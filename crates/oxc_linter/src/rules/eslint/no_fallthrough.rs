@@ -317,7 +317,10 @@ impl Rule for NoFallthrough {
             let is_illegal_fallthrough = {
                 let is_fallthrough = !case.consequent.is_empty()
                     || (!self.0.allow_empty_case
-                        && Self::has_blanks_between(ctx, case.span.start..next_case.span.start));
+                        && Self::has_blanks_between(
+                            ctx,
+                            case.span.start()..next_case.span.start(),
+                        ));
                 is_fallthrough
                     && self.maybe_allow_fallthrough_trivia(ctx, case, next_case).is_none()
             };
@@ -338,14 +341,14 @@ fn possible_fallthrough_comment_span(case: &SwitchCase) -> (u32, Option<u32>) {
     if let Ok(Statement::BlockStatement(block)) = case.consequent.iter().exactly_one() {
         let span = block.span;
         if let Some(last) = block.body.last() {
-            (last.span().end, Some(span.end))
+            (last.span().end(), Some(span.end()))
         } else {
-            (span.start, Some(span.end))
+            (span.start(), Some(span.end()))
         }
     } else if let Some(last) = case.consequent.last() {
-        (last.span().end, None)
+        (last.span().end(), None)
     } else {
-        (case.span.end, None)
+        (case.span.end(), None)
     }
 }
 
@@ -382,9 +385,9 @@ impl NoFallthrough {
             }
         }
 
-        let range = start..fall.span.start;
+        let range = start..fall.span.start();
         if is_fallthrough_comment_in_range(range) {
-            Some(Span::new(start, fall.span.start))
+            Some(Span::new(start, fall.span.start()))
         } else {
             None
         }

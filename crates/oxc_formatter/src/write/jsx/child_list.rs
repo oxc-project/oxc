@@ -299,7 +299,7 @@ impl FormatJsxChildList {
                         && is_non_text_node_next
                         && matches!(non_text.as_ref(), JSXChild::ExpressionContainer(element) if
                             matches!(&element.expression, JSXExpression::EmptyExpression(_) if
-                            f.context().comments().is_suppressed(element.span.end)
+                            f.context().comments().is_suppressed(element.span.end())
                         ));
 
                     let format_separator = line_mode.map(|mode| {

@@ -143,7 +143,7 @@ impl<'a> RegExpLiteral<'a> {
         #[expect(clippy::cast_possible_truncation)]
         let pattern_len = pattern_text.len() as u32;
         let literal_span = self.span;
-        let pattern_span_offset = literal_span.start + 1; // +1 to skip the opening `/`
+        let pattern_span_offset = literal_span.start() + 1; // +1 to skip the opening `/`
         let flags_span_offset = pattern_span_offset + pattern_len + 1; // +1 to skip the closing `/`
         let flags_text = &self.regex.flags.to_inline_string();
 

@@ -126,12 +126,12 @@ impl PreferToHaveLength {
             let code = Self::build_code(fixer.source_text(), static_mem_expr, super_mem_expr);
             let offset = u32::try_from(
                 fixer
-                    .source_range(Span::new(matcher.span.end, call_expr.span().end))
+                    .source_range(Span::new(matcher.span.end(), call_expr.span().end()))
                     .find('(')
                     .unwrap(),
             )
             .unwrap();
-            fixer.replace(Span::new(call_expr.span.start, matcher.span.end + offset), code)
+            fixer.replace(Span::new(call_expr.span.start(), matcher.span.end() + offset), code)
         });
     }
 
@@ -140,9 +140,10 @@ impl PreferToHaveLength {
         mem_expr: &MemberExpression<'a>,
         super_mem_expr: Option<&MemberExpression<'a>>,
     ) -> String {
-        let l = Span::new(mem_expr.span().start, mem_expr.object().span().end).source_text(source);
+        let l =
+            Span::new(mem_expr.span().start(), mem_expr.object().span().end()).source_text(source);
         let r = super_mem_expr.map(|mem_expr| {
-            Span::new(mem_expr.object().span().end, mem_expr.span().end).source_text(source)
+            Span::new(mem_expr.object().span().end(), mem_expr.span().end()).source_text(source)
         });
 
         let mut code = String::with_capacity(8 + l.len() + r.map_or(0, str::len) + 13);

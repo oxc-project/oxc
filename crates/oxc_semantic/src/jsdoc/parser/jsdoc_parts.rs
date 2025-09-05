@@ -65,7 +65,7 @@ impl<'a> JSDocCommentPart<'a> {
     // It may not be perfect for multiline, but for single line, which is probably the majority, it is enough.
     pub fn span_trimmed_first_line(&self) -> Span {
         if self.raw.trim().is_empty() {
-            return Span::empty(self.span.start);
+            return Span::empty(self.span.start());
         }
 
         let base_len = self.raw.len();
@@ -74,8 +74,8 @@ impl<'a> JSDocCommentPart<'a> {
             let trimmed_end_offset = base_len - self.raw.trim_end().len();
 
             return Span::new(
-                self.span.start + u32::try_from(trimmed_start_offset).unwrap_or_default(),
-                self.span.end - u32::try_from(trimmed_end_offset).unwrap_or_default(),
+                self.span.start() + u32::try_from(trimmed_start_offset).unwrap_or_default(),
+                self.span.end() - u32::try_from(trimmed_end_offset).unwrap_or_default(),
             );
         }
 
@@ -83,8 +83,8 @@ impl<'a> JSDocCommentPart<'a> {
         let trimmed_start_offset = base_len - start_trimmed.len();
         let trimmed_end_offset = trimmed_start_offset + start_trimmed.find('\n').unwrap_or(0);
         Span::new(
-            self.span.start + u32::try_from(trimmed_start_offset).unwrap_or_default(),
-            self.span.start + u32::try_from(trimmed_end_offset).unwrap_or_default(),
+            self.span.start() + u32::try_from(trimmed_start_offset).unwrap_or_default(),
+            self.span.start() + u32::try_from(trimmed_end_offset).unwrap_or_default(),
         )
     }
 

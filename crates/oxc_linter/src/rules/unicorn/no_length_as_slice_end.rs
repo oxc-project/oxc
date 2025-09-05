@@ -90,8 +90,8 @@ impl Rule for NoLengthAsSliceEnd {
                 second_argument.span,
             ),
             |fixer| {
-                let start = call_expr.arguments[0].span().end;
-                let end = call_expr.arguments[1].span().end;
+                let start = call_expr.arguments[0].span().end();
+                let end = call_expr.arguments[1].span().end();
                 let span = Span::new(start, end);
                 fixer.delete(&span)
             },

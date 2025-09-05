@@ -223,7 +223,7 @@ fn no_else_return_diagnostic_fix(
 ) {
     let prev_span = else_stmt_prev.span();
     let else_content_span = else_stmt.span();
-    let else_keyword_span = Span::new(prev_span.end, else_content_span.start);
+    let else_keyword_span = Span::new(prev_span.end(), else_content_span.start());
     let diagnostic = no_else_return_diagnostic(else_keyword_span, last_return_span);
     let parent_scope_id = if_block_node.scope_id();
 
@@ -232,7 +232,7 @@ fn no_else_return_diagnostic_fix(
         return;
     }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        let target_span = Span::new(else_keyword_span.start, else_content_span.end);
+        let target_span = Span::new(else_keyword_span.start(), else_content_span.end());
 
         // Capture the contents of the `else` statement, removing curly braces
         // for block statements
@@ -713,7 +713,7 @@ fn test() {
             "function foo14() { if (foo) return bar
 			else { baz(); }
 			[1, 2, 3].map(foo) }",
-            "function foo14() { if (foo) return bar\n baz(); 
+            "function foo14() { if (foo) return bar\n baz();
 			[1, 2, 3].map(foo) }",
             None,
         ),
@@ -721,7 +721,7 @@ fn test() {
             "function foo17() { if (foo) return bar
 			else { baz() }
 			qaz() }",
-            "function foo17() { if (foo) return bar\n baz() 
+            "function foo17() { if (foo) return bar\n baz()
 			qaz() }",
             None,
         ),

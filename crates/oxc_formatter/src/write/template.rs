@@ -243,11 +243,11 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
         // Special handling for array expressions - force flat mode
         let format_expression = format_once(|f| match self.expression {
             TemplateExpression::Expression(e) => {
-                let leading_comments = f.context().comments().comments_before(e.span().start);
+                let leading_comments = f.context().comments().comments_before(e.span().start());
                 FormatLeadingComments::Comments(leading_comments).fmt(f)?;
                 FormatExpressionWithoutTrailingComments(e).fmt(f)?;
                 let trailing_comments =
-                    f.context().comments().comments_before_character(e.span().start, b'}');
+                    f.context().comments().comments_before_character(e.span().start(), b'}');
                 has_comment_in_expression =
                     !leading_comments.is_empty() || !trailing_comments.is_empty();
                 FormatTrailingComments::Comments(trailing_comments).fmt(f)
@@ -341,12 +341,12 @@ impl<'a> TemplateExpression<'a, '_> {
                         | Expression::FunctionExpression(_)
                 )
                 // TODO: improve this
-                || f.source_text()[..e.span().start as usize]
+                || f.source_text()[..e.span().start() as usize]
                     .chars()
                     .rev()
                     .take_while(|c| *c != '{')
                     .any(is_line_terminator)
-                    || f.source_text()[e.span().end as usize..]
+                    || f.source_text()[e.span().end() as usize..]
                         .chars()
                         .take_while(|c| *c != '}')
                         .any(is_line_terminator)

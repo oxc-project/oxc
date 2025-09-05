@@ -280,7 +280,7 @@ fn should_group_first_argument(
                 return false;
             }
 
-            !f.comments().has_comments(call_like_span.start, first.span(), second.span().start)
+            !f.comments().has_comments(call_like_span.start(), first.span(), second.span().start())
                 && !can_group_expression_argument(second, f)
                 && is_relatively_short_argument(second)
         }
@@ -307,8 +307,8 @@ fn should_group_last_argument(
                 // }
             }
 
-            let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
-            if f.comments().has_comments(previous_span, last.span(), call_like_span.end) {
+            let previous_span = penultimate.map_or(call_like_span.start(), |a| a.span().end());
+            if f.comments().has_comments(previous_span, last.span(), call_like_span.end()) {
                 return false;
             }
 
@@ -938,12 +938,14 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: &str) ->
     }
 
     match arguments.first().unwrap() {
-        Argument::TemplateLiteral(template) => {
-            is_multiline_template_starting_on_same_line(template.span.start, template, source_text)
-        }
+        Argument::TemplateLiteral(template) => is_multiline_template_starting_on_same_line(
+            template.span.start(),
+            template,
+            source_text,
+        ),
         Argument::TaggedTemplateExpression(template) => {
             is_multiline_template_starting_on_same_line(
-                template.span.start,
+                template.span.start(),
                 &template.quasi,
                 source_text,
             )

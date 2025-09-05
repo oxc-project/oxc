@@ -36,7 +36,7 @@ impl<'a> JSDocFinder<'a> {
     }
 
     pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDoc<'a>>> {
-        self.attached.get(&span.start).cloned()
+        self.attached.get(&span.start()).cloned()
     }
 
     pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &'b JSDoc<'a>> + 'b {

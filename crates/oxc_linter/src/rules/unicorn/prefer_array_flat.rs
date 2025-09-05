@@ -109,7 +109,7 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         .callee
         .as_member_expression()
         .and_then(MemberExpression::static_property_info)
-        .map(|v| Span::new(v.0.start, call_expr.span.end));
+        .map(|v| Span::new(v.0.start(), call_expr.span.end()));
 
     if let Some(span) = target_fix_span {
         ctx.diagnostic_with_fix(prefer_array_flat_diagnostic(call_expr.span), |fixer| {
@@ -184,7 +184,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
                         .callee
                         .as_member_expression()
                         .and_then(MemberExpression::static_property_info)
-                        .map(|v| Span::new(v.0.start, call_expr.span.end));
+                        .map(|v| Span::new(v.0.start(), call_expr.span.end()));
 
                     debug_assert!(target_fix_span.is_some());
 
@@ -231,7 +231,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
                 .callee
                 .as_member_expression()
                 .and_then(MemberExpression::static_property_info)
-                .map(|v| Span::new(v.0.start, call_expr.span.end));
+                .map(|v| Span::new(v.0.start(), call_expr.span.end()));
 
             debug_assert!(target_fix_span.is_some());
 

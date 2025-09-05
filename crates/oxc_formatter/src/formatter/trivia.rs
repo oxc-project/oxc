@@ -29,7 +29,7 @@ use super::{Argument, Arguments, GroupId, SyntaxToken, prelude::*};
 /// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>. Prettier also
 /// implements the same behavior: <https://github.com/prettier/prettier/pull/13445/files#diff-3d5eaa2a1593372823589e6e55e7ca905f7c64203ecada0aa4b3b0cdddd5c3ddR160-R178>
 #[expect(clippy::suspicious_operation_groupings)]
-// `current.span.end == next.span.start` is correct, which checks whether the next comment starts exactly where the current comment ends.
+// `current.span.end() == next.span.start()` is correct, which checks whether the next comment starts exactly where the current comment ends.
 fn should_nestle_adjacent_doc_comments(
     current: &Comment,
     next: &Comment,
@@ -37,7 +37,7 @@ fn should_nestle_adjacent_doc_comments(
 ) -> bool {
     matches!(current.content, CommentContent::Jsdoc)
         && matches!(next.content, CommentContent::Jsdoc)
-        && current.span.end == next.span.start
+        && current.span.end() == next.span.start()
         && current.span.source_text(source_text).contains('\n')
         && next.span.source_text(source_text).contains('\n')
 }
@@ -67,7 +67,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
                 match comment.kind {
                     CommentKind::Block => {
-                        match get_lines_after(comment.span.end, f.source_text()) {
+                        match get_lines_after(comment.span.end(), f.source_text()) {
                             0 => {
                                 let should_nestle =
                                     leading_comments_iter.peek().is_some_and(|next_comment| {
@@ -90,7 +90,8 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                             _ => write!(f, [empty_line()])?,
                         }
                     }
-                    CommentKind::Line => match get_lines_after(comment.span.end, f.source_text()) {
+                    CommentKind::Line => match get_lines_after(comment.span.end(), f.source_text())
+                    {
                         0 | 1 => write!(f, [hard_line_break()])?,
                         _ => write!(f, [empty_line()])?,
                     },
@@ -102,7 +103,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let leading_comments = f.context().comments().comments_before(span.start);
+                let leading_comments = f.context().comments().comments_before(span.start());
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -358,7 +359,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
             FormatDanglingComments::Node { span, indent } => {
                 let source_text = f.context().source_text();
                 format_dangling_comments_impl(
-                    f.context().comments().comments_before(span.end),
+                    f.context().comments().comments_before(span.end()),
                     *indent,
                     f,
                 )
@@ -629,7 +630,7 @@ impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let source_text = self.span.source_text(f.source_text()).trim_end();
         if is_alignable_comment(source_text) {
-            let mut source_offset = self.span.start;
+            let mut source_offset = self.span.start();
 
             let mut lines = source_text.lines();
 

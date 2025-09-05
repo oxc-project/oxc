@@ -74,8 +74,8 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         let has_comment = first_group.members().first().is_some_and(|member| {
             matches!(member, ChainMember::StaticMember(expression)
                 if f.context().comments().has_comments_between(
-                    expression.object().span().end,
-                    expression.property().span.start
+                    expression.object().span().end(),
+                    expression.property().span.start()
                 )
             )
         });
@@ -185,7 +185,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             if matches!(
                 member,
                 ChainMember::StaticMember(member)
-                    if comments.has_comments_between(member.object().span().end, member.property().span.start)
+                    if comments.has_comments_between(member.object().span().end(), member.property().span.start())
             ) {
                 return true;
             }

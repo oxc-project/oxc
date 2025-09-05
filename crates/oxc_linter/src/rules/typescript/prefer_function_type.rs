@@ -113,8 +113,9 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
     let Some(type_annotation) = &return_type else {
         return;
     };
-    let Span { start, end, .. } = span;
-    let colon_pos = type_annotation.span.start - start;
+    let start = span.start();
+    let end = span.end();
+    let colon_pos = type_annotation.span.start() - start;
     let source_code = &ctx.source_text();
     let text: &str = &source_code[start as usize..end as usize];
     let mut suggestion = format!(
@@ -133,8 +134,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                 ctx.diagnostic_with_fix(
                     prefer_function_type_diagnostic(&suggestion, span),
                     |fixer| {
-                        let mut span = interface_decl.id.span;
-                        span.end = type_parameters.span.end;
+                        let span =
+                            Span::new(interface_decl.id.span.start(), type_parameters.span.end());
                         let type_name = fixer.source_range(span);
                         fixer
                             .replace(
@@ -147,14 +148,14 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
             } else {
                 ctx.diagnostic_with_fix(prefer_function_type_diagnostic(&suggestion, span), |_| {
                     let mut is_parent_exported = false;
-                    let mut node_start = interface_decl.span.start;
-                    let mut node_end = interface_decl.span.end;
+                    let mut node_start = interface_decl.span.start();
+                    let mut node_end = interface_decl.span.end();
                     if let AstKind::ExportNamedDeclaration(export_name_decl) =
                         ctx.nodes().parent_kind(node.id())
                     {
                         is_parent_exported = true;
-                        node_start = export_name_decl.span.start;
-                        node_end = export_name_decl.span.end;
+                        node_start = export_name_decl.span.start();
+                        node_end = export_name_decl.span.end();
                     }
 
                     let has_comments = ctx.has_comments_between(interface_decl.span);

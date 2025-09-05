@@ -130,12 +130,12 @@ impl Rule for NoCondAssign {
 impl NoCondAssign {
     #[expect(clippy::cast_possible_truncation)]
     fn emit_diagnostic(ctx: &LintContext<'_>, expr: &AssignmentExpression<'_>) {
-        let mut operator_span = Span::new(expr.left.span().end, expr.right.span().start);
+        let mut operator_span = Span::new(expr.left.span().end(), expr.right.span().start());
         let start =
             operator_span.source_text(ctx.source_text()).find(expr.operator.as_str()).unwrap_or(0)
                 as u32;
-        operator_span.start += start;
-        operator_span.end = operator_span.start + expr.operator.as_str().len() as u32;
+        operator_span.set_start(operator_span.start() + start);
+        operator_span.set_end(operator_span.start() + expr.operator.as_str().len() as u32);
 
         ctx.diagnostic(no_cond_assign_diagnostic(operator_span));
     }

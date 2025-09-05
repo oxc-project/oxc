@@ -136,7 +136,7 @@ impl Rule for JsxBooleanValue {
                     if let Some(expr) = container.expression.as_expression() {
                         if let Expression::BooleanLiteral(expr) = expr.without_parentheses() {
                             if expr.value && self.is_never(ident.name.as_str()) {
-                                let span = Span::new(ident.span.end, jsx_attr.span.end);
+                                let span = Span::new(ident.span.end(), jsx_attr.span.end());
                                 ctx.diagnostic_with_fix(
                                     boolean_value_diagnostic(&ident.name, span),
                                     |fixer| fixer.delete_range(span),

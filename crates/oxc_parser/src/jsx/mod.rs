@@ -205,12 +205,12 @@ impl<'a> ParserImpl<'a> {
                 return self.fatal_error(error);
             }
             property = Some(ident);
-            span = self.end_span(span.start);
+            span = self.end_span(span.start());
         }
 
         if let Some(property) = property {
             return self.ast.alloc_jsx_member_expression(
-                self.end_span(span.start),
+                self.end_span(span.start()),
                 object,
                 property,
             );
@@ -299,7 +299,7 @@ impl<'a> ParserImpl<'a> {
             let span = self.end_span(span_start);
             // Handle comment between curly braces (ex. `{/* comment */}`)
             //                                            ^^^^^^^^^^^^^ span
-            let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));
+            let expr = self.ast.jsx_empty_expression(Span::new(span.start() + 1, span.end() - 1));
             JSXExpression::EmptyExpression(expr)
         } else {
             let expr = JSXExpression::from(self.parse_jsx_assignment_expression());

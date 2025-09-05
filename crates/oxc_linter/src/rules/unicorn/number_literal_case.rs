@@ -100,7 +100,7 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
     if number_literal.starts_with("0B") || number_literal.starts_with("0O") {
         return Some((
             uppercase_prefix(
-                Span::new(raw_span.start + 1, raw_span.start + 2),
+                Span::new(raw_span.start() + 1, raw_span.start() + 2),
                 if number_literal.starts_with("0B") { "0b" } else { "0o" },
             ),
             number_literal.cow_to_ascii_lowercase().into_owned(),
@@ -117,20 +117,20 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
         }
         if has_uppercase_prefix {
             return Some((
-                uppercase_prefix(Span::new(raw_span.start + 1, raw_span.start + 2), "0x"),
+                uppercase_prefix(Span::new(raw_span.start() + 1, raw_span.start() + 2), "0x"),
                 "0x".to_owned() + &number_literal[2..],
             ));
         }
         if has_lowercase_digits {
             return Some((
-                lowercase_hexadecimal_digits(Span::new(raw_span.start + 2, raw_span.end)),
+                lowercase_hexadecimal_digits(Span::new(raw_span.start() + 2, raw_span.end())),
                 "0x".to_owned() + &digits_to_uppercase(&number_literal[2..]),
             ));
         }
         return None;
     }
     if let Some(index) = number_literal.find('E') {
-        let char_position = raw_span.start + index as u32;
+        let char_position = raw_span.start() + index as u32;
         return Some((
             uppercase_exponential_notation(Span::sized(char_position, 1)),
             number_literal.cow_to_ascii_lowercase().into_owned(),

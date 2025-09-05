@@ -42,7 +42,7 @@ impl RuleCommentRule<'_> {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn create_fix<'a>(&self, source_text: &'a str, comment_span: Span) -> Fix<'a> {
         let before_source =
-            &source_text[comment_span.start as usize..self.name_span.start as usize];
+            &source_text[comment_span.start() as usize..self.name_span.start() as usize];
 
         // check if there is a comma before the rule name
         // if there is, remove the comma, whitespace and the rule name
@@ -59,12 +59,12 @@ impl RuleCommentRule<'_> {
 
         if let Some(comma_before_offset) = comma_before_offset {
             return Fix::delete(Span::new(
-                self.name_span.start - comma_before_offset,
-                self.name_span.end,
+                self.name_span.start() - comma_before_offset,
+                self.name_span.end(),
             ));
         }
 
-        let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
+        let after_source = &source_text[self.name_span.end() as usize..comment_span.end() as usize];
 
         // check if there is a comma after the rule name
         // if there is, remove the comma, whitespace and the rule name
@@ -81,8 +81,8 @@ impl RuleCommentRule<'_> {
 
         if let Some(comma_after_offset) = comma_after_offset {
             return Fix::delete(Span::new(
-                self.name_span.start,
-                self.name_span.end + comma_after_offset,
+                self.name_span.start(),
+                self.name_span.end() + comma_after_offset,
             ));
         }
 
@@ -138,7 +138,7 @@ impl<'a> DisableDirectives<'a> {
         // are still suppressed.
         let matched_intervals = self
             .intervals
-            .find(span.start, span.end)
+            .find(span.start(), span.end())
             .filter(|interval| {
                 // Check if this rule should be disabled
                 let rule_matches = match interval.val {
@@ -156,15 +156,15 @@ impl<'a> DisableDirectives<'a> {
                 // Check if the diagnostic span is covered by this interval
                 if interval.val.is_next_line() {
                     // For next-line directives, only check if the diagnostic starts within the interval
-                    // We intentionally only check span.start (not span.end) to avoid suppressing
+                    // We intentionally only check span.start() (not span.end()) to avoid suppressing
                     // diagnostics for large constructs that merely contain the disabled line
                     #[expect(clippy::suspicious_operation_groupings)]
                     {
-                        span.start >= interval.start && span.start < interval.stop
+                        span.start() >= interval.start && span.start() < interval.stop
                     }
                 } else {
                     // For regular disable directives, check if there's any overlap
-                    span.start < interval.stop && span.end > interval.start
+                    span.start() < interval.stop && span.end() > interval.start
                 }
             })
             .map(|interval| interval.val)
@@ -298,7 +298,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
             let comment_span = comment.content_span();
             let text_source = comment_span.source_text(source_text);
             let text = text_source.trim_start();
-            let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
+            let mut rule_name_start =
+                comment_span.start() + (text_source.len() - text.len()) as u32;
 
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
@@ -307,7 +308,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
-                        self.disable_all_start = Some((comment_span.end, comment_span));
+                        self.disable_all_start = Some((comment_span.end(), comment_span));
                     }
                     self.disable_rule_comments.push(DisableRuleComment {
                         span: comment_span,
@@ -319,9 +320,9 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 else if let Some(text) = text.strip_prefix("-next-line") {
                     rule_name_start += 10; // -next-line is 10 bytes
                     // Get the span up to the next new line
-                    let mut stop = comment_span.end;
+                    let mut stop = comment_span.end();
                     let mut lines_after_comment_end =
-                        source_text[comment_span.end as usize..].split_inclusive('\n');
+                        source_text[comment_span.end() as usize..].split_inclusive('\n');
 
                     if let Some(rest_of_line) = lines_after_comment_end.next() {
                         stop += rest_of_line.len() as u32;
@@ -334,7 +335,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
 
                     if text.trim().is_empty() {
                         self.add_interval(
-                            comment_span.end,
+                            comment_span.end(),
                             stop,
                             DisabledRule::All { comment_span, is_next_line: true },
                         );
@@ -347,7 +348,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                         let mut rules = vec![];
                         Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
                             self.add_interval(
-                                comment_span.end,
+                                comment_span.end(),
                                 stop,
                                 DisabledRule::Single {
                                     rule_name,
@@ -370,11 +371,11 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     rule_name_start += 5; // -line is 5 bytes
 
                     // Get the span between the preceding newline to this comment
-                    let start = source_text[..comment_span.start as usize]
+                    let start = source_text[..comment_span.start() as usize]
                         .lines()
                         .next_back()
-                        .map_or(0, |line| comment_span.start - line.len() as u32);
-                    let stop = comment_span.start;
+                        .map_or(0, |line| comment_span.start() - line.len() as u32);
+                    let stop = comment_span.start();
 
                     // `eslint-disable-line`
                     if text.trim().is_empty() {
@@ -417,7 +418,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     let mut rules = vec![];
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
                         self.disable_start_map.entry(rule_name).or_insert((
-                            comment_span.end,
+                            comment_span.end(),
                             name_span,
                             comment_span,
                         ));
@@ -440,7 +441,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     if let Some((start, _)) = self.disable_all_start.take() {
                         self.add_interval(
                             start,
-                            comment_span.start,
+                            comment_span.start(),
                             DisabledRule::All { comment_span, is_next_line: false },
                         );
                     } else {
@@ -453,7 +454,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
                         if let Some((start, _, _)) = self.disable_start_map.remove(rule_name) {
                             self.add_interval(
                                 start,
-                                comment_span.start,
+                                comment_span.start(),
                                 DisabledRule::Single {
                                     rule_name,
                                     name_span,
@@ -1015,14 +1016,14 @@ mod tests {
                 assert_eq!(*unused_rule_name_no_debugger, Some("no-debugger"));
                 assert_eq!(
                     *unused_span_no_debugger,
-                    Span::sized(comments[0].content_span().start + 15, 11)
+                    Span::sized(comments[0].content_span().start() + 15, 11)
                 );
 
                 let (unused_rule_name_no_console, unused_span_no_console) = unused.last().unwrap();
                 assert_eq!(*unused_rule_name_no_console, Some("no-console"));
                 assert_eq!(
                     *unused_span_no_console,
-                    Span::sized(comments[0].content_span().start + 28, 10)
+                    Span::sized(comments[0].content_span().start() + 28, 10)
                 );
             },
         );
@@ -1117,13 +1118,13 @@ mod tests {
             |comments, directives| {
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-console",
-                    name_span: Span::sized(comments[0].content_span().start + 16, 10),
+                    name_span: Span::sized(comments[0].content_span().start() + 16, 10),
                     comment_span: comments[0].content_span(),
                     is_next_line: false,
                 });
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-debugger",
-                    name_span: Span::sized(comments[1].content_span().start + 16, 11),
+                    name_span: Span::sized(comments[1].content_span().start() + 16, 11),
                     comment_span: comments[1].content_span(),
                     is_next_line: false,
                 });

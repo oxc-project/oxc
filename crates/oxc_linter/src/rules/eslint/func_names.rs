@@ -298,12 +298,12 @@ impl Rule for FuncNames {
         for (func, node, parent_node) in invalid_funcs {
             let func_name_complete = get_function_name_with_kind(node, parent_node);
 
-            let report_span = Span::new(func.span.start, func.params.span.start);
+            let report_span = Span::new(func.span.start(), func.params.span.start());
             let replace_span = Span::new(
-                func.span.start,
+                func.span.start(),
                 func.type_parameters
                     .as_ref()
-                    .map_or_else(|| func.params.span.start, |tp| tp.span.start),
+                    .map_or_else(|| func.params.span.start(), |tp| tp.span.start()),
             );
             if let Some(id) = func.id.as_ref() {
                 ctx.diagnostic_with_suggestion(

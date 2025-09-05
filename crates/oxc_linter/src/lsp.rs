@@ -139,8 +139,8 @@ fn fix_to_fix_with_position<'a>(
     rope: &Rope,
     source_text: &str,
 ) -> FixWithPosition<'a> {
-    let start_position = offset_to_position(rope, fix.span.start, source_text);
-    let end_position = offset_to_position(rope, fix.span.end, source_text);
+    let start_position = offset_to_position(rope, fix.span.start(), source_text);
+    let end_position = offset_to_position(rope, fix.span.end(), source_text);
     FixWithPosition {
         content: fix.content.clone(),
         span: SpanPositionMessage::new(start_position, end_position)

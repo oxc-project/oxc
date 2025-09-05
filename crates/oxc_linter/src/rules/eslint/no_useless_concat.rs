@@ -71,12 +71,12 @@ impl Rule for NoUselessConcat {
         if left.is_string_literal() && right.is_string_literal() {
             let left_span = left.span();
             let right_span = right.span();
-            let span = Span::new(left_span.end, right_span.start);
+            let span = Span::new(left_span.end(), right_span.start());
             let source_text = span.source_text(ctx.source_text());
             if source_text.chars().any(is_line_terminator) {
                 return;
             }
-            let span = Span::new(left_span.start, right_span.end);
+            let span = Span::new(left_span.start(), right_span.end());
             ctx.diagnostic(no_useless_concat_diagnostic(span));
         }
     }

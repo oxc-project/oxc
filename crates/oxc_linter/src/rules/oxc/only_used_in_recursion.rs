@@ -177,13 +177,13 @@ fn create_diagnostic(
 
                     let arg_to_delete = call_expr.arguments[arg_index].span();
                     fix.push(Fix::delete(Span::new(
-                        arg_to_delete.start,
+                        arg_to_delete.start(),
                         skip_to_next_char(
                             ctx.source_text(),
-                            arg_to_delete.end,
+                            arg_to_delete.end(),
                             &Direction::Forward,
                         )
-                        .unwrap_or(arg_to_delete.end),
+                        .unwrap_or(arg_to_delete.end()),
                     )));
                 }
             }
@@ -225,11 +225,11 @@ fn create_diagnostic_jsx(
             let mut fix = fixer.new_fix_with_capacity(references.count() + 1);
 
             let source = ctx.source_text();
-            let span_start = skip_to_next_char(source, property.span.start, &Direction::Backward)
-                .unwrap_or(property.span.start);
+            let span_start = skip_to_next_char(source, property.span.start(), &Direction::Backward)
+                .unwrap_or(property.span.start());
             let span_end =
-                skip_to_next_char(ctx.source_text(), property.span.end, &Direction::Forward)
-                    .unwrap_or(property.span.end);
+                skip_to_next_char(ctx.source_text(), property.span.end(), &Direction::Forward)
+                    .unwrap_or(property.span.end());
 
             fix.push(Fix::delete(Span::new(span_start, span_end)));
 

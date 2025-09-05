@@ -93,7 +93,7 @@ impl Rule for RequireAwait {
                     finder.visit_function_body(body);
                     if !finder.found {
                         if matches!(func.r#type, FunctionType::FunctionDeclaration) {
-                            let need_delete_span = get_delete_span(ctx, func.span.start);
+                            let need_delete_span = get_delete_span(ctx, func.span.start());
                             ctx.diagnostic_with_dangerous_fix(
                                 require_await_diagnostic(
                                     func.id.as_ref().map_or(func.span, |ident| ident.span),
@@ -111,9 +111,9 @@ impl Rule for RequireAwait {
                                     ctx,
                                     if matches!(parent_parent_node, AstKind::ObjectProperty(x) if !x.method)
                                     {
-                                        func.span.start
+                                        func.span.start()
                                     } else {
-                                        span.start
+                                        span.start()
                                     },
                                 );
                                 let check_span = if matches!(key, PropertyKey::StaticIdentifier(_))
@@ -127,7 +127,7 @@ impl Rule for RequireAwait {
                                     |fixer| fixer.delete_range(need_delete_span),
                                 );
                             } else {
-                                let need_delete_span = get_delete_span(ctx, func.span.start);
+                                let need_delete_span = get_delete_span(ctx, func.span.start());
                                 ctx.diagnostic_with_dangerous_fix(
                                     require_await_diagnostic(
                                         func.id.as_ref().map_or(func.span, |ident| ident.span),
@@ -144,7 +144,7 @@ impl Rule for RequireAwait {
                     let mut finder = AwaitFinder { found: false };
                     finder.visit_function_body(body);
                     if !finder.found {
-                        let need_delete_span = get_delete_span(ctx, func.span.start);
+                        let need_delete_span = get_delete_span(ctx, func.span.start());
                         ctx.diagnostic_with_dangerous_fix(
                             require_await_diagnostic(func.span),
                             |fixer| fixer.delete_range(need_delete_span),

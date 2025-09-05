@@ -224,7 +224,7 @@ impl<'a> ParserImpl<'a> {
                 }
                 _ => return self.unexpected(),
             };
-            let params_span = self.end_span(ident.span.start);
+            let params_span = self.end_span(ident.span.start());
             let ident = BindingPatternKind::BindingIdentifier(ident);
             let pattern = self.ast.binding_pattern(ident, NONE, false);
             let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);

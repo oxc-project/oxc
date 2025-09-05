@@ -61,13 +61,13 @@ impl Rule for PreferNamespaceKeyword {
             return;
         }
 
-        let token = ctx.source_range(Span::new(module.span.start, module.id.span().start));
+        let token = ctx.source_range(Span::new(module.span.start(), module.id.span().start()));
         let Some(offset) = token.find("module") else {
             return;
         };
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_start = module.span.start + u32::try_from(offset).unwrap();
+            let span_start = module.span.start() + u32::try_from(offset).unwrap();
             fixer.replace(Span::sized(span_start, 6), "namespace")
         });
     }

@@ -39,7 +39,7 @@ pub fn prefer_to_be_simply_bool<'a>(
 
     if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression() {
         if arg.value == value {
-            let span = Span::new(matcher.span.start, call_expr.span.end);
+            let span = Span::new(matcher.span.start(), call_expr.span.end());
 
             let is_cmp_mem_expr = match matcher.parent {
                 Some(Expression::ComputedMemberExpression(_)) => true,

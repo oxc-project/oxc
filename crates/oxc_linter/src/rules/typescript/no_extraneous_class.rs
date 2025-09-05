@@ -145,7 +145,7 @@ impl Rule for NoExtraneousClass {
                     let mut span = class.span;
                     #[expect(clippy::checked_conversions, clippy::cast_possible_truncation)]
                     if let Some(decorator) = class.decorators.last() {
-                        span = Span::new(decorator.span.end, span.end);
+                        span = Span::new(decorator.span.end(), span.end());
                         // NOTE: there will always be a 'c' because of 'class' keyword.
                         let start = ctx.source_range(span).find('c').unwrap();
                         // SAFETY: source files are guaranteed to be less than

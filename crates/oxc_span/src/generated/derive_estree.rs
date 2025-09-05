@@ -8,16 +8,6 @@ use oxc_estree::{
 };
 
 use crate::source_type::*;
-use crate::span::*;
-
-impl ESTree for Span {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("start", &self.start);
-        state.serialize_field("end", &self.end);
-        state.end();
-    }
-}
 
 impl ESTree for SourceType {
     fn serialize<S: Serializer>(&self, serializer: S) {

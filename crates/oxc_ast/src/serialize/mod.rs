@@ -173,7 +173,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("hashbang", &program.hashbang);
 
         let span = if S::INCLUDE_TS_FIELDS {
-            Span::new(get_ts_start_span(program), program.span.end)
+            Span::new(get_ts_start_span(program), program.span.end())
         } else {
             program.span
         };
@@ -185,28 +185,28 @@ impl ESTree for ProgramConverter<'_, '_> {
 
 fn get_ts_start_span(program: &Program<'_>) -> u32 {
     if let Some(first_directive) = program.directives.first() {
-        return first_directive.span.start;
+        return first_directive.span.start();
     }
 
     let Some(first_stmt) = program.body.first() else {
         // Program contains no statements or directives. Span start = span end.
-        return program.span.end;
+        return program.span.end();
     };
 
-    let start = first_stmt.span().start;
+    let start = first_stmt.span().start();
     match first_stmt {
         Statement::ExportNamedDeclaration(decl) => {
             if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration
                 && let Some(decorator) = class.decorators.first()
             {
-                return cmp::min(start, decorator.span.start);
+                return cmp::min(start, decorator.span.start());
             }
         }
         Statement::ExportDefaultDeclaration(decl) => {
             if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration
                 && let Some(decorator) = class.decorators.first()
             {
-                return cmp::min(start, decorator.span.start);
+                return cmp::min(start, decorator.span.start());
             }
         }
         _ => {}

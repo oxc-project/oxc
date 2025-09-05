@@ -51,12 +51,12 @@ impl<'a> ObjectLike<'a, '_> {
         // TODO: Polish the code
         match self {
             Self::ObjectExpression(o) => o.as_ref().properties.first().is_some_and(|p| {
-                Span::new(o.span().start, p.span().start)
+                Span::new(o.span().start(), p.span().start())
                     .source_text(f.source_text())
                     .contains('\n')
             }),
             Self::TSTypeLiteral(o) => o.as_ref().members.first().is_some_and(|p| {
-                Span::new(o.span().start, p.span().start)
+                Span::new(o.span().start(), p.span().start())
                     .source_text(f.source_text())
                     .contains('\n')
             }),

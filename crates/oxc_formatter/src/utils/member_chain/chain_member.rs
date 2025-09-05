@@ -70,7 +70,9 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                     [
                         line_suffix_boundary(),
                         FormatLeadingComments::Comments(
-                            f.context().comments().comments_before(member.property().span().start)
+                            f.context()
+                                .comments()
+                                .comments_before(member.property().span().start())
                         ),
                         member.optional().then_some("?"),
                         ".",
@@ -136,7 +138,7 @@ impl<'a> Deref for FormatComputedMemberExpressionWithoutObject<'a, '_> {
 
 impl<'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before_character(self.span.start, b'[');
+        let comments = f.context().comments().comments_before_character(self.span.start(), b'[');
         if !comments.is_empty() {
             write!(f, [soft_line_break(), FormatLeadingComments::Comments(comments)])?;
         }

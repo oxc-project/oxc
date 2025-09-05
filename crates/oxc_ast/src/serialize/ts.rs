@@ -184,7 +184,7 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
 
         state.serialize_field("right", last);
 
-        let span = Span::new(parts[0].span.start, last.span.end);
+        let span = Span::new(parts[0].span.start(), last.span.end());
         state.serialize_span(span);
 
         state.end();

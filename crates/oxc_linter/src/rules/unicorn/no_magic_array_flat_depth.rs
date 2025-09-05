@@ -74,7 +74,7 @@ impl Rule for NoMagicArrayFlatDepth {
         };
 
         let has_explaining_comment =
-            ctx.comments_range(arguments_span.start..arguments_span.end).count() != 0;
+            ctx.comments_range(arguments_span.start()..arguments_span.end()).count() != 0;
 
         if has_explaining_comment {
             return;
@@ -97,12 +97,12 @@ fn get_call_expression_parentheses_pos<'a>(
         let source = ctx.source_text().char_indices();
 
         let start = source
-            .skip(callee_span.end as usize)
+            .skip(callee_span.end() as usize)
             .find(|(_, c)| c == &'(')
             .map(|(i, _)| i as u32)
             .expect("missing opening `(` for call expression argument");
 
-        let end = call_expr.span.end;
+        let end = call_expr.span.end();
 
         Span::new(start, end)
     })

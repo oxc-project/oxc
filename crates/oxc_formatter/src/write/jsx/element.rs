@@ -48,7 +48,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
         if let AstNodes::ArrowFunctionExpression(arrow) = self.parent().parent().parent()
             && arrow.expression
         {
-            let comments = f.context().comments().comments_before(arrow.span.end);
+            let comments = f.context().comments().comments_before(arrow.span.end());
             FormatTrailingComments::Comments(comments).fmt(f)
         } else {
             match self {
@@ -61,7 +61,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
 
 impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        let is_suppressed = f.comments().is_suppressed(self.span().start());
 
         let format_tag = format_once(|f| {
             if is_suppressed {

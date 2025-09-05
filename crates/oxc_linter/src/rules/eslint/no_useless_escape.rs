@@ -115,7 +115,7 @@ impl Rule for NoUselessEscape {
             AstKind::StringLiteral(literal) => check(
                 ctx,
                 node.id(),
-                literal.span.start,
+                literal.span.start(),
                 &check_string(literal.span.source_text(ctx.source_text())),
             ),
             AstKind::TemplateLiteral(literal) if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::TaggedTemplateExpression(expr) if expr.quasi.span == literal.span) => {
@@ -123,7 +123,7 @@ impl Rule for NoUselessEscape {
                     check(
                         ctx,
                         node.id(),
-                        template_element.span.start - 1,
+                        template_element.span.start() - 1,
                         &check_template(template_element.span.source_text(ctx.source_text())),
                     );
                 }
@@ -210,19 +210,19 @@ fn check_character(
              * out '^' characters that appear at the start of a character class.
              * (From ESLint source: https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/no-useless-escape.js)
              */
-            if class.span.start + 1 == span.start {
+            if class.span.start() + 1 == span.start() {
                 return None;
             }
         }
         if unicode_sets {
             if REGEX_CLASS_SET_RESERVED_DOUBLE_PUNCTUATOR.contains(escape_char) {
-                if let Some(prev_char) = source_text.chars().nth(span.end as usize) {
+                if let Some(prev_char) = source_text.chars().nth(span.end() as usize) {
                     // Escaping is valid when it is a reserved double punctuator
                     if prev_char == escape_char {
                         return None;
                     }
                 }
-                if let Some(prev_prev_char) = source_text.chars().nth(span.start as usize - 1) {
+                if let Some(prev_prev_char) = source_text.chars().nth(span.start() as usize - 1) {
                     if prev_prev_char == escape_char {
                         if escape_char != '^' {
                             return None;
@@ -233,8 +233,8 @@ fn check_character(
                             return None;
                         }
 
-                        let caret_index = class.span.start + 1;
-                        if caret_index < span.start - 1 {
+                        let caret_index = class.span.start() + 1;
+                        if caret_index < span.start() - 1 {
                             return None;
                         }
                     }
@@ -247,7 +247,7 @@ fn check_character(
              * character class.
              * (From ESLint source: https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/no-useless-escape.js)
              */
-            if class.span.start + 1 != span.start && span.end != class.span.end - 1 {
+            if class.span.start() + 1 != span.start() && span.end() != class.span.end() - 1 {
                 return None;
             }
         }

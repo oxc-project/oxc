@@ -129,7 +129,7 @@ impl Rule for SelfClosingComp {
         if self.html && is_dom_comp || self.component && !is_dom_comp {
             ctx.diagnostic_with_fix(self_closing_comp_diagnostic(jsx_closing_elem.span), |fixer| {
                 fixer.replace(
-                    Span::new(jsx_el.opening_element.span.end - 1, jsx_closing_elem.span.end),
+                    Span::new(jsx_el.opening_element.span.end() - 1, jsx_closing_elem.span.end()),
                     " />",
                 )
             });

@@ -23,12 +23,12 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
                         .collect::<Vec<_>>();
                     {
                         StaticImport {
-                            start: m.statement_span.start,
-                            end: m.statement_span.end,
+                            start: m.statement_span.start(),
+                            end: m.statement_span.end(),
                             module_request: ValueSpan {
                                 value: name.to_string(),
-                                start: m.span.start,
-                                end: m.span.end,
+                                start: m.span.start(),
+                                end: m.span.end(),
                             },
                             entries,
                         }
@@ -51,7 +51,7 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
                 acc
             })
             .into_iter()
-            .map(|(span, entries)| StaticExport { start: span.start, end: span.end, entries })
+            .map(|(span, entries)| StaticExport { start: span.start(), end: span.end(), entries })
             .collect::<Vec<_>>();
         static_exports.sort_unstable_by_key(|e| e.start);
 
@@ -59,8 +59,8 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
             .dynamic_imports
             .iter()
             .map(|i| DynamicImport {
-                start: i.span.start,
-                end: i.span.end,
+                start: i.span.start(),
+                end: i.span.end(),
                 module_request: Span::from(&i.module_request),
             })
             .collect::<Vec<_>>();
@@ -79,15 +79,15 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
 
 impl From<&oxc::span::Span> for Span {
     fn from(span: &oxc::span::Span) -> Self {
-        Self { start: span.start, end: span.end }
+        Self { start: span.start(), end: span.end() }
     }
 }
 
 impl From<&module_record::ExportEntry<'_>> for StaticExportEntry {
     fn from(e: &module_record::ExportEntry) -> Self {
         Self {
-            start: e.span.start,
-            end: e.span.end,
+            start: e.span.start(),
+            end: e.span.end(),
             module_request: e.module_request.as_ref().map(ValueSpan::from),
             import_name: ExportImportName::from(&e.import_name),
             export_name: ExportExportName::from(&e.export_name),
@@ -113,14 +113,14 @@ impl From<&module_record::ImportImportName<'_>> for ImportName {
             module_record::ImportImportName::Name(name_span) => (
                 ImportNameKind::Name,
                 Some(name_span.name.to_string()),
-                Some(name_span.span.start),
-                Some(name_span.span.end),
+                Some(name_span.span.start()),
+                Some(name_span.span.end()),
             ),
             module_record::ImportImportName::NamespaceObject => {
                 (ImportNameKind::NamespaceObject, None, None, None)
             }
             module_record::ImportImportName::Default(span) => {
-                (ImportNameKind::Default, None, Some(span.start), Some(span.end))
+                (ImportNameKind::Default, None, Some(span.start()), Some(span.end()))
             }
         };
         Self { kind, name, start, end }
@@ -131,8 +131,8 @@ impl From<&module_record::NameSpan<'_>> for ValueSpan {
     fn from(name_span: &module_record::NameSpan) -> Self {
         Self {
             value: name_span.name.to_string(),
-            start: name_span.span.start,
-            end: name_span.span.end,
+            start: name_span.span.start(),
+            end: name_span.span.end(),
         }
     }
 }
@@ -143,8 +143,8 @@ impl From<&module_record::ExportImportName<'_>> for ExportImportName {
             module_record::ExportImportName::Name(name_span) => (
                 ExportImportNameKind::Name,
                 Some(name_span.name.to_string()),
-                Some(name_span.span.start),
-                Some(name_span.span.end),
+                Some(name_span.span.start()),
+                Some(name_span.span.end()),
             ),
             module_record::ExportImportName::All => (ExportImportNameKind::All, None, None, None),
             module_record::ExportImportName::AllButDefault => {
@@ -162,11 +162,11 @@ impl From<&module_record::ExportExportName<'_>> for ExportExportName {
             module_record::ExportExportName::Name(name_span) => (
                 ExportExportNameKind::Name,
                 Some(name_span.name.to_string()),
-                Some(name_span.span.start),
-                Some(name_span.span.end),
+                Some(name_span.span.start()),
+                Some(name_span.span.end()),
             ),
             module_record::ExportExportName::Default(span) => {
-                (ExportExportNameKind::Default, None, Some(span.start), Some(span.end))
+                (ExportExportNameKind::Default, None, Some(span.start()), Some(span.end()))
             }
             module_record::ExportExportName::Null => (ExportExportNameKind::None, None, None, None),
         };
@@ -180,14 +180,14 @@ impl From<&module_record::ExportLocalName<'_>> for ExportLocalName {
             module_record::ExportLocalName::Name(name_span) => (
                 ExportLocalNameKind::Name,
                 Some(name_span.name.to_string()),
-                Some(name_span.span.start),
-                Some(name_span.span.end),
+                Some(name_span.span.start()),
+                Some(name_span.span.end()),
             ),
             module_record::ExportLocalName::Default(name_span) => (
                 ExportLocalNameKind::Default,
                 Some(name_span.name.to_string()),
-                Some(name_span.span.start),
-                Some(name_span.span.end),
+                Some(name_span.span.start()),
+                Some(name_span.span.end()),
             ),
             module_record::ExportLocalName::Null => (ExportLocalNameKind::None, None, None, None),
         };

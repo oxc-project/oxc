@@ -51,7 +51,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
             //
             // Some comments are not inside the block, but we need to print them inside the block.
             if has_comments_before_catch_clause
-                || f.context().comments().has_comments_before(self.span.end)
+                || f.context().comments().has_comments_before(self.span.end())
             {
                 write!(
                     f,

@@ -24,7 +24,7 @@ use super::FormatWrite;
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_trailing_comments = format_once(|f| {
-            let comments = f.context().comments().comments_before(self.span.end);
+            let comments = f.context().comments().comments_before(self.span.end());
             FormatTrailingComments::Comments(comments).fmt(f)
         });
 
@@ -64,7 +64,7 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                 Statement::ExportNamedDeclaration(export) => {
                     if let Some(Declaration::ClassDeclaration(decl)) = &export.declaration
                         && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
+                        && decorator.span().start() < export.span.start()
                     {
                         decorator.span()
                     } else {
@@ -77,7 +77,7 @@ impl<'a> Format<'a> for FormatProgramBody<'a, '_> {
                     if let ExportDefaultDeclarationKind::ClassDeclaration(decl) =
                         &export.declaration
                         && let Some(decorator) = decl.decorators.first()
-                        && decorator.span().start < export.span.start
+                        && decorator.span().start() < export.span.start()
                     {
                         decorator.span()
                     } else {
@@ -114,7 +114,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         // so we should keep an extra empty line after JsDirectiveList
         let source_text = f.context().source_text();
         let mut count = 0;
-        let mut source_text_chars = source_text[last_directive.span.end as usize..].chars();
+        let mut source_text_chars = source_text[last_directive.span.end() as usize..].chars();
         for char in source_text_chars.by_ref() {
             if is_line_terminator(char) {
                 count += 1;
@@ -151,7 +151,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["#!", dynamic_text(self.value().as_str().trim_end())])?;
 
-        if get_lines_after(self.span.end, f.source_text()) > 1 {
+        if get_lines_after(self.span.end(), f.source_text()) > 1 {
             write!(f, [empty_line()])
         } else {
             write!(f, [hard_line_break()])

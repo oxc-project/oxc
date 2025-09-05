@@ -117,7 +117,7 @@ impl Rule for PreferDefaultExport {
             if let Some(last_export_span) = indirect_entries
                 .iter()
                 .chain(local_entries.iter())
-                .max_by_key(|entry| entry.statement_span.start)
+                .max_by_key(|entry| entry.statement_span.start())
             {
                 ctx.diagnostic(prefer_default_export_diagnostic(
                     last_export_span.statement_span,

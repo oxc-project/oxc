@@ -84,7 +84,10 @@ impl Rule for NoUnnecessarySliceEnd {
                 ctx.diagnostic_with_fix(
                     no_unnecessary_slice_end_diagnostic(second_arg.span(), "Infinity"),
                     |fixer| {
-                        fixer.delete_range(Span::new(first_arg.span().end, second_arg.span().end))
+                        fixer.delete_range(Span::new(
+                            first_arg.span().end(),
+                            second_arg.span().end(),
+                        ))
                     },
                 );
             }
@@ -97,8 +100,8 @@ impl Rule for NoUnnecessarySliceEnd {
                             no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
                             |fixer| {
                                 fixer.delete_range(Span::new(
-                                    first_arg.span().end,
-                                    second_arg.span().end,
+                                    first_arg.span().end(),
+                                    second_arg.span().end(),
                                 ))
                             },
                         );
@@ -114,8 +117,8 @@ impl Rule for NoUnnecessarySliceEnd {
                         no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
                         |fixer| {
                             fixer.delete_range(Span::new(
-                                first_arg.span().end,
-                                second_arg.span().end,
+                                first_arg.span().end(),
+                                second_arg.span().end(),
                             ))
                         },
                     );

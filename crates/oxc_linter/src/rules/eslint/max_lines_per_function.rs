@@ -200,14 +200,14 @@ impl Rule for MaxLinesPerFunction {
         let source_text = ctx.source_text();
 
         let comment_lines = if self.skip_comments {
-            ctx.comments_range(span.start..span.end)
+            ctx.comments_range(span.start()..span.end())
                 .map(|comment| count_comment_lines(comment, source_text))
                 .sum()
         } else {
             0
         };
 
-        let code = &source_text[span.start as usize..span.end as usize];
+        let code = &source_text[span.start() as usize..span.end() as usize];
         let lines_in_function = if self.skip_blank_lines {
             code.lines().filter(|&line| !line.trim().is_empty()).count()
         } else {

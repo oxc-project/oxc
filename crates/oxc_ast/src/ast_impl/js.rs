@@ -826,7 +826,7 @@ impl CallExpression<'_> {
             // The below will never panic since the len of `self.arguments` must be >= 1
             #[expect(clippy::missing_panics_doc)]
             let last = self.arguments.last().unwrap();
-            Span::new(first.span().start, last.span().end)
+            Span::new(first.span().start(), last.span().end())
         })
     }
 }
@@ -849,7 +849,7 @@ impl NewExpression<'_> {
             // The below will never panic since the len of `self.arguments` must be >= 1
             #[expect(clippy::missing_panics_doc)]
             let last = self.arguments.last().unwrap();
-            Span::new(first.span().start, last.span().end)
+            Span::new(first.span().start(), last.span().end())
         })
     }
 }

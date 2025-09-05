@@ -105,7 +105,7 @@ impl NoRegexSpaces {
             &alloc,
             pattern.span.source_text(ctx.source_text()),
             None,
-            Options { pattern_span_offset: pattern.span.start, ..Options::default() },
+            Options { pattern_span_offset: pattern.span.start(), ..Options::default() },
         );
         let parsed_pattern = parser.parse().ok()?;
 
@@ -162,8 +162,8 @@ impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
         }
         if let Some(space_span) = &mut self.last_space_span {
             // If this is consecutive with the last space, extend it
-            if space_span.end == ch.span.start {
-                space_span.end = ch.span.end;
+            if space_span.end() == ch.span.start() {
+                space_span.expand_right(ch.span.end() - space_span.end());
             }
             // If it is not consecutive, and the last space is only one space, move it up
             else if space_span.size() == 1 {

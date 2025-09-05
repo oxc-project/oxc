@@ -219,7 +219,7 @@ impl PreferToBe {
         ctx: &LintContext,
     ) {
         let span = matcher.span;
-        let end = call_expr.span.end;
+        let end = call_expr.span.end();
 
         let is_cmp_mem_expr = match matcher.parent {
             Some(Expression::ComputedMemberExpression(_)) => true,
@@ -237,18 +237,18 @@ impl PreferToBe {
                 let new_matcher =
                     if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
                 let span = if let Some(not_modifier) = maybe_not_modifier {
-                    Span::new(not_modifier.span.start, end)
+                    Span::new(not_modifier.span.start(), end)
                 } else {
-                    Span::new(span.start, end)
+                    Span::new(span.start(), end)
                 };
                 fixer.replace(span, new_matcher)
             });
         } else if kind == &PreferToBeKind::Defined {
             ctx.diagnostic_with_fix(use_to_be_defined(span), |fixer| {
                 let (new_matcher, start) = if is_cmp_mem_expr {
-                    ("[\"toBeDefined\"]()", modifiers.first().unwrap().span.end)
+                    ("[\"toBeDefined\"]()", modifiers.first().unwrap().span.end())
                 } else {
-                    ("toBeDefined()", maybe_not_modifier.unwrap().span.start)
+                    ("toBeDefined()", maybe_not_modifier.unwrap().span.start())
                 };
 
                 fixer.replace(Span::new(start, end), new_matcher)
@@ -256,12 +256,12 @@ impl PreferToBe {
         } else if kind == &PreferToBeKind::Null {
             ctx.diagnostic_with_fix(use_to_be_null(span), |fixer| {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNull\"]()" } else { "toBeNull()" };
-                fixer.replace(Span::new(span.start, end), new_matcher)
+                fixer.replace(Span::new(span.start(), end), new_matcher)
             });
         } else if kind == &PreferToBeKind::NaN {
             ctx.diagnostic_with_fix(use_to_be_na_n(span), |fixer| {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNaN\"]()" } else { "toBeNaN()" };
-                fixer.replace(Span::new(span.start, end), new_matcher)
+                fixer.replace(Span::new(span.start(), end), new_matcher)
             });
         } else {
             ctx.diagnostic_with_fix(use_to_be(span), |fixer| {

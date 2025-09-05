@@ -152,7 +152,7 @@ impl Rule for PreferStringRaw {
         }
 
         ctx.diagnostic_with_fix(prefer_string_raw(string_literal.span), |fixer| {
-            let end = string_literal.span.start;
+            let end = string_literal.span.start();
             let before = ctx.source_range(oxc_span::Span::new(0, end));
 
             let mut fix = format!("String.raw`{unescaped}`");

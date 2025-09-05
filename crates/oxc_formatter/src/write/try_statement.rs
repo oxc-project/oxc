@@ -64,13 +64,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
 
         let span = self.pattern.span();
 
-        let leading_comments = f.context().comments().comments_before(span.start);
+        let leading_comments = f.context().comments().comments_before(span.start());
         let leading_comment_with_break = leading_comments.iter().any(|comment| {
-            comment.is_line() || get_lines_after(comment.span.end, f.source_text()) > 0
+            comment.is_line() || get_lines_after(comment.span.end(), f.source_text()) > 0
         });
 
         let trailing_comments =
-            f.context().comments().comments_before_character(self.span().end, b')');
+            f.context().comments().comments_before_character(self.span().end(), b')');
         let trailing_comment_with_break = trailing_comments
             .iter()
             .any(|comment| comment.is_line() || get_lines_before(comment.span, f) > 0);

@@ -152,16 +152,17 @@ fn has_default_comment(
     last_case_span: Span,
     comment_pattern: Option<&Regex>,
 ) -> bool {
-    ctx.semantic().comments_range(last_case_span.start..switch_span.end).next_back().is_some_and(
-        |comment| {
+    ctx.semantic()
+        .comments_range(last_case_span.start()..switch_span.end())
+        .next_back()
+        .is_some_and(|comment| {
             let raw = ctx.source_range(comment.content_span()).trim();
 
             match comment_pattern {
                 Some(re) => re.is_match(raw),
                 None => raw.eq_ignore_ascii_case("no default"),
             }
-        },
-    )
+        })
 }
 
 #[test]

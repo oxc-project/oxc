@@ -162,7 +162,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
             return self.scoping().symbol_span(self.id);
         }
         let own = binding.kind.span();
-        binding.type_annotation.as_ref().map_or(own, |ann| Span::new(own.start, ann.span.start))
+        binding.type_annotation.as_ref().map_or(own, |ann| Span::new(own.start(), ann.span.start()))
     }
 }
 

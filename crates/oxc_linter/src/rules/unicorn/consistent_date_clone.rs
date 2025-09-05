@@ -71,7 +71,7 @@ impl Rule for ConsistentDateClone {
             && !callee.optional
         {
             ctx.diagnostic_with_fix(consistent_date_clone_diagnostic(expr.span), |fixer| {
-                fixer.delete_range(Span::new(callee.object.span().end, expr.span.end))
+                fixer.delete_range(Span::new(callee.object.span().end(), expr.span.end()))
             });
         }
     }

@@ -67,10 +67,10 @@ impl Rule for NoUnnecessaryAwait {
                     false
                 }
             } {
-                ctx.diagnostic(no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)));
+                ctx.diagnostic(no_unnecessary_await_diagnostic(Span::sized(expr.span.start(), 5)));
             } else {
                 ctx.diagnostic_with_fix(
-                    no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)),
+                    no_unnecessary_await_diagnostic(Span::sized(expr.span.start(), 5)),
                     |fixer| fixer.replace(expr.span, fixer.source_range(expr.argument.span())),
                 );
             }

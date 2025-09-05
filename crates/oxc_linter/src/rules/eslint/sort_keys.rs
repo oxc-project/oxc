@@ -255,8 +255,8 @@ fn take_numeric(iter: &mut Chars, first: char) -> u32 {
 }
 
 fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: Span) -> &str {
-    let cur_span_end = current_span.end as usize;
-    let next_span_start = next_span.start as usize;
+    let cur_span_end = current_span.end() as usize;
+    let next_span_start = next_span.start() as usize;
     &source_text[cur_span_end..next_span_start]
 }
 

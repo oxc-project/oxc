@@ -48,7 +48,7 @@ impl Rule for NoAsyncAwait {
                     let parent_kind = ctx.nodes().parent_kind(node.id());
                     let async_span = match &func_decl.id {
                         // named function like `async function run() {}`
-                        Some(id) => Span::new(func_decl.span.start, id.span.end),
+                        Some(id) => Span::new(func_decl.span.start(), id.span.end()),
                         // anonymous function like `async function() {}`
                         None => match parent_kind {
                             // Actually part of a method definition like:
@@ -58,7 +58,7 @@ impl Rule for NoAsyncAwait {
                             // }
                             // ```
                             AstKind::MethodDefinition(method_def) => {
-                                Span::new(method_def.span.start, method_def.key.span().start)
+                                Span::new(method_def.span.start(), method_def.key.span().start())
                             }
                             // The function is part of an object property like:
                             // ```
@@ -67,7 +67,7 @@ impl Rule for NoAsyncAwait {
                             // };
                             // ```
                             AstKind::ObjectProperty(obj_prop) => {
-                                Span::new(obj_prop.span.start, obj_prop.key.span().start)
+                                Span::new(obj_prop.span.start(), obj_prop.key.span().start())
                             }
                             _ => func_decl.span,
                         },
@@ -77,7 +77,8 @@ impl Rule for NoAsyncAwait {
             }
             AstKind::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async {
-                    let async_span = Span::new(arrow_expr.span.start, arrow_expr.params.span.start);
+                    let async_span =
+                        Span::new(arrow_expr.span.start(), arrow_expr.params.span.start());
                     report_on_async_span(async_span, ctx);
                 }
             }
@@ -95,7 +96,8 @@ fn report_on_async_span(async_span: Span, ctx: &LintContext<'_>) {
     let Some(async_keyword_offset) = ctx.source_range(async_span).find("async") else {
         return;
     };
-    let async_keyword_span = Span::sized(async_span.start + async_keyword_offset as u32, ASYNC_LEN);
+    let async_keyword_span =
+        Span::sized(async_span.start() + async_keyword_offset as u32, ASYNC_LEN);
     ctx.diagnostic(no_async_diagnostic(async_keyword_span));
 }
 

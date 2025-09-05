@@ -163,9 +163,9 @@ impl Rule for PreferNegativeIndex {
 
                 for member_expr in member_exprs {
                     let member_expr_span = member_expr.span();
-                    let member_expr_next_end = member_expr_span.end + 1;
+                    let member_expr_next_end = member_expr_span.end() + 1;
                     let member_expr_with_next_span =
-                        Span::new(member_expr_span.start, member_expr_next_end);
+                        Span::new(member_expr_span.start(), member_expr_next_end);
                     let member_expr_with_next_str = ctx.source_range(member_expr_with_next_span);
 
                     if member_expr_with_next_str.ends_with(' ') {
@@ -472,7 +472,7 @@ fn test() {
         							foo.slice(
         								// comment 1
 
-        								
+
 
         								// comment 2
         								- 1,

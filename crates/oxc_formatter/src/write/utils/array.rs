@@ -54,7 +54,7 @@ where
                         let next_span =
                             array_iter.peek().map_or(SPAN, |e| e.1.map_or(SPAN, GetSpan::span));
 
-                        let comma_position = source_text.as_bytes()[..next_span.start as usize]
+                        let comma_position = source_text.as_bytes()[..next_span.start() as usize]
                             .iter()
                             .rev()
                             .position(|c| *c == b',');
@@ -63,8 +63,8 @@ where
                         #[expect(clippy::cast_possible_truncation)]
                         comma_position.map_or(SPAN, |pos| {
                             Span::new(
-                                next_span.start - pos as u32,
-                                next_span.start - pos as u32 + 1,
+                                next_span.start() - pos as u32,
+                                next_span.start() - pos as u32 + 1,
                             )
                         })
                     },

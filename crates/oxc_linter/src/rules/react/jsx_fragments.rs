@@ -119,16 +119,16 @@ impl Rule for JsxFragments {
                     jsx_fragments_diagnostic(jsx_elem.opening_element.name.span(), self.mode),
                     |fixer| {
                         let before_opening_tag = ctx.source_range(Span::new(
-                            jsx_elem.span().start,
-                            jsx_elem.opening_element.span().start,
+                            jsx_elem.span().start(),
+                            jsx_elem.opening_element.span().start(),
                         ));
                         let between_opening_tag_and_closing_tag = ctx.source_range(Span::new(
-                            jsx_elem.opening_element.span().end,
-                            closing_element.span().start,
+                            jsx_elem.opening_element.span().end(),
+                            closing_element.span().start(),
                         ));
                         let after_closing_tag = ctx.source_range(Span::new(
-                            closing_element.span().end,
-                            jsx_elem.span().end,
+                            closing_element.span().end(),
+                            jsx_elem.span().end(),
                         ));
                         let mut replacement = String::new();
                         replacement.push_str(before_opening_tag);
@@ -145,16 +145,16 @@ impl Rule for JsxFragments {
                     jsx_fragments_diagnostic(jsx_frag.opening_fragment.span(), self.mode),
                     |fixer| {
                         let before_opening_tag = ctx.source_range(Span::new(
-                            jsx_frag.span().start,
-                            jsx_frag.opening_fragment.span().start,
+                            jsx_frag.span().start(),
+                            jsx_frag.opening_fragment.span().start(),
                         ));
                         let between_opening_tag_and_closing_tag = ctx.source_range(Span::new(
-                            jsx_frag.opening_fragment.span().end,
-                            jsx_frag.closing_fragment.span().start,
+                            jsx_frag.opening_fragment.span().end(),
+                            jsx_frag.closing_fragment.span().start(),
                         ));
                         let after_closing_tag = ctx.source_range(Span::new(
-                            jsx_frag.closing_fragment.span().end,
-                            jsx_frag.span().end,
+                            jsx_frag.closing_fragment.span().end(),
+                            jsx_frag.span().end(),
                         ));
                         let mut replacement = String::new();
                         replacement.push_str(before_opening_tag);

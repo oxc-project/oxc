@@ -45,7 +45,7 @@ impl Rule for NoMultiStr {
                 // We found the "newline" character but want to highlight the '\', so go back one
                 // character.
                 let multi_span_start =
-                    literal.span.start + u32::try_from(position).unwrap_or_default() - 1;
+                    literal.span.start() + u32::try_from(position).unwrap_or_default() - 1;
                 ctx.diagnostic(no_multi_str_diagnostic(Span::sized(multi_span_start, 1)));
             }
         }

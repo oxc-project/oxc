@@ -20,7 +20,10 @@ pub fn ast(item: &mut Item, args: TokenStream) -> TokenStream {
 /// and static assertions for `#[generate_derive]`.
 fn modify_enum(item: &ItemEnum) -> TokenStream {
     // If enum has any non-unit variant, `#[repr(C, u8)]`, otherwise `#[repr(u8)]`
-    let repr = if item.variants.iter().any(|var| !matches!(var.fields, Fields::Unit)) {
+    let repr = if item.ident.to_string() == "Span" {
+        // Special case for Span, to ensure it is `#[repr(transparent)]`.
+        quote!(#[repr(transparent)])
+    } else if item.variants.iter().any(|var| !matches!(var.fields, Fields::Unit)) {
         quote!(#[repr(C, u8)])
     } else {
         quote!(#[repr(u8)])

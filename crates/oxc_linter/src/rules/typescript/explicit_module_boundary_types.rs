@@ -368,7 +368,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let target_name = target_span.map(|t| t.name);
         #[expect(clippy::cast_possible_truncation)]
         let span =
-            target_span.map_or(Span::sized(func.span.start, "function".len() as u32), |t| t.span);
+            target_span.map_or(Span::sized(func.span.start(), "function".len() as u32), |t| t.span);
         let is_allowed = || self.rule.is_some_allowed_name(func.name().or(target_name));
 
         // When allow_overload_functions is enabled, skip return type checking for all functions

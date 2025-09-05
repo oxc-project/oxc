@@ -69,9 +69,9 @@ impl Rule for NoNewStatics {
             ctx.diagnostic_with_fix(
                 static_promise_diagnostic(
                     prop_name,
-                    Span::new(new_expr.span.start, ident.span.start - 1),
+                    Span::new(new_expr.span.start(), ident.span.start() - 1),
                 ),
-                |fixer| fixer.delete_range(Span::new(new_expr.span.start, ident.span.start)),
+                |fixer| fixer.delete_range(Span::new(new_expr.span.start(), ident.span.start())),
             );
         }
     }

@@ -41,7 +41,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
         let name = self.name();
         let mut name_has_leading_comment = false;
         let mut name_has_own_line_leading_comment = false;
-        for leading_comment in f.comments().comments_before(name.span().start) {
+        for leading_comment in f.comments().comments_before(name.span().start()) {
             name_has_leading_comment = true;
             name_has_own_line_leading_comment =
                 name_has_own_line_leading_comment || leading_comment.is_line();
@@ -72,7 +72,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.span.end);
+        let comments = f.context().comments().comments_before(self.span.end());
         let has_own_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
@@ -95,7 +95,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.span.end);
+        let comments = f.context().comments().comments_before(self.span.end());
         let has_own_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
@@ -139,14 +139,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let has_comment = |f: &mut Formatter<'_, '_>| {
             let expression_span = self.expression.span();
-            f.comments().has_comments_before(expression_span.start)
-                || f.comments().has_comments_between(expression_span.end, self.span.end)
+            f.comments().has_comments_before(expression_span.start())
+                || f.comments().has_comments_between(expression_span.end(), self.span.end())
         };
 
         // Expression child
         if matches!(self.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
             if let JSXExpression::EmptyExpression(_) = self.expression {
-                let comments = f.context().comments().comments_before(self.span.end);
+                let comments = f.context().comments().comments_before(self.span.end());
                 let has_line_comment = comments.iter().any(|c| c.is_line());
 
                 write!(f, ["{"])?;
@@ -315,8 +315,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let comments = f.context().comments();
-        let has_comment = comments.has_comments_before(self.argument.span().start)
-            || comments.has_comments_between(self.argument.span().end, self.span.end);
+        let has_comment = comments.has_comments_before(self.argument.span().start())
+            || comments.has_comments_between(self.argument.span().end(), self.span.end());
         let format_inner = format_with(|f| {
             write!(f, [format_leading_comments(self.argument.span()), "..."])?;
             self.argument().fmt(f)
@@ -343,8 +343,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXIdentifier<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let comments = f.context().comments();
-        let has_comment = comments.has_comments_before(self.expression.span().start)
-            || comments.has_comments_between(self.expression.span().end, self.span.end);
+        let has_comment = comments.has_comments_before(self.expression.span().start())
+            || comments.has_comments_between(self.expression.span().end(), self.span.end());
         let format_inner = format_with(|f| {
             write!(f, [format_leading_comments(self.expression.span()), "..."])?;
             self.expression().fmt(f)

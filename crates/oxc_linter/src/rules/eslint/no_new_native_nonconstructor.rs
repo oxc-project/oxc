@@ -56,7 +56,7 @@ impl Rule for NoNewNativeNonconstructor {
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
             && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
         {
-            let start = expr.span.start;
+            let start = expr.span.start();
             let end = start + 3;
             ctx.diagnostic(no_new_native_nonconstructor_diagnostic(
                 ident.name.as_str(),

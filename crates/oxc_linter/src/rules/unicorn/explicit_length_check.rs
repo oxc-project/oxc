@@ -204,12 +204,12 @@ impl ExplicitLengthCheck {
         let parent = ctx.nodes().parent_kind(node.id());
         let need_paren = matches!(kind, AstKind::UnaryExpression(_))
             && matches!(parent, AstKind::UnaryExpression(_) | AstKind::AwaitExpression(_));
-        if span.start > 1 {
-            let start = ctx.source_text().as_bytes()[span.start as usize - 1];
+        if span.start() > 1 {
+            let start = ctx.source_text().as_bytes()[span.start() as usize - 1];
             need_pad_start = start.is_ascii_alphabetic() || !start.is_ascii();
         }
-        if (span.end as usize) < ctx.source_text().len() {
-            let end = ctx.source_text().as_bytes()[span.end as usize];
+        if (span.end() as usize) < ctx.source_text().len() {
+            let end = ctx.source_text().as_bytes()[span.end() as usize];
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }
 

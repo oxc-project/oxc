@@ -103,17 +103,17 @@ impl<'a> SourcemapBuilder<'a> {
 
     pub fn add_source_mapping_for_name(&mut self, output: &[u8], span: Span, name: &str) {
         debug_assert!(
-            (span.end as usize) <= self.original_source.len(),
+            (span.end() as usize) <= self.original_source.len(),
             "violated {}:{} <= {} for {name}",
-            span.start,
-            span.end,
+            span.start(),
+            span.end(),
             self.original_source.len()
         );
-        let original_name = self.original_source.get(span.start as usize..span.end as usize);
+        let original_name = self.original_source.get(span.start() as usize..span.end() as usize);
         // The token name should be original name.
         // If it hasn't change, name should be `None` to reduce `SourceMap` size.
         let token_name = if original_name == Some(name) { None } else { original_name };
-        self.add_source_mapping(output, span.start, token_name);
+        self.add_source_mapping(output, span.start(), token_name);
     }
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {

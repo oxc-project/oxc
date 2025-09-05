@@ -143,9 +143,9 @@ fn generate_visitor(
     } else {
         let walk_fn_ident = visitor_names.walk_ident();
         quote! {
-            self.convert_offset(&mut it.span.start);
+            self.convert_offset(&mut it.span.start());
             walk_mut::#walk_fn_ident(self, it #extra_args);
-            self.convert_offset(&mut it.span.end);
+            self.convert_offset(&mut it.span.end());
         }
     };
 

@@ -102,7 +102,7 @@ impl Rule for NoInvalidRegexp {
             let mut unique_flags = FxHashSet::default();
             for (idx, ch) in flags_text.char_indices() {
                 #[expect(clippy::cast_possible_truncation)]
-                let start = flags_span.start + 1 + idx as u32;
+                let start = flags_span.start() + 1 + idx as u32;
 
                 // Invalid combination: u+v
                 if ch == 'u' {
@@ -151,7 +151,7 @@ impl Rule for NoInvalidRegexp {
                 &allocator,
                 pattern_text,
                 flags_text,
-                Options { pattern_span_offset: pattern_span.start, flags_span_offset: 0 },
+                Options { pattern_span_offset: pattern_span.start(), flags_span_offset: 0 },
             )
             .parse()
             {

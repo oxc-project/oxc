@@ -12,8 +12,6 @@ const _: () = {
     // Padding: 0 bytes
     assert!(size_of::<Span>() == 8);
     assert!(align_of::<Span>() == 8);
-    assert!(offset_of!(Span, start) == 0);
-    assert!(offset_of!(Span, end) == 4);
 
     // Padding: 0 bytes
     assert!(size_of::<SourceType>() == 3);
@@ -36,9 +34,7 @@ const _: () = {
 const _: () = {
     // Padding: 0 bytes
     assert!(size_of::<Span>() == 8);
-    assert!(align_of::<Span>() == 4);
-    assert!(offset_of!(Span, start) == 0);
-    assert!(offset_of!(Span, end) == 4);
+    assert!(align_of::<Span>() == 8);
 
     // Padding: 0 bytes
     assert!(size_of::<SourceType>() == 3);

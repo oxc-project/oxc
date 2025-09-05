@@ -147,11 +147,11 @@ impl Rule for NoStaticOnlyClass {
                         // }
                         // ```
                         let next_start = if not_last {
-                            ele_arr[idx + 1].span().start
+                            ele_arr[idx + 1].span().start()
                         } else {
-                            class.body.span.end
+                            class.body.span.end()
                         };
-                        let mut search_start = item.span().end;
+                        let mut search_start = item.span().end();
                         let mut target_semicolon_pos = None;
                         while search_start < next_start {
                             if let Some(pos) = ctx
@@ -159,10 +159,10 @@ impl Rule for NoStaticOnlyClass {
                                 .find(';')
                                 .map(|p| search_start + (p as u32))
                             {
-                                let comments = ctx.comments_range(item.span().end..next_start);
+                                let comments = ctx.comments_range(item.span().end()..next_start);
                                 let mut is_in_comment = false;
                                 for comment in comments {
-                                    if comment.span.start < pos && comment.span.end > pos {
+                                    if comment.span.start() < pos && comment.span.end() > pos {
                                         is_in_comment = true;
                                         break;
                                     }
@@ -205,13 +205,13 @@ impl Rule for NoStaticOnlyClass {
                 }
             }
 
-            let start = class.span.start;
+            let start = class.span.start();
             if class.id.is_none() {
                 // just remove the class keyword
                 rule_fixes.push(fixer.delete_range(Span::sized(start, 5)));
             } else {
                 let id = class.id.as_ref().unwrap();
-                let target = Span::new(start, id.span.end);
+                let target = Span::new(start, id.span.end());
                 let replacement = format!("const {} =", id.name.as_str());
                 rule_fixes.push(fixer.replace(target, replacement));
             }

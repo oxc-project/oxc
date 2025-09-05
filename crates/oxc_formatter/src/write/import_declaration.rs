@@ -65,7 +65,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
         } else if self.len() == 1
             && let Some(ImportDeclarationSpecifier::ImportSpecifier(specifier)) =
                 specifiers_iter.peek().map(AsRef::as_ref)
-            && !f.comments().has_comments_before(specifier.local.span.start)
+            && !f.comments().has_comments_before(specifier.local.span.start())
         {
             write!(
                 f,
@@ -94,7 +94,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                                         let comments = f
                                             .context()
                                             .comments()
-                                            .comments_before(specifier.span().start);
+                                            .comments_before(specifier.span().start());
                                         if !comments.is_empty() {
                                             if get_lines_before(comments[0].span, f) > 1 {
                                                 write!(f, [empty_line()])?;
@@ -120,7 +120,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.local.span.end);
+        let comments = f.context().comments().comments_before(self.local.span.end());
         let mut len = comments.len();
         while len != 0 && comments[len - 1].is_block() {
             len -= 1;
@@ -155,7 +155,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_comment = format_with(|f| {
             if self.with_entries().is_empty() {
-                let comments = f.context().comments().comments_before(self.span.end);
+                let comments = f.context().comments().comments_before(self.span.end());
                 write!(f, [space(), FormatLeadingComments::Comments(comments)])?;
             }
             Ok(())

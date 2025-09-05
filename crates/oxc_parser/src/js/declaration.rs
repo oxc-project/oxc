@@ -60,7 +60,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_using_statement(&mut self) -> Statement<'a> {
         let mut decl = self.parse_using_declaration(StatementContext::StatementList);
         self.asi();
-        decl.span = self.end_span(decl.span.start);
+        decl.span = self.end_span(decl.span.start());
         Statement::VariableDeclaration(self.alloc(decl))
     }
 
@@ -138,7 +138,10 @@ impl<'a> ParserImpl<'a> {
             };
             let type_annotation = self.parse_ts_type_annotation();
             if let Some(type_annotation) = &type_annotation {
-                Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
+                Self::extend_binding_pattern_span_end(
+                    type_annotation.span.end(),
+                    &mut binding_kind,
+                );
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {

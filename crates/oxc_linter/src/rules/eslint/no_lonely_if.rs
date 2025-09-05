@@ -6,7 +6,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 fn no_lonely_if_diagnostic(lonely_if: &IfStatement) -> OxcDiagnostic {
-    let span = Span::sized(lonely_if.span.start, 2);
+    let span = Span::sized(lonely_if.span.start(), 2);
     OxcDiagnostic::warn("Unexpected `if` as the only statement in an `else` block")
         .with_help("Consider using `else if` instead.")
         .with_label(span)

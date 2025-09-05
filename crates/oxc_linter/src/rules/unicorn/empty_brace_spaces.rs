@@ -64,7 +64,7 @@ impl Rule for EmptyBraceSpaces {
                         static_block_body.chars().take_while(|c| c.is_whitespace()).count();
                     let static_leading_count = (whitespace_count + left_curly_brace + 8) as u32;
 
-                    if span.end - span.start > static_leading_count {
+                    if span.end() - span.start() > static_leading_count {
                         ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
                             fixer.replace(span, "static {}")
                         });
@@ -80,7 +80,7 @@ impl Rule for EmptyBraceSpaces {
             _ => return,
         };
 
-        if is_empty_body && span.end - span.start > 2 && !ctx.has_comments_between(span) {
+        if is_empty_body && span.end() - span.start() > 2 && !ctx.has_comments_between(span) {
             ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
                 fixer.replace(span, "{}")
             });

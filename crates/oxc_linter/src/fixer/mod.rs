@@ -136,7 +136,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         target: &T,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_at(target.span().start, text.into())
+        self.insert_text_at(target.span().start(), text.into())
     }
 
     /// Creates a fix command that inserts text before the specified range in the source text.
@@ -146,7 +146,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         span: Span,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_at(span.start, text.into())
+        self.insert_text_at(span.start(), text.into())
     }
 
     /// Creates a fix command that inserts text after the given node.
@@ -156,7 +156,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         target: &T,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_at(target.span().end, text.into())
+        self.insert_text_at(target.span().end(), text.into())
     }
 
     /// Creates a fix command that inserts text after the specified range in the source text.
@@ -166,7 +166,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         span: Span,
         text: S,
     ) -> RuleFix<'a> {
-        self.insert_text_at(span.end, text.into())
+        self.insert_text_at(span.end(), text.into())
     }
 
     /// Creates a fix command that inserts text at the specified index in the source text.
@@ -353,8 +353,8 @@ impl<'a> Fixer<'a> {
                 filtered_messages.push(m);
                 continue;
             };
-            let start = span.start;
-            let end = span.end;
+            let start = span.start();
+            let end = span.end();
             debug_assert!(start <= end, "Negative range is invalid: {span:?}");
             if start > end {
                 filtered_messages.push(m);
@@ -692,8 +692,8 @@ mod test {
     fn assert_fixed_corrected(source_text: &str, expected: &str, composite_fix: CompositeFix) {
         let mut source_text = source_text.to_string();
         let fix = composite_fix.normalize_fixes(&source_text);
-        let start = fix.span.start as usize;
-        let end = fix.span.end as usize;
+        let start = fix.span.start() as usize;
+        let end = fix.span.end() as usize;
         source_text.replace_range(start..end, fix.content.to_string().as_str());
         assert_eq!(source_text, expected);
     }
@@ -725,7 +725,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start: 2")]
+    #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start(): 2")]
     fn overlapping_ranges_in_composite_fix() {
         let source_text = "foo bar baz";
         let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(2, 5))];
@@ -778,7 +778,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start: 2")]
+    #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start(): 2")]
     fn throw_error_when_ranges_overlap() {
         let source_text = "foo\nbar";
         let fixes = vec![Fix::new("foo", Span::new(0, 3)), Fix::new("x", Span::new(2, 5))];

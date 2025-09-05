@@ -115,7 +115,7 @@ fn check_string(ctx: &LintContext<'_>, string: &str) {
                 ctx.diagnostic(replacement(
                     &(prev_match.as_str().to_string() + decimal_escape_str),
                     "\\u00008",
-                    Span::new(prev_match.start() as u32, decimal_escape_span.end),
+                    Span::new(prev_match.start() as u32, decimal_escape_span.end()),
                 ));
                 ctx.diagnostic(replacement(decimal_escape_str, "\\u0038", decimal_escape_span));
             }

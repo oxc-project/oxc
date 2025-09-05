@@ -88,9 +88,9 @@ impl Rule for PreferObjectHasOwn {
                 ctx.diagnostic(diagnostic);
             } else {
                 ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                    let needs_space = replace_target_span.start > 1
+                    let needs_space = replace_target_span.start() > 1
                         && !ctx
-                            .source_range(Span::new(0, replace_target_span.start))
+                            .source_range(Span::new(0, replace_target_span.start()))
                             .ends_with([' ', '=', '/', '(']);
 
                     let replacement = if needs_space { " Object.hasOwn" } else { "Object.hasOwn" };

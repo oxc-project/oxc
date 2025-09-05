@@ -315,7 +315,7 @@ impl SortImports {
                             let a = window[0].span;
                             let b = window[1].span;
 
-                            let padding = Span::new(a.end, b.start);
+                            let padding = Span::new(a.end(), b.start());
                             ctx.source_range(padding)
                         })
                         .collect();
@@ -453,10 +453,10 @@ fn get_first_local_member_name<'a>(decl: &ImportDeclaration<'a>) -> Option<Cow<'
 // start of the `right` span. If the given span are on the same line, or `right` span is appears before `left` span,
 // it returns `0`.
 fn get_number_of_lines_between(left: Span, right: Span, ctx: &LintContext) -> usize {
-    if left.end >= right.start {
+    if left.end() >= right.start() {
         return 0;
     }
-    let between_span = Span::new(left.end, right.start);
+    let between_span = Span::new(left.end(), right.start());
     let count = ctx.source_range(between_span).lines().count();
 
     // In same line

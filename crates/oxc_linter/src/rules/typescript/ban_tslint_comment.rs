@@ -63,11 +63,11 @@ fn get_full_comment(ctx: &LintContext, span: Span) -> Span {
     let mut span = span;
 
     let source_size = u32::try_from(ctx.source_text().len()).unwrap();
-    let tokens = ctx.source_range(Span::new(span.end, source_size));
+    let tokens = ctx.source_range(Span::new(span.end(), source_size));
 
     // Take into account new line at the end of the comment
     if matches!(tokens.chars().next(), Some('\n')) {
-        span.end += 1;
+        span = span.expand_right(1);
     }
 
     span

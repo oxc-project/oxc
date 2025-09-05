@@ -261,8 +261,8 @@ fn should_have_braces<'a>(
                 Statement::BlockStatement(block) => block.body.first(),
                 _ => None,
             };
-            let body_start = body.span().start;
-            let stmt_start = stmt.map_or(body_start, |stmt| stmt.span().start);
+            let body_start = body.span().start();
+            let stmt_start = stmt.map_or(body_start, |stmt| stmt.span().start());
             let comments = ctx.comments_range(body_start..stmt_start - 1);
 
             stmt.is_none_or(|stmt| !is_one_liner(stmt, ctx) || comments.count() > 0)
@@ -331,8 +331,8 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         || {
             let parent = ctx.nodes().parent_node(node.id());
 
-            if parent.span().start < span.start {
-                Span::empty(parent.span().start)
+            if parent.span().start() < span.start() {
+                Span::empty(parent.span().start())
             } else {
                 Span::empty(0)
             }
@@ -346,7 +346,7 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 
     let text = ctx.source_range(Span::new(
         next_char_offset,
-        span.end - ((node_string.len() as u32) - trimmed_len),
+        span.end() - ((node_string.len() as u32) - trimmed_len),
     ));
 
     !text.contains('\n')
@@ -363,8 +363,8 @@ fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 }
 
 fn get_token_before<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
-    let span_start = node.span().start;
-    ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end)
+    let span_start = node.span().start();
+    ctx.nodes().iter().filter(|n| n.span().end() < span_start).max_by_key(|n| n.span().end())
 }
 
 pub fn are_braces_necessary(node: &Statement, ctx: &LintContext) -> bool {
@@ -391,15 +391,15 @@ fn is_lexical_declaration(node: &Statement) -> bool {
 #[expect(clippy::cast_possible_truncation)]
 fn get_next_char_offset(span: Span, ctx: &LintContext) -> Option<u32> {
     let src = ctx.source_text();
-    let start = span.end as usize;
+    let start = span.end() as usize;
 
     if let Some(tail) = src.get(start..) {
         if tail.starts_with("\r\n") || tail.starts_with("\n\r") {
-            return Some(span.end + 2);
+            return Some(span.end() + 2);
         }
     }
 
-    src[start..].chars().next().map(|c| span.end + c.len_utf8() as u32)
+    src[start..].chars().next().map(|c| span.end() + c.len_utf8() as u32)
 }
 
 #[expect(clippy::cast_possible_truncation)] // for `as i32`
@@ -1484,7 +1484,7 @@ fn test() {
             "if (foo) {
 			 quz = true;
 			 }",
-            "if (foo) 
+            "if (foo)
 			 quz = true;
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1508,7 +1508,7 @@ fn test() {
             "if (foo) {
 			 var bar = 'baz';
 			 }",
-            "if (foo) 
+            "if (foo)
 			 var bar = 'baz';
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1517,7 +1517,7 @@ fn test() {
             "while (true) {
 			 doSomething();
 			 }",
-            "while (true) 
+            "while (true)
 			 doSomething();
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1526,7 +1526,7 @@ fn test() {
             "for (var i = 0; foo; i++) {
 			 doSomething();
 			 }",
-            "for (var i = 0; foo; i++) 
+            "for (var i = 0; foo; i++)
 			 doSomething();
 			 ",
             Some(serde_json::json!(["multi-or-nest"])),
@@ -1626,14 +1626,14 @@ fn test() {
         (
             "if (foo) { bar; }
 			++baz;",
-            "if (foo)  bar; 
+            "if (foo)  bar;
 			++baz;",
             Some(serde_json::json!(["multi"])),
         ),
         (
             "if (foo) { bar }
 			Baz();",
-            "if (foo)  bar 
+            "if (foo)  bar
 			Baz();",
             Some(serde_json::json!(["multi"])),
         ),
@@ -1656,7 +1656,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "if (foo) 
+            "if (foo)
 			doSomething()
 			;
 			",
@@ -1669,7 +1669,7 @@ fn test() {
 			;
 			}",
             "if (foo) doSomething();
-			else if (bar) 
+			else if (bar)
 			doSomethingElse()
 			;
 			",
@@ -1682,7 +1682,7 @@ fn test() {
 			;
 			}",
             "if (foo) doSomething();
-			else 
+			else
 			doSomethingElse()
 			;
 			",
@@ -1693,7 +1693,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var i = 0; foo; i++) 
+            "for (var i = 0; foo; i++)
 			doSomething()
 			;
 			",
@@ -1704,7 +1704,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var foo in bar) 
+            "for (var foo in bar)
 			doSomething()
 			;
 			",
@@ -1715,7 +1715,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "for (var foo of bar) 
+            "for (var foo of bar)
 			doSomething()
 			;
 			",
@@ -1726,7 +1726,7 @@ fn test() {
 			doSomething()
 			;
 			}",
-            "while (foo) 
+            "while (foo)
 			doSomething()
 			;
 			",
@@ -1737,7 +1737,7 @@ fn test() {
 			doSomething()
 			;
 			} while (foo)",
-            "do  
+            "do
 			doSomething()
 			;
 			 while (foo)",

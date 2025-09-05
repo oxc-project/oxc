@@ -169,10 +169,10 @@ impl Rule for NoNamespace {
             TSModuleDeclarationKind::Global => None, // handled above
             TSModuleDeclarationKind::Module => declaration_code
                 .find("module")
-                .map(|i| Span::sized(declaration.span.start + i as u32, 6)),
+                .map(|i| Span::sized(declaration.span.start() + i as u32, 6)),
             TSModuleDeclarationKind::Namespace => declaration_code
                 .find("namespace")
-                .map(|i| Span::sized(declaration.span.start + i as u32, 9)),
+                .map(|i| Span::sized(declaration.span.start() + i as u32, 9)),
         };
         if let Some(span) = span {
             ctx.diagnostic(no_namespace_diagnostic(span));

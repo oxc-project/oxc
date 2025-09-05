@@ -124,12 +124,11 @@ impl Rule for ForDirection {
 
                     match update {
                         Expression::UpdateExpression(update) => {
-                            if update.span().start == update.argument.span().start {
-                                span.start = update.argument.span().end;
-                                span.end = update.span().end;
+                            if update.span().start() == update.argument.span().start() {
+                                span = Span::new(update.argument.span().end(), update.span().end());
                             } else {
-                                span.start = update.span().start;
-                                span.end = update.argument.span().start;
+                                span =
+                                    Span::new(update.span().start(), update.argument.span().start())
                             }
 
                             if update.operator == UpdateOperator::Increment {
@@ -139,8 +138,7 @@ impl Rule for ForDirection {
                             }
                         }
                         Expression::AssignmentExpression(update) => {
-                            span.start = update.left.span().end;
-                            span.end = update.right.span().start;
+                            span = Span::new(update.left.span().end(), update.right.span().start());
 
                             if update.operator == AssignmentOperator::Addition {
                                 new_operator_str = "-=";

@@ -132,7 +132,7 @@ fn report_diagnostic<'a>(
     is_template_lit: bool,
     ctx: &LintContext<'a>,
 ) {
-    let span = if is_template_lit { span } else { Span::new(span.start + 1, span.end - 1) };
+    let span = if is_template_lit { span } else { Span::new(span.start() + 1, span.end() - 1) };
 
     ctx.diagnostic_with_fix(no_console_spaces_diagnostic(direction, ident, span), |fixer| {
         let content = if is_template_lit {

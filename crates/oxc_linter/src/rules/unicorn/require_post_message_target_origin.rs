@@ -64,7 +64,7 @@ impl Rule for RequirePostMessageTargetOrigin {
         if matches!(member_expr.static_property_name(), Some(name) if name == "postMessage") {
             let span = call_expr.arguments[0].span();
             ctx.diagnostic_with_suggestion(
-                require_post_message_target_origin_diagnostic(Span::new(span.end, span.end)),
+                require_post_message_target_origin_diagnostic(Span::new(span.end(), span.end())),
                 |fixer| {
                     let text = match member_expr.object() {
                         Expression::Identifier(ident) => {

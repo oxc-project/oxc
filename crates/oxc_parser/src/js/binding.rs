@@ -18,7 +18,7 @@ impl<'a> ParserImpl<'a> {
         let optional = if allow_question && self.is_ts { self.eat(Kind::Question) } else { false };
         let type_annotation = self.parse_ts_type_annotation();
         if let Some(type_annotation) = &type_annotation {
-            Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut kind);
+            Self::extend_binding_pattern_span_end(type_annotation.span.end(), &mut kind);
         } else if optional {
             Self::extend_binding_pattern_span_end(self.prev_token_end, &mut kind);
         }
@@ -178,6 +178,6 @@ impl<'a> ParserImpl<'a> {
             BindingPatternKind::ArrayPattern(pat) => &mut pat.span,
             BindingPatternKind::AssignmentPattern(pat) => &mut pat.span,
         };
-        pat_span.end = end;
+        pat_span.set_end(end);
     }
 }

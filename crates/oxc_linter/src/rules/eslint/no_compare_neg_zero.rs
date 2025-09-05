@@ -97,9 +97,9 @@ impl Rule for NoCompareNegZero {
                         no_compare_neg_zero_diagnostic(op, expr.span),
                         |fixer| {
                             let start = if is_left_neg_zero {
-                                expr.left.span().start
+                                expr.left.span().start()
                             } else {
-                                expr.right.span().start
+                                expr.right.span().start()
                             };
                             let end = start + 1;
                             let span = Span::new(start, end);

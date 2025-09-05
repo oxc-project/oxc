@@ -162,7 +162,7 @@ fn generate_struct_implementation(
             quote! {}
         } else {
             quote! {
-                let is_suppressed = f.comments().is_suppressed(self.span().start);
+                let is_suppressed = f.comments().is_suppressed(self.span().start());
             }
         };
 

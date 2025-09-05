@@ -628,17 +628,17 @@ impl<'a> Codegen<'a> {
     fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], ctx: Context) {
         self.print_ascii_byte(b'(');
 
-        let has_comment_before_right_paren = span.end > 0 && self.has_comment(span.end - 1);
+        let has_comment_before_right_paren = span.end() > 0 && self.has_comment(span.end() - 1);
 
         let has_comment = has_comment_before_right_paren
-            || arguments.iter().any(|item| self.has_comment(item.span().start));
+            || arguments.iter().any(|item| self.has_comment(item.span().start()));
 
         if has_comment {
             self.indent();
             self.print_list_with_comments(arguments, ctx);
             // Handle `/* comment */);`
             if !has_comment_before_right_paren
-                || (span.end > 0 && !self.print_expr_comments(span.end - 1))
+                || (span.end() > 0 && !self.print_expr_comments(span.end() - 1))
             {
                 self.print_soft_newline();
             }
@@ -655,7 +655,7 @@ impl<'a> Codegen<'a> {
         let Some((first, rest)) = items.split_first() else {
             return;
         };
-        if self.print_expr_comments(first.span().start) {
+        if self.print_expr_comments(first.span().start()) {
             self.print_indent();
         } else {
             self.print_soft_newline();
@@ -664,7 +664,7 @@ impl<'a> Codegen<'a> {
         first.print(self, ctx);
         for item in rest {
             self.print_comma();
-            if self.print_expr_comments(item.span().start) {
+            if self.print_expr_comments(item.span().start()) {
                 self.print_indent();
             } else {
                 self.print_soft_newline();
@@ -839,7 +839,7 @@ impl<'a> Codegen<'a> {
     fn add_source_mapping(&mut self, span: Span) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             if !span.is_empty() {
-                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
+                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start(), None);
             }
         }
     }
@@ -847,7 +847,7 @@ impl<'a> Codegen<'a> {
     fn add_source_mapping_end(&mut self, span: Span) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             if !span.is_empty() {
-                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end(), None);
             }
         }
     }

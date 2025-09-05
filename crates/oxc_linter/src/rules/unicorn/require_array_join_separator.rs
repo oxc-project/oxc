@@ -68,8 +68,8 @@ impl Rule for RequireArrayJoinSeparator {
         {
             ctx.diagnostic_with_fix(
                 require_array_join_separator_diagnostic(Span::new(
-                    member_expr.span().end,
-                    call_expr.span.end,
+                    member_expr.span().end(),
+                    call_expr.span.end(),
                 )),
                 |fixer| {
                     // after end of `join`, find the `(` and insert `","`
@@ -84,7 +84,7 @@ impl Rule for RequireArrayJoinSeparator {
                         fixer.insert_text_after_range(
                             Span::new(
                                 0,
-                                call_expr.span.start
+                                call_expr.span.start()
                                     + member_expr.span().size()
                                     + open_bracket as u32
                                     + 1,
@@ -108,13 +108,16 @@ impl Rule for RequireArrayJoinSeparator {
             {
                 ctx.diagnostic_with_fix(
                     require_array_join_separator_diagnostic(Span::new(
-                        member_expr.span().end,
-                        call_expr.span.end,
+                        member_expr.span().end(),
+                        call_expr.span.end(),
                     )),
                     |fixer| {
                         // after the end of the first argument, insert `","`
                         let first_arg = call_expr.arguments.first().unwrap();
-                        fixer.insert_text_after_range(Span::empty(first_arg.span().end), r#", ",""#)
+                        fixer.insert_text_after_range(
+                            Span::empty(first_arg.span().end()),
+                            r#", ",""#,
+                        )
                     },
                 );
             }

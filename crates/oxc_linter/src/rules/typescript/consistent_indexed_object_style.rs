@@ -257,7 +257,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         ),
                         |fixer| {
                             let key = fixer.source_range(first.span);
-                            let params_span = Span::new(first.span.end + 1, tref.span.end - 1);
+                            let params_span = Span::new(first.span.end() + 1, tref.span.end() - 1);
                             let params = fixer.source_range(params_span).trim();
                             let content = format!("{{ [key: {key}]: {params} }}");
                             fixer.replace(tref.span, content)

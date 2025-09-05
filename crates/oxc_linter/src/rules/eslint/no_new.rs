@@ -62,7 +62,7 @@ impl Rule for NoNew {
                     return;
                 }
             }
-            let span = Span::new(expr.span.start, expr.callee.span().end);
+            let span = Span::new(expr.span.start(), expr.callee.span().end());
             ctx.diagnostic(no_new_diagnostic(span));
         }
     }

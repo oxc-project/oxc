@@ -264,9 +264,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
         if self.operator().is_keyword() {
             write!(f, space());
         }
-        let Span { start, end, .. } = self.argument.span();
+        let span = self.argument.span();
+        let start = span.start();
+        let end = span.end();
         if f.comments().has_comments_before(start)
-            || f.comments().has_comments_between(end, self.span().end)
+            || f.comments().has_comments_between(end, self.span().end())
         {
             write!(
                 f,
@@ -602,7 +604,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
         let body = self.body();
         let format_body = FormatStatementBody::new(body);
         if init.is_none() && test.is_none() && update.is_none() {
-            let comments = f.context().comments().comments_before(body.span().start);
+            let comments = f.context().comments().comments_before(body.span().start());
             if !comments.is_empty() {
                 write!(
                     f,
@@ -645,7 +647,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.body.span().start());
         write!(
             f,
             [
@@ -669,7 +671,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.body.span().start());
 
         let r#await = self.r#await();
         let left = self.left();
@@ -716,15 +718,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             ))
         )?;
         if let Some(alternate) = alternate {
-            let alternate_start = alternate.span().start;
+            let alternate_start = alternate.span().start();
             let comments = f.context().comments().comments_before(alternate_start);
 
             let has_line_comment = comments.iter().any(|comment| comment.kind == CommentKind::Line);
             let has_dangling_comments = has_line_comment
                 || comments.last().is_some_and(|last_comment| {
                     // Ensure the comments are placed before the else keyword or on a new line
-                    let gap_str =
-                        &f.source_text()[last_comment.span.end as usize..alternate_start as usize];
+                    let gap_str = &f.source_text()
+                        [last_comment.span.end() as usize..alternate_start as usize];
                     gap_str.contains("else") || gap_str.contains('\n')
                 });
 
@@ -803,7 +805,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.body.span().start);
+        let comments = f.context().comments().comments_before(self.body.span().start());
         FormatLeadingComments::Comments(comments).fmt(f)?;
 
         let label = self.label();
@@ -839,7 +841,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.right.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.right.span().start());
         write!(
             f,
             [
@@ -928,7 +930,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.span.start);
+        let comments = f.context().comments().comments_before(self.span.start());
         if !comments.is_empty() {
             write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
         }
@@ -1439,7 +1441,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
 
         let should_indent_extends_only = type_parameters.as_ref().is_some_and(|params|
                 // TODO:
-                // !f.comments().has_trailing_line_comment(params.span().end)
+                // !f.comments().has_trailing_line_comment(params.span().end())
                 true);
 
         let type_parameter_group = if should_indent_extends_only && !extends.is_empty() {
@@ -1500,7 +1502,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
             write!(f, ["interface", space()])?;
 
             // TODO:
-            // let id_has_trailing_comments = f.comments().has_trailing_comments(id.span().end);
+            // let id_has_trailing_comments = f.comments().has_trailing_comments(id.span().end());
             let id_has_trailing_comments = false;
             if id_has_trailing_comments || !extends.is_empty() {
                 if should_indent_extends_only {

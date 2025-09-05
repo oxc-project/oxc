@@ -97,8 +97,8 @@ impl Rule for GuardForIn {
                 _ => {}
             }
             ctx.diagnostic(guard_for_in_diagnostic(Span::new(
-                for_in_statement.span.start,
-                for_in_statement.right.span().end + 1,
+                for_in_statement.span.start(),
+                for_in_statement.right.span().end() + 1,
             )));
         }
     }

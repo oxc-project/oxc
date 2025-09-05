@@ -130,9 +130,9 @@ impl PreferComparisonMatcher {
             // Therefore the range starting after ',' and before '.' is called as call_span_end,
             // and the same as `arg_span_end`.
             let call_span_end =
-                fixer.source_range(Span::new(binary_expr.span.end, parent_call_expr.span.end));
+                fixer.source_range(Span::new(binary_expr.span.end(), parent_call_expr.span.end()));
             let arg_span_end =
-                fixer.source_range(Span::new(matcher_arg_value.span.end, call_expr.span.end));
+                fixer.source_range(Span::new(matcher_arg_value.span.end(), call_expr.span.end()));
             let content = Self::building_code(
                 binary_expr,
                 call_span_end,

@@ -98,8 +98,8 @@ impl Rule for PreferTodo {
                     let mut multi_fix = multi_fixer.new_fix_with_capacity(2);
                     multi_fix.push(fix);
                     multi_fix.push(multi_fixer.delete_range(Span::new(
-                        call_expr.arguments[0].span().end,
-                        call_expr.span.end - 1,
+                        call_expr.arguments[0].span().end(),
+                        call_expr.span.end() - 1,
                     )));
                     multi_fix.with_message("Replace with `test.todo` or `it.todo`.")
                 });

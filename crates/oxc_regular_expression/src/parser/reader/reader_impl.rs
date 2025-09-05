@@ -64,7 +64,7 @@ impl<'a> Reader<'a> {
 
     pub fn advance(&mut self) {
         if let Some(unit) = self.units.get(self.index) {
-            self.offset = unit.span.end;
+            self.offset = unit.span.end();
             self.index += 1;
         }
     }

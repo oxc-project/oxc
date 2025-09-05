@@ -116,8 +116,9 @@ impl Rule for PreferPrototypeMethods {
             ),
             |fixer| {
                 let span = object_expr.span();
-                let need_padding = span.start >= 1
-                    && ctx.source_text().as_bytes()[span.start as usize - 1].is_ascii_alphabetic();
+                let need_padding = span.start() >= 1
+                    && ctx.source_text().as_bytes()[span.start() as usize - 1]
+                        .is_ascii_alphabetic();
                 fixer.replace(
                     span,
                     format!(

@@ -104,20 +104,20 @@ impl Rule for PaddingAroundTestBlocks {
         let Some(prev_statement_span) = prev_statement_span else {
             return;
         };
-        let mut comments_range = ctx.comments_range(prev_statement_span.end..node.span().start);
-        let mut span_between_start = prev_statement_span.end;
-        let mut span_between_end = node.span().start;
+        let mut comments_range = ctx.comments_range(prev_statement_span.end()..node.span().start());
+        let mut span_between_start = prev_statement_span.end();
+        let mut span_between_end = node.span().start();
         if let Some(last_comment_span) = comments_range.next_back().map(|comment| comment.span) {
             let space_after_last_comment =
-                ctx.source_range(Span::new(last_comment_span.end, node.span().start));
+                ctx.source_range(Span::new(last_comment_span.end(), node.span().start()));
             let space_before_last_comment =
-                ctx.source_range(Span::new(prev_statement_span.end, last_comment_span.start));
+                ctx.source_range(Span::new(prev_statement_span.end(), last_comment_span.start()));
             if space_after_last_comment.matches('\n').count() > 1
                 || space_before_last_comment.matches('\n').count() == 0
             {
-                span_between_start = last_comment_span.end;
+                span_between_start = last_comment_span.end();
             } else {
-                span_between_end = last_comment_span.start;
+                span_between_end = last_comment_span.start();
             }
         }
         let span_between = Span::new(span_between_start, span_between_end);
@@ -142,7 +142,11 @@ fn get_statement_span_before_node(node: AstNode, statements: &[Statement]) -> Op
     statements
         .iter()
         .filter_map(|statement| {
-            if statement.span().end <= node.span().start { Some(statement.span()) } else { None }
+            if statement.span().end() <= node.span().start() {
+                Some(statement.span())
+            } else {
+                None
+            }
         })
         .next_back()
 }

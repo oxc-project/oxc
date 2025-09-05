@@ -330,7 +330,7 @@ fn check_and_report_error_generic(
 
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let type_text =
-            &source_text[element_type_span.start as usize..element_type_span.end as usize];
+            &source_text[element_type_span.start() as usize..element_type_span.end() as usize];
         let array_type_identifier = if is_readonly { "ReadonlyArray" } else { "Array" };
 
         fixer.replace(type_reference_span, format!("{array_type_identifier}<{type_text}>"))
@@ -530,7 +530,7 @@ fn get_message_type<'a>(type_param: &'a TSType, source_text: &'a str) -> &'a str
         let Some(element_type_span) = element_type_span else {
             return "T";
         };
-        return &source_text[element_type_span.start as usize..element_type_span.end as usize];
+        return &source_text[element_type_span.start() as usize..element_type_span.end() as usize];
     }
     "T"
 }

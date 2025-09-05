@@ -143,7 +143,7 @@ impl Rule for SwitchCaseBraces {
 
             if self.always_braces && missing_braces {
                 let colon = u32::try_from(ctx.source_range(case.span).find(':').unwrap()).unwrap();
-                let span = Span::sized(case.span.start, colon + 1);
+                let span = Span::sized(case.span.start(), colon + 1);
                 ctx.diagnostic_with_fix(
                     switch_case_braces_diagnostic_missing_braces(span),
                     |fixer| {

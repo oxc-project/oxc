@@ -173,8 +173,8 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
                 no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span),
                 |fixer| {
                     fixer.delete_range(Span::new(
-                        assignment_expr.span.start,
-                        assignment_expr.span.end + 1,
+                        assignment_expr.span.start(),
+                        assignment_expr.span.end() + 1,
                     ))
                 },
             );
@@ -680,7 +680,7 @@ fn test() {
             "
             class Foo {
               constructor(public name: unknown) {
-                
+
               }
             }
             ",
@@ -698,7 +698,7 @@ fn test() {
             class Foo {
               constructor(other: unknown, public name: unknown) {
                 this.other = other;
-                
+
               }
             }
             ",
@@ -716,9 +716,9 @@ fn test() {
             "
             class Foo {
               constructor(public name: unknown) {
-                
-                
-                
+
+
+
               }
             }
             ",
@@ -739,7 +739,7 @@ fn test() {
             class Foo {
               constructor(public name: unknown) {
                 if (maybeTrue) {
-                  
+
                 } else {
                   this.name = name + 'edited';
                 }
@@ -758,7 +758,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo: string) {
-                
+
               }
             }
             ",
@@ -774,7 +774,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo?: string) {
-                
+
               }
             }
             ",
@@ -790,7 +790,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo?: string) {
-                
+
               }
             }
             ",
@@ -806,7 +806,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo = '') {
-                
+
               }
             }
             ",
@@ -823,7 +823,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo = '') {
-                
+
                 this.foo += 'foo';
               }
             }
@@ -840,7 +840,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo: string) {
-                
+
               }
             }
             ",
@@ -856,7 +856,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo: string) {
-                
+
               }
             }
             ",
@@ -872,7 +872,7 @@ fn test() {
             "
             class Foo {
               constructor(public foo: string) {
-                
+
               }
             }
             ",
@@ -888,7 +888,7 @@ fn test() {
             "
             class Foo {
               constructor(private foo: string) {
-                
+
               }
             }
             ",
@@ -910,7 +910,7 @@ fn test() {
                 function bar() {
                   this.foo = foo;
                 }
-                
+
               }
             }
             ",
@@ -932,7 +932,7 @@ fn test() {
                 this.bar = () => {
                   this.foo = foo;
                 };
-                
+
               }
             }
             ",
@@ -955,10 +955,10 @@ fn test() {
               constructor(private foo: string) {
                 class Bar {
                   constructor(private foo: string) {
-                    
+
                   }
                 }
-                
+
               }
             }
             ",
@@ -977,7 +977,7 @@ fn test() {
             "
             class Foo {
               constructor(private foo: string) {
-                
+
               }
               bar = () => {
                 this.foo = 'foo';
@@ -999,7 +999,7 @@ fn test() {
             "
             class Foo {
               constructor(private foo: string) {
-                
+
               }
               init = foo => {
                 this.foo = foo;
@@ -1023,11 +1023,11 @@ fn test() {
             "
             class Foo {
               constructor(private foo: string) {
-                
+
               }
               init = class Bar {
                 constructor(private foo: string) {
-                  
+
                 }
               };
             }
@@ -1047,7 +1047,7 @@ fn test() {
             class Foo {
               constructor(private foo: string) {
                 {
-                  
+
                 }
               }
             }
@@ -1067,7 +1067,7 @@ fn test() {
             class Foo {
               constructor(private foo: string) {
                 (() => {
-                  
+
                 })();
               }
             }

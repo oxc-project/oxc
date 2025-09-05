@@ -67,7 +67,7 @@ impl Rule for NoLabelVar {
             ctx.scoping().find_binding(node.scope_id(), &labeled_stmt.label.name)
         {
             let decl_span = ctx.scoping().symbol_span(symbol_id);
-            let label_decl = labeled_stmt.span.start;
+            let label_decl = labeled_stmt.span.start();
             ctx.diagnostic(no_label_var_diagnostic(
                 &labeled_stmt.label.name,
                 decl_span,

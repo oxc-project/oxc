@@ -112,7 +112,10 @@ fn diagnose_variable_declarator(
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
         ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
-            fixer.delete_range(Span::new(variable_declarator.id.span().end, null_literal.span.end))
+            fixer.delete_range(Span::new(
+                variable_declarator.id.span().end(),
+                null_literal.span.end(),
+            ))
         });
 
         return;

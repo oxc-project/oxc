@@ -211,23 +211,23 @@ impl Rule for ExplicitFunctionReturnType {
                     match parent.kind() {
                         AstKind::MethodDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                                def.span.start,
-                                def.value.params.span.start,
+                                def.span.start(),
+                                def.value.params.span.start(),
                             )));
                             return;
                         }
                         AstKind::PropertyDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                                def.span.start,
-                                func.params.span.start,
+                                def.span.start(),
+                                func.params.span.start(),
                             )));
 
                             return;
                         }
                         AstKind::ObjectProperty(prop) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                                prop.span.start,
-                                func.params.span.start,
+                                prop.span.start(),
+                                func.params.span.start(),
                             )));
 
                             return;
@@ -237,18 +237,18 @@ impl Rule for ExplicitFunctionReturnType {
                 }
                 if func.is_expression() {
                     ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                        func.span.start,
-                        func.params.span.start,
+                        func.span.start(),
+                        func.params.span.start(),
                     )));
                 } else if let Some(id) = &func.id {
                     ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                        func.span.start,
-                        id.span.end,
+                        func.span.start(),
+                        id.span.end(),
                     )));
                 } else {
                     ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                        func.span.start,
-                        func.params.span.start,
+                        func.span.start(),
+                        func.params.span.start(),
                     )));
                 }
             }
@@ -280,23 +280,23 @@ impl Rule for ExplicitFunctionReturnType {
                     match parent.kind() {
                         AstKind::MethodDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                                def.span.start,
-                                def.value.params.span.start,
+                                def.span.start(),
+                                def.value.params.span.start(),
                             )));
                             return;
                         }
                         AstKind::PropertyDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                                def.span.start,
-                                func.params.span.start,
+                                def.span.start(),
+                                func.params.span.start(),
                             )));
 
                             return;
                         }
                         AstKind::ObjectProperty(prop) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                                prop.span.start,
-                                func.params.span.start,
+                                prop.span.start(),
+                                func.params.span.start(),
                             )));
 
                             return;
@@ -305,8 +305,8 @@ impl Rule for ExplicitFunctionReturnType {
                     }
                 }
                 ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
-                    func.params.span.end + 1,
-                    func.params.span.end + 3,
+                    func.params.span.end() + 1,
+                    func.params.span.end() + 3,
                 )));
             }
             _ => {}

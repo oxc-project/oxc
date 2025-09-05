@@ -197,17 +197,17 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         // `A \n\n/* comment . */ . / comment . */ B`
         //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         // Check whether has more than 1 continuous new lines before the operator (`.`)
-        let start = expression.object().span().end;
-        let mut end = expression.property().span().start;
+        let start = expression.object().span().end();
+        let mut end = expression.property().span().start();
         let mut comments = f.comments().comments_between(start, end).iter();
         let mut last_comment_span = comments.next_back();
 
         while start < end {
             // Skip comments that are after the operator (`.`)
             if let Some(last_comment) = last_comment_span
-                && last_comment.span.end == end
+                && last_comment.span.end() == end
             {
-                end = last_comment.span.start - 1;
+                end = last_comment.span.start() - 1;
                 last_comment_span = comments.next_back();
                 continue;
             } else if matches!(source_text[end as usize], b'.') {
@@ -220,7 +220,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
 
         // Skip comments that are before the operator (`.`)
         if let Some(comment) = comments.next() {
-            end = comment.span.start;
+            end = comment.span.start();
         }
 
         // Count the number of continuous new lines

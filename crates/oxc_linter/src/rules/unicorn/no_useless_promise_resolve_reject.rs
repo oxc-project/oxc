@@ -350,10 +350,10 @@ fn generate_fix<'a>(
                 text
             } else {
                 if matches!(parent.kind(), AstKind::ReturnStatement(_)) {
-                    replace_range.start = parent.kind().span().start + 6;
+                    replace_range.set_start(parent.kind().span().start() + 6);
                 }
                 if is_yield {
-                    replace_range.start = parent.kind().span().start + 5;
+                    replace_range.set_start(parent.kind().span().start() + 5);
                 }
                 text
             }

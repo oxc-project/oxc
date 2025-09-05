@@ -67,9 +67,9 @@ const _: () = {
 
 #[cfg(target_pointer_width = "32")]
 const _: () = {
-    // Padding: 0 bytes
-    assert!(size_of::<RawTransferData>() == 188);
-    assert!(align_of::<RawTransferData>() == 4);
+    // Padding: 4 bytes
+    assert!(size_of::<RawTransferData>() == 192);
+    assert!(align_of::<RawTransferData>() == 8);
     assert!(offset_of!(RawTransferData, program) == 0);
     assert!(offset_of!(RawTransferData, comments) == 88);
     assert!(offset_of!(RawTransferData, module) == 104);
@@ -96,7 +96,7 @@ const _: () = {
 
     // Padding: 0 bytes
     assert!(size_of::<ErrorLabel>() == 16);
-    assert!(align_of::<ErrorLabel>() == 4);
+    assert!(align_of::<ErrorLabel>() == 8);
     assert!(offset_of!(ErrorLabel, message) == 8);
     assert!(offset_of!(ErrorLabel, span) == 0);
 
@@ -111,14 +111,14 @@ const _: () = {
 
     // Padding: 0 bytes
     assert!(size_of::<StaticImport>() == 40);
-    assert!(align_of::<StaticImport>() == 4);
+    assert!(align_of::<StaticImport>() == 8);
     assert!(offset_of!(StaticImport, span) == 0);
     assert!(offset_of!(StaticImport, module_request) == 8);
     assert!(offset_of!(StaticImport, entries) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<StaticExport>() == 24);
-    assert!(align_of::<StaticExport>() == 4);
+    assert!(align_of::<StaticExport>() == 8);
     assert!(offset_of!(StaticExport, span) == 0);
     assert!(offset_of!(StaticExport, entries) == 8);
 };

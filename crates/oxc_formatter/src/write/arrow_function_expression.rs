@@ -130,7 +130,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 let arrow_expression = arrow.get_expression();
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
-                    return if f.context().comments().has_comments_before(sequence.span().start) {
+                    return if f.context().comments().has_comments_before(sequence.span().start()) {
                         write!(
                             f,
                             [group(&format_args!(
@@ -166,20 +166,20 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
                             // TODO: It seems no difference whether check there is a leading comment or not.
-                            // !f.comments().has_leading_own_line_comment(body.span().start)
+                            // !f.comments().has_leading_own_line_comment(body.span().start())
                             true
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
                         Expression::TemplateLiteral(template) => {
                             is_multiline_template_starting_on_same_line(
-                                template.span.start,
+                                template.span.start(),
                                 template,
                                 f.source_text(),
                             )
                         }
                         Expression::TaggedTemplateExpression(template) => {
                             is_multiline_template_starting_on_same_line(
-                                template.span.start,
+                                template.span.start(),
                                 &template.quasi,
                                 f.source_text(),
                             )
@@ -509,7 +509,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // comments manually, since they won't have their own
                     // Format node to handle it.
                     let should_format_comments = !is_first_in_chain
-                        && f.context().comments().has_comments_before(arrow.span.start);
+                        && f.context().comments().has_comments_before(arrow.span.start());
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
@@ -583,7 +583,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
-                if f.context().comments().has_comments_before(sequence.span().start) {
+                if f.context().comments().has_comments_before(sequence.span().start()) {
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(
@@ -623,7 +623,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // the comments of the head get formatted as part of the `FormatJsArrowFunctionExpression` call.
             // TODO: It seems unneeded in the current oxc implementation?
             // for arrow in self.arrows().skip(1) {
-            //     write!(f, format_trailing_comments(arrow.span().end))?;
+            //     write!(f, format_trailing_comments(arrow.span().end()))?;
             // }
 
             Ok(())

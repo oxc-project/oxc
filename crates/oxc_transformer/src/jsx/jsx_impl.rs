@@ -712,7 +712,7 @@ impl<'a> JsxImpl<'a, '_> {
             if is_element {
                 // { __source: { fileName, lineNumber, columnNumber } }
                 if self.options.jsx_source_plugin {
-                    let (line, column) = self.jsx_source.get_line_column(span.start);
+                    let (line, column) = self.jsx_source.get_line_column(span.start());
                     let expr = self.jsx_source.get_source_object(line, column, ctx);
                     arguments.push(Argument::from(expr));
                 }
@@ -730,7 +730,7 @@ impl<'a> JsxImpl<'a, '_> {
                 }
 
                 if self.options.jsx_source_plugin {
-                    let (line, column) = self.jsx_source.get_line_column(span.start);
+                    let (line, column) = self.jsx_source.get_line_column(span.start());
                     properties.push(
                         self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
                     );

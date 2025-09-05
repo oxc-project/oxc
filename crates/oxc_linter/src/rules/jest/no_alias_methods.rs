@@ -129,8 +129,7 @@ impl Rule for NoAliasMethods {
         // expect(a).not['toThrowError']()
         // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
         if matcher.element.is_string_literal() {
-            span.start += 1;
-            span.end -= 1;
+            span = span.shrink(1);
         }
 
         ctx.diagnostic_with_fix(

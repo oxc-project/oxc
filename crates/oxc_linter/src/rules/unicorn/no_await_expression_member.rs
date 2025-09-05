@@ -79,8 +79,8 @@ impl Rule for NoAwaitExpressionMember {
                     };
                     let name = id.name.as_str();
                     let inner_text = ctx.source_range(Span::new(
-                        paren_expr.span.start + 1,
-                        paren_expr.span.end - 1,
+                        paren_expr.span.start() + 1,
+                        paren_expr.span.end() - 1,
                     ));
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(5);

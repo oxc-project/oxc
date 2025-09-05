@@ -23,7 +23,7 @@ fn format_export_keyword_with_class_decorators<'a>(
     // `@decorator export class Cls {}`
     //            ^ print leading comments here
     let format_leading_comments = |f: &mut Formatter<'_, 'a>| -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(span.start);
+        let comments = f.context().comments().comments_before(span.start());
         if !comments.is_empty() {
             FormatLeadingComments::Comments(comments).fmt(f)?;
         }
@@ -35,7 +35,7 @@ fn format_export_keyword_with_class_decorators<'a>(
     {
         // `@decorator export class Cls {}`
         // decorators are placed before the export keyword
-        if class.decorators[0].span.end < span.start {
+        if class.decorators[0].span.end() < span.start() {
             write!(f, [class.decorators(), hard_line_break()])?;
             format_leading_comments(f)?;
             write!(f, [keyword, space()])
@@ -100,7 +100,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
             self.format_leading_comments(f)?;
             write!(f, ["export", space()])?;
 
-            let comments = f.context().comments().comments_before_character(self.span.start, b'{');
+            let comments =
+                f.context().comments().comments_before_character(self.span.start(), b'{');
             if !comments.is_empty() {
                 write!(f, [FormatLeadingComments::Comments(comments)])?;
             }
@@ -147,7 +148,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
                         format_once(move |f| {
                             // Should add empty line before the specifier if there are comments before it.
                             let comments =
-                                f.context().comments().comments_before(specifier.span().start);
+                                f.context().comments().comments_before(specifier.span().start());
                             if !comments.is_empty() {
                                 if get_lines_before(comments[0].span, f) > 1 {
                                     write!(f, [empty_line()])?;
@@ -165,7 +166,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.exported.span().end);
+        let comments = f.context().comments().comments_before(self.exported.span().end());
         let mut len = comments.len();
         while len != 0 && comments[len - 1].is_block() {
             len -= 1;

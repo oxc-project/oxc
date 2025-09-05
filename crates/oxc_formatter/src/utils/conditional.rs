@@ -131,7 +131,7 @@ fn format_trailing_comments<'a>(
         let mut index_before_operator = None;
         for (index, comment) in comments.iter().enumerate() {
             // This comment is after the `end` position, so we stop here and return the comments before this comment
-            if comment.span.end > end {
+            if comment.span.end() > end {
                 return &comments[..index_before_operator.unwrap_or(index)];
             }
 
@@ -140,7 +140,7 @@ fn format_trailing_comments<'a>(
             //   |        |        |
             //   |        |        |
             //  these are the gaps between comments
-            let gap_str = &source_text.as_bytes()[start as usize..comment.span.start as usize];
+            let gap_str = &source_text.as_bytes()[start as usize..comment.span.start() as usize];
 
             // If this comment is in a new line, we stop here and return the comments before this comment
             if gap_str.contains(&b'\n') {
@@ -156,7 +156,7 @@ fn format_trailing_comments<'a>(
             }
 
             // Update the start position for the next iteration
-            start = comment.span.end;
+            start = comment.span.end();
         }
 
         &comments[..index_before_operator.unwrap_or(comments.len())]
@@ -380,8 +380,8 @@ impl<'a> FormatConditionalLike<'a, '_> {
             ConditionalLike::ConditionalExpression(conditional) => {
                 write!(f, FormatExpressionWithoutTrailingComments(conditional.test()))?;
                 format_trailing_comments(
-                    conditional.test.span().end,
-                    conditional.consequent.span().start,
+                    conditional.test.span().end(),
+                    conditional.consequent.span().start(),
                     b'?',
                     f,
                 )
@@ -429,8 +429,8 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 let format_consequent = format_once(|f| {
                     write!(f, FormatExpressionWithoutTrailingComments(conditional.consequent()))?;
                     format_trailing_comments(
-                        conditional.consequent.span().end,
-                        conditional.alternate.span().start,
+                        conditional.consequent.span().end(),
+                        conditional.alternate.span().start(),
                         b':',
                         f,
                     )

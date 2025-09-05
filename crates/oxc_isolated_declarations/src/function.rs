@@ -155,5 +155,5 @@ impl<'a> IsolatedDeclarations<'a> {
 }
 
 pub fn get_function_span(func: &Function<'_>) -> Span {
-    func.id.as_ref().map_or_else(|| Span::empty(func.params.span.start), |id| id.span)
+    func.id.as_ref().map_or_else(|| Span::empty(func.params.span.start()), |id| id.span)
 }

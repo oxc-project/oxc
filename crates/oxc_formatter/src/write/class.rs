@@ -99,7 +99,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         let value = self.value();
         // Handle comments between method name and parameters
         // Example: method /* comment */ (param) {}
-        let comments = f.context().comments().comments_before(value.params().span.start);
+        let comments = f.context().comments().comments_before(value.params().span.start());
         if !comments.is_empty() {
             write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
         }
@@ -110,7 +110,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if let Some(body) = &value.body() {
             // Handle block comments between method signature and body
             // Example: method() /* comment */ {}
-            let comments = f.context().comments().comments_before(body.span.start);
+            let comments = f.context().comments().comments_before(body.span.start());
             if !comments.is_empty() {
                 write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
             }
@@ -157,7 +157,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
         // Handle comments between decorators and the 'accessor' keyword
         // We look for comments before the first character 'a' of 'accessor'
         // This ensures proper placement of comments like: @decorator /* comment */ accessor x
-        let comments = f.context().comments().comments_before_character(self.span.start, b'a');
+        let comments = f.context().comments().comments_before_character(self.span.start(), b'a');
         FormatLeadingComments::Comments(comments).fmt(f)?;
 
         if self.r#type().is_abstract() {
@@ -279,12 +279,12 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             || (!implements.is_empty() && super_class.is_none()))
             && type_parameters.as_ref().is_some_and(|type_parameters| {
                 !f.comments().has_trailing_line_comments(
-                    type_parameters.span.start,
+                    type_parameters.span.start(),
                     super_class
                         .map(GetSpan::span)
                         .or(implements.first().map(GetSpan::span))
                         .unwrap()
-                        .start,
+                        .start(),
                 )
             });
 
@@ -333,7 +333,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             // The logic here ensures these comments are formatted as trailing comments
             // after the class name, maintaining their position before the extends clause.
             if let Some(super_class) = &super_class {
-                let comments = f.context().comments().comments_before(super_class.span().start);
+                let comments = f.context().comments().comments_before(super_class.span().start());
                 if comments.iter().any(|c| c.is_line()) {
                     FormatTrailingComments::Comments(comments).fmt(f)?;
                 }
@@ -356,7 +356,9 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                     let comments = if type_arguments.is_some() || !implements.is_empty() {
                         &[]
                     } else {
-                        f.context().comments().comments_between(extends.span().end, body.span.start)
+                        f.context()
+                            .comments()
+                            .comments_between(extends.span().end(), body.span.start())
                     };
 
                     // Check if there are trailing line comments after the extends clause
@@ -431,7 +433,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                     write!(f, [soft_line_break_or_space()])?;
                 }
 
-                let comments = f.context().comments().comments_before(implements[0].span().start);
+                let comments = f.context().comments().comments_before(implements[0].span().start());
                 write!(f, [FormatLeadingComments::Comments(comments), implements])?;
             }
 
@@ -500,7 +502,7 @@ fn should_group<'a>(class: &Class<'a>, f: &Formatter<'_, 'a>) -> bool {
     while let Some(span) = spans_iter.next() {
         if let Some(next_span) = spans_iter.peek() {
             // Check if there are comments between the current span and the next one
-            if comments.has_comments_between(span.end, next_span.start) {
+            if comments.has_comments_between(span.end(), next_span.start()) {
                 // If there are comments, we should group the heritage clauses
                 return true;
             }

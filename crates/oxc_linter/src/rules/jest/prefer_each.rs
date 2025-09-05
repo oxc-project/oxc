@@ -119,13 +119,13 @@ impl PreferEach {
 
                     let span = match parent_node.kind() {
                         AstKind::ForStatement(statement) => {
-                            Span::new(statement.span.start, statement.body.span().start)
+                            Span::new(statement.span.start(), statement.body.span().start())
                         }
                         AstKind::ForInStatement(statement) => {
-                            Span::new(statement.span.start, statement.body.span().start)
+                            Span::new(statement.span.start(), statement.body.span().start())
                         }
                         AstKind::ForOfStatement(statement) => {
-                            Span::new(statement.span.start, statement.body.span().start)
+                            Span::new(statement.span.start(), statement.body.span().start())
                         }
                         _ => unreachable!(),
                     };

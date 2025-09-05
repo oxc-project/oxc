@@ -216,11 +216,13 @@ impl ESTree for TemplateElementConverter<'_, '_> {
         state.serialize_field("value", &TemplateElementValue(element));
         state.serialize_field("tail", &element.tail);
 
-        let mut span = element.span;
-        if S::INCLUDE_TS_FIELDS {
-            span.start -= 1;
-            span.end += if element.tail { 1 } else { 2 };
-        }
+        let span = if S::INCLUDE_TS_FIELDS {
+            let start = element.span.start() - 1;
+            let end = element.span.end() + if element.tail { 1 } else { 2 };
+            Span::new(start, end)
+        } else {
+            element.span
+        };
         state.serialize_span(span);
 
         state.end();

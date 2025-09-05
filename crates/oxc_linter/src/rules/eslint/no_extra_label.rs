@@ -122,8 +122,8 @@ fn report_label_if_extra(label: &LabelIdentifier, node: &AstNode, ctx: &LintCont
             _ => unreachable!(),
         };
 
-        let keyword_end = node.span().start + keyword_len;
-        let delete_span = Span::new(keyword_end, label.span.end);
+        let keyword_end = node.span().start() + keyword_len;
+        let delete_span = Span::new(keyword_end, label.span.end());
 
         let diagnostic = no_extra_label_diagnostic(label);
         if ctx.comments().iter().any(|comment| delete_span.contains_inclusive(comment.span)) {
@@ -179,7 +179,7 @@ fn test() {
         "A: switch (a) { case 0: break A; }",
         "X: while (x) { A: switch (a) { case 0: break A; } }",
         "X: switch (a) { case 0: A: while (b) break A; }",
-        "                
+        "
         A: while (true) {
             break A;
             while (true) {

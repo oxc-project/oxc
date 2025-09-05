@@ -22,7 +22,7 @@ impl Utf8ToUtf16Converter<'_> {
     }
 
     pub(crate) fn convert_object_property(&mut self, prop: &mut ObjectProperty<'_>) {
-        self.convert_offset(&mut prop.span.start);
+        self.convert_offset(&mut prop.span.start());
 
         // If shorthand, span of `key` and `value` are the same
         match (prop.shorthand, &mut prop.key, &mut prop.value) {
@@ -36,7 +36,7 @@ impl Utf8ToUtf16Converter<'_> {
             }
         }
 
-        self.convert_offset(&mut prop.span.end);
+        self.convert_offset(&mut prop.span.end());
     }
 
     pub(crate) fn convert_binding_pattern(&mut self, pattern: &mut BindingPattern<'_>) {
@@ -44,24 +44,24 @@ impl Utf8ToUtf16Converter<'_> {
         // so visit `type_annotation` before exiting span of `kind`
         let span_end = match &mut pattern.kind {
             BindingPatternKind::BindingIdentifier(ident) => {
-                self.convert_offset(&mut ident.span.start);
+                self.convert_offset(&mut ident.span.start());
                 walk_mut::walk_binding_identifier(self, ident);
-                &mut ident.span.end
+                &mut ident.span.end()
             }
             BindingPatternKind::ObjectPattern(obj_pattern) => {
-                self.convert_offset(&mut obj_pattern.span.start);
+                self.convert_offset(&mut obj_pattern.span.start());
                 walk_mut::walk_object_pattern(self, obj_pattern);
-                &mut obj_pattern.span.end
+                &mut obj_pattern.span.end()
             }
             BindingPatternKind::ArrayPattern(arr_pattern) => {
-                self.convert_offset(&mut arr_pattern.span.start);
+                self.convert_offset(&mut arr_pattern.span.start());
                 walk_mut::walk_array_pattern(self, arr_pattern);
-                &mut arr_pattern.span.end
+                &mut arr_pattern.span.end()
             }
             BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                self.convert_offset(&mut assign_pattern.span.start);
+                self.convert_offset(&mut assign_pattern.span.start());
                 walk_mut::walk_assignment_pattern(self, assign_pattern);
-                &mut assign_pattern.span.end
+                &mut assign_pattern.span.end()
             }
         };
 
@@ -79,18 +79,18 @@ impl Utf8ToUtf16Converter<'_> {
         // `BindingRestElement` contains a `BindingPattern`, but in this case span of
         // `type_annotation` is after span of `kind`.
         // So avoid calling `visit_binding_pattern` which would call `convert_binding_pattern` above.
-        self.convert_offset(&mut rest_element.span.start);
+        self.convert_offset(&mut rest_element.span.start());
 
         self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
         if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
         }
 
-        self.convert_offset(&mut rest_element.span.end);
+        self.convert_offset(&mut rest_element.span.end());
     }
 
     pub(crate) fn convert_binding_property(&mut self, prop: &mut BindingProperty<'_>) {
-        self.convert_offset(&mut prop.span.start);
+        self.convert_offset(&mut prop.span.start());
 
         // If shorthand, span of `key` and `value` are the same
         match (prop.shorthand, &mut prop.key, &mut prop.value) {
@@ -116,7 +116,7 @@ impl Utf8ToUtf16Converter<'_> {
             }
         }
 
-        self.convert_offset(&mut prop.span.end);
+        self.convert_offset(&mut prop.span.end());
     }
 
     pub(crate) fn convert_export_named_declaration(
@@ -127,9 +127,9 @@ impl Utf8ToUtf16Converter<'_> {
         if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
             self.convert_exported_class(class, &mut decl.span);
         } else {
-            self.convert_offset(&mut decl.span.start);
+            self.convert_offset(&mut decl.span.start());
             walk_mut::walk_export_named_declaration(self, decl);
-            self.convert_offset(&mut decl.span.end);
+            self.convert_offset(&mut decl.span.end());
         }
     }
 
@@ -141,9 +141,9 @@ impl Utf8ToUtf16Converter<'_> {
         if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration {
             self.convert_exported_class(class, &mut decl.span);
         } else {
-            self.convert_offset(&mut decl.span.start);
+            self.convert_offset(&mut decl.span.start());
             walk_mut::walk_export_default_declaration(self, decl);
-            self.convert_offset(&mut decl.span.end);
+            self.convert_offset(&mut decl.span.end());
         }
     }
 
@@ -160,12 +160,12 @@ impl Utf8ToUtf16Converter<'_> {
         // These have spans which are before the export statement span start.
         // Then process export statement and `Class` start, then remaining decorators,
         // which have spans within the span of `Class`.
-        let mut decl_start = export_decl_span.start;
+        let mut decl_start = export_decl_span.start();
         for decorator in &mut class.decorators {
-            if decorator.span.start > decl_start {
+            if decorator.span.start() > decl_start {
                 // Process span start of export statement and `Class`
-                self.convert_offset(&mut export_decl_span.start);
-                self.convert_offset(&mut class.span.start);
+                self.convert_offset(&mut export_decl_span.start());
+                self.convert_offset(&mut class.span.start());
                 // Prevent this branch being taken again
                 decl_start = u32::MAX;
             }
@@ -174,8 +174,8 @@ impl Utf8ToUtf16Converter<'_> {
 
         // If didn't already, process span start of export statement and `Class`
         if decl_start < u32::MAX {
-            self.convert_offset(&mut export_decl_span.start);
-            self.convert_offset(&mut class.span.start);
+            self.convert_offset(&mut export_decl_span.start());
+            self.convert_offset(&mut class.span.start());
         }
 
         // Process rest of the class
@@ -195,12 +195,12 @@ impl Utf8ToUtf16Converter<'_> {
         self.visit_class_body(&mut class.body);
 
         // Process span end of `Class` and export statement
-        self.convert_offset(&mut class.span.end);
-        self.convert_offset(&mut export_decl_span.end);
+        self.convert_offset(&mut class.span.end());
+        self.convert_offset(&mut export_decl_span.end());
     }
 
     pub(crate) fn convert_export_specifier(&mut self, specifier: &mut ExportSpecifier<'_>) {
-        self.convert_offset(&mut specifier.span.start);
+        self.convert_offset(&mut specifier.span.start());
 
         // `local` and `exported` have same span if e.g.:
         // * `export {x}`
@@ -216,11 +216,11 @@ impl Utf8ToUtf16Converter<'_> {
             self.visit_module_export_name(&mut specifier.exported);
         }
 
-        self.convert_offset(&mut specifier.span.end);
+        self.convert_offset(&mut specifier.span.end());
     }
 
     pub(crate) fn convert_import_specifier(&mut self, specifier: &mut ImportSpecifier<'_>) {
-        self.convert_offset(&mut specifier.span.start);
+        self.convert_offset(&mut specifier.span.start());
 
         // `imported` and `local` have same span if e.g. `import {x} from 'foo';`
         let same_spans = specifier.imported.span() == specifier.local.span;
@@ -233,11 +233,11 @@ impl Utf8ToUtf16Converter<'_> {
             self.visit_binding_identifier(&mut specifier.local);
         }
 
-        self.convert_offset(&mut specifier.span.end);
+        self.convert_offset(&mut specifier.span.end());
     }
 
     pub(crate) fn convert_template_literal(&mut self, lit: &mut TemplateLiteral<'_>) {
-        self.convert_offset(&mut lit.span.start);
+        self.convert_offset(&mut lit.span.start());
 
         // Visit `quasis` and `expressions` in source order. The two `Vec`s are interleaved.
         for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
@@ -246,11 +246,11 @@ impl Utf8ToUtf16Converter<'_> {
         }
         self.visit_template_element(lit.quasis.last_mut().unwrap());
 
-        self.convert_offset(&mut lit.span.end);
+        self.convert_offset(&mut lit.span.end());
     }
 
     pub(crate) fn convert_ts_template_literal_type(&mut self, lit: &mut TSTemplateLiteralType<'_>) {
-        self.convert_offset(&mut lit.span.start);
+        self.convert_offset(&mut lit.span.start());
 
         // Visit `quasis` and `types` in source order. The two `Vec`s are interleaved.
         for (quasi, ts_type) in lit.quasis.iter_mut().zip(&mut lit.types) {
@@ -259,6 +259,6 @@ impl Utf8ToUtf16Converter<'_> {
         }
         self.visit_template_element(lit.quasis.last_mut().unwrap());
 
-        self.convert_offset(&mut lit.span.end);
+        self.convert_offset(&mut lit.span.end());
     }
 }

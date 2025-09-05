@@ -87,7 +87,7 @@ impl Rule for NoAwaitInPromiseMethods {
                         .expect("callee is a static property");
 
                     ctx.diagnostic(no_await_in_promise_methods_diagnostic(
-                        Span::sized(await_expr.span.start, 5),
+                        Span::sized(await_expr.span.start(), 5),
                         property_name,
                     ));
                 }

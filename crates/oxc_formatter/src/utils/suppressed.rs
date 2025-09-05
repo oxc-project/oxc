@@ -19,13 +19,14 @@ impl<'a> Format<'a> for FormatSuppressedNode {
         write!(f, [dynamic_text(self.0.span().source_text(f.source_text()))]);
 
         // The suppressed node contains comments that should be marked as printed.
-        mark_comments_as_printed_before(self.0.end, f);
+        mark_comments_as_printed_before(self.0.end(), f);
 
         Ok(())
     }
 }
 
 fn mark_comments_as_printed_before(end: u32, f: &mut Formatter<'_, '_>) {
-    let count = f.comments().unprinted_comments().iter().take_while(|c| c.span.end <= end).count();
+    let count =
+        f.comments().unprinted_comments().iter().take_while(|c| c.span.end() <= end).count();
     f.context_mut().comments_mut().increase_printed_count_by(count);
 }

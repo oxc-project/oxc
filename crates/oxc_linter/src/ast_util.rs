@@ -508,7 +508,7 @@ fn is_definitely_non_error_type(ty: &TSType) -> bool {
 /// this function will return None because there is non-whitespace before the statement,
 /// meaning the line of source_text containing the Span is not indented on a new line.
 pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
-    let span_start = span.start as usize;
+    let span_start = span.start() as usize;
     let preceding_source_text = &source_text[..span_start];
 
     // only return last line if is whitespace

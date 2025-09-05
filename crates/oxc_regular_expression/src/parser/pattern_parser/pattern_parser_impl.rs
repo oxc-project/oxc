@@ -722,7 +722,7 @@ impl<'a> PatternParser<'a> {
                 let span = self.span_factory.create(span_start, self.reader.offset());
                 // Keep original digits for `to_string()`
                 // Otherwise `\0022`(octal \002 + symbol 2) will be `\22`(octal \22)
-                let digits = span.end - span.start - 1; // -1 for '\'
+                let digits = span.end() - span.start() - 1; // -1 for '\'
 
                 return Ok(Some(ast::Character {
                     span,

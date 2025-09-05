@@ -52,12 +52,11 @@ impl Rule for NoEmptyFile {
             return;
         }
 
-        let mut span = program.span;
         // only show diagnostic for the first 100 characters to avoid huge diagnostic messages with
         // empty programs containing a bunch of comments.
         // NOTE: if the enable/disable directives come after the first 100 characters they won't be
         // respected by this diagnostic.
-        span.end = std::cmp::min(span.end, 100);
+        let span = Span::new(program.span.start(), std::cmp::min(program.span.end(), 100));
         ctx.diagnostic(no_empty_file_diagnostic(span));
     }
 

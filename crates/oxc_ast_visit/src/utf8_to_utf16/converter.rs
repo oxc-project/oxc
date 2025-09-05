@@ -291,8 +291,8 @@ impl<'t> Utf8ToUtf16Converter<'t> {
 
     /// Convert [`Span`] from UTF-8 offsets to UTF-16 offsets.
     pub fn convert_span(&mut self, span: &mut Span) {
-        self.convert_offset(&mut span.start);
-        self.convert_offset(&mut span.end);
+        self.convert_offset(&mut span.start());
+        self.convert_offset(&mut span.end());
     }
 
     /// Convert a single UTF-16 offset back to UTF-8.
@@ -320,8 +320,8 @@ impl<'t> Utf8ToUtf16Converter<'t> {
 
     /// Convert [`Span`] from UTF-16 offsets to UTF-8 offsets.
     pub fn convert_span_back(&self, span: &mut Span) {
-        self.convert_offset_back(&mut span.start);
-        self.convert_offset_back(&mut span.end);
+        self.convert_offset_back(&mut span.start());
+        self.convert_offset_back(&mut span.end());
     }
 }
 

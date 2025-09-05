@@ -176,12 +176,15 @@ impl Rule for NoUselessUndefined {
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
                                 let delete_span = if let Some(comment) = ctx
-                                    .comments_range(ret_stmt.span.start..ret_stmt.span.end)
+                                    .comments_range(ret_stmt.span.start()..ret_stmt.span.end())
                                     .next_back()
                                 {
-                                    Span::new(comment.span.end, undefined_literal.span.end)
+                                    Span::new(comment.span.end(), undefined_literal.span.end())
                                 } else {
-                                    Span::new(ret_stmt.span().start + 6, undefined_literal.span.end)
+                                    Span::new(
+                                        ret_stmt.span().start() + 6,
+                                        undefined_literal.span.end(),
+                                    )
                                 };
                                 fixer.delete_range(delete_span)
                             },
@@ -241,8 +244,8 @@ impl Rule for NoUselessUndefined {
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
                                 fixer.delete_range(Span::new(
-                                    variable_declarator.id.span().end,
-                                    undefined_literal.span.end,
+                                    variable_declarator.id.span().end(),
+                                    undefined_literal.span.end(),
                                 ))
                             },
                         );
@@ -250,7 +253,8 @@ impl Rule for NoUselessUndefined {
                     // `const {foo = undefined} = {}`
                     AstKind::AssignmentPattern(assign_pattern) => {
                         let left = &assign_pattern.left;
-                        let delete_span = Span::new(left.span().end, undefined_literal.span.end);
+                        let delete_span =
+                            Span::new(left.span().end(), undefined_literal.span.end());
                         if is_has_function_return_type(parent_node, ctx) {
                             return;
                         }
@@ -293,18 +297,18 @@ impl Rule for NoUselessUndefined {
                 }
                 let first_undefined_span = undefined_args_spans[0];
                 let last_undefined_span = undefined_args_spans[undefined_args_spans.len() - 1];
-                let mut start = first_undefined_span.start;
-                let mut end = last_undefined_span.end;
+                let mut start = first_undefined_span.start();
+                let mut end = last_undefined_span.end();
 
                 let remaining_count = arguments.len() - undefined_args_spans.len();
 
                 if remaining_count > 0 {
                     let previous_argument = &arguments[remaining_count - 1];
-                    start = previous_argument.span().end;
+                    start = previous_argument.span().end();
                 }
                 // If all arguments removed, and there is trailing comma, we need remove it.
                 if remaining_count == 0 {
-                    end = call_expr.span.end - 1;
+                    end = call_expr.span.end() - 1;
                 }
 
                 let delete_span = Span::new(start, end);

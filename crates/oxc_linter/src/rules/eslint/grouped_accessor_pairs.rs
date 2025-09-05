@@ -256,8 +256,8 @@ impl Rule for GroupedAccessorPairs {
                             self.pair_order,
                             (&getter_key, &setter_key),
                             (
-                                Span::new(getter_node.span.start, getter_node.key.span().end),
-                                Span::new(setter_node.span.start, setter_node.key.span().end),
+                                Span::new(getter_node.span.start(), getter_node.key.span().end()),
+                                Span::new(setter_node.span.start(), setter_node.key.span().end()),
                             ),
                             (getter_idx, setter_idx),
                         );
@@ -326,8 +326,8 @@ impl Rule for GroupedAccessorPairs {
                             self.pair_order,
                             (&getter_key, &setter_key),
                             (
-                                Span::new(getter_node.span.start, getter_node.key.span().end),
-                                Span::new(setter_node.span.start, setter_node.key.span().end),
+                                Span::new(getter_node.span.start(), getter_node.key.span().end()),
+                                Span::new(setter_node.span.start(), setter_node.key.span().end()),
                             ),
                             (getter_idx, setter_idx),
                         );
@@ -396,8 +396,8 @@ impl GroupedAccessorPairs {
                     self.pair_order,
                     (&getter_key, &setter_key),
                     (
-                        Span::new(getter_node.span.start, getter_node.key.span().end),
-                        Span::new(setter_node.span.start, setter_node.key.span().end),
+                        Span::new(getter_node.span.start(), getter_node.key.span().end()),
+                        Span::new(setter_node.span.start(), setter_node.key.span().end()),
                     ),
                     (getter_idx, setter_idx),
                 );

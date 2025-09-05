@@ -162,7 +162,7 @@ fn fix_fragment_element<'a>(
 ) -> RuleFix<'a> {
     let replacement = if let Some(closing_elem) = &elem.closing_element {
         trim_like_react(
-            Span::new(elem.opening_element.span.end, closing_elem.span.start)
+            Span::new(elem.opening_element.span.end(), closing_elem.span.start())
                 .source_text(ctx.source_text()),
         )
     } else {
@@ -180,7 +180,7 @@ fn fix_jsx_fragment<'a>(
     fixer.replace(
         elem.span(),
         trim_like_react(
-            Span::new(elem.opening_fragment.span.end, elem.closing_fragment.span.start)
+            Span::new(elem.opening_fragment.span.end(), elem.closing_fragment.span.start())
                 .source_text(ctx.source_text()),
         ),
     )
@@ -524,7 +524,7 @@ fn test() {
             r"
             const Comp = () => (
               <html>
-                
+
               </html>
             );
             ",

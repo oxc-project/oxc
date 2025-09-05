@@ -76,8 +76,8 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
                 pattern_span.source_text(&self.source_text),
                 flags_span.map(|span| span.source_text(&self.source_text)),
                 RegExpParserOptions {
-                    pattern_span_offset: pattern_span.start,
-                    flags_span_offset: flags_span.map_or(0, |span| span.start),
+                    pattern_span_offset: pattern_span.start(),
+                    flags_span_offset: flags_span.map_or(0, |span| span.start()),
                 },
             )
             .parse();

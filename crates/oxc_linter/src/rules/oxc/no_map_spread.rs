@@ -451,7 +451,7 @@ fn has_reads_after(
         .filter(|r| r.is_read())
         // Find where the symbol was declared
         .map(|r| nodes.get_node(r.node_id())) //
-        .any(|node| node.span().end > span.end)
+        .any(|node| node.span().end() > span.end())
 }
 
 fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<&'b Expression<'a>> {

@@ -105,8 +105,8 @@ impl Rule for NoNonNullAssertedOptionalChain {
         };
 
         if let Some(chain_span) = chain_span {
-            let chain_span_end = chain_span.end;
-            let non_null_end = non_null_expr.span.end - 1;
+            let chain_span_end = chain_span.end();
+            let non_null_end = non_null_expr.span.end() - 1;
             let diagnostic = no_non_null_asserted_optional_chain_diagnostic(
                 Span::sized(chain_span_end, 1),
                 Span::sized(non_null_end, 1),

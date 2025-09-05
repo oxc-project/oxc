@@ -29,7 +29,7 @@ impl NoUnusedVars {
             .iter()
             .find(|specifier| symbol == specifier)
             .map_or_else(|| symbol.span(), GetSpan::span);
-        let text_after = fixer.source_text()[(span.end as usize)..].chars();
+        let text_after = fixer.source_text()[(span.end() as usize)..].chars();
         let span = span.expand_right(count_whitespace_or_commas(text_after));
 
         fixer.delete_range(span).dangerously()

@@ -38,12 +38,12 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
         let last_attribute_has_comments = self
             .attributes
             .last()
-            .is_some_and(|a| comments.has_comments_between(a.span().end, self.span.end));
+            .is_some_and(|a| comments.has_comments_between(a.span().end(), self.span.end()));
 
         let type_arguments_or_name_end =
-            self.type_arguments().map_or_else(|| self.name.span().end, |t| t.span.end);
+            self.type_arguments().map_or_else(|| self.name.span().end(), |t| t.span.end());
         let first_attribute_start_or_element_end =
-            self.attributes.first().map_or_else(|| self.span.end, |a| a.span().start);
+            self.attributes.first().map_or_else(|| self.span.end(), |a| a.span().start());
         let mut name_has_comments = comments
             .has_comments_between(type_arguments_or_name_end, first_attribute_start_or_element_end);
 
@@ -101,7 +101,7 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
                 let format_inner = format_with(|f| {
                     write!(f, [format_open, soft_line_indent_or_space(&self.attributes())])?;
 
-                    let comments = f.context().comments().comments_before(self.span.end);
+                    let comments = f.context().comments().comments_before(self.span.end());
                     FormatTrailingComments::Comments(comments).fmt(f)?;
 
                     let force_bracket_same_line = f.options().bracket_same_line.value();

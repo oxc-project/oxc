@@ -57,7 +57,7 @@ impl Rule for NoUnescapedEntities {
             for (i, &byte) in source.as_bytes().iter().enumerate() {
                 if matches!(byte, b'\'' | b'\"') {
                     #[expect(clippy::cast_possible_truncation)]
-                    let start = jsx_text.span.start + i as u32;
+                    let start = jsx_text.span.start() + i as u32;
                     ctx.diagnostic(no_unescaped_entities_diagnostic(
                         Span::sized(start, 1),
                         byte as char,

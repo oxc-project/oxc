@@ -107,10 +107,10 @@ impl Rule for NoInvalidRemoveEventListener {
         let listener_span = if listener_span.size() > 20 {
             match listener {
                 Argument::FunctionExpression(func_expr) => {
-                    Span::new(func_expr.span.start, func_expr.params.span.end)
+                    Span::new(func_expr.span.start(), func_expr.params.span.end())
                 }
                 Argument::ArrowFunctionExpression(arrow_expr) => {
-                    Span::new(arrow_expr.span.start, arrow_expr.body.span.start)
+                    Span::new(arrow_expr.span.start(), arrow_expr.body.span.start())
                 }
                 Argument::CallExpression(_) => listener_span,
                 _ => unreachable!(),
