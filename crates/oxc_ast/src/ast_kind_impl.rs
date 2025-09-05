@@ -1,4 +1,7 @@
-#![expect(missing_docs)] // FIXME
+//! Implementation details for AST node kinds
+//!
+//! This module provides methods and utilities for working with [`AstKind`],
+//! including type checking, conversions, and tree traversal helpers.
 
 use oxc_allocator::{Address, GetAddress};
 use oxc_span::{Atom, GetSpan};
@@ -6,6 +9,10 @@ use oxc_span::{Atom, GetSpan};
 use super::{AstKind, ast::*};
 
 impl<'a> AstKind<'a> {
+    /// Check if this AST node is a statement
+    ///
+    /// Returns `true` for all statement types including iteration statements,
+    /// control flow statements, and declaration statements.
     #[rustfmt::skip]
     pub fn is_statement(self) -> bool {
         self.is_iteration_statement()
@@ -16,6 +23,10 @@ impl<'a> AstKind<'a> {
                     | Self::IfStatement(_) | Self::VariableDeclaration(_) | Self::ExportDefaultDeclaration(_))
     }
 
+    /// Check if this AST node is a declaration
+    ///
+    /// Returns `true` for function declarations, class declarations,
+    /// variable declarations, TypeScript declarations, and module declarations.
     #[rustfmt::skip]
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
@@ -26,10 +37,17 @@ impl<'a> AstKind<'a> {
         ) || self.is_module_declaration()
     }
 
+    /// Check if this AST node is a module declaration
+    ///
+    /// Returns `true` for import/export declarations.
     pub fn is_module_declaration(self) -> bool {
         self.as_module_declaration_kind().is_some()
     }
 
+    /// Attempt to convert this AST node to a module declaration kind
+    ///
+    /// Returns `Some(ModuleDeclarationKind)` if this is a module declaration,
+    /// `None` otherwise.
     pub fn as_module_declaration_kind(&self) -> Option<ModuleDeclarationKind<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(ModuleDeclarationKind::Import(decl)),
@@ -46,12 +64,19 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this AST node is an iteration statement
+    ///
+    /// Returns `true` for do-while, while, for-in, for-of, and for statements.
     #[rustfmt::skip]
     pub fn is_iteration_statement(self) -> bool {
         matches!(self, Self::DoWhileStatement(_) | Self::WhileStatement(_) | Self::ForInStatement(_)
                 | Self::ForOfStatement(_) | Self::ForStatement(_))
     }
 
+    /// Check if this AST node is any kind of identifier
+    ///
+    /// Returns `true` for binding identifiers, identifier references,
+    /// and label identifiers.
     #[rustfmt::skip]
     pub fn is_identifier(self) -> bool {
         matches!(self, Self::BindingIdentifier(_)
@@ -59,6 +84,10 @@ impl<'a> AstKind<'a> {
                 | Self::LabelIdentifier(_))
     }
 
+    /// Check if this AST node is a TypeScript type
+    ///
+    /// Returns `true` for all TypeScript type nodes including keywords,
+    /// type references, unions, intersections, etc.
     #[rustfmt::skip]
     pub fn is_type(self) -> bool {
         matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSIntrinsicKeyword(_)
@@ -69,6 +98,10 @@ impl<'a> AstKind<'a> {
                 | Self::TSTypeLiteral(_) | Self::TSTypeReference(_) | Self::TSUnionType(_))
     }
 
+    /// Check if this AST node is a literal
+    ///
+    /// Returns `true` for numeric, string, boolean, null, bigint,
+    /// regexp, and template literals.
     pub fn is_literal(self) -> bool {
         matches!(
             self,
@@ -82,10 +115,17 @@ impl<'a> AstKind<'a> {
         )
     }
 
+    /// Check if this AST node is function-like
+    ///
+    /// Returns `true` for function expressions/declarations and arrow functions.
     pub fn is_function_like(self) -> bool {
         matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
     }
 
+    /// Get the name of an identifier node
+    ///
+    /// Returns the identifier name if this is any kind of identifier node,
+    /// `None` otherwise.
     pub fn identifier_name(self) -> Option<Atom<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name),
@@ -96,6 +136,9 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this is an identifier reference with a specific name
+    ///
+    /// Returns `true` if this is an `IdentifierReference` with the given name.
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
@@ -125,10 +168,17 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this AST node is a property key
+    ///
+    /// Returns `true` for identifier names and private identifiers used as property keys.
     pub fn is_property_key(&self) -> bool {
         self.as_property_key_kind().is_some()
     }
 
+    /// Attempt to convert this AST node to a property key kind
+    ///
+    /// Returns `Some(PropertyKeyKind)` if this is a property key,
+    /// `None` otherwise.
     pub fn as_property_key_kind(&self) -> Option<PropertyKeyKind<'a>> {
         match self {
             Self::IdentifierName(ident) => Some(PropertyKeyKind::Static(ident)),
@@ -137,6 +187,9 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Create an `AstKind` from an expression
+    ///
+    /// Converts any expression type to its corresponding `AstKind` variant.
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
@@ -649,12 +702,21 @@ impl GetAddress for MemberExpressionKind<'_> {
     }
 }
 
+/// Module declaration types
+///
+/// Represents different kinds of module import and export declarations.
 pub enum ModuleDeclarationKind<'a> {
+    /// An import declaration like `import foo from 'bar'`
     Import(&'a ImportDeclaration<'a>),
+    /// An export all declaration like `export * from 'foo'`
     ExportAll(&'a ExportAllDeclaration<'a>),
+    /// A named export declaration like `export { foo, bar }`
     ExportNamed(&'a ExportNamedDeclaration<'a>),
+    /// A default export declaration like `export default foo`
     ExportDefault(&'a ExportDefaultDeclaration<'a>),
+    /// A TypeScript export assignment like `export = foo`
     TSExportAssignment(&'a TSExportAssignment<'a>),
+    /// A TypeScript namespace export like `export as namespace foo`
     TSNamespaceExport(&'a TSNamespaceExportDeclaration<'a>),
 }
 
@@ -685,6 +747,9 @@ impl GetSpan for ModuleDeclarationKind<'_> {
     }
 }
 
+/// Property key types
+///
+/// Represents different kinds of property keys in objects and classes.
 pub enum PropertyKeyKind<'a> {
     /// A static identifier property key, like `a` in `{ a: 1 }`.
     Static(&'a IdentifierName<'a>),
