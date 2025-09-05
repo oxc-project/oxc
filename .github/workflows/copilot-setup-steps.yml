@@ -33,7 +33,7 @@ jobs:
           cache-key: warm
           save-cache: false
           tools: just,cargo-insta,typos-cli,cargo-shear,dprint,ast-grep
-          components: clippy rust-docs rustfmt
+          components: clippy rust-docs rustfmt rust-analyzer
 
       - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
