@@ -15,6 +15,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
+
+        // Try to fold assignments first
+        if let Some(stmt) = Self::try_fold_assignments_in_if_else(if_stmt, ctx) {
+            return Some(stmt);
+        }
+
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             if if_stmt.alternate.is_none() {
                 let (op, e) = match &mut if_stmt.test {

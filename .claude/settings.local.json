@@ -6,7 +6,8 @@
       "Bash(ast-grep:*)",
       "Bash(rg:*)",
       "Bash(cargo clippy:*)",
-      "Bash(cargo build:*)"
+      "Bash(cargo build:*)",
+      "Bash(cargo test:*)"
     ],
     "deny": [],
     "ask": []
