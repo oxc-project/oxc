@@ -874,7 +874,7 @@ impl<'a> PeepholeOptimizations {
                     Some(arg) => arg
                         .evaluate_value_to_string(ctx)
                         .filter(|_| !arg.may_have_side_effects(ctx))
-                        .map(|s| ctx.value_to_expr(e.span, ConstantValue::String(s))),
+                        .map(|s| ctx.value_to_expression(e.span, ConstantValue::String(s))),
                 }
             }
             "Number" => Some(ctx.ast.expression_numeric_literal(

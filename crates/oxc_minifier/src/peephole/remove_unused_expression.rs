@@ -18,7 +18,7 @@ impl<'a> PeepholeOptimizations {
     pub fn remove_unused_expression(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         match e {
             Expression::ArrayExpression(_) => Self::remove_unused_array_expr(e, ctx),
-            Expression::AssignmentExpression(_) => Self::remove_unused_assignment_expr(e, ctx),
+            Expression::AssignmentExpression(_) => Self::remove_unused_assignment_expression(e, ctx),
             Expression::BinaryExpression(_) => Self::remove_unused_binary_expr(e, ctx),
             Expression::CallExpression(_) => Self::remove_unused_call_expr(e, ctx),
             Expression::ClassExpression(_) => Self::remove_unused_class_expr(e, ctx),
@@ -608,7 +608,7 @@ impl<'a> PeepholeOptimizations {
         }))
     }
 
-    pub fn remove_unused_assignment_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    pub fn remove_unused_assignment_expression(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         let Expression::AssignmentExpression(assign_expr) = e else { return false };
         if matches!(
             ctx.state.options.unused,

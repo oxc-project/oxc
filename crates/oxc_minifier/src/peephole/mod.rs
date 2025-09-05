@@ -208,10 +208,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::inline_template_literal(t, ctx);
                 Self::substitute_template_literal(expr, ctx);
             }
-            Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
+            Expression::ObjectExpression(e) => Self::fold_object_expression(e, ctx),
             Expression::BinaryExpression(e) => {
                 Self::substitute_swap_binary_expressions(e);
-                Self::fold_binary_expr(expr, ctx);
+                Self::fold_binary_expression(expr, ctx);
                 Self::fold_binary_typeof_comparison(expr, ctx);
                 Self::minimize_loose_boolean(expr, ctx);
                 Self::minimize_binary(expr, ctx);
@@ -219,26 +219,26 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::substitute_typeof_undefined(expr, ctx);
             }
             Expression::UnaryExpression(_) => {
-                Self::fold_unary_expr(expr, ctx);
+                Self::fold_unary_expression(expr, ctx);
                 Self::minimize_unary(expr, ctx);
                 Self::substitute_unary_plus(expr, ctx);
             }
             Expression::StaticMemberExpression(_) => {
-                Self::fold_static_member_expr(expr, ctx);
+                Self::fold_static_member_expression(expr, ctx);
                 Self::replace_known_property_access(expr, ctx);
             }
             Expression::ComputedMemberExpression(_) => {
-                Self::fold_computed_member_expr(expr, ctx);
+                Self::fold_computed_member_expression(expr, ctx);
                 Self::replace_known_property_access(expr, ctx);
             }
             Expression::LogicalExpression(_) => {
-                Self::fold_logical_expr(expr, ctx);
+                Self::fold_logical_expression(expr, ctx);
                 Self::minimize_logical_expression(expr, ctx);
                 Self::substitute_is_object_and_not_null(expr, ctx);
                 Self::substitute_rotate_logical_expression(expr, ctx);
             }
             Expression::ChainExpression(_) => {
-                Self::fold_chain_expr(expr, ctx);
+                Self::fold_chain_expression(expr, ctx);
                 Self::substitute_chain_expression(expr, ctx);
             }
             Expression::CallExpression(_) => {
@@ -261,7 +261,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::minimize_normal_assignment_to_combined_logical_assignment(e, ctx);
                 Self::minimize_normal_assignment_to_combined_assignment(e, ctx);
                 Self::minimize_assignment_to_update_expression(expr, ctx);
-                Self::remove_unused_assignment_expr(expr, ctx);
+                Self::remove_unused_assignment_expression(expr, ctx);
             }
             Expression::SequenceExpression(_) => Self::remove_sequence_expression(expr, ctx),
             Expression::ArrowFunctionExpression(e) => Self::substitute_arrow_expression(e, ctx),
@@ -478,20 +478,20 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             Expression::TemplateLiteral(t) => {
                 PeepholeOptimizations::inline_template_literal(t, ctx);
             }
-            Expression::ObjectExpression(e) => PeepholeOptimizations::fold_object_exp(e, ctx),
+            Expression::ObjectExpression(e) => PeepholeOptimizations::fold_object_expression(e, ctx),
             Expression::BinaryExpression(_) => {
-                PeepholeOptimizations::fold_binary_expr(e, ctx);
+                PeepholeOptimizations::fold_binary_expression(e, ctx);
                 PeepholeOptimizations::fold_binary_typeof_comparison(e, ctx);
             }
-            Expression::UnaryExpression(_) => PeepholeOptimizations::fold_unary_expr(e, ctx),
+            Expression::UnaryExpression(_) => PeepholeOptimizations::fold_unary_expression(e, ctx),
             Expression::StaticMemberExpression(_) => {
-                PeepholeOptimizations::fold_static_member_expr(e, ctx);
+                PeepholeOptimizations::fold_static_member_expression(e, ctx);
             }
             Expression::ComputedMemberExpression(_) => {
-                PeepholeOptimizations::fold_computed_member_expr(e, ctx);
+                PeepholeOptimizations::fold_computed_member_expression(e, ctx);
             }
-            Expression::LogicalExpression(_) => PeepholeOptimizations::fold_logical_expr(e, ctx),
-            Expression::ChainExpression(_) => PeepholeOptimizations::fold_chain_expr(e, ctx),
+            Expression::LogicalExpression(_) => PeepholeOptimizations::fold_logical_expression(e, ctx),
+            Expression::ChainExpression(_) => PeepholeOptimizations::fold_chain_expression(e, ctx),
             Expression::CallExpression(_) => {
                 PeepholeOptimizations::fold_call_expression(e, ctx);
                 PeepholeOptimizations::remove_dead_code_call_expression(e, ctx);
@@ -503,7 +503,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
                 PeepholeOptimizations::remove_sequence_expression(e, ctx);
             }
             Expression::AssignmentExpression(_) => {
-                PeepholeOptimizations::remove_unused_assignment_expr(e, ctx);
+                PeepholeOptimizations::remove_unused_assignment_expression(e, ctx);
             }
             _ => {}
         }

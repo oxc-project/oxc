@@ -49,14 +49,14 @@ impl<'a> Minifier {
     }
 
     pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(false, allocator, program)
+        self.compress_and_mangle(false, allocator, program)
     }
 
-    pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(true, allocator, program)
+    pub fn eliminate_dead_code(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
+        self.compress_and_mangle(true, allocator, program)
     }
 
-    fn build(
+    fn compress_and_mangle(
         self,
         dce: bool,
         allocator: &'a Allocator,
@@ -74,11 +74,11 @@ impl<'a> Minifier {
                     let options = CompressOptions {
                         target: options.target,
                         treeshake: options.treeshake,
-                        ..CompressOptions::dce()
+                        ..CompressOptions::dead_code_elimination()
                     };
-                    compressor.dead_code_elimination_with_scoping(program, scoping, options)
+                    compressor.eliminate_dead_code_with_scoping(program, scoping, options)
                 } else {
-                    compressor.build_with_scoping(program, scoping, options)
+                    compressor.compress_with_scoping(program, scoping, options)
                 };
                 (stats, iterations)
             })
