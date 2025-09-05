@@ -2,7 +2,7 @@
 //!
 //! This module contains AST node definitions for TypeScript syntax including:
 //! - Type annotations and declarations
-//! - Interfaces and type aliases  
+//! - Interfaces and type aliases
 //! - Enums and namespaces
 //! - TypeScript-specific expressions
 //! - Import/export extensions

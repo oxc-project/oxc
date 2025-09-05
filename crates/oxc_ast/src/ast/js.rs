@@ -2,7 +2,7 @@
 //!
 //! This module contains the core AST node definitions for JavaScript syntax including:
 //! - Program structure and statements
-//! - Expressions and literals  
+//! - Expressions and literals
 //! - Functions and classes
 //! - Patterns and identifiers
 //! - Module declarations (import/export)
