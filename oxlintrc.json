@@ -42,8 +42,6 @@
     "npm/runtime/**",
     "tasks/coverage/**",
     "crates/oxc_semantic/tests/**",
-    "napi/**", // TODO
-    "tasks/lint_rules/src/oxlint-rules.mjs", // TODO
-    "tasks/lint_rules/src/main.mjs" // TODO
+    "napi/**" // TODO
   ]
 }
