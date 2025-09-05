@@ -52,7 +52,11 @@ impl<'a> Minifier {
         self.compress_and_mangle(false, allocator, program)
     }
 
-    pub fn eliminate_dead_code(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
+    pub fn eliminate_dead_code(
+        self,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+    ) -> MinifierReturn {
         self.compress_and_mangle(true, allocator, program)
     }
 

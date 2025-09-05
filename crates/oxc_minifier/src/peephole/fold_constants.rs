@@ -29,7 +29,9 @@ impl<'a> PeepholeOptimizations {
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => {}
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
-                if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expression(e.span, v)) {
+                if let Some(changed) =
+                    e.evaluate_value(ctx).map(|v| ctx.value_to_expression(e.span, v))
+                {
                     *expr = changed;
                     ctx.state.changed = true;
                 }
@@ -43,7 +45,9 @@ impl<'a> PeepholeOptimizations {
         if e.object.may_have_side_effects(ctx) {
             return;
         }
-        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expression(e.span, value)) {
+        if let Some(changed) =
+            e.evaluate_value(ctx).map(|value| ctx.value_to_expression(e.span, value))
+        {
             *expr = changed;
             ctx.state.changed = true;
         }
@@ -55,7 +59,9 @@ impl<'a> PeepholeOptimizations {
         if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
             return;
         }
-        if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expression(e.span, value)) {
+        if let Some(changed) =
+            e.evaluate_value(ctx).map(|value| ctx.value_to_expression(e.span, value))
+        {
             *expr = changed;
             ctx.state.changed = true;
         }

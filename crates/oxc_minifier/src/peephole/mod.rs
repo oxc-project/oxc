@@ -478,7 +478,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             Expression::TemplateLiteral(t) => {
                 PeepholeOptimizations::inline_template_literal(t, ctx);
             }
-            Expression::ObjectExpression(e) => PeepholeOptimizations::fold_object_expression(e, ctx),
+            Expression::ObjectExpression(e) => {
+                PeepholeOptimizations::fold_object_expression(e, ctx)
+            }
             Expression::BinaryExpression(_) => {
                 PeepholeOptimizations::fold_binary_expression(e, ctx);
                 PeepholeOptimizations::fold_binary_typeof_comparison(e, ctx);
@@ -490,7 +492,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
             Expression::ComputedMemberExpression(_) => {
                 PeepholeOptimizations::fold_computed_member_expression(e, ctx);
             }
-            Expression::LogicalExpression(_) => PeepholeOptimizations::fold_logical_expression(e, ctx),
+            Expression::LogicalExpression(_) => {
+                PeepholeOptimizations::fold_logical_expression(e, ctx)
+            }
             Expression::ChainExpression(_) => PeepholeOptimizations::fold_chain_expression(e, ctx),
             Expression::CallExpression(_) => {
                 PeepholeOptimizations::fold_call_expression(e, ctx);
