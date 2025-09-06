@@ -2,8 +2,8 @@ use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement,
-        JSXFragment, Statement,
+        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment,
+        Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -180,7 +180,6 @@ fn is_in_array_or_iter<'a, 'b>(
                     return None;
                 }
 
-
                 is_outside_containing_function = true;
             }
             AstKind::Function(_func) => {
@@ -190,7 +189,6 @@ fn is_in_array_or_iter<'a, 'b>(
                 if is_outside_containing_function {
                     return None;
                 }
-
 
                 is_outside_containing_function = true;
             }
@@ -213,7 +211,8 @@ fn is_in_array_or_iter<'a, 'b>(
                                 // Check if JSX element span is contained within the target argument span
                                 let jsx_span = jsx_node.kind().span();
                                 let arg_span = target_arg.span();
-                                if jsx_span.start >= arg_span.start && jsx_span.end <= arg_span.end {
+                                if jsx_span.start >= arg_span.start && jsx_span.end <= arg_span.end
+                                {
                                     return Some(InsideArrayOrIterator::Iterator(span));
                                 }
                             }
