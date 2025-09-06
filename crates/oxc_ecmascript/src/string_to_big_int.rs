@@ -1,5 +1,6 @@
 use num_bigint::BigInt;
 use num_traits::{Num, Zero};
+use oxc_data_structures::string_utils::StrExt;
 
 /// `StringToBigInt`
 ///
@@ -15,7 +16,7 @@ impl StringToBigInt<'_> for &str {
             return None;
         }
 
-        let s = self.trim();
+        let s = self.ascii_trim();
 
         if s.is_empty() {
             return Some(BigInt::zero());

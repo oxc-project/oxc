@@ -1,3 +1,4 @@
+use oxc_data_structures::string_utils::StrExt;
 use oxc_span::Span;
 
 /// Represents the raw text of a JSDoc tag *outside* the type expression (`{}`) and tag name (e.g., `@param`),
@@ -64,14 +65,14 @@ impl<'a> JSDocCommentPart<'a> {
     // ```
     // It may not be perfect for multiline, but for single line, which is probably the majority, it is enough.
     pub fn span_trimmed_first_line(&self) -> Span {
-        if self.raw.trim().is_empty() {
+        if self.raw.ascii_trim().is_empty() {
             return Span::empty(self.span.start);
         }
 
         let base_len = self.raw.len();
         if self.raw.lines().count() == 1 {
-            let trimmed_start_offset = base_len - self.raw.trim_start().len();
-            let trimmed_end_offset = base_len - self.raw.trim_end().len();
+            let trimmed_start_offset = base_len - self.raw.ascii_trim_start().len();
+            let trimmed_end_offset = base_len - self.raw.ascii_trim_end().len();
 
             return Span::new(
                 self.span.start + u32::try_from(trimmed_start_offset).unwrap_or_default(),
@@ -79,7 +80,7 @@ impl<'a> JSDocCommentPart<'a> {
             );
         }
 
-        let start_trimmed = self.raw.trim_start();
+        let start_trimmed = self.raw.ascii_trim_start();
         let trimmed_start_offset = base_len - start_trimmed.len();
         let trimmed_end_offset = trimmed_start_offset + start_trimmed.find('\n').unwrap_or(0);
         Span::new(
@@ -92,13 +93,13 @@ impl<'a> JSDocCommentPart<'a> {
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
         if self.raw.lines().count() == 1 {
-            return self.raw.trim().to_string();
+            return self.raw.ascii_trim().to_string();
         }
 
         self.raw
             .lines()
             // Trim leading the first `*` in each line
-            .map(|line| line.trim().strip_prefix('*').unwrap_or(line).trim())
+            .map(|line| line.ascii_trim().strip_prefix('*').unwrap_or(line).ascii_trim())
             .filter(|line| !line.is_empty())
             .collect::<Vec<_>>()
             .join("\n")
@@ -113,7 +114,7 @@ pub struct JSDocTagKindPart<'a> {
 impl<'a> JSDocTagKindPart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.starts_with('@'));
-        debug_assert!(part_content.trim() == part_content);
+        debug_assert!(part_content.ascii_trim() == part_content);
 
         Self { raw: part_content, span }
     }
@@ -161,7 +162,7 @@ impl<'a> JSDocTagTypePart<'a> {
     /// Returns the type content without `{` and `}`.
     pub fn parsed(&self) -> &'a str {
         // +1 for `{`, -1 for `}`
-        self.raw[1..self.raw.len() - 1].trim()
+        self.raw[1..self.raw.len() - 1].ascii_trim()
     }
 }
 
@@ -201,7 +202,7 @@ pub struct JSDocTagTypeNamePart<'a> {
 
 impl<'a> JSDocTagTypeNamePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
-        debug_assert!(part_content.trim() == part_content);
+        debug_assert!(part_content.ascii_trim() == part_content);
 
         let optional = part_content.starts_with('[') && part_content.ends_with(']');
         let default = optional && part_content.contains('=');
@@ -213,8 +214,8 @@ impl<'a> JSDocTagTypeNamePart<'a> {
     /// `.raw` may be like `[foo = var]`, so extract the name
     pub fn parsed(&self) -> &'a str {
         if self.optional {
-            let inner = self.raw.trim_start_matches('[').trim_end_matches(']').trim();
-            return inner.split_once('=').map_or(inner, |(v, _)| v.trim());
+            let inner = self.raw.trim_start_matches('[').trim_end_matches(']').ascii_trim();
+            return inner.split_once('=').map_or(inner, |(v, _)| v.ascii_trim());
         }
 
         self.raw

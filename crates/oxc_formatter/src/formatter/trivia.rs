@@ -4,6 +4,7 @@ use oxc_ast::{
     Comment, CommentContent, CommentKind,
     ast::{CallExpression, NewExpression},
 };
+use oxc_data_structures::string_utils::StrExt;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::comment_node;
 
@@ -627,7 +628,7 @@ impl Format<'_> for FormatSkippedTokenTrivia {
 impl<'a> Format<'a> for Comment {
     #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = self.span.source_text(f.source_text()).trim_end();
+        let source_text = self.span.source_text(f.source_text()).ascii_trim_end();
         if is_alignable_comment(source_text) {
             let mut source_offset = self.span.start;
 
@@ -635,7 +636,7 @@ impl<'a> Format<'a> for Comment {
 
             // `is_alignable_comment` only returns `true` for multiline comments
             let first_line = lines.next().unwrap();
-            write!(f, [dynamic_text(first_line.trim_end())])?;
+            write!(f, [dynamic_text(first_line.ascii_trim_end())])?;
 
             source_offset += first_line.len() as u32;
 
@@ -644,7 +645,7 @@ impl<'a> Format<'a> for Comment {
                 f,
                 [&format_once(|f| {
                     for line in lines {
-                        write!(f, [hard_line_break(), " ", dynamic_text(line.trim())])?;
+                        write!(f, [hard_line_break(), " ", dynamic_text(line.ascii_trim())])?;
                         source_offset += line.len() as u32;
                     }
                     Ok(())

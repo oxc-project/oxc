@@ -1,3 +1,4 @@
+use oxc_data_structures::string_utils::StrExt;
 use unicode_width::UnicodeWidthStr;
 
 use std::cmp;
@@ -582,7 +583,7 @@ impl<'a> EachTemplateTable<'a> {
         let header_text = header.value.raw.as_str();
 
         for column in header_text.split_terminator('|') {
-            let trimmed = column.trim();
+            let trimmed = column.ascii_trim();
             let text = f.context().allocator().alloc_str(trimmed);
             let column = EachTemplateColumn::new(text, false);
             builder.entry(EachTemplateElement::Column(column));

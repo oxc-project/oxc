@@ -6,6 +6,7 @@ use Tag::{
     StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
     StartLabelled, StartLineSuffix,
 };
+use oxc_data_structures::string_utils::StrExt;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
@@ -2528,8 +2529,11 @@ pub fn get_lines_before(span: Span, f: &Formatter) -> usize {
             // If we find a `(`, we try to find the matching `)` and reset the count.
             // This is necessary to avoid counting the newlines inside the parenthesis.
 
-            let Some((pos, ')')) =
-                f.source_text()[right_parent_start..].trim_start().chars().enumerate().next()
+            let Some((pos, ')')) = (&f.source_text()[right_parent_start..])
+                .ascii_trim_start()
+                .chars()
+                .enumerate()
+                .next()
             else {
                 return count;
             };

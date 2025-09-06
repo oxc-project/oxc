@@ -2,6 +2,7 @@ use std::ops::Deref;
 
 use oxc_allocator::{Address, Vec};
 use oxc_ast::{ast::*, match_expression};
+use oxc_data_structures::string_utils::StrExt;
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::{ZWNBSP, is_line_terminator};
 
@@ -149,7 +150,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#!", dynamic_text(self.value().as_str().trim_end())])?;
+        write!(f, ["#!", dynamic_text(self.value().as_str().ascii_trim_end())])?;
 
         if get_lines_after(self.span.end, f.source_text()) > 1 {
             write!(f, [empty_line()])
