@@ -1116,12 +1116,14 @@ impl<'a> JsxImpl<'a, '_> {
         let mut prev = 0;
         while let Some((i, c)) = chars.next() {
             if c == '&' {
-                let start = i;
+                let mut start = i;
                 let mut end = None;
                 for (j, c) in chars.by_ref() {
                     if c == ';' {
                         end.replace(j);
                         break;
+                    } else if c == '&' {
+                        start = j;
                     }
                 }
                 if let Some(end) = end {
@@ -1372,5 +1374,15 @@ mod test {
         assert_eq!(&meta_prop.meta.name, "import");
         assert_eq!(&meta_prop.property.name, "meta");
         assert_eq!(member.property.name, "prop");
+    }
+
+    #[test]
+    fn entity_after_stray_amp() {
+        setup!(traverse_ctx, _transform_ctx);
+        let input = "& &amp;";
+        let mut acc = None;
+        super::JsxImpl::decode_entities(input, &mut acc, input.len(), traverse_ctx);
+        let out = acc.as_ref().unwrap().as_str();
+        assert_eq!(out, "& &");
     }
 }
