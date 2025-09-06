@@ -259,7 +259,6 @@ impl Rule for ConsistentFunctionScoping {
             return;
         }
 
-        // Skip linting for functions in specific contexts
         if matches!(
             outermost_paren_parent(node, ctx).map(AstNode::kind),
             Some(AstKind::ReturnStatement(_))
