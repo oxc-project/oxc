@@ -474,4 +474,6 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",
     "node" => "eslint-plugin-node",
+    "vue" => "eslint-plugin-vue",
+    "regexp" => "eslint-plugin-regexp",
 };
