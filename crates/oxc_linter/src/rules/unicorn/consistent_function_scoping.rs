@@ -260,8 +260,10 @@ impl Rule for ConsistentFunctionScoping {
         }
 
         // Skip linting for functions in specific contexts
-        if matches!(outermost_paren_parent(node, ctx).map(AstNode::kind), Some(AstKind::ReturnStatement(_)))
-            || is_function_direct_argument(node, ctx)
+        if matches!(
+            outermost_paren_parent(node, ctx).map(AstNode::kind),
+            Some(AstKind::ReturnStatement(_))
+        ) || is_function_direct_argument(node, ctx)
         {
             return;
         }
@@ -351,13 +353,13 @@ impl<'a> Visit<'a> for ReferencesFinder {
 fn is_function_direct_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let parent = ctx.nodes().parent_node(node.id());
     let node_span = node.span();
-    
+
     match parent.kind() {
-        AstKind::CallExpression(call) => 
-            call.arguments.iter().any(|arg| arg.span() == node_span),
-        AstKind::NewExpression(new_expr) => 
-            new_expr.arguments.iter().any(|arg| arg.span() == node_span),
-        _ => false
+        AstKind::CallExpression(call) => call.arguments.iter().any(|arg| arg.span() == node_span),
+        AstKind::NewExpression(new_expr) => {
+            new_expr.arguments.iter().any(|arg| arg.span() == node_span)
+        }
+        _ => false,
     }
 }
 
@@ -373,7 +375,7 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
                         // Check if the function is the callee (true IIFE)
                         // Handle both direct calls and parenthesized calls
                         let callee = &call.callee.without_parentheses();
-                        return callee.span().start <= parent_node.span().start 
+                        return callee.span().start <= parent_node.span().start
                             && parent_node.span().end <= callee.span().end;
                     }
                 }
@@ -392,7 +394,9 @@ fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             AstKind::CallExpression(call_expr) if is_react_hook(&call_expr.callee) => return true,
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 function_count += 1;
-                if function_count > 1 { break; }
+                if function_count > 1 {
+                    break;
+                }
             }
             _ => {}
         }
