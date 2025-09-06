@@ -9,8 +9,9 @@ use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 struct ArgumentContext {
     /// 0 = not in arguments, >0 = nesting level
     depth: u8,
-    /// Reference to current call expression span for additional context
-    current_call: Option<Span>,
+    /// Start position of current call expression for context (u32 vs Option<Span>)
+    /// 0 = no current call, >0 = call start position
+    current_call_start: u32,
 }
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
@@ -71,31 +72,33 @@ impl<'ast> FormatState<'ast> {
     }
 
     /// Returns true if currently formatting inside call arguments
-    #[inline]
+    #[inline(always)]
     pub fn is_in_arguments(&self) -> bool {
         self.argument_context.depth > 0
     }
 
     /// Returns the current argument nesting depth
-    #[inline]
+    #[inline(always)]
     pub fn argument_depth(&self) -> u8 {
         self.argument_context.depth
     }
 
     /// Enter argument context for the given call expression
+    #[inline]
     pub fn enter_arguments(&mut self, call_span: Span) {
         self.argument_context = ArgumentContext {
             depth: self.argument_context.depth.saturating_add(1),
-            current_call: Some(call_span),
+            current_call_start: call_span.start,
         };
     }
 
     /// Exit argument context
+    #[inline]
     pub fn exit_arguments(&mut self) {
         if self.argument_context.depth > 0 {
             self.argument_context.depth = self.argument_context.depth.saturating_sub(1);
             if self.argument_context.depth == 0 {
-                self.argument_context.current_call = None;
+                self.argument_context.current_call_start = 0;
             }
         }
     }

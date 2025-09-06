@@ -71,13 +71,13 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     /// Returns true if currently formatting inside call arguments
-    #[inline]
+    #[inline(always)]
     pub fn is_in_arguments(&self) -> bool {
         self.state().is_in_arguments()
     }
 
     /// Returns the current argument nesting depth
-    #[inline]
+    #[inline(always)]
     pub fn argument_depth(&self) -> u8 {
         self.state().argument_depth()
     }

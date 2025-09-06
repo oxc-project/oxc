@@ -37,6 +37,7 @@ pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
 }
 
 /// Context-aware version that can use argument context when available during formatting
+#[inline]
 pub fn is_expression_used_as_call_argument_fast(
     span: Span,
     parent: &AstNodes,
@@ -46,6 +47,10 @@ pub fn is_expression_used_as_call_argument_fast(
     if f.is_in_arguments() {
         match parent {
             AstNodes::CallExpression(call) => {
+                // Early exit: If no arguments, can't be an argument
+                if call.arguments().is_empty() {
+                    return false;
+                }
                 // If this is the callee, it's not an argument
                 if call.callee.span() == span {
                     return false;
@@ -54,6 +59,10 @@ pub fn is_expression_used_as_call_argument_fast(
                 return true;
             }
             AstNodes::NewExpression(new_expr) => {
+                // Early exit: If no arguments, can't be an argument
+                if new_expr.arguments().is_empty() {
+                    return false;
+                }
                 // If this is the callee, it's not an argument
                 if new_expr.callee.span() == span {
                     return false;
