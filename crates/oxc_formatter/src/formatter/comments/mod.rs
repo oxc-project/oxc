@@ -10,6 +10,7 @@ use oxc_ast::{
     Comment, CommentKind,
     ast::{self, CallExpression, NewExpression},
 };
+use oxc_data_structures::string_utils::StrExt;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -487,7 +488,7 @@ impl<'a> Comments<'a> {
     pub fn is_suppressed(&self, start: u32) -> bool {
         self.comments_before(start).iter().any(|comment| {
             // TODO: should replace `prettier-ignore` with `oxc-formatter-ignore` or something else later.
-            comment.content_span().source_text(self.source_text).trim() == "prettier-ignore"
+            comment.content_span().source_text(self.source_text).ascii_trim() == "prettier-ignore"
         })
     }
 }
@@ -616,6 +617,6 @@ pub fn is_alignable_comment(source_text: &str) -> bool {
         return false;
     }
     source_text.lines().enumerate().all(|(index, line)| {
-        if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
+        if index == 0 { line.starts_with("/*") } else { line.ascii_trim_start().starts_with('*') }
     })
 }

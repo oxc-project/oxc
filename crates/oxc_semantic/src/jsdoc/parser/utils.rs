@@ -1,3 +1,5 @@
+use oxc_data_structures::string_utils::StrExt;
+
 // For now, just returns the most outer braces
 pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
     let mut start = None;
@@ -30,7 +32,7 @@ pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
 // e.g. `[foo = 1]`, `[bar="here inside of string"]`, `[ baz = [ "a b", "c" ] ]`
 pub fn find_type_name_range(s: &str) -> Option<(usize, usize)> {
     // Not optional type syntax
-    if !s.trim_start().starts_with('[') {
+    if !s.ascii_trim_start().starts_with('[') {
         return find_token_range(s);
     }
 

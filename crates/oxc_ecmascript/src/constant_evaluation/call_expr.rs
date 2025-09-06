@@ -10,6 +10,7 @@ use std::borrow::Cow;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_data_structures::string_utils::StrExt;
 use oxc_syntax::number::ToJsString;
 
 use cow_utils::CowUtils;
@@ -120,9 +121,9 @@ fn try_fold_string_casing<'a>(
     let result = match name {
         "toLowerCase" => ctx.ast().atom(&value.cow_to_lowercase()),
         "toUpperCase" => ctx.ast().atom(&value.cow_to_uppercase()),
-        "trim" => ctx.ast().atom(value.trim()),
-        "trimStart" => ctx.ast().atom(value.trim_start()),
-        "trimEnd" => ctx.ast().atom(value.trim_end()),
+        "trim" => ctx.ast().atom(value.as_ref().ascii_trim()),
+        "trimStart" => ctx.ast().atom(value.as_ref().ascii_trim_start()),
+        "trimEnd" => ctx.ast().atom(value.as_ref().ascii_trim_end()),
         _ => return None,
     };
     Some(ConstantValue::String(Cow::Borrowed(result.as_str())))
@@ -680,7 +681,7 @@ fn try_fold_global_parse_float<'a>(
     let arg = args.first().unwrap();
     let expr = arg.as_expression()?;
     let input_string = expr.get_side_free_string_value(ctx)?;
-    let trimmed = input_string.trim_start();
+    let trimmed = input_string.ascii_trim_start();
     let Some(trimmed_prefix) = find_str_decimal_literal_prefix(trimmed) else {
         return Some(ConstantValue::Number(f64::NAN));
     };
@@ -808,7 +809,7 @@ fn try_fold_global_parse_int<'a>(
     let string_arg = args.first().unwrap();
     let string_expr = string_arg.as_expression()?;
     let string_value = string_expr.evaluate_value_to_string(ctx)?;
-    let mut string_value = string_value.trim_start();
+    let mut string_value = string_value.ascii_trim_start();
 
     let mut sign = 1;
     if string_value.starts_with('-') {
