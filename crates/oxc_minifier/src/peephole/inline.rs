@@ -45,7 +45,7 @@ impl<'a> PeepholeOptimizations {
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
             }
         {
-            *expr = ctx.value_to_expr(expr.span(), cv.clone());
+            *expr = ctx.value_to_expression(expr.span(), cv.clone());
             ctx.state.changed = true;
         }
     }

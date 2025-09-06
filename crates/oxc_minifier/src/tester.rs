@@ -91,7 +91,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     assert!(ret.errors.is_empty(), "{source_text}");
     let mut program = ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator).build(&mut program, options);
+        Compressor::new(&allocator).compress(&mut program, options);
     }
     Codegen::new()
         .with_options(CodegenOptions {

@@ -85,7 +85,7 @@ impl CompressOptions {
         }
     }
 
-    pub fn dce() -> Self {
+    pub fn dead_code_elimination() -> Self {
         Self {
             target: ESTarget::ESNext,
             keep_names: CompressOptionsKeepNames::all_true(),

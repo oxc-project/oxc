@@ -67,9 +67,9 @@ fn dce(
 ) -> String {
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    Compressor::new(allocator).dead_code_elimination(
+    Compressor::new(allocator).eliminate_dead_code(
         &mut program,
-        CompressOptions { max_iterations, ..CompressOptions::dce() },
+        CompressOptions { max_iterations, ..CompressOptions::dead_code_elimination() },
     );
     Codegen::new()
         .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })

@@ -18,13 +18,13 @@ impl<'a> Compressor<'a> {
         Self { allocator }
     }
 
-    pub fn build(self, program: &mut Program<'a>, options: CompressOptions) {
+    pub fn compress(self, program: &mut Program<'a>, options: CompressOptions) {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
-        self.build_with_scoping(program, scoping, options);
+        self.compress_with_scoping(program, scoping, options);
     }
 
     /// Returns total number of iterations ran.
-    pub fn build_with_scoping(
+    pub fn compress_with_scoping(
         self,
         program: &mut Program<'a>,
         scoping: Scoping,
@@ -39,13 +39,13 @@ impl<'a> Compressor<'a> {
         PeepholeOptimizations::new(max_iterations).run_in_loop(program, &mut ctx)
     }
 
-    pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
+    pub fn eliminate_dead_code(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
-        self.dead_code_elimination_with_scoping(program, scoping, options)
+        self.eliminate_dead_code_with_scoping(program, scoping, options)
     }
 
     /// Returns total number of iterations ran.
-    pub fn dead_code_elimination_with_scoping(
+    pub fn eliminate_dead_code_with_scoping(
         self,
         program: &mut Program<'a>,
         scoping: Scoping,

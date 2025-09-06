@@ -13,7 +13,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = &mut ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator).dead_code_elimination(program, options);
+        Compressor::new(&allocator).eliminate_dead_code(program, options);
     }
     Codegen::new().build(program).code
 }
@@ -26,7 +26,7 @@ fn test(source_text: &str, expected: &str) {
     let source_text = source_text.cow_replace("false", f);
 
     let source_type = SourceType::default();
-    let result = run(&source_text, source_type, Some(CompressOptions::dce()));
+    let result = run(&source_text, source_type, Some(CompressOptions::dead_code_elimination()));
     let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }

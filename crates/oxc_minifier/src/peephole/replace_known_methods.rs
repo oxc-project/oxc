@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
         // Use constant evaluation for known method calls
         if let Some(constant_value) = ce.evaluate_value(ctx) {
             ctx.state.changed = true;
-            *node = ctx.value_to_expr(ce.span, constant_value);
+            *node = ctx.value_to_expression(ce.span, constant_value);
             return;
         }
 

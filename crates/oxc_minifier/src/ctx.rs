@@ -114,15 +114,15 @@ impl<'a> Ctx<'a, '_> {
         ident.is_global_reference(self.0.scoping())
     }
 
-    pub fn eval_binary(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
+    pub fn evaluate_binary_expression(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
         if e.may_have_side_effects(self) {
             None
         } else {
-            e.evaluate_value(self).map(|v| self.value_to_expr(e.span, v))
+            e.evaluate_value(self).map(|v| self.value_to_expression(e.span, v))
         }
     }
 
-    pub fn eval_binary_operation(
+    pub fn evaluate_binary_operation(
         &self,
         operator: BinaryOperator,
         left: &Expression<'a>,
@@ -131,7 +131,7 @@ impl<'a> Ctx<'a, '_> {
         binary_operation_evaluate_value(operator, left, right, self)
     }
 
-    pub fn value_to_expr(&self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
+    pub fn value_to_expression(&self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
                 let number_base =
