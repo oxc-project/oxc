@@ -111,18 +111,18 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         ctx.state.changed = false;
     }
 
-    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = ctx.state.changed;
-        if self.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
-            counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
-            }
-        }
+        // if self.changed {
+        // Remove unused references by visiting the AST again and diff the collected references.
+        // let refs_before =
+        // ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+        // let mut counter = ReferencesCounter::default();
+        // counter.visit_program(program);
+        // for reference_id_to_remove in refs_before.difference(&counter.refs) {
+        // ctx.scoping_mut().delete_reference(*reference_id_to_remove);
+        // }
+        // }
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -519,5 +519,62 @@ impl<'a> Visit<'a> for ReferencesCounter {
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         let reference_id = it.reference_id();
         self.refs.insert(reference_id);
+    }
+}
+
+pub trait DeleteCode<'a, 'b> {
+    fn delete(&self, _ctx: &mut Ctx<'a, 'b>) {}
+}
+
+impl<'a> DeleteCode<'a, '_> for IdentifierReference<'a> {
+    fn delete(&self, ctx: &mut Ctx<'a, '_>) {
+        ReferencesRemover { ctx }.visit_identifier_reference(self);
+    }
+}
+
+impl<'a> DeleteCode<'a, '_> for ExpressionStatement<'a> {
+    fn delete(&self, ctx: &mut Ctx<'a, '_>) {
+        ReferencesRemover { ctx }.visit_expression_statement(self);
+    }
+}
+
+impl<'a> DeleteCode<'a, '_> for Statement<'a> {
+    fn delete(&self, ctx: &mut Ctx<'a, '_>) {
+        ReferencesRemover { ctx }.visit_statement(self);
+    }
+}
+
+impl<'a> DeleteCode<'a, '_> for Expression<'a> {
+    fn delete(&self, ctx: &mut Ctx<'a, '_>) {
+        ReferencesRemover { ctx }.visit_expression(self);
+    }
+}
+
+impl<'a> DeleteCode<'a, '_> for AssignmentTarget<'a> {
+    fn delete(&self, ctx: &mut Ctx<'a, '_>) {
+        ReferencesRemover { ctx }.visit_assignment_target(self);
+    }
+}
+
+impl<'a> DeleteCode<'a, '_> for SimpleAssignmentTarget<'a> {
+    fn delete(&self, ctx: &mut Ctx<'a, '_>) {
+        ReferencesRemover { ctx }.visit_simple_assignment_target(self);
+    }
+}
+
+impl<'a> DeleteCode<'a, '_> for IfStatement<'a> {
+    fn delete(&self, ctx: &mut Ctx<'a, '_>) {
+        ReferencesRemover { ctx }.visit_if_statement(self);
+    }
+}
+
+struct ReferencesRemover<'a, 'b, 'c> {
+    ctx: &'c mut Ctx<'a, 'b>,
+}
+
+impl<'a> Visit<'a> for ReferencesRemover<'a, '_, '_> {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        let reference_id = it.reference_id();
+        self.ctx.scoping_mut().delete_reference(reference_id);
     }
 }

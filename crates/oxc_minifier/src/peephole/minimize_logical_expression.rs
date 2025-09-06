@@ -4,7 +4,7 @@ use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 
-use crate::ctx::Ctx;
+use crate::{ctx::Ctx, peephole::DeleteCode};
 
 use super::PeepholeOptimizations;
 
@@ -32,7 +32,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -78,7 +78,7 @@ impl<'a> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -136,6 +136,7 @@ impl<'a> PeepholeOptimizations {
         if left_id_name != right_id.name {
             return None;
         }
+        right_id.delete(ctx);
 
         let null_expr_span = match left_value {
             LeftPairValueResult::Null(span) => span,

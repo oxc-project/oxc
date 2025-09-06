@@ -7,7 +7,7 @@ use oxc_ecmascript::{
 use oxc_span::{ContentEq, GetSpan};
 use oxc_syntax::es_target::ESTarget;
 
-use crate::ctx::Ctx;
+use crate::{ctx::Ctx, peephole::DeleteCode};
 
 use super::PeepholeOptimizations;
 
@@ -244,6 +244,7 @@ impl<'a> PeepholeOptimizations {
                 if matches!(consequent.arguments[0], Argument::SpreadElement(_))
                     && matches!(alternate.arguments[0], Argument::SpreadElement(_))
                 {
+                    alternate.callee.delete(ctx);
                     let callee = consequent.callee.take_in(ctx.ast);
                     let consequent_first_arg = {
                         let Argument::SpreadElement(el) = &mut consequent.arguments[0] else {
@@ -273,8 +274,8 @@ impl<'a> PeepholeOptimizations {
                 if !matches!(consequent.arguments[0], Argument::SpreadElement(_))
                     && !matches!(alternate.arguments[0], Argument::SpreadElement(_))
                 {
+                    alternate.callee.delete(ctx);
                     let callee = consequent.callee.take_in(ctx.ast);
-
                     let consequent_first_arg =
                         consequent.arguments[0].to_expression_mut().take_in(ctx.ast);
                     let alternate_first_arg =
@@ -339,8 +340,10 @@ impl<'a> PeepholeOptimizations {
                                 value_expr.take_in(ctx.ast),
                                 LogicalOperator::Coalesce,
                                 if is_negate {
+                                    expr.consequent.delete(ctx);
                                     expr.alternate.take_in(ctx.ast)
                                 } else {
+                                    expr.alternate.delete(ctx);
                                     expr.consequent.take_in(ctx.ast)
                                 },
                             ));
