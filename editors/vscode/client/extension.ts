@@ -138,7 +138,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   async function findBinary(): Promise<string> {
-    let bin = configService.vsCodeConfig.binPath;
+    let bin = configService.getUserServerBinPath();
     if (bin) {
       try {
         await fsPromises.access(bin);
