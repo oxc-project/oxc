@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::{alloc::Layout, cell::Cell, ptr::NonNull, slice};
 
 use crate::{Allocator, Box, Vec};
 
@@ -70,6 +70,85 @@ where
     }
 }
 
+impl<'new_alloc, T, C> CloneIn<'new_alloc> for Box<'_, [T]>
+where
+    T: CloneIn<'new_alloc, Cloned = C>,
+{
+    type Cloned = Box<'new_alloc, [C]>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        let slice = self.as_ref();
+
+        // Compile-time check that `T` and `C` have identical size and alignment - which they always will
+        // with intended usage that `T` and `C` are same types, just with different lifetimes.
+        // This guarantees that layout of clone is same as layout of `slice`,
+        // so we can create `Layout` with `for_value`, which has no runtime checks.
+        const {
+            assert!(
+                size_of::<C>() == size_of::<T>() && align_of::<C>() == align_of::<T>(),
+                "Size and alignment of `T` and `<T as CloneIn>::Cloned` must be the same"
+            );
+        }
+        let layout = Layout::for_value(slice);
+
+        let dst_ptr = allocator.alloc_layout(layout).cast::<C>();
+
+        // SAFETY: We allocated space for `slice.len()` items of type `C`, starting at `dst_ptr`.
+        // Therefore, writing `slice.len()` elements to that memory region is safe.
+        // `C` isn't `Drop`, and allocation is in the arena, so we don't need to worry about a panic
+        // in the loop - can't lead to a memory leak.
+        unsafe {
+            let mut ptr = dst_ptr;
+            for item in slice {
+                ptr.write(item.clone_in(allocator));
+                ptr = ptr.add(1);
+            }
+        }
+
+        // SAFETY: We just initialized `slice.len()` x `C`s, starting at `dst_ptr`
+        let new_slice = unsafe { slice::from_raw_parts_mut(dst_ptr.as_ptr(), slice.len()) };
+        // SAFETY: `NonNull::from(new_slice)` produces a valid pointer. The data is in the arena.
+        // Lifetime of returned `Box` matches the `Allocator` the data was allocated in.
+        unsafe { Box::from_non_null(NonNull::from(new_slice)) }
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        let slice = self.as_ref();
+
+        // Compile-time check that `T` and `C` have identical size and alignment - which they always will
+        // with intended usage that `T` and `C` are same types, just with different lifetimes.
+        // This guarantees that layout of clone is same as layout of `slice`,
+        // so we can create `Layout` with `for_value`, which has no runtime checks.
+        const {
+            assert!(
+                size_of::<C>() == size_of::<T>() && align_of::<C>() == align_of::<T>(),
+                "Size and alignment of `T` and `<T as CloneIn>::Cloned` must be the same"
+            );
+        }
+        let layout = Layout::for_value(slice);
+
+        let dst_ptr = allocator.alloc_layout(layout).cast::<C>();
+
+        // SAFETY: We allocated space for `slice.len()` items of type `C`, starting at `dst_ptr`.
+        // Therefore, writing `slice.len()` elements to that memory region is safe.
+        // `C` isn't `Drop`, and allocation is in the arena, so we don't need to worry about a panic
+        // in the loop - can't lead to a memory leak.
+        unsafe {
+            let mut ptr = dst_ptr;
+            for item in slice {
+                ptr.write(item.clone_in_with_semantic_ids(allocator));
+                ptr = ptr.add(1);
+            }
+        }
+
+        // SAFETY: We just initialized `slice.len()` x `C`s, starting at `dst_ptr`
+        let new_slice = unsafe { slice::from_raw_parts_mut(dst_ptr.as_ptr(), slice.len()) };
+        // SAFETY: `NonNull::from(new_slice)` produces a valid pointer. The data is in the arena.
+        // Lifetime of returned `Box` matches the `Allocator` the data was allocated in.
+        unsafe { Box::from_non_null(NonNull::from(new_slice)) }
+    }
+}
+
 impl<'new_alloc, T, C> CloneIn<'new_alloc> for Vec<'_, T>
 where
     T: CloneIn<'new_alloc, Cloned = C>,
@@ -123,4 +202,24 @@ impl_clone_in! {
     isize i8 i16 i32 i64 i128
     f32 f64
     bool char
+}
+
+#[cfg(test)]
+mod test {
+    use super::{Allocator, CloneIn, Vec};
+
+    #[test]
+    fn clone_in_boxed_slice() {
+        let allocator = Allocator::default();
+
+        let mut original = Vec::from_iter_in([1, 2, 3], &allocator).into_boxed_slice();
+
+        let cloned = original.clone_in(&allocator);
+        let cloned2 = original.clone_in_with_semantic_ids(&allocator);
+        original[1] = 4;
+
+        assert_eq!(original.as_ref(), &[1, 4, 3]);
+        assert_eq!(cloned.as_ref(), &[1, 2, 3]);
+        assert_eq!(cloned2.as_ref(), &[1, 2, 3]);
+    }
 }
