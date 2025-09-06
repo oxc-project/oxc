@@ -137,15 +137,18 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = &mut Ctx::new(ctx);
+        let not_dce = !ctx.state.dce;
         match stmt {
             Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
             Statement::IfStatement(s) => {
                 Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                 Self::try_fold_if(stmt, ctx);
-                if let Statement::IfStatement(if_stmt) = stmt {
-                    if let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx) {
-                        *stmt = folded_stmt;
-                        ctx.state.changed = true;
+                if not_dce {
+                    if let Statement::IfStatement(if_stmt) = stmt {
+                        if let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx) {
+                            *stmt = folded_stmt;
+                            ctx.state.changed = true;
+                        }
                     }
                 }
             }
@@ -293,17 +296,17 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             }
             Expression::BooleanLiteral(_) => {
                 if not_dce {
-                    Self::substitute_boolean(expr, ctx)
+                    Self::substitute_boolean(expr, ctx);
                 }
             }
             Expression::ArrayExpression(_) => {
                 if not_dce {
-                    Self::substitute_array_expression(expr, ctx)
+                    Self::substitute_array_expression(expr, ctx);
                 }
             }
             Expression::Identifier(_) => {
                 if not_dce {
-                    Self::inline_identifier_reference(expr, ctx)
+                    Self::inline_identifier_reference(expr, ctx);
                 }
             }
             _ => {}

@@ -88,7 +88,7 @@ fn dce_if_statement() {
     // <https://github.com/rollup/rollup/blob/master/test/function/samples/allow-undefined-as-parameter/main.js>
     test_same("function foo(undefined) { if (!undefined) throw Error('') } foo()");
 
-    test("function foo() { if (undefined) { bar } } foo()", "function foo() { } foo()");
+    test("function foo() { if (undefined) { bar } bar } foo()", "function foo() { bar } foo()");
     test("function foo() { { bar } } foo()", "function foo() { bar } foo()");
 
     test("if (true) { foo; } if (true) { foo; }", "foo; foo;");
@@ -180,17 +180,19 @@ fn dce_var_hoisting() {
     test(
         "function f() {
           KEEP();
+          foo;
           return function g() {
             var x;
           }
           REMOVE;
-          function KEEP() {}
+          function KEEP() { bar }
           REMOVE;
         } f()",
         "function f() {
           KEEP();
-          return function g() {}
-          function KEEP() {}
+          foo;
+          return function g() { }
+          function KEEP() { bar }
         } f()",
     );
 }
