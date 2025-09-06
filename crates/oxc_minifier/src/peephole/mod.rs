@@ -29,7 +29,7 @@ use crate::{
     state::MinifierState,
 };
 
-pub use self::normalize::{Normalize, NormalizeOptions};
+pub use self::normalize::Normalize;
 
 pub struct PeepholeOptimizations {
     max_iterations: Option<u8>,
@@ -203,10 +203,13 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = &mut Ctx::new(ctx);
+        let not_dce = !ctx.state.dce;
         match expr {
             Expression::TemplateLiteral(t) => {
                 Self::inline_template_literal(t, ctx);
-                Self::substitute_template_literal(expr, ctx);
+                if not_dce {
+                    Self::substitute_template_literal(expr, ctx);
+                }
             }
             Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
             Expression::BinaryExpression(e) => {
@@ -215,39 +218,53 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::fold_binary_typeof_comparison(expr, ctx);
                 Self::minimize_loose_boolean(expr, ctx);
                 Self::minimize_binary(expr, ctx);
-                Self::substitute_loose_equals_undefined(expr, ctx);
-                Self::substitute_typeof_undefined(expr, ctx);
+                if not_dce {
+                    Self::substitute_loose_equals_undefined(expr, ctx);
+                    Self::substitute_typeof_undefined(expr, ctx);
+                }
             }
             Expression::UnaryExpression(_) => {
                 Self::fold_unary_expr(expr, ctx);
                 Self::minimize_unary(expr, ctx);
-                Self::substitute_unary_plus(expr, ctx);
+                if not_dce {
+                    Self::substitute_unary_plus(expr, ctx);
+                }
             }
             Expression::StaticMemberExpression(_) => {
                 Self::fold_static_member_expr(expr, ctx);
-                Self::replace_known_property_access(expr, ctx);
+                if not_dce {
+                    Self::replace_known_property_access(expr, ctx);
+                }
             }
             Expression::ComputedMemberExpression(_) => {
                 Self::fold_computed_member_expr(expr, ctx);
-                Self::replace_known_property_access(expr, ctx);
+                if not_dce {
+                    Self::replace_known_property_access(expr, ctx);
+                }
             }
             Expression::LogicalExpression(_) => {
                 Self::fold_logical_expr(expr, ctx);
                 Self::minimize_logical_expression(expr, ctx);
-                Self::substitute_is_object_and_not_null(expr, ctx);
-                Self::substitute_rotate_logical_expression(expr, ctx);
+                if not_dce {
+                    Self::substitute_is_object_and_not_null(expr, ctx);
+                    Self::substitute_rotate_logical_expression(expr, ctx);
+                }
             }
             Expression::ChainExpression(_) => {
                 Self::fold_chain_expr(expr, ctx);
-                Self::substitute_chain_expression(expr, ctx);
+                if not_dce {
+                    Self::substitute_chain_expression(expr, ctx);
+                }
             }
             Expression::CallExpression(_) => {
                 Self::fold_call_expression(expr, ctx);
                 Self::remove_dead_code_call_expression(expr, ctx);
                 Self::replace_concat_chain(expr, ctx);
                 Self::replace_known_global_methods(expr, ctx);
-                Self::substitute_simple_function_call(expr, ctx);
-                Self::substitute_object_or_array_constructor(expr, ctx);
+                if not_dce {
+                    Self::substitute_simple_function_call(expr, ctx);
+                    Self::substitute_object_or_array_constructor(expr, ctx);
+                }
             }
             Expression::ConditionalExpression(logical_expr) => {
                 Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);
@@ -268,13 +285,27 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             Expression::FunctionExpression(e) => Self::try_remove_name_from_functions(e, ctx),
             Expression::ClassExpression(e) => Self::try_remove_name_from_classes(e, ctx),
             Expression::NewExpression(e) => {
-                Self::substitute_typed_array_constructor(e, ctx);
-                Self::substitute_global_new_expression(expr, ctx);
-                Self::substitute_object_or_array_constructor(expr, ctx);
+                if not_dce {
+                    Self::substitute_typed_array_constructor(e, ctx);
+                    Self::substitute_global_new_expression(expr, ctx);
+                    Self::substitute_object_or_array_constructor(expr, ctx);
+                }
             }
-            Expression::BooleanLiteral(_) => Self::substitute_boolean(expr, ctx),
-            Expression::ArrayExpression(_) => Self::substitute_array_expression(expr, ctx),
-            Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
+            Expression::BooleanLiteral(_) => {
+                if not_dce {
+                    Self::substitute_boolean(expr, ctx)
+                }
+            }
+            Expression::ArrayExpression(_) => {
+                if not_dce {
+                    Self::substitute_array_expression(expr, ctx)
+                }
+            }
+            Expression::Identifier(_) => {
+                if not_dce {
+                    Self::inline_identifier_reference(expr, ctx)
+                }
+            }
             _ => {}
         }
     }

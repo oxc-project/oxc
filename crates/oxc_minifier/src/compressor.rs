@@ -5,7 +5,7 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     CompressOptions,
-    peephole::{Normalize, NormalizeOptions, PeepholeOptimizations},
+    peephole::{Normalize, PeepholeOptimizations},
     state::MinifierState,
 };
 
@@ -59,9 +59,7 @@ impl<'a> Compressor<'a> {
     ) -> u8 {
         let max_iterations = state.options.max_iterations;
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
-        let normalize_options =
-            NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
-        Normalize::new(normalize_options).build(program, &mut ctx);
+        Normalize.build(program, &mut ctx);
         PeepholeOptimizations::new(max_iterations).run_in_loop(program, &mut ctx)
     }
 }
