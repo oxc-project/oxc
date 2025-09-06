@@ -1,4 +1,5 @@
-use rustc_hash::FxHashSet;
+use oxc_ecmascript::constant_evaluation::ConstantValue;
+use rustc_hash::FxHashMap;
 
 use oxc_span::SourceType;
 use oxc_syntax::symbol::SymbolId;
@@ -10,8 +11,8 @@ pub struct MinifierState<'a> {
 
     pub options: CompressOptions,
 
-    /// Function declarations that are empty
-    pub empty_functions: FxHashSet<SymbolId>,
+    /// The return value of function declarations that are pure
+    pub pure_functions: FxHashMap<SymbolId, Option<ConstantValue<'a>>>,
 
     pub symbol_values: SymbolValues<'a>,
 
@@ -23,7 +24,7 @@ impl MinifierState<'_> {
         Self {
             source_type,
             options,
-            empty_functions: FxHashSet::default(),
+            pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
             changed: false,
         }

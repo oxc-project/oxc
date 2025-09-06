@@ -1,11 +1,13 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
 };
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
-use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
+use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
@@ -208,12 +210,6 @@ pub fn get_enclosing_function<'a, 'b>(
     }
 }
 
-/// Returns if `arg` is the `n`th (0-indexed) argument of `call`.
-pub fn _is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usize) -> bool {
-    let nth = &call.arguments[n];
-    nth.span() == arg.span()
-}
-
 /// Jump to the outer most of chained parentheses if any
 pub fn outermost_paren<'a, 'b>(
     node: &'b AstNode<'a>,
@@ -259,10 +255,10 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 /// Iterate over parents of `node`, skipping nodes that are also ignored by
 /// [`Expression::get_inner_expression`].
 pub fn iter_outer_expressions<'a, 's>(
-    semantic: &'s Semantic<'a>,
+    nodes: &'s AstNodes<'a>,
     node_id: NodeId,
 ) -> impl Iterator<Item = AstKind<'a>> + 's {
-    semantic.nodes().ancestor_kinds(node_id).filter(|parent| {
+    nodes.ancestor_kinds(node_id).filter(|parent| {
         !matches!(
             parent,
             AstKind::ParenthesizedExpression(_)
@@ -514,6 +510,14 @@ pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
 }
 
 pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
+    could_be_error_impl(ctx, expr, &mut FxHashSet::default())
+}
+
+fn could_be_error_impl(
+    ctx: &LintContext,
+    expr: &Expression,
+    visited: &mut FxHashSet<SymbolId>,
+) -> bool {
     match expr.get_inner_expression() {
         Expression::NewExpression(_)
         | Expression::AwaitExpression(_)
@@ -527,42 +531,54 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
         Expression::AssignmentExpression(expr) => {
             if matches!(expr.operator, AssignmentOperator::Assign | AssignmentOperator::LogicalAnd)
             {
-                return could_be_error(ctx, &expr.right);
+                return could_be_error_impl(ctx, &expr.right, visited);
             }
 
             if matches!(
                 expr.operator,
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
             ) {
-                return expr.left.get_expression().is_none_or(|expr| could_be_error(ctx, expr))
-                    || could_be_error(ctx, &expr.right);
+                return expr
+                    .left
+                    .get_expression()
+                    .is_none_or(|expr| could_be_error_impl(ctx, expr, visited))
+                    || could_be_error_impl(ctx, &expr.right, visited);
             }
 
             false
         }
         Expression::SequenceExpression(expr) => {
-            expr.expressions.last().is_some_and(|expr| could_be_error(ctx, expr))
+            expr.expressions.last().is_some_and(|expr| could_be_error_impl(ctx, expr, visited))
         }
         Expression::LogicalExpression(expr) => {
             if matches!(expr.operator, LogicalOperator::And) {
-                return could_be_error(ctx, &expr.right);
+                return could_be_error_impl(ctx, &expr.right, visited);
             }
 
-            could_be_error(ctx, &expr.left) || could_be_error(ctx, &expr.right)
+            could_be_error_impl(ctx, &expr.left, visited)
+                || could_be_error_impl(ctx, &expr.right, visited)
         }
         Expression::ConditionalExpression(expr) => {
-            could_be_error(ctx, &expr.consequent) || could_be_error(ctx, &expr.alternate)
+            could_be_error_impl(ctx, &expr.consequent, visited)
+                || could_be_error_impl(ctx, &expr.alternate, visited)
         }
         Expression::Identifier(ident) => {
             let reference = ctx.scoping().get_reference(ident.reference_id());
             let Some(symbol_id) = reference.symbol_id() else {
                 return true;
             };
+
+            // Check if we've already visited this symbol to prevent infinite recursion
+            // Return true (could be error) when we encounter a circular reference since we can't determine the type
+            if !visited.insert(symbol_id) {
+                return true;
+            }
+
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {
-                        could_be_error(ctx, init)
+                        could_be_error_impl(ctx, init, visited)
                     } else {
                         // TODO: warn about throwing undefined
                         false
@@ -892,4 +908,46 @@ pub fn get_function_name_with_kind<'a>(
     }
 
     Cow::Owned(tokens.join(" "))
+}
+
+/// Check if a node's span is exactly equal to any argument span in a call or new expression
+#[inline]
+pub fn is_node_exact_call_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let parent = ctx.nodes().parent_node(node.id());
+
+    match parent.kind() {
+        AstKind::CallExpression(call) => {
+            if call.arguments.is_empty() {
+                return false;
+            }
+            let node_span = node.span(); // Only compute span when needed
+            call.arguments.iter().any(|arg| arg.span() == node_span)
+        }
+        AstKind::NewExpression(new_expr) => {
+            if new_expr.arguments.is_empty() {
+                return false;
+            }
+            let node_span = node.span(); // Only compute span when needed
+            new_expr.arguments.iter().any(|arg| arg.span() == node_span)
+        }
+        _ => false,
+    }
+}
+
+/// Check if a node's span is contained within any argument span in a call expression
+#[inline]
+pub fn is_node_within_call_argument<'a>(
+    node: &AstNode<'a>,
+    call: &CallExpression<'a>,
+    target_arg_index: usize,
+) -> bool {
+    // Early exit for out-of-bounds index
+    if target_arg_index >= call.arguments.len() {
+        return false;
+    }
+
+    let target_arg = &call.arguments[target_arg_index]; // Direct indexing, no Option unwrap
+    let node_span = node.span();
+    let arg_span = target_arg.span();
+    node_span.start >= arg_span.start && node_span.end <= arg_span.end
 }

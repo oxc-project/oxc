@@ -9,7 +9,7 @@ use oxc_ast::{
     },
     match_member_expression,
 };
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};
@@ -331,5 +331,23 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
         )
     } else {
         true
+    }
+}
+
+/// Checks if a JSX opening element is a React Fragment.
+/// Recognizes both `<Fragment>` and `<React.Fragment>` forms.
+pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
+    match &elem.name {
+        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
+        JSXElementName::MemberExpression(mem_expr) => {
+            if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
+                ident.name == "React" && mem_expr.property.name == "Fragment"
+            } else {
+                false
+            }
+        }
+        JSXElementName::NamespacedName(_)
+        | JSXElementName::Identifier(_)
+        | JSXElementName::ThisExpression(_) => false,
     }
 }

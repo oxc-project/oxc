@@ -4,6 +4,102 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- e3b6dc0 allocator: Add `Box::from_non_null` method (#13454) (overlookmotel)
+- afa0877 allocator: Introduce `BitSet` type (#13449) (overlookmotel)
+
+### 🚜 Refactor
+
+- e6cdaa6 allocator: Add `#[repr(transparent)]` to `Vec` and `Box` (#13457) (overlookmotel)
+
+### ⚡ Performance
+
+- b92fa4f allocator/bitset: Store bits in `Box<[usize]>` (#13455) (overlookmotel)
+- f5a742f allocator/bitset: Initialize `BitSet` with `memset` (#13451) (overlookmotel)
+- cdfa48d allocator/bitset: Store bits as `usize`s (#13450) (overlookmotel)
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 💥 BREAKING CHANGES
+
+- df8e639 allocator: [**BREAKING**] Put `AllocatorPool` behind `pool` feature (#13373) (overlookmotel)
+
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- f490d27 allocator: Remove unsound `Send` impl and tighten `Sync` requirement for `HashMap` (#13203) (overlookmotel)
+- 0815a89 allocator: Remove unsound `Send` impl and tighten `Sync` requirements for `Vec` (#13041) (overlookmotel)
+- af3b98e allocator: Remove `Vec::bump` method (#13039) (overlookmotel)
+- 9ac418d allocator: Remove `Clone` impl from `Vec` (#13040) (overlookmotel)
+- d2e8cb6 allocator: Remove unsound `impl Sync for Allocator` (#13033) (overlookmotel)
+- 8264664 allocator: Fix soundness hole in `Allocator::alloc_bytes_start` (#13141) (overlookmotel)
+
+### 🚜 Refactor
+
+- 93eaf5f allocator: Replace `AtomicUsize` with `Cell<usize>` in `AllocationStats` (#13043) (overlookmotel)
+
+### 🧪 Testing
+
+- 792ae31 estree, allocator: Use `default` to create `ESTreeSerializer`s (#13211) (overlookmotel)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚀 Features
+
+- 7cf6186 allocator: Add `data_end_ptr` and `set_cursor_ptr` methods to `Allocator` (#13134) (overlookmotel)
+
+### 🚜 Refactor
+
+- f6ac2e6 allocator, napi/parser: Use `usize::is_multiple_of` (#13142) (overlookmotel)
+- 51f6c84 allocator: Rename vars and comments in `AllocatorPool` (#13129) (overlookmotel)
+- 152f1f9 allocator: Remove `Default` impl for `AllocatorPool` (#13128) (overlookmotel)
+- 18ad3c0 allocator: Harden safety of `FixedSizeAllocator::new` (#13124) (overlookmotel)
+
+### 📚 Documentation
+
+- 3048302 allocator: Document all cargo features (#13104) (overlookmotel)
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 🚜 Refactor
+
+- 4f31b73 allocator: Move allocation tracking code into own module (#12937) (overlookmotel)
+- ff1d93b allocator: Do not make `Allocator::bump` field public (#12936) (overlookmotel)
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 🧪 Testing
+
+- d79f4ec parser: Track number of allocations (#12555) (camchenry)
+
+
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚜 Refactor

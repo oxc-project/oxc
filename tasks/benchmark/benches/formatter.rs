@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_formatter::{FormatOptions, Formatter};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_tasks_common::TestFiles;
 
 fn bench_formatter(criterion: &mut Criterion) {
@@ -15,10 +15,14 @@ fn bench_formatter(criterion: &mut Criterion) {
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let options = FormatOptions::default();
+                let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
+                let program = Parser::new(&allocator, source_text, source_type)
+                    .with_options(parse_options)
+                    .parse()
+                    .program;
+                let format_options = FormatOptions::default();
                 runner.run(|| {
-                    Formatter::new(&allocator, options).build(&program);
+                    Formatter::new(&allocator, format_options).build(&program);
                 });
             });
         });

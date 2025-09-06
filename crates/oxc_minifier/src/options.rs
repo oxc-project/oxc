@@ -45,6 +45,9 @@ pub struct CompressOptions {
     /// Treeshake Options .
     /// <https://rollupjs.org/configuration-options/#treeshake>
     pub treeshake: TreeShakeOptions,
+
+    /// Limit the maximum number of iterations for debugging purpose.
+    pub max_iterations: Option<u8>,
 }
 
 impl Default for CompressOptions {
@@ -64,6 +67,7 @@ impl CompressOptions {
             sequences: true,
             unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
+            max_iterations: None,
         }
     }
 
@@ -77,6 +81,7 @@ impl CompressOptions {
             sequences: true,
             unused: CompressOptionsUnused::Keep,
             treeshake: TreeShakeOptions::default(),
+            max_iterations: None,
         }
     }
 
@@ -90,6 +95,7 @@ impl CompressOptions {
             sequences: false,
             unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
+            max_iterations: None,
         }
     }
 }

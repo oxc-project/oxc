@@ -1,15 +1,13 @@
 use std::path::Path;
 
 use nonmax::NonMaxU32;
+
+use oxc_data_structures::slice_iter::SliceIter;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
 
-// Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
-const LS_OR_PS_FIRST: u8 = 0xE2;
-const LS_OR_PS_SECOND: u8 = 0x80;
-const LS_THIRD: u8 = 0xA8;
-const PS_THIRD: u8 = 0xA9;
+use crate::str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES};
 
 /// Number of lines to check with linear search when translating byte position to line index
 const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
@@ -260,19 +258,17 @@ impl<'a> SourcemapBuilder<'a> {
                 b'\n' => {}
                 b'\r' => {
                     // Handle Windows-specific "\r\n" newlines
-                    if iter.clone().next() == Some(&b'\n') {
+                    if iter.peek() == Some(&b'\n') {
                         iter.next();
                     }
                 }
                 _ if b.is_ascii() => {
                     continue;
                 }
-                LS_OR_PS_FIRST => {
+                LS_OR_PS_FIRST_BYTE => {
                     let next_byte = *iter.next().unwrap();
                     let next_next_byte = *iter.next().unwrap();
-                    if next_byte != LS_OR_PS_SECOND
-                        || !matches!(next_next_byte, LS_THIRD | PS_THIRD)
-                    {
+                    if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
                         last_line_is_ascii = false;
                         continue;
                     }
@@ -286,7 +282,7 @@ impl<'a> SourcemapBuilder<'a> {
 
             // Line break found.
             // `iter` is now positioned after line break.
-            line_start_ptr = iter.as_slice().as_ptr();
+            line_start_ptr = iter.ptr();
             self.generated_line += 1;
             self.generated_column = 0;
             last_line_is_ascii = true;
@@ -294,8 +290,8 @@ impl<'a> SourcemapBuilder<'a> {
 
         // Calculate column
         self.generated_column += if last_line_is_ascii {
-            // `iter` is now exhausted, so `iter.as_slice().as_ptr()` is pointer to end of `output`
-            (iter.as_slice().as_ptr() as usize - line_start_ptr as usize) as u32
+            // `iter` is now exhausted, so `iter.ptr()` is pointer to end of `output`
+            (iter.ptr() as usize - line_start_ptr as usize) as u32
         } else {
             let line_byte_offset = line_start_ptr as usize - remaining.as_ptr() as usize;
             // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this
@@ -310,6 +306,9 @@ impl<'a> SourcemapBuilder<'a> {
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
         let mut lines = vec![];
         let mut column_offsets = IndexVec::new();
+
+        // Used as a buffer to reduce memory reallocations
+        let mut columns = vec![];
 
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
@@ -348,8 +347,6 @@ impl<'a> SourcemapBuilder<'a> {
                         let line = lines.iter_mut().last().unwrap();
                         line.column_offsets_id =
                             Some(ColumnOffsetsId::from_usize(column_offsets.len()));
-
-                        let mut columns = vec![];
 
                         // Loop through rest of line char-by-char.
                         // `chunk_byte_offset` in this loop is byte offset from start of this 1st
@@ -394,8 +391,9 @@ impl<'a> SourcemapBuilder<'a> {
                             // Record column offsets
                             column_offsets.push(ColumnOffsets {
                                 byte_offset_to_first: byte_offset_from_line_start,
-                                columns: columns.into_boxed_slice(),
+                                columns: columns.clone().into_boxed_slice(),
                             });
+                            columns.clear();
 
                             // Revert back to outer loop for next line
                             continue 'lines;
@@ -547,7 +545,7 @@ mod test {
         // The name `b` -> `c`, save `b` to token.
         assert_eq!(
             sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
-            Some("b")
+            Some(&"b".into())
         );
     }
 

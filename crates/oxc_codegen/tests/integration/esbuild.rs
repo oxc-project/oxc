@@ -522,7 +522,7 @@ fn test_function() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Comments and parentheses handling not yet implemented"]
 fn test_comments_and_parentheses() {
     test("(/* foo */ { x() { foo() } }.x());", "/* foo */\n({ x() {\n  foo();\n} }).x();\n");
     test(
@@ -829,7 +829,7 @@ fn test_whitespace() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Minification functionality not yet implemented"]
 fn minify() {
     test_minify("0.1", ".1;");
     test_minify("1.2", "1.2;");

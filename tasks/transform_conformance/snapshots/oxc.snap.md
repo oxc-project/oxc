@@ -1,6 +1,6 @@
-commit: 1d4546bc
+commit: 41d96516
 
-Passed: 180/300
+Passed: 186/309
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -20,7 +20,26 @@ Passed: 180/300
 * regexp
 
 
-# babel-plugin-transform-class-properties (22/28)
+# babel-plugin-transform-explicit-resource-management (2/4)
+* export-class-name/input.js
+x Output mismatch
+
+* function-with-scopes-in-params/input.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
+rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(4): ["x", "y"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "y":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(4)
+
+
+# babel-plugin-transform-class-properties (23/29)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -502,7 +521,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (44/47)
+# babel-plugin-transform-react-jsx (45/48)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -520,26 +539,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (2/4)
-* export-class-name/input.js
-x Output mismatch
-
-* function-with-scopes-in-params/input.js
-Bindings mismatch:
-after transform: ScopeId(1): ["_usingCtx", "a", "b", "x", "y"]
-rebuilt        : ScopeId(1): ["_usingCtx", "a", "b"]
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(4): ["x", "y"]
-Symbol scope ID mismatch for "x":
-after transform: SymbolId(3): ScopeId(1)
-rebuilt        : SymbolId(4): ScopeId(4)
-Symbol scope ID mismatch for "y":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(5): ScopeId(4)
-
-
-# legacy-decorators (6/79)
+# legacy-decorators (6/81)
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
@@ -554,13 +554,111 @@ rebuilt        : SymbolId(4): Span { start: 69, end: 82 }
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(6), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(8), ReferenceId(9)]
 Symbol span mismatch for "Example":
 after transform: SymbolId(1): Span { start: 87, end: 94 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Example":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
+
+* oxc/metadata/enum-types/input.ts
+Bindings mismatch:
+after transform: ScopeId(1): ["StringEnum", "bar", "foo"]
+rebuilt        : ScopeId(1): ["StringEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(2): ["TemplateStringEnum", "mixed", "template"]
+rebuilt        : ScopeId(2): ["TemplateStringEnum"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(3): ["NumberEnum", "a", "b"]
+rebuilt        : ScopeId(3): ["NumberEnum"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(4): ["UnaryEnum", "bitwise", "negative", "positive"]
+rebuilt        : ScopeId(4): ["UnaryEnum"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(0x0)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(6): ["UnaryOtherEnum", "bitwise", "negative", "positive"]
+rebuilt        : ScopeId(6): ["UnaryOtherEnum"]
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(7): ["AutoIncrementEnum", "first", "second", "third"]
+rebuilt        : ScopeId(7): ["AutoIncrementEnum"]
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(0x0)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(8): ["MixedEnum", "num", "str"]
+rebuilt        : ScopeId(8): ["MixedEnum"]
+Scope flags mismatch:
+after transform: ScopeId(8): ScopeFlags(0x0)
+rebuilt        : ScopeId(8): ScopeFlags(Function)
+Bindings mismatch:
+after transform: ScopeId(9): ["ComputedEnum", "computed", "expression"]
+rebuilt        : ScopeId(9): ["ComputedEnum"]
+Scope flags mismatch:
+after transform: ScopeId(9): ScopeFlags(0x0)
+rebuilt        : ScopeId(9): ScopeFlags(Function)
+Symbol flags mismatch for "StringEnum":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "StringEnum":
+after transform: SymbolId(0): [ReferenceId(5), ReferenceId(21), ReferenceId(27)]
+rebuilt        : SymbolId(0): [ReferenceId(3)]
+Symbol flags mismatch for "TemplateStringEnum":
+after transform: SymbolId(3): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "TemplateStringEnum":
+after transform: SymbolId(3): [ReferenceId(7), ReferenceId(31)]
+rebuilt        : SymbolId(2): [ReferenceId(7)]
+Symbol flags mismatch for "NumberEnum":
+after transform: SymbolId(6): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "NumberEnum":
+after transform: SymbolId(6): [ReferenceId(9), ReferenceId(22), ReferenceId(23), ReferenceId(37)]
+rebuilt        : SymbolId(4): [ReferenceId(13), ReferenceId(53)]
+Symbol flags mismatch for "UnaryEnum":
+after transform: SymbolId(9): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "UnaryEnum":
+after transform: SymbolId(9): [ReferenceId(11), ReferenceId(45)]
+rebuilt        : SymbolId(6): [ReferenceId(21)]
+Symbol flags mismatch for "UnaryOtherEnum":
+after transform: SymbolId(14): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "UnaryOtherEnum":
+after transform: SymbolId(14): [ReferenceId(13), ReferenceId(53)]
+rebuilt        : SymbolId(9): [ReferenceId(32)]
+Symbol flags mismatch for "AutoIncrementEnum":
+after transform: SymbolId(18): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(11): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "AutoIncrementEnum":
+after transform: SymbolId(18): [ReferenceId(15), ReferenceId(61)]
+rebuilt        : SymbolId(11): [ReferenceId(40)]
+Symbol flags mismatch for "MixedEnum":
+after transform: SymbolId(22): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(13): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "MixedEnum":
+after transform: SymbolId(22): [ReferenceId(17), ReferenceId(66)]
+rebuilt        : SymbolId(13): [ReferenceId(45)]
+Symbol flags mismatch for "ComputedEnum":
+after transform: SymbolId(25): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(15): SymbolFlags(FunctionScopedVariable)
+Symbol reference IDs mismatch for "ComputedEnum":
+after transform: SymbolId(25): [ReferenceId(19), ReferenceId(72)]
+rebuilt        : SymbolId(15): [ReferenceId(52)]
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
@@ -571,7 +669,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(12), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(0): [ReferenceId(11), ReferenceId(12)]
 Symbol span mismatch for "Cls":
 after transform: SymbolId(7): Span { start: 145, end: 148 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
@@ -584,6 +682,50 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
 rebuilt        : ["Object", "babelHelpers", "console", "dec"]
+
+* oxc/metadata/params/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["Foo", "methodDecorator", "paramDecorator"]
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(4): Span { start: 107, end: 110 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol span mismatch for "Foo":
+after transform: SymbolId(11): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(1): Span { start: 107, end: 110 }
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "methodDecorator":
+after transform: SymbolId(0) "methodDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Reference symbol mismatch for "paramDecorator":
+after transform: SymbolId(2) "paramDecorator"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
+rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
 
 * oxc/metadata/this/input.ts
 Symbol span mismatch for "Example":
@@ -614,13 +756,13 @@ after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 6, end: 13 }
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(2): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+rebuilt        : ReferenceId(6): ReferenceFlags(Read)
 Reference flags mismatch for "UnboundTypeReference":
 after transform: ReferenceId(3): ReferenceFlags(Read | Type)
-rebuilt        : ReferenceId(5): ReferenceFlags(Read)
+rebuilt        : ReferenceId(7): ReferenceFlags(Read)
 Unresolved reference IDs mismatch for "UnboundTypeReference":
 after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
-rebuilt        : [ReferenceId(4), ReferenceId(5)]
+rebuilt        : [ReferenceId(6), ReferenceId(7)]
 
 * oxc/metadata/without-decorator/input.ts
 Symbol span mismatch for "C":
@@ -1470,7 +1612,12 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (20/34)
+# plugin-styled-components (24/39)
+* minify-comments/input.js
+Unresolved references mismatch:
+after transform: ["x", "y", "z"]
+rebuilt        : ["x", "z"]
+
 * styled-components/add-identifier-with-top-level-import-paths/input.js
 x Output mismatch
 

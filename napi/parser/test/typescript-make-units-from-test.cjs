@@ -112,7 +112,7 @@ function getErrorFiles(filePath, options) {
         const errorFile = fs.readFileSync(errorPath, 'utf8');
         errorFiles.push(errorFile);
       }
-    } catch (e) {
+    } catch {
       // Skip if file doesn't exist or can't be read
     }
   }

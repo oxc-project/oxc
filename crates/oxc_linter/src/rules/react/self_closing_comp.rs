@@ -34,11 +34,17 @@ impl Default for SelfClosingComp {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Detects components without children which can be self-closed to avoid unnecessary extra
-    /// closing tags.
+    /// Detects components without children which can be self-closed to avoid
+    /// unnecessary extra closing tags.
     ///
-    /// A self closing component which contains whitespace is allowed except when it also contains
-    /// a newline.
+    /// ### Why is this bad?
+    ///
+    /// Components without children don't need explicit closing tags. Using
+    /// self-closing syntax makes code more concise and reduces visual clutter.
+    /// It also follows common React and JSX conventions for empty elements.
+    ///
+    /// A self-closing component which contains whitespace is allowed except
+    /// when it also contains a newline.
     ///
     /// ### Examples
     ///

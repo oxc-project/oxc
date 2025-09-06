@@ -70,7 +70,7 @@ impl Rule for PreferDomNodeTextContent {
                 ) && (matches!(grand_parent_node.kind(), AstKind::ObjectPattern(_))
                     || matches!(
                         grand_parent_node.kind(),
-                        AstKind::SimpleAssignmentTarget(_)
+                        AstKind::IdentifierReference(_)
                             | AstKind::ObjectAssignmentTarget(_)
                             | AstKind::AssignmentTargetPropertyIdentifier(_)
                             | AstKind::ArrayAssignmentTarget(_)

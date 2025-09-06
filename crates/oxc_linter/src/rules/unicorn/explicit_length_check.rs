@@ -4,11 +4,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{
+    AstNode,
     context::LintContext,
     rule::Rule,
     utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node},
@@ -198,29 +198,17 @@ impl ExplicitLengthCheck {
             }
         };
 
-        // Determine the span to replace
-        let replacement_span = match kind {
-            // For Boolean calls with logical expressions, only replace the member expression
-            AstKind::CallExpression(call) if is_boolean_call(&kind) => {
-                if let Some(arg) = call.arguments.first() {
-                    if matches!(arg.as_expression(), Some(Expression::LogicalExpression(_))) {
-                        // Only replace the member expression itself
-                        static_member_expr.span
-                    } else {
-                        // Replace the entire Boolean call for simple cases like Boolean(foo.length)
-                        kind.span()
-                    }
-                } else {
-                    kind.span()
-                }
+        let span = match node.kind() {
+            AstKind::CallExpression(call) if is_boolean_call(&node.kind()) => {
+                // Check if we should replace just the member expression or the whole call
+                call.arguments
+                    .first()
+                    .and_then(|arg| arg.as_expression())
+                    .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
+                    .map_or_else(|| node.span(), |_| static_member_expr.span)
             }
-            // For negated expressions like !Boolean(...), replace the entire expression
-            AstKind::UnaryExpression(_) => kind.span(),
-            // For other cases, use the node's span
-            _ => kind.span(),
+            _ => node.span(),
         };
-
-        let span = replacement_span;
         let mut need_pad_start = false;
         let mut need_pad_end = false;
         let parent = ctx.nodes().parent_kind(node.id());
@@ -235,16 +223,28 @@ impl ExplicitLengthCheck {
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }
 
-        let fixed = format!(
-            "{}{}{}{}{}{}",
-            if need_pad_start { " " } else { "" },
-            if need_paren { "(" } else { "" },
-            static_member_expr.span.source_text(ctx.source_text()),
-            check_code,
-            if need_paren { ")" } else { "" },
-            if need_pad_end { " " } else { "" },
-        );
+        // Pre-compute source text to avoid repeated calls
+        let source_text = static_member_expr.span.source_text(ctx.source_text());
 
+        // Use capacity hint to reduce allocations - estimate based on components
+        let estimated_capacity = source_text.len() + check_code.len() + 6; // +6 for spaces and parens
+        let mut fixed = String::with_capacity(estimated_capacity);
+
+        if need_pad_start {
+            fixed.push(' ');
+        }
+        if need_paren {
+            fixed.push('(');
+        }
+        fixed.push_str(source_text);
+        fixed.push(' ');
+        fixed.push_str(check_code);
+        if need_paren {
+            fixed.push(')');
+        }
+        if need_pad_end {
+            fixed.push(' ');
+        }
         let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
@@ -285,11 +285,7 @@ impl Rule for ExplicitLengthCheck {
             } else {
                 let (ancestor, is_negative) = get_boolean_ancestor(node, ctx);
                 if is_boolean_node(ancestor, ctx) {
-                    // For simple length checks like Boolean(foo.length) or !foo.length
-                    // is_negative indicates if the check is negated
-                    // A negated check means we're checking for non-zero (not empty)
-                    let is_zero_length_check = is_negative;
-                    self.report(ctx, ancestor, is_zero_length_check, static_member_expr, true);
+                    self.report(ctx, ancestor, is_negative, static_member_expr, true);
                     return;
                 }
                 match ctx.nodes().parent_kind(node.id()) {

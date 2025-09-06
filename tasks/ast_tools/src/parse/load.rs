@@ -202,14 +202,14 @@ fn parse_ast_attr_foreign_name(attr: &Attribute, ident: &Ident) -> Option<String
 
     let mut foreign_name = None;
     for meta in &metas {
-        if let Meta::NameValue(name_value) = meta {
-            if name_value.path.is_ident("foreign") {
-                assert!(
-                    foreign_name.is_none(),
-                    "Multiple `#[ast(foreign)]` attributes on type: `{ident}`"
-                );
-                foreign_name = Some(convert_expr_to_string(&name_value.value));
-            }
+        if let Meta::NameValue(name_value) = meta
+            && name_value.path.is_ident("foreign")
+        {
+            assert!(
+                foreign_name.is_none(),
+                "Multiple `#[ast(foreign)]` attributes on type: `{ident}`"
+            );
+            foreign_name = Some(convert_expr_to_string(&name_value.value));
         }
     }
     foreign_name

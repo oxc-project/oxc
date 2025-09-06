@@ -22,7 +22,7 @@ impl<'a> SveltePartialLoader<'a> {
     /// Each *.svelte file can contain at most
     ///  * one `<script>` block
     ///  * one `<script context="module">` or `<script module>` block
-    /// <https://github.com/sveltejs/svelte.dev/blob/ba7ad256f786aa5bc67eac3a58608f3f50b59e91/apps/svelte.dev/content/tutorial/02-advanced-svelte/08-script-module/02-module-exports/index.md>
+    ///    <https://github.com/sveltejs/svelte.dev/blob/ba7ad256f786aa5bc67eac3a58608f3f50b59e91/apps/svelte.dev/content/tutorial/02-advanced-svelte/08-script-module/02-module-exports/index.md>
     fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
         let mut pointer = 0;
         let Some(result1) = self.parse_script(&mut pointer) else {

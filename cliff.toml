@@ -9,6 +9,7 @@
 [bump]
 features_always_bump_minor = false
 breaking_always_bump_major = false
+bump_type = "minor"
 
 [changelog]
 header = """

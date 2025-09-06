@@ -24,7 +24,7 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct ExplicitFunctionReturnType(Box<ExplicitFunctionReturnTypeConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ExplicitFunctionReturnTypeConfig {
     allow_expressions: bool,
     allow_typed_function_expressions: bool,
@@ -41,6 +41,21 @@ impl std::ops::Deref for ExplicitFunctionReturnType {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl Default for ExplicitFunctionReturnTypeConfig {
+    fn default() -> Self {
+        Self {
+            allow_expressions: false,
+            allow_typed_function_expressions: true,
+            allow_direct_const_assertion_in_arrow_functions: true,
+            allow_concise_arrow_function_expressions_starting_with_void: false,
+            allow_functions_without_type_parameters: false,
+            allowed_names: FxHashSet::default(),
+            allow_higher_order_functions: true,
+            allow_iifes: false,
+        }
     }
 }
 
@@ -192,7 +207,7 @@ impl Rule for ExplicitFunctionReturnType {
                     }
                 }
 
-                if let Some(parent) = get_parent_node(node, ctx) {
+                if let Some(parent) = outermost_paren_parent(node, ctx) {
                     match parent.kind() {
                         AstKind::MethodDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
@@ -261,7 +276,7 @@ impl Rule for ExplicitFunctionReturnType {
                     return;
                 }
 
-                if let Some(parent) = get_parent_node(node, ctx) {
+                if let Some(parent) = outermost_paren_parent(node, ctx) {
                     match parent.kind() {
                         AstKind::MethodDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
@@ -355,7 +370,7 @@ impl ExplicitFunctionReturnType {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let Some(parent) = get_parent_node(node, ctx) else { return false };
+        let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
         match parent.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
@@ -475,8 +490,7 @@ impl ExplicitFunctionReturnType {
 
 // check function is IIFE (Immediately Invoked Function Expression)
 fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) =
-        iter_outer_expressions(ctx.semantic(), node.id()).next()
+    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.nodes(), node.id()).next()
     else {
         return false;
     };
@@ -514,16 +528,8 @@ fn is_setter(node: &AstNode) -> bool {
     }
 }
 
-// TODO(camc314): inline this function
-fn get_parent_node<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
-    outermost_paren_parent(node, ctx)
-}
-
 fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = get_parent_node(node, ctx) else { return false };
+    let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
     is_typed_parent(parent, Some(node))
         || is_property_of_object_with_type(parent, ctx)
         || is_constructor_argument(parent)
@@ -607,7 +613,7 @@ fn is_function(expr: &Expression) -> bool {
 }
 
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = get_parent_node(node, ctx) else { return false };
+    let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
     if let AstKind::ObjectProperty(prop) = parent.kind() {
         if let Expression::ArrowFunctionExpression(func) = &prop.value {
@@ -715,7 +721,7 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
         return false;
     }
-    let Some(obj_expr_parent) = get_parent_node(parent, ctx) else {
+    let Some(obj_expr_parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
     is_typed_parent(obj_expr_parent, None) || is_property_of_object_with_type(obj_expr_parent, ctx)
@@ -1543,6 +1549,12 @@ fn test() {
                 return () => {xxxxxxx }
             }
         	",
+            None,
+            None,
+            None,
+        ),
+        (
+            "clients.filter((client) => searchWords.every((word) => client.name.toLowerCase().includes(word)) || client.cats.some((cat) => searchWords.every((word) => cat.name.toLowerCase().includes(word))))",
             None,
             None,
             None,

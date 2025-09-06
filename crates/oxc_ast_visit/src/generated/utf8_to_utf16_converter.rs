@@ -2,7 +2,6 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/utf8_to_utf16.rs`.
 
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{VisitMut, utf8_to_utf16::Utf8ToUtf16Converter, walk_mut};
@@ -60,6 +59,16 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_object_expression(self, it);
         self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_object_property(&mut self, it: &mut ObjectProperty<'a>) {
+        // Custom implementation
+        self.convert_object_property(it);
+    }
+
+    fn visit_template_literal(&mut self, it: &mut TemplateLiteral<'a>) {
+        // Custom implementation
+        self.convert_template_literal(it);
     }
 
     fn visit_tagged_template_expression(&mut self, it: &mut TaggedTemplateExpression<'a>) {
@@ -380,6 +389,11 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_binding_pattern(&mut self, it: &mut BindingPattern<'a>) {
+        // Custom implementation
+        self.convert_binding_pattern(it);
+    }
+
     fn visit_assignment_pattern(&mut self, it: &mut AssignmentPattern<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_assignment_pattern(self, it);
@@ -392,16 +406,31 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_binding_property(&mut self, it: &mut BindingProperty<'a>) {
+        // Custom implementation
+        self.convert_binding_property(it);
+    }
+
     fn visit_array_pattern(&mut self, it: &mut ArrayPattern<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_array_pattern(self, it);
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_binding_rest_element(&mut self, it: &mut BindingRestElement<'a>) {
+        // Custom implementation
+        self.convert_binding_rest_element(it);
+    }
+
     fn visit_function(&mut self, it: &mut Function<'a>, flags: ScopeFlags) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_function(self, it, flags);
         self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_formal_parameters(&mut self, it: &mut FormalParameters<'a>) {
+        // Custom implementation
+        self.convert_formal_parameters(it);
     }
 
     fn visit_formal_parameter(&mut self, it: &mut FormalParameter<'a>) {
@@ -482,6 +511,11 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_import_specifier(&mut self, it: &mut ImportSpecifier<'a>) {
+        // Custom implementation
+        self.convert_import_specifier(it);
+    }
+
     fn visit_import_default_specifier(&mut self, it: &mut ImportDefaultSpecifier<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_import_default_specifier(self, it);
@@ -494,16 +528,37 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_with_clause(&mut self, it: &mut WithClause<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_with_clause(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_import_attribute(&mut self, it: &mut ImportAttribute<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_import_attribute(self, it);
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_export_named_declaration(&mut self, it: &mut ExportNamedDeclaration<'a>) {
+        // Custom implementation
+        self.convert_export_named_declaration(it);
+    }
+
+    fn visit_export_default_declaration(&mut self, it: &mut ExportDefaultDeclaration<'a>) {
+        // Custom implementation
+        self.convert_export_default_declaration(it);
+    }
+
     fn visit_export_all_declaration(&mut self, it: &mut ExportAllDeclaration<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_export_all_declaration(self, it);
         self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_export_specifier(&mut self, it: &mut ExportSpecifier<'a>) {
+        // Custom implementation
+        self.convert_export_specifier(it);
     }
 
     fn visit_v_8_intrinsic_expression(&mut self, it: &mut V8IntrinsicExpression<'a>) {
@@ -965,6 +1020,12 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_ts_import_type_qualified_name(&mut self, it: &mut TSImportTypeQualifiedName<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ts_import_type_qualified_name(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_ts_function_type(&mut self, it: &mut TSFunctionType<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_function_type(self, it);
@@ -981,6 +1042,11 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_ts_mapped_type(self, it);
         self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ts_template_literal_type(&mut self, it: &mut TSTemplateLiteralType<'a>) {
+        // Custom implementation
+        self.convert_ts_template_literal_type(it);
     }
 
     fn visit_ts_as_expression(&mut self, it: &mut TSAsExpression<'a>) {
@@ -1059,232 +1125,5 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_js_doc_unknown_type(self, it);
         self.convert_offset(&mut it.span.end);
-    }
-
-    fn visit_formal_parameters(&mut self, params: &mut FormalParameters<'a>) {
-        walk_mut::walk_formal_parameters(self, params);
-    }
-
-    fn visit_object_property(&mut self, prop: &mut ObjectProperty<'a>) {
-        self.convert_offset(&mut prop.span.start);
-        match (prop.shorthand, &mut prop.key, &mut prop.value) {
-            (true, PropertyKey::StaticIdentifier(key), Expression::Identifier(value)) => {
-                self.visit_identifier_name(key);
-                value.span = key.span;
-            }
-            (_, key, value) => {
-                self.visit_property_key(key);
-                self.visit_expression(value);
-            }
-        }
-        self.convert_offset(&mut prop.span.end);
-    }
-
-    fn visit_binding_pattern(&mut self, pattern: &mut BindingPattern<'a>) {
-        let span_end = match &mut pattern.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
-                self.convert_offset(&mut ident.span.start);
-                walk_mut::walk_binding_identifier(self, ident);
-                &mut ident.span.end
-            }
-            BindingPatternKind::ObjectPattern(obj_pattern) => {
-                self.convert_offset(&mut obj_pattern.span.start);
-                walk_mut::walk_object_pattern(self, obj_pattern);
-                &mut obj_pattern.span.end
-            }
-            BindingPatternKind::ArrayPattern(arr_pattern) => {
-                self.convert_offset(&mut arr_pattern.span.start);
-                walk_mut::walk_array_pattern(self, arr_pattern);
-                &mut arr_pattern.span.end
-            }
-            BindingPatternKind::AssignmentPattern(assign_pattern) => {
-                self.convert_offset(&mut assign_pattern.span.start);
-                walk_mut::walk_assignment_pattern(self, assign_pattern);
-                &mut assign_pattern.span.end
-            }
-        };
-        if let Some(type_annotation) = &mut pattern.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-        self.convert_offset(span_end);
-    }
-
-    fn visit_binding_rest_element(&mut self, rest_element: &mut BindingRestElement<'a>) {
-        self.convert_offset(&mut rest_element.span.start);
-        self.visit_binding_pattern_kind(&mut rest_element.argument.kind);
-        if let Some(type_annotation) = &mut rest_element.argument.type_annotation {
-            self.visit_ts_type_annotation(type_annotation);
-        }
-        self.convert_offset(&mut rest_element.span.end);
-    }
-
-    fn visit_binding_property(&mut self, prop: &mut BindingProperty<'a>) {
-        self.convert_offset(&mut prop.span.start);
-        match (prop.shorthand, &mut prop.key, &mut prop.value) {
-            (
-                true,
-                PropertyKey::StaticIdentifier(key),
-                BindingPattern { kind: BindingPatternKind::BindingIdentifier(value), .. },
-            ) => {
-                self.visit_identifier_name(key);
-                value.span = key.span;
-            }
-            (
-                true,
-                PropertyKey::StaticIdentifier(key),
-                BindingPattern { kind: BindingPatternKind::AssignmentPattern(pattern), .. },
-            ) => {
-                self.visit_assignment_pattern(pattern);
-                key.span = pattern.left.span();
-            }
-            (_, key, value) => {
-                self.visit_property_key(key);
-                self.visit_binding_pattern(value);
-            }
-        }
-        self.convert_offset(&mut prop.span.end);
-    }
-
-    fn visit_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        // Special case logic for `@dec export class C {}`
-        if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
-            self.visit_export_class(class, &mut decl.span);
-        } else {
-            self.convert_offset(&mut decl.span.start);
-            walk_mut::walk_export_named_declaration(self, decl);
-            self.convert_offset(&mut decl.span.end);
-        }
-    }
-
-    fn visit_export_default_declaration(&mut self, decl: &mut ExportDefaultDeclaration<'a>) {
-        // Special case logic for `@dec export default class {}`
-        if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut decl.declaration {
-            self.visit_export_class(class, &mut decl.span);
-        } else {
-            self.convert_offset(&mut decl.span.start);
-            walk_mut::walk_export_default_declaration(self, decl);
-            self.convert_offset(&mut decl.span.end);
-        }
-    }
-
-    fn visit_export_specifier(&mut self, specifier: &mut ExportSpecifier<'a>) {
-        self.convert_offset(&mut specifier.span.start);
-        match (&mut specifier.local, &mut specifier.exported) {
-            (
-                ModuleExportName::IdentifierReference(local),
-                ModuleExportName::IdentifierName(exported),
-            ) if local.span == exported.span => {
-                self.visit_identifier_reference(local);
-                exported.span = local.span;
-            }
-            (
-                ModuleExportName::IdentifierName(local),
-                ModuleExportName::IdentifierName(exported),
-            ) if local.span == exported.span => {
-                self.visit_identifier_name(local);
-                exported.span = local.span;
-            }
-            (ModuleExportName::StringLiteral(local), ModuleExportName::StringLiteral(exported))
-                if local.span == exported.span =>
-            {
-                self.visit_string_literal(local);
-                exported.span = local.span;
-            }
-            (local, exported) => {
-                self.visit_module_export_name(local);
-                self.visit_module_export_name(exported);
-            }
-        }
-        self.convert_offset(&mut specifier.span.end);
-    }
-
-    fn visit_import_specifier(&mut self, specifier: &mut ImportSpecifier<'a>) {
-        self.convert_offset(&mut specifier.span.start);
-        match &mut specifier.imported {
-            ModuleExportName::IdentifierName(imported) if imported.span == specifier.local.span => {
-                self.visit_identifier_name(imported);
-                specifier.local.span = imported.span;
-            }
-            imported => {
-                self.visit_module_export_name(imported);
-                self.visit_binding_identifier(&mut specifier.local);
-            }
-        }
-        self.convert_offset(&mut specifier.span.end);
-    }
-
-    fn visit_with_clause(&mut self, with_clause: &mut WithClause<'a>) {
-        self.visit_import_attributes(&mut with_clause.with_entries);
-    }
-
-    fn visit_template_literal(&mut self, lit: &mut TemplateLiteral<'a>) {
-        self.convert_offset(&mut lit.span.start);
-        for (quasi, expression) in lit.quasis.iter_mut().zip(&mut lit.expressions) {
-            self.visit_template_element(quasi);
-            self.visit_expression(expression);
-        }
-        self.visit_template_element(lit.quasis.last_mut().unwrap());
-        self.convert_offset(&mut lit.span.end);
-    }
-
-    fn visit_ts_template_literal_type(&mut self, lit: &mut TSTemplateLiteralType<'a>) {
-        self.convert_offset(&mut lit.span.start);
-        for (quasi, ts_type) in lit.quasis.iter_mut().zip(&mut lit.types) {
-            self.visit_template_element(quasi);
-            self.visit_ts_type(ts_type);
-        }
-        self.visit_template_element(lit.quasis.last_mut().unwrap());
-        self.convert_offset(&mut lit.span.end);
-    }
-}
-
-impl Utf8ToUtf16Converter<'_> {
-    /// Visit `ExportNamedDeclaration` or `ExportDefaultDeclaration` containing a `Class`.
-    /// e.g. `export class C {}`, `export default class {}`
-    ///
-    /// These need special handing because decorators before the `export` keyword
-    /// have `Span`s which are before the start of the export statement.
-    /// e.g. `@dec export class C {}`, `@dec export default class {}`.
-    /// So they need to be processed first.
-    fn visit_export_class(&mut self, class: &mut Class<'_>, export_decl_span: &mut Span) {
-        // Process decorators.
-        // Process decorators before the `export` keyword first.
-        // These have spans which are before the export statement span start.
-        // Then process export statement and `Class` start, then remaining decorators,
-        // which have spans within the span of `Class`.
-        let mut decl_start = export_decl_span.start;
-        for decorator in &mut class.decorators {
-            if decorator.span.start > decl_start {
-                // Process span start of export statement and `Class`
-                self.convert_offset(&mut export_decl_span.start);
-                self.convert_offset(&mut class.span.start);
-                // Prevent this branch being taken again
-                decl_start = u32::MAX;
-            }
-            self.visit_decorator(decorator);
-        }
-        // If didn't already, process span start of export statement and `Class`
-        if decl_start < u32::MAX {
-            self.convert_offset(&mut export_decl_span.start);
-            self.convert_offset(&mut class.span.start);
-        }
-        // Process rest of the class
-        if let Some(id) = &mut class.id {
-            self.visit_binding_identifier(id);
-        }
-        if let Some(type_parameters) = &mut class.type_parameters {
-            self.visit_ts_type_parameter_declaration(type_parameters);
-        }
-        if let Some(super_class) = &mut class.super_class {
-            self.visit_expression(super_class);
-        }
-        if let Some(super_type_arguments) = &mut class.super_type_arguments {
-            self.visit_ts_type_parameter_instantiation(super_type_arguments);
-        }
-        self.visit_ts_class_implements_list(&mut class.implements);
-        self.visit_class_body(&mut class.body);
-        // Process span end of `Class` and export statement
-        self.convert_offset(&mut class.span.end);
-        self.convert_offset(&mut export_decl_span.end);
     }
 }

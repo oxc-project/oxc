@@ -45,13 +45,16 @@ impl<'a> Template<'a> {
             RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
             RuleKind::Vitest => Path::new("crates/oxc_linter/src/rules/vitest"),
             RuleKind::Regexp => Path::new("crates/oxc_linter/src/rules/regexp"),
+            RuleKind::Vue => Path::new("crates/oxc_linter/src/rules/vue"),
         };
 
         std::fs::create_dir_all(path)?;
         let out_path = path.join(format!("{}.rs", self.context.snake_rule_name));
 
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
-        format_rule_output(&out_path)?;
+        format_rule_output(&out_path).map(|mut child| {
+            child.wait().expect("failed to format");
+        })?;
 
         println!("Saved test file to {}", out_path.display());
 

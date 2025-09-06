@@ -1,4 +1,22 @@
 #![expect(clippy::print_stdout)]
+//! # Variable Name Mangling Example
+//!
+//! This example demonstrates variable name mangling using the Oxc mangler.
+//! It shortens variable names to reduce file size.
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_minifier --example mangler [filename] [options]
+//! ```
+//!
+//! ## Options
+//!
+//! - `--keep-names`: Preserve function and class names
+//! - `--debug`: Enable debug output
+//! - `--twice`: Test idempotency by running twice
+
 use std::path::Path;
 
 use oxc_allocator::Allocator;

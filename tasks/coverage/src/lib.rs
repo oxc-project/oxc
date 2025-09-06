@@ -68,7 +68,7 @@ impl AppArgs {
         self.run_parser();
         self.run_semantic();
         self.run_codegen();
-        // self.run_formatter();
+        self.run_formatter();
         self.run_transformer();
         self.run_transpiler();
         self.run_minifier();

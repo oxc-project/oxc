@@ -83,7 +83,8 @@ expression: json
       "default": {
         "jsx-a11y": {
           "polymorphicPropName": null,
-          "components": {}
+          "components": {},
+          "attributes": {}
         },
         "next": {
           "rootDir": []
@@ -192,6 +193,7 @@ expression: json
       }
     },
     "GlobSet": {
+      "description": "A set of glob patterns.",
       "type": "array",
       "items": {
         "type": "string"
@@ -256,6 +258,17 @@ expression: json
       "description": "Configure JSX A11y plugin rules.\n\nSee\n[eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s\nconfiguration for a full reference.",
       "type": "object",
       "properties": {
+        "attributes": {
+          "description": "Map of attribute names to their DOM equivalents.\nThis is useful for non-React frameworks that use different attribute names.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jsx-a11y\": {\n\"attributes\": {\n\"for\": [\"htmlFor\", \"for\"]\n}\n}\n}\n}\n```",
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
         "components": {
           "description": "To have your custom components be checked as DOM elements, you can\nprovide a mapping of your component names to the DOM element name.\n\nExample:\n\n```json\n{\n\"settings\": {\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"IconButton\": \"button\"\n}\n}\n}\n}\n```",
           "default": {},
@@ -289,7 +302,9 @@ expression: json
         "nextjs",
         "react-perf",
         "promise",
-        "node"
+        "node",
+        "regex",
+        "vue"
       ]
     },
     "LintPlugins": {
@@ -472,7 +487,8 @@ expression: json
         "jsx-a11y": {
           "default": {
             "polymorphicPropName": null,
-            "components": {}
+            "components": {},
+            "attributes": {}
           },
           "allOf": [
             {

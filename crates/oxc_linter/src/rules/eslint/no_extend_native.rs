@@ -201,9 +201,7 @@ fn get_property_assignment<'a>(
             }
             AstKind::ComputedMemberExpression(computed_expr)
                 if computed_expr.object.span().contains_inclusive(node.span()) => {}
-            AstKind::StaticMemberExpression(_) | AstKind::SimpleAssignmentTarget(_) => {}
-            AstKind::ParenthesizedExpression(_) => {}
-            AstKind::ChainExpression(_) => {}
+            AstKind::StaticMemberExpression(_) | AstKind::PrivateFieldExpression(_) => {}
             _ => return None,
         }
     }
@@ -230,12 +228,20 @@ fn get_prototype_property_accessed<'a>(
             }
             // Check if this member expression is wrapped in a ChainExpression
             let grandparent_node = ctx.nodes().parent_node(parent.id());
-            if let AstKind::ChainExpression(_) = grandparent_node.kind() {
-                // Return the ChainExpression, not its parent
-                Some(grandparent_node)
+            let result_node = if let AstKind::ChainExpression(_) = grandparent_node.kind() {
+                // Return the ChainExpression
+                grandparent_node
             } else {
                 // Return the MemberExpression
-                Some(parent)
+                parent
+            };
+
+            // Check if the result is wrapped in parentheses
+            let great_grandparent_node = ctx.nodes().parent_node(result_node.id());
+            if let AstKind::ParenthesizedExpression(_) = great_grandparent_node.kind() {
+                Some(great_grandparent_node)
+            } else {
+                Some(result_node)
             }
         }
         _ => None,

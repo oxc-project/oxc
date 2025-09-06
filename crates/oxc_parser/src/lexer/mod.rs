@@ -40,14 +40,11 @@ pub use token::Token;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct LexerCheckpoint<'a> {
-    /// Current position in source
-    position: SourcePosition<'a>,
-
+    source_position: SourcePosition<'a>,
     token: Token,
-
-    errors_pos: usize,
+    errors: Option<Vec<OxcDiagnostic>>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -141,16 +138,16 @@ impl<'a> Lexer<'a> {
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         LexerCheckpoint {
-            position: self.source.position(),
+            source_position: self.source.position(),
             token: self.token,
-            errors_pos: self.errors.len(),
+            errors: { if self.errors.is_empty() { None } else { Some(self.errors.clone()) } },
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
-        self.errors.truncate(checkpoint.errors_pos);
-        self.source.set_position(checkpoint.position);
+        self.errors = checkpoint.errors.unwrap_or_default();
+        self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
     }
 
@@ -166,7 +163,21 @@ impl<'a> Lexer<'a> {
         self.context = context;
     }
 
-    /// Main entry point
+    /// Read first token in file.
+    pub fn first_token(&mut self) -> Token {
+        // HashbangComment ::
+        //     `#!` SingleLineCommentChars?
+        let kind = if let Some([b'#', b'!']) = self.peek_2_bytes() {
+            // SAFETY: Next 2 bytes are `#!`
+            unsafe { self.read_hashbang_comment() }
+        } else {
+            self.read_next_token()
+        };
+        self.finish_next(kind)
+    }
+
+    /// Read next token in file.
+    /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
         let kind = self.read_next_token();
         self.finish_next(kind)
@@ -273,6 +284,7 @@ impl<'a> Lexer<'a> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
+    #[inline] // Make sure is inlined into `next_token`
     fn read_next_token(&mut self) -> Kind {
         self.trivia_builder.has_pure_comment = false;
         self.trivia_builder.has_no_side_effects_comment = false;

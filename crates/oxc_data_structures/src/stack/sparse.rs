@@ -23,7 +23,7 @@ use super::{NonEmptyStack, Stack};
 ///
 /// e.g. if `T` is 24 bytes, and 90% of stack entries have no values:
 /// * `Vec<Option<T>>` is 24 bytes per entry (or 32 bytes if `T` has no niche).
-/// * `NonEmptyStack<Option<T>>` is same.
+/// * `NonEmptyStack<Option<T>>` is the same.
 /// * `SparseStack<T>` is 4 bytes per entry.
 ///
 /// When the stack grows and reallocates, `SparseStack` has less memory to copy, which is a performance

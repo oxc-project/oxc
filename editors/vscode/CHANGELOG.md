@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
 
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+
+### 🚜 Refactor
+
+- b638371 language_server: Do not check twice for supported extension (#13130) (Sysix)
+
+
+
+
+
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 5475075 vscode/language_server: Add `tsConfigPath` option (#12484) (Sysix)
+
+
+## [1.9.0] - 2025-07-29
+
+### 🐛 Bug Fixes
+
+- cc19c8b vscode: Fix statusbar icon order (#12544) (Christian Fehmer)
+
+
+
+
 
 
 

@@ -63,6 +63,7 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             unused: oxc_minifier::CompressOptionsUnused::Keep,
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
+            max_iterations: None,
         })
     }
 }
@@ -170,6 +171,9 @@ impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
 #[napi(object)]
 #[derive(Default)]
 pub struct MinifyOptions {
+    /// Use when minifying an ES6 module.
+    pub module: Option<bool>,
+
     pub compress: Option<Either<bool, CompressOptions>>,
 
     pub mangle: Option<Either<bool, MangleOptions>>,

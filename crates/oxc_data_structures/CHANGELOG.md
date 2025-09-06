@@ -4,6 +4,65 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.86.0] - 2025-08-31
+
+### 💥 BREAKING CHANGES
+
+- edeebc6 data_structures: [**BREAKING**] Rename `SliceIterExt` to `SliceIter` (#13439) (overlookmotel)
+
+### 🚀 Features
+
+- d0479e9 data_structures: Add `as_mut_slice` method to `IterMut` via `SliceIterMutExt` trait (#13437) (overlookmotel)
+- 5b139aa data_structures: Add `ptr` and `end_ptr` methods to `SliceIterExt` (#13435) (overlookmotel)
+- d8b027f data_structures: Add `SliceIterExt::peek` method (#13434) (overlookmotel)
+
+### 🚜 Refactor
+
+- 51919c2 data_structures: Rename lifetime in `SliceIterExt` (#13433) (overlookmotel)
+
+### ⚡ Performance
+
+- 475205f data_structures: Reduce `IterMut::advance_unchecked` to 1 instruction (#13438) (overlookmotel)
+
+
+
+
+
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 📚 Documentation
+
+- bb7838d data_structures: Add stacks to README (#12904) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### ⚡ Performance
+
+- e8ac1a5 codegen: Write indent in chunks of 32 bytes (#12745) (overlookmotel)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🚀 Features
+
+- af4d558 codegen: Add options to control indentation (#12691) (Copilot)
+
+### 📚 Documentation
+
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+
 
 
 

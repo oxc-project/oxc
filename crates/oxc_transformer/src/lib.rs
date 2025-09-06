@@ -580,6 +580,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.enter_statement(stmt, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }

@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- d676e04 ast_macros: Do not panic in macro (#13102) (overlookmotel)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- c63c944 ast_macros: Simplify code (#13101) (overlookmotel)
+
+
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+
+### 📚 Documentation
+
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚜 Refactor
+
+- f0b1f0d napi/oxlint, napi/parser: Remove source length from `RawTransferMetadata` (#12483) (overlookmotel)
+
+
 ## [0.78.0] - 2025-07-24
 
 ### 🚀 Features

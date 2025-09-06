@@ -14,6 +14,7 @@ fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> 
 #[derive(Debug, Default, Clone)]
 pub struct NoInnerDeclarations {
     config: NoInnerDeclarationsConfig,
+    block_scoped_functions: Option<BlockScopedFunctions>,
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
@@ -23,6 +24,15 @@ enum NoInnerDeclarationsConfig {
     Functions,
     /// Disallows function and var declarations in nested blocks
     Both,
+}
+
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+enum BlockScopedFunctions {
+    /// Allow function declarations in nested blocks in strict mode (ES6+ behavior)
+    #[default]
+    Allow,
+    /// Disallow function declarations in nested blocks regardless of strict mode
+    Disallow,
 }
 
 declare_oxc_lint!(
@@ -66,7 +76,22 @@ impl Rule for NoInnerDeclarations {
                 _ => NoInnerDeclarationsConfig::Both,
             },
         );
-        Self { config }
+
+        let block_scoped_functions = if value.is_array() && !value.is_null() {
+            value
+                .get(1)
+                .and_then(|v| v.get("blockScopedFunctions"))
+                .and_then(serde_json::Value::as_str)
+                .map(|value| match value {
+                    "disallow" => BlockScopedFunctions::Disallow,
+                    _ => BlockScopedFunctions::Allow,
+                })
+                .or(Some(BlockScopedFunctions::Allow))
+        } else {
+            None
+        };
+
+        Self { config, block_scoped_functions }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -79,6 +104,20 @@ impl Rule for NoInnerDeclarations {
             AstKind::Function(func) => {
                 if !func.is_function_declaration() {
                     return;
+                }
+
+                if self.config == NoInnerDeclarationsConfig::Functions {
+                    if let Some(block_scoped_functions) = self.block_scoped_functions {
+                        if block_scoped_functions == BlockScopedFunctions::Allow {
+                            let is_module = ctx.source_type().is_module();
+                            let scope_id = node.scope_id();
+                            let is_strict = ctx.scoping().scope_flags(scope_id).is_strict_mode();
+
+                            if is_module || is_strict {
+                                return;
+                            }
+                        }
+                    }
                 }
             }
             _ => return,
@@ -141,33 +180,59 @@ fn test() {
         ("if (test) { var fn = function expr() { }; }", None),
         ("function decl() { var fn = function expr() { }; }", None),
         ("function decl(arg) { var fn; if (arg) { fn = function() { }; } }", None),
-        ("var x = {doSomething() {function doSomethingElse() {}}}", None),
-        ("function decl(arg) { var fn; if (arg) { fn = function expr() { }; } }", None),
+        ("var x = {doSomething() {function doSomethingElse() {}}}", None), // { "ecmaVersion": 6 },
+        ("function decl(arg) { var fn; if (arg) { fn = function expr() { }; } }", None), // { "ecmaVersion": 6 },
         ("function decl(arg) { var fn; if (arg) { fn = function expr() { }; } }", None),
         ("if (test) { var foo; }", None),
-        ("if (test) { let x = 1; }", Some(serde_json::json!(["both"]))),
-        ("if (test) { const x = 1; }", Some(serde_json::json!(["both"]))),
+        ("if (test) { let x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
+        ("if (test) { const x = 1; }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
+        ("if (test) { using x = 1; }", Some(serde_json::json!(["both"]))), // {				"ecmaVersion": 2026,				"sourceType": "module",			},
+        ("if (test) { await using x = 1; }", Some(serde_json::json!(["both"]))), // {				"ecmaVersion": 2026,				"sourceType": "module",			},
         ("function doSomething() { while (test) { var foo; } }", None),
         ("var foo;", Some(serde_json::json!(["both"]))),
         ("var foo = 42;", Some(serde_json::json!(["both"]))),
         ("function doSomething() { var foo; }", Some(serde_json::json!(["both"]))),
         ("(function() { var foo; }());", Some(serde_json::json!(["both"]))),
-        ("foo(() => { function bar() { } });", None),
-        ("var fn = () => {var foo;}", Some(serde_json::json!(["both"]))),
-        ("var x = {doSomething() {var foo;}}", Some(serde_json::json!(["both"]))),
-        ("export var foo;", Some(serde_json::json!(["both"]))),
-        ("export function bar() {}", Some(serde_json::json!(["both"]))),
-        ("export default function baz() {}", Some(serde_json::json!(["both"]))),
-        ("exports.foo = () => {}", Some(serde_json::json!(["both"]))),
+        ("foo(() => { function bar() { } });", None), // { "ecmaVersion": 6 },
+        ("var fn = () => {var foo;}", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
+        ("var x = {doSomething() {var foo;}}", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
+        ("export var foo;", Some(serde_json::json!(["both"]))), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("export function bar() {}", Some(serde_json::json!(["both"]))), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("export default function baz() {}", Some(serde_json::json!(["both"]))), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("exports.foo = () => {}", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
         ("exports.foo = function(){}", Some(serde_json::json!(["both"]))),
         ("module.exports = function foo(){}", Some(serde_json::json!(["both"]))),
-        ("class C { method() { function foo() {} } }", Some(serde_json::json!(["both"]))),
-        ("class C { method() { var x; } }", Some(serde_json::json!(["both"]))),
-        ("class C { static { function foo() {} } }", Some(serde_json::json!(["both"]))),
-        ("class C { static { var x; } }", Some(serde_json::json!(["both"]))),
-        ("for (const x in {}) { let y = 5; }", Some(serde_json::json!(["both"]))),
-        ("for (const x of []) { let y = 5; }", Some(serde_json::json!(["both"]))),
-        ("for (const x = 1; a < 10; a++) { let y = 5; }", Some(serde_json::json!(["both"]))),
+        ("class C { method() { function foo() {} } }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2022 },
+        ("class C { method() { var x; } }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2022 },
+        ("class C { static { function foo() {} } }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2022 },
+        ("class C { static { var x; } }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2022 },
+        (
+            "'use strict'
+			 if (test) { function doSomething() { } }",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "'use strict'
+			 if (test) { function doSomething() { } }",
+            Some(serde_json::json!(["functions"])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "function foo() {'use strict'
+			 if (test) { function doSomething() { } } }",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
+        ), // { "ecmaVersion": 6 },
+        (
+            "function foo() { { function bar() { } } }",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
+        ), // { "ecmaVersion": 2022, "sourceType": "module" },
+        (
+            "class C { method() { if(test) { function somethingElse() { } } } }",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "const C = class { method() { if(test) { function somethingElse() { } } } }",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
+        ), // { "ecmaVersion": 2022 }
     ];
 
     let fail = vec![
@@ -175,12 +240,12 @@ fn test() {
         ("if (foo) var a; ", Some(serde_json::json!(["both"]))),
         ("if (foo) /* some comments */ var a; ", Some(serde_json::json!(["both"]))),
         ("if (foo){ function f(){ if(bar){ var a; } } }", Some(serde_json::json!(["both"]))),
-        ("if (foo) function f(){ if(bar) var a; } ", Some(serde_json::json!(["both"]))),
+        ("if (foo) function f(){ if(bar) var a; }", Some(serde_json::json!(["both"]))),
         ("if (foo) { var fn = function(){} } ", Some(serde_json::json!(["both"]))),
         ("if (foo)  function f(){} ", None),
         ("function bar() { if (foo) function f(){}; }", Some(serde_json::json!(["both"]))),
         ("function bar() { if (foo) var a; }", Some(serde_json::json!(["both"]))),
-        ("if (foo){ var a; }", Some(serde_json::json!(["both"]))),
+        ("if (foo) { var a; }", Some(serde_json::json!(["both"]))),
         ("function doSomething() { do { function somethingElse() { } } while (test); }", None),
         ("(function() { if (test) { function doSomething() { } } }());", None),
         ("while (test) { var foo; }", Some(serde_json::json!(["both"]))),
@@ -192,26 +257,60 @@ fn test() {
         (
             "const doSomething = () => { if (test) { var foo = 42; } }",
             Some(serde_json::json!(["both"])),
-        ),
-        ("class C { method() { if(test) { var foo; } } }", Some(serde_json::json!(["both"]))),
+        ), // { "ecmaVersion": 6 },
+        ("class C { method() { if(test) { var foo; } } }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 6 },
+        ("class C { static { if (test) { var foo; } } }", Some(serde_json::json!(["both"]))), // { "ecmaVersion": 2022 },
         (
             "class C { static { if (test) { function foo() {} } } }",
-            Some(serde_json::json!(["both"])),
-        ),
-        ("class C { static { if (test) { var foo; } } }", Some(serde_json::json!(["both"]))),
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
+        ), // { "ecmaVersion": 2022 },
         (
             "class C { static { if (test) { if (anotherTest) { var foo; } } } }",
             Some(serde_json::json!(["both"])),
-        ),
-        ("for (const x in {}) { var y = 5; }", Some(serde_json::json!(["both"]))),
-        ("for (const x of []) { var y = 5; }", Some(serde_json::json!(["both"]))),
-        ("for (const x = 1; a < 10; a++) { var y = 5; }", Some(serde_json::json!(["both"]))),
-        ("for (const x in {}) var y = 5;", Some(serde_json::json!(["both"]))),
-        ("for (const x of []) var y = 5;", Some(serde_json::json!(["both"]))),
-        ("for (const x = 1; a < 10; a++) var y = 5;", Some(serde_json::json!(["both"]))),
-        ("for (var x in {}) {}", Some(serde_json::json!(["both"]))),
-        ("for (var x of []) {}", Some(serde_json::json!(["both"]))),
-        ("for (var x = 1; a < 10; a++) {}", Some(serde_json::json!(["both"]))),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "if (test) { function doSomething() { } }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "allow" }])),
+        ), // { "ecmaVersion": 5 },
+        (
+            "if (test) { function doSomething() { } }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "'use strict'
+			 if (test) { function doSomething() { } }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "'use strict'
+			 if (test) { function doSomething() { } }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
+        ), // { "ecmaVersion": 5 },
+        (
+            "'use strict'
+			 if (test) { function doSomething() { } }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "allow" }])),
+        ), // { "ecmaVersion": 5 },
+        (
+            "function foo() {'use strict'
+			 { function bar() { } } }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
+        ), // { "ecmaVersion": 2022 },
+        (
+            "function foo() {'use strict'
+			 { function bar() { } } }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
+        ), // { "ecmaVersion": 5 },
+        (
+            "function doSomething() { 'use strict'
+			 do { function somethingElse() { } } while (test); }",
+            Some(serde_json::json!(["both", { "blockScopedFunctions": "disallow" }])),
+        ), // { "ecmaVersion": 5 },
+        (
+            "{ function foo () {'use strict'
+			 console.log('foo called'); } }",
+            Some(serde_json::json!(["both"])),
+        ), // { "ecmaVersion": 2022 }
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)

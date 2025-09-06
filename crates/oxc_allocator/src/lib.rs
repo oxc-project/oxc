@@ -16,6 +16,10 @@
 //!
 //! * `serialize` - Enables serialization support for [`Box`] and [`Vec`] with `serde` and `oxc_estree`.
 //!
+//! * `pool` - Enables [`AllocatorPool`].
+//!
+//! * `bitset` - Enables [`BitSet`].
+//!
 //! * `from_raw_parts` - Adds [`Allocator::from_raw_parts`] method.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
@@ -24,8 +28,15 @@
 //!   Only supported on 64-bit little-endian platforms at present.
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 //!
+//! * `track_allocations` - Count allocations and reallocations.
+//!   For internal use only. The APIs provided by this feature are sketchy at best, and possibly
+//!   undefined behavior. Do not enable this feature under any circumstances in production code.
+//!
 //! * `disable_fixed_size` - Disables `fixed_size` feature.
 //!   Purpose is to prevent `--all-features` enabling fixed sized allocators.
+//!
+//! * `disable_track_allocations` - Disables `track_allocations` feature.
+//!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
 #![warn(missing_docs)]
 
@@ -34,6 +45,8 @@ mod address;
 mod alloc;
 mod allocator;
 mod allocator_api2;
+#[cfg(feature = "bitset")]
+mod bitset;
 mod boxed;
 mod clone_in;
 mod convert;
@@ -42,12 +55,16 @@ mod from_raw_parts;
 pub mod hash_map;
 mod string_builder;
 mod take_in;
+#[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+mod tracking;
 mod vec;
 mod vec2;
 
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress};
 pub use allocator::Allocator;
+#[cfg(feature = "bitset")]
+pub use bitset::BitSet;
 pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
@@ -58,15 +75,19 @@ pub use vec::Vec;
 
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present
 
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
+#[cfg(all(
+    feature = "pool",
+    not(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))
+))]
 mod pool;
 
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -74,6 +95,7 @@ mod pool;
 ))]
 mod pool_fixed_size;
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -85,6 +107,7 @@ use pool_fixed_size as pool;
 // so this is required to avoid unused vars lint warning in release mode.
 #[cfg(all(
     debug_assertions,
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -93,6 +116,7 @@ use pool_fixed_size as pool;
 use pool_fixed_size::FixedSizeAllocatorMetadata;
 // Export so can be used in `napi/oxlint2`
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -100,16 +124,20 @@ use pool_fixed_size::FixedSizeAllocatorMetadata;
 ))]
 pub use pool_fixed_size::free_fixed_size_allocator;
 
+#[cfg(feature = "pool")]
 pub use pool::{AllocatorGuard, AllocatorPool};
 
 // Dummy implementations of interfaces from `pool_fixed_size`, just to stop clippy complaining.
 // Seems to be necessary due to feature unification.
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
+#[cfg(all(
+    feature = "pool",
+    not(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))
+))]
 #[allow(missing_docs, clippy::missing_safety_doc, clippy::unused_self, clippy::allow_attributes)]
 mod dummies {
     use std::{ptr::NonNull, sync::atomic::AtomicBool};
@@ -135,15 +163,19 @@ mod dummies {
         }
     }
 }
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
+#[cfg(all(
+    feature = "pool",
+    not(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))
+))]
 pub use dummies::*;
 
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
@@ -155,6 +187,7 @@ mod generated {
     pub mod fixed_size_constants;
 }
 #[cfg(all(
+    feature = "pool",
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",

@@ -62,7 +62,7 @@ use crate::{
     state::TransformState,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
-use metadata::LegacyDecoratorMetadata;
+use metadata::{LegacyDecoratorMetadata, MethodMetadata};
 
 #[derive(Default)]
 struct ClassDecoratorInfo {
@@ -111,6 +111,24 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_statement(stmt, ctx);
+        }
+    }
+
+    #[inline]
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.emit_decorator_metadata {
+            self.metadata.enter_class(class, ctx);
+        }
+    }
+
+    #[inline]
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.transform_class(class, ctx);
+    }
+
     // `#[inline]` because this is a hot path
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -123,18 +141,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
                 self.transform_export_default_class(stmt, ctx);
             }
             _ => {}
-        }
-    }
-
-    #[inline]
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.transform_class(class, ctx);
-    }
-
-    #[inline]
-    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.emit_decorator_metadata {
-            self.metadata.enter_class(class, ctx);
         }
     }
 
@@ -598,7 +604,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// Transform decorators of [`ClassElement::MethodDefinition`],
     /// [`ClassElement::PropertyDefinition`] and [`ClassElement::AccessorProperty`].
     fn transform_decorators_of_class_elements(
-        &self,
+        &mut self,
         class: &mut Class<'a>,
         class_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -680,7 +686,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ], Class);
     /// ```
     fn transform_decorators_of_class_and_constructor(
-        &self,
+        &mut self,
         class: &mut Class<'a>,
         class_binding: &BoundIdentifier<'a>,
         class_alias_binding: Option<&BoundIdentifier<'a>>,
@@ -821,7 +827,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     /// ]
     /// ```
     fn get_all_decorators_of_class_method(
-        &self,
+        &mut self,
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -835,16 +841,31 @@ impl<'a> LegacyDecorator<'a, '_> {
         }
 
         let mut decorations = ctx.ast.vec_with_capacity(method_decoration_count);
+
+        // Method decorators should always be injected before all other decorators
         decorations.extend(
             method
                 .decorators
-                .drain(..)
+                .take_in(ctx.ast)
+                .into_iter()
                 .map(|decorator| ArrayExpressionElement::from(decorator.expression)),
         );
 
         // The decorators of params are always inserted at the end if any.
         if param_decoration_count > 0 {
             self.transform_decorators_of_parameters(&mut decorations, params, ctx);
+        }
+
+        // `decorateMetadata` should always be injected after param decorators
+        if let Some(metadata) = self.metadata.pop_method_metadata() {
+            match metadata {
+                MethodMetadata::Constructor(meta) => {
+                    decorations.push(ArrayExpressionElement::from(meta));
+                }
+                MethodMetadata::Normal(meta) => {
+                    decorations.extend(meta.map(ArrayExpressionElement::from));
+                }
+            }
         }
 
         Some(ctx.ast.expression_array(SPAN, decorations))
@@ -1032,7 +1053,6 @@ impl<'a> LegacyDecorator<'a, '_> {
     ) -> Statement<'a> {
         let export_default_class_reference = ctx.ast.module_declaration_export_default_declaration(
             SPAN,
-            ctx.ast.module_export_name_identifier_name(SPAN, "default"),
             ExportDefaultDeclarationKind::Identifier(
                 ctx.ast.alloc(class_binding.create_read_reference(ctx)),
             ),

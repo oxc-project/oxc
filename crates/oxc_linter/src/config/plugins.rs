@@ -47,6 +47,10 @@ bitflags! {
         const PROMISE = 1 << 11;
         /// `eslint-plugin-node`
         const NODE = 1 << 12;
+        /// `eslint-plugin-regex`
+        const REGEX = 1 << 13;
+        /// `eslint-plugin-vue`
+        const VUE = 1 << 14;
     }
 }
 
@@ -119,6 +123,8 @@ impl From<&str> for BuiltinLintPlugins {
             "react-perf" | "react_perf" => BuiltinLintPlugins::REACT_PERF,
             "promise" => BuiltinLintPlugins::PROMISE,
             "node" => BuiltinLintPlugins::NODE,
+            "regex" => BuiltinLintPlugins::REGEX,
+            "vue" => BuiltinLintPlugins::VUE,
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
             _ => BuiltinLintPlugins::empty(),
@@ -142,6 +148,8 @@ impl From<BuiltinLintPlugins> for &'static str {
             BuiltinLintPlugins::REACT_PERF => "react-perf",
             BuiltinLintPlugins::PROMISE => "promise",
             BuiltinLintPlugins::NODE => "node",
+            BuiltinLintPlugins::REGEX => "regex",
+            BuiltinLintPlugins::VUE => "vue",
             _ => "",
         }
     }
@@ -225,6 +233,8 @@ impl JsonSchema for LintPlugins {
             ReactPerf,
             Promise,
             Node,
+            Regex,
+            Vue,
         }
 
         let enum_schema = r#gen.subschema_for::<LintPluginOptionsSchema>();

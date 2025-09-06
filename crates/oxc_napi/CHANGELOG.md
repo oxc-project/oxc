@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
 
+
+
+
+
+
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+
+
+
+
+
 ## [0.77.0] - 2025-07-12
 
 ### 🚀 Features

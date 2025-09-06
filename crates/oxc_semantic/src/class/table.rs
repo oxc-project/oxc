@@ -1,5 +1,6 @@
-use rustc_hash::FxHashMap;
 use std::borrow::Cow;
+
+use rustc_hash::FxHashMap;
 
 use oxc_index::IndexVec;
 use oxc_span::{Atom, Span};
@@ -70,7 +71,7 @@ impl<'a> ClassTable<'a> {
     pub fn iter_private_identifiers(
         &self,
         class_id: ClassId,
-    ) -> impl Iterator<Item = &PrivateIdentifierReference> + '_ {
+    ) -> impl Iterator<Item = &PrivateIdentifierReference<'_>> + '_ {
         self.private_identifier_references[class_id].iter()
     }
 

@@ -23,7 +23,7 @@ Options:
 Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(', ')}
 `;
 
-(async () => {
+void (async () => {
   //
   // Parse arguments
   //
@@ -41,7 +41,7 @@ Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(', ')}
   const targetPluginNames = new Set(values.target ?? ALL_TARGET_PLUGINS.keys());
   for (const pluginName of targetPluginNames) {
     if (!ALL_TARGET_PLUGINS.has(pluginName)) {
-      console.error(`Unknown plugin name: ${pluginName}`);
+      console.error(`Unknown plugin name: ${String(pluginName)}`);
       return;
     }
   }

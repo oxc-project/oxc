@@ -5,9 +5,6 @@ use bitflags::bitflags;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
 
-#[cfg(feature = "language_server")]
-use crate::service::offset_to_position::SpanPositionMessage;
-
 bitflags! {
     /// Flags describing an automatic code fix.
     ///
@@ -292,13 +289,6 @@ pub struct Fix<'a> {
     pub span: Span,
 }
 
-#[cfg(feature = "language_server")]
-#[derive(Debug)]
-pub struct FixWithPosition<'a> {
-    pub content: Cow<'a, str>,
-    pub span: SpanPositionMessage<'a>,
-}
-
 impl<'new> CloneIn<'new> for Fix<'_> {
     type Cloned = Fix<'new>;
 
@@ -390,14 +380,6 @@ impl PossibleFixes<'_> {
             }
         }
     }
-}
-
-#[cfg(feature = "language_server")]
-#[derive(Debug)]
-pub enum PossibleFixesWithPosition<'a> {
-    None,
-    Single(FixWithPosition<'a>),
-    Multiple(Vec<FixWithPosition<'a>>),
 }
 
 // NOTE (@DonIsaac): having these variants is effectively the same as interning
@@ -550,7 +532,7 @@ impl<'a> CompositeFix<'a> {
     /// 3. contains negative ranges (span.start > span.end)
     ///
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L147-L179>
-    fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
+    pub fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
         let mut fixes = fixes;
         if fixes.is_empty() {
             // Do nothing

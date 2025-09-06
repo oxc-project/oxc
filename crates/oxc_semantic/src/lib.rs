@@ -54,6 +54,7 @@ use class::ClassTable;
 /// [`Abstract Syntax Tree (AST)`]: crate::AstNodes
 /// [`scoping`]: crate::Scoping
 /// [`control flow graph (CFG)`]: crate::ControlFlowGraph
+#[derive(Default)]
 pub struct Semantic<'a> {
     /// Source code of the JavaScript/TypeScript program being analyzed.
     source_text: &'a str,
@@ -69,7 +70,7 @@ pub struct Semantic<'a> {
     classes: ClassTable<'a>,
 
     /// Parsed comments.
-    comments: &'a oxc_allocator::Vec<'a, Comment>,
+    comments: &'a [Comment],
     irregular_whitespaces: Box<[Span]>,
 
     /// Parsed JSDoc comments.
@@ -120,7 +121,7 @@ impl<'a> Semantic<'a> {
         (&mut self.scoping, &self.nodes)
     }
 
-    pub fn classes(&self) -> &ClassTable {
+    pub fn classes(&self) -> &ClassTable<'_> {
         &self.classes
     }
 

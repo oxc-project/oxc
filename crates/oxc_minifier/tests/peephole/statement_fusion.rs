@@ -3,7 +3,7 @@
 /// Tries to fuse all the statements in a block into a one statement by using COMMAs or statements.
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/StatementFusion.java>
-use super::{test, test_same};
+use crate::{test, test_same};
 
 #[test]
 fn fold_block_with_statements() {
@@ -73,7 +73,7 @@ fn fuse_into_vanilla_for2() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Label statement fusion optimization not yet implemented"]
 fn fuse_into_label() {
     test("a;b;c;label:for(x in y){}", "label:for(x in a,b,c,y);");
     test("a;b;c;label:for(;g;){}", "label:for(a,b,c;g;);");

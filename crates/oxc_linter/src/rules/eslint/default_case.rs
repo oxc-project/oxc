@@ -31,22 +31,36 @@ impl std::ops::Deref for DefaultCase {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require default cases in switch statements
+    /// Enforces that all `switch` statements include a `default` case,
+    /// unless explicitly marked with a configured comment.
     ///
     /// ### Why is this bad?
     ///
-    /// Some code conventions require that all switch statements have a default case,
-    /// even if the default case is empty. The thinking is that it’s better to always
-    /// explicitly state what the default behavior should be so that it’s clear
-    /// whether or not the developer forgot to include the default behavior by mistake.
+    /// Without a `default` case, it is unclear whether the omission was
+    /// intentional or an oversight. Adding a `default` or a special comment
+    /// makes the code more explicit and reduces mistakes.
     ///
     /// You may optionally include a `// no default` after the last case if there is
     /// no default case. The comment may be in any desired case, such as `// No Default`.
     ///
-    /// ### Examples
+    /// ### Options
+    ///
+    /// First option:
+    /// - Type: `object`
+    /// - Properties:
+    ///     - `commentPattern`: `string` (default: `/^no default$/i`) - A regex pattern used to detect comments that mark the absence of a `default` case as intentional.
+    ///
+    /// Example configuration:
+    ///   ```json
+    ///   {
+    ///       "default-case": ["error", { "commentPattern": "^skip\\sdefault" }]
+    ///   }
+    ///   ```
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```javascript
+    /// ```js
+    /// /* default-case: ["error"] */
+    ///
     /// switch (foo) {
     ///   case 1:
     ///     break;
@@ -54,56 +68,43 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```js
+    /// /* default-case: ["error"] */
+    ///
     /// switch (a) {
     ///   case 1:
-    ///     /* code */
     ///     break;
-    ///
     ///   default:
-    ///     /* code */
     ///     break;
     /// }
-    /// ```
     ///
-    /// ```javascript
     /// switch (a) {
     ///   case 1:
-    ///     /* code */
     ///     break;
-    ///
     ///   // no default
     /// }
     /// ```
     ///
-    /// ```javascript
+    /// #### `commentPattern`
+    ///
+    /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
+    /// ```js
+    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
+    ///
     /// switch (a) {
     ///   case 1:
-    ///     /* code */
     ///     break;
-    ///
-    ///   // No Default
+    ///   // no default
     /// }
     /// ```
     ///
-    /// ### Options
+    /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
+    /// ```js
+    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
     ///
-    /// #### commentPattern
-    ///
-    /// `{ type: string, default: "/^no default$/i" }`
-    ///
-    /// This option is for specifying an alternative regular expression which
-    /// will override the default `/^no default$/i` comment test pattern.
-    ///
-    /// For example if `{ "commentPattern": "^skip\\sdefault" }` were used
-    /// then the following example would not violate the rule:
-    ///
-    /// ```javascript
-    /// switch(a) {
+    /// switch (a) {
     ///   case 1:
-    ///     /* code */
     ///     break;
-    ///
     ///   // skip default
     /// }
     /// ```
@@ -114,46 +115,53 @@ declare_oxc_lint!(
 
 impl Rule for DefaultCase {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut cfg = DefaultCaseConfig::default();
+        let comment_pattern = value
+            .get(0)
+            .and_then(|config| config.get("commentPattern"))
+            .and_then(serde_json::Value::as_str)
+            .and_then(|pattern| RegexBuilder::new(pattern).case_insensitive(true).build().ok());
+        let case_config = DefaultCaseConfig { comment_pattern };
 
-        if let Some(config) = value.get(0) {
-            if let Some(val) = config.get("commentPattern").and_then(serde_json::Value::as_str) {
-                cfg.comment_pattern = RegexBuilder::new(val).case_insensitive(true).build().ok();
-            }
-        }
-
-        Self(Box::new(cfg))
+        Self(Box::new(case_config))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::SwitchStatement(switch) = node.kind() {
-            let cases = &switch.cases;
+        let AstKind::SwitchStatement(switch) = node.kind() else {
+            return;
+        };
 
-            if cases.is_empty() || cases.iter().any(|case| case.test.is_none()) {
-                return;
-            }
+        let cases = &switch.cases;
 
-            let Some(last_case) = cases.last() else {
-                return;
-            };
+        if cases.is_empty() || cases.iter().any(|case| case.test.is_none()) {
+            return;
+        }
 
-            let has_default_comment = ctx
-                .semantic()
-                .comments_range(last_case.span.start..switch.span.end)
-                .next_back()
-                .is_some_and(|comment| {
-                    let raw = ctx.source_range(comment.content_span()).trim();
-                    match &self.comment_pattern {
-                        Some(comment_pattern) => comment_pattern.is_match(raw),
-                        None => raw.eq_ignore_ascii_case("no default"),
-                    }
-                });
+        let Some(last_case) = cases.last() else {
+            return;
+        };
 
-            if !has_default_comment {
-                ctx.diagnostic(default_case_diagnostic(switch.span));
-            }
+        if !has_default_comment(ctx, switch.span, last_case.span, self.comment_pattern.as_ref()) {
+            ctx.diagnostic(default_case_diagnostic(switch.span));
         }
     }
+}
+
+fn has_default_comment(
+    ctx: &LintContext,
+    switch_span: Span,
+    last_case_span: Span,
+    comment_pattern: Option<&Regex>,
+) -> bool {
+    ctx.semantic().comments_range(last_case_span.start..switch_span.end).next_back().is_some_and(
+        |comment| {
+            let raw = ctx.source_range(comment.content_span()).trim();
+
+            match comment_pattern {
+                Some(re) => re.is_match(raw),
+                None => raw.eq_ignore_ascii_case("no default"),
+            }
+        },
+    )
 }
 
 #[test]

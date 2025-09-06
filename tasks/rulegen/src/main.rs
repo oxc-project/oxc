@@ -61,6 +61,9 @@ const VITEST_TEST_PATH: &str =
 
 const REGEXP_TEST_PATH: &str = "https://raw.githubusercontent.com/ota-meshi/eslint-plugin-regexp/refs/heads/master/tests/lib/rules";
 
+const VUE_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules/";
+
 struct TestCase {
     source_text: String,
     code: Option<String>,
@@ -157,8 +160,10 @@ fn format_code_snippet(code: &str) -> String {
         return code;
     }
 
-    // "debugger" => "debugger"
-    if !code.contains('"') {
+    // `debugger` => `debugger`
+    // `"debugger"` => `r#"\"debugger\""#`
+    // `\u1234` => `r#"\u1234"`
+    if !code.contains('"') && !code.contains('\\') {
         return format!("\"{code}\"");
     }
 
@@ -197,20 +202,20 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
-        if let Some(member_expr) = expr.callee.as_member_expression() {
-            if let Expression::ArrayExpression(array_expr) = member_expr.object() {
-                // ['class A {', '}'].join('\n')
-                let mut code = String::new();
-                for arg in &array_expr.elements {
-                    let ArrayExpressionElement::StringLiteral(lit) = arg else {
-                        continue;
-                    };
-                    code.push_str(lit.value.as_str());
-                    code.push('\n');
-                }
-                self.code = Some(code);
-                self.config = None;
+        if let Some(member_expr) = expr.callee.as_member_expression()
+            && let Expression::ArrayExpression(array_expr) = member_expr.object()
+        {
+            // ['class A {', '}'].join('\n')
+            let mut code = String::new();
+            for arg in &array_expr.elements {
+                let ArrayExpressionElement::StringLiteral(lit) = arg else {
+                    continue;
+                };
+                code.push_str(lit.value.as_str());
+                code.push('\n');
             }
+            self.code = Some(code);
+            self.config = None;
         }
     }
 
@@ -457,11 +462,11 @@ impl<'a> Visit<'a> for State<'a> {
         if let Expression::Identifier(ident) = &expr.callee {
             // Add describe's first parameter as part group comment
             // e.g. for `describe('valid', () => { ... })`, the group comment will be "valid"
-            if ident.name == "describe" {
-                if let Some(Argument::StringLiteral(lit)) = expr.arguments.first() {
-                    pushed = true;
-                    self.group_comment_stack.push(lit.value.to_string());
-                }
+            if ident.name == "describe"
+                && let Some(Argument::StringLiteral(lit)) = expr.arguments.first()
+            {
+                pushed = true;
+                self.group_comment_stack.push(lit.value.to_string());
             }
         }
         for arg in &expr.arguments {
@@ -498,17 +503,16 @@ impl<'a> Visit<'a> for State<'a> {
                     }
                 }
 
-                if let Expression::CallExpression(call_expr) = &prop.value {
-                    if call_expr.callee.is_member_expression() {
-                        // for eslint-plugin-react
-                        if let Some(Argument::ArrayExpression(array_expr)) =
-                            call_expr.arguments.first()
-                        {
-                            let array_expr = self.alloc(array_expr);
-                            for arg in &array_expr.elements {
-                                if let Some(expr) = arg.as_expression() {
-                                    self.add_valid_test(expr);
-                                }
+                if let Expression::CallExpression(call_expr) = &prop.value
+                    && call_expr.callee.is_member_expression()
+                {
+                    // for eslint-plugin-react
+                    if let Some(Argument::ArrayExpression(array_expr)) = call_expr.arguments.first()
+                    {
+                        let array_expr = self.alloc(array_expr);
+                        for arg in &array_expr.elements {
+                            if let Some(expr) = arg.as_expression() {
+                                self.add_valid_test(expr);
                             }
                         }
                     }
@@ -535,17 +539,14 @@ impl<'a> Visit<'a> for State<'a> {
                 }
 
                 // for eslint-plugin-react
-                if let Expression::CallExpression(call_expr) = &prop.value {
-                    if call_expr.callee.is_member_expression() {
-                        if let Some(Argument::ArrayExpression(array_expr)) =
-                            call_expr.arguments.first()
-                        {
-                            let array_expr = self.alloc(array_expr);
-                            for arg in &array_expr.elements {
-                                if let Some(expr) = arg.as_expression() {
-                                    self.add_invalid_test(expr);
-                                }
-                            }
+                if let Expression::CallExpression(call_expr) = &prop.value
+                    && call_expr.callee.is_member_expression()
+                    && let Some(Argument::ArrayExpression(array_expr)) = call_expr.arguments.first()
+                {
+                    let array_expr = self.alloc(array_expr);
+                    for arg in &array_expr.elements {
+                        if let Some(expr) = arg.as_expression() {
+                            self.add_invalid_test(expr);
                         }
                     }
                 }
@@ -564,19 +565,19 @@ fn find_parser_arguments<'a, 'b>(
             return None;
         };
         let StaticMemberExpression { object, property, .. } = &**static_member_expr;
-        if let Expression::Identifier(iden) = object {
-            if iden.name == "parsers" && property.name == "all" {
-                if let Some(arg) = call_expr.arguments.first() {
-                    if let Argument::CallExpression(call_expr) = arg {
-                        if call_expr.callee.is_member_expression() {
-                            return Some(&call_expr.arguments);
-                        }
-                        return None;
-                    }
-                    if arg.is_expression() {
-                        return None;
-                    }
+        if let Expression::Identifier(iden) = object
+            && iden.name == "parsers"
+            && property.name == "all"
+            && let Some(arg) = call_expr.arguments.first()
+        {
+            if let Argument::CallExpression(call_expr) = arg {
+                if call_expr.callee.is_member_expression() {
+                    return Some(&call_expr.arguments);
                 }
+                return None;
+            }
+            if arg.is_expression() {
+                return None;
             }
         }
         expr = object;
@@ -600,26 +601,31 @@ pub enum RuleKind {
     Promise,
     Vitest,
     Regexp,
+    Vue,
 }
 
-impl RuleKind {
-    fn from(kind: &str) -> Self {
-        match kind {
-            "jest" => Self::Jest,
-            "typescript" => Self::Typescript,
-            "unicorn" => Self::Unicorn,
-            "import" => Self::Import,
-            "react" => Self::React,
-            "react-perf" => Self::ReactPerf,
-            "jsx-a11y" => Self::JSXA11y,
-            "oxc" => Self::Oxc,
-            "nextjs" => Self::NextJS,
-            "jsdoc" => Self::JSDoc,
-            "n" => Self::Node,
-            "promise" => Self::Promise,
-            "vitest" => Self::Vitest,
-            "regexp" => Self::Regexp,
-            _ => Self::ESLint,
+impl TryFrom<&str> for RuleKind {
+    type Error = String;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "eslint" => Ok(Self::ESLint),
+            "jest" => Ok(Self::Jest),
+            "typescript" => Ok(Self::Typescript),
+            "unicorn" => Ok(Self::Unicorn),
+            "import" => Ok(Self::Import),
+            "react" => Ok(Self::React),
+            "react-perf" => Ok(Self::ReactPerf),
+            "jsx-a11y" => Ok(Self::JSXA11y),
+            "oxc" => Ok(Self::Oxc),
+            "nextjs" => Ok(Self::NextJS),
+            "jsdoc" => Ok(Self::JSDoc),
+            "n" => Ok(Self::Node),
+            "promise" => Ok(Self::Promise),
+            "vitest" => Ok(Self::Vitest),
+            "regexp" => Ok(Self::Regexp),
+            "vue" => Ok(Self::Vue),
+            _ => Err(format!("Invalid `RuleKind`, got `{value}`")),
         }
     }
 }
@@ -642,6 +648,7 @@ impl Display for RuleKind {
             Self::Promise => "eslint-plugin-promise",
             Self::Vitest => "eslint-plugin-vitest",
             Self::Regexp => "eslint-plugin-regexp",
+            Self::Vue => "eslint-plugin-vue",
         };
         f.write_str(kind_name)
     }
@@ -652,7 +659,9 @@ fn main() {
     args.next();
 
     let rule_name = args.next().expect("expected rule name").to_case(Case::Snake);
-    let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| RuleKind::from(&kind));
+    let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| {
+        RuleKind::try_from(kind.as_str()).expect("Invalid `RuleKind`")
+    });
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
 
@@ -671,6 +680,7 @@ fn main() {
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Regexp => format!("{REGEXP_TEST_PATH}/{kebab_rule_name}.ts"),
+        RuleKind::Vue => format!("{VUE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
     let language = match rule_kind {
@@ -725,15 +735,15 @@ fn main() {
                     if code.is_empty() {
                         continue;
                     }
-                    if let Some(current_comment) = current_comment {
-                        if current_comment != last_comment {
-                            last_comment = current_comment.to_string();
-                            code = format!(
-                                "// {}\n{}",
-                                &last_comment,
-                                case.code(has_config, has_settings, has_filename)
-                            );
-                        }
+                    if let Some(current_comment) = current_comment
+                        && current_comment != last_comment
+                    {
+                        last_comment = current_comment.to_string();
+                        code = format!(
+                            "// {}\n{}",
+                            &last_comment,
+                            case.code(has_config, has_settings, has_filename)
+                        );
                     }
 
                     if let Some(output) = case.output() {
@@ -794,6 +804,7 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
         RuleKind::Vitest => "vitest".into(),
         RuleKind::Node => "node".into(),
         RuleKind::Regexp => "regexp".into(),
+        RuleKind::Vue => "vue".into(),
     }
 }
 

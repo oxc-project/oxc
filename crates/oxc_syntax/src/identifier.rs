@@ -54,6 +54,17 @@ const MMSP: char = '\u{205f}';
 
 const IDEOGRAPHIC_SPACE: char = '\u{3000}';
 
+fn is_unicode_space_separator(c: char) -> bool {
+    // is_whitespace matches Unicode `White_Space` property
+    // exclude the characters that are included in `White_Space`, but not `Space_Separator`
+    // <https://util.unicode.org/UnicodeJsps/list-unicodeset.jsp?a=%5Cp%7BWhite_Space%7D%26%5CP%7BGeneral_Category%3DSpace_Separator%7D>
+    c.is_whitespace() && !matches!(c, TAB | LF | VT | FF | CR | NEL | LS | PS)
+}
+
+pub fn is_white_space(c: char) -> bool {
+    matches!(c, TAB | VT | FF | ZWNBSP) || is_unicode_space_separator(c)
+}
+
 // https://eslint.org/docs/latest/rules/no-irregular-whitespace#rule-details
 #[rustfmt::skip]
 pub fn is_irregular_whitespace(c: char) -> bool {

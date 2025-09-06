@@ -48,6 +48,14 @@ impl Default for RequireTopLevelDescribe {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Requires test cases and hooks to be inside a top-level `describe` block.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Having tests and hooks organized within `describe` blocks provides better
+    /// structure and grouping for test suites. It makes test output more readable
+    /// and helps with test organization, especially in larger codebases.
+    ///
     /// This rule triggers a warning if a test case (`test` and `it`) or a hook
     /// (`beforeAll`, `beforeEach`, `afterEach`, `afterAll`) is not located in a
     /// top-level `describe` block.

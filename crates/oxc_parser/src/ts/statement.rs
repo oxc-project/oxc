@@ -201,6 +201,9 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::interface_implements(implements_kw_span));
         }
         for extend in &extends {
+            if self.fatal_error.is_some() {
+                break;
+            }
             if !extend.expression.is_entity_name_expression() {
                 self.error(diagnostics::interface_extend(extend.span));
             }
@@ -238,8 +241,13 @@ impl<'a> ParserImpl<'a> {
         }
 
         let modifiers = self.parse_modifiers(
-            /* permit_const_as_modifier */ false,
+            /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ false,
+        );
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::READONLY,
+            diagnostics::cannot_appear_on_a_type_member,
         );
 
         if self.parse_contextual_modifier(Kind::Get) {
@@ -416,15 +424,16 @@ impl<'a> ParserImpl<'a> {
             }
         }
         match kind {
-            Kind::Global | Kind::Module | Kind::Namespace => {
-                let decl = self.parse_ts_module_declaration(start_span, modifiers);
-                Declaration::TSModuleDeclaration(decl)
-            }
-            Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
-            Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
-            Kind::Interface => {
+            Kind::Var | Kind::Let | Kind::Const => {
+                let kind = self.get_variable_declaration_kind();
                 self.bump_any();
-                self.parse_ts_interface_declaration(start_span, modifiers)
+                let decl = self.parse_variable_declaration(
+                    start_span,
+                    kind,
+                    VariableDeclarationParent::Statement,
+                    modifiers,
+                );
+                Declaration::VariableDeclaration(decl)
             }
             Kind::Class => {
                 let decl = self.parse_class_declaration(start_span, modifiers, decorators);
@@ -448,16 +457,15 @@ impl<'a> ParserImpl<'a> {
                 }
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start_span)
             }
-            kind if kind.is_variable_declaration() => {
-                let kind = self.get_variable_declaration_kind();
+            Kind::Global | Kind::Module | Kind::Namespace if self.is_ts => {
+                let decl = self.parse_ts_module_declaration(start_span, modifiers);
+                Declaration::TSModuleDeclaration(decl)
+            }
+            Kind::Type if self.is_ts => self.parse_ts_type_alias_declaration(start_span, modifiers),
+            Kind::Enum if self.is_ts => self.parse_ts_enum_declaration(start_span, modifiers),
+            Kind::Interface if self.is_ts => {
                 self.bump_any();
-                let decl = self.parse_variable_declaration(
-                    start_span,
-                    kind,
-                    VariableDeclarationParent::Statement,
-                    modifiers,
-                );
-                Declaration::VariableDeclaration(decl)
+                self.parse_ts_interface_declaration(start_span, modifiers)
             }
             _ if self.at_function_with_async() => {
                 let declare = modifiers.contains(ModifierKind::Declare);

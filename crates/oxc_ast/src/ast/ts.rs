@@ -1,9 +1,17 @@
 //! TypeScript Definitions
 //!
+//! This module contains AST node definitions for TypeScript syntax including:
+//! - Type annotations and declarations
+//! - Interfaces and type aliases
+//! - Enums and namespaces
+//! - TypeScript-specific expressions
+//! - Import/export extensions
+//!
+//! ## References
 //! - [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! - [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 #![expect(
-    missing_docs, // FIXME
+    missing_docs, // TODO: document individual struct fields  
     clippy::enum_variant_names,
 )]
 
@@ -212,7 +220,7 @@ pub enum TSLiteral<'a> {
 
 /// TypeScript Type
 ///
-/// This is the root-level type for TypeScript types, kind of like [`Expression`] is for
+/// This is the root-level type for TypeScript types, similar to how [`Expression`] is for
 /// expressions.
 ///
 /// ## Examples
@@ -1359,8 +1367,37 @@ pub struct TSImportType<'a> {
     pub span: Span,
     pub argument: TSType<'a>,
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
-    pub qualifier: Option<TSTypeName<'a>>,
+    pub qualifier: Option<TSImportTypeQualifier<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+}
+
+/// TypeScript Import Type Qualifier
+///
+/// The qualifier part of an import type that doesn't create references.
+/// In `import("./a").b.c`, the `.b.c` part is the qualifier.
+///
+/// Unlike `TSTypeName`, this doesn't use `IdentifierReference` because
+/// these are not references to identifiers in scope, but rather property
+/// accesses on the imported module type.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
+pub enum TSImportTypeQualifier<'a> {
+    Identifier(Box<'a, IdentifierName<'a>>) = 0,
+    QualifiedName(Box<'a, TSImportTypeQualifiedName<'a>>) = 1,
+}
+
+/// TypeScript Import Type Qualified Name
+///
+/// A qualified name in an import type (e.g., `a.b.c` in `import("./module").a.b.c`)
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSQualifiedName")]
+pub struct TSImportTypeQualifiedName<'a> {
+    pub span: Span,
+    pub left: TSImportTypeQualifier<'a>,
+    pub right: IdentifierName<'a>,
 }
 
 /// TypeScript Function Type

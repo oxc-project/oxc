@@ -238,16 +238,16 @@ fn calculate_layout_for_struct(
             // * Largest single range of niche values.
             // * Largest number of niche values at start of range.
             // * Earlier field (earlier after re-ordering).
-            if let Some(field_niche) = &field_layout.niche {
-                if layout.niche.as_ref().is_none_or(|niche| {
+            if let Some(field_niche) = &field_layout.niche
+                && layout.niche.as_ref().is_none_or(|niche| {
                     field_niche.count_max() > niche.count_max()
                         || (field_niche.count_max() == niche.count_max()
                             && field_niche.count_start > niche.count_start)
-                }) {
-                    let mut niche = field_niche.clone();
-                    niche.offset += offset;
-                    layout.niche = Some(niche);
-                }
+                })
+            {
+                let mut niche = field_niche.clone();
+                niche.offset += offset;
+                layout.niche = Some(niche);
             }
 
             // Next field starts after this one

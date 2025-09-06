@@ -4256,7 +4256,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for WithClause<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         WithClause {
             span: CloneIn::clone_in(&self.span, allocator),
-            attributes_keyword: CloneIn::clone_in(&self.attributes_keyword, allocator),
+            keyword: CloneIn::clone_in(&self.keyword, allocator),
             with_entries: CloneIn::clone_in(&self.with_entries, allocator),
         }
     }
@@ -4264,12 +4264,23 @@ impl<'new_alloc> CloneIn<'new_alloc> for WithClause<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         WithClause {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            attributes_keyword: CloneIn::clone_in_with_semantic_ids(
-                &self.attributes_keyword,
-                allocator,
-            ),
+            keyword: CloneIn::clone_in_with_semantic_ids(&self.keyword, allocator),
             with_entries: CloneIn::clone_in_with_semantic_ids(&self.with_entries, allocator),
         }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for WithClauseKeyword {
+    type Cloned = WithClauseKeyword;
+
+    #[inline(always)]
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        *self
+    }
+
+    #[inline(always)]
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        *self
     }
 }
 
@@ -4351,7 +4362,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclaration<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ExportDefaultDeclaration {
             span: CloneIn::clone_in(&self.span, allocator),
-            exported: CloneIn::clone_in(&self.exported, allocator),
             declaration: CloneIn::clone_in(&self.declaration, allocator),
         }
     }
@@ -4359,7 +4369,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclaration<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ExportDefaultDeclaration {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            exported: CloneIn::clone_in_with_semantic_ids(&self.exported, allocator),
             declaration: CloneIn::clone_in_with_semantic_ids(&self.declaration, allocator),
         }
     }
@@ -7433,6 +7442,52 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSImportType<'_> {
             options: CloneIn::clone_in_with_semantic_ids(&self.options, allocator),
             qualifier: CloneIn::clone_in_with_semantic_ids(&self.qualifier, allocator),
             type_arguments: CloneIn::clone_in_with_semantic_ids(&self.type_arguments, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TSImportTypeQualifier<'_> {
+    type Cloned = TSImportTypeQualifier<'new_alloc>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Identifier(it) => {
+                TSImportTypeQualifier::Identifier(CloneIn::clone_in(it, allocator))
+            }
+            Self::QualifiedName(it) => {
+                TSImportTypeQualifier::QualifiedName(CloneIn::clone_in(it, allocator))
+            }
+        }
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Identifier(it) => TSImportTypeQualifier::Identifier(
+                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            ),
+            Self::QualifiedName(it) => TSImportTypeQualifier::QualifiedName(
+                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for TSImportTypeQualifiedName<'_> {
+    type Cloned = TSImportTypeQualifiedName<'new_alloc>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        TSImportTypeQualifiedName {
+            span: CloneIn::clone_in(&self.span, allocator),
+            left: CloneIn::clone_in(&self.left, allocator),
+            right: CloneIn::clone_in(&self.right, allocator),
+        }
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        TSImportTypeQualifiedName {
+            span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
+            left: CloneIn::clone_in_with_semantic_ids(&self.left, allocator),
+            right: CloneIn::clone_in_with_semantic_ids(&self.right, allocator),
         }
     }
 }
