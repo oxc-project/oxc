@@ -10,7 +10,7 @@ use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::PeepholeOptimizations;
+use super::{DeleteCode, PeepholeOptimizations};
 
 /// Remove Dead Code from the AST.
 ///
@@ -62,9 +62,11 @@ impl<'a> PeepholeOptimizations {
                 Self::try_fold_if(if_stmt.alternate.as_mut().unwrap(), ctx);
             }
             Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
+                if_stmt.alternate.as_ref().inspect(|s| s.delete(ctx));
                 if_stmt.alternate = None;
             }
             Some(Statement::EmptyStatement(_)) => {
+                if_stmt.alternate.as_ref().inspect(|s| s.delete(ctx));
                 if_stmt.alternate = None;
             }
             _ => {}
@@ -105,18 +107,23 @@ impl<'a> PeepholeOptimizations {
             if test_has_side_effects {
                 if !has_var_stmt {
                     if boolean {
+                        if_stmt.alternate.as_ref().inspect(|s| s.delete(ctx));
                         if_stmt.alternate = None;
                     } else {
+                        if_stmt.consequent.delete(ctx);
                         if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
                     }
                 }
                 return;
             }
             *stmt = if boolean {
+                if_stmt.alternate.as_ref().inspect(|s| s.delete(ctx));
                 if_stmt.consequent.take_in(ctx.ast)
             } else if let Some(alternate) = if_stmt.alternate.take() {
+                if_stmt.consequent.delete(ctx);
                 alternate
             } else {
+                if_stmt.delete(ctx);
                 ctx.ast.statement_empty(if_stmt.span)
             };
             ctx.state.changed = true;
@@ -229,6 +236,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
+            expr_stmt.delete(ctx);
             *stmt = ctx.ast.statement_empty(expr_stmt.span);
             ctx.state.changed = true;
         }
@@ -430,10 +438,12 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.pure_functions.get(&symbol_id),
                     Some(Some(ConstantValue::Undefined))
                 ) {
+                    ident.delete(ctx);
                     let mut exprs =
                         Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
                     if exprs.is_empty() {
-                        *expr = ctx.ast.void_0(e.span);
+                        let new_expr = ctx.ast.void_0(e.span);
+                        *expr = new_expr;
                         ctx.state.changed = true;
                         return;
                     }

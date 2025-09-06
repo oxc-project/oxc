@@ -11,7 +11,7 @@ use oxc_syntax::es_target::ESTarget;
 
 use crate::{CompressOptionsUnused, ctx::Ctx};
 
-use super::PeepholeOptimizations;
+use super::{DeleteCode, PeepholeOptimizations};
 
 impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
@@ -648,6 +648,7 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.read_references_count > 0 {
             return false;
         }
+        assign_expr.left.delete(ctx);
         *e = assign_expr.right.take_in(ctx.ast);
         ctx.state.changed = true;
         false
