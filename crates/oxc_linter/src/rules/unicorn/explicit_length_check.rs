@@ -118,7 +118,8 @@ fn get_replacement_span(node: &AstNode, static_member_expr: &StaticMemberExpress
     match node.kind() {
         AstKind::CallExpression(call) if is_boolean_call(&node.kind()) => {
             // Check if we should replace just the member expression or the whole call
-            call.arguments.first()
+            call.arguments
+                .first()
                 .and_then(|arg| arg.as_expression())
                 .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
                 .map(|_| static_member_expr.span)
@@ -231,7 +232,7 @@ impl ExplicitLengthCheck {
         let paren_open = if need_paren { "(" } else { "" };
         let paren_close = if need_paren { ")" } else { "" };
         let pad_end = if need_pad_end { " " } else { "" };
-        
+
         let fixed = format!(
             "{pad_start}{paren_open}{} {check_code}{paren_close}{pad_end}",
             static_member_expr.span.source_text(ctx.source_text())
