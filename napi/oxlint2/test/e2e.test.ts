@@ -92,4 +92,10 @@ describe('oxlint2 CLI', () => {
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
+
+  it('should respect disable directives for custom plugin rules', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_disable_directives');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
 });
