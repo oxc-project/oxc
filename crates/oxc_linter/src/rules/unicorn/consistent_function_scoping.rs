@@ -9,7 +9,7 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::{get_function_like_declaration, outermost_paren_parent},
+    ast_util::{get_function_like_declaration, is_node_exact_call_argument, outermost_paren_parent},
     context::LintContext,
     rule::Rule,
     utils::is_react_hook,
@@ -262,7 +262,7 @@ impl Rule for ConsistentFunctionScoping {
         if matches!(
             outermost_paren_parent(node, ctx).map(AstNode::kind),
             Some(AstKind::ReturnStatement(_))
-        ) || is_function_direct_argument(node, ctx)
+        ) || is_node_exact_call_argument(node, ctx)
         {
             return;
         }
@@ -346,19 +346,6 @@ impl<'a> Visit<'a> for ReferencesFinder {
         self.in_function += 1;
         walk::walk_function(self, func, flags);
         self.in_function -= 1;
-    }
-}
-
-fn is_function_direct_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let parent = ctx.nodes().parent_node(node.id());
-    let node_span = node.span();
-
-    match parent.kind() {
-        AstKind::CallExpression(call) => call.arguments.iter().any(|arg| arg.span() == node_span),
-        AstKind::NewExpression(new_expr) => {
-            new_expr.arguments.iter().any(|arg| arg.span() == node_span)
-        }
-        _ => false,
     }
 }
 

@@ -114,20 +114,6 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
         } if is_literal(right, value) && op == *operator
     )
 }
-fn get_replacement_span(node: &AstNode, static_member_expr: &StaticMemberExpression) -> Span {
-    match node.kind() {
-        AstKind::CallExpression(call) if is_boolean_call(&node.kind()) => {
-            // Check if we should replace just the member expression or the whole call
-            call.arguments
-                .first()
-                .and_then(|arg| arg.as_expression())
-                .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
-                .map_or_else(|| node.span(), |_| static_member_expr.span)
-        }
-        _ => node.span(),
-    }
-}
-
 fn get_length_check_node<'a, 'b>(
     node: &AstNode<'a>,
     ctx: &'b LintContext<'a>,
@@ -212,7 +198,17 @@ impl ExplicitLengthCheck {
             }
         };
 
-        let span = get_replacement_span(node, static_member_expr);
+        let span = match node.kind() {
+            AstKind::CallExpression(call) if is_boolean_call(&node.kind()) => {
+                // Check if we should replace just the member expression or the whole call
+                call.arguments
+                    .first()
+                    .and_then(|arg| arg.as_expression())
+                    .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
+                    .map_or_else(|| node.span(), |_| static_member_expr.span)
+            }
+            _ => node.span(),
+        };
         let mut need_pad_start = false;
         let mut need_pad_end = false;
         let parent = ctx.nodes().parent_kind(node.id());
@@ -227,15 +223,20 @@ impl ExplicitLengthCheck {
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }
 
-        let pad_start = if need_pad_start { " " } else { "" };
-        let paren_open = if need_paren { "(" } else { "" };
-        let paren_close = if need_paren { ")" } else { "" };
-        let pad_end = if need_pad_end { " " } else { "" };
-
-        let fixed = format!(
-            "{pad_start}{paren_open}{} {check_code}{paren_close}{pad_end}",
-            static_member_expr.span.source_text(ctx.source_text())
-        );
+        // Pre-compute source text to avoid repeated calls  
+        let source_text = static_member_expr.span.source_text(ctx.source_text());
+        
+        // Use capacity hint to reduce allocations - estimate based on components
+        let estimated_capacity = source_text.len() + check_code.len() + 6; // +6 for spaces and parens
+        let mut fixed = String::with_capacity(estimated_capacity);
+        
+        if need_pad_start { fixed.push(' '); }
+        if need_paren { fixed.push('('); }
+        fixed.push_str(source_text);
+        fixed.push(' ');
+        fixed.push_str(check_code);
+        if need_paren { fixed.push(')'); }
+        if need_pad_end { fixed.push(' '); }
         let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
