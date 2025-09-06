@@ -9,7 +9,9 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::{get_function_like_declaration, is_node_exact_call_argument, outermost_paren_parent},
+    ast_util::{
+        get_function_like_declaration, is_node_exact_call_argument, outermost_paren_parent,
+    },
     context::LintContext,
     rule::Rule,
     utils::is_react_hook,

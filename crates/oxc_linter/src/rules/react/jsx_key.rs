@@ -207,8 +207,10 @@ fn is_in_array_or_iter<'a, 'b>(
                     if let Some((span, ident)) = member_expr.static_property_info() {
                         if TARGET_METHODS.contains(&ident) {
                             // Early exit if no arguments to check
-                            if v.arguments.is_empty() { return None; }
-                            
+                            if v.arguments.is_empty() {
+                                return None;
+                            }
+
                             // Array.from uses 2nd argument (index 1), others use 1st argument (index 0)
                             let target_arg_index = if ident == "from" { 1 } else { 0 };
                             if is_node_within_call_argument(jsx_node, v, target_arg_index) {

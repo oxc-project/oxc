@@ -223,20 +223,28 @@ impl ExplicitLengthCheck {
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }
 
-        // Pre-compute source text to avoid repeated calls  
+        // Pre-compute source text to avoid repeated calls
         let source_text = static_member_expr.span.source_text(ctx.source_text());
-        
+
         // Use capacity hint to reduce allocations - estimate based on components
         let estimated_capacity = source_text.len() + check_code.len() + 6; // +6 for spaces and parens
         let mut fixed = String::with_capacity(estimated_capacity);
-        
-        if need_pad_start { fixed.push(' '); }
-        if need_paren { fixed.push('('); }
+
+        if need_pad_start {
+            fixed.push(' ');
+        }
+        if need_paren {
+            fixed.push('(');
+        }
         fixed.push_str(source_text);
         fixed.push(' ');
         fixed.push_str(check_code);
-        if need_paren { fixed.push(')'); }
-        if need_pad_end { fixed.push(' '); }
+        if need_paren {
+            fixed.push(')');
+        }
+        if need_pad_end {
+            fixed.push(' ');
+        }
         let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
