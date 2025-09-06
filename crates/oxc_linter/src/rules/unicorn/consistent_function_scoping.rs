@@ -259,14 +259,10 @@ impl Rule for ConsistentFunctionScoping {
             return;
         }
 
-        if matches!(
-            outermost_paren_parent(node, ctx).map(AstNode::kind),
-            Some(
-                AstKind::ReturnStatement(_)
-                    | AstKind::CallExpression(_)
-                    | AstKind::NewExpression(_)
-            )
-        ) {
+        // Skip linting for functions in specific contexts
+        if matches!(outermost_paren_parent(node, ctx).map(AstNode::kind), Some(AstKind::ReturnStatement(_)))
+            || is_function_direct_argument(node, ctx)
+        {
             return;
         }
 
@@ -352,50 +348,35 @@ impl<'a> Visit<'a> for ReferencesFinder {
     }
 }
 
-fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    // Look for the pattern where a function is declared inside an IIFE
-    // IIFE pattern: (function() { function inner() {} })() or (() => { function inner() {} })()
-
-    // Find the containing function/arrow function by traversing ancestors
-    let ancestors: Vec<&AstNode> = ctx.nodes().ancestors(node.id()).collect();
-    let mut containing_function = None;
-
-    for ancestor in ancestors {
-        match ancestor.kind() {
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                containing_function = Some(ancestor);
-                break;
-            }
-            _ => {}
-        }
+fn is_function_direct_argument<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    let parent = ctx.nodes().parent_node(node.id());
+    let node_span = node.span();
+    
+    match parent.kind() {
+        AstKind::CallExpression(call) => 
+            call.arguments.iter().any(|arg| arg.span() == node_span),
+        AstKind::NewExpression(new_expr) => 
+            new_expr.arguments.iter().any(|arg| arg.span() == node_span),
+        _ => false
     }
+}
 
-    // If we found a containing function, check if it's immediately invoked
-    if let Some(func_node) = containing_function {
-        // Check if this function is directly called (IIFE pattern)
-        let func_parent = outermost_paren_parent(func_node, ctx);
-
-        if let Some(parent) = func_parent {
-            if let AstKind::CallExpression(call_expr) = parent.kind() {
-                // Check if the function is the callee of the call expression
-                // Handle both direct function call and parenthesized function call
-                let is_callee = match &call_expr.callee {
-                    Expression::ParenthesizedExpression(paren_expr) => {
-                        paren_expr.span() == func_node.span()
-                            || match &paren_expr.expression {
-                                Expression::FunctionExpression(func_expr) => {
-                                    func_expr.span == func_node.span()
-                                }
-                                Expression::ArrowFunctionExpression(arrow_expr) => {
-                                    arrow_expr.span == func_node.span()
-                                }
-                                _ => false,
-                            }
+fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    if let Some(parent_node) = outermost_paren_parent(node, ctx) {
+        if let Some(parent_node) = outermost_paren_parent(parent_node, ctx) {
+            if matches!(
+                parent_node.kind(),
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+            ) {
+                if let Some(call_node) = outermost_paren_parent(parent_node, ctx) {
+                    if let AstKind::CallExpression(call) = call_node.kind() {
+                        // Check if the function is the callee (true IIFE)
+                        // Handle both direct calls and parenthesized calls
+                        let callee = &call.callee.without_parentheses();
+                        return callee.span().start <= parent_node.span().start 
+                            && parent_node.span().end <= callee.span().end;
                     }
-                    _ => call_expr.callee.span() == func_node.span(),
-                };
-
-                return is_callee;
+                }
             }
         }
     }
@@ -404,36 +385,18 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    // Check if this function is directly inside a React hook callback
-    // We want to exempt functions that are direct arguments to React hooks,
-    // but not nested functions within those callbacks
-
-    // Find the containing function/arrow function
-    let ancestors: Vec<&AstNode> = ctx.nodes().ancestors(node.id()).collect();
-    let mut containing_function = None;
-
-    for ancestor in ancestors {
+    // Walk up ancestors looking for React hook calls, but stop at function boundaries
+    let mut function_count = 0;
+    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
         match ancestor.kind() {
+            AstKind::CallExpression(call_expr) if is_react_hook(&call_expr.callee) => return true,
             AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                containing_function = Some(ancestor);
-                break;
+                function_count += 1;
+                if function_count > 1 { break; }
             }
             _ => {}
         }
     }
-
-    // If this function is not directly inside another function, check if it's a React hook callback
-    if let Some(func_node) = containing_function {
-        // Check if the containing function is directly an argument to a React hook
-        let func_parent = ctx.nodes().parent_node(func_node.id());
-        if let AstKind::CallExpression(call_expr) = func_parent.kind() {
-            // Check if this containing function is directly in the arguments array
-            if call_expr.arguments.iter().any(|arg| arg.span() == func_node.span()) {
-                return is_react_hook(&call_expr.callee);
-            }
-        }
-    }
-
     false
 }
 
