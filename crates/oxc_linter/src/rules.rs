@@ -623,6 +623,7 @@ mod node {
 }
 
 mod vue {
+    pub mod define_props_declaration;
     pub mod valid_define_emits;
     pub mod valid_define_props;
 }
@@ -1201,6 +1202,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    vue::define_props_declaration,
     vue::valid_define_emits,
     vue::valid_define_props,
 }
