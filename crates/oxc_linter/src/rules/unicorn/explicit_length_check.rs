@@ -114,6 +114,20 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
         } if is_literal(right, value) && op == *operator
     )
 }
+fn get_replacement_span(node: &AstNode, static_member_expr: &StaticMemberExpression) -> Span {
+    match node.kind() {
+        AstKind::CallExpression(call) if is_boolean_call(&node.kind()) => {
+            // Check if we should replace just the member expression or the whole call
+            call.arguments.first()
+                .and_then(|arg| arg.as_expression())
+                .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
+                .map(|_| static_member_expr.span)
+                .unwrap_or_else(|| node.span())
+        }
+        _ => node.span(),
+    }
+}
+
 fn get_length_check_node<'a, 'b>(
     node: &AstNode<'a>,
     ctx: &'b LintContext<'a>,
@@ -198,27 +212,7 @@ impl ExplicitLengthCheck {
             }
         };
 
-        // Determine the span to replace
-        let replacement_span = match kind {
-            // For Boolean calls with logical expressions, only replace the member expression
-            AstKind::CallExpression(call) if is_boolean_call(&kind) => {
-                if let Some(arg) = call.arguments.first() {
-                    if matches!(arg.as_expression(), Some(Expression::LogicalExpression(_))) {
-                        // Only replace the member expression itself
-                        static_member_expr.span
-                    } else {
-                        // Replace the entire Boolean call for simple cases like Boolean(foo.length)
-                        kind.span()
-                    }
-                } else {
-                    kind.span()
-                }
-            }
-            // For other cases, use the node's span
-            _ => kind.span(),
-        };
-
-        let span = replacement_span;
+        let span = get_replacement_span(node, static_member_expr);
         let mut need_pad_start = false;
         let mut need_pad_end = false;
         let parent = ctx.nodes().parent_kind(node.id());
@@ -233,15 +227,14 @@ impl ExplicitLengthCheck {
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }
 
+        let pad_start = if need_pad_start { " " } else { "" };
+        let paren_open = if need_paren { "(" } else { "" };
+        let paren_close = if need_paren { ")" } else { "" };
+        let pad_end = if need_pad_end { " " } else { "" };
+        
         let fixed = format!(
-            "{}{}{}{}{}{}{}",
-            if need_pad_start { " " } else { "" },
-            if need_paren { "(" } else { "" },
-            static_member_expr.span.source_text(ctx.source_text()),
-            " ",
-            check_code,
-            if need_paren { ")" } else { "" },
-            if need_pad_end { " " } else { "" },
+            "{pad_start}{paren_open}{} {check_code}{paren_close}{pad_end}",
+            static_member_expr.span.source_text(ctx.source_text())
         );
         let property = static_member_expr.property.name;
         let help = if auto_fix {
