@@ -5,7 +5,7 @@ use std::{
     ptr::NonNull,
     sync::{
         Mutex,
-        atomic::{AtomicBool, AtomicU32, Ordering},
+        atomic::{AtomicU32, Ordering},
     },
 };
 
@@ -113,15 +113,14 @@ pub struct FixedSizeAllocatorMetadata {
     pub id: u32,
     /// Pointer to start of original allocation backing the `FixedSizeAllocator`
     pub alloc_ptr: NonNull<u8>,
-    /// `true` if both Rust and JS currently hold references to this `FixedSizeAllocator`.
+    /// Number of references to this `FixedSizeAllocator`.
     ///
-    /// * `false` initially.
-    /// * Set to `true` when buffer is shared with JS.
-    /// * When JS garbage collector collects the buffer, set back to `false` again.
-    ///   Memory will be freed when the `FixedSizeAllocator` is dropped on Rust side.
-    /// * Also set to `false` if `FixedSizeAllocator` is dropped on Rust side.
-    ///   Memory will be freed in finalizer when JS garbage collector collects the buffer.
-    pub is_double_owned: AtomicBool,
+    /// * 1 initially.
+    /// * Incremented when buffer is shared with JS.
+    /// * Decremented when JS garbage collector collects the buffer.
+    /// * Decremented when `FixedSizeAllocator` is dropped on Rust side.
+    /// * Memory is freed when counter reaches 0.
+    pub ref_count: AtomicU32,
 }
 
 // What we ideally want is an allocation 2 GiB in size, aligned on 4 GiB.
@@ -260,8 +259,7 @@ impl FixedSizeAllocator {
 
         // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,
         // which is after the end of the allocator chunk
-        let metadata =
-            FixedSizeAllocatorMetadata { alloc_ptr, id, is_double_owned: AtomicBool::new(false) };
+        let metadata = FixedSizeAllocatorMetadata { alloc_ptr, id, ref_count: AtomicU32::new(1) };
         // SAFETY: `FIXED_METADATA_OFFSET` is `FIXED_METADATA_SIZE_ROUNDED` bytes before end of
         // the allocation, so there's space for `FixedSizeAllocatorMetadata`.
         // It's sufficiently aligned for `FixedSizeAllocatorMetadata`.
@@ -304,11 +302,11 @@ impl Drop for FixedSizeAllocator {
     }
 }
 
-/// Deallocate memory backing a `FixedSizeAllocator` if it's not double-owned
+/// Deallocate memory backing a `FixedSizeAllocator` if it's not multiply-referenced
 /// (both owned by a `FixedSizeAllocator` on Rust side *and* held as a buffer on JS side).
 ///
-/// If it is double-owned, don't deallocate the memory but set the flag that it's no longer double-owned
-/// so next call to this function will deallocate it.
+/// If it is multiply-referenced, don't deallocate the memory, but decrement the ref counter.
+/// A later call to this function will deallocate the memory once the ref counter reaches 0.
 ///
 /// # SAFETY
 ///
@@ -326,22 +324,20 @@ pub unsafe fn free_fixed_size_allocator(metadata_ptr: NonNull<FixedSizeAllocator
         // `&FixedSizeAllocatorMetadata` ref only lives until end of this block.
         let metadata = unsafe { metadata_ptr.as_ref() };
 
-        // * If `is_double_owned` is already `false`, then one of:
-        //   1. The `Allocator` was never sent to JS side, or
-        //   2. The `FixedSizeAllocator` was already dropped on Rust side, or
-        //   3. Garbage collector already collected it on JS side.
-        //   We can deallocate the memory.
+        // Decrement the ref count.
         //
-        // * If `is_double_owned` is `true`, set it to `false` and exit.
-        //   Memory will be freed when `FixedSizeAllocator` is dropped on Rust side
-        //   or JS garbage collector collects the buffer.
+        // If ref count is not 1 (before decrementing), then the memory is still in use elsewhere,
+        // because either:
+        // * `FixedSizeAllocator` has not yet been dropped on Rust side, or
+        // * JS garbage collector has not yet collected the buffer on JS side.
+        // Therefore we cannot free the memory yet. Exit.
         //
         // Maybe a more relaxed `Ordering` would be OK, but I (@overlookmotel) am not sure,
         // so going with `Ordering::SeqCst` to be on safe side.
         // Deallocation only happens at the end of the whole process, so it shouldn't matter much.
         // TODO: Figure out if can use `Ordering::Relaxed`.
-        let is_double_owned = metadata.is_double_owned.swap(false, Ordering::SeqCst);
-        if is_double_owned {
+        let old_ref_count = metadata.ref_count.fetch_sub(1, Ordering::SeqCst);
+        if old_ref_count != 1 {
             return;
         }
 
