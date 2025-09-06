@@ -1,8 +1,4 @@
-'use strict';
-
-const { parseSyncRawImpl, parseAsyncRawImpl, isJsAst, returnBufferToCache } = require('./common.js');
-
-module.exports = { parseSyncRaw, parseAsyncRaw };
+import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.mjs';
 
 /**
  * Parse JS/TS source synchronously on current thread, using raw transfer to speed up deserialization.
@@ -12,7 +8,7 @@ module.exports = { parseSyncRaw, parseAsyncRaw };
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
-function parseSyncRaw(filename, sourceText, options) {
+export function parseSyncRaw(filename, sourceText, options) {
   let _;
   ({ experimentalRawTransfer: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, deserialize);
@@ -36,7 +32,7 @@ function parseSyncRaw(filename, sourceText, options) {
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
-function parseAsyncRaw(filename, sourceText, options) {
+export function parseAsyncRaw(filename, sourceText, options) {
   let _;
   ({ experimentalRawTransfer: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);

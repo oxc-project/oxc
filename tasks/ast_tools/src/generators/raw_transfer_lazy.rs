@@ -37,15 +37,15 @@ impl Generator for RawTransferLazyGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/constructors.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/constructors.mjs"),
                 code: constructors,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/walk.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/walk.mjs"),
                 code: walkers,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/types.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/types.mjs"),
                 code: node_type_ids_map,
             },
         ]
@@ -158,13 +158,10 @@ fn generate(
 
     // Generate file containing constructors
     let constructors = &state.constructors;
-    let constructor_names = &state.constructor_names;
     #[rustfmt::skip]
     let constructors = format!("
-        'use strict';
-
-        const {{ TOKEN, constructorError }} = require('../../raw-transfer/lazy-common.js'),
-            NodeArray = require('../../raw-transfer/node-array.js');
+        import {{ TOKEN, constructorError }} from '../../raw-transfer/lazy-common.mjs';
+        import {{ NodeArray }} from '../../raw-transfer/node-array.mjs';
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -172,10 +169,6 @@ fn generate(
             inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
 
         {constructors}
-
-        module.exports = {{
-            {constructor_names}
-        }};
     ");
 
     // Generate file containing walk functions
@@ -183,13 +176,9 @@ fn generate(
     let walked_constructor_names = &state.walked_constructor_names;
     #[rustfmt::skip]
     let walkers = format!("
-        'use strict';
+        import {{ {walked_constructor_names} }} from './constructors.mjs';
 
-        const {{
-            {walked_constructor_names}
-        }} = require('./constructors.js');
-
-        module.exports = walkProgram;
+        export {{ walkProgram }};
 
         {walkers}
     ");
@@ -202,23 +191,15 @@ fn generate(
     let non_leaf_node_type_ids_map = &state.non_leaf_node_type_ids_map;
     #[rustfmt::skip]
     let node_type_ids_map = format!("
-        'use strict';
-
         // Mapping from node type name to node type ID
-        const NODE_TYPE_IDS_MAP = new Map([
+        export const NODE_TYPE_IDS_MAP = new Map([
             // Leaf nodes
             {leaf_node_type_ids_map}// Non-leaf nodes
             {non_leaf_node_type_ids_map}
         ]);
 
-        const NODE_TYPES_COUNT = {nodes_count},
-            LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
-
-        module.exports = {{
-            NODE_TYPE_IDS_MAP,
-            NODE_TYPES_COUNT,
-            LEAF_NODE_TYPES_COUNT,
-        }};
+        export const NODE_TYPES_COUNT = {nodes_count};
+        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
     ");
 
     (constructors, walkers, node_type_ids_map)
@@ -736,7 +717,7 @@ fn generate_struct(
     // TODO: Add `visit` method to all classes which are nodes?
     #[rustfmt::skip]
     write_it!(state.constructors, "
-        class {struct_name} {{
+        export class {struct_name} {{
             {type_prop_init}
             #internal;
 

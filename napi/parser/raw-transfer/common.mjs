@@ -1,21 +1,13 @@
-'use strict';
-
-const os = require('node:os');
-const rawTransferSupported = require('./supported.js');
-const {
-  parseSyncRaw: parseSyncRawBinding,
-  parseAsyncRaw: parseAsyncRawBinding,
+import os from 'node:os';
+import {
   getBufferOffset,
-} = require('../bindings.js');
-const { BUFFER_SIZE, BUFFER_ALIGN, IS_TS_FLAG_POS } = require('../generated/constants.js');
+  parseAsyncRaw as parseAsyncRawBinding,
+  parseSyncRaw as parseSyncRawBinding,
+} from '../bindings.mjs';
+import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from '../generated/constants.mjs';
+import { rawTransferSupported } from './supported.mjs';
 
-module.exports = {
-  parseSyncRawImpl,
-  parseAsyncRawImpl,
-  prepareRaw,
-  isJsAst,
-  returnBufferToCache,
-};
+export { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, prepareRaw, returnBufferToCache };
 
 // Throw an error if running on a platform which raw transfer doesn't support.
 //
