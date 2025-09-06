@@ -1,20 +1,23 @@
 #![expect(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
+use std::fmt::Write as _;
 use std::{
     borrow::Cow,
     fmt::{self, Display, Formatter},
 };
 
 use convert_case::{Case, Casing};
+use lazy_regex::regex;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    Argument, ArrayExpressionElement, CallExpression, Expression, ExpressionStatement,
-    ObjectExpression, ObjectProperty, ObjectPropertyKind, Program, PropertyKey, Statement,
-    StaticMemberExpression, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
+    Argument, ArrayExpression, ArrayExpressionElement, AssignmentTarget, CallExpression,
+    Expression, ExpressionStatement, IdentifierName, ObjectExpression, ObjectProperty,
+    ObjectPropertyKind, Program, PropertyKey, Statement, StaticMemberExpression, StringLiteral,
+    TaggedTemplateExpression, TemplateLiteral,
 };
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Serialize;
 
 mod json;
@@ -23,46 +26,74 @@ mod util;
 
 const ESLINT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/tests/lib/rules";
+const ESLINT_RULES_PATH: &str = "https://raw.githubusercontent.com/eslint/eslint/main/lib/rules";
 
 const JEST_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jest-community/eslint-plugin-jest/main/src/rules/__tests__";
+const JEST_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/jest-community/eslint-plugin-jest/main/src/rules";
 
 const TYPESCRIPT_ESLINT_TEST_PATH: &str = "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/tests/rules";
+const TYPESCRIPT_ESLINT_RULES_PATH: &str = "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/src/rules";
 
 const UNICORN_TEST_PATH: &str =
     "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
+const UNICORN_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/rules";
 
 const IMPORT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/import-js/eslint-plugin-import/main/tests/src/rules";
+const IMPORT_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/import-js/eslint-plugin-import/main/src/rules";
 
 const REACT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/tests/lib/rules";
+const REACT_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-react/master/lib/rules";
 
 const JSX_A11Y_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules";
+const JSX_A11Y_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/src/rules";
 
 const NEXT_JS_TEST_PATH: &str =
     "https://raw.githubusercontent.com/vercel/next.js/canary/test/unit/eslint-plugin-next";
+const NEXT_JS_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/vercel/next.js/canary/packages/eslint-plugin-next/src/rules";
 
 const JSDOC_TEST_PATH: &str =
     "https://raw.githubusercontent.com/gajus/eslint-plugin-jsdoc/main/test/rules/assertions";
+const JSDOC_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/gajus/eslint-plugin-jsdoc/main/src/rules";
 
 const REACT_PERF_TEST_PATH: &str =
     "https://raw.githubusercontent.com/cvazac/eslint-plugin-react-perf/master/tests/lib/rules";
+const REACT_PERF_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/cvazac/eslint-plugin-react-perf/master/lib/rules";
 
 const NODE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-n/master/tests/lib/rules";
+const NODE_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/eslint-community/eslint-plugin-n/master/lib/rules";
 
 const PROMISE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/__tests__";
+const PROMISE_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/rules";
 
 const VITEST_TEST_PATH: &str =
     "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/tests";
+const VITEST_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/src/rules";
 
 const REGEXP_TEST_PATH: &str = "https://raw.githubusercontent.com/ota-meshi/eslint-plugin-regexp/refs/heads/master/tests/lib/rules";
+const REGEXP_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/ota-meshi/eslint-plugin-regexp/refs/heads/master/lib/rules";
 
 const VUE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules/";
+const VUE_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/lib/rules/";
 
 struct TestCase {
     source_text: String,
@@ -306,7 +337,11 @@ impl<'a> Visit<'a> for TestCase {
     }
 
     fn visit_template_literal(&mut self, lit: &TemplateLiteral<'a>) {
-        self.code = Some(lit.single_quasi().unwrap().to_string());
+        self.code = Some(
+            lit.single_quasi()
+                .expect("Expected template literal to have a single quasi")
+                .to_string(),
+        );
         self.config = None;
     }
 
@@ -335,6 +370,10 @@ pub struct Context {
     ///
     /// Should be `"js"`, `"jsx"`, `"ts"`, `"tsx"`. Defaults to `"js"`.
     language: Cow<'static, str>,
+    rule_config: Option<String>,
+    rule_config_tuple: Option<String>,
+    has_hash_map: bool,
+    has_hash_set: bool,
 }
 
 impl Context {
@@ -354,6 +393,10 @@ impl Context {
             fix_cases: None,
             has_filename: false,
             language: Cow::Borrowed("js"),
+            rule_config: None,
+            rule_config_tuple: None,
+            has_hash_map: false,
+            has_hash_set: false,
         }
     }
 
@@ -369,6 +412,20 @@ impl Context {
 
     fn with_language<S: Into<Cow<'static, str>>>(mut self, language: S) -> Self {
         self.language = language.into();
+        self
+    }
+
+    fn with_rule_config(
+        mut self,
+        rule_config: String,
+        rule_config_tuple: String,
+        has_hash_map: bool,
+        has_hash_set: bool,
+    ) -> Self {
+        self.rule_config = Some(rule_config);
+        self.rule_config_tuple = Some(rule_config_tuple);
+        self.has_hash_map = has_hash_map;
+        self.has_hash_set = has_hash_set;
         self
     }
 }
@@ -584,6 +641,682 @@ fn find_parser_arguments<'a, 'b>(
     }
 }
 
+#[derive(Debug, Serialize, PartialEq)]
+enum RuleConfigElement {
+    Enum(Vec<RuleConfigElement>),
+    Object(FxHashMap<String, RuleConfigElement>),
+    Map(Box<RuleConfigElement>),
+    Array(Box<RuleConfigElement>),
+    Set(Box<RuleConfigElement>),
+    Boolean,
+    StringLiteral(String),
+    String,
+    Number,
+    Integer,
+    Nullable(Box<RuleConfigElement>),
+    True,
+    False,
+    Null,
+}
+
+struct RuleConfigOutput {
+    seen_names: FxHashSet<String>,
+    output: String,
+    has_errors: bool,
+    log_errors: bool,
+    has_hash_map: bool,
+    has_hash_set: bool,
+}
+
+impl RuleConfigOutput {
+    fn new(log_errors: bool) -> Self {
+        Self {
+            seen_names: FxHashSet::default(),
+            output: String::new(),
+            has_errors: false,
+            has_hash_map: false,
+            has_hash_set: false,
+            log_errors,
+        }
+    }
+
+    fn log_error(&mut self, message: &str) {
+        if self.log_errors {
+            println!("\x1b[31m[ERROR]\x1b[0m: {message}");
+        }
+        self.has_errors = true;
+    }
+
+    fn extract_output(&mut self, element: &RuleConfigElement, field_name: &str) -> Option<String> {
+        let (element_label, element_output) = self.extract_output_inner(element, field_name)?;
+        if let Some(element_output) = element_output {
+            let _ = writeln!(self.output, "\n{element_output}");
+        }
+        Some(element_label)
+    }
+
+    fn extract_output_inner(
+        &mut self,
+        element: &RuleConfigElement,
+        field_name: &str,
+    ) -> Option<(String, Option<String>)> {
+        match element {
+            RuleConfigElement::Enum(elements) => {
+                let enum_name = field_name.to_case(Case::Pascal);
+                let enum_name = if self.seen_names.contains(&enum_name) {
+                    let mut iteration = 0;
+                    loop {
+                        let enum_name = format!("{enum_name}{iteration}");
+                        if !self.seen_names.contains(&enum_name) {
+                            break enum_name;
+                        }
+                        iteration += 1;
+                    }
+                } else {
+                    enum_name
+                };
+                self.seen_names.insert(enum_name.clone());
+                let mut output = String::new();
+                output.push_str(
+                    "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
+                );
+                output.push_str("#[schemars(untagged, rename_all = \"camelCase\")]\n");
+                let _ = writeln!(output, "enum {enum_name} {{");
+                let mut unlabeled_enum_value_count = 0;
+                let mut added_default = false;
+                let (enum_fields, fields_output) = elements
+                    .iter()
+                    .filter_map(|element| match element {
+                        RuleConfigElement::StringLiteral(string_literal) => {
+                            let is_valid_identifier_regex = regex!(r"^[a-zA-Z_]\w*$");
+                            let formatted_string_literal = string_literal.to_case(Case::Pascal);
+                            if is_valid_identifier_regex.is_match(&formatted_string_literal) {
+                                let rename = if formatted_string_literal.to_case(Case::Camel)
+                                    == *string_literal
+                                {
+                                    None
+                                } else {
+                                    Some(format!("rename = \"{string_literal}\""))
+                                };
+                                Some((rename, Some(formatted_string_literal), None, None))
+                            } else {
+                                Some((
+                                    Some(format!("rename = \"{string_literal}\"")),
+                                    None,
+                                    None,
+                                    None,
+                                ))
+                            }
+                        }
+                        RuleConfigElement::Object(_)
+                        | RuleConfigElement::Array(_)
+                        | RuleConfigElement::Set(_)
+                        | RuleConfigElement::Nullable(_)
+                        | RuleConfigElement::Boolean
+                        | RuleConfigElement::String
+                        | RuleConfigElement::Number
+                        | RuleConfigElement::Integer
+                        | RuleConfigElement::Enum(_)
+                        | RuleConfigElement::Map(_) => {
+                            let (element_label, element_output) =
+                                self.extract_output_inner(element, field_name)?;
+                            Some((
+                                None,
+                                None,
+                                Some(element_label),
+                                element_output,
+                            ))
+                        }
+                        RuleConfigElement::True
+                        | RuleConfigElement::False
+                        | RuleConfigElement::Null => {
+                            self.log_error(&format!("Unhandled enum element: {element:?}"));
+                            None
+                        }
+                    })
+                    .fold(
+                        (String::new(), String::new()),
+                        |(mut enum_fields, mut enum_value_output),
+                         (schemars_tag, enum_label, enum_value, element_output)| {
+                            let mut schemars_tags = vec![];
+                            if let Some(serde_tag) = schemars_tag {
+                                schemars_tags.push(serde_tag);
+                            }
+                            if !schemars_tags.is_empty() {
+                                let _ = writeln!(
+                                    enum_fields,
+                                    "    #[schemars({})]",
+                                    schemars_tags.join(", ")
+                                );
+                            }
+                            // Bogus default tag, but allows generated code to compile.
+                            // Complicated enum values need a default value, so only add the bogus tag
+                            // if it's easy.
+                            if enum_value.is_none() && !added_default {
+                                let _ = writeln!(enum_fields, "    #[default]");
+                                added_default = true;
+                            }
+                            let enum_label = enum_label.unwrap_or_else(|| {
+                                unlabeled_enum_value_count += 1;
+                                format!("Unlabeled{unlabeled_enum_value_count}")
+                            });
+                            let _ = writeln!(enum_fields, "    {enum_label}{},", if let Some(enum_value) = enum_value { format!("({enum_value})") } else { String::new() });
+                            if let Some(element_output) = element_output {
+                                let _ = writeln!(enum_value_output, "\n{element_output}");
+                            }
+                            (enum_fields, enum_value_output)
+                        },
+                    );
+
+                let _ = writeln!(output, "{enum_fields}\n}}\n{fields_output}\n");
+                Some((enum_name, Some(output)))
+            }
+            RuleConfigElement::Object(hash_map) => {
+                let struct_name = if self.seen_names.contains(&field_name.to_case(Case::Pascal)) {
+                    let mut iteration = 0;
+                    loop {
+                        let struct_name =
+                            format!("{}{iteration}", field_name.to_case(Case::Pascal));
+                        if !self.seen_names.contains(&struct_name) {
+                            break struct_name;
+                        }
+                        iteration += 1;
+                    }
+                } else {
+                    field_name.to_case(Case::Pascal)
+                };
+                self.seen_names.insert(struct_name.clone());
+                let mut output = String::from(
+                    "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
+                );
+                output.push_str("#[schemars(rename_all = \"camelCase\")]\n");
+                let _ = writeln!(output, "struct {struct_name} {{");
+                let mut fields_output = String::new();
+                for (raw_key, value) in hash_map {
+                    let key = &raw_key.to_case(Case::Pascal);
+                    let Some((value_label, value_output)) = self.extract_output_inner(value, key)
+                    else {
+                        continue;
+                    };
+                    if key.to_case(Case::Camel) != *raw_key {
+                        let _ = writeln!(output, "    #[serde(rename = \"{raw_key}\")]");
+                    }
+                    let _ = writeln!(output, "    {}: {value_label},", key.to_case(Case::Snake));
+                    if let Some(value_output) = value_output {
+                        let _ = writeln!(fields_output, "{value_output}\n");
+                    }
+                }
+                let _ = writeln!(output, "}}\n{fields_output}");
+                Some((struct_name, Some(output)))
+            }
+            RuleConfigElement::Array(element) => {
+                let (element_label, element_output) =
+                    self.extract_output_inner(element, field_name)?;
+                Some((format!("Vec<{element_label}>"), element_output))
+            }
+            RuleConfigElement::Set(element) => {
+                self.has_hash_set = true;
+                let (element_label, element_output) =
+                    self.extract_output_inner(element, field_name)?;
+                Some((format!("FxHashSet<{element_label}>"), element_output))
+            }
+            RuleConfigElement::Integer => Some((String::from("i32"), None)),
+            RuleConfigElement::String => Some((String::from("String"), None)),
+            RuleConfigElement::Number => Some((String::from("f32"), None)),
+            RuleConfigElement::Boolean => Some((String::from("bool"), None)),
+            RuleConfigElement::Nullable(element) => {
+                let (element_label, element_output) =
+                    self.extract_output_inner(element, field_name)?;
+                Some((format!("Option<{element_label}>"), element_output))
+            }
+            RuleConfigElement::Map(element) => {
+                let (element_label, element_output) =
+                    self.extract_output_inner(element, field_name)?;
+                self.has_hash_map = true;
+                Some((format!("FxHashMap<String, {element_label}>"), element_output))
+            }
+            RuleConfigElement::StringLiteral(_)
+            | RuleConfigElement::True
+            | RuleConfigElement::False
+            | RuleConfigElement::Null => {
+                self.log_error(&format!("Unhandled element for output: {element:?}"));
+                None
+            }
+        }
+    }
+}
+
+struct RuleConfig<'a> {
+    elements: Vec<RuleConfigElement>,
+    next_element: Option<RuleConfigElement>,
+    source_text: &'a str,
+    has_errors: bool,
+    log_errors: bool,
+}
+
+impl<'a> RuleConfig<'a> {
+    fn new(source_text: &'a str, log_errors: bool) -> Self {
+        Self { elements: vec![], next_element: None, source_text, has_errors: false, log_errors }
+    }
+
+    fn log_error(&mut self, message: &str) {
+        if self.log_errors {
+            println!("\x1b[31m[ERROR]\x1b[0m: {message}");
+        }
+        self.has_errors = true;
+    }
+
+    // Helper function to handle 'type' property
+    fn handle_type_property(&mut self, value: &Expression<'a>) -> Option<RuleConfigElement> {
+        match value {
+            Expression::StringLiteral(lit) => self.parse_type_string_literal(lit),
+            Expression::ArrayExpression(array_expression) => {
+                self.parse_type_array_expression(array_expression)
+            }
+            _ => {
+                self.log_error(&format!(
+                    "Unhandled `type` expression: {}",
+                    value.span().source_text(self.source_text)
+                ));
+                None
+            }
+        }
+    }
+
+    // Helper function to parse type string literals
+    fn parse_type_string_literal(&mut self, lit: &StringLiteral) -> Option<RuleConfigElement> {
+        match lit.value.as_str() {
+            "string" => Some(RuleConfigElement::String),
+            "boolean" => Some(RuleConfigElement::Boolean),
+            "number" => Some(RuleConfigElement::Number),
+            "integer" => Some(RuleConfigElement::Integer),
+            "array" | "object" => None,
+            _ => {
+                self.log_error(&format!("Unhandled `type` value: {}", lit.value));
+                None
+            }
+        }
+    }
+
+    // Helper function to parse type array expressions
+    fn parse_type_array_expression(
+        &mut self,
+        array_expression: &ArrayExpression<'a>,
+    ) -> Option<RuleConfigElement> {
+        if array_expression.elements.len() != 2 {
+            if array_expression.elements.len() != 1 {
+                self.log_error(&format!(
+                    "Unhandled `type` expression: {}",
+                    array_expression.span().source_text(self.source_text)
+                ));
+                return None;
+            }
+            let ArrayExpressionElement::StringLiteral(literal) = &array_expression.elements[0]
+            else {
+                self.log_error(&format!(
+                    "Unhandled `type` expression: {}",
+                    array_expression.span().source_text(self.source_text)
+                ));
+                return None;
+            };
+            let element = self.parse_type_string_literal(literal)?;
+            return Some(RuleConfigElement::Nullable(Box::new(element)));
+        }
+        let first_element = &array_expression.elements[0];
+        let second_element = &array_expression.elements[1];
+        let ArrayExpressionElement::StringLiteral(first_literal) = first_element else {
+            self.log_error(&format!(
+                "Unhandled `type` expression: {}",
+                array_expression.span().source_text(self.source_text)
+            ));
+            return None;
+        };
+        let ArrayExpressionElement::StringLiteral(second_literal) = second_element else {
+            self.log_error(&format!(
+                "Unhandled `type` expression: {}",
+                array_expression.span().source_text(self.source_text)
+            ));
+            return None;
+        };
+        if (first_literal.value == "null") == (second_literal.value == "null") {
+            self.log_error(&format!(
+                "Unhandled `type` expression: {}",
+                array_expression.span().source_text(self.source_text)
+            ));
+            return None;
+        }
+        let non_null_literal =
+            if first_literal.value == "null" { second_literal } else { first_literal };
+        let nested_element = self.parse_type_string_literal(non_null_literal)?;
+        Some(RuleConfigElement::Nullable(Box::new(nested_element)))
+    }
+
+    // Helper function to extract properties
+    fn extract_properties(
+        &mut self,
+        object_expression: &ObjectExpression<'a>,
+    ) -> FxHashMap<String, RuleConfigElement> {
+        let mut properties: FxHashMap<String, RuleConfigElement> = FxHashMap::default();
+        for object_property_kind in &object_expression.properties {
+            let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
+                self.log_error(&format!(
+                    "Cannot parse object property kind: {}",
+                    object_property_kind.span().source_text(self.source_text)
+                ));
+                continue;
+            };
+            let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                self.log_error(&format!(
+                    "Cannot parse object property key: {}",
+                    object_property.key.span().source_text(self.source_text)
+                ));
+                continue;
+            };
+            let Expression::ObjectExpression(object_expression) = &object_property.value else {
+                self.log_error(&format!(
+                    "Cannot parse object property value: {}",
+                    object_property.value.span().source_text(self.source_text)
+                ));
+                continue;
+            };
+            self.visit_object_expression(object_expression);
+            let Some(element) = self.next_element.take() else {
+                self.log_error(&String::from("Cannot find next element"));
+                continue;
+            };
+            properties.insert(identifier.name.into(), element);
+        }
+        properties
+    }
+
+    // Helper function to extract enum elements
+    fn extract_enum_elements(
+        &mut self,
+        array_expression: &ArrayExpression<'a>,
+    ) -> Vec<RuleConfigElement> {
+        array_expression
+            .elements
+            .iter()
+            .filter_map(|arg| match arg {
+                ArrayExpressionElement::StringLiteral(string_literal) => {
+                    Some(RuleConfigElement::StringLiteral(string_literal.value.into()))
+                }
+                ArrayExpressionElement::BooleanLiteral(boolean_literal) => {
+                    if boolean_literal.value {
+                        Some(RuleConfigElement::True)
+                    } else {
+                        Some(RuleConfigElement::False)
+                    }
+                }
+                ArrayExpressionElement::NullLiteral(_) => Some(RuleConfigElement::Null),
+                _ => {
+                    self.log_error(&format!(
+                        "Cannot parse `enum` value: {}",
+                        arg.span().source_text(self.source_text)
+                    ));
+                    None
+                }
+            })
+            .collect::<Vec<_>>()
+    }
+
+    // Helper function to extract 'anyOf' or 'oneOf' elements
+    fn extract_any_of_elements(
+        &mut self,
+        array_expression: &ArrayExpression<'a>,
+        identifier: &IdentifierName,
+    ) -> Vec<RuleConfigElement> {
+        let mut elements = Vec::new();
+        for arg in &array_expression.elements {
+            let ArrayExpressionElement::ObjectExpression(object_expression) = arg else {
+                self.log_error(&format!(
+                    "Cannot parse `{}` value: {}",
+                    identifier.name,
+                    arg.span().source_text(self.source_text)
+                ));
+                continue;
+            };
+            self.visit_object_expression(object_expression);
+            let Some(element) = self.next_element.take() else {
+                return elements;
+            };
+            match element {
+                RuleConfigElement::Enum(child_elements) => {
+                    elements.extend(child_elements);
+                }
+                _ => {
+                    elements.push(element);
+                }
+            }
+        }
+        elements
+    }
+}
+
+impl<'a> Visit<'a> for RuleConfig<'a> {
+    fn visit_program(&mut self, program: &Program<'a>) {
+        for stmt in &program.body {
+            self.visit_statement(stmt);
+        }
+    }
+
+    fn visit_statement(&mut self, stmt: &Statement<'a>) {
+        let Statement::ExpressionStatement(expression_statement) = stmt else {
+            return;
+        };
+        let Expression::AssignmentExpression(assignment_expression) =
+            &expression_statement.expression
+        else {
+            return;
+        };
+        let AssignmentTarget::StaticMemberExpression(static_member_expression) =
+            &assignment_expression.left
+        else {
+            return;
+        };
+        let Expression::Identifier(identifier) = &static_member_expression.object else {
+            return;
+        };
+        if identifier.name != "module" {
+            return;
+        }
+        if static_member_expression.property.name != "exports" {
+            return;
+        }
+        let Expression::ObjectExpression(object_expression) = &assignment_expression.right else {
+            return;
+        };
+        for object_property_kind in &object_expression.properties {
+            let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
+                continue;
+            };
+            let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                continue;
+            };
+            if identifier.name != "meta" {
+                continue;
+            }
+            let Expression::ObjectExpression(object_expression) = &object_property.value else {
+                continue;
+            };
+            for object_property_kind in &object_expression.properties {
+                let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind
+                else {
+                    continue;
+                };
+                let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                    continue;
+                };
+                if identifier.name != "schema" {
+                    continue;
+                }
+                match &object_property.value {
+                    Expression::ArrayExpression(array_expression) => {
+                        self.elements = array_expression
+                            .elements
+                            .iter()
+                            .filter_map(|element| {
+                                let ArrayExpressionElement::ObjectExpression(object_expression) =
+                                    element
+                                else {
+                                    return None;
+                                };
+                                self.next_element = None;
+                                self.visit_object_expression(object_expression);
+                                self.next_element.take()
+                            })
+                            .collect::<Vec<_>>();
+                    }
+                    Expression::ObjectExpression(object_expression) => {
+                        self.visit_object_expression(object_expression);
+                        let Some(element) = self.next_element.take() else {
+                            return;
+                        };
+                        self.elements = vec![element];
+                    }
+                    _ => {
+                        self.log_error(&format!(
+                            "Cannot parse `schema` value: {}",
+                            object_property.value.span().source_text(self.source_text)
+                        ));
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    fn visit_object_expression(&mut self, object_expression: &ObjectExpression<'a>) {
+        let mut rule_config_element = None;
+        let mut is_unique = false;
+        for object_property_kind in &object_expression.properties {
+            let ObjectPropertyKind::ObjectProperty(object_property) = &object_property_kind else {
+                self.log_error(&format!(
+                    "Cannot parse object property kind: {}",
+                    object_property_kind.span().source_text(self.source_text)
+                ));
+                continue;
+            };
+            let PropertyKey::StaticIdentifier(identifier) = &object_property.key else {
+                self.log_error(&format!(
+                    "Cannot parse object property key: {}",
+                    object_property.key.span().source_text(self.source_text)
+                ));
+                continue;
+            };
+            match identifier.name.as_str() {
+                "type" => {
+                    rule_config_element = self.handle_type_property(&object_property.value);
+                }
+                "properties" => {
+                    let Expression::ObjectExpression(object_expression) = &object_property.value
+                    else {
+                        self.log_error(&format!(
+                            "Cannot parse `properties` value: {}",
+                            object_property.value.span().source_text(self.source_text)
+                        ));
+                        continue;
+                    };
+                    let properties = self.extract_properties(object_expression);
+                    rule_config_element = Some(RuleConfigElement::Object(properties));
+                }
+                "items" => {
+                    let Expression::ObjectExpression(object_expression) = &object_property.value
+                    else {
+                        self.log_error(&format!(
+                            "Cannot parse `items` value: {}",
+                            object_property.value.span().source_text(self.source_text)
+                        ));
+                        continue;
+                    };
+                    self.visit_object_expression(object_expression);
+                    let Some(element) = self.next_element.take() else {
+                        self.log_error(&String::from("Cannot find next element"));
+                        continue;
+                    };
+                    if is_unique {
+                        rule_config_element = Some(RuleConfigElement::Set(Box::new(element)));
+                    } else {
+                        rule_config_element = Some(RuleConfigElement::Array(Box::new(element)));
+                    }
+                }
+                "uniqueItems" => {
+                    let Expression::BooleanLiteral(boolean_literal) = &object_property.value else {
+                        self.log_error(&format!(
+                            "Cannot parse `uniqueItems` value: {}",
+                            object_property.value.span().source_text(self.source_text)
+                        ));
+                        continue;
+                    };
+                    if !boolean_literal.value {
+                        continue;
+                    }
+                    is_unique = true;
+                    let Some(RuleConfigElement::Array(element)) = rule_config_element else {
+                        continue;
+                    };
+                    rule_config_element = Some(RuleConfigElement::Set(element));
+                }
+                "enum" => {
+                    let Expression::ArrayExpression(array_expression) = &object_property.value
+                    else {
+                        self.log_error(&format!(
+                            "Cannot parse `enum` values: {}",
+                            object_property.value.span().source_text(self.source_text)
+                        ));
+                        continue;
+                    };
+                    let elements = self.extract_enum_elements(array_expression);
+                    rule_config_element = Some(RuleConfigElement::Enum(elements));
+                }
+                "anyOf" | "oneOf" => {
+                    let Expression::ArrayExpression(array_expression) = &object_property.value
+                    else {
+                        self.log_error(&format!(
+                            "Cannot parse `{}` value: {}",
+                            identifier.name,
+                            object_property.value.span().source_text(self.source_text)
+                        ));
+                        continue;
+                    };
+                    let elements = self.extract_any_of_elements(array_expression, identifier);
+                    rule_config_element = Some(RuleConfigElement::Enum(elements));
+                }
+                "additionalProperties" => match &object_property.value {
+                    Expression::ObjectExpression(object_expression) => {
+                        self.visit_object_expression(object_expression);
+                        let Some(element) = self.next_element.take() else {
+                            self.log_error(&String::from("Cannot find next element"));
+                            continue;
+                        };
+                        rule_config_element = Some(RuleConfigElement::Map(Box::new(element)));
+                    }
+                    Expression::BooleanLiteral(boolean_literal) => {
+                        if boolean_literal.value {
+                            self.log_error(&format!(
+                                "Unhandled `additionalProperties` value: {}",
+                                object_property.value.span().source_text(self.source_text)
+                            ));
+                        }
+                    }
+                    _ => {
+                        self.log_error(&format!(
+                            "Unhandled `additionalProperties` value: {}",
+                            object_property.value.span().source_text(self.source_text)
+                        ));
+                    }
+                },
+                "default" | "required" | "minItems" | "minimum" | "minLength" | "maxItems"
+                | "minProperties" | "maximum" | "pattern" => {}
+                _ => {
+                    self.log_error(&format!("Unhandled key `{}`", identifier.name));
+                }
+            }
+        }
+        self.next_element = rule_config_element;
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum RuleKind {
     ESLint,
@@ -683,6 +1416,24 @@ fn main() {
         RuleKind::Vue => format!("{VUE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
+    let rule_src_path = match rule_kind {
+        RuleKind::ESLint => format!("{ESLINT_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Jest => format!("{JEST_RULES_PATH}/{kebab_rule_name}.ts"),
+        RuleKind::Typescript => format!("{TYPESCRIPT_ESLINT_RULES_PATH}/{kebab_rule_name}.ts"),
+        RuleKind::Unicorn => format!("{UNICORN_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Import => format!("{IMPORT_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::React => format!("{REACT_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::ReactPerf => format!("{REACT_PERF_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::JSXA11y => format!("{JSX_A11Y_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::NextJS => format!("{NEXT_JS_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::JSDoc => format!("{JSDOC_RULES_PATH}/{camel_rule_name}.js"),
+        RuleKind::Node => format!("{NODE_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Promise => format!("{PROMISE_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Vitest => format!("{VITEST_RULES_PATH}/{kebab_rule_name}.ts"),
+        RuleKind::Regexp => format!("{REGEXP_RULES_PATH}/{kebab_rule_name}.ts"),
+        RuleKind::Vue => format!("{VUE_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Oxc => String::new(),
+    };
     let language = match rule_kind {
         RuleKind::Typescript | RuleKind::Oxc => "ts",
         RuleKind::NextJS => "tsx",
@@ -692,11 +1443,11 @@ fn main() {
 
     println!("Reading test file from {rule_test_path}");
 
-    let body = oxc_tasks_common::agent()
+    let test_body = oxc_tasks_common::agent()
         .get(&rule_test_path)
         .call()
         .map(|mut res| res.body_mut().read_to_string());
-    let context = match body {
+    let mut context = match test_body {
         Ok(Ok(body)) => {
             let allocator = Allocator::default();
             let source_type = SourceType::from_path(rule_test_path).unwrap();
@@ -766,15 +1517,74 @@ fn main() {
                 .with_fix_cases(fix_cases)
         }
         Err(err) => {
-            println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");
+            println!("Rule tests {rule_name} cannot be found in {rule_kind}, use empty template.");
             println!("Error: {err}");
             Context::new(rule_kind, &rule_name, String::new(), String::new())
         }
         Ok(Err(err)) => {
-            println!("Failed to convert rule source code to string: {err}, use empty template");
+            println!("Failed to convert rule test code to string: {err}, use empty template");
             Context::new(rule_kind, &rule_name, String::new(), String::new())
         }
     };
+
+    println!("Reading rule source file from {rule_src_path}");
+
+    let rule_src_body = oxc_tasks_common::agent()
+        .get(&rule_src_path)
+        .call()
+        .map(|mut res| res.body_mut().read_to_string());
+    match rule_src_body {
+        Ok(Ok(body)) => {
+            let allocator = Allocator::default();
+            let source_type = SourceType::from_path(rule_src_path).unwrap();
+            let ret = Parser::new(&allocator, &body, source_type).parse();
+            let debug_mode = false;
+            let mut config = RuleConfig::new(&body, debug_mode);
+            // TODO: Use the tasks/lint_rules package to get the runtime config object from javascript
+            // and parse it here to resolve values of expressions.
+            config.visit_program(&ret.program);
+            if debug_mode {
+                println!("Rule config: {:?}", config.elements);
+            }
+            let mut rule_config_output = RuleConfigOutput::new(debug_mode);
+            let config_names = config
+                .elements
+                .iter()
+                .enumerate()
+                .filter_map(|(index, element)| {
+                    let element_name = format!("ConfigElement{index}");
+                    rule_config_output.extract_output(element, element_name.as_str())
+                })
+                .collect::<Vec<_>>();
+            if debug_mode {
+                println!("Rule config names: {config_names:?}");
+                println!("Rule Output:\n{}", rule_config_output.output);
+            }
+            if rule_config_output.has_errors {
+                println!("Rule config parsed, but with fatal errors. Not writing config.");
+            } else if config.has_errors {
+                println!("Rule config parsed, but with errors.");
+            } else {
+                println!("Rule config parsed.");
+            }
+            if !config_names.is_empty() && !rule_config_output.has_errors {
+                let rule_config_tuple = format!("({})", config_names.join(", "));
+                context = context.with_rule_config(
+                    rule_config_output.output,
+                    rule_config_tuple,
+                    rule_config_output.has_hash_map,
+                    rule_config_output.has_hash_set,
+                );
+            }
+        }
+        Ok(Err(err)) => {
+            println!("Failed to convert rule source code to string: {err}, use empty template");
+        }
+        Err(err) => {
+            println!("Rule source {rule_name} cannot be found in {rule_kind}, use empty template.");
+            println!("Error: {err}");
+        }
+    }
 
     let rule_name = &context.kebab_rule_name;
     let template = template::Template::with_context(&context);
