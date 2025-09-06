@@ -68,8 +68,7 @@ impl TsGoLintState {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         let json_input = self.json_input(paths, &mut resolved_configs);
-
-        if json_input.files.is_empty() {
+        if json_input.configs.is_empty() {
             return Ok(());
         }
 
@@ -461,33 +460,38 @@ impl TsGoLintState {
         &self,
         paths: &[Arc<OsStr>],
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
-    ) -> TsGoLintInput {
-        TsGoLintInput {
-            files: paths
-                .iter()
-                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
-                .map(|path| TsGoLintInputFile {
-                    file_path: path.to_string_lossy().to_string(),
-                    rules: {
-                        let path_buf = PathBuf::from(path);
-                        let resolved_config = resolved_configs
-                            .entry(path_buf.clone())
-                            .or_insert_with(|| self.config_store.resolve(&path_buf));
+    ) -> Payload {
+        let mut config_groups: FxHashMap<Vec<Rule>, Vec<String>> = FxHashMap::default();
 
-                        // Collect the rules that are enabled for this file
-                        resolved_config
-                            .rules
-                            .iter()
-                            .filter_map(|(rule, status)| {
-                                if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                                    Some(rule.name().to_string())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect()
-                    },
-                })
+        for path in paths {
+            if SourceType::from_path(Path::new(path)).is_ok() {
+                let path_buf = PathBuf::from(path);
+                let file_path = path.to_string_lossy().to_string();
+
+                let resolved_config = resolved_configs
+                    .entry(path_buf.clone())
+                    .or_insert_with(|| self.config_store.resolve(&path_buf));
+
+                let rules: Vec<Rule> = resolved_config
+                    .rules
+                    .iter()
+                    .filter_map(|(rule, status)| {
+                        if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                            Some(Rule { name: rule.name().to_string() })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                config_groups.entry(rules).or_default().push(file_path);
+            }
+        }
+
+        Payload {
+            configs: config_groups
+                .into_iter()
+                .map(|(rules, file_paths)| Config { file_paths, rules })
                 .collect(),
         }
     }
@@ -497,26 +501,34 @@ impl TsGoLintState {
 ///
 /// ```json
 /// {
-///   "files": [
+///   "configs": [
 ///     {
-///       "file_path": "/absolute/path/to/file.ts",
-///       "rules": ["rule-1", "another-rule"]
+///       "file_paths": ["/absolute/path/to/file.ts", "/another/file.ts"],
+///       "rules": [
+///         { name: "rule-1" },
+///         { name: "another-rule" },
+///       ]
 ///     }
 ///   ]
 /// }
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TsGoLintInput {
-    pub files: Vec<TsGoLintInputFile>,
+pub struct Payload {
+    pub configs: Vec<Config>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TsGoLintInputFile {
+pub struct Config {
     /// Absolute path to the file to lint
-    pub file_path: String,
+    pub file_paths: Vec<String>,
     /// List of rules to apply to this file
     /// Example: `["no-floating-promises"]`
-    pub rules: Vec<String>,
+    pub rules: Vec<Rule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
+pub struct Rule {
+    pub name: String,
 }
 
 /// Represents the raw output binary data from `tsgolint`.
