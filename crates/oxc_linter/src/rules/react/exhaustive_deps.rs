@@ -1394,8 +1394,6 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
                     if let Some(id) = pat.left.get_binding_identifier() {
                         cb(id.name.into());
                     } else {
-                        // `const { idk: { thing } = { } } = props;`
-                        // not sure what to do
                         needs_full_identifier = true;
                     }
                 }
