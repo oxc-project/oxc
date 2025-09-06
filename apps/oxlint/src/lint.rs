@@ -305,21 +305,10 @@ impl LintRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        // Run type-aware linting through tsgolint
-        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        if self.options.type_aware {
-            if let Err(err) = TsGoLintState::new(options.cwd(), config_store.clone())
-                .with_silent(misc_options.silent)
-                .lint(&files_to_lint, tx_error.clone())
-            {
-                print_and_flush_stdout(stdout, &err);
-                return CliRunResult::TsGoLintError;
-            }
-        }
-
-        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+        let linter =
+            Linter::new(LintOptions::default(), config_store.clone(), self.external_linter)
+                .with_fix(fix_options.fix_kind())
+                .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
 
@@ -344,21 +333,41 @@ impl LintRunner {
 
         let number_of_rules = linter.number_of_rules(self.options.type_aware);
 
+        let cwd = options.cwd().to_path_buf();
+
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
-        rayon::spawn(move || {
-            let mut lint_service = LintService::new(linter, options);
-            lint_service.with_paths(files_to_lint);
+        {
+            let tx_error = tx_error.clone();
+            let files_to_lint = files_to_lint.clone();
+            rayon::spawn(move || {
+                let mut lint_service = LintService::new(linter, options);
+                lint_service.with_paths(files_to_lint);
 
-            // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
-            // This reads the source text into start of allocator, instead of the end.
-            #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+                // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
+                // This reads the source text into start of allocator, instead of the end.
+                #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+                {
+                    use crate::raw_fs::RawTransferFileSystem;
+                    lint_service.with_file_system(Box::new(RawTransferFileSystem));
+                }
+
+                lint_service.run(&tx_error);
+            });
+        }
+
+        // Run type-aware linting through tsgolint
+        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
+        if self.options.type_aware {
+            if let Err(err) = TsGoLintState::new(&cwd, config_store)
+                .with_silent(misc_options.silent)
+                .lint(&files_to_lint, tx_error)
             {
-                use crate::raw_fs::RawTransferFileSystem;
-                lint_service.with_file_system(Box::new(RawTransferFileSystem));
+                print_and_flush_stdout(stdout, &err);
+                return CliRunResult::TsGoLintError;
             }
-
-            lint_service.run(&tx_error);
-        });
+        } else {
+            drop(tx_error);
+        }
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
