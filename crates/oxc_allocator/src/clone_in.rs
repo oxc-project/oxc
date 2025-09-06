@@ -159,11 +159,51 @@ where
     type Cloned = Vec<'new_alloc, C>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Vec::from_iter_in(self.iter().map(|it| it.clone_in(allocator)), allocator)
+        // The implementation below is equivalent to:
+        // `Vec::from_iter_in(self.iter().map(|it| it.clone_in(allocator)), allocator)`
+        // But `Vec::from_iter_in` is inefficient because it performs a bounds check for each item.
+        // This is unnecessary in this case as we know the length of the slice with certainty.
+        // This implementation takes advantage of that invariant, and skips those checks.
+
+        let slice = self.as_slice();
+
+        let mut vec = Vec::<C>::with_capacity_in(slice.len(), allocator);
+
+        // SAFETY: We allocated capacity for `slice.len()` elements in `vec`.
+        // Therefore, writing `slice.len()` elements to that memory region is safe.
+        // `C` and `Vec` aren't `Drop`, and allocation is in the arena, so we don't need to worry about
+        // a panic in this loop - can't lead to a memory leak. We just set length at the end.
+        unsafe {
+            let mut ptr = vec.as_mut_ptr();
+            for item in slice {
+                ptr.write(item.clone_in(allocator));
+                ptr = ptr.add(1);
+            }
+            vec.set_len(slice.len());
+        }
+
+        vec
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Vec::from_iter_in(self.iter().map(|it| it.clone_in_with_semantic_ids(allocator)), allocator)
+        let slice = self.as_slice();
+
+        let mut vec = Vec::<C>::with_capacity_in(slice.len(), allocator);
+
+        // SAFETY: We allocated capacity for `slice.len()` elements in `vec`.
+        // Therefore, writing `slice.len()` elements to that memory region is safe.
+        // `C` and `Vec` aren't `Drop`, and allocation is in the arena, so we don't need to worry about
+        // a panic in this loop - can't lead to a memory leak. We just set length at the end.
+        unsafe {
+            let mut ptr = vec.as_mut_ptr();
+            for item in slice {
+                ptr.write(item.clone_in_with_semantic_ids(allocator));
+                ptr = ptr.add(1);
+            }
+            vec.set_len(slice.len());
+        }
+
+        vec
     }
 }
 
@@ -221,5 +261,23 @@ mod test {
         assert_eq!(original.as_ref(), &[1, 4, 3]);
         assert_eq!(cloned.as_ref(), &[1, 2, 3]);
         assert_eq!(cloned2.as_ref(), &[1, 2, 3]);
+    }
+
+    #[test]
+    fn clone_in_vec() {
+        let allocator = Allocator::default();
+
+        let mut original = Vec::with_capacity_in(8, &allocator);
+        original.extend_from_slice(&[1, 2, 3]);
+
+        let cloned = original.clone_in(&allocator);
+        let cloned2 = original.clone_in_with_semantic_ids(&allocator);
+        original[1] = 4;
+
+        assert_eq!(original.as_slice(), &[1, 4, 3]);
+        assert_eq!(cloned.as_slice(), &[1, 2, 3]);
+        assert_eq!(cloned.capacity(), 3);
+        assert_eq!(cloned2.as_slice(), &[1, 2, 3]);
+        assert_eq!(cloned2.capacity(), 3);
     }
 }
