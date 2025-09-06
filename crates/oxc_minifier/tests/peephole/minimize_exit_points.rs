@@ -1,7 +1,7 @@
 use crate::{test, test_same};
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Break statement optimization not yet implemented"]
 fn test_break_optimization() {
     test("f:{if(true){a();break f;}else;b();}", "f:{if(true){a()}else{b()}}");
     test("f:{if(false){a();break f;}else;b();break f;}", "f:{if(false){a()}else{b()}}");
@@ -34,7 +34,7 @@ fn test_function_return_optimization1() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Function return optimization not yet implemented"]
 fn test_function_return_optimization2() {
     test("function f(){if(a()){b();if(c())return;}}", "function f(){if(a()){b();if(c());}}");
     test("function f(){if(x)return; x=3; return; }", "function f(){if(x); else x=3}");
@@ -110,7 +110,7 @@ fn test_function_return_scoped() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: While continue optimization not yet implemented"]
 fn test_while_continue_optimization() {
     test("while(true){if(x)continue; x=3; continue; }", "while(true)if(x);else x=3");
     test_same("while(true){a();continue;b();}");
@@ -152,7 +152,7 @@ fn test_while_continue_optimization() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Do-while continue optimization not yet implemented"]
 fn test_do_continue_optimization() {
     test("do{if(x)continue; x=3; continue; }while(true)", "do if(x); else x=3; while(true)");
     test_same("do{a();continue;b()}while(true)");
@@ -207,7 +207,7 @@ fn test_do_continue_optimization() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: For loop continue optimization not yet implemented"]
 fn test_for_continue_optimization() {
     test("for(x in y){if(x)continue; x=3; continue; }", "for(x in y)if(x);else x=3");
     test_same("for(x in y){a();continue;b()}");
@@ -284,7 +284,7 @@ fn test_for_continue_optimization() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Code motion with function hoisting not yet implemented"]
 fn test_code_motion_doesnt_break_function_hoisting() {
     test(
         "function f() { if (x) return; foo(); function foo() {} }",
@@ -309,7 +309,7 @@ fn test_dont_test_break_in_do_while_if_condition_has_side_effects() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Switch exit point optimization not yet implemented"]
 fn test_switch_exit_points1() {
     test("switch (x) { case 1: f(); break; }", "switch (x) { case 1: f();        }");
     test(
@@ -323,7 +323,7 @@ fn test_switch_exit_points1() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Block scoped variable optimization not yet implemented"]
 fn test_test_block_scoped_variables() {
     // When moving block-scoped variable declarations into inner blocks, first convert them to
     // "var" declarations to avoid breaking any references in inner functions.
@@ -354,7 +354,7 @@ fn test_test_block_scoped_variables() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Block scoped variables in loops optimization not yet implemented"]
 fn test_dont_test_block_scoped_variables_in_loops() {
     // Don't move block-scoped declarations into inner blocks inside a loop, since converting
     // let/const declarations to vars in a loop can cause incorrect semantics.

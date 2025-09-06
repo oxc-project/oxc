@@ -12,9 +12,6 @@ pub struct SymbolValue<'a> {
     /// Symbol is exported.
     pub exported: bool,
 
-    /// Inside for statement initializer.
-    pub for_statement_init: bool,
-
     pub read_references_count: u32,
     pub write_references_count: u32,
 

@@ -103,6 +103,10 @@ mod test {
         test_same_options("export var x", &options);
         test_same_options("using x = foo", &options);
         test_same_options("await using x = foo", &options);
+
+        test_options("for (var x; ; );", "for (; ;);", &options);
+        test_options("for (var x = 1; ; );", "for (; ;);", &options);
+        test_same_options("for (var x = foo; ; );", &options); // can be improved
     }
 
     #[test]

@@ -564,9 +564,9 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     ///
     /// // Valid
     /// * `foo` -> `foo`
-    /// // Contains space
+    ///   // Contains space
     /// * `foo bar` -> `foo_bar`
-    /// // Reserved keyword
+    ///   // Reserved keyword
     /// * `this` -> `_this`
     /// * `arguments` -> `_arguments`
     fn normalize_function_name(input: &Cow<'a, str>, ctx: &TraverseCtx<'a>) -> Atom<'a> {

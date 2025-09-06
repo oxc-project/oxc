@@ -274,11 +274,11 @@ impl<'a> ParserImpl<'a> {
 
     /// Section 15.4 Method Definitions
     /// `ClassElementName` ( `UniqueFormalParameters` ) { `FunctionBody` }
-    /// `GeneratorMethod`
+    /// * `GeneratorMethod`
     ///   * `ClassElementName`
-    /// `AsyncMethod`
+    /// * `AsyncMethod`
     ///   async `ClassElementName`
-    /// `AsyncGeneratorMethod`
+    /// * `AsyncGeneratorMethod`
     ///   async * `ClassElementName`
     pub(crate) fn parse_method(
         &mut self,

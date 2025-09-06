@@ -719,6 +719,15 @@ mod test {
     }
 
     #[test]
+    fn ignore_patterns_whitelist() {
+        let args1 = &[];
+        let args2 = &["."];
+        Tester::new()
+            .with_cwd("fixtures/ignore_patterns_whitelist".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
+    }
+
+    #[test]
     fn filter_allow_all() {
         let args = &["-A", "all", "fixtures/linter"];
         Tester::new().test_and_snapshot(args);
@@ -1248,6 +1257,14 @@ mod test {
     fn test_tsgolint_config() {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "no-floating-promises", "-c", "config-test.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_no_typescript_files() {
+        // tsgolint shouldn't run when no files need type aware linting
+        let args = &["--type-aware", "test.svelte"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 }

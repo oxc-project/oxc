@@ -27,6 +27,7 @@ This approach is significantly faster than using the system allocator for AST op
 
 - `serialize` - Enables serialization support for `Box` and `Vec` with `serde` and `oxc_estree`.
 - `pool` - Enables `AllocatorPool`.
+- `bitset` - Enables `BitSet`.
 - `from_raw_parts` - Adds unsafe `from_raw_parts` method (not recommended for general use).
 - `fixed_size` - Makes `AllocatorPool` create large fixed-size allocators, instead of flexibly-sized ones.
   Only supported on 64-bit little-endian platforms at present.

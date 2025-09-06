@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- afa0877 allocator: Introduce `BitSet` type (#13449) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e3f953d mangler: Keep names for parenthesized functions and classes (#13421) (sapphi-red)
+
+### ⚡ Performance
+
+- 0d66399 mangler: Store slot indexes as `u32`s (#13462) (overlookmotel)
+- caf40c5 mangler: Do not sort `Vec` if empty (#13461) (overlookmotel)
+- e473b83 mangler: Replace `FixedBitSet` with `BitSet` based on Rolldown's implementation (#13419) (sapphi-red)
+
+
 
 
 

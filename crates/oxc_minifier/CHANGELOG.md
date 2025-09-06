@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- 2931356 minifier: Inline single use functions past sideeffectful expressions (#13426) (sapphi-red)
+- f97283b ecmascript: Support more cases for IsLiteralValue with `include_functions` (#13425) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 68b9b33 minifier: Set proper scope information for injected if blocks (#13444) (sapphi-red)
+- 73b93ce minifier: Set reference_id when removing `window.` from `window?.Object` (#13442) (sapphi-red)
+- 6d0e355 minifier: Avoid inlining single use variables when the name needs to be preserved (#13422) (sapphi-red)
+
+### 🚜 Refactor
+
+- 46fc83d minifier: Use `.reference_id()` instead of `.reference_id` (#13443) (sapphi-red)
+
+
 
 ## [0.84.0] - 2025-08-30
 

@@ -16,16 +16,32 @@
     "correctness": "error",
     "perf": "error"
   },
+  "overrides": [
+    {
+      "files": ["**/editors/vscode/tests/*.spec.ts"],
+      "rules": {
+        // VSCode uses `vscode-test-cli`, which uses `mocha`.
+        // Ignore specific rules, instead of copying the plugins array.
+        "vitest/expect-expect": "off"
+      }
+    },
+    {
+      "files": [
+        "tasks/e2e/test/*.test.ts"
+      ],
+      "rules": {
+        "vitest/valid-title": ["error", {
+          "typecheck": true
+        }]
+      }
+    }
+  ],
   "ignorePatterns": [
     "**/fixtures/**",
     "**/generated/**",
     "npm/runtime/**",
     "tasks/coverage/**",
     "crates/oxc_semantic/tests/**",
-    "tasks/e2e/**", // TODO
-    "napi/**", // TODO
-    "editors/vscode/tests/**", // TODO,
-    "tasks/lint_rules/src/oxlint-rules.mjs", // TODO
-    "tasks/lint_rules/src/main.mjs" // TODO
+    "napi/**" // TODO
   ]
 }

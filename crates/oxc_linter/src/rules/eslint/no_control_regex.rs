@@ -362,6 +362,11 @@ mod tests {
                 // globalThis
                 "var regex = new globalThis.RegExp('\\x1f\\x1e')",
                 "var regex = globalThis.RegExp('\\x1f')",
+                // inner expressions (parentheses and type expressions)
+                "RegExp(('\\x1f'))",
+                "new RegExp(('\\x1f'))",
+                "new RegExp((('\\x1f')))",
+                "new RegExp('\\x1f' as string)",
             ],
         )
         .test_and_snapshot();

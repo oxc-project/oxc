@@ -37,7 +37,7 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// 3. Visitors receive a `&mut TraverseCtx`, but cannot overwrite its `ancestry` field because they:
 ///    a. cannot create a new `TraverseAncestry`
 ///       - `TraverseAncestry::new` and `TraverseCtx::new` are private.
-///    b. cannot obtain an owned `TraverseAncestry` from a `&TraverseAncestry`
+///         b. cannot obtain an owned `TraverseAncestry` from a `&TraverseAncestry`
 ///       - `TraverseAncestry` is not `Clone`.
 ///
 /// ## Soundness hole

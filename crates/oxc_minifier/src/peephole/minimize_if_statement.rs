@@ -1,7 +1,7 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
-use oxc_semantic::ScopeId;
+use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
 use crate::ctx::Ctx;
@@ -124,11 +124,10 @@ impl<'a> PeepholeOptimizations {
 
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
-    #[expect(clippy::cast_possible_truncation)]
     fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
             if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
-                let scope_id = ScopeId::new(ctx.scoping.scoping().scopes_len() as u32);
+                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
                 if_stmt.consequent = Statement::BlockStatement(ctx.ast.alloc(
                     ctx.ast.block_statement_with_scope_id(
                         if_stmt.consequent.span(),

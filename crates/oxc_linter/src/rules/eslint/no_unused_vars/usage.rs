@@ -371,11 +371,11 @@ impl<'a> Symbol<'_, 'a> {
     /// for code like `let a = 0; a`, but bans code like `let a = 0; a++`;
     ///
     /// - We encounter a node proving that the reference is absolutely used by
-    /// another variable, we return `false` immediately.
+    ///   another variable, we return `false` immediately.
     /// - When we encounter an AST node that updates the value of the symbol this
-    /// reference is for, such as an [`AssignmentExpression`] with the symbol on
-    /// the LHS or a mutating [`UnaryExpression`], we mark the reference as not
-    /// being used by others.
+    ///   reference is for, such as an [`AssignmentExpression`] with the symbol on
+    ///   the LHS or a mutating [`UnaryExpression`], we mark the reference as not
+    ///   being used by others.
     /// - When we encounter a node where we are sure the value produced by an
     ///   expression will no longer be used, such as an [`ExpressionStatement`],
     ///   we end our search. This is because expression statements produce a

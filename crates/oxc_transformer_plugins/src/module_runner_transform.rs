@@ -38,12 +38,12 @@
 //! There are few problems to integrate this transform into the main transformer:
 //!
 //! 1. In Vite, it will collect import deps and dynamic import deps during the transform process, and return them
-//! at the end of function. We can do this, but how to pass them into the js side?
+//!    at the end of function. We can do this, but how to pass them into the js side?
 //!
 //! 2. In case other plugins will insert imports/exports, we must transform them in `exit_program`, but it will pose
-//! another problem: how to transform identifiers which refer to imports? We must collect some information from imports,
-//! but it is already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifiers,
-//! dynamic imports, and import meta.
+//!    another problem: how to transform identifiers which refer to imports? We must collect some information from imports,
+//!    but it is already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifiers,
+//!    dynamic imports, and import meta.
 
 use std::iter;
 

@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: taiki-e/install-action@f63c33fd96cc1e69a29bafd06541cf28588b43a4 # v2.58.21
+      - uses: taiki-e/install-action@14083e64ac8cf1f5e54356df00b9779b23e192a1 # v2.58.29
         with:
           tool: dprint
 

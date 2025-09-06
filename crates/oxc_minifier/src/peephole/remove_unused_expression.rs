@@ -624,7 +624,7 @@ impl<'a> PeepholeOptimizations {
         if Self::keep_top_level_var_in_script_mode(ctx) {
             return false;
         }
-        let Some(reference_id) = ident.reference_id.get() else { return false };
+        let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else {
             return false;
         };
@@ -640,9 +640,6 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         if symbol_value.read_references_count > 0 {
-            return false;
-        }
-        if symbol_value.for_statement_init {
             return false;
         }
         *e = assign_expr.right.take_in(ctx.ast);
@@ -1079,7 +1076,9 @@ mod test {
         test_same_options("function foo(t) { return t = x(); } foo();", &options);
 
         // For loops
-        test_same_options("for (let i;;) foo(i)", &options);
+        test_options("for (let i;;) i = 0", "for (;;);", &options);
+        test_options("for (let i;;) foo(i)", "for (;;) foo(void 0)", &options);
+        test_same_options("for (let i;;) i = 0, foo(i)", &options);
         test_same_options("for (let i in []) foo(i)", &options);
         test_same_options("for (let element of list) element && (element.foo = bar)", &options);
         test_same_options("for (let key in obj) key && (obj[key] = bar)", &options);

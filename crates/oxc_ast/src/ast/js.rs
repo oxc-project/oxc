@@ -1,5 +1,17 @@
+//! JavaScript AST node definitions
+//!
+//! This module contains the core AST node definitions for JavaScript syntax including:
+//! - Program structure and statements
+//! - Expressions and literals
+//! - Functions and classes
+//! - Patterns and identifiers
+//! - Module declarations (import/export)
+//! - JSX syntax support
+//!
+//! The AST design follows ECMAScript specifications while providing
+//! clear distinctions between different identifier types for better type safety.
 #![expect(
-    missing_docs, // FIXME
+    missing_docs, // TODO: document individual struct fields
     clippy::enum_variant_names,
     clippy::struct_field_names,
 )]

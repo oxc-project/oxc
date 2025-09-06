@@ -5918,8 +5918,8 @@ Reference symbol mismatch for "require":
 after transform: SymbolId(0) "require"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Error", "JSON", "RegExp"]
-rebuilt        : ["Error", "JSON", "RegExp", "require"]
+after transform: ["Error", "JSON"]
+rebuilt        : ["Error", "JSON", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowUnionContainingTypeParameter1.ts
 Unresolved references mismatch:

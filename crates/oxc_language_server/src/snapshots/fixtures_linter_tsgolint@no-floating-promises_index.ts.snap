@@ -2,19 +2,6 @@
 source: crates/oxc_language_server/src/tester.rs
 input_file: crates/oxc_language_server/fixtures/linter/tsgolint/no-floating-promises/index.ts
 ---
-code: "typescript-eslint(no-confusing-void-expression)"
-code_description.href: "None"
-message: "Returning a void expression from an arrow function shorthand is forbidden. Please add braces to the arrow function."
-range: Range { start: Position { line: 0, character: 50 }, end: Position { line: 0, character: 66 } }
-related_information[0].message: ""
-related_information[0].location.uri: "file://<variable>/fixtures/linter/tsgolint/no-floating-promises/index.ts"
-related_information[0].location.range: Range { start: Position { line: 0, character: 50 }, end: Position { line: 0, character: 66 } }
-severity: Some(Warning)
-source: Some("oxc")
-tags: None
-fixed: Single(FixedContent { message: None, code: "{  resolve(\"value\"); }", range: Range { start: Position { line: 0, character: 49 }, end: Position { line: 0, character: 66 } } })
-
-
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
 message: "Promises must be awaited.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."

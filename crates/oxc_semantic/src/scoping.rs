@@ -16,11 +16,25 @@ use oxc_syntax::{
 pub type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
 pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, ReferenceId>>;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Redeclaration {
     pub span: Span,
     pub declaration: NodeId,
     pub flags: SymbolFlags,
+}
+
+impl CloneIn<'_> for Redeclaration {
+    type Cloned = Self;
+
+    #[inline]
+    fn clone_in(&self, _allocator: &Allocator) -> Self::Cloned {
+        Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
+    }
+
+    #[inline]
+    fn clone_in_with_semantic_ids(&self, _allocator: &Allocator) -> Self::Cloned {
+        self.clone()
+    }
 }
 
 /// # Symbol Table and Scope Tree
@@ -992,37 +1006,17 @@ impl Scoping {
                     symbol_redeclarations: cell
                         .symbol_redeclarations
                         .iter()
-                        .map(|(k, v)| {
-                            let v = v.iter().map(|r| Redeclaration {
-                                span: r.span,
-                                declaration: r.declaration,
-                                flags: r.flags,
-                            });
-                            (*k, ArenaVec::from_iter_in(v, allocator))
-                        })
-                        .collect::<FxHashMap<_, _>>(),
+                        .map(|(k, v)| (*k, v.clone_in_with_semantic_ids(allocator)))
+                        .collect(),
                     bindings: cell
                         .bindings
                         .iter()
-                        .map(|map| {
-                            let mut copy = Bindings::new_in(allocator);
-                            for (k, v) in map {
-                                let str = allocator.alloc_str(k);
-                                copy.insert(str, *v);
-                            }
-                            copy
-                        })
+                        .map(|map| map.clone_in_with_semantic_ids(allocator))
                         .collect(),
                     scope_child_ids: cell.scope_child_ids.clone_in_with_semantic_ids(allocator),
-                    root_unresolved_references: {
-                        let mut copy = UnresolvedReferences::new_in(allocator);
-                        cell.root_unresolved_references.iter().for_each(|(k, v)| {
-                            let k = allocator.alloc_str(k);
-                            let v = v.clone_in_with_semantic_ids(allocator);
-                            copy.insert(k, v);
-                        });
-                        copy
-                    },
+                    root_unresolved_references: cell
+                        .root_unresolved_references
+                        .clone_in_with_semantic_ids(allocator),
                 })
             },
         }
