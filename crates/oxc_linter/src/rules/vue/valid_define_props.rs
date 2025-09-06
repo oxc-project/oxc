@@ -11,58 +11,58 @@ use crate::{
 };
 
 fn has_type_and_arguments_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`defineEmits` has both a type-only emit and an argument.")
+    OxcDiagnostic::warn("`defineProps` has both a type-only emit and an argument.")
         .with_help("remove the argument for better type inference.")
         .with_label(span)
 }
 
 fn called_multiple_times(span: Span, second_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`defineEmits` has been called multiple times.")
-        .with_help("combine all events into a single `defineEmits` call.")
+    OxcDiagnostic::warn("`defineProps` has been called multiple times.")
+        .with_help("combine all `defineProps` calls into a single `defineProps` call.")
         .with_labels([
-            span.label("`defineEmits` is called here"),
-            second_span.label("`defineEmits` is called here too"),
+            span.label("`defineProps` is called here"),
+            second_span.label("`defineProps` is called here too"),
         ])
 }
 
 fn events_not_defined(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Custom events are not defined.")
-        .with_help("Define at least one event in `defineEmits`.")
+    OxcDiagnostic::warn("Props are not defined.")
+        .with_help("Define at least one prop in `defineProps`.")
         .with_label(span)
 }
 
 fn referencing_locally(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`defineEmits` is referencing locally declared variables.")
+    OxcDiagnostic::warn("`defineProps` is referencing locally declared variables.")
         .with_help("inline the variable or import it from another module.")
         .with_label(span)
 }
 
 fn define_in_both(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Custom events are defined in both `defineEmits` and `export default {}`.")
+    OxcDiagnostic::warn("Props are defined in both `defineProps` and `export default {}`.")
         .with_help("Remove `export default`.")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ValidDefineEmits;
+pub struct ValidDefineProps;
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule checks whether defineEmits compiler macro is valid.
+    /// This rule checks whether `defineProps` compiler macro is valid.
     ///
-    /// This rule reports defineEmits compiler macros in the following cases:
+    /// This rule reports `defineProps` compiler macros in the following cases:
     ///
-    /// - `defineEmits` is referencing locally declared variables.
-    /// - `defineEmits` has both a literal type and an argument. e.g. `defineEmits<(e: 'foo')=>void>(['bar'])`
-    /// - `defineEmits` has been called multiple times.
-    /// - Custom events are defined in both `defineEmits` and `export default {}`.
-    /// - Custom events are not defined in either `defineEmits` or `export default {}`.
+    /// - `defineProps` is referencing locally declared variables.
+    /// - `defineProps` has both a literal type and an argument. e.g. `defineProps<{ /*props*/ }>({ /*props*/ })`
+    /// - `defineProps` has been called multiple times.
+    /// - Props are defined in both `defineProps` and `export default {}`.
+    /// - Props are not defined in either `defineProps` or `export default {}`.
     ///
     /// ### Why is this bad?
     ///
-    /// Misusing `defineEmits` can lead to runtime errors, unclear component contracts, and lost type safety.
-    /// Vue may still compile the code, but emitted events may break silently or be typed incorrectly.
+    /// Misusing `defineProps` can lead to runtime errors, and lost type safety.
+    /// Vue may still compile the code, but properties may break silently or be typed incorrectly.
     ///
     /// ### Examples
     ///
@@ -70,32 +70,32 @@ declare_oxc_lint!(
     ///
     /// ```vue
     /// <script setup>
-    /// const def = { notify: null }
-    /// defineEmits(def)
+    /// const def = { msg: String }
+    /// defineProps(def)
     /// </script>
     /// ```
     ///
     /// ```vue
     /// <script setup lang="ts">
-    /// defineEmits<(e: 'notify') => void>({ submit: null })
+    /// defineProps<{ msg?: string }>({ msg: String })
     /// </script>
     /// ```
     ///
     /// ```vue
     /// <script setup>
-    /// defineEmits({ notify: null })
-    /// defineEmits({ submit: null })
+    /// defineProps({ msg: String })
+    /// defineProps({ count: Number })
     /// </script>
     /// ```
     ///
     /// ```vue
     /// <script>
     /// export default {
-    ///   emits: ['notify']
+    ///   props: { msg: String }
     /// }
     /// </script>
     /// <script setup>
-    /// defineEmits({ submit: null })
+    /// defineProps({ count: Number })
     /// </script>
     /// ```
     ///
@@ -103,53 +103,53 @@ declare_oxc_lint!(
     ///
     /// ```vue
     /// <script setup>
-    /// defineEmits({ notify: null })
+    /// defineProps({ msg: String })
     /// </script>
     /// ```
     ///
     /// ```vue
     /// <script setup>
-    /// defineEmits(['notify'])
+    /// defineProps(['msg'])
     /// </script>
     /// ```
     ///
     /// ```vue
     /// <script setup lang="ts">
-    /// defineEmits<(e: 'notify') => void>()
+    /// defineProps<{ msg?: string }>()
     /// </script>
     /// ```
     ///
     /// ```vue
     /// <script>
     /// export default {
-    ///   emits: ['notify']
+    ///   props: { msg: String }
     /// }
     /// </script>
     /// <script setup>
-    /// defineEmits()
+    /// defineProps()
     /// </script>
     /// ```
-    ValidDefineEmits,
+    ValidDefineProps,
     vue,
     correctness,
-    pending  // TODO: removing empty `defineEmits` and merging multiple `defineEmits` calls
+    pending  // TODO: removing empty `defineProps` and merging multiple `defineProps` calls
 );
 
-impl Rule for ValidDefineEmits {
+impl Rule for ValidDefineProps {
     fn run_once(&self, ctx: &LintContext) {
         let mut found: Option<Span> = None;
 
-        let has_other_script_emits = has_default_exports_property(&ctx.other_file_hosts(), "emits");
+        let has_other_script_emits = has_default_exports_property(&ctx.other_file_hosts(), "props");
         for node in ctx.nodes() {
             let AstKind::CallExpression(call_expr) = node.kind() else {
                 continue;
             };
 
-            // only check call Expression which is `defineEmits`
+            // only check call Expression which is `defineProps`
             if call_expr
                 .callee
                 .get_identifier_reference()
-                .is_none_or(|reference| reference.name != "defineEmits")
+                .is_none_or(|reference| reference.name != "defineProps")
             {
                 continue;
             }
@@ -193,7 +193,7 @@ fn test() {
             "
 			      <script setup>
 			        /* ✓ GOOD */
-			        defineEmits({ notify: null })
+			        defineProps({ msg: String })
 			      </script>
 			      ",
             None,
@@ -204,7 +204,7 @@ fn test() {
             "
 			      <script setup>
 			        /* ✓ GOOD */
-			        defineEmits(['notify'])
+			        defineProps(['msg'])
 			      </script>
 			      ",
             None,
@@ -215,7 +215,7 @@ fn test() {
             r#"
 			      <script setup lang="ts">
 			        /* ✓ GOOD */
-			        defineEmits<(e: 'notify')=>void>()
+			        defineProps<{ msg?:string }>()
 			      </script>
 			      "#,
             None,
@@ -224,14 +224,14 @@ fn test() {
         ), // {        "parserOptions": { "parser": require.resolve("@typescript-eslint/parser") }      },
         (
             "
-        	      <script>
-        	        const def = { notify: null }
-        	      </script>
-        	      <script setup>
-        	        /* ✓ GOOD */
-        	        defineEmits(def)
-        	      </script>
-        	      ",
+			      <script>
+			        const def = { msg: String }
+			      </script>
+			      <script setup>
+			        /* ✓ GOOD */
+			        defineProps(def)
+			      </script>
+			      ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -239,9 +239,12 @@ fn test() {
         (
             "
 			      <script setup>
-			        defineEmits({
-			          notify (payload) {
-			            return typeof payload === 'string'
+			        defineProps({
+			          addFunction: {
+			            type: Function,
+			            default (a, b) {
+			              return a + b
+			            }
 			          }
 			        })
 			      </script>
@@ -303,27 +306,6 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
-        (
-            "
-                  <script>
-                  export default { emits: [] }
-                  </script>
-                  <script setup>
-                  defineEmits();
-                  </script>",
-            None,
-            None,
-            Some(PathBuf::from("test.vue")),
-        ),
-        (
-            "
-			      <script setup>
-			      defineEmits(unResolvedVariable);
-			      </script>",
-            None,
-            None,
-            Some(PathBuf::from("test.vue")),
-        ),
     ];
 
     let fail = vec![
@@ -331,8 +313,8 @@ fn test() {
             "
 			      <script setup>
 			        /* ✗ BAD */
-			        const def = { notify: null }
-			        defineEmits(def)
+			        const def = { msg: String }
+			        defineProps(def)
 			      </script>
 			      ",
             None,
@@ -343,7 +325,7 @@ fn test() {
             r#"
 			      <script setup lang="ts">
 			        /* ✗ BAD */
-			        defineEmits<(e: 'notify')=>void>({ submit: null })
+			        defineProps<{ msg?:string }>({ msg: String })
 			      </script>
 			      "#,
             None,
@@ -354,8 +336,8 @@ fn test() {
             "
 			      <script setup>
 			        /* ✗ BAD */
-			        defineEmits({ notify: null })
-			        defineEmits({ submit: null })
+			        defineProps({ msg: String })
+			        defineProps({ count: Number })
 			      </script>
 			      ",
             None,
@@ -364,30 +346,16 @@ fn test() {
         ),
         (
             "
-        	      <script>
-        	      export default {
-        	        emits: ['notify']
-        	      }
-        	      </script>
-        	      <script setup>
-        	        /* ✗ BAD */
-        	        defineEmits({ submit: null })
-        	      </script>
-        	      ",
-            None,
-            None,
-            Some(PathBuf::from("test.vue")),
-        ),
-        (
-            "
-                  <script>
-                  export default { emits: [] }
-                  </script>
-                  <script setup lang='ts'>
-                    defineEmits<{
-                      (e: 'change'): void
-                    }>();
-                  </script>",
+			      <script>
+			      export default {
+			        props: { msg: String }
+			      }
+			      </script>
+			      <script setup>
+			        /* ✗ BAD */
+			        defineProps({ count: Number })
+			      </script>
+			      ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -396,7 +364,7 @@ fn test() {
             "
 			      <script setup>
 			        /* ✗ BAD */
-			        defineEmits()
+			        defineProps()
 			      </script>
 			      ",
             None,
@@ -405,5 +373,5 @@ fn test() {
         ),
     ];
 
-    Tester::new(ValidDefineEmits::NAME, ValidDefineEmits::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(ValidDefineProps::NAME, ValidDefineProps::PLUGIN, pass, fail).test_and_snapshot();
 }
