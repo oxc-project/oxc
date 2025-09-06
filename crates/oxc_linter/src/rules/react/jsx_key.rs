@@ -182,7 +182,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 is_outside_containing_function = true;
             }
-            AstKind::Function(_func) => {
+            AstKind::Function(_) => {
                 if let AstKind::ObjectProperty(_) = ctx.nodes().parent_kind(parent.id()) {
                     return None;
                 }
