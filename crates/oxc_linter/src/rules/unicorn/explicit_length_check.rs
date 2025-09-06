@@ -122,8 +122,7 @@ fn get_replacement_span(node: &AstNode, static_member_expr: &StaticMemberExpress
                 .first()
                 .and_then(|arg| arg.as_expression())
                 .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
-                .map(|_| static_member_expr.span)
-                .unwrap_or_else(|| node.span())
+                .map_or_else(|| node.span(), |_| static_member_expr.span)
         }
         _ => node.span(),
     }
