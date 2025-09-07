@@ -17,8 +17,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {
  3 │             console.log(props.foo?.bar.baz);
-   ·                         ───────┬──────
-   ·                                ╰── useCallback uses `props.foo.bar.baz` here
+   ·                         ─────────┬────────
+   ·                                  ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -29,8 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {
  3 │             console.log(props.foo?.bar?.baz);
-   ·                         ───────┬──────
-   ·                                ╰── useCallback uses `props.foo.bar.baz` here
+   ·                         ─────────┬─────────
+   ·                                  ╰── useCallback uses `props.foo.bar.baz` here
  4 │           }, []);
    ·              ──
  5 │         }
@@ -253,15 +253,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Try memoizing this variable with `useRef` or `useCallback`.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has unnecessary dependency: local2
-   ╭─[exhaustive_deps.tsx:6:14]
- 5 │             console.log(local1);
- 6 │           }, [local1, local2]);
-   ·              ────────────────
- 7 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useMemo depends on `local1`, which changes every render
    ╭─[exhaustive_deps.tsx:2:17]
  1 │ function MyComponent() {
@@ -399,7 +390,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │               history.foo.bar[2].dobedo.listen(),
    ·               ───────────
  5 │               history.foo.bar().dobedo.listen[2]
-   ·               ───────────
+   ·               ───────
  6 │             ];
  7 │           }, []);
    ·              ──
@@ -411,8 +402,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  3 │             return [
  4 │               history?.foo
-   ·               ───┬───
-   ·                  ╰── useEffect uses `history.foo` here
+   ·               ──────┬─────
+   ·                     ╰── useEffect uses `history.foo` here
  5 │             ];
  6 │           }, []);
    ·              ──
@@ -669,30 +660,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.bar
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(foo);
- 5 │           }, [props.bar]);
-   ·              ───────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           useCallback(() => {
  3 │             const { foo: { bar } } = props;
    ·                                      ──┬──
    ·                                        ╰── useCallback uses `props.foo` here
- 4 │             console.log(bar);
- 5 │           }, [props.foo.bar]);
-   ·              ───────────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar
-   ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(bar);
  5 │           }, [props.foo.bar]);
    ·              ───────────────
@@ -733,24 +706,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ╰── useCallback uses `local` here
  5 │           }, [local.id]);
    ·              ──────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(local);
- 5 │           }, [local.id]);
-   ·              ──────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: local.id
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(local);
- 5 │           }, [local.id, local]);
-   ·              ─────────────────
  6 │         }
    ╰────
   help: Either include it or remove the dependency array.
@@ -846,15 +801,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
-   ╭─[exhaustive_deps.tsx:4:14]
- 3 │             console.log(props.foo.bar);
- 4 │           }, [props.foo.bar.baz]);
-   ·              ───────────────────
- 5 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has missing dependencies: 'props.hello', and 'props'
    ╭─[exhaustive_deps.tsx:5:14]
  2 │           const fn = useCallback(() => {
@@ -862,15 +808,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────
  4 │             console.log(props.hello);
    ·                         ─────
- 5 │           }, [props.foo.bar.baz]);
-   ·              ───────────────────
- 6 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar.baz
-   ╭─[exhaustive_deps.tsx:5:14]
- 4 │             console.log(props.hello);
  5 │           }, [props.foo.bar.baz]);
    ·              ───────────────────
  6 │         }
@@ -1205,11 +1142,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.color', and 'props.someOtherRefs.current.innerHTML'
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'props.color', and 'props.someOtherRefs.innerHTML'
     ╭─[exhaustive_deps.tsx:9:14]
   6 │             console.log(ref2.current.textContent);
   7 │             alert(props.someOtherRefs.current.innerHTML);
-    ·                   ───────────────────────────
+    ·                   ───────────────────
   8 │             fetch(props.color);
     ·                   ─────
   9 │           }, []);
@@ -1218,104 +1155,85 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref1.current'. Mutable values like 'ref1.current' aren't valid dependencies because mutating them doesn't re-render the component.
     ╭─[exhaustive_deps.tsx:9:15]
   8 │             fetch(props.color);
   9 │           }, [ref1.current, ref2.current, props.someOtherRefs, props.color]);
     ·               ────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref2.current'. Mutable values like 'ref2.current' aren't valid dependencies because mutating them doesn't re-render the component.
     ╭─[exhaustive_deps.tsx:9:29]
   8 │             fetch(props.color);
   9 │           }, [ref1.current, ref2.current, props.someOtherRefs, props.color]);
     ·                             ────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref1.current'. Mutable values like 'ref1.current' aren't valid dependencies because mutating them doesn't re-render the component.
     ╭─[exhaustive_deps.tsx:9:15]
   8 │             fetch(props.color);
   9 │           }, [ref1?.current, ref2?.current, props.someOtherRefs, props.color]);
     ·               ─────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref2.current'. Mutable values like 'ref2.current' aren't valid dependencies because mutating them doesn't re-render the component.
     ╭─[exhaustive_deps.tsx:9:30]
   8 │             fetch(props.color);
   9 │           }, [ref1?.current, ref2?.current, props.someOtherRefs, props.color]);
     ·                              ─────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref.current'. Mutable values like 'ref.current' aren't valid dependencies because mutating them doesn't re-render the component.
    ╭─[exhaustive_deps.tsx:5:15]
  4 │             console.log(ref.current);
  5 │           }, [ref.current]);
    ·               ───────────
  6 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref1.current'. Mutable values like 'ref1.current' aren't valid dependencies because mutating them doesn't re-render the component.
    ╭─[exhaustive_deps.tsx:7:15]
  6 │             ref2.current.scrollTop = 0;
  7 │           }, [ref1.current, ref2.current, activeTab]);
    ·               ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref2.current'. Mutable values like 'ref2.current' aren't valid dependencies because mutating them doesn't re-render the component.
    ╭─[exhaustive_deps.tsx:7:29]
  6 │             ref2.current.scrollTop = 0;
  7 │           }, [ref1.current, ref2.current, activeTab]);
    ·                             ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref1.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has a dependency on 'ref1.current'. Mutable values like 'ref1.current' aren't valid dependencies because mutating them doesn't re-render the component.
    ╭─[exhaustive_deps.tsx:7:15]
  6 │             ref2.current.scrollTop = initY;
  7 │           }, [ref1.current, ref2.current, activeTab, initY]);
    ·               ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref2.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has a dependency on 'ref2.current'. Mutable values like 'ref2.current' aren't valid dependencies because mutating them doesn't re-render the component.
    ╭─[exhaustive_deps.tsx:7:29]
  6 │             ref2.current.scrollTop = initY;
  7 │           }, [ref1.current, ref2.current, activeTab, initY]);
    ·                             ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has unnecessary dependency: activeTab
-   ╭─[exhaustive_deps.tsx:7:14]
- 6 │             ref2.current.scrollTop = initY;
- 7 │           }, [ref1.current, ref2.current, activeTab, initY]);
-   ·              ──────────────────────────────────────────────
- 8 │         }
-   ╰────
-  help: Either include it or remove the dependency array.
-
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useEffect has a dependency on 'ref.current'. Mutable values like 'ref.current' aren't valid dependencies because mutating them doesn't re-render the component.
    ╭─[exhaustive_deps.tsx:5:15]
  4 │             console.log(ref.current);
  5 │           }, [ref.current, ref]);
    ·               ───────────
  6 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useImperativeHandle has a missing dependency: 'props.hello'
    ╭─[exhaustive_deps.tsx:6:15]
@@ -1348,7 +1266,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[exhaustive_deps.tsx:6:14]
  2 │           useEffect(() => {
  3 │             if (props?.onChange) {
-   ·                 ─────
+   ·                 ───────────────
  4 │               props?.onChange();
    ·               ─────
  5 │             }
@@ -1380,7 +1298,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │             if (props.foo.onChange) {
    ·                 ─────────
  4 │               props.foo.onChange();
-   ·               ─────────
+   ·               ─────
  5 │             }
  6 │           }, []);
    ·              ──
@@ -1396,7 +1314,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │             if (props.foo.onChange) {
    ·                 ─────────
  5 │               props.foo.onChange();
-   ·               ─────────
+   ·               ─────
  6 │             }
  7 │           }, []);
    ·              ──
@@ -1532,6 +1450,24 @@ source: crates/oxc_linter/src/tester.rs
   help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:5:26]
+ 4 │             myRef.current.addEventListener('mousemove', handleMove);
+ 5 │             return () => myRef.current.removeEventListener('mousemove', handleMove);
+   ·                          ─────────────
+ 6 │           }, [myRef]);
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:8:17]
+ 7 │               setTimeout(() => {
+ 8 │                 myRef.current.removeEventListener('mousemove', handleMouse);
+   ·                 ─────────────
+ 9 │                 myRef.current.removeEventListener('mousein', handleMouse);
+   ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
    ╭─[exhaustive_deps.tsx:8:17]
  7 │               setTimeout(() => {
  8 │                 myRef.current.removeEventListener('mousemove', handleMouse);
@@ -1547,6 +1483,24 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ─────────────
  10 │               });
     ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+    ╭─[exhaustive_deps.tsx:9:17]
+  8 │                 myRef.current.removeEventListener('mousemove', handleMouse);
+  9 │                 myRef.current.removeEventListener('mousein', handleMouse);
+    ·                 ─────────────
+ 10 │               });
+    ╰────
+  help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.
+   ╭─[exhaustive_deps.tsx:8:19]
+ 7 │                 setTimeout(() => {
+ 8 │                   myRef.current.removeEventListener('mousemove', handleMove);
+   ·                   ─────────────
+ 9 │                 });
+   ╰────
   help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function.

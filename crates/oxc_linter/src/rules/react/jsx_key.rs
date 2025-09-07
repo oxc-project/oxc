@@ -2,8 +2,8 @@ use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement,
-        JSXFragment, Statement,
+        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment,
+        Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -12,6 +12,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::is_node_within_call_argument,
     context::{ContextHost, LintContext},
     rule::Rule,
 };
@@ -155,11 +156,11 @@ fn is_in_array_or_iter<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<InsideArrayOrIterator> {
+    let jsx_node = node;
     let mut node = node;
 
     let mut is_outside_containing_function = false;
     let mut is_explicit_return = false;
-    let mut argument = None;
 
     while !matches!(node.kind(), AstKind::Program(_)) {
         let parent = ctx.nodes().parent_node(node.id());
@@ -179,6 +180,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 if is_outside_containing_function {
                     return None;
                 }
+
                 is_outside_containing_function = true;
             }
             AstKind::Function(_) => {
@@ -188,6 +190,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 if is_outside_containing_function {
                     return None;
                 }
+
                 is_outside_containing_function = true;
             }
             AstKind::ArrayExpression(_) => {
@@ -200,16 +203,21 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::CallExpression(v) => {
                 let callee = &v.callee.without_parentheses();
 
-                if let Some(member_expr) = callee.as_member_expression()
-                    && let Some((span, ident)) = member_expr.static_property_info()
-                    && TARGET_METHODS.contains(&ident)
-                    && argument.is_some_and(|argument: &Argument<'_>| {
-                        v.arguments
-                            .get(if ident == "from" { 1 } else { 0 })
-                            .is_some_and(|arg| arg.span() == argument.span())
-                    })
-                {
-                    return Some(InsideArrayOrIterator::Iterator(span));
+                if let Some(member_expr) = callee.as_member_expression() {
+                    if let Some((span, ident)) = member_expr.static_property_info() {
+                        if TARGET_METHODS.contains(&ident) {
+                            // Early exit if no arguments to check
+                            if v.arguments.is_empty() {
+                                return None;
+                            }
+
+                            // Array.from uses 2nd argument (index 1), others use 1st argument (index 0)
+                            let target_arg_index = if ident == "from" { 1 } else { 0 };
+                            if is_node_within_call_argument(jsx_node, v, target_arg_index) {
+                                return Some(InsideArrayOrIterator::Iterator(span));
+                            }
+                        }
+                    }
                 }
 
                 return None;
@@ -220,9 +228,6 @@ fn is_in_array_or_iter<'a, 'b>(
             | AstKind::JSXFragment(_) => return None,
             AstKind::ReturnStatement(_) => {
                 is_explicit_return = true;
-            }
-            AstKind::Argument(arg) => {
-                argument = Some(arg);
             }
             _ => {}
         }

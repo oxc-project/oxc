@@ -50,7 +50,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/with-same-name-v
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "a",
-            "node_id": 23
+            "node_id": 22
           }
         ]
       }
