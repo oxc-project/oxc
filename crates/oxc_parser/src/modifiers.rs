@@ -292,14 +292,24 @@ impl std::fmt::Display for ModifierKind {
 impl<'a> ParserImpl<'a> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         let mut flags = ModifierFlags::empty();
-        if !self.at_modifier() {
-            return Modifiers::new(None, flags);
-        }
         let mut modifiers = self.ast.vec();
-        while self.at_modifier() {
-            let span = self.start_span();
+        loop {
             let kind = self.cur_kind();
-            self.bump_any();
+            if !kind.is_modifier_kind() {
+                break;
+            }
+
+            let span = self.start_span();
+            if !self.try_parse_next_token_if(|next_token| match kind {
+                Kind::Const => next_token.kind() == Kind::Enum,
+                Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
+                    can_token_follow_modifier(next_token)
+                }
+                _ => is_token_on_same_line_and_can_follow_modifier(next_token),
+            }) {
+                break;
+            }
+
             let modifier_kind = self.token_kind_into_modifier_kind(kind);
             let modifier = Modifier { span: self.end_span(span), kind: modifier_kind };
             if modifier.kind == ModifierKind::Export {
@@ -310,22 +320,6 @@ impl<'a> ParserImpl<'a> {
             modifiers.push(modifier);
         }
         Modifiers::new(Some(modifiers), flags)
-    }
-
-    fn at_modifier(&mut self) -> bool {
-        if !self.cur_kind().is_modifier_kind() {
-            return false;
-        }
-
-        let next_token = self.lexer.peek_token();
-        match self.cur_kind() {
-            Kind::Const => next_token.kind() == Kind::Enum,
-            Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                can_token_follow_modifier(next_token)
-            }
-            // Rest modifiers cannot cross line
-            _ => is_token_on_same_line_and_can_follow_modifier(next_token),
-        }
     }
 
     fn token_kind_into_modifier_kind(&mut self, kind: Kind) -> ModifierKind {
