@@ -381,19 +381,14 @@ impl<'a> ParserImpl<'a> {
                 }
             }
             Kind::Static => {
-                if !has_seen_static_modifier
-                    && self.try_parse_next_token_if(|next_token| {
-                        if next_token.kind() == Kind::LCurly {
-                            !stop_on_start_of_class_static_block
-                        } else {
-                            can_token_follow_modifier(next_token)
-                        }
-                    })
+                if has_seen_static_modifier
+                    || (stop_on_start_of_class_static_block
+                        && self.lexer.peek_token().kind() == Kind::LCurly)
+                    || !self.try_parse_next_token_if(can_token_follow_modifier)
                 {
-                    ModifierKind::Static
-                } else {
                     return None;
                 }
+                ModifierKind::Static
             }
             _ => {
                 if kind.is_modifier_kind()
