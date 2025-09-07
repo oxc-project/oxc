@@ -2,6 +2,7 @@
 
 use oxc_allocator::{Address, Allocator};
 use oxc_ast::AstKind;
+use oxc_span::Span;
 
 use crate::options::FormatOptions;
 
@@ -68,6 +69,7 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.state().group_id(debug_name)
     }
+
 
     /// Joins multiple [Format] together without any separator
     ///
