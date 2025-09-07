@@ -292,7 +292,7 @@ impl std::fmt::Display for ModifierKind {
 impl<'a> ParserImpl<'a> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         let mut flags = ModifierFlags::empty();
-        let mut modifiers = self.ast.vec();
+        let mut modifiers = None;
         loop {
             let kind = self.cur_kind();
             if !kind.is_modifier_kind() {
@@ -317,9 +317,9 @@ impl<'a> ParserImpl<'a> {
             }
             self.check_for_duplicate_modifiers(flags, &modifier);
             flags.set(kind.into(), true);
-            modifiers.push(modifier);
+            modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
         }
-        Modifiers::new(Some(modifiers), flags)
+        Modifiers::new(modifiers, flags)
     }
 
     fn token_kind_into_modifier_kind(&mut self, kind: Kind) -> ModifierKind {
