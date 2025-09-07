@@ -100,16 +100,7 @@ impl Rule for PreferRegexpTest {
                     return;
                 }
             }
-
-            AstKind::Argument(_) => {
-                let Some(parent) = outermost_paren_parent(parent, ctx) else {
-                    return;
-                };
-
-                let AstKind::CallExpression(call_expr) = parent.kind() else {
-                    return;
-                };
-
+            AstKind::CallExpression(call_expr) => {
                 let Expression::Identifier(ident) = &call_expr.callee else {
                     return;
                 };

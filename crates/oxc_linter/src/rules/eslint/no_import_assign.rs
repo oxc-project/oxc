@@ -159,7 +159,7 @@ impl Rule for NoImportAssign {
 /// - `Reflect.setPrototypeOf`
 fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     let current_node = ctx.nodes().get_node(node_id);
-    let call_expression_node = ctx.nodes().parent_kind(ctx.nodes().parent_id(node_id));
+    let call_expression_node = ctx.nodes().parent_kind(node_id);
 
     let AstKind::CallExpression(expr) = call_expression_node else {
         return false;

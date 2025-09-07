@@ -187,17 +187,25 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         parent = stmt.grand_parent();
     }
     let maybe_jsx_expression_child = match parent {
-        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent {
-            // Argument
-            AstNodes::Argument(argument)
-                if matches!(argument.parent, AstNodes::CallExpression(_)) =>
-            {
-                argument.grand_parent()
+        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => {
+            // Check if this arrow function is used as a call argument
+            if crate::utils::is_expression_used_as_call_argument(arrow.span, arrow.parent) {
+                // Get the call expression's parent
+                if let AstNodes::CallExpression(call) = arrow.parent {
+                    call.parent
+                } else if let AstNodes::NewExpression(new_expr) = arrow.parent {
+                    new_expr.parent
+                } else {
+                    return false;
+                }
+            } else {
+                // If it's the callee
+                match arrow.parent {
+                    AstNodes::CallExpression(call) => call.parent,
+                    _ => return false,
+                }
             }
-            // Callee
-            AstNodes::CallExpression(call) => call.parent,
-            _ => return false,
-        },
+        }
         _ => return false,
     };
     matches!(maybe_jsx_expression_child, AstNodes::JSXExpressionContainer(container)

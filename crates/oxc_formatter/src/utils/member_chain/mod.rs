@@ -47,7 +47,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         // `flattened_items` now contains only the nodes that should have a sequence of
         // `[ StaticMemberExpression -> AnyNode + CallExpression ]`
         let tail_groups =
-            compute_remaining_groups(chain_members.drain(remaining_members_start_index..));
+            compute_remaining_groups(chain_members.drain(remaining_members_start_index..), f);
         let head_group = MemberChainGroup::from(chain_members);
 
         let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
@@ -302,39 +302,61 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 /// computes groups coming after the first group
 fn compute_remaining_groups<'a, 'b>(
     members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
+    f: &Formatter<'_, 'a>,
 ) -> TailChainGroups<'a, 'b> {
     let mut has_seen_call_expression = false;
+    let mut has_trailing_comment = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
 
     for member in members {
+        // Check if previous member had a trailing comment
+        // If so, we should start a new group
+        let should_break_group = has_seen_call_expression || has_trailing_comment;
+
         match member {
             // [0] should be appended at the end of the group instead of the
             // beginning of the next one
             ChainMember::ComputedMember(_) if is_computed_array_member_access(&member) => {
-                groups_builder.start_or_continue_group(member);
+                // Always append to the current group, don't start a new one
+                groups_builder.start_or_continue_group(member.clone());
+                // Don't reset has_seen_call_expression since we're continuing the group
             }
             ChainMember::StaticMember(_) | ChainMember::ComputedMember(_) => {
                 // if we have seen a CallExpression, we want to close the group.
                 // The resultant group will be something like: [ . , then, () ];
                 // `.` and `then` belong to the previous StaticMemberExpression,
                 // and `()` belong to the call expression we just encountered
-                if has_seen_call_expression {
+                if should_break_group {
                     groups_builder.close_group();
-                    groups_builder.start_group(member);
+                    groups_builder.start_group(member.clone());
                     has_seen_call_expression = false;
                 } else {
-                    groups_builder.start_or_continue_group(member);
+                    groups_builder.start_or_continue_group(member.clone());
                 }
             }
             ChainMember::CallExpression { .. } => {
-                groups_builder.start_or_continue_group(member);
+                if has_trailing_comment {
+                    groups_builder.close_group();
+                    groups_builder.start_group(member.clone());
+                } else {
+                    groups_builder.start_or_continue_group(member.clone());
+                }
                 has_seen_call_expression = true;
             }
             ChainMember::TSNonNullExpression(_) => {
-                groups_builder.start_or_continue_group(member);
+                if should_break_group {
+                    groups_builder.close_group();
+                    groups_builder.start_group(member.clone());
+                    has_seen_call_expression = false;
+                } else {
+                    groups_builder.start_or_continue_group(member.clone());
+                }
             }
             ChainMember::Node(_) => unreachable!("Remaining members never have a `Node` variant"),
         }
+
+        // Check if this member has a trailing comment for the next iteration
+        has_trailing_comment = member.has_same_line_trailing_comment(f);
     }
 
     groups_builder.finish()
@@ -346,14 +368,45 @@ fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
     )
 }
 
+/// Combined analysis of call arguments to avoid multiple iterations
+#[derive(Debug, Default)]
+struct ArgumentAnalysis {
+    has_arrow_or_function: bool,
+    all_simple: bool,
+}
+
+fn analyze_call_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> ArgumentAnalysis {
+    let mut analysis = ArgumentAnalysis { has_arrow_or_function: false, all_simple: true };
+
+    for argument in call.arguments() {
+        // Check for arrow or function expressions
+        if matches!(
+            &**argument,
+            Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)
+        ) {
+            analysis.has_arrow_or_function = true;
+        }
+
+        // Check if argument is simple
+        if analysis.all_simple && !SimpleArgument::new(argument).is_simple() {
+            analysis.all_simple = false;
+        }
+
+        // Early exit if we've determined both conditions
+        if analysis.has_arrow_or_function && !analysis.all_simple {
+            break;
+        }
+    }
+
+    analysis
+}
+
 fn has_arrow_or_function_expression_arg(call: &AstNode<'_, CallExpression<'_>>) -> bool {
-    call.as_ref().arguments.iter().any(|argument| {
-        matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
-    })
+    analyze_call_arguments(call).has_arrow_or_function
 }
 
 fn has_simple_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> bool {
-    call.arguments().iter().all(|argument| SimpleArgument::new(argument).is_simple())
+    analyze_call_arguments(call).all_simple
 }
 
 /// In order to detect those cases, we use an heuristic: if the first

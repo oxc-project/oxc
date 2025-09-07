@@ -5,8 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use schemars::JsonSchema;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -19,25 +18,24 @@ fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected the Promise rejection reason to be an Error").with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone)]
 pub struct PreferPromiseRejectErrors {
-    /// Whether to allow calls to `Promise.reject()` with no arguments.
     allow_empty_reject: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require using Error objects as Promise rejection reasons.
+    /// Require using Error objects as Promise rejection reasons
     ///
     /// ### Why is this bad?
     ///
-    /// It is considered good practice to only pass instances of the built-in `Error` object to the
-    /// `reject()` function for user-defined errors in Promises. `Error` objects automatically
-    /// store a stack trace, which can be used to debug an error by determining where it came
-    /// from. If a Promise is rejected with a non-`Error` value, it can be difficult to
-    /// determine where the rejection occurred.
+    /// It is considered good practice to only pass instances of the built-in `Error` object to the `reject()` function for user-defined errors in Promises. `Error` objects automatically store a stack trace, which can be used to debug an error by determining where it came from. If a Promise is rejected with a non-`Error` value, it can be difficult to determine where the rejection occurred.
+    ///
+    /// ### Options
+    ///
+    /// This rule takes one optional object argument:
+    /// - `allowEmptyReject: true` (`false` by default) allows calls to `Promise.reject()` with no arguments.
     ///
     /// ### Examples
     ///
@@ -74,8 +72,7 @@ declare_oxc_lint!(
     PreferPromiseRejectErrors,
     eslint,
     style,
-    none,
-    config = PreferPromiseRejectErrors,
+    none
 );
 
 impl Rule for PreferPromiseRejectErrors {
@@ -153,7 +150,11 @@ fn check_reject_in_function(
         ctx.symbol_references(reject_arg.symbol_id()).for_each(|reference| {
             if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
             {
-                check_reject_call(call_expr, ctx, allow_empty_reject);
+                let ref_node = ctx.nodes().get_node(reference.node_id());
+
+                if call_expr.callee.span().contains_inclusive(ref_node.span()) {
+                    check_reject_call(call_expr, ctx, allow_empty_reject);
+                }
             }
         });
         return;

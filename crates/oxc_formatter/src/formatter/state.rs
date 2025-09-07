@@ -5,6 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder, prelude::Interned};
 
+
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
@@ -24,7 +25,9 @@ pub struct FormatState<'ast> {
 
 impl std::fmt::Debug for FormatState<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_struct("FormatState").field("context", &self.context).finish()
+        f.debug_struct("FormatState")
+            .field("context", &self.context)
+            .finish()
     }
 }
 

@@ -830,7 +830,7 @@ impl<'a> Format<'a> for AstNode<'a, Argument<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::Argument(transmute_self(self)));
+        let parent = self.parent;
         match self.inner {
             Argument::SpreadElement(inner) => allocator
                 .alloc(AstNode::<SpreadElement> {
