@@ -267,6 +267,49 @@ Here's an example if you're using Next.js in a monorepo:
 ```
 
 
+### settings.import
+
+type: `object`
+
+
+See: [settings](https://github.com/import-js/eslint-plugin-import/blob/main/README.md#settings)
+
+
+#### settings.import.external-module-folders
+
+type: `string[]`
+
+default: `["node_modules"]`
+
+An array of folders. Resolved modules only from those folders will be considered as "external".
+
+See: [import/external-module-folders](https://github.com/import-js/eslint-plugin-import/blob/main/README.md#importexternal-module-folders)
+
+
+#### settings.import.internal-regex
+
+type: `string`
+
+default: `""`
+
+A regex for packages should be treated as internal.
+Useful when you are utilizing a monorepo setup or developing a set of packages that depend on each other.
+
+See: [import/internal-regex](https://github.com/import-js/eslint-plugin-import/blob/main/README.md#importinternal-regex)
+
+Example:
+
+```json
+{
+"settings": {
+"import": {
+"internal-regex": "^@scope/"
+}
+}
+}
+```
+
+
 ### settings.jsdoc
 
 type: `object`
