@@ -2,7 +2,7 @@ use oxc_ast::{AstType, ast_kind::AST_TYPE_MAX};
 
 const USIZE_BITS: usize = usize::BITS as usize;
 
-/// Number of bytes required for bit set which can represent all [`AstType`]s.
+/// Number of `usize`s required for bit set which can represent all [`AstType`]s.
 // Need to add plus one here because 0 is a possible value, but requires at least one bit to represent it.
 const NUM_USIZES: usize = (AST_TYPE_MAX as usize + 1).div_ceil(USIZE_BITS);
 
