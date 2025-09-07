@@ -123,15 +123,23 @@ impl Rule for NoCallbackInPromise {
 
 impl NoCallbackInPromise {
     fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
-        if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-            || !matches!(ctx.nodes().parent_kind(node.id()), AstKind::Argument(_))
-        {
+        if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
             return false;
         }
 
-        ctx.nodes().ancestors(node.id()).nth(1).is_some_and(|node| {
-            node.kind().as_call_expression().is_some_and(Self::has_promise_callback)
-        })
+        // Check if the parent is a CallExpression with then/catch
+        let parent = ctx.nodes().parent_node(node.id());
+        if let Some(call_expr) = parent.kind().as_call_expression() {
+            // Check if this function is one of the arguments
+            let is_argument = call_expr
+                .arguments
+                .iter()
+                .any(|arg| matches!(arg.as_expression(), Some(expr) if expr.span() == node.span()));
+
+            return is_argument && Self::has_promise_callback(call_expr);
+        }
+
+        false
     }
 
     fn has_promise_callback(call_expr: &CallExpression) -> bool {
