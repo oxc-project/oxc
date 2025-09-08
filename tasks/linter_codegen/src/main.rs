@@ -269,13 +269,12 @@ fn is_node_kind_call(expr: &Expr) -> bool {
 fn extract_variants_from_pat(pat: &Pat, out: &mut BTreeSet<String>) -> CollectionResult {
     match pat {
         Pat::Or(orpat) => {
-            let mut result = CollectionResult::Complete;
             for p in &orpat.cases {
                 if extract_variants_from_pat(p, out) == CollectionResult::Incomplete {
-                    result = CollectionResult::Incomplete;
+                    return CollectionResult::Incomplete;
                 }
             }
-            result
+            CollectionResult::Complete
         }
         Pat::TupleStruct(ts) => {
             if let Some(variant) = astkind_variant_from_path(&ts.path) {
