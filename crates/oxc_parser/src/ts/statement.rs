@@ -561,14 +561,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
         let span = self.start_span();
-        self.parse_class_element_modifiers(true);
-
-        let this_span = self.start_span();
         self.bump_any();
-        let this = self.end_span(this_span);
+        let this_span = self.end_span(span);
 
         let type_annotation = self.parse_ts_type_annotation();
-        self.ast.ts_this_parameter(self.end_span(span), this, type_annotation)
+        self.ast.ts_this_parameter(self.end_span(span), this_span, type_annotation)
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {
