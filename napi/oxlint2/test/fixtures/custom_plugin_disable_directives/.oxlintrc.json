@@ -3,8 +3,7 @@
   "categories": { "correctness": "off" },
   "rules": {
     "test-plugin/no-var": "error",
-    "no-debugger": "error",
-    "no-unused-vars": "warn"
+    "no-debugger": "error"
   },
   "ignorePatterns": ["test_plugin/**"]
 }
