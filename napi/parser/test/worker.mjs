@@ -1,2 +1,2 @@
-import { parseSync } from '../index.js';
+import { parseSync } from '../index.mjs';
 parseSync('test.js', '');
