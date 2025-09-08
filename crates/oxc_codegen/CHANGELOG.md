@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- e11a946 rust: Fix missing docs (#13541) (Boshen)
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+
 ## [0.86.0] - 2025-08-31
 
 ### 💥 BREAKING CHANGES
