@@ -234,6 +234,12 @@ impl LintRunner {
         }
         .with_filters(&filters);
 
+        // If no external rules, discard `ExternalLinter`
+        let mut external_linter = self.external_linter;
+        if external_plugin_store.is_empty() {
+            external_linter = None;
+        }
+
         if let Some(basic_config_file) = oxlintrc_for_print {
             let config_file = config_builder.resolve_final_config_file(basic_config_file);
             if misc_options.print_config {
@@ -324,7 +330,7 @@ impl LintRunner {
             }
         }
 
-        let linter = Linter::new(LintOptions::default(), config_store, self.external_linter)
+        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 
