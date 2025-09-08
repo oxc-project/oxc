@@ -460,11 +460,13 @@ fn apply_rule_fix<'a>(
     replace_span: Span,
     function_name: Option<String>,
 ) -> RuleFix<'a> {
-    if !is_safe_fix {
-        return fixer.noop();
+    if is_safe_fix {
+        if let Some(name) = function_name {
+            return fixer.insert_text_after(&replace_span, format!(" {}", name));
+        }
     }
 
-    fixer.insert_text_after(&replace_span, format!(" {}", function_name.unwrap()))
+    fixer.noop()
 }
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow<'a, str>> {
