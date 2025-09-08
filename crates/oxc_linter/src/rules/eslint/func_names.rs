@@ -224,7 +224,7 @@ impl FuncNames {
         &self,
         ctx: &'a LintContext<'_>,
     ) -> Vec<(&'a Function<'a>, &'a AstNode<'a>, &'a AstNode<'a>)> {
-        let mut invalid_functions: Vec<(&Function, &AstNode, &AstNode)> = vec![];
+        let mut invalid_functions: Vec<(&Function, &AstNode, &AstNode)> = Vec::new();
 
         for node in ctx.nodes() {
             match node.kind() {
@@ -242,36 +242,12 @@ impl FuncNames {
                 // check if the calling function is inside its own body
                 // then, remove it from invalid_functions because recursion are always named
                 AstKind::CallExpression(expression) => {
-                    if let Expression::Identifier(identifier) = &expression.callee {
-                        // check at first if the callee calls an invalid function
-                        if !invalid_functions
-                            .iter()
-                            .filter_map(|(func, _, _)| func.name())
-                            .any(|func_name| func_name == identifier.name)
-                        {
-                            continue;
-                        }
-
-                        // a function which is calling itself inside is always valid
-                        let ast_span =
-                            ctx.nodes().ancestors(node.id()).find_map(|p| match p.kind() {
-                                AstKind::Function(func) => {
-                                    let func_name = func.name()?;
-
-                                    if func_name == identifier.name {
-                                        return Some(func.span);
-                                    }
-
-                                    None
-                                }
-                                _ => None,
-                            });
-
-                        // we found a recursive function, remove it from the invalid list
-                        if let Some(span) = ast_span {
-                            invalid_functions.retain(|(func, _, _)| func.span != span);
-                        }
-                    }
+                    retain_recursive_function_from_invalid_functions(
+                        &mut invalid_functions,
+                        expression,
+                        node,
+                        ctx,
+                    );
                 }
                 _ => {}
             }
@@ -298,11 +274,39 @@ impl Rule for FuncNames {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let invalid_functions = self.get_invalid_functions(ctx);
-
-        for (func, node, parent_node) in invalid_functions {
+        for (func, node, parent_node) in self.get_invalid_functions(ctx) {
             diagnostic_invalid_function(func, node, parent_node, ctx);
         }
+    }
+}
+
+fn retain_recursive_function_from_invalid_functions(
+    invalid_functions: &mut Vec<(&Function, &AstNode, &AstNode)>,
+    expression: &oxc_ast::ast::CallExpression,
+    node: &AstNode,
+    ctx: &LintContext,
+) {
+    let Expression::Identifier(identifier) = &expression.callee else {
+        return;
+    };
+    // check at first if the callee calls an invalid function
+    if !invalid_functions
+        .iter()
+        .flat_map(|(func, _, _)| func.name())
+        .any(|func_name| func_name == identifier.name)
+    {
+        return;
+    }
+
+    // a function which is calling itself inside is always valid
+    if let Some(span) = ctx.nodes().ancestors(node.id()).find_map(|p| {
+        if let AstKind::Function(func) = p.kind() {
+            func.name().filter(|n| *n == identifier.name).map(|_| func.span)
+        } else {
+            None
+        }
+    }) {
+        invalid_functions.retain(|(func, _, _)| func.span != span);
     }
 }
 
@@ -331,7 +335,7 @@ fn diagnostic_invalid_function(
         func.type_parameters.as_ref().map_or_else(|| func.params.span.start, |tp| tp.span.start),
     );
 
-    let function_name: Option<String> = guess_function_name(ctx, node.id()).map(Cow::into_owned);
+    let function_name = guess_function_name(ctx, node.id()).map(Cow::into_owned);
 
     let is_safe_fix =
         function_name.as_ref().is_some_and(|name| can_safely_apply_fix(func, name, ctx));
@@ -459,9 +463,8 @@ fn apply_rule_fix<'a>(
     if !is_safe_fix {
         return fixer.noop();
     }
-    let function_name = function_name.unwrap();
 
-    fixer.insert_text_after(&replace_span, format!(" {function_name}"))
+    fixer.insert_text_after(&replace_span, format!(" {}", function_name.unwrap()))
 }
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow<'a, str>> {
