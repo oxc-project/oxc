@@ -253,15 +253,24 @@ impl<'a> AstNodes<'a> {
 
     /// Checks if the AST contains any nodes of the given types.
     ///
-    /// Example:
-    /// ```ignore
-    /// let for_stmt = AstTypesBitset::from_types(&[AstType::ForStatement]);
-    /// let import_export_decl = AstTypesBitset::from_types(&[AstType::ImportDeclaration, AstType::ExportDeclaration]);
+    /// ## Example
+    /// ```
+    /// # fn get_nodes<'a>() -> AstNodes<'a> { AstNodes::default() }
     ///
-    /// // returns true if there is a `for` loop anywhere in the AST.
-    /// nodes.contains_any(&for_stmt)
-    /// // returns true if there is at least one import OR one export in the AST.
-    /// nodes.contains_any(&import_export_decl)
+    /// use oxc_ast::AstType;
+    /// use oxc_semantic::{AstNodes, AstTypesBitset};
+    ///
+    /// let for_stmt = AstTypesBitset::from_types(&[AstType::ForStatement]);
+    /// let import_export_decl = AstTypesBitset::from_types(&[
+    ///   AstType::ImportDeclaration,
+    ///   AstType::ExportNamedDeclaration,
+    /// ]);
+    ///
+    /// let nodes: AstNodes = get_nodes();
+    /// // `true` if there is a `for` loop anywhere in the AST
+    /// nodes.contains_any(&for_stmt);
+    /// // `true` if there is at least one import OR one export in the AST
+    /// nodes.contains_any(&import_export_decl);
     /// ```
     pub fn contains_any(&self, bitset: &AstTypesBitset) -> bool {
         self.node_kinds_set.intersects(bitset)
@@ -269,15 +278,24 @@ impl<'a> AstNodes<'a> {
 
     /// Checks if the AST contains all of the given types.
     ///
-    /// Example:
-    /// ```ignore
-    /// let for_stmt = AstTypesBitset::from_types(&[AstType::ForStatement]);
-    /// let import_export_decl = AstTypesBitset::from_types(&[AstType::ImportDeclaration, AstType::ExportDeclaration]);
+    /// ## Example
+    /// ```
+    /// # fn get_nodes<'a>() -> AstNodes<'a> { AstNodes::default() }
     ///
-    /// // returns true if there is a `for` loop anywhere in the AST.
-    /// nodes.contains_all(&for_stmt)
-    /// // returns true only if there is at least one import AND one export in the AST.
-    /// nodes.contains_all(&import_export_decl)
+    /// use oxc_ast::AstType;
+    /// use oxc_semantic::{AstNodes, AstTypesBitset};
+    ///
+    /// let for_stmt = AstTypesBitset::from_types(&[AstType::ForStatement]);
+    /// let import_export_decl = AstTypesBitset::from_types(&[
+    ///   AstType::ImportDeclaration,
+    ///   AstType::ExportNamedDeclaration,
+    /// ]);
+    ///
+    /// let nodes: AstNodes = get_nodes();
+    /// // `true` if there is a `for` loop anywhere in the AST
+    /// nodes.contains_all(&for_stmt);
+    /// // `true` if there is at least one import AND one export in the AST
+    /// nodes.contains_all(&import_export_decl);
     /// ```
     pub fn contains_all(&self, bitset: &AstTypesBitset) -> bool {
         self.node_kinds_set.contains(bitset)
@@ -285,12 +303,18 @@ impl<'a> AstNodes<'a> {
 
     /// Checks if the AST contains a node of the given type.
     ///
-    /// Example:
-    /// ```ignore
-    /// // returns true if there is a `for` loop anywhere in the AST.
-    /// nodes.contains(AstType::ForStatement)
-    /// // returns true if there is an `ImportDeclaration` anywhere in the AST.
-    /// nodes.contains(AstType::ImportDeclaration)
+    /// ## Example
+    /// ```
+    /// # fn get_nodes<'a>() -> AstNodes<'a> { AstNodes::default() }
+    ///
+    /// use oxc_ast::AstType;
+    /// use oxc_semantic::{AstNodes, AstTypesBitset};
+    ///
+    /// let nodes: AstNodes = get_nodes();
+    /// // `true` if there is a `for` loop anywhere in the AST
+    /// nodes.contains(AstType::ForStatement);
+    /// // `true` if there is an `ImportDeclaration` anywhere in the AST
+    /// nodes.contains(AstType::ImportDeclaration);
     /// ```
     pub fn contains(&self, ty: AstType) -> bool {
         self.node_kinds_set.has(ty)
