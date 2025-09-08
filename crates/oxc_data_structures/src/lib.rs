@@ -19,3 +19,6 @@ pub mod slice_iter;
 
 #[cfg(feature = "stack")]
 pub mod stack;
+
+#[cfg(feature = "string_utils")]
+pub mod string_utils;

@@ -1,5 +1,6 @@
 use std::{borrow::Cow, iter::FusedIterator};
 
+use oxc_data_structures::string_utils::StrExt;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::{Comment, CommentKind, ast::Program};
@@ -222,7 +223,7 @@ impl Codegen<'_> {
                     if !line.starts_with("/*") {
                         self.print_indent();
                     }
-                    self.print_str_escaping_script_close_tag(line.trim_start());
+                    self.print_str_escaping_script_close_tag(line.trim_ascii_start());
                     if !line.ends_with("*/") {
                         self.print_hard_newline();
                     }
@@ -256,7 +257,7 @@ impl Codegen<'_> {
                     if !line.starts_with("/*") {
                         buffer.push('\t');
                     }
-                    buffer.push_str(line.trim_start());
+                    buffer.push_str(line.ascii_trim_start());
                     if !line.ends_with("*/") {
                         buffer.push('\n');
                     }
