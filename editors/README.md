@@ -6,6 +6,8 @@
 
 [(Neo)Vim](https://github.com/oxc-project/coc-oxc)
 
+[Zed](https://github.com/oxc-project/zed-oxc)
+
 ## Third-Party
 
 > We look forward to your contributions, Feel free to open a PR if you are working on an IDE extension for oxlint(`oxc_language_server`).
