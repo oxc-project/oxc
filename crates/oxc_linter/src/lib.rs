@@ -4,6 +4,7 @@
 use std::{path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast_kind::AST_TYPE_MAX;
 use oxc_semantic::AstNode;
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
@@ -37,10 +38,11 @@ pub mod loader;
 pub mod rules;
 pub mod table;
 
-#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
 mod generated {
+    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
     #[cfg(debug_assertions)]
     pub mod assert_layouts;
+    mod rule_runner_impls;
 }
 
 pub use crate::{
@@ -60,7 +62,7 @@ pub use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
-    rule::{RuleCategory, RuleFixMeta, RuleMeta},
+    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunner},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
@@ -90,7 +92,6 @@ fn size_asserts() {
 pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
-    #[cfg_attr(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))), expect(dead_code))]
     external_linter: Option<ExternalLinter>,
 }
 
@@ -125,6 +126,11 @@ impl Linter {
     /// number of rules depends on which file is being linted.
     pub fn number_of_rules(&self, type_aware: bool) -> Option<usize> {
         self.config.number_of_rules(type_aware)
+    }
+
+    /// Return `true` if `Linter` has an external linter (JS plugins).
+    pub fn has_external_linter(&self) -> bool {
+        self.external_linter.is_some()
     }
 
     pub fn run<'a>(
@@ -167,10 +173,42 @@ impl Linter {
             //
             // See https://github.com/oxc-project/oxc/pull/6600 for more context.
             if semantic.nodes().len() > 200_000 {
+                const AST_TYPES_LEN: usize = AST_TYPE_MAX as usize + 1;
+
                 // Collect rules into a Vec so that we can iterate over the rules multiple times
                 let rules = rules.collect::<Vec<_>>();
 
+                // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
+                // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
+                // compile-time since we know all of the rules and their AST node type information ahead of time.
+                //
+                // Convert to boxed array to help compiler see that indexing into it with an `AstType`
+                // cannot go out of bounds, and remove bounds checks. The `unwrap` is infallible and should be optimized out.
+                let rules_by_ast_type = vec![Vec::new(); AST_TYPES_LEN];
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let mut rules_by_ast_type =
+                    Box::<[_; AST_TYPES_LEN]>::try_from(rules_by_ast_type.into_boxed_slice())
+                        .ok()
+                        .unwrap();
+                // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
+                // node types, but it at least guarantees we won't need to realloc.
+                let mut rules_any_ast_type = Vec::with_capacity(rules.len());
+
                 for (rule, ctx) in &rules {
+                    let rule = *rule;
+                    // Collect node type information for rules. In large files, benchmarking showed it was worth
+                    // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
+                    if rule.should_run(&ctx_host) {
+                        let (ast_types, all_types) = rule.types_info();
+                        if all_types {
+                            rules_any_ast_type.push((rule, ctx));
+                        } else {
+                            for ty in ast_types {
+                                rules_by_ast_type[ty as usize].push((rule, ctx));
+                            }
+                        }
+                    }
+
                     rule.run_once(ctx);
                 }
 
@@ -180,8 +218,12 @@ impl Linter {
                     }
                 }
 
+                // Run rules on nodes
                 for node in semantic.nodes() {
-                    for (rule, ctx) in &rules {
+                    for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
+                        rule.run(node, ctx);
+                    }
+                    for (rule, ctx) in &rules_any_ast_type {
                         rule.run(node, ctx);
                     }
                 }
@@ -201,8 +243,19 @@ impl Linter {
                         rule.run_on_symbol(symbol, ctx);
                     }
 
-                    for node in semantic.nodes() {
-                        rule.run(node, ctx);
+                    // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
+                    // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
+                    let (ast_types, all_types) = rule.types_info();
+                    if all_types {
+                        for node in semantic.nodes() {
+                            rule.run(node, ctx);
+                        }
+                    } else {
+                        for node in semantic.nodes() {
+                            if ast_types.has(node.kind().ty()) {
+                                rule.run(node, ctx);
+                            }
+                        }
                     }
 
                     if should_run_on_jest_node {
@@ -329,6 +382,13 @@ impl Linter {
                         external_rules[diagnostic.rule_index as usize];
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
+
+                    if ctx_host
+                        .disable_directives()
+                        .contains(&format!("{plugin_name}/{rule_name}"), span)
+                    {
+                        continue;
+                    }
 
                     ctx_host.push_diagnostic(Message::new(
                         OxcDiagnostic::error(diagnostic.message)

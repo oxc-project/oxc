@@ -6,7 +6,7 @@
 //! are inside a proc macro.
 
 /// <https://github.com/import-js/eslint-plugin-import>
-mod import {
+pub(crate) mod import {
     pub mod consistent_type_specifier_style;
     pub mod default;
     pub mod export;
@@ -38,7 +38,7 @@ mod import {
     pub mod unambiguous;
 }
 
-mod eslint {
+pub(crate) mod eslint {
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
@@ -190,7 +190,7 @@ mod eslint {
     pub mod yoda;
 }
 
-mod typescript {
+pub(crate) mod typescript {
     pub mod adjacent_overload_signatures;
     pub mod array_type;
     pub mod await_thenable;
@@ -276,7 +276,7 @@ mod typescript {
     pub mod use_unknown_in_catch_callback_variable;
 }
 
-mod jest {
+pub(crate) mod jest {
     pub mod consistent_test_it;
     pub mod expect_expect;
     pub mod max_expects;
@@ -329,7 +329,7 @@ mod jest {
     pub mod valid_title;
 }
 
-mod react {
+pub(crate) mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
     pub mod exhaustive_deps;
@@ -371,14 +371,14 @@ mod react {
     pub mod void_dom_elements_no_children;
 }
 
-mod react_perf {
+pub(crate) mod react_perf {
     pub mod jsx_no_jsx_as_prop;
     pub mod jsx_no_new_array_as_prop;
     pub mod jsx_no_new_function_as_prop;
     pub mod jsx_no_new_object_as_prop;
 }
 
-mod unicorn {
+pub(crate) mod unicorn {
     pub mod catch_error_name;
     pub mod consistent_assert;
     pub mod consistent_date_clone;
@@ -485,7 +485,7 @@ mod unicorn {
     pub mod throw_new_error;
 }
 
-mod jsx_a11y {
+pub(crate) mod jsx_a11y {
     pub mod alt_text;
     pub mod anchor_ambiguous_text;
     pub mod anchor_has_content;
@@ -517,7 +517,7 @@ mod jsx_a11y {
     pub mod tabindex_no_positive;
 }
 
-mod oxc {
+pub(crate) mod oxc {
     pub mod approx_constant;
     pub mod bad_array_method_on_arguments;
     pub mod bad_bitwise_operator;
@@ -544,7 +544,7 @@ mod oxc {
     pub mod uninvoked_array_callback;
 }
 
-mod nextjs {
+pub(crate) mod nextjs {
     pub mod google_font_display;
     pub mod google_font_preconnect;
     pub mod inline_script_id;
@@ -569,7 +569,7 @@ mod nextjs {
 }
 
 /// <https://github.com/gajus/eslint-plugin-jsdoc>
-mod jsdoc {
+pub(crate) mod jsdoc {
     pub mod check_access;
     pub mod check_property_names;
     pub mod check_tag_names;
@@ -590,7 +590,7 @@ mod jsdoc {
     pub mod require_yields;
 }
 
-mod promise {
+pub(crate) mod promise {
     pub mod always_return;
     pub mod avoid_new;
     pub mod catch_or_return;
@@ -608,7 +608,7 @@ mod promise {
     pub mod valid_params;
 }
 
-mod vitest {
+pub(crate) mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_to_be_falsy;
@@ -617,12 +617,12 @@ mod vitest {
     pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
-mod node {
+pub(crate) mod node {
     pub mod no_exports_assign;
     pub mod no_new_require;
 }
 
-mod vue {
+pub(crate) mod vue {
     pub mod valid_define_emits;
 }
 

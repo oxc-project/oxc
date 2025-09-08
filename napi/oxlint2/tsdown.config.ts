@@ -13,7 +13,7 @@ export default defineConfig({
     './oxlint.*.node',
     'oxlint2-*',
     // External the generated constants file - we'll copy it separately
-    './generated/constants.cjs',
+    './generated/constants.mjs',
     // These are generated (also used by oxc-parser, so we'll copy them separately)
     /..\/parser\/.*/,
   ],

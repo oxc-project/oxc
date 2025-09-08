@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- 2cd4c7b minifier: Inline constant that is declared in normal for statement initializer (#13509) (sapphi-red)
+- 52f3e89 minifier: Remove unused variables in for init (#13508) (sapphi-red)
+- b4dfddd minifier: Store symbol information for for init variables (#13507) (sapphi-red)
+- 05def8c minifier: Constant fold `RegExp.prototype.source` (#13472) (sapphi-red)
+- 78dcfc6 minifier: Return total iterations ran for DCE as well (#13476) (sapphi-red)
+- ecf69bb minifier: Respect `--max-iterations` for DCE as well (#13475) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+- 946669b minifier: Inline multiple variable declarations at once (#13477) (sapphi-red)
+
+### ⚡ Performance
+
+- 60dd9c9 minifier: Prealloc template exprs vec (#13410) (camchenry)
+
+
 ## [0.86.0] - 2025-08-31
 
 ### 🚀 Features

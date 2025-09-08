@@ -38,6 +38,11 @@ pub fn parse_jsdoc(
     // This includes inline code blocks or markdown-style code inside comments.
     let mut in_backticks = false;
 
+    // Track whether we're currently inside quotes '...' or "..."
+    // This includes package names when doing a @import
+    let mut in_double_quotes = false;
+    let mut in_single_quotes = false;
+
     // This flag tells us if we have already found the main comment block.
     // The first part before any @tags is considered the comment. Everything after is a tag.
     let mut comment_found = false;
@@ -52,8 +57,12 @@ pub fn parse_jsdoc(
     while let Some(ch) = chars.next() {
         // A `@` is only considered the start of a tag if we are not nested inside
         // braces, square brackets, or backtick-quoted sections
-        let can_parse =
-            curly_brace_depth == 0 && square_brace_depth == 0 && brace_depth == 0 && !in_backticks;
+        let can_parse = curly_brace_depth == 0
+            && square_brace_depth == 0
+            && brace_depth == 0
+            && !in_backticks
+            && !in_double_quotes
+            && !in_single_quotes;
 
         match ch {
             // NOTE: For now, only odd backtick(s) are handled.
@@ -67,6 +76,8 @@ pub fn parse_jsdoc(
                     in_backticks = !in_backticks;
                 }
             }
+            '"' => in_double_quotes = !in_double_quotes,
+            '\'' => in_single_quotes = !in_single_quotes,
             '{' => curly_brace_depth += 1,
             '}' => curly_brace_depth = curly_brace_depth.saturating_sub(1),
             '(' => brace_depth += 1,

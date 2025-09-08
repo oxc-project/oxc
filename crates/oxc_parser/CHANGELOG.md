@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+- 65aca9e parser: Reset popped lexer errors when rewinding (#13494) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 3ead0dd parser: Store Option<diagnostic> for lexer errors (#13520) (camc314)
+
+
 
 
 

@@ -22,6 +22,7 @@ pub use oxc_syntax::{
 
 pub mod dot;
 
+mod ast_types_bitset;
 mod binder;
 mod builder;
 mod checker;
@@ -35,6 +36,7 @@ mod scoping;
 mod stats;
 mod unresolved_stack;
 
+pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};

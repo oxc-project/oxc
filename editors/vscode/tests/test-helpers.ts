@@ -119,8 +119,10 @@ export async function writeToFixtureFile(file: string, content: string, workspac
   await window.showTextDocument(fileUri);
 
   for (const char of content) {
+      // oxlint-disable eslint/no-await-in-loop -- simulate key presses
       await commands.executeCommand('type', { text: char });
       await sleep(50);
+      // oxlint-enable
   }
 }
 
@@ -131,3 +133,4 @@ export async function waitForDiagnosticChange(): Promise<void> {
       })
     );
 }
+

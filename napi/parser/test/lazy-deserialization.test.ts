@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { parseSync } from '../index.js';
+import { parseSync } from '../index.mjs';
 
 function parseSyncLazy(filename, code, options = null) {
   return parseSync(filename, code, { ...options, experimentalLazy: true });

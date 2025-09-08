@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- bb1faf9 allocator: Implement `CloneIn` for `HashMap` (#13562) (overlookmotel)
+- a54a4de allocator: Implement `CloneIn` for `Box<[T]>` (#13505) (overlookmotel)
+- c1fdcf6 allocator: Add `Vec::into_boxed_slice` method (#13503) (overlookmotel)
+
+### ⚡ Performance
+
+- 6fce49d allocator: Remove bounds checks in `CloneIn` for `Vec` (#13506) (overlookmotel)
+
+
 ## [0.86.0] - 2025-08-31
 
 ### 🚀 Features
