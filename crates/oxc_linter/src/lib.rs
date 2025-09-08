@@ -92,7 +92,6 @@ fn size_asserts() {
 pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
-    #[cfg_attr(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))), expect(dead_code))]
     external_linter: Option<ExternalLinter>,
 }
 
@@ -127,6 +126,11 @@ impl Linter {
     /// number of rules depends on which file is being linted.
     pub fn number_of_rules(&self, type_aware: bool) -> Option<usize> {
         self.config.number_of_rules(type_aware)
+    }
+
+    /// Return `true` if `Linter` has an external linter (JS plugins).
+    pub fn has_external_linter(&self) -> bool {
+        self.external_linter.is_some()
     }
 
     pub fn run<'a>(

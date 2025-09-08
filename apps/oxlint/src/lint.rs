@@ -359,13 +359,16 @@ impl LintRunner {
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
+            #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+            let has_external_linter = linter.has_external_linter();
+
             let mut lint_service = LintService::new(linter, options);
             lint_service.with_paths(files_to_lint);
 
-            // Use `RawTransferFileSystem` if `oxlint2` feature is enabled.
+            // Use `RawTransferFileSystem` if `oxlint2` feature is enabled and `ExternalLinter` exists.
             // This reads the source text into start of allocator, instead of the end.
             #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-            {
+            if has_external_linter {
                 use crate::raw_fs::RawTransferFileSystem;
                 lint_service.with_file_system(Box::new(RawTransferFileSystem));
             }
