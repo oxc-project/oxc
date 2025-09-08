@@ -8,6 +8,7 @@ use crate::{
     FormatOptions, format_args,
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
+        comments::is_own_line_comment,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::format_dangling_comments,
     },
@@ -529,10 +530,20 @@ fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    if f.comments().has_leading_own_line_comments(right.span().start)
-        && !matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
-    {
-        return true;
+    let is_jsx = matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_));
+
+    for comment in f.comments().comments_before(right.span().start) {
+        if !is_jsx
+            && (get_lines_after(comment.span.end, f.source_text()) > 0
+                || is_own_line_comment(comment, f.source_text()))
+        {
+            return true;
+        }
+
+        // Needs to wrap a parenthesis for the node, so it won't break.
+        if f.comments().is_type_cast_comment(comment) {
+            return false;
+        }
     }
 
     match right.as_ref() {
