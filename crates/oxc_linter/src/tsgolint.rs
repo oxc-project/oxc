@@ -22,7 +22,7 @@ use crate::{
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
 pub struct TsGoLintState {
-    /// The path to the `tsgolint` executable (at least our our best guess at it).
+    /// The path to the `tsgolint` executable (at least our best guess at it).
     executable_path: PathBuf,
     /// Current working directory, used for rendering paths in diagnostics.
     cwd: PathBuf,
