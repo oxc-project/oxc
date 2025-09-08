@@ -76,6 +76,7 @@ pub trait RuleRunner: Rule {
         (Self::NODE_TYPES, Self::ANY_NODE_TYPE)
     }
 }
+
 pub trait RuleMeta {
     const NAME: &'static str;
 

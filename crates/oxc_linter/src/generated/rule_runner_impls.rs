@@ -4,7 +4,6 @@
 #![allow(clippy::needless_pass_by_value)]
 
 use oxc_ast::AstType;
-
 use oxc_semantic::AstTypesBitset;
 
 use crate::rule::RuleRunner;

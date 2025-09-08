@@ -1,8 +1,13 @@
 #![allow(clippy::print_stdout)]
-use std::fmt::Write as _;
-use std::io::Write as _;
-use std::process::{Command, Stdio};
-use std::{collections::BTreeSet, fs, io, path::Path};
+
+use std::{
+    collections::BTreeSet,
+    fmt::Write as _,
+    fs,
+    io::{self, Write as _},
+    path::Path,
+    process::{Command, Stdio},
+};
 
 use convert_case::{Case, Casing};
 use syn::{Expr, ExprIf, File, Pat, Path as SynPath, Stmt}; // keep syn in scope for parse_file used elsewhere
@@ -24,7 +29,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
     out.push_str("// Auto-generated code, DO NOT EDIT DIRECTLY!\n");
     out.push_str("// To regenerate: `cargo run -p oxc_linter_codegen`\n\n");
     out.push_str("#![allow(clippy::needless_pass_by_value)]\n\n");
-    out.push_str("use oxc_ast::AstType;\n\n");
+    out.push_str("use oxc_ast::AstType;\n");
     out.push_str("use oxc_semantic::AstTypesBitset;\n\n");
     out.push_str("use crate::rule::RuleRunner;\n\n");
 
