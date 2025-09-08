@@ -6742,7 +6742,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors3.ts:2:25]
  1 │ class foo {
  2 │     constructor (public public a: number) {
@@ -6751,7 +6751,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors4.ts:2:26]
  1 │ class foo {
  2 │     constructor (private public a: number) {
@@ -10222,7 +10222,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │     .then((role: Role) =>
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/multipleClassPropertyModifiersErrors.ts:2:9]
  1 │ class C {
  2 │     public public p1;
@@ -10231,7 +10231,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/multipleClassPropertyModifiersErrors.ts:3:10]
  2 │     public public p1;
  3 │     private private p2;
@@ -16243,7 +16243,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:39:13]
  38 │ class E {
  39 │     private public protected property;
@@ -16252,7 +16252,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:39:20]
  38 │ class E {
  39 │     private public protected property;
@@ -16261,7 +16261,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:40:12]
  39 │     private public protected property;
  40 │     public protected method() { }
@@ -16270,7 +16270,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:41:13]
  40 │     public protected method() { }
  41 │     private protected get getter() { return 0; }
@@ -16279,7 +16279,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:42:12]
  41 │     private protected get getter() { return 0; }
  42 │     public public set setter(a: number) { }
@@ -22470,7 +22470,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts:2:10]
  1 │ class C {
  2 │   public public constructor() { }
@@ -22479,7 +22479,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts:2:10]
  1 │ class C {
  2 │   public private constructor() { }
@@ -23510,7 +23510,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration7.ts:2:12]
  1 │ class C {
  2 │     public public get Foo() { }
@@ -23528,7 +23528,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration1.ts:2:12]
  1 │ class C {
  2 │     public public Foo() { }
@@ -23618,7 +23618,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │ }
     ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration1.ts:2:10]
  1 │ class C {
  2 │   public public Foo;
@@ -23831,7 +23831,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected4.ts:2:13]
  1 │ class C {
  2 │   protected public m() { }
@@ -23840,7 +23840,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected7.ts:2:13]
  1 │ class C {
  2 │   protected private m() { }
