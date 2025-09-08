@@ -462,7 +462,7 @@ fn apply_rule_fix<'a>(
 ) -> RuleFix<'a> {
     if is_safe_fix {
         if let Some(name) = function_name {
-            return fixer.insert_text_after(&replace_span, format!(" {}", name));
+            return fixer.insert_text_after(&replace_span, format!(" {name}"));
         }
     }
 
