@@ -379,6 +379,13 @@ impl Linter {
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
 
+                    if ctx_host
+                        .disable_directives()
+                        .contains(&format!("{plugin_name}/{rule_name}"), span)
+                    {
+                        continue;
+                    }
+
                     ctx_host.push_diagnostic(Message::new(
                         OxcDiagnostic::error(diagnostic.message)
                             .with_label(span)
