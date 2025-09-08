@@ -93,6 +93,7 @@ fn find_rule_source_file(root: &Path, rule: &RuleEntry) -> Option<std::path::Pat
 }
 
 /// Represents a lint rule entry in the `declare_all_lint_rules!` macro.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 struct RuleEntry<'e> {
     /// The module name of the rule's plugin, like `eslint` in `eslint::no_debugger::NoDebugger`.
     plugin_module_name: &'e str,
@@ -141,14 +142,7 @@ fn get_all_rules(contents: &str) -> io::Result<Vec<RuleEntry<'_>>> {
         rule_entries.push(RuleEntry { plugin_module_name, rule_module_name });
     }
     // Sort deterministically
-    rule_entries.sort_by(|a, b| {
-        let ord = a.plugin_module_name.cmp(b.plugin_module_name);
-        if ord == std::cmp::Ordering::Equal {
-            a.rule_module_name.cmp(b.rule_module_name)
-        } else {
-            ord
-        }
-    });
+    rule_entries.sort_unstable();
 
     Ok(rule_entries)
 }
