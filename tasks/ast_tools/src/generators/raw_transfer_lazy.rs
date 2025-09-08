@@ -58,8 +58,6 @@ struct State {
     constructors: String,
     /// Code for walkers
     walkers: String,
-    /// Code for constructor class names
-    constructor_names: String,
     /// Code for constructor class names which are used in walkers
     walked_constructor_names: String,
     /// Code for mapping from struct name to ID
@@ -97,7 +95,6 @@ fn generate(
     let mut state = State {
         constructors: String::new(),
         walkers: String::new(),
-        constructor_names: String::new(),
         walked_constructor_names: String::new(),
         leaf_node_type_ids_map: String::new(),
         non_leaf_node_type_ids_map: String::new(),
@@ -747,8 +744,6 @@ fn generate_struct(
 
         const Debug{struct_name} = class {struct_name} {{}};
     ");
-
-    write_it!(state.constructor_names, "{struct_name}, ");
 
     // Generate walk function
     if !is_walked {
