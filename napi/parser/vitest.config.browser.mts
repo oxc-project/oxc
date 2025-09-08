@@ -2,9 +2,9 @@ import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-    define: {
-        'process.env.NODE_DEBUG_NATIVE': '"wasi"'
-    },
+  define: {
+    'process.env.NODE_DEBUG_NATIVE': '"wasi"',
+  },
   test: {
     dir: 'test-browser',
     browser: {
