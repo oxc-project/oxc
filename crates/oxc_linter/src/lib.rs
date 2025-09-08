@@ -181,6 +181,7 @@ impl Linter {
                 let mut rules_any_ast_type = Vec::with_capacity(rules.len());
 
                 for (rule, ctx) in &rules {
+                    let rule = *rule;
                     // Collect node type information for rules. In large files, benchmarking showed it was worth
                     // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
                     if rule.should_run(&ctx_host) {
