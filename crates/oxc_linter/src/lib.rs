@@ -169,13 +169,23 @@ impl Linter {
             //
             // See https://github.com/oxc-project/oxc/pull/6600 for more context.
             if semantic.nodes().len() > 200_000 {
+                const AST_TYPES_LEN: usize = AST_TYPE_MAX as usize + 1;
+
                 // Collect rules into a Vec so that we can iterate over the rules multiple times
                 let rules = rules.collect::<Vec<_>>();
 
                 // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
                 // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
                 // compile-time since we know all of the rules and their AST node type information ahead of time.
-                let mut rules_by_ast_type = vec![Vec::new(); AST_TYPE_MAX as usize + 1];
+                //
+                // Convert to boxed array to help compiler see that indexing into it with an `AstType`
+                // cannot go out of bounds, and remove bounds checks. The `unwrap` is infallible and should be optimized out.
+                let rules_by_ast_type = vec![Vec::new(); AST_TYPES_LEN];
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let mut rules_by_ast_type =
+                    Box::<[_; AST_TYPES_LEN]>::try_from(rules_by_ast_type.into_boxed_slice())
+                        .ok()
+                        .unwrap();
                 // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
                 // node types, but it at least guarantees we won't need to realloc.
                 let mut rules_any_ast_type = Vec::with_capacity(rules.len());
