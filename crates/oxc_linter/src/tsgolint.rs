@@ -35,12 +35,20 @@ pub struct TsGoLintState {
 
 impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
-        TsGoLintState {
-            config_store,
-            executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
-            cwd: cwd.to_path_buf(),
-            silent: false,
-        }
+        let executable_path =
+            try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint"));
+
+        TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false }
+    }
+
+    /// Try to create a new TsGoLintState, returning an error if the executable cannot be found.
+    ///
+    /// # Errors
+    /// Returns an error if the tsgolint executable cannot be found.
+    pub fn try_new(cwd: &Path, config_store: ConfigStore) -> Result<Self, String> {
+        let executable_path = try_find_tsgolint_executable(cwd)?;
+
+        Ok(TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false })
     }
 
     /// Set to `true` to skip file system reads.
@@ -710,15 +718,29 @@ fn parse_single_message(
 /// Tries to find the `tsgolint` executable. In priority order, this will check:
 /// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
 /// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
-pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
+///
+/// # Errors
+/// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
+/// Returns an error if the tsgolint executable could not be resolve inside `node_modules/.bin`.
+pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     // Check the environment variable first
-    if let Ok(path) = std::env::var("OXLINT_TSGOLINT_PATH") {
-        let path = PathBuf::from(path);
+    if let Ok(path_str) = std::env::var("OXLINT_TSGOLINT_PATH") {
+        let path = PathBuf::from(&path_str);
         if path.is_dir() {
-            return Some(path.join("tsgolint"));
-        } else if path.is_file() {
-            return Some(path);
+            let tsgolint_path = path.join("tsgolint");
+            if tsgolint_path.exists() {
+                return Ok(tsgolint_path);
+            }
+            return Err(format!(
+                "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to directory '{path_str}' but 'tsgolint' binary not found inside"
+            ));
         }
+        if path.is_file() {
+            return Ok(path);
+        }
+        return Err(format!(
+            "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to '{path_str}' which does not exist"
+        ));
     }
 
     // executing a sub command in windows, needs a `cmd` or `ps1` extension.
@@ -730,7 +752,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
     loop {
         let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
         if node_modules_bin.exists() {
-            return Some(node_modules_bin);
+            return Ok(node_modules_bin);
         }
 
         // If we reach the root directory, stop searching
@@ -739,7 +761,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
         }
     }
 
-    None
+    Err("Failed to find tsgolint executable".to_string())
 }
 
 #[cfg(test)]
