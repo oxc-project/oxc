@@ -1,7 +1,10 @@
 {
-    "plugins": ["./test_plugin"],
-    "rules": {
-        "test-plugin/no-var": "error"
-    },
-    "ignorePatterns": ["test_plugin/**"]
+  "plugins": ["./test_plugin"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "test-plugin/no-var": "error",
+    "no-debugger": "error",
+    "no-unused-vars": "warn"
+  },
+  "ignorePatterns": ["test_plugin/**"]
 }
