@@ -292,7 +292,7 @@ fn retain_recursive_function_from_invalid_functions(
     // check at first if the callee calls an invalid function
     if !invalid_functions
         .iter()
-        .flat_map(|(func, _, _)| func.name())
+        .filter_map(|(func, _, _)| func.name())
         .any(|func_name| func_name == identifier.name)
     {
         return;
