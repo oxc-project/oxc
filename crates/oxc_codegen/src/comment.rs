@@ -83,7 +83,8 @@ impl<'a> Iterator for LineTerminatorSplitter<'a> {
                             let index = ptr.offset_from(bytes.as_ptr()) as usize;
                             let line = self.text.get_unchecked(consumed..index);
                             // Check if next byte is `\n` and consume it as well
-                            let skip_bytes = if bytes.get(index + 1) == Some(&b'\n') { 2 } else { 1 };
+                            let skip_bytes =
+                                if bytes.get(index + 1) == Some(&b'\n') { 2 } else { 1 };
                             // Set `consumed` to after `\r` or `\r\n`
                             consumed = index + skip_bytes;
                             self.text = self.text.get_unchecked(consumed..);
