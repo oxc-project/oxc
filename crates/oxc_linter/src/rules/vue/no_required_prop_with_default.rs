@@ -1,11 +1,14 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSMethodSignatureKind, TSSignature, TSType, TSTypeName},
+    ast::{
+        ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSMethodSignatureKind,
+        TSSignature, TSType, TSTypeName,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
-use oxc_span::{Span, GetSpan};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -62,7 +65,7 @@ impl Rule for NoRequiredPropWithDefault {
                     && let Some(second_arg_expr) = second_arg.as_expression()
                 {
                     let Expression::ObjectExpression(second_obj_expr) =
-                    second_arg_expr.get_inner_expression()
+                        second_arg_expr.get_inner_expression()
                     else {
                         return;
                     };
@@ -73,7 +76,8 @@ impl Rule for NoRequiredPropWithDefault {
 
                     for prop in second_obj_expr.properties.iter() {
                         if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                        && let Some(key) = obj_prop.key.static_name() {
+                            && let Some(key) = obj_prop.key.static_name()
+                        {
                             key_hash.insert(key.to_string());
                         }
                     }
@@ -107,20 +111,30 @@ impl Rule for NoRequiredPropWithDefault {
                             }
                             let reference_node =
                                 ctx.symbol_declaration(reference.symbol_id().unwrap());
-                            let AstKind::TSInterfaceDeclaration(interface_decl) = reference_node.kind() else {
+                            let AstKind::TSInterfaceDeclaration(interface_decl) =
+                                reference_node.kind()
+                            else {
                                 return;
                             };
                             let body = &interface_decl.body;
                             body.body.iter().for_each(|item| {
                                 let (key_name, optional) = match item {
-                                    TSSignature::TSPropertySignature(prop_sign) => (prop_sign.key.static_name(), prop_sign.optional),
-                                    TSSignature::TSMethodSignature(method_sign) if method_sign.kind == TSMethodSignatureKind::Method => (method_sign.key.static_name(), method_sign.optional),
+                                    TSSignature::TSPropertySignature(prop_sign) => {
+                                        (prop_sign.key.static_name(), prop_sign.optional)
+                                    }
+                                    TSSignature::TSMethodSignature(method_sign)
+                                        if method_sign.kind == TSMethodSignatureKind::Method =>
+                                    {
+                                        (method_sign.key.static_name(), method_sign.optional)
+                                    }
                                     _ => (None, false),
                                 };
-                                if let Some(key_name) = key_name && !optional {
+                                if let Some(key_name) = key_name
+                                    && !optional
+                                {
                                     if key_hash.contains(key_name.as_ref()) {
                                         ctx.diagnostic(no_required_prop_with_default_diagnostic(
-                                            item.span()
+                                            item.span(),
                                         ));
                                     }
                                 }
@@ -129,14 +143,22 @@ impl Rule for NoRequiredPropWithDefault {
                         TSType::TSTypeLiteral(type_literal) => {
                             type_literal.members.iter().for_each(|item| {
                                 let (key_name, optional) = match item {
-                                    TSSignature::TSPropertySignature(prop_sign) => (prop_sign.key.static_name(), prop_sign.optional),
-                                    TSSignature::TSMethodSignature(method_sign) if method_sign.kind == TSMethodSignatureKind::Method => (method_sign.key.static_name(), method_sign.optional),
+                                    TSSignature::TSPropertySignature(prop_sign) => {
+                                        (prop_sign.key.static_name(), prop_sign.optional)
+                                    }
+                                    TSSignature::TSMethodSignature(method_sign)
+                                        if method_sign.kind == TSMethodSignatureKind::Method =>
+                                    {
+                                        (method_sign.key.static_name(), method_sign.optional)
+                                    }
                                     _ => (None, false),
                                 };
-                                if let Some(key_name) = key_name && !optional {
+                                if let Some(key_name) = key_name
+                                    && !optional
+                                {
                                     if key_hash.contains(key_name.as_ref()) {
                                         ctx.diagnostic(no_required_prop_with_default_diagnostic(
-                                            item.span()
+                                            item.span(),
                                         ));
                                     }
                                 }
@@ -147,13 +169,16 @@ impl Rule for NoRequiredPropWithDefault {
                 }
             }
             AstKind::ExportDefaultDeclaration(export_default_decl) => {
-                let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) = &export_default_decl.declaration else {
+                let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
+                    &export_default_decl.declaration
+                else {
                     return;
                 };
                 // find prop
                 let Some(prop) = obj_expr.properties.iter().find(|item| {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
-                    && let Some(key) = obj_prop.key.static_name() {
+                        && let Some(key) = obj_prop.key.static_name()
+                    {
                         key == "props"
                     } else {
                         false
@@ -162,22 +187,29 @@ impl Rule for NoRequiredPropWithDefault {
                     return;
                 };
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
-                && let Expression::ObjectExpression(obj_expr) = obj_prop.value.get_inner_expression() {
+                    && let Expression::ObjectExpression(obj_expr) =
+                        obj_prop.value.get_inner_expression()
+                {
                     obj_expr.properties.iter().for_each(|item| {
                         if let ObjectPropertyKind::ObjectProperty(p) = item
-                        && let Some(key) = p.key.static_name()
-                        && let Expression::ObjectExpression(inner_obj_expr) = p.value.get_inner_expression() {
+                            && let Some(key) = p.key.static_name()
+                            && let Expression::ObjectExpression(inner_obj_expr) =
+                                p.value.get_inner_expression()
+                        {
                             // check inner_obj_expr.properties has 'default' key
                             let mut has_default_key = false;
                             let mut has_required_key = false;
                             for property in inner_obj_expr.properties.iter() {
                                 if let ObjectPropertyKind::ObjectProperty(inner_p) = property
-                                && let Some(inner_key) = inner_p.key.static_name() {
+                                    && let Some(inner_key) = inner_p.key.static_name()
+                                {
                                     if inner_key == "default" {
                                         has_default_key = true;
                                     }
                                     if inner_key == "required" {
-                                        let Expression::BooleanLiteral(inner_value) = &inner_p.value else {
+                                        let Expression::BooleanLiteral(inner_value) =
+                                            &inner_p.value
+                                        else {
                                             continue;
                                         };
                                         if inner_value.value {
@@ -189,7 +221,7 @@ impl Rule for NoRequiredPropWithDefault {
 
                                     if has_default_key && has_required_key {
                                         ctx.diagnostic(no_required_prop_with_default_diagnostic(
-                                            p.span
+                                            p.span,
                                         ));
                                         break;
                                     }
@@ -198,7 +230,6 @@ impl Rule for NoRequiredPropWithDefault {
                         }
                     })
                 }
-
             }
             _ => {}
         }
@@ -216,18 +247,18 @@ fn test() {
 
     // let pass = vec![(
     //     r#"
-	// 						<script setup lang="ts">
-	// 							interface A {
-	// 								name?: string;
-	// 							}
-	// 							withDefaults(
-	// 								defineProps<A>(),
-	// 								{
-	// 									name: 'Foo',
-	// 								}
-	// 							);
-	// 						</script>
-	// 					"#,
+    // 						<script setup lang="ts">
+    // 							interface A {
+    // 								name?: string;
+    // 							}
+    // 							withDefaults(
+    // 								defineProps<A>(),
+    // 								{
+    // 									name: 'Foo',
+    // 								}
+    // 							);
+    // 						</script>
+    // 					"#,
     //     None,
     //     None,
     //     Some(PathBuf::from("test2.vue")),
@@ -258,10 +289,10 @@ fn test() {
 
     // let fail = vec![
     // ];
-        
+
     let pass = vec![
-    (
-        r#"
+        (
+            r#"
                 <script setup lang="ts">
                     interface TestPropType {
                     name?: string
@@ -275,12 +306,12 @@ fn test() {
                     );
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        r#"
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            r#"
                 <script setup lang="ts">
                     type TestPropType = {
                     name?: string
@@ -294,12 +325,12 @@ fn test() {
                     );
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        r#"
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            r#"
                 <script setup lang="ts">
                     interface TestPropType {
                     name?
@@ -312,12 +343,12 @@ fn test() {
                     );
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        r#"
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            r#"
                 <script setup lang="ts">
                     interface TestPropType {
                     get name(): string
@@ -332,12 +363,12 @@ fn test() {
                     );
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        r#"
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            r#"
                 <script setup lang="ts">
                     interface TestPropType {
                     get name(): void
@@ -351,12 +382,12 @@ fn test() {
                     );
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        r#"
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            r#"
                 <script setup lang="ts">
                     const [name] = 'test'
 
@@ -372,12 +403,12 @@ fn test() {
                     );
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        "
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            "
                 <script>
                 export default {
                     props: {
@@ -389,24 +420,24 @@ fn test() {
                 }
                 </script>
                 ",
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ),
-    (
-        "
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
                 <script>
                 export default {
                     props: ['name']
                 }
                 </script>
                 ",
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ),
-    (
-        "
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
                 <script setup>
                     const props = defineProps({
                     name: {
@@ -416,12 +447,12 @@ fn test() {
                     })
                 </script>
                 ",
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ),
-    (
-        r#"
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            r#"
                 <script setup lang="ts">
                     interface TestPropType {
                     name?: string
@@ -429,24 +460,24 @@ fn test() {
                     const {name="World"} = defineProps<TestPropType>();
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        r#"
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            r#"
                 <script setup lang="ts">
                     const {name="World"} = defineProps<{
                     name?: string
                     }>();
                 </script>
                 "#,
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
-    (
-        "
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        (
+            "
                 <script setup>
                     const {name='Hello'} = defineProps({
                     name: {
@@ -455,10 +486,10 @@ fn test() {
                     })
                 </script>
                 ",
-        None,
-        None,
-        Some(PathBuf::from("test.vue")),
-    ),
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
