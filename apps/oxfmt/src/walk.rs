@@ -84,8 +84,9 @@ impl Walk {
             inner.overrides(override_builder);
         }
 
-        let inner =
-            inner.ignore(false).git_global(false).follow_links(true).hidden(false).build_parallel();
+        // Do not follow symlinks like Prettier does.
+        // See https://github.com/prettier/prettier/pull/14627
+        let inner = inner.hidden(false).ignore(false).git_global(false).build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
 
