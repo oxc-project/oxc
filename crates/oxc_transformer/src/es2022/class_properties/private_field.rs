@@ -1537,13 +1537,13 @@ impl<'a> ClassProperties<'a, '_> {
     /// Transform call expression to bind a proper context.
     ///
     /// * Callee without a private field:
-    ///  `Foo?.bar()?.zoo?.().#x;`
-    ///  ->
-    ///  `(_Foo$bar$zoo = (_Foo$bar = Foo?.bar())?.zoo) === null || _Foo$bar$zoo === void 0 ? void 0
-    ///  : babelHelpers.assertClassBrand(Foo, _Foo$bar$zoo.call(_Foo$bar), _x)._;`
+    ///   `Foo?.bar()?.zoo?.().#x;`
+    ///   ->
+    ///   `(_Foo$bar$zoo = (_Foo$bar = Foo?.bar())?.zoo) === null || _Foo$bar$zoo === void 0 ? void 0
+    ///   : babelHelpers.assertClassBrand(Foo, _Foo$bar$zoo.call(_Foo$bar), _x)._;`
     ///
     /// * Callee has a private field:
-    ///  `o?.Foo.#self.getSelf?.().#m?.();`
+    ///   `o?.Foo.#self.getSelf?.().#m?.();`
     ///   ->
     ///   `(_ref = o === null || o === void 0 ? void 0 : (_babelHelpers$assertC =
     ///   babelHelpers.assertClassBrand(Foo, o.Foo, _self)._).getSelf) === null ||
@@ -1827,13 +1827,13 @@ impl<'a> ClassProperties<'a, '_> {
     /// Transform private field in expression.
     ///
     /// * Static
-    ///  `#prop in object` -> `_checkInRHS(object) === Class`
+    ///   `#prop in object` -> `_checkInRHS(object) === Class`
     ///
     /// * Instance prop
-    ///  `#prop in object` -> `_prop.has(_checkInRHS(object))`
+    ///   `#prop in object` -> `_prop.has(_checkInRHS(object))`
     ///
     /// * Instance method
-    ///  `#method in object` -> `_Class_brand.has(_checkInRHS(object))`
+    ///   `#method in object` -> `_Class_brand.has(_checkInRHS(object))`
     ///
     // `#[inline]` so that compiler sees that `expr` is an `Expression::PrivateFieldExpression`
     #[inline]

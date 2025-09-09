@@ -306,13 +306,12 @@ const getArrayEntries = (constName, fileContent) => {
       .split('\n')
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith('//'))
-      .map((line) =>
+      .flatMap((line) =>
         line
           .replace(/"/g, '')
           .split(',')
           .filter((s) => s !== '')
-      )
-      .flat(),
+      ),
   );
 };
 

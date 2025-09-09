@@ -1,10 +1,8 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer_lazy.rs`.
 
-'use strict';
-
 // Mapping from node type name to node type ID
-const NODE_TYPE_IDS_MAP = new Map([
+export const NODE_TYPE_IDS_MAP = new Map([
   // Leaf nodes
   ['IdentifierName', 0],
   ['IdentifierReference', 1],
@@ -188,11 +186,5 @@ const NODE_TYPE_IDS_MAP = new Map([
   ['JSDocNonNullableType', 178],
 ]);
 
-const NODE_TYPES_COUNT = 179,
-  LEAF_NODE_TYPES_COUNT = 38;
-
-module.exports = {
-  NODE_TYPE_IDS_MAP,
-  NODE_TYPES_COUNT,
-  LEAF_NODE_TYPES_COUNT,
-};
+export const NODE_TYPES_COUNT = 179;
+export const LEAF_NODE_TYPES_COUNT = 38;

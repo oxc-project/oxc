@@ -1,4 +1,4 @@
-use std::{env, ffi::OsStr, io::Write, path::PathBuf, sync::Arc};
+use std::{env, io::Write, path::PathBuf};
 
 use ignore::overrides::OverrideBuilder;
 
@@ -50,12 +50,12 @@ impl FormatRunner {
             .flatten();
 
         let walker = Walk::new(&regular_paths, override_builder);
-        let paths = walker.paths();
+        let entries = walker.entries();
 
-        let files_to_format = paths
+        let files_to_format = entries
             .into_iter()
-            // .filter(|path| !config_store.should_ignore(Path::new(path)))
-            .collect::<Vec<Arc<OsStr>>>();
+            // .filter(|entry| !config_store.should_ignore(Path::new(&entry.path)))
+            .collect::<Vec<_>>();
 
         if files_to_format.is_empty() {
             print_and_flush_stdout(stdout, "Expected at least one target file\n");
@@ -67,7 +67,7 @@ impl FormatRunner {
 
         rayon::spawn(move || {
             let mut format_service = FormatService::new(cwd, &output_options);
-            format_service.with_paths(files_to_format);
+            format_service.with_entries(files_to_format);
             format_service.run(&tx_error);
         });
         // NOTE: This is a blocking

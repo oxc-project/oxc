@@ -1,2 +1,3 @@
-const [index: string]: number
+interface Foo {
+  const [index: string]: number
 }

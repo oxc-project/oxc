@@ -1824,7 +1824,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Function.bind to Function.call optimization not yet implemented"]
     fn test_bind_to_call() {
         test("((function(){}).bind())()", "((function(){}))()");
         test("((function(){}).bind(a))()", "((function(){})).call(a)");

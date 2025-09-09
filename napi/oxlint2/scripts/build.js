@@ -35,54 +35,43 @@ if (!existsSync(parserGeneratedDir)) {
 
 console.log('Copying generated files...');
 // Copy generated constants file
-const constantsPath = join(rootDir, 'src-js/generated/constants.cjs');
+const constantsPath = join(rootDir, 'src-js/generated/constants.mjs');
 if (existsSync(constantsPath)) {
-  copyFileSync(constantsPath, join(distGeneratedDir, 'constants.cjs'));
-  console.log('Copied constants.cjs');
+  copyFileSync(constantsPath, join(distGeneratedDir, 'constants.mjs'));
+  console.log('Copied constants.mjs');
 } else {
   console.error(
-    'Warning: generated/constants.cjs not found. Make sure to run napi build first.',
+    'Warning: generated/constants.mjs not found. Make sure to run napi build first.',
   );
 }
 
 // Copy parser files
 const parserFiles = [
   {
-    src: join(rootDir, '../parser/raw-transfer/lazy-common.js'),
-    dest: join(parserRawTransferDir, 'lazy-common.cjs'),
+    src: join(rootDir, '../parser/raw-transfer/lazy-common.mjs'),
+    dest: join(parserRawTransferDir, 'lazy-common.mjs'),
   },
   {
-    src: join(rootDir, '../parser/raw-transfer/node-array.js'),
-    dest: join(parserRawTransferDir, 'node-array.cjs'),
+    src: join(rootDir, '../parser/raw-transfer/node-array.mjs'),
+    dest: join(parserRawTransferDir, 'node-array.mjs'),
   },
   {
-    src: join(rootDir, '../parser/generated/lazy/walk.js'),
-    dest: join(parserGeneratedDir, 'walk.cjs'),
+    src: join(rootDir, '../parser/generated/lazy/walk.mjs'),
+    dest: join(parserGeneratedDir, 'walk.mjs'),
   },
   {
-    src: join(rootDir, '../parser/generated/lazy/types.js'),
-    dest: join(parserGeneratedDir, 'types.cjs'),
+    src: join(rootDir, '../parser/generated/lazy/types.mjs'),
+    dest: join(parserGeneratedDir, 'types.mjs'),
   },
   {
-    src: join(rootDir, '../parser/generated/lazy/constructors.js'),
-    dest: join(parserGeneratedDir, 'constructors.cjs'),
+    src: join(rootDir, '../parser/generated/lazy/constructors.mjs'),
+    dest: join(parserGeneratedDir, 'constructors.mjs'),
   },
 ];
 
 for (const { src, dest } of parserFiles) {
   if (existsSync(src)) {
-    // replace a any `require(`*.js`)` with `require(`*`.cjs`)`
-    const content = String(readFileSync(src));
-    const updatedContent = content.replace(
-      /require\((['"])(.*?)(\.js)(['"])\)/g,
-      (match, p1, p2, p3, p4) => {
-        return `require(${p1}${p2}.cjs${p4})`;
-      },
-    );
-    writeFileSync(dest, updatedContent);
-
-    //
-    // copyFileSync(src, dest);
+    copyFileSync(src, dest);
     console.log(`Copied ${src.split('/').pop()}`);
   } else {
     console.error(`Warning: parser file not found: ${src}`);

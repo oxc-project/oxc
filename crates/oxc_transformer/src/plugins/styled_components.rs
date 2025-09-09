@@ -8,8 +8,8 @@
 //! ## Implementation Status
 //!
 //! > Note: Currently, this plugin only supports styled-components imported via import statements.
-//! The transformation will not be applied if you import it using `require("styled-components")`,
-//! in other words, it only supports `ESM` not `CJS`.
+//! > The transformation will not be applied if you import it using `require("styled-components")`,
+//! > in other words, it only supports `ESM` not `CJS`.
 //!
 //! ### Options:
 //! **✅ Fully Supported:**
@@ -834,7 +834,7 @@ fn is_valid_styled_component_source(source: &str) -> bool {
 ///    - Currently inside a string.
 ///    - Current string quote character.
 ///    - Depth of parentheses.
-///    This state is carried over across different quasis.
+///      This state is carried over across different quasis.
 /// 2. Iterate through each quasi, and each byte of each quasi:
 ///    - If encounter a string quote (`"` or `'`), toggle the `string_quote` state.
 ///    - Skip comments (both block and line comments) and whitespace, compressing them as needed.

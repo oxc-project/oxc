@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- 9590b57 regular_expression: Detect regex pattern modifiers usage (#13471) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 26ab087 transformer: Don't ignore the entity after a stray '&' (#13554) (Shina)
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+### 🚜 Refactor
+
+- c17b80a regular_expression: Extract `has_unsupported_regular_expression_pattern` (#13468) (sapphi-red)
+- 14c40fd ast: Implement `RegExpLiteral::parse_pattern` (#13467) (sapphi-red)
+
+
 ## [0.86.0] - 2025-08-31
 
 ### 💥 BREAKING CHANGES

@@ -244,6 +244,18 @@ impl<'a> ParserImpl<'a> {
             /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ false,
         );
+
+        if self.is_index_signature() {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::READONLY,
+                diagnostics::cannot_appear_on_an_index_signature,
+            );
+            return TSSignature::TSIndexSignature(
+                self.parse_index_signature_declaration(span, &modifiers),
+            );
+        }
+
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::READONLY,
@@ -256,12 +268,6 @@ impl<'a> ParserImpl<'a> {
 
         if self.parse_contextual_modifier(Kind::Set) {
             return self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Set);
-        }
-
-        if self.is_index_signature() {
-            return TSSignature::TSIndexSignature(
-                self.parse_index_signature_declaration(span, &modifiers),
-            );
         }
 
         self.parse_property_or_method_signature(span, &modifiers)
@@ -555,14 +561,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
         let span = self.start_span();
-        self.parse_class_element_modifiers(true);
-
-        let this_span = self.start_span();
         self.bump_any();
-        let this = self.end_span(this_span);
+        let this_span = self.end_span(span);
 
         let type_annotation = self.parse_ts_type_annotation();
-        self.ast.ts_this_parameter(self.end_span(span), this, type_annotation)
+        self.ast.ts_this_parameter(self.end_span(span), this_span, type_annotation)
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {

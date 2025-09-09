@@ -35,10 +35,8 @@ oxc_span = { workspace = true }
 
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 ignore = { workspace = true, features = ["simd-accel"] }
-indexmap = { workspace = true }
 miette = { workspace = true }
 rayon = { workspace = true }
-rustc-hash = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]

@@ -65,19 +65,19 @@ impl Generator for RawTransferGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js.mjs"),
                 code: js,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.mjs"),
                 code: ts,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.mjs"),
                 code: constants_js.clone(),
             },
             Output::Javascript {
-                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src-js/generated/constants.cjs"),
+                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src-js/generated/constants.mjs"),
                 code: constants_js,
             },
             Output::Rust {
@@ -116,17 +116,13 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
     #[rustfmt::skip]
     let prelude = format!("
-        'use strict';
-
-        module.exports = deserialize;
-
         let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
 
-        function deserialize(buffer, sourceTextInput, sourceByteLenInput) {{
+        export function deserialize(buffer, sourceTextInput, sourceByteLenInput) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
@@ -1041,21 +1037,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
 
     #[rustfmt::skip]
     let js_output = format!("
-        const BUFFER_SIZE = {buffer_size},
-            BUFFER_ALIGN = {BLOCK_ALIGN},
-            DATA_POINTER_POS_32 = {data_pointer_pos_32},
-            IS_TS_FLAG_POS = {is_ts_pos},
-            PROGRAM_OFFSET = {program_offset},
-            SOURCE_LEN_OFFSET = {source_len_offset};
-
-        module.exports = {{
-            BUFFER_SIZE,
-            BUFFER_ALIGN,
-            DATA_POINTER_POS_32,
-            IS_TS_FLAG_POS,
-            PROGRAM_OFFSET,
-            SOURCE_LEN_OFFSET,
-        }};
+        export const BUFFER_SIZE = {buffer_size};
+        export const BUFFER_ALIGN = {BLOCK_ALIGN};
+        export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
+        export const IS_TS_FLAG_POS = {is_ts_pos};
+        export const PROGRAM_OFFSET = {program_offset};
+        export const SOURCE_LEN_OFFSET = {source_len_offset};
     ");
 
     let block_size = number_lit(BLOCK_SIZE);

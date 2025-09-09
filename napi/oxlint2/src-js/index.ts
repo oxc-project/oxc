@@ -1,23 +1,19 @@
-import { createRequire } from 'node:module';
 import { lint } from './bindings.js';
 import {
   DATA_POINTER_POS_32,
   SOURCE_LEN_OFFSET,
   // TODO(camc314): we need to generate `.d.ts` file for this module.
   // @ts-expect-error
-} from './generated/constants.cjs';
+} from './generated/constants.mjs';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 import type { Visitor } from './types.ts';
 
-// Import methods and objects from `oxc-parser`.
-// Use `require` not `import` as `oxc-parser` uses `require` internally,
-// and need to make sure get same instance of modules as it uses internally,
-// otherwise `TOKEN` here won't be same `TOKEN` as used within `oxc-parser`.
-const require = createRequire(import.meta.url);
-const { TOKEN } = require('../dist/parser/raw-transfer/lazy-common.cjs'),
-  walkProgram = require('../dist/parser/generated/lazy/walk.cjs');
+// @ts-expect-error we need to generate `.d.ts` file for this module.
+import { TOKEN } from '../dist/parser/raw-transfer/lazy-common.mjs';
+// @ts-expect-error we need to generate `.d.ts` file for this module.
+import { walkProgram } from '../dist/parser/generated/lazy/walk.mjs';
 
 // --------------------
 // Plugin loading

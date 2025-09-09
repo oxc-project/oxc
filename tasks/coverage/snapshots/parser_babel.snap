@@ -3,7 +3,7 @@ commit: 41d96516
 parser_babel Summary:
 AST Parsed     : 2407/2423 (99.34%)
 Positive Passed: 2385/2423 (98.43%)
-Negative Passed: 1646/1755 (93.79%)
+Negative Passed: 1649/1755 (93.96%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -86,15 +86,9 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-initializer/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-method/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer-w-annotation/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/index-signature-errors/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-readonly/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
 
@@ -12022,6 +12016,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───
    ╰────
 
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:3]
+ 3 │   #method();
+ 4 │   declare method();
+   ·   ───────
+ 5 │ }
+   ╰────
+
   × Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:2:3]
  1 │ class C {
@@ -12043,6 +12045,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │   #method();
  4 │   declare method();
    ·           ──────
+ 5 │ }
+   ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body-babel-7/input.js:4:3]
+ 3 │   #method();
+ 4 │   declare method();
+   ·   ───────
  5 │ }
    ╰────
 
@@ -12562,6 +12572,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-method/input.ts:2:3]
+ 1 │ class A {
+ 2 │   declare foo() {}
+   ·   ───────
+ 3 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-new-line-abstract/input.ts:1:8]
  1 │ declare abstract
@@ -12588,7 +12606,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:2:10]
  1 │ class Foo {
  2 │   public public a;
@@ -12597,7 +12615,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:3:11]
  2 │   public public a;
  3 │   private public b;
@@ -12606,7 +12624,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:4:13]
  3 │   private public b;
  4 │   protected private c;
@@ -12615,7 +12633,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:5:10]
  4 │   protected private c;
  5 │   public protected d;
@@ -12624,7 +12642,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:10]
  5 │   public protected d;
  6 │   public protected private e;
@@ -12633,7 +12651,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:20]
  5 │   public protected d;
  6 │   public protected private e;
@@ -12658,6 +12676,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class Foo extends Bar implements {
    ·                                  ─
  2 │ }
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:6:3]
+ 5 │   abstract *d() {}
+ 6 │   readonly *e() {}
+   ·   ────────
+ 7 │   declare *f() {}
+   ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:3]
+ 6 │   readonly *e() {}
+ 7 │   declare *f() {}
+   ·   ───────
+ 8 │   protected *g() {}
    ╰────
 
   × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
@@ -12689,6 +12723,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class Foo implements {
    ·                      ─
  2 │ }
+   ╰────
+
+  × TS(1029): 'static' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/index-signature-errors/input.ts:2:14]
+ 1 │ class C {
+ 2 │     readonly static [x: string]: any;
+   ·              ──────
+ 3 │ }
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-readonly/input.ts:2:5]
+ 1 │ class C {
+ 2 │     readonly m() {}
+   ·     ────────
+ 3 │ }
    ╰────
 
   × The keyword 'private' is reserved
@@ -12771,6 +12821,38 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ╰── `;` expected
  4 │ }
    ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:3:3]
+ 2 │   abstract *d?() { }
+ 3 │   readonly *e?() { }
+   ·   ────────
+ 4 │   declare *f?() { }
+   ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:3]
+ 3 │   readonly *e?() { }
+ 4 │   declare *f?() { }
+   ·   ───────
+ 5 │ }
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:9:3]
+  8 │   abstract *[d?.d]?() { }
+  9 │   readonly *[e?.e]?() { }
+    ·   ────────
+ 10 │   declare *[f?.f]?() { }
+    ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:3]
+  9 │   readonly *[e?.e]?() { }
+ 10 │   declare *[f?.f]?() { }
+    ·   ───────
+ 11 │ }
+    ╰────
 
   × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]
@@ -13433,6 +13515,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │   readonly g();
    ╰────
 
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method/input.ts:8:3]
+ 7 │   abstract f();
+ 8 │   readonly g();
+   ·   ────────
+ 9 │ }
+   ╰────
+
   × TS(1070): 'private' modifier cannot appear on a type member.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:2:3]
  1 │ interface Foo {
@@ -13479,6 +13569,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │   abstract f();
    ·   ────────
  8 │   readonly g();
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts:8:3]
+ 7 │   abstract f();
+ 8 │   readonly g();
+   ·   ────────
+ 9 │ }
    ╰────
 
   × TS(1070): 'private' modifier cannot appear on a type member.
