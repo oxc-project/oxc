@@ -2516,7 +2516,6 @@ version = "0.1.0"
 dependencies = [
  "bpaf",
  "ignore",
- "indexmap",
  "mimalloc-safe",
  "oxc-miette",
  "oxc_allocator",
@@ -2525,7 +2524,6 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "rayon",
- "rustc-hash",
  "tracing-subscriber",
 ]
 
