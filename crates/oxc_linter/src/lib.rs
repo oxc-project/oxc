@@ -5,6 +5,7 @@ use std::{path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast_kind::AST_TYPE_MAX;
+use oxc_data_structures::box_macros::boxed_array;
 use oxc_semantic::AstNode;
 
 #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
@@ -173,8 +174,6 @@ impl Linter {
             //
             // See https://github.com/oxc-project/oxc/pull/6600 for more context.
             if semantic.nodes().len() > 200_000 {
-                const AST_TYPES_LEN: usize = AST_TYPE_MAX as usize + 1;
-
                 // Collect rules into a Vec so that we can iterate over the rules multiple times
                 let rules = rules.collect::<Vec<_>>();
 
@@ -182,14 +181,9 @@ impl Linter {
                 // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
                 // compile-time since we know all of the rules and their AST node type information ahead of time.
                 //
-                // Convert to boxed array to help compiler see that indexing into it with an `AstType`
-                // cannot go out of bounds, and remove bounds checks. The `unwrap` is infallible and should be optimized out.
-                let rules_by_ast_type = vec![Vec::new(); AST_TYPES_LEN];
-                #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let mut rules_by_ast_type =
-                    Box::<[_; AST_TYPES_LEN]>::try_from(rules_by_ast_type.into_boxed_slice())
-                        .ok()
-                        .unwrap();
+                // Use boxed array to help compiler see that indexing into it with an `AstType`
+                // cannot go out of bounds, and remove bounds checks.
+                let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
                 // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
                 // node types, but it at least guarantees we won't need to realloc.
                 let mut rules_any_ast_type = Vec::with_capacity(rules.len());

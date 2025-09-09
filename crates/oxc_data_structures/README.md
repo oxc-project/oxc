@@ -13,6 +13,7 @@ This crate provides specialized data structures and utilities that are used thro
 - **Inline strings**: Memory-efficient string storage for short strings
 - **Slice iterators**: Enhanced iteration capabilities for slices
 - **Rope data structure**: Efficient text manipulation for large documents
+- **Box macros**: Macros for creating boxed arrays / slices (similar to `vec!` macro)
 
 ## Architecture
 
