@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- f00adbe semantic: Add ability to lookup if AST contains any node kinds (#13137) (camchenry)
+
+### 🐛 Bug Fixes
+
+- d6b2e57 semantic: Correct comment on `AstTypesBitset` (#13572) (overlookmotel)
+- dc9645f semantic: Allow super in object literal method inside a class (#13463) (Boshen)
+
+### ⚡ Performance
+
+- 5648b31 semantic: Speed up `Scoping::clone_in_with_semantic_ids_with_another_arena` (#13563) (overlookmotel)
+
+
 
 
 ## [0.84.0] - 2025-08-30

@@ -5,8 +5,8 @@
 // This file is duplicated in `oxc-project/acorn-test262` repo in `src/utils` directory.
 // Any changes made here also need to be replicated there.
 
-const path = require('path');
-const fs = require('fs');
+import fs from 'fs';
+import path from 'path';
 
 // Regex patterns equivalent to the Rust version
 const META_OPTIONS_REGEX = /^\/\/\s*@(\w+)\s*:\s*([^\r\n]*)/gm;
@@ -126,7 +126,7 @@ function getErrorFiles(filePath, options) {
  * @param {string} code - Content of the test file
  * @returns {Object} TestCaseContent object
  */
-function makeUnitsFromTest(filePath, code) {
+export function makeUnitsFromTest(filePath, code) {
   const currentFileOptions = new Map();
   let currentFileName = null;
   const testUnitData = [];
@@ -195,5 +195,3 @@ function makeUnitsFromTest(filePath, code) {
     errorFiles,
   };
 }
-
-module.exports.makeUnitsFromTest = makeUnitsFromTest;

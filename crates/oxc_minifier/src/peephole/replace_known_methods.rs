@@ -287,7 +287,7 @@ impl<'a> PeepholeOptimizations {
 
                 let mut quasi_strs: Vec<Cow<'a, str>> =
                     vec![Cow::Borrowed(base_str.value.as_str())];
-                let mut expressions = ctx.ast.vec();
+                let mut expressions = ctx.ast.vec_with_capacity(expression_count);
                 let mut pushed_quasi = true;
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
@@ -666,20 +666,20 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join optimization with sparse arrays not yet implemented"]
     fn test_string_join_add_sparse() {
         test("x = [,,'a'].join(',')", "x = ',,a'");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join optimization edge cases not yet implemented"]
     fn test_no_string_join() {
         test_same("x = [].join(',',2)");
         test_same("x = [].join(f)");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join to string concatenation optimization not yet implemented"]
     fn test_string_join_add() {
         test("x = ['a', 'b', 'c'].join('')", "x = \"abc\"");
         test("x = [].join(',')", "x = \"\"");
@@ -739,7 +739,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join single element optimization not yet implemented"]
     fn test_string_join_add_b1992789() {
         test("x = ['a'].join('')", "x = \"a\"");
         test_same("x = [foo()].join('')");
@@ -890,7 +890,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: String.split optimization not yet implemented"]
     fn test_fold_string_split() {
         // late = false;
         test("x = 'abcde'.split('foo')", "x = ['abcde']");
@@ -928,7 +928,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join edge case optimization not yet implemented"]
     fn test_join_bug() {
         test("var x = [].join();", "var x = '';");
         test_same("var x = [x].join();");
@@ -948,7 +948,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
     fn test_join_spread1() {
         test_same("var x = [...foo].join('');");
         test_same("var x = [...someMap.keys()].join('');");
@@ -960,7 +960,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
     fn test_join_spread2() {
         test("var x = [...foo].join(',');", "var x = [...foo].join();");
         test("var x = [...someMap.keys()].join(',');", "var x = [...someMap.keys()].join();");
@@ -1219,7 +1219,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Math.pow optimization not yet implemented"]
     fn test_fold_math_functions_pow() {
         test("Math.pow(1, 2)", "1");
         test("Math.pow(2, 0)", "1");
@@ -1346,7 +1346,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: String charAt replacement optimization not yet implemented"]
     fn test_replace_with_char_at() {
         // enableTypeCheck();
         // replaceTypesWithColors();

@@ -490,8 +490,9 @@ impl CodeBuffer {
     /// but only advance `len` by the actual number of bytes. This avoids a `memset` function call.
     ///
     /// Take alternative slow path if either:
-    /// 1. Total characters to print > 32.
-    /// 2. Less than 32 bytes spare capacity in buffer (needs to grow).
+    ///   1. Total characters to print > 32.
+    ///   2. Less than 32 bytes spare capacity in buffer (needs to grow).
+    ///
     /// Both of these cases should be rare.
     ///
     /// We write 32 bytes because both tabs and spaces are supported.

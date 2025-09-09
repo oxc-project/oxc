@@ -49,9 +49,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
-            if !self.at(Kind::RParen) {
-                self.expect(Kind::Comma);
-            }
+            self.bump(Kind::Comma);
             Some(param)
         } else {
             None
@@ -274,11 +272,11 @@ impl<'a> ParserImpl<'a> {
 
     /// Section 15.4 Method Definitions
     /// `ClassElementName` ( `UniqueFormalParameters` ) { `FunctionBody` }
-    /// `GeneratorMethod`
+    /// * `GeneratorMethod`
     ///   * `ClassElementName`
-    /// `AsyncMethod`
+    /// * `AsyncMethod`
     ///   async `ClassElementName`
-    /// `AsyncGeneratorMethod`
+    /// * `AsyncGeneratorMethod`
     ///   async * `ClassElementName`
     pub(crate) fn parse_method(
         &mut self,

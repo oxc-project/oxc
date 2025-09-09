@@ -1,22 +1,18 @@
-'use strict';
+import { createRequire } from 'node:module';
+import { parseAsync as parseAsyncBinding, parseSync as parseSyncBinding } from './bindings.mjs';
+import { wrap } from './wrap.mjs';
 
-const bindings = require('./bindings.js');
-const { wrap } = require('./wrap.cjs');
-const rawTransferSupported = require('./raw-transfer/supported.js');
+export {
+  ExportExportNameKind,
+  ExportImportNameKind,
+  ExportLocalNameKind,
+  ImportNameKind,
+  ParseResult,
+  Severity,
+} from './bindings.mjs';
+export { rawTransferSupported } from './raw-transfer/supported.mjs';
 
-const { parseSync: parseSyncBinding, parseAsync: parseAsyncBinding } = bindings;
-
-module.exports.ParseResult = bindings.ParseResult;
-module.exports.ExportExportNameKind = bindings.ExportExportNameKind;
-module.exports.ExportImportNameKind = bindings.ExportImportNameKind;
-module.exports.ExportLocalNameKind = bindings.ExportLocalNameKind;
-module.exports.ImportNameKind = bindings.ImportNameKind;
-module.exports.Severity = bindings.Severity;
-
-module.exports.parseSync = parseSync;
-module.exports.parseAsync = parseAsync;
-module.exports.experimentalGetLazyVisitor = experimentalGetLazyVisitor;
-module.exports.rawTransferSupported = rawTransferSupported;
+const require = createRequire(import.meta.url);
 
 // Lazily loaded as needed
 let parseSyncRaw = null,
@@ -31,7 +27,7 @@ let parseSyncRaw = null,
  */
 function loadRawTransfer() {
   if (parseSyncRaw === null) {
-    ({ parseSyncRaw, parseAsyncRaw } = require('./raw-transfer/eager.js'));
+    ({ parseSyncRaw, parseAsyncRaw } = require('./raw-transfer/eager.mjs'));
   }
 }
 
@@ -41,7 +37,7 @@ function loadRawTransfer() {
  */
 function loadRawTransferLazy() {
   if (parseSyncLazy === null) {
-    ({ parseSyncLazy, parseAsyncLazy, Visitor } = require('./raw-transfer/lazy.js'));
+    ({ parseSyncLazy, parseAsyncLazy, Visitor } = require('./raw-transfer/lazy.mjs'));
   }
 }
 
@@ -55,7 +51,7 @@ function loadRawTransferLazy() {
  * @throws {Error} - If `experimentalRawTransfer` or `experimentalLazy` option is enabled,
  *   and raw transfer is not supported on this platform
  */
-function parseSync(filename, sourceText, options) {
+export function parseSync(filename, sourceText, options) {
   if (options?.experimentalRawTransfer) {
     loadRawTransfer();
     return parseSyncRaw(filename, sourceText, options);
@@ -87,7 +83,7 @@ function parseSync(filename, sourceText, options) {
  * @throws {Error} - If `experimentalRawTransfer` or `experimentalLazy` option is enabled,
  *   and raw transfer is not supported on this platform
  */
-async function parseAsync(filename, sourceText, options) {
+export async function parseAsync(filename, sourceText, options) {
   if (options?.experimentalRawTransfer) {
     loadRawTransfer();
     return await parseAsyncRaw(filename, sourceText, options);
@@ -103,7 +99,7 @@ async function parseAsync(filename, sourceText, options) {
  * Get `Visitor` class to construct visitors with.
  * @returns {function} - `Visitor` class
  */
-function experimentalGetLazyVisitor() {
+export function experimentalGetLazyVisitor() {
   loadRawTransferLazy();
   return Visitor;
 }

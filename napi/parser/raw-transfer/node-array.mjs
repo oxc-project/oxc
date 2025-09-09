@@ -1,6 +1,4 @@
-'use strict';
-
-const { TOKEN, constructorError } = require('./lazy-common.js');
+import { constructorError, TOKEN } from './lazy-common.mjs';
 
 // Internal symbol to get `NodeArray` from a proxy wrapping a `NodeArray`.
 //
@@ -23,7 +21,7 @@ let getInternalFromProxy, getLength, getElement;
  * TODO: Other methods could maybe be more optimal, avoiding going via proxy multiple times
  * e.g. `some`, `indexOf`.
  */
-class NodeArray extends Array {
+export class NodeArray extends Array {
   #internal;
 
   /**
@@ -152,8 +150,6 @@ class NodeArray extends Array {
 }
 
 NodeArray.prototype[Symbol.iterator] = NodeArray.prototype.values;
-
-module.exports = NodeArray;
 
 /**
  * Iterator over values of a `NodeArray`.

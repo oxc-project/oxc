@@ -1,8 +1,7 @@
-'use strict';
+import { createRequire } from 'node:module';
+import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.mjs';
 
-const { parseSyncRawImpl, parseAsyncRawImpl, isJsAst, returnBufferToCache } = require('./common.js');
-
-module.exports = { parseSyncRaw, parseAsyncRaw };
+const require = createRequire(import.meta.url);
 
 /**
  * Parse JS/TS source synchronously on current thread, using raw transfer to speed up deserialization.
@@ -12,7 +11,7 @@ module.exports = { parseSyncRaw, parseAsyncRaw };
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
-function parseSyncRaw(filename, sourceText, options) {
+export function parseSyncRaw(filename, sourceText, options) {
   let _;
   ({ experimentalRawTransfer: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, deserialize);
@@ -36,7 +35,7 @@ function parseSyncRaw(filename, sourceText, options) {
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
-function parseAsyncRaw(filename, sourceText, options) {
+export function parseAsyncRaw(filename, sourceText, options) {
   let _;
   ({ experimentalRawTransfer: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);
@@ -56,7 +55,7 @@ function deserialize(buffer, sourceText, sourceByteLen) {
   // Lazy load deserializer, and deserialize buffer to JS objects
   let data;
   if (isJsAst(buffer)) {
-    if (deserializeJS === null) deserializeJS = require('../generated/deserialize/js.js');
+    if (deserializeJS === null) deserializeJS = require('../generated/deserialize/js.mjs').deserialize;
     data = deserializeJS(buffer, sourceText, sourceByteLen);
 
     // Add a line comment for hashbang
@@ -65,7 +64,7 @@ function deserialize(buffer, sourceText, sourceByteLen) {
       data.comments.unshift({ type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end });
     }
   } else {
-    if (deserializeTS === null) deserializeTS = require('../generated/deserialize/ts.js');
+    if (deserializeTS === null) deserializeTS = require('../generated/deserialize/ts.mjs').deserialize;
     data = deserializeTS(buffer, sourceText, sourceByteLen);
     // Note: Do not add line comment for hashbang, to match `@typescript-eslint/parser`.
     // See https://github.com/oxc-project/oxc/blob/ea784f5f082e4c53c98afde9bf983afd0b95e44e/napi/parser/src/lib.rs#L106-L130

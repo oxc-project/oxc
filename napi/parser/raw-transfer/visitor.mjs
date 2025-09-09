@@ -1,18 +1,12 @@
-'use strict';
-
-const {
-  NODE_TYPE_IDS_MAP,
-  NODE_TYPES_COUNT,
-  LEAF_NODE_TYPES_COUNT,
-} = require('../generated/lazy/types.js');
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../generated/lazy/types.mjs';
 
 // Getter for private `#visitorsArr` property of `Visitor` class. Initialized in class body below.
-let getVisitorsArr;
+let getVisitorsArrTemp;
 
 /**
  * Visitor class, used to visit an AST.
  */
-class Visitor {
+export class Visitor {
   #visitorsArr;
 
   /**
@@ -43,11 +37,11 @@ class Visitor {
   }
 
   static {
-    getVisitorsArr = visitor => visitor.#visitorsArr;
+    getVisitorsArrTemp = visitor => visitor.#visitorsArr;
   }
 }
 
-module.exports = { Visitor, getVisitorsArr };
+export const getVisitorsArr = getVisitorsArrTemp;
 
 /**
  * Create array of visitors, keyed by node type ID.
