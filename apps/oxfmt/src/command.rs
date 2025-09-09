@@ -7,17 +7,6 @@ const VERSION: &str = match option_env!("OXC_VERSION") {
     None => "dev",
 };
 
-#[expect(clippy::ptr_arg)]
-fn validate_paths(paths: &Vec<PathBuf>) -> bool {
-    if paths.is_empty() {
-        true
-    } else {
-        paths.iter().all(|p| p.components().all(|c| c != std::path::Component::ParentDir))
-    }
-}
-
-const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
-
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options, version(VERSION))]
 pub struct FormatCommand {
@@ -28,7 +17,7 @@ pub struct FormatCommand {
     pub misc_options: MiscOptions,
 
     /// Single file, single path or list of paths
-    #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
+    #[bpaf(positional("PATH"), many)]
     pub paths: Vec<PathBuf>,
 }
 
