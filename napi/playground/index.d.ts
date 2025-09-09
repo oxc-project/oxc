@@ -111,4 +111,6 @@ export interface OxcRunOptions {
 export interface OxcTransformerOptions {
   target?: string
   useDefineForClassFields: boolean
+  experimentalDecorators: boolean
+  emitDecoratorMetadata: boolean
 }

@@ -190,6 +190,8 @@ impl Oxc {
                 !transform_options.use_define_for_class_fields;
             options.typescript.remove_class_fields_without_initializer =
                 !transform_options.use_define_for_class_fields;
+            options.decorator.legacy = transform_options.experimental_decorators;
+            options.decorator.emit_decorator_metadata = transform_options.emit_decorator_metadata;
             let result = Transformer::new(&allocator, &path, &options)
                 .build_with_scoping(scoping, &mut program);
             self.diagnostics.extend(result.errors);
