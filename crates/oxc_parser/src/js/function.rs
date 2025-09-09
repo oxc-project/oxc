@@ -49,9 +49,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
-            if !self.at(Kind::RParen) {
-                self.expect(Kind::Comma);
-            }
+            self.bump(Kind::Comma);
             Some(param)
         } else {
             None
