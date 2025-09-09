@@ -57,4 +57,22 @@ const {
 })
 export default __napiModule.exports
 export const Severity = __napiModule.exports.Severity
-export const Oxc = __napiModule.exports.Oxc
+
+import { jsonParseAst } from "../parser/wrap.mjs"
+
+export function Oxc() {
+  const oxc = new __napiModule.exports.Oxc();
+  return new Proxy(oxc, {
+    get(_target, p, _receiver) {
+      if (p === 'ast') {
+        return jsonParseAst(oxc.astJson);
+      }
+      const value = oxc[p];
+      if (typeof value === 'function') {
+        return value.bind(oxc);
+      }
+      return value;
+    }
+  })
+}
+
