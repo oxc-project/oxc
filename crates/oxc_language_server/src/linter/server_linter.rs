@@ -18,10 +18,10 @@ use tower_lsp_server::UriExt;
 use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
+    options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     tsgo_linter::TsgoLinter,
 };
-use crate::options::{Run, UnusedDisableDirectives};
-use crate::{ConcurrentHashMap, OXC_CONFIG_FILE, Options};
+use crate::{ConcurrentHashMap, OXC_CONFIG_FILE};
 
 use super::config_walker::ConfigWalker;
 
@@ -80,7 +80,7 @@ impl ServerLinterDiagnostics {
 }
 
 impl ServerLinter {
-    pub fn new(root_uri: &Uri, options: &Options) -> Self {
+    pub fn new(root_uri: &Uri, options: &LSPLintOptions) -> Self {
         let root_path = root_uri.to_file_path().unwrap();
         let mut nested_ignore_patterns = Vec::new();
         let (nested_configs, mut extended_paths) =
@@ -186,7 +186,7 @@ impl ServerLinter {
     /// and insert them inside the nested configuration
     fn create_nested_configs(
         root_path: &Path,
-        options: &Options,
+        options: &LSPLintOptions,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> (ConcurrentHashMap<PathBuf, Config>, Vec<PathBuf>) {
         let mut extended_paths = Vec::new();
@@ -397,9 +397,10 @@ mod test {
     use std::path::{Path, PathBuf};
 
     use crate::{
-        Options,
-        linter::server_linter::{ServerLinter, normalize_path},
-        options::Run,
+        linter::{
+            options::{LintOptions, Run, UnusedDisableDirectives},
+            server_linter::{ServerLinter, normalize_path},
+        },
         tester::{Tester, get_file_path},
     };
     use rustc_hash::FxHashMap;
@@ -420,7 +421,7 @@ mod test {
         let mut nested_ignore_patterns = Vec::new();
         let (configs, _) = ServerLinter::create_nested_configs(
             Path::new("/root/"),
-            &Options { flags, ..Options::default() },
+            &LintOptions { flags, ..LintOptions::default() },
             &mut nested_ignore_patterns,
         );
 
@@ -432,7 +433,7 @@ mod test {
         let mut nested_ignore_patterns = Vec::new();
         let (configs, _) = ServerLinter::create_nested_configs(
             &get_file_path("fixtures/linter/init_nested_configs"),
-            &Options::default(),
+            &LintOptions::default(),
             &mut nested_ignore_patterns,
         );
         let configs = configs.pin();
@@ -451,7 +452,7 @@ mod test {
     fn test_lint_on_run_on_type_on_type() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_type",
-            Some(Options { type_aware: true, run: Run::OnType, ..Default::default() }),
+            Some(LintOptions { type_aware: true, run: Run::OnType, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-type.ts", Run::OnType);
     }
@@ -461,7 +462,7 @@ mod test {
     fn test_lint_on_run_on_type_on_save() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_save",
-            Some(Options { type_aware: true, run: Run::OnType, ..Default::default() }),
+            Some(LintOptions { type_aware: true, run: Run::OnType, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
     }
@@ -471,7 +472,7 @@ mod test {
     fn test_lint_on_run_on_save_on_type() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_save",
-            Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
+            Some(LintOptions { type_aware: true, run: Run::OnSave, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-type.ts", Run::OnType);
     }
@@ -481,7 +482,7 @@ mod test {
     fn test_lint_on_run_on_save_on_save() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_type",
-            Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
+            Some(LintOptions { type_aware: true, run: Run::OnSave, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
     }
@@ -491,7 +492,7 @@ mod test {
     fn test_lint_on_run_on_type_on_save_without_type_aware() {
         Tester::new(
             "fixtures/linter/lint_on_run/on_type",
-            Some(Options { type_aware: false, run: Run::OnType, ..Default::default() }),
+            Some(LintOptions { type_aware: false, run: Run::OnType, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-save-no-type-aware.ts", Run::OnSave);
     }
@@ -566,12 +567,12 @@ mod test {
     fn test_multiple_suggestions() {
         Tester::new(
             "fixtures/linter/multiple_suggestions",
-            Some(Options {
+            Some(LintOptions {
                 flags: FxHashMap::from_iter([(
                     "fix_kind".to_string(),
                     "safe_fix_or_suggestion".to_string(),
                 )]),
-                ..Options::default()
+                ..Default::default()
             }),
         )
         .test_and_snapshot_single_file("forward_ref.ts");
@@ -579,10 +580,9 @@ mod test {
 
     #[test]
     fn test_report_unused_directives() {
-        use crate::options::UnusedDisableDirectives;
         Tester::new(
             "fixtures/linter/unused_disabled_directives",
-            Some(Options {
+            Some(LintOptions {
                 unused_disable_directives: UnusedDisableDirectives::Deny,
                 ..Default::default()
             }),
@@ -601,7 +601,7 @@ mod test {
     fn test_ts_alias() {
         Tester::new(
             "fixtures/linter/ts_path_alias",
-            Some(Options {
+            Some(LintOptions {
                 ts_config_path: Some("./deep/tsconfig.json".to_string()),
                 ..Default::default()
             }),
@@ -614,7 +614,7 @@ mod test {
     fn test_tsgo_lint() {
         let tester = Tester::new(
             "fixtures/linter/tsgolint",
-            Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
+            Some(LintOptions { type_aware: true, run: Run::OnSave, ..Default::default() }),
         );
         tester.test_and_snapshot_single_file("no-floating-promises/index.ts");
     }

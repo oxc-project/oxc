@@ -3,6 +3,7 @@ use std::{str::FromStr, sync::Arc};
 use futures::future::join_all;
 use log::{debug, info, warn};
 use rustc_hash::FxBuildHasher;
+use serde::Deserialize;
 use serde_json::json;
 use tokio::sync::{OnceCell, RwLock, SetError};
 use tower_lsp_server::{
@@ -21,6 +22,7 @@ use tower_lsp_server::{
 mod capabilities;
 mod code_actions;
 mod commands;
+mod formatter;
 mod linter;
 mod options;
 #[cfg(test)]
@@ -64,7 +66,7 @@ impl LanguageServer for Backend {
                 return Some(new_settings);
             }
 
-            let deprecated_settings = Options::try_from(value.get_mut("settings")?.take()).ok();
+            let deprecated_settings = Options::deserialize(value.get_mut("settings")?.take()).ok();
 
             // the client has deprecated settings and has a deprecated root uri.
             // handle all things like the old way

@@ -18,6 +18,7 @@ use crate::{
     },
     linter::{
         error_with_position::{DiagnosticReport, PossibleFixContent},
+        options::LintOptions,
         server_linter::{ServerLinter, ServerLinterRun, normalize_path},
     },
 };
@@ -46,7 +47,7 @@ impl WorkspaceWorker {
 
     pub async fn init_linter(&self, options: &Options) {
         *self.options.lock().await = options.clone();
-        *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, options));
+        *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
     }
 
     // WARNING: start all programs (linter, formatter) before calling this function
@@ -56,13 +57,14 @@ impl WorkspaceWorker {
 
         // clone the options to avoid locking the mutex
         let options = self.options.lock().await;
-        let use_nested_configs = options.use_nested_configs();
+        let use_nested_configs = options.lint.use_nested_configs();
 
         // append the base watcher
         watchers.push(FileSystemWatcher {
             glob_pattern: GlobPattern::Relative(RelativePattern {
                 base_uri: OneOf::Right(self.root_uri.clone()),
                 pattern: options
+                    .lint
                     .config_path
                     .as_ref()
                     .unwrap_or(&"**/.oxlintrc.json".to_owned())
@@ -115,12 +117,12 @@ impl WorkspaceWorker {
 
     async fn refresh_server_linter(&self) {
         let options = self.options.lock().await;
-        let server_linter = ServerLinter::new(&self.root_uri, &options);
+        let server_linter = ServerLinter::new(&self.root_uri, &options.lint);
 
         *self.server_linter.write().await = Some(server_linter);
     }
 
-    fn needs_linter_restart(old_options: &Options, new_options: &Options) -> bool {
+    fn needs_linter_restart(old_options: &LintOptions, new_options: &LintOptions) -> bool {
         old_options.config_path != new_options.config_path
             || old_options.ts_config_path != new_options.ts_config_path
             || old_options.use_nested_configs() != new_options.use_nested_configs()
@@ -306,7 +308,7 @@ impl WorkspaceWorker {
             *options_guard = changed_options.clone();
         }
 
-        if Self::needs_linter_restart(&current_option, changed_options) {
+        if Self::needs_linter_restart(&current_option.lint, &changed_options.lint) {
             let files = {
                 let server_linter_guard = self.server_linter.read().await;
                 let server_linter = server_linter_guard.as_ref();
@@ -318,13 +320,14 @@ impl WorkspaceWorker {
             };
             self.refresh_server_linter().await;
 
-            if current_option.config_path != changed_options.config_path {
+            if current_option.lint.config_path != changed_options.lint.config_path {
                 return (
                     Some(self.revalidate_diagnostics(files).await),
                     Some(FileSystemWatcher {
                         glob_pattern: GlobPattern::Relative(RelativePattern {
                             base_uri: OneOf::Right(self.root_uri.clone()),
                             pattern: changed_options
+                                .lint
                                 .config_path
                                 .as_ref()
                                 .unwrap_or(&"**/.oxlintrc.json".to_string())
