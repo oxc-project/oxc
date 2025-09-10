@@ -1,7 +1,6 @@
 use std::{
     alloc::{self, GlobalAlloc, Layout, System},
-    mem::ManuallyDrop,
-    ops::Deref,
+    mem::{self, ManuallyDrop},
     ptr::NonNull,
     sync::{
         Mutex,
@@ -15,6 +14,8 @@ use crate::{
     Allocator,
     generated::fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
 };
+
+use super::AllocatorGuard;
 
 const TWO_GIB: usize = 1 << 31;
 const FOUR_GIB: usize = 1 << 32;
@@ -46,12 +47,12 @@ impl AllocatorPool {
     ///
     /// Panics if the underlying mutex is poisoned.
     pub fn get(&self) -> AllocatorGuard<'_> {
-        let allocator = {
+        let fixed_size_allocator = {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()
         };
 
-        let allocator = allocator.unwrap_or_else(|| {
+        let fixed_size_allocator = fixed_size_allocator.unwrap_or_else(|| {
             // Each allocator needs to have a unique ID, but the order those IDs are assigned in
             // doesn't matter, so `Ordering::Relaxed` is fine
             let id = self.next_id.fetch_add(1, Ordering::Relaxed);
@@ -61,45 +62,31 @@ impl AllocatorPool {
             FixedSizeAllocator::new(id)
         });
 
-        AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
+        // Unwrap `FixedSizeAllocator`.
+        // `add` method will wrap it again, before returning it to pool, ensuring it gets dropped properly.
+        // SAFETY: `FixedSizeAllocator` is just a wrapper around `ManuallyDrop<Allocator>`,
+        // and is `#[repr(transparent)]`, so the 2 are equivalent.
+        let allocator = unsafe {
+            mem::transmute::<FixedSizeAllocator, ManuallyDrop<Allocator>>(fixed_size_allocator)
+        };
+
+        AllocatorGuard { allocator, pool: self }
     }
 
-    /// Add a [`FixedSizeAllocator`] to the pool.
+    /// Add an [`Allocator`] to the pool.
     ///
     /// The `Allocator` is reset by this method, so it's ready to be re-used.
     ///
     /// # Panics
     ///
     /// Panics if the underlying mutex is poisoned.
-    fn add(&self, mut allocator: FixedSizeAllocator) {
-        allocator.reset();
+    pub(super) fn add(&self, allocator: Allocator) {
+        let mut fixed_size_allocator =
+            FixedSizeAllocator { allocator: ManuallyDrop::new(allocator) };
+        fixed_size_allocator.reset();
+
         let mut allocators = self.allocators.lock().unwrap();
-        allocators.push(allocator);
-    }
-}
-
-/// A guard object representing exclusive access to an [`Allocator`] from the pool.
-///
-/// On drop, the `Allocator` is reset and returned to the pool.
-pub struct AllocatorGuard<'alloc_pool> {
-    allocator: ManuallyDrop<FixedSizeAllocator>,
-    pool: &'alloc_pool AllocatorPool,
-}
-
-impl Deref for AllocatorGuard<'_> {
-    type Target = Allocator;
-
-    fn deref(&self) -> &Self::Target {
-        &self.allocator.allocator
-    }
-}
-
-impl Drop for AllocatorGuard<'_> {
-    /// Return [`Allocator`] back to the pool.
-    fn drop(&mut self) {
-        // SAFETY: After taking ownership of the `FixedSizeAllocator`, we do not touch the `ManuallyDrop` again
-        let allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
-        self.pool.add(allocator);
+        allocators.push(fixed_size_allocator);
     }
 }
 
@@ -198,6 +185,7 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
 /// * `BLOCK_SIZE` is a multiple of 16.
 /// * `RawTransferMetadata` is 16 bytes.
 /// * Size of `FixedSizeAllocatorMetadata` is rounded up to a multiple of 16.
+#[repr(transparent)]
 struct FixedSizeAllocator {
     /// `Allocator` which utilizes part of the original allocation
     allocator: ManuallyDrop<Allocator>,

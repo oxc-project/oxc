@@ -1,6 +1,8 @@
-use std::{iter, mem::ManuallyDrop, ops::Deref, sync::Mutex};
+use std::{iter, mem::ManuallyDrop, sync::Mutex};
 
 use crate::Allocator;
+
+use super::AllocatorGuard;
 
 /// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
 ///
@@ -40,35 +42,10 @@ impl AllocatorPool {
     /// # Panics
     ///
     /// Panics if the underlying mutex is poisoned.
-    fn add(&self, mut allocator: Allocator) {
+    pub(super) fn add(&self, mut allocator: Allocator) {
         allocator.reset();
         let mut allocators = self.allocators.lock().unwrap();
         allocators.push(allocator);
-    }
-}
-
-/// A guard object representing exclusive access to an [`Allocator`] from the pool.
-///
-/// On drop, the `Allocator` is reset and returned to the pool.
-pub struct AllocatorGuard<'alloc_pool> {
-    allocator: ManuallyDrop<Allocator>,
-    pool: &'alloc_pool AllocatorPool,
-}
-
-impl Deref for AllocatorGuard<'_> {
-    type Target = Allocator;
-
-    fn deref(&self) -> &Self::Target {
-        &self.allocator
-    }
-}
-
-impl Drop for AllocatorGuard<'_> {
-    /// Return [`Allocator`] back to the pool.
-    fn drop(&mut self) {
-        // SAFETY: After taking ownership of the `Allocator`, we do not touch the `ManuallyDrop` again
-        let allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
-        self.pool.add(allocator);
     }
 }
 

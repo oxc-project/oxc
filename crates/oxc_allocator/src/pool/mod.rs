@@ -1,3 +1,7 @@
+use std::{mem::ManuallyDrop, ops::Deref};
+
+use crate::Allocator;
+
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present.
 // They are only enabled if `fixed_size` feature enabled, and `disable_fixed_size` feature is not enabled.
 //
@@ -31,3 +35,28 @@ mod standard;
     target_endian = "little"
 )))]
 pub use standard::*;
+
+/// A guard object representing exclusive access to an [`Allocator`] from the pool.
+///
+/// On drop, the `Allocator` is reset and returned to the pool.
+pub struct AllocatorGuard<'alloc_pool> {
+    allocator: ManuallyDrop<Allocator>,
+    pool: &'alloc_pool AllocatorPool,
+}
+
+impl Deref for AllocatorGuard<'_> {
+    type Target = Allocator;
+
+    fn deref(&self) -> &Self::Target {
+        &self.allocator
+    }
+}
+
+impl Drop for AllocatorGuard<'_> {
+    /// Return [`Allocator`] back to the pool.
+    fn drop(&mut self) {
+        // SAFETY: After taking ownership of the `Allocator`, we do not touch the `ManuallyDrop` again
+        let allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
+        self.pool.add(allocator);
+    }
+}
