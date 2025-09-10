@@ -744,7 +744,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                     // Ensure the comments are placed before the else keyword or on a new line
                     let gap_str =
                         f.source_text().slice_range(last_comment.span.end, alternate_start);
-                    gap_str.contains("else") || f.source_text().contains_newline_between(last_comment.span.end, alternate_start)
+                    gap_str.contains("else")
+                        || f.source_text()
+                            .contains_newline_between(last_comment.span.end, alternate_start)
                 });
 
             let else_on_same_line =
