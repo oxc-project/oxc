@@ -56,11 +56,11 @@ pub type JsLintFileCb = ThreadsafeFunction<
 
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     let cb = Arc::new(cb);
-    Arc::new(move |plugin_name| {
+    Arc::new(move |plugin_path| {
         Box::pin({
             let cb = Arc::clone(&cb);
             async move {
-                let result = cb.call_async(plugin_name).await?.into_future().await?;
+                let result = cb.call_async(plugin_path).await?.into_future().await?;
                 let plugin_load_result: PluginLoadResult = serde_json::from_str(&result)?;
                 Ok(plugin_load_result)
             }
