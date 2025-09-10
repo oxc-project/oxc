@@ -5,7 +5,7 @@ src:
   - '.github/generated/ast_changes_watch_list.yml'
   - 'crates/oxc_allocator/src/generated/assert_layouts.rs'
   - 'crates/oxc_allocator/src/generated/fixed_size_constants.rs'
-  - 'crates/oxc_allocator/src/pool_fixed_size.rs'
+  - 'crates/oxc_allocator/src/pool/fixed_size.rs'
   - 'crates/oxc_ast/src/ast/comment.rs'
   - 'crates/oxc_ast/src/ast/js.rs'
   - 'crates/oxc_ast/src/ast/jsx.rs'

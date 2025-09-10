@@ -71,3 +71,38 @@ impl Drop for AllocatorGuard<'_> {
         self.pool.add(allocator);
     }
 }
+
+// Dummy implementations of interfaces from `fixed_size`, just to stop clippy complaining.
+// Seems to be necessary due to feature unification.
+#[allow(
+    dead_code,
+    missing_docs,
+    clippy::missing_safety_doc,
+    clippy::unused_self,
+    clippy::allow_attributes
+)]
+mod dummies {
+    use std::{ptr::NonNull, sync::atomic::AtomicBool};
+
+    use crate::Allocator;
+
+    #[doc(hidden)]
+    pub struct FixedSizeAllocatorMetadata {
+        pub id: u32,
+        pub(crate) alloc_ptr: NonNull<u8>,
+        pub is_double_owned: AtomicBool,
+    }
+
+    #[doc(hidden)]
+    pub unsafe fn free_fixed_size_allocator(_metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
+        unreachable!();
+    }
+
+    #[doc(hidden)]
+    impl Allocator {
+        pub unsafe fn fixed_size_metadata_ptr(&self) -> NonNull<FixedSizeAllocatorMetadata> {
+            unreachable!();
+        }
+    }
+}
+pub use dummies::*;

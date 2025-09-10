@@ -13,7 +13,7 @@ use oxc_ast_macros::ast;
 
 use crate::{
     Allocator,
-    fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
+    generated::fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
 };
 
 const TWO_GIB: usize = 1 << 31;
@@ -103,16 +103,16 @@ impl Drop for AllocatorGuard<'_> {
     }
 }
 
-/// Metadata about a [`FixedSizeAllocator`].
+/// Metadata about a `FixedSizeAllocator`.
 ///
-/// Is stored in the memory backing the [`FixedSizeAllocator`], after `RawTransferMetadata`,
-/// which is after the section of the allocation which [`Allocator`] uses for its chunk.
+/// Is stored in the memory backing the `FixedSizeAllocator`, after `RawTransferMetadata`,
+/// which is after the section of the allocation which `Allocator` uses for its chunk.
 #[ast]
 pub struct FixedSizeAllocatorMetadata {
     /// ID of this allocator
     pub id: u32,
     /// Pointer to start of original allocation backing the `FixedSizeAllocator`
-    pub alloc_ptr: NonNull<u8>,
+    pub(crate) alloc_ptr: NonNull<u8>,
     /// `true` if both Rust and JS currently hold references to this `FixedSizeAllocator`.
     ///
     /// * `false` initially.
@@ -143,7 +143,7 @@ const ALLOC_SIZE: usize = BLOCK_SIZE + TWO_GIB;
 const ALLOC_ALIGN: usize = TWO_GIB;
 
 /// Layout of backing allocations for fixed-size allocators.
-pub const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
+const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALIGN) {
     Ok(layout) => layout,
     Err(_) => unreachable!(),
 };
@@ -198,7 +198,7 @@ pub const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC
 /// * `BLOCK_SIZE` is a multiple of 16.
 /// * `RawTransferMetadata` is 16 bytes.
 /// * Size of `FixedSizeAllocatorMetadata` is rounded up to a multiple of 16.
-pub struct FixedSizeAllocator {
+struct FixedSizeAllocator {
     /// `Allocator` which utilizes part of the original allocation
     allocator: ManuallyDrop<Allocator>,
 }
@@ -206,7 +206,7 @@ pub struct FixedSizeAllocator {
 impl FixedSizeAllocator {
     /// Create a new [`FixedSizeAllocator`].
     #[expect(clippy::items_after_statements)]
-    pub fn new(id: u32) -> Self {
+    fn new(id: u32) -> Self {
         // Only support little-endian systems. `Allocator::from_raw_parts` includes this same assertion.
         // This module is only compiled on 64-bit little-endian systems, so it should be impossible for
         // this panic to occur. But we want to make absolutely sure that if there's a mistake elsewhere,
