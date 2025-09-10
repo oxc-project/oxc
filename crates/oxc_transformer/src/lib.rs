@@ -31,6 +31,7 @@ mod es2019;
 mod es2020;
 mod es2021;
 mod es2022;
+mod esnext;
 mod jsx;
 mod proposals;
 mod regexp;
@@ -70,6 +71,7 @@ pub use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     es2022::{ClassPropertiesOptions, ES2022Options},
+    esnext::ESNextOptions,
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
@@ -141,7 +143,8 @@ impl<'a> Transformer<'a> {
             decorator: Decorator::new(self.decorator, &self.ctx),
             plugins: Plugins::new(self.plugins, &self.ctx),
             explicit_resource_management: self
-                .proposals
+                .env
+                .esnext
                 .explicit_resource_management
                 .then(|| ExplicitResourceManagement::new(&self.ctx)),
             x0_typescript: program

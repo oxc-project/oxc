@@ -12,6 +12,7 @@ use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     es2022::{ClassPropertiesOptions, ES2022Options},
+    esnext::ESNextOptions,
     regexp::RegExpOptions,
 };
 
@@ -40,6 +41,8 @@ pub struct EnvOptions {
     pub es2021: ES2021Options,
 
     pub es2022: ES2022Options,
+
+    pub esnext: ESNextOptions,
 }
 
 impl EnvOptions {
@@ -85,6 +88,9 @@ impl EnvOptions {
             es2022: ES2022Options {
                 class_static_block: true,
                 class_properties: Some(ClassPropertiesOptions::default()),
+            },
+            esnext: ESNextOptions {
+                explicit_resource_management: true,
             },
         }
     }
@@ -187,6 +193,9 @@ impl From<EngineTargets> for EnvOptions {
             es2022: ES2022Options {
                 class_static_block: o.has_feature(ES2022ClassStaticBlock),
                 class_properties: o.has_feature(ES2022ClassProperties).then(Default::default),
+            },
+            esnext: ESNextOptions {
+                explicit_resource_management: true, // Default to transform, will be overridden in mod.rs based on target
             },
         }
     }

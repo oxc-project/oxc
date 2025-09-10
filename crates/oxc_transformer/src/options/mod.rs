@@ -13,6 +13,7 @@ use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     es2022::ES2022Options,
+    esnext::ESNextOptions,
     jsx::JsxOptions,
     plugins::{PluginsOptions, StyledComponentsOptions},
     proposals::ProposalOptions,
@@ -141,16 +142,12 @@ impl TransformOptions {
             ESTarget::from_str(s.as_ref()).map_or(false, |target| target == ESTarget::ESNext)
         });
         
-        let env = EnvOptions::from_target_list(list)?;
+        let mut env = EnvOptions::from_target_list(list)?;
         
-        // Disable explicit resource management for esnext target
-        let proposals = if has_esnext {
-            ProposalOptions { explicit_resource_management: false }
-        } else {
-            ProposalOptions::default()
-        };
+        // Set explicit resource management for esnext target
+        env.esnext.explicit_resource_management = !has_esnext;
         
-        Ok(Self { env, proposals, ..Self::default() })
+        Ok(Self { env, ..Self::default() })
     }
 }
 
@@ -159,16 +156,12 @@ impl From<ESTarget> for TransformOptions {
         use crate::options::es_target::ESVersion;
         let mut engine_targets = EngineTargets::default();
         engine_targets.insert(Engine::Es, target.version());
-        let env = EnvOptions::from(engine_targets);
+        let mut env = EnvOptions::from(engine_targets);
         
-        // Disable explicit resource management for esnext target
-        let proposals = if target == ESTarget::ESNext {
-            ProposalOptions { explicit_resource_management: false }
-        } else {
-            ProposalOptions::default()
-        };
+        // Set explicit resource management for esnext target
+        env.esnext.explicit_resource_management = target != ESTarget::ESNext;
         
-        Self { env, proposals, ..Self::default() }
+        Self { env, ..Self::default() }
     }
 }
 
@@ -313,9 +306,12 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 es2020,
                 es2021,
                 es2022,
+                esnext: ESNextOptions {
+                    explicit_resource_management: options.plugins.explicit_resource_management,
+                },
             },
             proposals: ProposalOptions {
-                explicit_resource_management: options.plugins.explicit_resource_management,
+                explicit_resource_management: false, // Moved to esnext.explicit_resource_management
             },
             helper_loader,
             plugins,

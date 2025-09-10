@@ -1,4 +1,5 @@
 mod es_target;
+mod esnext_options;
 mod targets;
 
 use std::path::Path;
