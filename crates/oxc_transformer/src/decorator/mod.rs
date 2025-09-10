@@ -29,6 +29,13 @@ impl<'a, 'ctx> Decorator<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
+    #[inline] // Because this is a no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.legacy {
+            self.legacy_decorator.exit_program(program, ctx);
+        }
+    }
+
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.enter_statement(stmt, ctx);

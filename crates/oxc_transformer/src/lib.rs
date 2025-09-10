@@ -206,6 +206,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.exit_program(program, ctx);
         self.x1_jsx.exit_program(program, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_program(program, ctx);

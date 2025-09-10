@@ -123,6 +123,12 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
+    #[inline] // Because this is a no-op in release mode
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        // Check all stack entries which were pushed have been popped again
+        debug_assert!(self.class_decoration_stack.len() == 1);
+    }
+
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.emit_decorator_metadata {
             self.metadata.enter_statement(stmt, ctx);
