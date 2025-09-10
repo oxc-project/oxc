@@ -6,10 +6,7 @@ use crate::{
     Format, FormatResult, format_args,
     formatter::{
         Formatter,
-        comments::{
-            Comments, has_new_line_forward, is_end_of_line_comment, is_new_line,
-            is_own_line_comment,
-        },
+        comments::{Comments, is_end_of_line_comment, is_own_line_comment},
         prelude::*,
     },
     generated::ast_nodes::AstNode,
@@ -132,12 +129,12 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
         let comments = f.comments().comments_before(start);
 
         let is_line_comment_or_multi_line_comment = |comments: &[Comment]| {
-            comments.iter().any(|comment| {
-                comment.is_line()
-                    || comment.span.source_text(source_text).chars().any(is_line_terminator)
-            }) || comments
-                .last()
-                .is_some_and(|comment| is_end_of_line_comment(comment, source_text))
+            comments
+                .iter()
+                .any(|comment| comment.is_line() || source_text.contains_newline(comment.span))
+                || comments
+                    .last()
+                    .is_some_and(|comment| is_end_of_line_comment(comment, &source_text))
         };
 
         if is_line_comment_or_multi_line_comment(comments) {

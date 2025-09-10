@@ -6,12 +6,10 @@ use oxc_span::GetSpan;
 use crate::{
     format_args,
     formatter::{
-        Buffer, Comments, Format, FormatError, FormatResult, Formatter,
+        Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
         buffer::RemoveSoftLinesBuffer,
-        comments::has_new_line_backward,
         prelude::*,
         trivia::{FormatLeadingComments, format_trailing_comments},
-        write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
@@ -174,14 +172,14 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                             is_multiline_template_starting_on_same_line(
                                 template.span.start,
                                 template,
-                                f.source_text(),
+                                &f.source_text(),
                             )
                         }
                         Expression::TaggedTemplateExpression(template) => {
                             is_multiline_template_starting_on_same_line(
                                 template.span.start,
                                 &template.quasi,
-                                f.source_text(),
+                                &f.source_text(),
                             )
                         }
                         _ => false,
@@ -398,10 +396,10 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 pub fn is_multiline_template_starting_on_same_line(
     start: u32,
     template: &TemplateLiteral,
-    source_text: &str,
+    source_text: &SourceText,
 ) -> bool {
-    template.quasis.iter().any(|quasi| quasi.value.raw.contains('\n'))
-        && !has_new_line_backward(&source_text[..start as usize])
+    template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
+        && !source_text.has_newline_before(start)
 }
 
 struct ArrowChain<'a, 'b> {

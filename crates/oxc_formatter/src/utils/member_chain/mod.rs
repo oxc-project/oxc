@@ -6,7 +6,7 @@ use std::iter;
 
 use crate::{
     JsLabels, best_fitting,
-    formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
+    formatter::{Buffer, Format, FormatResult, Formatter, SourceText, prelude::*},
     generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         call_expression::is_test_call_expression,
@@ -416,10 +416,7 @@ fn chain_members_iter<'a, 'b>(
                 .printed_comments()
                 .last()
                 .is_some_and(|c| f.comments().is_type_cast_comment(c))
-                && f.source_text().as_bytes()[expression.span().end as usize..]
-                    .trim_ascii_start()
-                    .first()
-                    .is_some_and(|&b| b == b')')
+                && f.source_text().next_non_whitespace_byte_is(expression.span().end, b')')
         {
             return ChainMember::Node(expression).into();
         }

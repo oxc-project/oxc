@@ -339,18 +339,9 @@ impl<'a> TemplateExpression<'a, '_> {
                     Expression::ConditionalExpression(_)
                         | Expression::ArrowFunctionExpression(_)
                         | Expression::FunctionExpression(_)
-                )
-                // TODO: improve this
-                || f.source_text()[..e.span().start as usize]
-                    .chars()
-                    .rev()
-                    .take_while(|c| *c != '{')
-                    .any(is_line_terminator)
-                    || f.source_text()[e.span().end as usize..]
-                        .chars()
-                        .take_while(|c| *c != '}')
-                        .any(is_line_terminator)
-                    || e.span().source_text(f.source_text()).chars().any(is_line_terminator)
+                ) || f.source_text().has_newline_before(e.span().start)
+                    || f.source_text().has_newline_after(e.span().end)
+                    || f.source_text().contains_newline(e.span())
             }
             TemplateExpression::TSType(t) => {
                 matches!(

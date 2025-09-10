@@ -114,7 +114,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         // so we should keep an extra empty line after JsDirectiveList
         let source_text = f.context().source_text();
         let mut count = 0;
-        let mut source_text_chars = source_text[last_directive.span.end as usize..].chars();
+        let mut source_text_chars = source_text.slice_from(last_directive.span.end).chars();
         for char in source_text_chars.by_ref() {
             if is_line_terminator(char) {
                 count += 1;
@@ -135,7 +135,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
             f,
             [
                 FormatLiteralStringToken::new(
-                    self.expression().span().source_text(f.source_text()),
+                    f.source_text().text_for(self.expression()),
                     self.expression().span(),
                     /* jsx */
                     false,
@@ -151,7 +151,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["#!", dynamic_text(self.value().as_str().trim_end())])?;
 
-        if get_lines_after(self.span.end, f.source_text()) > 1 {
+        if f.source_text().lines_after(self.span.end) > 1 {
             write!(f, [empty_line()])
         } else {
             write!(f, [hard_line_break()])

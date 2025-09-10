@@ -149,7 +149,9 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
                             let comments =
                                 f.context().comments().comments_before(specifier.span().start);
                             if !comments.is_empty() {
-                                if get_lines_before(comments[0].span, f) > 1 {
+                                if f.source_text().get_lines_before(comments[0].span, f.comments())
+                                    > 1
+                                {
                                     write!(f, [empty_line()])?;
                                 }
                                 write!(f, [FormatLeadingComments::Comments(comments)])?;

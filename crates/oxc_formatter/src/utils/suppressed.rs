@@ -16,7 +16,7 @@ impl FormatSuppressedNode {
 
 impl<'a> Format<'a> for FormatSuppressedNode {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.0.span().source_text(f.source_text()))]);
+        write!(f, [dynamic_text(f.source_text().text_for(&self.0))]);
 
         // The suppressed node contains comments that should be marked as printed.
         mark_comments_as_printed_before(self.0.end, f);
