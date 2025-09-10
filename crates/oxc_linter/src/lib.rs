@@ -191,14 +191,12 @@ impl Linter {
                     let rule = *rule;
                     // Collect node type information for rules. In large files, benchmarking showed it was worth
                     // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                    if rule.should_run(&ctx_host) {
-                        if let Some(ast_types) = rule.types_info() {
-                            for ty in ast_types {
-                                rules_by_ast_type[ty as usize].push((rule, ctx));
-                            }
-                        } else {
-                            rules_any_ast_type.push((rule, ctx));
+                    if let Some(ast_types) = rule.types_info() {
+                        for ty in ast_types {
+                            rules_by_ast_type[ty as usize].push((rule, ctx));
                         }
+                    } else {
+                        rules_any_ast_type.push((rule, ctx));
                     }
 
                     rule.run_once(ctx);
