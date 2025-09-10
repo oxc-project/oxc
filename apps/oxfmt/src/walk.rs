@@ -134,7 +134,7 @@ impl Walk {
         Self { inner }
     }
 
-    pub fn entries(self) -> Vec<WalkEntry> {
+    pub fn collect_entries(self) -> Vec<WalkEntry> {
         let (sender, receiver) = mpsc::channel::<Vec<WalkEntry>>();
         let mut builder = WalkBuilder { sender };
         self.inner.visit(&mut builder);

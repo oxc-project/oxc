@@ -3,7 +3,7 @@ use std::{fs, path::Path, time::Instant};
 use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 use oxc_formatter::{FormatOptions, Formatter};
 use oxc_parser::{ParseOptions, Parser};
 
@@ -85,16 +85,12 @@ impl FormatService {
                 (OutputOptions::ListDifferent, true) => {
                     Some(OxcDiagnostic::warn(format!("{}", path.to_string_lossy())))
                 }
-                (OutputOptions::Write, _) => Some(
-                    OxcDiagnostic::warn(format!(
-                        "{} {}ms{}",
-                        path.to_string_lossy(),
-                        elapsed.as_millis(),
-                        if is_changed { "" } else { " (unchanged)" }
-                    ))
-                    // This cannot be `Warning`, otherwise CLI exit code will be 1
-                    .with_severity(Severity::Advice),
-                ),
+                (OutputOptions::Write, _) => Some(OxcDiagnostic::warn(format!(
+                    "{} {}ms{}",
+                    path.to_string_lossy(),
+                    elapsed.as_millis(),
+                    if is_changed { "" } else { " (unchanged)" }
+                ))),
                 _ => None,
             } {
                 tx_error.send((path.to_path_buf(), vec![diagnostic.into()])).unwrap();
