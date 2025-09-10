@@ -35,12 +35,13 @@ impl AllocatorPool {
 
     /// Add an [`Allocator`] to the pool.
     ///
-    /// The `Allocator` should be empty, ready to be re-used.
+    /// The `Allocator` is reset by this method, so it's ready to be re-used.
     ///
     /// # Panics
     ///
     /// Panics if the underlying mutex is poisoned.
-    fn add(&self, allocator: Allocator) {
+    fn add(&self, mut allocator: Allocator) {
+        allocator.reset();
         let mut allocators = self.allocators.lock().unwrap();
         allocators.push(allocator);
     }
@@ -66,8 +67,7 @@ impl Drop for AllocatorGuard<'_> {
     /// Return [`Allocator`] back to the pool.
     fn drop(&mut self) {
         // SAFETY: After taking ownership of the `Allocator`, we do not touch the `ManuallyDrop` again
-        let mut allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
-        allocator.reset();
+        let allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
         self.pool.add(allocator);
     }
 }
