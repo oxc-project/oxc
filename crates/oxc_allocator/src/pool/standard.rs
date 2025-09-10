@@ -12,7 +12,6 @@ pub struct StandardAllocatorPool {
 
 impl StandardAllocatorPool {
     /// Create a new [`StandardAllocatorPool`] for use across the specified number of threads.
-    #[cfg_attr(all(feature = "fixed_size", not(feature = "disable_fixed_size")), expect(dead_code))]
     pub fn new(thread_count: usize) -> StandardAllocatorPool {
         let allocators = iter::repeat_with(Allocator::new).take(thread_count).collect();
         StandardAllocatorPool { allocators: Mutex::new(allocators) }

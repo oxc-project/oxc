@@ -43,14 +43,21 @@ pub use standard::{FixedSizeAllocatorMetadata, free_fixed_size_allocator};
 
 /// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
 ///
-/// Uses either a standard or fixed-size allocator pool implementation, depending on Cargo features
-/// and platform support.
+/// Uses either:
+/// 1. Standard allocators - suitable for general use.
+/// 2. Fixed-size allocators - compatible with raw transfer.
+///
+/// Standard allocator pool is created by [`AllocatorPool::new`].
+/// Fixed-size allocator pool is created by [`AllocatorPool::new_fixed_size`].
+///
+/// Fixed-size allocators are only supported on 64-bit little-endian platforms at present,
+/// and require the `fixed_size` Cargo feature to be enabled, and `disable_fixed_size` Cargo feature
+/// to not be enabled.
 #[repr(transparent)]
 pub struct AllocatorPool(AllocatorPoolInner);
 
 /// Inner type of [`AllocatorPool`], holding either a standard or fixed-size allocator pool.
 enum AllocatorPoolInner {
-    #[cfg_attr(all(feature = "fixed_size", not(feature = "disable_fixed_size")), expect(dead_code))]
     Standard(StandardAllocatorPool),
     #[cfg(all(
         feature = "fixed_size",
@@ -63,17 +70,9 @@ enum AllocatorPoolInner {
 
 impl AllocatorPool {
     /// Create a new [`AllocatorPool`] for use across the specified number of threads,
-    /// which uses either standard or fixed-size allocators depending on Cargo features.
+    /// which uses standard allocators.
     pub fn new(thread_count: usize) -> AllocatorPool {
-        #[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
-        {
-            Self::new_fixed_size(thread_count)
-        }
-
-        #[cfg(not(all(feature = "fixed_size", not(feature = "disable_fixed_size"))))]
-        {
-            Self(AllocatorPoolInner::Standard(StandardAllocatorPool::new(thread_count)))
-        }
+        Self(AllocatorPoolInner::Standard(StandardAllocatorPool::new(thread_count)))
     }
 
     /// Create a new [`AllocatorPool`] for use across the specified number of threads,
