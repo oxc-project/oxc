@@ -520,7 +520,10 @@ impl<'a> PeepholeOptimizations {
                 break;
             };
             if kind.name == id.name {
-                if decl.init.is_none() {
+                if decl.init.is_none()
+                    && (decl.kind == VariableDeclarationKind::Var
+                        || assign_expr.right.is_literal_value(true, ctx))
+                {
                     // "var a; a = b();" => "var a = b();"
                     decl.init = Some(assign_expr.right.take_in(ctx.ast));
                     return true;
@@ -530,6 +533,8 @@ impl<'a> PeepholeOptimizations {
                 //   This is not possible as we need to consider cases when `c()` accesses `a`
                 // - "var a = 1; a = b();" => "var a = b();"
                 //   This is not possible as we need to consider cases when `b()` accesses `a`
+                // - "let a; a = foo(a);" => "let a = foo(a);"
+                //   This is not possible as TDZ error would be introduced
                 break;
             }
             // should not move assignment above variables with initializer to keep the execution order
