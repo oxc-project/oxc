@@ -2,6 +2,9 @@ use std::{mem::ManuallyDrop, ops::Deref};
 
 use crate::Allocator;
 
+mod standard;
+use standard::StandardAllocatorPool;
+
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present.
 // They are only enabled if `fixed_size` feature enabled, and `disable_fixed_size` feature is not enabled.
 //
@@ -19,22 +22,122 @@ mod fixed_size;
     target_pointer_width = "64",
     target_endian = "little"
 ))]
-pub use fixed_size::*;
+use fixed_size::FixedSizeAllocatorPool;
+#[cfg(all(
+    feature = "fixed_size",
+    not(feature = "disable_fixed_size"),
+    target_pointer_width = "64",
+    target_endian = "little"
+))]
+pub use fixed_size::{FixedSizeAllocatorMetadata, free_fixed_size_allocator};
 
+// Dummy implementations of interfaces from `fixed_size`, just to stop clippy complaining.
+// Seems to be necessary due to feature unification.
 #[cfg(not(all(
     feature = "fixed_size",
     not(feature = "disable_fixed_size"),
     target_pointer_width = "64",
     target_endian = "little"
 )))]
-mod standard;
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
-pub use standard::*;
+pub use standard::{FixedSizeAllocatorMetadata, free_fixed_size_allocator};
+
+/// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
+///
+/// Uses either a standard or fixed-size allocator pool implementation, depending on Cargo features
+/// and platform support.
+#[repr(transparent)]
+pub struct AllocatorPool(AllocatorPoolInner);
+
+/// Inner type of [`AllocatorPool`], holding either a standard or fixed-size allocator pool.
+enum AllocatorPoolInner {
+    #[cfg_attr(all(feature = "fixed_size", not(feature = "disable_fixed_size")), expect(dead_code))]
+    Standard(StandardAllocatorPool),
+    #[cfg(all(
+        feature = "fixed_size",
+        not(feature = "disable_fixed_size"),
+        target_pointer_width = "64",
+        target_endian = "little"
+    ))]
+    FixedSize(FixedSizeAllocatorPool),
+}
+
+impl AllocatorPool {
+    /// Create a new [`AllocatorPool`] for use across the specified number of threads,
+    /// which uses either standard or fixed-size allocators depending on Cargo features.
+    pub fn new(thread_count: usize) -> AllocatorPool {
+        #[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
+        {
+            Self::new_fixed_size(thread_count)
+        }
+
+        #[cfg(not(all(feature = "fixed_size", not(feature = "disable_fixed_size"))))]
+        {
+            Self(AllocatorPoolInner::Standard(StandardAllocatorPool::new(thread_count)))
+        }
+    }
+
+    /// Create a new [`AllocatorPool`] for use across the specified number of threads,
+    /// which uses fixed-size allocators (suitable for raw transfer).
+    #[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
+    pub fn new_fixed_size(thread_count: usize) -> AllocatorPool {
+        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+        {
+            Self(AllocatorPoolInner::FixedSize(FixedSizeAllocatorPool::new(thread_count)))
+        }
+
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        {
+            panic!("Fixed size allocators are only supported on 64-bit little-endian platforms");
+        }
+    }
+
+    /// Retrieve an [`Allocator`] from the pool, or create a new one if the pool is empty.
+    ///
+    /// Returns an [`AllocatorGuard`] that gives access to the allocator.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the underlying mutex is poisoned.
+    pub fn get(&self) -> AllocatorGuard<'_> {
+        let allocator = match &self.0 {
+            AllocatorPoolInner::Standard(pool) => pool.get(),
+            #[cfg(all(
+                feature = "fixed_size",
+                not(feature = "disable_fixed_size"),
+                target_pointer_width = "64",
+                target_endian = "little"
+            ))]
+            AllocatorPoolInner::FixedSize(pool) => pool.get(),
+        };
+
+        AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
+    }
+
+    /// Add an [`Allocator`] to the pool.
+    ///
+    /// The `Allocator` is reset by this method, so it's ready to be re-used.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the underlying mutex is poisoned.
+    fn add(&self, allocator: Allocator) {
+        // SAFETY: This method is only called from `AllocatorGuard::drop`.
+        // `AllocatorGuard`s are only created by `AllocatorPool::get`, so the `Allocator` must have
+        // been created by this pool. Therefore, it is the correct type for the pool.
+        unsafe {
+            match &self.0 {
+                AllocatorPoolInner::Standard(pool) => pool.add(allocator),
+                #[cfg(all(
+                    feature = "fixed_size",
+                    not(feature = "disable_fixed_size"),
+                    target_pointer_width = "64",
+                    target_endian = "little"
+                ))]
+                AllocatorPoolInner::FixedSize(pool) => pool.add(allocator),
+            }
+        }
+    }
+}
 
 /// A guard object representing exclusive access to an [`Allocator`] from the pool.
 ///

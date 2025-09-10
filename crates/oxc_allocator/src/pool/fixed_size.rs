@@ -15,38 +15,32 @@ use crate::{
     generated::fixed_size_constants::{BLOCK_ALIGN, BLOCK_SIZE, RAW_METADATA_SIZE},
 };
 
-use super::AllocatorGuard;
-
 const TWO_GIB: usize = 1 << 31;
 const FOUR_GIB: usize = 1 << 32;
 
-/// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
-///
-/// Internally uses a `Vec` protected by a `Mutex` to store available allocators.
-pub struct AllocatorPool {
+/// A thread-safe pool for reusing [`Allocator`] instances, that uses fixed-size allocators,
+/// suitable for use with raw transfer.
+pub struct FixedSizeAllocatorPool {
     /// Allocators in the pool
     allocators: Mutex<Vec<FixedSizeAllocator>>,
     /// ID to assign to next `Allocator` that's created
     next_id: AtomicU32,
 }
 
-impl AllocatorPool {
-    /// Creates a new [`AllocatorPool`] for use across the specified number of threads.
-    pub fn new(thread_count: usize) -> AllocatorPool {
+impl FixedSizeAllocatorPool {
+    /// Create a new [`FixedSizeAllocatorPool`] for use across the specified number of threads.
+    pub fn new(thread_count: usize) -> FixedSizeAllocatorPool {
         // Each allocator consumes a large block of memory, so create them on demand instead of upfront,
         // in case not all threads end up being used (e.g. language server without `import` plugin)
         let allocators = Vec::with_capacity(thread_count);
-        AllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
+        FixedSizeAllocatorPool { allocators: Mutex::new(allocators), next_id: AtomicU32::new(0) }
     }
 
-    /// Retrieves an [`Allocator`] from the pool, or creates a new one if the pool is empty.
-    ///
-    /// Returns an [`AllocatorGuard`] that gives access to the allocator.
+    /// Retrieve an [`Allocator`] from the pool, or create a new one if the pool is empty.
     ///
     /// # Panics
-    ///
     /// Panics if the underlying mutex is poisoned.
-    pub fn get(&self) -> AllocatorGuard<'_> {
+    pub fn get(&self) -> Allocator {
         let fixed_size_allocator = {
             let mut allocators = self.allocators.lock().unwrap();
             allocators.pop()
@@ -69,18 +63,19 @@ impl AllocatorPool {
         let allocator = unsafe {
             mem::transmute::<FixedSizeAllocator, ManuallyDrop<Allocator>>(fixed_size_allocator)
         };
-
-        AllocatorGuard { allocator, pool: self }
+        ManuallyDrop::into_inner(allocator)
     }
 
     /// Add an [`Allocator`] to the pool.
     ///
     /// The `Allocator` is reset by this method, so it's ready to be re-used.
     ///
-    /// # Panics
+    /// # SAFETY
+    /// The `Allocator` must have been created by a `FixedSizeAllocatorPool` (not `StandardAllocatorPool`).
     ///
+    /// # Panics
     /// Panics if the underlying mutex is poisoned.
-    pub(super) fn add(&self, allocator: Allocator) {
+    pub(super) unsafe fn add(&self, allocator: Allocator) {
         let mut fixed_size_allocator =
             FixedSizeAllocator { allocator: ManuallyDrop::new(allocator) };
         fixed_size_allocator.reset();
