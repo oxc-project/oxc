@@ -183,7 +183,7 @@ pub use dummies::*;
 ))]
 mod generated {
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
     pub mod fixed_size_constants;
 }
 #[cfg(all(

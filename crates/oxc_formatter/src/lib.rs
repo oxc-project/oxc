@@ -11,7 +11,7 @@
 
 mod generated {
     pub mod ast_nodes;
-    pub mod format;
+    mod format;
 }
 mod formatter;
 mod options;

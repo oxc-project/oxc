@@ -48,7 +48,7 @@ pub fn raw_transfer_supported() -> bool {
 mod generated {
     // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     pub mod raw_transfer_constants;
 }

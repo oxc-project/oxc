@@ -42,7 +42,7 @@ pub mod table;
 mod generated {
     #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
     mod rule_runner_impls;
 }
 

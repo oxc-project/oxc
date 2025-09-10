@@ -54,23 +54,24 @@ pub mod precedence;
 mod trivia;
 
 mod generated {
-    #[cfg(debug_assertions)]
-    pub mod assert_layouts;
-    pub mod ast_builder;
     pub mod ast_kind;
-    pub mod derive_clone_in;
-    pub mod derive_content_eq;
-    pub mod derive_dummy;
+
+    #[cfg(debug_assertions)]
+    mod assert_layouts;
+    mod ast_builder;
+    mod derive_clone_in;
+    mod derive_content_eq;
+    mod derive_dummy;
     #[cfg(feature = "serialize")]
-    pub mod derive_estree;
-    pub mod derive_get_address;
-    pub mod derive_get_span;
-    pub mod derive_get_span_mut;
-    pub mod derive_take_in;
-    pub mod get_id;
+    mod derive_estree;
+    mod derive_get_address;
+    mod derive_get_span;
+    mod derive_get_span_mut;
+    mod derive_take_in;
+    mod get_id;
 }
 
-pub use generated::{ast_builder, ast_kind};
+pub use generated::ast_kind;
 
 pub use crate::{
     ast::comment::{Comment, CommentContent, CommentKind, CommentPosition},

@@ -8,7 +8,7 @@ mod surrogate_pair;
 
 mod generated {
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
     mod derive_clone_in;
     mod derive_content_eq;
 }
