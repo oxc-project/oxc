@@ -494,7 +494,7 @@ impl ConfigStoreBuilder {
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
-    #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+    #[cfg(not(feature = "oxlint2"))]
     #[expect(unused_variables, clippy::needless_pass_by_ref_mut)]
     fn load_external_plugin(
         oxlintrc_dir_path: &Path,
@@ -506,7 +506,7 @@ impl ConfigStoreBuilder {
         unreachable!()
     }
 
-    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+    #[cfg(feature = "oxlint2")]
     fn load_external_plugin(
         oxlintrc_dir_path: &Path,
         plugin_specifier: &str,

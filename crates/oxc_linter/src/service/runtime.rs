@@ -269,11 +269,11 @@ impl Runtime {
         // If an external linter is used (JS plugins), we must use fixed-size allocators,
         // for compatibility with raw transfer
         let allocator_pool = if linter.has_external_linter() {
-            #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+            #[cfg(feature = "oxlint2")]
             {
                 AllocatorPool::new_fixed_size(thread_count)
             }
-            #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+            #[cfg(not(feature = "oxlint2"))]
             {
                 panic!("`oxlint2` feature must be enabled when using external linters");
             }

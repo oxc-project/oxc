@@ -18,7 +18,7 @@ pub mod cli {
 
 use cli::{CliRunResult, LintRunner};
 
-#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+#[cfg(feature = "oxlint2")]
 mod raw_fs;
 
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]

@@ -8,9 +8,9 @@ use oxc_ast::ast_kind::AST_TYPE_MAX;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_semantic::AstNode;
 
-#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+#[cfg(feature = "oxlint2")]
 use oxc_ast_macros::ast;
-#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+#[cfg(feature = "oxlint2")]
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 
 #[cfg(test)]
@@ -40,8 +40,7 @@ pub mod rules;
 pub mod table;
 
 mod generated {
-    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
-    #[cfg(debug_assertions)]
+    #[cfg(all(feature = "oxlint2", debug_assertions))]
     mod assert_layouts;
     mod rule_runner_impls;
 }
@@ -260,11 +259,11 @@ impl Linter {
                 }
             }
 
-            #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+            #[cfg(feature = "oxlint2")]
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
             // Stop clippy complaining about unused vars
-            #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+            #[cfg(not(feature = "oxlint2"))]
             let (_, _, _) = (&external_rules, &mut ctx_host, allocator);
 
             if let Some(severity) = self.options.report_unused_directive {
@@ -282,7 +281,7 @@ impl Linter {
         ctx_host.take_diagnostics()
     }
 
-    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+    #[cfg(feature = "oxlint2")]
     fn run_external_rules<'a>(
         &self,
         external_rules: &[(ExternalRuleId, AllowWarnDeny)],
@@ -400,7 +399,7 @@ impl Linter {
     }
 }
 
-#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+#[cfg(feature = "oxlint2")]
 /// Metadata written to end of buffer.
 ///
 /// Duplicate of `RawTransferMetadata` in `napi/parser/src/raw_transfer_types.rs`.
@@ -418,10 +417,10 @@ struct RawTransferMetadata2 {
     pub(crate) _padding: u64,
 }
 
-#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+#[cfg(feature = "oxlint2")]
 use RawTransferMetadata2 as RawTransferMetadata;
 
-#[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+#[cfg(feature = "oxlint2")]
 impl RawTransferMetadata {
     pub fn new(data_offset: u32) -> Self {
         Self { data_offset, is_ts: false, _padding: 0 }
