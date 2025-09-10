@@ -15,7 +15,7 @@
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.5.0",
-    "oxlint-tsgolint": "0.1.6",
+    "oxlint-tsgolint": "0.2.0",
     "oxlint": "^1.12.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
