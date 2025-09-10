@@ -2035,6 +2035,11 @@ impl RuleRunner for crate::rules::unicorn::no_array_reduce::NoArrayReduce {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_array_reverse::NoArrayReverse {
+    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
+    const ANY_NODE_TYPE: bool = true;
+}
+
 impl RuleRunner for crate::rules::unicorn::no_await_expression_member::NoAwaitExpressionMember {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
