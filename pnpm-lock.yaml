@@ -151,6 +151,8 @@ importers:
 
   npm/oxc-types: {}
 
+  npm/oxfmt: {}
+
   npm/oxlint: {}
 
   npm/runtime: {}

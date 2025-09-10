@@ -22,3 +22,11 @@ versioned_files = [
   "npm/oxlint/package.json",
   "crates/oxc_language_server/Cargo.toml",
 ]
+
+[[releases]]
+name = "oxfmt"
+scopes_for_breaking_change = ["format"]
+versioned_files = [
+  "apps/oxfmt/Cargo.toml",
+  "crates/oxc_formatter/Cargo.toml",
+]
