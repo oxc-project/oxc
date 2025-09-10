@@ -14,7 +14,7 @@ use oxc_linter::RuntimeFileSystem;
 /// Identical to `OsFileSystem`, except that `read_to_arena_str` reads the file's contents into
 /// start of the allocator, instead of the end. This conforms to what raw transfer needs.
 ///
-/// Must only be used in conjunction with `AllocatorPool` with `fixed_size` feature enabled,
+/// Must only be used in conjunction with `AllocatorPool` created with `new_fixed_size`,
 /// which wraps `Allocator`s with a custom `Drop` impl, which makes `read_to_arena_str` safe.
 ///
 /// This is a temporary solution. When we replace `bumpalo` with our own allocator, all strings

@@ -265,7 +265,21 @@ impl Runtime {
         let _ = rayon::ThreadPoolBuilder::new().build_global();
 
         let thread_count = rayon::current_num_threads();
-        let allocator_pool = AllocatorPool::new(thread_count);
+
+        // If an external linter is used (JS plugins), we must use fixed-size allocators,
+        // for compatibility with raw transfer
+        let allocator_pool = if linter.has_external_linter() {
+            #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
+            {
+                AllocatorPool::new_fixed_size(thread_count)
+            }
+            #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
+            {
+                panic!("`oxlint2` feature must be enabled when using external linters");
+            }
+        } else {
+            AllocatorPool::new(thread_count)
+        };
 
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
