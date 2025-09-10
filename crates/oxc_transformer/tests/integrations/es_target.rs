@@ -195,3 +195,45 @@ fn test_esnext_mixed_with_other_targets() {
     let result = test(source, &options).unwrap();
     assert!(result.contains("_usingCtx"));
 }
+
+#[test]
+fn test_complex_using_scenarios() {
+    let source = r#"
+function testComplexUsing() {
+  using resource1 = createResource();
+  await using resource2 = createAsyncResource();
+  
+  for (using item of items) {
+    console.log(item);
+  }
+  
+  for await (using asyncItem of asyncItems) {
+    console.log(asyncItem);
+  }
+}
+"#;
+    
+    // Test with esnext - should NOT transform any using syntax
+    let options = TransformOptions::from(ESTarget::from_str("esnext").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // All using syntax should remain untransformed
+    assert!(result.contains("using resource1 = createResource();"));
+    assert!(result.contains("await using resource2 = createAsyncResource();"));
+    assert!(result.contains("for (using item of items)"));
+    assert!(result.contains("for await (using asyncItem of asyncItems)"));
+    assert!(!result.contains("_usingCtx"));
+    assert!(!result.contains("try {"));
+    
+    // Test with es2020 - should transform all using syntax
+    let options = TransformOptions::from(ESTarget::from_str("es2020").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // All using syntax should be transformed
+    assert!(!result.contains("using resource1 = createResource();"));
+    assert!(!result.contains("await using resource2 = createAsyncResource();"));
+    assert!(!result.contains("for (using item of items)"));
+    assert!(!result.contains("for await (using asyncItem of asyncItems)"));
+    assert!(result.contains("_usingCtx"));
+    assert!(result.contains("try {"));
+}
