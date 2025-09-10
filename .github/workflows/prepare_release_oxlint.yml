@@ -4,9 +4,6 @@ permissions: {}
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - trigger-other-workflow
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}

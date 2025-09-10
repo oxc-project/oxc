@@ -1,0 +1,19 @@
+name: Prepare Release Oxfmt
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare Release Oxfmt
+    uses: ./.github/workflows/reusable_prepare_release.yml
+    with:
+      name: oxfmt
+    secrets:
+      OXC_BOT_PAT: ${{ secrets.OXC_BOT_PAT }}
