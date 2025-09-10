@@ -14,16 +14,13 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     Format, FormatResult, SyntaxTriviaPieceComments,
-    formatter::{
-        Formatter,
-        prelude::{get_lines_after, get_lines_before},
-    },
+    formatter::{Formatter, SourceText},
     generated::ast_nodes::SiblingNode,
 };
 
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
-    source_text: &'a str,
+    source_text: SourceText<'a>,
     comments: &'a Vec<'a, Comment>,
     printed_count: usize,
     // The index of the type cast comment that has been printed already.
@@ -31,7 +28,7 @@ pub struct Comments<'a> {
 }
 
 impl<'a> Comments<'a> {
-    pub fn new(source_text: &'a str, comments: &'a Vec<'a, Comment>) -> Self {
+    pub fn new(source_text: SourceText<'a>, comments: &'a Vec<'a, Comment>) -> Self {
         Comments { source_text, comments, printed_count: 0, handled_type_cast_comment: 0 }
     }
 
@@ -100,9 +97,7 @@ impl<'a> Comments<'a> {
         let comments = self.comments_after(start);
         while index < comments.len() {
             let comment = &comments[index];
-            if self.source_text[start as usize..comment.span.start as usize]
-                .contains(character as char)
-            {
+            if self.source_text.bytes_range(start, comment.span.start).contains(&character) {
                 return &comments[..index];
             }
 
@@ -227,10 +222,9 @@ impl<'a> Comments<'a> {
         }
 
         let last_remaining_comment = &comments[comment_index - 1];
-        let gap_str =
-            Span::new(last_remaining_comment.span.end, current_start).source_text(self.source_text);
-
-        gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'('))
+        self.source_text.all_bytes_match(last_remaining_comment.span.end, current_start, |b| {
+            b.is_ascii_whitespace() || b == b'('
+        })
     }
 
     pub fn has_leading_own_line_comments(&self, start: u32) -> bool {
@@ -241,7 +235,7 @@ impl<'a> Comments<'a> {
             }
 
             if is_own_line_comment(comment, self.source_text)
-                || get_lines_after(comment.span.end, self.source_text) > 0
+                || self.source_text.lines_after(comment.span.end) > 0
             {
                 return true;
             }
@@ -276,8 +270,9 @@ impl<'a> Comments<'a> {
         let mut gap_end = following_start;
         for cur_index in (0..comment_index).rev() {
             let comment = &comments[cur_index];
-            let gap_str = Span::new(comment.span.end, gap_end).source_text(self.source_text);
-            if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
+            if self.source_text.all_bytes_match(comment.span.end, gap_end, |b| {
+                b.is_ascii_whitespace() || b == b'('
+            }) {
                 gap_end = comment.span.start;
             } else {
                 return true;
@@ -479,8 +474,9 @@ impl<'a> Comments<'a> {
         let mut gap_end = following_span.start;
         for cur_index in (0..comment_index).rev() {
             let comment = &comments[cur_index];
-            let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
-            if gap_str.as_bytes().iter().all(|&s| s.is_ascii_whitespace() || s == b'(') {
+            if source_text.all_bytes_match(comment.span.end, gap_end, |b| {
+                b.is_ascii_whitespace() || b == b'('
+            }) {
                 gap_end = comment.span.start;
             } else {
                 // If there is a non-whitespace character, we stop here
@@ -498,7 +494,7 @@ impl<'a> Comments<'a> {
 
     fn is_suppressed_comment(&self, comment: &Comment) -> bool {
         // TODO: should replace `prettier-ignore` with `oxc-formatter-ignore` or something else later.
-        comment.content_span().source_text(self.source_text).trim() == "prettier-ignore"
+        self.source_text.text_for(&comment.content_span()).trim() == "prettier-ignore"
     }
 
     pub fn is_type_cast_comment(&self, comment: &Comment) -> bool {
@@ -509,19 +505,16 @@ impl<'a> Comments<'a> {
             return false;
         }
 
-        let start = comment.span.start as usize;
-        let end = comment.span.end as usize;
-        let bytes = self.source_text.as_bytes();
-
-        for i in start..end {
-            if bytes[i] == b'@'
+        let bytes = self.source_text.text_for(&comment.span).as_bytes();
+        let mut bytes_iter = bytes.iter().enumerate();
+        for (i, &byte) in bytes_iter {
+            if byte == b'@'
                 && (matches_pattern_at(bytes, i, TYPE_PATTERN)
                     || matches_pattern_at(bytes, i, SATISFIES_PATTERN))
             {
                 return true;
             }
         }
-
         false
     }
 
@@ -538,26 +531,17 @@ impl<'a> Comments<'a> {
     pub fn get_type_cast_comment_index(&self, span: Span) -> Option<usize> {
         let start = span.start;
 
-        let mut index = 0;
-        let mut comments =
-            self.unprinted_comments().iter().take_while(|c| c.span.end <= start).peekable();
-
-        while let Some(comment) = comments.next() {
+        let comments = self.unprinted_comments().iter().take_while(|c| c.span.end <= start);
+        for (index, comment) in comments.enumerate() {
             if comment.span.end > start {
                 return None;
             }
 
-            if self.source_text.as_bytes()[comment.span.end as usize
-                ..=comments.peek().map_or(start as usize, |c| c.span.start as usize)]
-                .trim_ascii_start()
-                .first()
-                .is_some_and(|&b| b == b'(')
+            if self.source_text.next_non_whitespace_byte_is(comment.span.end, b'(')
                 && self.is_type_cast_comment(comment)
             {
                 return Some(index);
             }
-
-            index += 1;
         }
 
         None
@@ -579,21 +563,19 @@ fn is_word_boundary_byte(byte: Option<&u8>) -> bool {
 }
 
 fn matches_pattern_at(bytes: &[u8], pos: usize, pattern: &[u8]) -> bool {
-    pos + pattern.len() <= bytes.len()
-        && &bytes[pos..pos + pattern.len()] == pattern
-        && is_word_boundary_byte(bytes.get(pos + pattern.len()))
+    bytes[pos..].starts_with(pattern) && is_word_boundary_byte(bytes.get(pos + pattern.len()))
 }
 
 fn handle_if_and_while_statement_comments<'a>(
     mut end: u32,
     mut comment_index: usize,
     comments: &'a [Comment],
-    source_text: &'a str,
+    source_text: SourceText,
 ) -> &'a [Comment] {
     // `if (a /* comment before paren */) // comment after paren`
     loop {
         let cur_comment_span = comments[comment_index].span;
-        if source_text.as_bytes()[cur_comment_span.end as usize..end as usize].contains(&b')') {
+        if source_text.bytes_contain(cur_comment_span.end, end, b')') {
             return &comments[..=comment_index];
         }
 
@@ -609,68 +591,12 @@ fn handle_if_and_while_statement_comments<'a>(
     unreachable!()
 }
 
-#[inline]
-pub fn is_new_line(char: char) -> ControlFlow<bool> {
-    if char == ' ' || char == '\t' {
-        ControlFlow::Continue(())
-    } else if char == '\n' || char == '\r' || char == '\u{2028}' || char == '\u{2029}' {
-        ControlFlow::Break(true)
-    } else {
-        ControlFlow::Break(false)
-    }
+pub fn is_own_line_comment(comment: &Comment, source_text: SourceText) -> bool {
+    source_text.has_newline_before(comment.span.start)
 }
 
-pub fn has_new_line_backward(text: &str) -> bool {
-    let mut chars = text.chars().rev();
-
-    for char in chars {
-        match is_new_line(char) {
-            ControlFlow::Continue(()) => {}
-            ControlFlow::Break(true) => return true,
-            ControlFlow::Break(false) => return false,
-        }
-    }
-
-    false
-}
-
-pub fn has_new_line_forward(text: &str) -> bool {
-    let mut chars = text.chars();
-
-    for char in chars {
-        match is_new_line(char) {
-            ControlFlow::Continue(()) => {}
-            ControlFlow::Break(true) => return true,
-            ControlFlow::Break(false) => return false,
-        }
-    }
-
-    false
-}
-
-pub fn is_own_line_comment(comment: &Comment, source_text: &str) -> bool {
-    let start = comment.span.start;
-    if start == 0 {
-        return false;
-    }
-
-    has_new_line_backward(Span::sized(0, comment.span.start).source_text(source_text))
-}
-
-pub fn is_end_of_line_comment(comment: &Comment, source_text: &str) -> bool {
-    let end = comment.span.end;
-    has_new_line_forward(&source_text[(end as usize)..])
-}
-
-/// Formats a comment as it was in the source document
-pub struct FormatPlainComment<C> {
-    context: PhantomData<C>,
-}
-
-impl<C> Default for FormatPlainComment<C> {
-    fn default() -> Self {
-        FormatPlainComment { context: PhantomData }
-    }
+pub fn is_end_of_line_comment(comment: &Comment, source_text: SourceText) -> bool {
+    source_text.has_newline_after(comment.span.end)
 }
 
 /// Returns `true` if `comment` is a multi line block comment where each line

@@ -10,14 +10,14 @@ use rustc_hash::FxHashMap;
 
 use crate::{formatter::FormatElement, generated::ast_nodes::AstNode, options::FormatOptions};
 
-use super::Comments;
+use super::{Comments, SourceText};
 
 /// Context object storing data relevant when formatting an object.
 #[derive(Clone)]
 pub struct FormatContext<'ast> {
     options: FormatOptions,
 
-    source_text: &'ast str,
+    source_text: SourceText<'ast>,
 
     source_type: SourceType,
 
@@ -46,11 +46,12 @@ impl<'ast> FormatContext<'ast> {
         allocator: &'ast Allocator,
         options: FormatOptions,
     ) -> Self {
+        let source_text = SourceText::new(program.source_text);
         Self {
             options,
-            source_text: program.source_text,
+            source_text,
             source_type: program.source_type,
-            comments: Comments::new(program.source_text, &program.comments),
+            comments: Comments::new(source_text, &program.comments),
             allocator,
             cached_elements: FxHashMap::default(),
         }
@@ -71,8 +72,8 @@ impl<'ast> FormatContext<'ast> {
         &mut self.comments
     }
 
-    /// Returns the formatting options
-    pub fn source_text(&self) -> &'ast str {
+    /// Returns the source text wrapper
+    pub fn source_text(&self) -> SourceText<'ast> {
         self.source_text
     }
 

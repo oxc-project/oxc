@@ -743,8 +743,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 || comments.last().is_some_and(|last_comment| {
                     // Ensure the comments are placed before the else keyword or on a new line
                     let gap_str =
-                        &f.source_text()[last_comment.span.end as usize..alternate_start as usize];
-                    gap_str.contains("else") || gap_str.contains('\n')
+                        f.source_text().slice_range(last_comment.span.end, alternate_start);
+                    gap_str.contains("else")
+                        || f.source_text()
+                            .contains_newline_between(last_comment.span.end, alternate_start)
                 });
 
             let else_on_same_line =
@@ -1091,7 +1093,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NullLiteral> {
 impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_number_token(
-            self.span().source_text(f.source_text()),
+            f.source_text().text_for(self),
             self.span(),
             NumberFormatOptions::default().keep_one_trailing_decimal_zero(),
         )
@@ -1103,7 +1105,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
         FormatLiteralStringToken::new(
-            self.span().source_text(f.source_text()),
+            f.source_text().text_for(self),
             self.span(),
             /* jsx */
             is_jsx,

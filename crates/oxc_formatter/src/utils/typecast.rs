@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Buffer, Format, FormatResult, format_args,
-    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
     generated::ast_nodes::AstNode,
     write,
     write::{
@@ -14,14 +14,6 @@ use crate::{
         FormatJsArrowFunctionExpressionOptions,
     },
 };
-
-/// Check if the first non-whitespace byte at the given position matches the expected byte
-fn next_byte_is(source_text: &str, position: usize, expected_byte: u8) -> bool {
-    source_text.as_bytes()[position..]
-        .trim_ascii_start()
-        .first()
-        .is_some_and(|&b| b == expected_byte)
-}
 
 /// Formats a node with TypeScript type cast comments if present.
 ///
@@ -44,8 +36,9 @@ pub fn format_type_cast_comment_node<'a, T>(
 ) -> FormatResult<bool> {
     let comments = f.context().comments();
     let span = node.span();
+    let source = f.source_text();
 
-    if !next_byte_is(f.source_text(), span.end as usize, b')') {
+    if !source.next_non_whitespace_byte_is(span.end, b')') {
         return Ok(false);
     }
 
@@ -54,8 +47,7 @@ pub fn format_type_cast_comment_node<'a, T>(
         let type_cast_comment = &comments[type_cast_comment_index];
 
         // Get the source text from the end of type cast comment to the node span
-        let node_source_text =
-            &f.source_text()[type_cast_comment.span.end as usize..span.end as usize];
+        let node_source_text = source.bytes_range(type_cast_comment.span.end, span.end);
 
         // `(/** @type {Number} */ (bar).zoo)`
         //                         ^^^^
@@ -74,7 +66,7 @@ pub fn format_type_cast_comment_node<'a, T>(
         // If the printed cast comment is already handled, return early to avoid infinite recursion.
         if !comments.is_already_handled_type_cast_comment()
             && comments.printed_comments().last().is_some_and(|c| {
-                next_byte_is(f.source_text(), c.span.end as usize, b'(')
+                source.next_non_whitespace_byte_is(c.span.end, b'(')
                     && f.comments().is_type_cast_comment(c)
             })
         {
@@ -100,22 +92,20 @@ pub fn format_type_cast_comment_node<'a, T>(
 
 /// Check if the source text has properly closed parentheses starting with '('.
 /// Returns true if the text starts with '(' and all parentheses are balanced.
-fn has_closed_parentheses(source: &str) -> bool {
-    let bytes = source.as_bytes();
-
+fn has_closed_parentheses(source: &[u8]) -> bool {
     let mut paren_count = 0i32;
     let mut i = 0;
 
-    while i < bytes.len() {
-        match bytes[i] {
+    while i < source.len() {
+        match source[i] {
             b'(' => paren_count += 1,
             b')' => paren_count -= 1,
-            b'/' if i + 1 < bytes.len() => {
-                match bytes[i + 1] {
+            b'/' if i + 1 < source.len() => {
+                match source[i + 1] {
                     b'/' => {
                         // Skip to end of line comment
                         i += 2;
-                        while i < bytes.len() && bytes[i] != b'\n' {
+                        while i < source.len() && source[i] != b'\n' {
                             i += 1;
                         }
                         continue;
@@ -123,8 +113,8 @@ fn has_closed_parentheses(source: &str) -> bool {
                     b'*' => {
                         // Skip to end of block comment
                         i += 2;
-                        while i + 1 < bytes.len() {
-                            if bytes[i] == b'*' && bytes[i + 1] == b'/' {
+                        while i + 1 < source.len() {
+                            if source[i] == b'*' && source[i + 1] == b'/' {
                                 i += 2;
                                 break;
                             }
@@ -138,10 +128,10 @@ fn has_closed_parentheses(source: &str) -> bool {
             quote @ (b'"' | b'\'' | b'`') => {
                 // Skip string literal (double-quoted, single-quoted, or template)
                 i += 1;
-                while i < bytes.len() {
-                    match bytes[i] {
+                while i < source.len() {
+                    match source[i] {
                         b if b == quote => break,
-                        b'\\' if i + 1 < bytes.len() => i += 1, // Skip escaped character
+                        b'\\' if i + 1 < source.len() => i += 1, // Skip escaped character
                         _ => {}
                     }
                     i += 1;
