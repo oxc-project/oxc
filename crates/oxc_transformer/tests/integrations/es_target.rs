@@ -81,3 +81,23 @@ fn target_list_fail() {
         assert_eq!(result.unwrap_err().to_string(), expected);
     }
 }
+
+#[test]
+fn test_using_with_esnext() {
+    let source = "using disposable = new Resource();";
+    
+    // Test with esnext - should NOT transform
+    let options = TransformOptions::from(ESTarget::from_str("esnext").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // Should be unchanged
+    assert_eq!(result.trim(), "using disposable = new Resource();");
+    
+    // Test with es2020 - should transform
+    let options = TransformOptions::from(ESTarget::from_str("es2020").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // Should be transformed (different from original)
+    assert_ne!(result.trim(), "using disposable = new Resource();");
+    println!("ES2020 transformed result: {}", result);
+}
