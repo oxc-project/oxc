@@ -1996,14 +1996,8 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::PrivateIdentifier(ident) => {
                     ident.print(p, ctx);
                 }
-                PropertyKey::StringLiteral(s) => {
-                    if self.computed {
-                        p.print_ascii_byte(b'[');
-                    }
+                PropertyKey::StringLiteral(s) if !self.computed => {
                     p.print_string_literal(s, /* allow_backtick */ false);
-                    if self.computed {
-                        p.print_ascii_byte(b']');
-                    }
                 }
                 key => {
                     if self.computed {

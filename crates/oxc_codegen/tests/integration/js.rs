@@ -229,7 +229,7 @@ fn assignment() {
     test_minify(r#"({"my-key": value} = obj);"#, r#"({"my-key":value}=obj);"#);
     test_minify(
         r#"({["computed"]: a, "literal": b} = obj);"#,
-        r#"({["computed"]:a,"literal":b}=obj);"#,
+        r#"({[`computed`]:a,"literal":b}=obj);"#,
     );
     test_minify(r#"let {"test-key": testKey} = obj;"#, r#"let{"test-key":testKey}=obj;"#);
 
