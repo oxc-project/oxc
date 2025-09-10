@@ -19,5 +19,5 @@ export default defineConfig({
   ],
   // At present only compress syntax.
   // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
-  minify: { compress: true },
+  minify: { compress: true, mangle: false, codegen: { removeWhitespace: false } },
 });
