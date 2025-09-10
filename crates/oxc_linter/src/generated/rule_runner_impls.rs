@@ -1437,7 +1437,6 @@ impl RuleRunner for crate::rules::nextjs::no_async_client_component::NoAsyncClie
 impl RuleRunner for crate::rules::nextjs::no_before_interactive_script_outside_document::NoBeforeInteractiveScriptOutsideDocument {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[AstType::JSXOpeningElement]);
     const ANY_NODE_TYPE: bool = false;
-
 }
 
 impl RuleRunner for crate::rules::nextjs::no_css_tags::NoCssTags {
@@ -1724,7 +1723,6 @@ impl RuleRunner for crate::rules::react::button_has_type::ButtonHasType {
 impl RuleRunner for crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::react::exhaustive_deps::ExhaustiveDeps {
@@ -2131,13 +2129,11 @@ impl RuleRunner for crate::rules::typescript::no_namespace::NoNamespace {
 impl RuleRunner for crate::rules::typescript::no_non_null_asserted_nullish_coalescing::NoNonNullAssertedNullishCoalescing {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::typescript::no_non_null_asserted_optional_chain::NoNonNullAssertedOptionalChain {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::typescript::no_non_null_assertion::NoNonNullAssertion {
@@ -2165,19 +2161,16 @@ impl RuleRunner for crate::rules::typescript::no_this_alias::NoThisAlias {
 impl RuleRunner for crate::rules::typescript::no_unnecessary_boolean_literal_compare::NoUnnecessaryBooleanLiteralCompare {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::typescript::no_unnecessary_parameter_property_assignment::NoUnnecessaryParameterPropertyAssignment {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::typescript::no_unnecessary_template_expression::NoUnnecessaryTemplateExpression {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner
@@ -2393,7 +2386,6 @@ impl RuleRunner for crate::rules::typescript::unbound_method::UnboundMethod {
 impl RuleRunner for crate::rules::typescript::use_unknown_in_catch_callback_variable::UseUnknownInCatchCallbackVariable {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::unicorn::catch_error_name::CatchErrorName {
@@ -2787,7 +2779,6 @@ impl RuleRunner for crate::rules::unicorn::prefer_includes::PreferIncludes {
 impl RuleRunner for crate::rules::unicorn::prefer_logical_operator_over_ternary::PreferLogicalOperatorOverTernary {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::unicorn::prefer_math_min_max::PreferMathMinMax {
@@ -2924,7 +2915,6 @@ impl RuleRunner for crate::rules::unicorn::require_array_join_separator::Require
 impl RuleRunner for crate::rules::unicorn::require_number_to_fixed_digits_argument::RequireNumberToFixedDigitsArgument {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner
@@ -2979,7 +2969,6 @@ impl RuleRunner for crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy 
 impl RuleRunner for crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots {
     const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
     const ANY_NODE_TYPE: bool = true;
-
 }
 
 impl RuleRunner for crate::rules::vue::valid_define_emits::ValidDefineEmits {

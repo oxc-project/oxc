@@ -1,7 +1,6 @@
 #![allow(clippy::print_stdout)]
 
 use std::{
-    collections::BTreeSet,
     fmt::Write as _,
     fs,
     io::{self, Write as _},
@@ -10,6 +9,7 @@ use std::{
 };
 
 use convert_case::{Case, Casing};
+use rustc_hash::FxHashSet;
 use syn::{Expr, ExprIf, File, Pat, Path as SynPath, Stmt}; // keep syn in scope for parse_file used elsewhere
 
 fn main() -> io::Result<()> {
@@ -35,32 +35,35 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
 
     for rule in &rule_entries {
         // Try to open the rule source file and use syn to detect node types
-        let mut detected_types: BTreeSet<String> = BTreeSet::new();
+        let mut detected_types: NodeTypeSet = NodeTypeSet::new();
         if let Some(src_path) = find_rule_source_file(&root, rule)
             && let Ok(src_contents) = fs::read_to_string(&src_path)
             && let Ok(file) = syn::parse_file(&src_contents)
-            && let Some(bitset) = detect_top_level_node_types(&file, rule)
+            && let Some(node_types) = detect_top_level_node_types(&file, rule)
         {
-            detected_types.extend(bitset);
+            detected_types.extend(node_types);
         }
 
         let has_detected = !detected_types.is_empty();
         let (node_types_init, any_node_type) = if has_detected {
-            // Map variant name to AstType constant path (AstType::Variant)
-            let type_idents: Vec<String> =
-                detected_types.into_iter().map(|v| format!("AstType::{v}")).collect();
-            (format!("AstTypesBitset::from_types(&[{}])", type_idents.join(", ")), false)
+            (detected_types.to_ast_type_bitset_string(), false)
         } else {
             ("AstTypesBitset::new()".to_string(), true)
         };
 
         write!(
             out,
-            "impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} {{\n    const NODE_TYPES: &AstTypesBitset = &{node_types_init};\n    const ANY_NODE_TYPE: bool = {any_node_type};\n\n}}\n\n",
+            r"
+impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} {{
+    const NODE_TYPES: &AstTypesBitset = &{node_types_init};
+    const ANY_NODE_TYPE: bool = {any_node_type};
+}}
+            ",
             plugin_module = rule.plugin_module_name,
             rule_module = rule.rule_module_name,
             rule_struct = rule.rule_struct_name(),
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     let formatted_out = rust_fmt(&out);
@@ -147,23 +150,57 @@ fn get_all_rules(contents: &str) -> io::Result<Vec<RuleEntry<'_>>> {
     Ok(rule_entries)
 }
 
+/// A set of AstKind variants, used for storing the unique node types detected in a rule,
+/// or a portion of the rule file.
+struct NodeTypeSet {
+    node_types: FxHashSet<String>,
+}
+
+impl NodeTypeSet {
+    /// Create a new set of node variants
+    fn new() -> Self {
+        Self { node_types: FxHashSet::default() }
+    }
+
+    /// Insert a variant into the set
+    fn insert(&mut self, node_type_variant: String) {
+        self.node_types.insert(node_type_variant);
+    }
+
+    /// Returns `true` if there are no node types in the set.
+    fn is_empty(&self) -> bool {
+        self.node_types.is_empty()
+    }
+
+    /// Extend the set with another set of node types.
+    fn extend(&mut self, other: NodeTypeSet) {
+        self.node_types.extend(other.node_types);
+    }
+
+    /// Returns the generated code string to initialize an `AstTypesBitset` with the variants
+    /// in this set.
+    fn to_ast_type_bitset_string(&self) -> String {
+        let mut variants: Vec<&str> =
+            self.node_types.iter().map(std::string::String::as_str).collect();
+        variants.sort_unstable();
+        let type_idents: Vec<String> =
+            variants.into_iter().map(|v| format!("AstType::{v}")).collect();
+        format!("AstTypesBitset::from_types(&[{}])", type_idents.join(", "))
+    }
+}
+
 /// Detect the top-level node types used in a lint rule file by analyzing the Rust AST with `syn`.
 /// Returns `Some(bitset)` if at least one node type can be determined, otherwise `None`.
-fn detect_top_level_node_types(file: &File, rule: &RuleEntry) -> Option<BTreeSet<String>> {
+fn detect_top_level_node_types(file: &File, rule: &RuleEntry) -> Option<NodeTypeSet> {
     let rule_impl = find_rule_impl_block(file, &rule.rule_struct_name())?;
     let run_func = find_impl_function(rule_impl, "run")?;
 
-    let variants: BTreeSet<String> = if let Some(det) = IfElseKindDetector::from_run_func(run_func)
-    {
-        det.variants
-    } else {
-        return None;
-    };
-    if variants.is_empty() {
+    let node_types = IfElseKindDetector::from_run_func(run_func)?;
+    if node_types.is_empty() {
         return None;
     }
 
-    Some(variants)
+    Some(node_types)
 }
 
 fn find_rule_impl_block<'a>(file: &'a File, rule_struct_name: &str) -> Option<&'a syn::ItemImpl> {
@@ -194,11 +231,11 @@ fn find_impl_function<'a>(imp: &'a syn::ItemImpl, func_name: &str) -> Option<&'a
 
 /// Detects top-level `if let AstKind::... = node.kind()` patterns in the `run` method.
 struct IfElseKindDetector {
-    variants: BTreeSet<String>,
+    node_types: NodeTypeSet,
 }
 
 impl IfElseKindDetector {
-    fn from_run_func(run_func: &syn::ImplItemFn) -> Option<Self> {
+    fn from_run_func(run_func: &syn::ImplItemFn) -> Option<NodeTypeSet> {
         // Only consider when the body has exactly one top-level statement and it's an `if`.
         let block = &run_func.block;
         if block.stmts.len() != 1 {
@@ -206,15 +243,71 @@ impl IfElseKindDetector {
         }
         let stmt = &block.stmts[0];
         let Stmt::Expr(Expr::If(ifexpr), _) = stmt else { return None };
-        let mut variants = BTreeSet::new();
-        let result = collect_if_chain_variants(ifexpr, &mut variants);
-        if result == CollectionResult::Incomplete || variants.is_empty() {
+        let mut detector = Self { node_types: NodeTypeSet::new() };
+        let result = detector.collect_if_chain_variants(ifexpr);
+        if result == CollectionResult::Incomplete || detector.node_types.is_empty() {
             return None;
         }
-        Some(Self { variants })
+        Some(detector.node_types)
+    }
+
+    /// Collects AstKind variants from an if-else chain of `if let AstKind::Xxx(..) = node.kind()`.
+    /// Returns `true` if all syntax was recognized as supported, otherwise `false`, indicating that
+    /// the variants collected may be incomplete and should not be treated as valid.
+    fn collect_if_chain_variants(&mut self, ifexpr: &ExprIf) -> CollectionResult {
+        // Extract variants from condition like `if let AstKind::Xxx(..) = node.kind()`.
+        if self.extract_variants_from_if_let_condition(&ifexpr.cond) == CollectionResult::Incomplete
+        {
+            // If syntax is not recognized, return Incomplete.
+            return CollectionResult::Incomplete;
+        }
+        // Walk else-if chain.
+        if let Some((_, else_branch)) = &ifexpr.else_branch {
+            match &**else_branch {
+                Expr::If(nested) => self.collect_if_chain_variants(nested),
+                // plain `else { ... }` should default to any node type
+                _ => CollectionResult::Incomplete,
+            }
+        } else {
+            CollectionResult::Complete
+        }
+    }
+
+    /// Extracts AstKind variants from an `if let` condition like `if let AstKind::Xxx(..) = node.kind()`.
+    fn extract_variants_from_if_let_condition(&mut self, cond: &Expr) -> CollectionResult {
+        let Expr::Let(let_expr) = cond else { return CollectionResult::Incomplete };
+        // RHS must be `node.kind()`
+        if is_node_kind_call(&let_expr.expr) {
+            self.extract_variants_from_pat(&let_expr.pat)
+        } else {
+            CollectionResult::Incomplete
+        }
+    }
+
+    fn extract_variants_from_pat(&mut self, pat: &Pat) -> CollectionResult {
+        match pat {
+            Pat::Or(orpat) => {
+                for p in &orpat.cases {
+                    if self.extract_variants_from_pat(p) == CollectionResult::Incomplete {
+                        return CollectionResult::Incomplete;
+                    }
+                }
+                CollectionResult::Complete
+            }
+            Pat::TupleStruct(ts) => {
+                if let Some(variant) = astkind_variant_from_path(&ts.path) {
+                    self.node_types.insert(variant);
+                    CollectionResult::Complete
+                } else {
+                    CollectionResult::Incomplete
+                }
+            }
+            _ => CollectionResult::Incomplete,
+        }
     }
 }
 
+/// Result of attempting to collect node type variants.
 #[derive(Debug, PartialEq, Eq)]
 enum CollectionResult {
     /// All syntax recognized as supported, variants collected should be complete.
@@ -222,37 +315,6 @@ enum CollectionResult {
     /// Some syntax not recognized as supported, variants collected may be incomplete
     /// and should not be treated as valid. We should default to running on any node type.
     Incomplete,
-}
-
-/// Collects AstKind variants from an if-else chain of `if let AstKind::Xxx(..) = node.kind()`.
-/// Returns `true` if all syntax was recognized as supported, otherwise `false`, indicating that
-/// the variants collected may be incomplete and should not be treated as valid.
-fn collect_if_chain_variants(ifexpr: &ExprIf, out: &mut BTreeSet<String>) -> CollectionResult {
-    // Extract variants from condition like `if let AstKind::Xxx(..) = node.kind()`.
-    if extract_variants_from_if_condition(&ifexpr.cond, out) == CollectionResult::Incomplete {
-        // If syntax is not recognized, return Incomplete.
-        return CollectionResult::Incomplete;
-    }
-    // Walk else-if chain.
-    if let Some((_, else_branch)) = &ifexpr.else_branch {
-        match &**else_branch {
-            Expr::If(nested) => collect_if_chain_variants(nested, out),
-            // plain `else { ... }` should default to any node type
-            _ => CollectionResult::Incomplete,
-        }
-    } else {
-        CollectionResult::Complete
-    }
-}
-
-fn extract_variants_from_if_condition(cond: &Expr, out: &mut BTreeSet<String>) -> CollectionResult {
-    let Expr::Let(let_expr) = cond else { return CollectionResult::Incomplete };
-    // RHS must be `node.kind()`
-    if is_node_kind_call(&let_expr.expr) {
-        extract_variants_from_pat(&let_expr.pat, out)
-    } else {
-        CollectionResult::Incomplete
-    }
 }
 
 fn is_node_kind_call(expr: &Expr) -> bool {
@@ -264,28 +326,6 @@ fn is_node_kind_call(expr: &Expr) -> bool {
         return p.path.is_ident("node");
     }
     false
-}
-
-fn extract_variants_from_pat(pat: &Pat, out: &mut BTreeSet<String>) -> CollectionResult {
-    match pat {
-        Pat::Or(orpat) => {
-            for p in &orpat.cases {
-                if extract_variants_from_pat(p, out) == CollectionResult::Incomplete {
-                    return CollectionResult::Incomplete;
-                }
-            }
-            CollectionResult::Complete
-        }
-        Pat::TupleStruct(ts) => {
-            if let Some(variant) = astkind_variant_from_path(&ts.path) {
-                out.insert(variant);
-                CollectionResult::Complete
-            } else {
-                CollectionResult::Incomplete
-            }
-        }
-        _ => CollectionResult::Incomplete,
-    }
 }
 
 /// Extract AstKind variant from something like `AstKind::Variant`

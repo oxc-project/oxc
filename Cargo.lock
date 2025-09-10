@@ -2061,6 +2061,7 @@ version = "0.0.0"
 dependencies = [
  "convert_case",
  "project-root",
+ "rustc-hash",
  "syn",
 ]
 
