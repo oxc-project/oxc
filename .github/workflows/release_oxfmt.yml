@@ -184,8 +184,6 @@ jobs:
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Publish npm packages as latest
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
           for package in npm/oxfmt*
