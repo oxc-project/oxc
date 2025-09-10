@@ -34,6 +34,7 @@ impl FormatService {
 
             let path = Path::new(&entry.path);
             let source_type = entry.source_type;
+
             // TODO: read_to_arena_str()?
             let source_text = fs::read_to_string(path).expect("Failed to read file");
 
@@ -69,36 +70,34 @@ impl FormatService {
             let elapsed = start_time.elapsed();
             let is_changed = source_text != code;
 
-            match self.output_options {
-                OutputOptions::Write => {
-                    if is_changed {
-                        fs::write(path, code)
-                            .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
-                            .unwrap();
-                    }
+            // Write back if needed
+            if matches!(self.output_options, OutputOptions::Write) && is_changed {
+                fs::write(path, code)
+                    .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
+                    .unwrap();
+            }
 
-                    let diagnostic = if is_changed {
-                        OxcDiagnostic::warn(format!(
-                            "{} {}ms",
-                            path.to_string_lossy(),
-                            elapsed.as_millis()
-                        ))
-                    } else {
-                        OxcDiagnostic::warn(format!(
-                            "{} {}ms (unchanged)",
-                            path.to_string_lossy(),
-                            elapsed.as_millis()
-                        ))
-                        .with_severity(Severity::Advice)
-                    };
-                    tx_error.send((path.to_path_buf(), vec![diagnostic.into()])).unwrap();
+            // Notify if needed
+            if let Some(diagnostic) = match (&self.output_options, is_changed) {
+                (OutputOptions::Check | OutputOptions::Default, true) => Some(OxcDiagnostic::warn(
+                    format!("{} ({}ms)", path.to_string_lossy(), elapsed.as_millis()),
+                )),
+                (OutputOptions::ListDifferent, true) => {
+                    Some(OxcDiagnostic::warn(format!("{}", path.to_string_lossy())))
                 }
-                OutputOptions::Default => {
-                    if is_changed {
-                        let diagnostic = OxcDiagnostic::warn(format!("{}", path.to_string_lossy()));
-                        tx_error.send((path.to_path_buf(), vec![diagnostic.into()])).unwrap();
-                    }
-                }
+                (OutputOptions::Write, _) => Some(
+                    OxcDiagnostic::warn(format!(
+                        "{} {}ms{}",
+                        path.to_string_lossy(),
+                        elapsed.as_millis(),
+                        if is_changed { "" } else { " (unchanged)" }
+                    ))
+                    // This cannot be `Warning`, otherwise CLI exit code will be 1
+                    .with_severity(Severity::Advice),
+                ),
+                _ => None,
+            } {
+                tx_error.send((path.to_path_buf(), vec![diagnostic.into()])).unwrap();
             }
         });
     }

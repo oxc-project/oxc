@@ -37,6 +37,13 @@ pub struct FormatCommand {
 pub enum OutputOptions {
     #[bpaf(hide)]
     Default,
+    /// Check mode - check if files are formatted
+    #[bpaf(long, short)]
+    Check,
+    // -l, --list-different
+    /// List mode - list files that would be changed
+    #[bpaf(long, short)]
+    ListDifferent,
     /// Write mode - write formatted code back
     #[bpaf(long, short)]
     Write,

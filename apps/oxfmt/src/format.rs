@@ -1,4 +1,4 @@
-use std::{env, io::Write, path::PathBuf};
+use std::{env, io::Write, path::PathBuf, time::Instant};
 
 use ignore::overrides::OverrideBuilder;
 
@@ -23,6 +23,8 @@ impl FormatRunner {
     }
 
     pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+        let start_time = Instant::now();
+
         let cwd = self.cwd;
         let FormatCommand { paths, output_options, .. } = self.options;
 
@@ -65,6 +67,8 @@ impl FormatRunner {
         let reporter = Box::new(DefaultReporter::default());
         let (mut diagnostic_service, tx_error) = DiagnosticService::new(reporter);
 
+        // TODO: if -c, print "Checking formatting..."
+
         rayon::spawn(move || {
             let mut format_service = FormatService::new(cwd, &output_options);
             format_service.with_entries(files_to_format);
@@ -73,8 +77,12 @@ impl FormatRunner {
         // NOTE: This is a blocking
         let res = diagnostic_service.run(stdout);
 
-        print_and_flush_stdout(stdout, &format!("{res:?}"));
+        let elapsed = start_time.elapsed();
+        // TODO: if -c && all unchanged, print "All matched files use the correct format"
+        // TODO: if -c && changed, print "Format issue found in above files. Run with `-w` to fix."
+        print_and_flush_stdout(stdout, &format!("{res:?} in {elapsed:.2?}\n"));
 
+        // TODO: return different exit codes based on warnings_count, errors_count
         CliRunResult::FormatSucceeded
     }
 }

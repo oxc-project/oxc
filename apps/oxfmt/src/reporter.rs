@@ -1,5 +1,5 @@
 use oxc_diagnostics::{
-    Error, GraphicalReportHandler, Severity,
+    Error, GraphicalReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 
@@ -24,13 +24,10 @@ impl DiagnosticReporter for DefaultReporter {
         }
 
         // Otherwise, this is a error without `labels`, originate from `oxfmt` itself
-        let prefix = match error.severity().unwrap_or_default() {
-            Severity::Warning => "[warn] ",
-            _ => "",
-        };
+
         // NOTE: Formatted `path` should be inlined
         // there is no way to get here since we do not have `labels`
-        Some(format!("{prefix}{error}\n"))
+        Some(format!("{error}\n"))
     }
 
     fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
