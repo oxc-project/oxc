@@ -234,6 +234,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             Expression::LogicalExpression(_) => {
                 Self::fold_logical_expr(expr, ctx);
                 Self::minimize_logical_expression(expr, ctx);
+                Self::apply_demorgans_law(expr, ctx);
                 Self::substitute_is_object_and_not_null(expr, ctx);
                 Self::substitute_rotate_logical_expression(expr, ctx);
             }
