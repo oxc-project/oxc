@@ -67,6 +67,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
     }
 
     #[inline]
+    fn exit_method_definition(
+        &mut self,
+        node: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.legacy {
+            self.legacy_decorator.exit_method_definition(node, ctx);
+        }
+    }
+
+    #[inline]
     fn enter_accessor_property(
         &mut self,
         node: &mut AccessorProperty<'a>,
@@ -78,6 +89,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
     }
 
     #[inline]
+    fn exit_accessor_property(
+        &mut self,
+        node: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.legacy {
+            self.legacy_decorator.exit_accessor_property(node, ctx);
+        }
+    }
+
+    #[inline]
     fn enter_property_definition(
         &mut self,
         node: &mut PropertyDefinition<'a>,
@@ -85,6 +107,28 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
     ) {
         if self.options.legacy {
             self.legacy_decorator.enter_property_definition(node, ctx);
+        }
+    }
+
+    #[inline]
+    fn exit_property_definition(
+        &mut self,
+        node: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.legacy {
+            self.legacy_decorator.exit_property_definition(node, ctx);
+        }
+    }
+
+    #[inline]
+    fn enter_decorator(
+        &mut self,
+        node: &mut oxc_ast::ast::Decorator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.legacy {
+            self.legacy_decorator.enter_decorator(node, ctx);
         }
     }
 }

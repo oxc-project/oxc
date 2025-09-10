@@ -87,11 +87,9 @@
 ///
 /// ## References
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
-use std::collections::VecDeque;
-
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
-use oxc_data_structures::stack::NonEmptyStack;
+use oxc_data_structures::stack::{SparseStack, Stack};
 use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
@@ -115,14 +113,22 @@ enum EnumType {
     Object,
 }
 
-pub enum MethodMetadata<'a> {
-    Constructor(Expression<'a>),
-    Normal([Expression<'a>; 3]),
-}
-
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
-    metadata_stack: NonEmptyStack<VecDeque<MethodMetadata<'a>>>,
+    /// Stack of method metadata arrays, each array contains 3 expressions:
+    /// [design:type, design:paramtypes, design:returntype]
+    ///
+    /// Only the method that needs to be pushed onto a stack is the method metadata,
+    /// which should be inserted after all real decorators. However, method parameters
+    /// will be processed before the metadata generation, so we need to temporarily store
+    /// them in a stack and pop them when in exit_method_definition.
+    method_metadata_stack: Stack<[Expression<'a>; 3]>,
+    /// Stack of constructor metadata expressions, each expression
+    /// is the design:paramtypes array
+    ///
+    /// Same as `method_metadata_stack`, but for constructors, because the constructor is specially treated
+    /// in class, we need to find it in `exit_class` and push a placeholder
+    constructor_metadata_stack: SparseStack<Expression<'a>>,
     enum_types: FxHashMap<SymbolId, EnumType>,
 }
 
@@ -130,7 +136,8 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         LegacyDecoratorMetadata {
             ctx,
-            metadata_stack: NonEmptyStack::new(VecDeque::new()),
+            method_metadata_stack: Stack::new(),
+            constructor_metadata_stack: SparseStack::new(),
             enum_types: FxHashMap::default(),
         }
     }
@@ -165,12 +172,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
         {
             let serialized_type =
                 self.serialize_parameter_types_of_node(&constructor.value.params, ctx);
-
-            self.metadata_stack.push(VecDeque::from_iter([MethodMetadata::Constructor(
-                self.create_metadata("design:paramtypes", serialized_type, ctx),
-            )]));
+            self.constructor_metadata_stack.push(Some(self.create_metadata(
+                "design:paramtypes",
+                serialized_type,
+                ctx,
+            )));
         } else {
-            self.metadata_stack.push(VecDeque::new());
+            self.constructor_metadata_stack.push(None);
         }
     }
 
@@ -201,7 +209,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
                 self.create_metadata("design:returntype", serialized_type, ctx)
             },
         ];
-        self.metadata_stack.last_mut().push_back(MethodMetadata::Normal(metadata));
+
+        self.method_metadata_stack.push(metadata);
     }
 
     #[inline]
@@ -281,8 +290,12 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         enum_type
     }
 
-    pub fn pop_method_metadata(&mut self) -> Option<MethodMetadata<'a>> {
-        self.metadata_stack.last_mut().pop_front()
+    pub fn pop_method_metadata(&mut self) -> Option<[Expression<'a>; 3]> {
+        self.method_metadata_stack.pop()
+    }
+
+    pub fn pop_constructor_metadata(&mut self) -> Option<Expression<'a>> {
+        self.constructor_metadata_stack.pop()
     }
 
     fn serialize_type_annotation(
