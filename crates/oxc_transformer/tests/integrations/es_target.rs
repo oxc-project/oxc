@@ -21,6 +21,8 @@ fn es_target() {
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
         ("es2021", "class Foo { #a; }"),
+        ("es2020", "using disposable = new Resource();"), // test using syntax
+        ("es2021", "await using asyncDisposable = new AsyncResource();"), // test await using syntax
     ];
 
     // Test no transformation for esnext.
@@ -100,4 +102,96 @@ fn test_using_with_esnext() {
     // Should be transformed (different from original)
     assert_ne!(result.trim(), "using disposable = new Resource();");
     println!("ES2020 transformed result: {}", result);
+}
+
+#[test]
+fn test_await_using_with_esnext() {
+    let source = "await using asyncDisposable = new AsyncResource();";
+    
+    // Test with esnext - should NOT transform
+    let options = TransformOptions::from(ESTarget::from_str("esnext").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // Should be unchanged
+    assert_eq!(result.trim(), "await using asyncDisposable = new AsyncResource();");
+    
+    // Test with es2020 - should transform
+    let options = TransformOptions::from(ESTarget::from_str("es2020").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // Should be transformed (different from original)
+    assert_ne!(result.trim(), "await using asyncDisposable = new AsyncResource();");
+    println!("ES2020 await using transformed result: {}", result);
+}
+
+#[test]
+fn test_playground_example() {
+    // This is the exact example from the playground in the issue
+    let source = r#"
+using resource = {
+  [Symbol.dispose]() {
+    console.log("Disposing resource");
+  }
+};
+
+console.log("Using resource");
+"#;
+    
+    // Test with esnext - should NOT transform
+    let options = TransformOptions::from(ESTarget::from_str("esnext").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // Should be unchanged (except for some formatting)
+    assert!(result.contains("using resource = {"));
+    assert!(result.contains("[Symbol.dispose]() {"));
+    assert!(!result.contains("_usingCtx"));
+    assert!(!result.contains("try {"));
+    
+    // Test with es2020 - should transform
+    let options = TransformOptions::from(ESTarget::from_str("es2020").unwrap());
+    let result = test(source, &options).unwrap();
+    
+    // Should be transformed
+    assert!(!result.contains("using resource = {"));
+    assert!(result.contains("_usingCtx"));
+    assert!(result.contains("try {"));
+    
+    println!("ESNext result (no transform):\n{}", test(source, &TransformOptions::from(ESTarget::from_str("esnext").unwrap())).unwrap());
+    println!("ES2020 result (transformed):\n{}", test(source, &TransformOptions::from(ESTarget::from_str("es2020").unwrap())).unwrap());
+}
+
+#[test]
+fn test_from_target_method() {
+    let source = "using disposable = new Resource();";
+    
+    // Test with esnext using from_target method - should NOT transform
+    let options = TransformOptions::from_target("esnext").unwrap();
+    let result = test(source, &options).unwrap();
+    assert_eq!(result.trim(), "using disposable = new Resource();");
+    
+    // Test with es2020 using from_target method - should transform
+    let options = TransformOptions::from_target("es2020").unwrap();
+    let result = test(source, &options).unwrap();
+    assert_ne!(result.trim(), "using disposable = new Resource();");
+    assert!(result.contains("_usingCtx"));
+    
+    // Test with esnext using from_target_list method - should NOT transform
+    let options = TransformOptions::from_target_list(&["esnext"]).unwrap();
+    let result = test(source, &options).unwrap();
+    assert_eq!(result.trim(), "using disposable = new Resource();");
+}
+
+#[test]
+fn test_esnext_mixed_with_other_targets() {
+    let source = "using disposable = new Resource();";
+    
+    // Test with mixed targets including esnext - should NOT transform (esnext overrides)
+    let options = TransformOptions::from_target_list(&["chrome80", "esnext", "firefox70"]).unwrap();
+    let result = test(source, &options).unwrap();
+    assert_eq!(result.trim(), "using disposable = new Resource();");
+    
+    // Test with mixed targets without esnext - should transform
+    let options = TransformOptions::from_target_list(&["chrome80", "firefox70", "es2020"]).unwrap();
+    let result = test(source, &options).unwrap();
+    assert!(result.contains("_usingCtx"));
 }

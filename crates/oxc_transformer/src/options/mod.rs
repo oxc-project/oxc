@@ -112,7 +112,11 @@ impl TransformOptions {
     /// * No matching target.
     /// * Invalid version.
     pub fn from_target(s: &str) -> Result<Self, String> {
-        EnvOptions::from_target(s).map(|env| Self { env, ..Self::default() })
+        if s.contains(',') {
+            Self::from_target_list(&s.split(',').collect::<Vec<_>>())
+        } else {
+            Self::from_target_list(&[s])
+        }
     }
 
     /// Initialize from a list of `target`s and `environmens`s.
@@ -130,7 +134,23 @@ impl TransformOptions {
     /// * No matching target.
     /// * Invalid version.
     pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
-        EnvOptions::from_target_list(list).map(|env| Self { env, ..Self::default() })
+        use std::str::FromStr;
+        
+        // Check if esnext is in the target list
+        let has_esnext = list.iter().any(|s| {
+            ESTarget::from_str(s.as_ref()).map_or(false, |target| target == ESTarget::ESNext)
+        });
+        
+        let env = EnvOptions::from_target_list(list)?;
+        
+        // Disable explicit resource management for esnext target
+        let proposals = if has_esnext {
+            ProposalOptions { explicit_resource_management: false }
+        } else {
+            ProposalOptions::default()
+        };
+        
+        Ok(Self { env, proposals, ..Self::default() })
     }
 }
 
@@ -140,7 +160,15 @@ impl From<ESTarget> for TransformOptions {
         let mut engine_targets = EngineTargets::default();
         engine_targets.insert(Engine::Es, target.version());
         let env = EnvOptions::from(engine_targets);
-        Self { env, ..Self::default() }
+        
+        // Disable explicit resource management for esnext target
+        let proposals = if target == ESTarget::ESNext {
+            ProposalOptions { explicit_resource_management: false }
+        } else {
+            ProposalOptions::default()
+        };
+        
+        Self { env, proposals, ..Self::default() }
     }
 }
 

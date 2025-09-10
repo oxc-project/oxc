@@ -86,3 +86,29 @@ class Foo {
 		_classPrivateFieldInitSpec(this, _a, void 0);
 	}
 }
+
+########## 11 es2020
+using disposable = new Resource();
+----------
+import _usingCtx2 from '@oxc-project/runtime/helpers/usingCtx';
+try {
+	var _usingCtx = _usingCtx2();
+	var disposable = _usingCtx.u(new Resource());
+} catch (_) {
+	_usingCtx.e = _;
+} finally {
+	_usingCtx.d();
+}
+
+########## 12 es2021
+await using asyncDisposable = new AsyncResource();
+----------
+import _usingCtx2 from '@oxc-project/runtime/helpers/usingCtx';
+try {
+	var _usingCtx = _usingCtx2();
+	var asyncDisposable = _usingCtx.a(new AsyncResource());
+} catch (_) {
+	_usingCtx.e = _;
+} finally {
+	await _usingCtx.d();
+}
