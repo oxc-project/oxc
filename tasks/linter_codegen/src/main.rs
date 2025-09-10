@@ -44,19 +44,17 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             detected_types.extend(node_types);
         }
 
-        let has_detected = !detected_types.is_empty();
-        let (node_types_init, any_node_type) = if has_detected {
-            (detected_types.to_ast_type_bitset_string(), false)
+        let node_types_init = if detected_types.is_empty() {
+            "None".to_string()
         } else {
-            ("AstTypesBitset::new()".to_string(), true)
+            format!("Some(&{})", detected_types.to_ast_type_bitset_string())
         };
 
         write!(
             out,
             r"
 impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} {{
-    const NODE_TYPES: &AstTypesBitset = &{node_types_init};
-    const ANY_NODE_TYPE: bool = {any_node_type};
+    const NODE_TYPES: Option<&AstTypesBitset> = {node_types_init};
 }}
             ",
             plugin_module = rule.plugin_module_name,

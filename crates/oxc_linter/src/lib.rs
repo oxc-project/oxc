@@ -192,13 +192,12 @@ impl Linter {
                     // Collect node type information for rules. In large files, benchmarking showed it was worth
                     // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
                     if rule.should_run(&ctx_host) {
-                        let (ast_types, all_types) = rule.types_info();
-                        if all_types {
-                            rules_any_ast_type.push((rule, ctx));
-                        } else {
+                        if let Some(ast_types) = rule.types_info() {
                             for ty in ast_types {
                                 rules_by_ast_type[ty as usize].push((rule, ctx));
                             }
+                        } else {
+                            rules_any_ast_type.push((rule, ctx));
                         }
                     }
 
@@ -238,16 +237,15 @@ impl Linter {
 
                     // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
                     // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                    let (ast_types, all_types) = rule.types_info();
-                    if all_types {
-                        for node in semantic.nodes() {
-                            rule.run(node, ctx);
-                        }
-                    } else {
+                    if let Some(ast_types) = rule.types_info() {
                         for node in semantic.nodes() {
                             if ast_types.has(node.kind().ty()) {
                                 rule.run(node, ctx);
                             }
+                        }
+                    } else {
+                        for node in semantic.nodes() {
+                            rule.run(node, ctx);
                         }
                     }
 
