@@ -214,6 +214,7 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::TemplateLiteral(_)
         | AstKind::UnaryExpression(_)
         | AstKind::IfStatement(_)
+        | AstKind::SpreadElement(_)
         | AstKind::LogicalExpression(_) => true,
         AstKind::ExpressionStatement(_) => {
             let parent_node = semantic.nodes().parent_node(kind.id());
@@ -256,6 +257,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        r"
+            class Foo { #privateMember = {}; a() { return { ...this.#privateMember }; } }
+        ",
         r"
             class Test {
                 #prop = undefined
