@@ -9,9 +9,10 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
+    class::ClassId,
     number::NumberBase,
     operator::{AssignmentOperator, UnaryOperator},
-    scope::ScopeFlags,
+    scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
 
@@ -891,108 +892,266 @@ fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
 }
 
 pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
+    // `Some` for `super()`, `None` for `super.foo` / `super.bar()` etc
     let super_call_span = match ctx.nodes.parent_kind(ctx.current_node_id) {
         AstKind::CallExpression(expr) => Some(expr.span),
         AstKind::NewExpression(expr) => Some(expr.span),
         _ => None,
     };
 
-    let Some(class_id) = ctx.class_table_builder.current_class_id else {
-        // Not in a class. `super` only valid in an object method.
-        for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
-            let flags = ctx.scoping.scope_flags(scope_id);
-            if flags.is_function() && !flags.is_arrow() {
-                let func_node_id = ctx.scoping.get_node_id(scope_id);
-                if let AstKind::ObjectProperty(prop) = ctx.nodes.parent_kind(func_node_id) {
-                    if prop.method || prop.kind != PropertyKind::Init {
-                        // Function's parent is an `ObjectProperty` representing a method/getter/setter.
-                        // Check the function is the value of the property, not computed key.
-                        // Valid: `obj = { method() { super.foo } }`
-                        // Invalid: `obj = { [ function() { super.foo } ]() {} }`
-                        let func_kind = ctx.nodes.kind(func_node_id);
-                        if func_kind.address() == prop.value.address() {
-                            if let Some(super_call_span) = super_call_span {
-                                ctx.error(unexpected_super_call(super_call_span));
+    let (mut class_scope_id, mut class_id) =
+        get_class_details(ctx.class_table_builder.current_class_id, ctx);
+
+    let mut previous_scope_id = None;
+
+    // In this loop, we `return` if `super` is legal, or `break` if it's illegal.
+    //
+    // We also fall through to an error if `super` is not inside a function or class.
+    // > ModuleBody : ModuleItemList
+    // > * It is a Syntax Error if ModuleItemList Contains super.
+    // > ScriptBody : StatementList
+    // > * It is a Syntax Error if StatementList Contains super
+    'scopes: for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+        if Some(scope_id) == class_scope_id {
+            // Reached the class scope.
+            //
+            // We already exited if inside a method, or static block (see below).
+            // Therefore we're in one of:
+            // 1. Class property value.
+            // 2. Class accessor value.
+            // 3. Computed key of a class method / property / accessor.
+            // 4. Decorators on a class method / property / accessor.
+            // 5. `TSIndexSignature`.
+            // Find out which.
+            //
+            // Note: In terms of scopes, we could also be in a class's `super_class`,
+            // but `ClassTableBuilder` does not enter the class until entering class body.
+            // So when visiting `super` in `class Outer { method() { class Inner extends super.foo {} } }`,
+            // `ctx.class_table_builder.current_class_id` is `Outer` class, not `Inner`.
+
+            let search_start_node_id = if let Some(previous_scope_id) = previous_scope_id {
+                ctx.scoping.get_node_id(previous_scope_id)
+            } else {
+                ctx.current_node_id
+            };
+            let mut previous_node_address = ctx.nodes.kind(search_start_node_id).address();
+
+            for ancestor_kind in ctx.nodes.ancestor_kinds(search_start_node_id) {
+                match ancestor_kind {
+                    AstKind::PropertyDefinition(prop) => {
+                        if prop
+                            .value
+                            .as_ref()
+                            .is_some_and(|value| value.address() == previous_node_address)
+                        {
+                            // In property's value - `super.foo` is legal here, `super()` is not.
+                            // > FieldDefinition : ClassElementName Initializer opt
+                            // > * It is a Syntax Error if Initializer is present and Initializer Contains SuperCall is true.
+                            if super_call_span.is_some() {
+                                break 'scopes;
                             }
                             return;
                         }
+                        // In computed key or decorators
+                    }
+                    AstKind::AccessorProperty(prop) => {
+                        if prop
+                            .value
+                            .as_ref()
+                            .is_some_and(|value| value.address() == previous_node_address)
+                        {
+                            // In accessor's value - `super.foo` is legal here, `super()` is not
+                            if super_call_span.is_some() {
+                                break 'scopes;
+                            }
+                            return;
+                        }
+                        // In computed key or decorators
+                    }
+                    AstKind::MethodDefinition(_) => {
+                        // In computed key or decorators.
+                        // If we were in the value, we would have exited loop already,
+                        // because `value` is a function - which is handled below.
+                    }
+                    AstKind::TSIndexSignature(sig) => {
+                        // I (@overlookmotel) don't think `Super` should appear in a type annotation.
+                        // e.g. `super` is parsed as an `IdentifierReference`, not `Super` in:
+                        // `class C { [keys: typeof super.foo]: typeof super.foo }`
+                        // But I did find one weird case where `super` *is* currently parsed as `Super`:
+                        // `class C { [keys: string]: typeof import('x', { with: super.foo }).y; }`
+                        //
+                        // So probably this branch is unreachable in practice. But handle it just in case,
+                        // to avoid falling through to `unreachable!()` below.
+                        //
+                        // If it *is* possible, I'm also not sure what correct behavior should be.
+                        // As best guess, treating it like class properties:
+                        // Treat `parameters` like computed key, `type_annotation` like initializer value.
+                        if sig.type_annotation.address() == previous_node_address {
+                            // In signature's `type_annotation` - `super.foo` is legal here, `super()` is not
+                            if super_call_span.is_some() {
+                                break 'scopes;
+                            }
+                            return;
+                        }
+                        // In `parameters` - treat like computed key
+                    }
+                    _ => {
+                        previous_node_address = ancestor_kind.address();
+                        continue;
                     }
                 }
+
+                // `super` is in a computed key, decorator, or `TSIndexSignature`'s `parameters`.
+                //
+                // Whether it's legal or not depends on external context
+                // (whether this class is nested in another class or object method).
+                //
+                // Illegal:
+                // * `class C { [super.foo] = 1 }`
+                // * `class C { @super.foo method() {} }`
+                // * `class C extends super.foo {}`
+                //
+                // Legal:
+                // * `class Outer { method() { class Inner { [super.foo] = 1 } } }`
+                // * `class Outer { method() { class Inner { @super.foo method() {} } } }`
+                // * `class Outer { method() { class Inner extends super.foo {} } }`
+                // * `obj = { method() { class Inner { [super.foo] = 1 } } }`
+                // * `obj = { method() { class Inner { @super.foo method() {} } } }`
+                // * `obj = { method() { class Inner extends super.foo {} } }`
+                //
+                // So continue searching up the scope tree.
+
+                // Set `previous_scope_id` to the class. On next ancestor search, start from this class.
+                previous_scope_id = Some(scope_id);
+
+                // We're now in the parent class
+                let parent_class_id =
+                    ctx.class_table_builder.classes.parent_ids.get(&class_id).copied();
+                (class_scope_id, class_id) = get_class_details(parent_class_id, ctx);
+
+                continue 'scopes;
+            }
+
+            // See comment above. The `for` loop above cannot complete without exiting early
+            // with `return`, `break 'scopes`, or `continue 'scopes`.
+            unreachable!();
+        }
+
+        let scope_flags = ctx.scoping.scope_flags(scope_id);
+
+        // `super.foo` is legal in static blocks, `super()` is not.
+        // > ClassStaticBlockBody : ClassStaticBlockStatementList
+        // > * It is a Syntax Error if ClassStaticBlockStatementList Contains SuperCall is true.
+        if scope_flags.is_class_static_block() {
+            if super_call_span.is_some() {
                 break;
             }
-        }
-
-        // ModuleBody : ModuleItemList
-        // * It is a Syntax Error if ModuleItemList Contains super.
-        // ScriptBody : StatementList
-        // * It is a Syntax Error if StatementList Contains super
-        if let Some(super_call_span) = super_call_span {
-            ctx.error(unexpected_super_call(super_call_span));
-        } else {
-            ctx.error(unexpected_super_reference(sup.span));
-        }
-        return;
-    };
-
-    // In a class
-    let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
-    let AstKind::Class(class) = ctx.nodes.kind(class_node_id) else { unreachable!() };
-    let class_scope_id = class.scope_id();
-
-    for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
-        let flags = ctx.scoping.scope_flags(scope_id);
-
-        if flags.intersects(ScopeFlags::Constructor) {
-            // ClassTail : ClassHeritageopt { ClassBody }
-            // * It is a Syntax Error if ClassHeritage is not present and the following algorithm returns true:
-            // 1. Let constructor be ConstructorMethod of ClassBody.
-            // 2. If constructor is empty, return false.
-            // 3. Return HasDirectSuper of constructor.
-            if class.super_class.is_none() && super_call_span.is_some() {
-                ctx.error(super_without_derived_class(sup.span, class.span));
-            }
             return;
         }
 
-        if let Some(super_call_span) = super_call_span {
-            // ClassElement : MethodDefinition
-            // * It is a Syntax Error if PropName of MethodDefinition is not "constructor" and HasDirectSuper of MethodDefinition is true.
-            // * It is a Syntax Error if SuperCall in nested set/get function
-            if flags.is_function() && !flags.is_arrow() {
-                return ctx.error(unexpected_super_call(super_call_span));
-            }
+        // Skip over non-function scopes and arrow functions
+        if !scope_flags.is_function() || scope_flags.is_arrow() {
+            // If we reach class scope in a later iteration, we can search for class element containing
+            // `super` starting from this scope's node, instead of starting from `super`,
+            // which saves iterations over ancestor nodes
+            previous_scope_id = Some(scope_id);
 
-            // FieldDefinition : ClassElementName Initializer opt
-            // * It is a Syntax Error if Initializer is present and Initializer Contains SuperCall is true.
-            // PropertyDefinition : MethodDefinition
-            // * It is a Syntax Error if HasDirectSuper of MethodDefinition is true.
-            let is_class_scope = class_scope_id == scope_id;
-            // ClassStaticBlockBody : ClassStaticBlockStatementList
-            // * It is a Syntax Error if ClassStaticBlockStatementList Contains SuperCall is true.
-            let is_class_static_block_scope = flags.is_class_static_block();
-            if is_class_scope || is_class_static_block_scope {
-                return ctx.error(unexpected_super_call(super_call_span));
-            }
+            continue;
         }
 
-        if class_scope_id == scope_id {
-            break;
-        }
+        // We're in a function.
+        // If function is a class or object method/getter/setter/constructor, then `super.foo` is legal.
+        // `super()` is only legal if in a class constructor.
+        // If function is anywhere else, both `super()` and `super.foo` are illegal.
+        let func_node_id = ctx.scoping.get_node_id(scope_id);
+        let func_address = ctx.nodes.kind(func_node_id).address();
 
-        if flags.is_function() && !flags.is_arrow() {
-            // * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
-            // Check this function if is a class or object method, if it isn't, then it a plain function
-            let function_node_id = ctx.scoping.get_node_id(scope_id);
-            let parent_kind = ctx.nodes.parent_kind(function_node_id);
-            let is_class_method = matches!(parent_kind, AstKind::MethodDefinition(_));
-            // For `class C { foo() { return { bar() { super.bar(); } }; } }`
-            let is_object_method = matches!(parent_kind, AstKind::ObjectProperty(_));
-            if !is_class_method && !is_object_method {
-                ctx.error(unexpected_super_reference(sup.span));
+        match ctx.nodes.parent_kind(func_node_id) {
+            AstKind::ObjectProperty(prop) => {
+                // Function's parent is an `ObjectProperty`.
+                // Check the function is a method/getter/setter, not a normal property.
+                // Valid: `obj = { method() { super.foo } }`
+                // Invalid: `obj = { x: function() { super.foo } }`
+                let is_method_or_getter_or_setter = prop.method || prop.kind != PropertyKind::Init;
+                if is_method_or_getter_or_setter {
+                    // Function's parent is an `ObjectProperty` representing a method/getter/setter.
+                    // Check the function is the value of the property, not computed key.
+                    // Valid: `obj = { method() { super.foo } }`
+                    // Invalid: `obj = { [ function() { super.foo } ]() {} }`
+                    if func_address == prop.value.address() {
+                        // `super.foo` is legal here, `super()` is not.
+                        // > PropertyDefinition : MethodDefinition
+                        // > * It is a Syntax Error if HasDirectSuper of MethodDefinition is true.
+                        if super_call_span.is_some() {
+                            break;
+                        }
+                        return;
+                    }
+                }
+                // Function is value of a normal property, or computed key - illegal
+                break;
             }
-            return;
+            AstKind::MethodDefinition(method) => {
+                // Function's parent is a `MethodDefinition` representing a class method/getter/setter/constructor.
+                // Check the function is the method itself, not computed key or decorator.
+                // Valid: `class C { method() { super.foo } }`
+                // Invalid: `class C { [ function() { super.foo } ]() {} }`
+                // Invalid: `class C { @(function() { super.foo }) method() {} }`
+                if func_address == method.value.address() {
+                    // `super.foo` is legal here.
+                    // `super()` is only legal if method is class constructor, and class has a super-class.
+                    //
+                    // > ClassElement : MethodDefinition
+                    // > * It is a Syntax Error if PropName of MethodDefinition is not "constructor" and
+                    // >   HasDirectSuper of MethodDefinition is true.
+                    // > * It is a Syntax Error if SuperCall in nested set/get function.
+                    // >
+                    // > ClassTail : ClassHeritageopt { ClassBody }
+                    // > * It is a Syntax Error if ClassHeritage is not present and the following algorithm returns true:
+                    // >   1. Let constructor be ConstructorMethod of ClassBody.
+                    // >   2. If constructor is empty, return false.
+                    // >   3. Return HasDirectSuper of constructor.
+                    if super_call_span.is_some() {
+                        if method.kind != MethodDefinitionKind::Constructor {
+                            break;
+                        }
+
+                        let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
+                        let class = ctx.nodes.kind(class_node_id).as_class().unwrap();
+                        if class.super_class.is_none() {
+                            ctx.error(super_without_derived_class(sup.span, class.span));
+                        }
+                    }
+                    return;
+                }
+                // Function is computed key or decorator - illegal
+                break;
+            }
+            // Function is not a class or object method/getter/setter/constructor - illegal.
+            // > * It is a Syntax Error if FunctionBody Contains SuperProperty is true.
+            _ => break,
         }
     }
+
+    // `super` is in illegal position
+    if let Some(super_call_span) = super_call_span {
+        ctx.error(unexpected_super_call(super_call_span));
+    } else {
+        ctx.error(unexpected_super_reference(sup.span));
+    }
+}
+
+fn get_class_details(
+    maybe_class_id: Option<ClassId>,
+    ctx: &SemanticBuilder<'_>,
+) -> (Option<ScopeId>, ClassId) {
+    let Some(class_id) = maybe_class_id else {
+        return (None, ClassId::new(0)); // Dummy class ID
+    };
+    let node_id = ctx.class_table_builder.classes.get_node_id(class_id);
+    let class = ctx.nodes.kind(node_id).as_class().unwrap();
+    let scope_id = class.scope_id();
+    (Some(scope_id), class_id)
 }
 
 fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
