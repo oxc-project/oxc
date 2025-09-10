@@ -7,7 +7,6 @@ use crate::{
     Format, FormatResult, format_args,
     formatter::{
         Formatter,
-        comments::{is_end_of_line_comment, is_own_line_comment},
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },

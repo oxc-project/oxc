@@ -8,7 +8,6 @@ use crate::{
     FormatOptions, format_args,
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
-        comments::is_own_line_comment,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::format_dangling_comments,
     },
@@ -532,10 +531,11 @@ fn should_break_after_operator<'a>(
 ) -> bool {
     let is_jsx = matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_));
 
+    let source_text = f.source_text();
     for comment in f.comments().comments_before(right.span().start) {
         if !is_jsx
-            && (f.source_text().lines_after(comment.span.end) > 0
-                || is_own_line_comment(comment, f.source_text()))
+            && (source_text.lines_after(comment.span.end) > 0
+                || source_text.is_own_line_comment(comment))
         {
             return true;
         }
@@ -790,7 +790,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         return true;
     }
 
-    if f.comments().has_comments_in_span(call_expressions[0].span) {
+    if f.comments().has_comment_in_span(call_expressions[0].span) {
         return false;
     }
 

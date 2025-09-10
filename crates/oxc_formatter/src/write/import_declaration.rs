@@ -65,7 +65,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
         } else if self.len() == 1
             && let Some(ImportDeclarationSpecifier::ImportSpecifier(specifier)) =
                 specifiers_iter.peek().map(AsRef::as_ref)
-            && !f.comments().has_comments_before(specifier.local.span.start)
+            && !f.comments().has_comment_before(specifier.local.span.start)
         {
             write!(
                 f,

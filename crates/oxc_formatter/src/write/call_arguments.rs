@@ -279,7 +279,7 @@ fn should_group_first_argument(
                 return false;
             }
 
-            !f.comments().has_comments(call_like_span.start, first.span(), second.span().start)
+            !f.comments().has_comment(call_like_span.start, first.span(), second.span().start)
                 && !can_group_expression_argument(second, f)
                 && is_relatively_short_argument(second)
         }
@@ -307,7 +307,7 @@ fn should_group_last_argument(
             }
 
             let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
-            if f.comments().has_comments(previous_span, last.span(), call_like_span.end) {
+            if f.comments().has_comment(previous_span, last.span(), call_like_span.end) {
                 return false;
             }
 
@@ -449,12 +449,12 @@ fn can_group_expression_argument(argument: &Expression<'_>, f: &Formatter<'_, '_
     match argument {
         Expression::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
-                || f.comments().has_comments_in_span(object_expression.span)
+                || f.comments().has_comment_in_span(object_expression.span)
         }
 
         Expression::ArrayExpression(array_expression) => {
             !array_expression.elements.is_empty()
-                || f.comments().has_comments_in_span(array_expression.span)
+                || f.comments().has_comment_in_span(array_expression.span)
         }
         Expression::TSTypeAssertion(assertion_expression) => {
             can_group_expression_argument(&assertion_expression.expression, f)
@@ -514,7 +514,7 @@ fn can_group_arrow_function_expression_argument(
                         true
                     }
                     _ => true,
-                }) || (body.statements.is_empty() && f.comments().has_dangling_comments(body.span))
+                }) || (body.statements.is_empty() && f.comments().has_comment_before(body.span.end))
             }
             _ => true,
         }
@@ -983,7 +983,7 @@ fn is_react_hook_with_deps_array(
             }
 
             // Is there a comment that isn't around the callback or deps?
-            !comments.filter_comments_in_span(arguments.parent.span()).any(|comment| {
+            !comments.comments_before(arguments.parent.span().end).iter().any(|comment| {
                 !callback.span.contains_inclusive(comment.span)
                     && !deps.span.contains_inclusive(comment.span)
             })

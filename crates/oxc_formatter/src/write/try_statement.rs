@@ -80,12 +80,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
                 f,
                 soft_block_indent(&format_once(|f| {
                     write!(f, [FormatLeadingComments::Comments(leading_comments)])?;
-                    let printed_len = f.context().comments().printed_comments().len();
+                    let printed_len_before_pattern =
+                        f.context().comments().printed_comments().len();
                     write!(f, self.pattern())?;
                     if trailing_comments.is_empty() ||
                         // The `pattern` cannot print comments that are below it, so we need to check whether there
                         // are any trailing comments that haven't been printed yet. If there are, print them.
-                        f.context().comments().printed_comments().len() - printed_len
+                        f.context().comments().printed_comments().len() - printed_len_before_pattern
                             == trailing_comments.len()
                     {
                         Ok(())

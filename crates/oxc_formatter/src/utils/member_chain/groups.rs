@@ -199,7 +199,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         // Check whether has more than 1 continuous new lines before the operator (`.`)
         let start = expression.object().span().end;
         let mut end = expression.property().span().start;
-        let mut comments = f.comments().comments_between(start, end).iter();
+        let mut comments = f.comments().comments_in_range(start, end).iter();
         let mut last_comment_span = comments.next_back();
 
         while start < end {
