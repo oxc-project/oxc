@@ -62,5 +62,5 @@ lazy-regex = { workspace = true }
 default = []
 allocator = ["dep:mimalloc-safe"]
 oxlint2 = ["oxc_linter/oxlint2", "oxc_allocator/fixed_size", "dep:simdutf8"]
-disable_oxlint2 = ["oxc_linter/disable_oxlint2", "oxc_allocator/disable_fixed_size"]
+disable_oxlint2 = ["oxc_linter/disable_oxlint2"]
 force_test_reporter = ["oxc_linter/force_test_reporter"]

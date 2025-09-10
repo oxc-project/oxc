@@ -6,40 +6,15 @@ mod standard;
 use standard::StandardAllocatorPool;
 
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present.
-// They are only enabled if `fixed_size` feature enabled, and `disable_fixed_size` feature is not enabled.
+// They are only enabled if `fixed_size` Cargo feature is enabled.
 //
 // Note: Importing the `fixed_size` module would cause a compilation error on 32-bit systems.
-#[cfg(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
 mod fixed_size;
-#[cfg(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
 use fixed_size::FixedSizeAllocatorPool;
-#[cfg(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
 pub use fixed_size::{FixedSizeAllocatorMetadata, free_fixed_size_allocator};
-
-// Dummy implementations of interfaces from `fixed_size`, just to stop clippy complaining.
-// Seems to be necessary due to feature unification.
-#[cfg(not(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-)))]
-pub use standard::{FixedSizeAllocatorMetadata, free_fixed_size_allocator};
 
 /// A thread-safe pool for reusing [`Allocator`] instances to reduce allocation overhead.
 ///
@@ -51,20 +26,14 @@ pub use standard::{FixedSizeAllocatorMetadata, free_fixed_size_allocator};
 /// Fixed-size allocator pool is created by [`AllocatorPool::new_fixed_size`].
 ///
 /// Fixed-size allocators are only supported on 64-bit little-endian platforms at present,
-/// and require the `fixed_size` Cargo feature to be enabled, and `disable_fixed_size` Cargo feature
-/// to not be enabled.
+/// and require the `fixed_size` Cargo feature to be enabled.
 #[repr(transparent)]
 pub struct AllocatorPool(AllocatorPoolInner);
 
 /// Inner type of [`AllocatorPool`], holding either a standard or fixed-size allocator pool.
 enum AllocatorPoolInner {
     Standard(StandardAllocatorPool),
-    #[cfg(all(
-        feature = "fixed_size",
-        not(feature = "disable_fixed_size"),
-        target_pointer_width = "64",
-        target_endian = "little"
-    ))]
+    #[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
     FixedSize(FixedSizeAllocatorPool),
 }
 
@@ -77,7 +46,7 @@ impl AllocatorPool {
 
     /// Create a new [`AllocatorPool`] for use across the specified number of threads,
     /// which uses fixed-size allocators (suitable for raw transfer).
-    #[cfg(all(feature = "fixed_size", not(feature = "disable_fixed_size")))]
+    #[cfg(feature = "fixed_size")]
     pub fn new_fixed_size(thread_count: usize) -> AllocatorPool {
         #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
         {
@@ -102,7 +71,6 @@ impl AllocatorPool {
             AllocatorPoolInner::Standard(pool) => pool.get(),
             #[cfg(all(
                 feature = "fixed_size",
-                not(feature = "disable_fixed_size"),
                 target_pointer_width = "64",
                 target_endian = "little"
             ))]
@@ -128,7 +96,6 @@ impl AllocatorPool {
                 AllocatorPoolInner::Standard(pool) => pool.add(allocator),
                 #[cfg(all(
                     feature = "fixed_size",
-                    not(feature = "disable_fixed_size"),
                     target_pointer_width = "64",
                     target_endian = "little"
                 ))]

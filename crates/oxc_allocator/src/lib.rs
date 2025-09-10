@@ -32,9 +32,6 @@
 //!   For internal use only. The APIs provided by this feature are sketchy at best, and possibly
 //!   undefined behavior. Do not enable this feature under any circumstances in production code.
 //!
-//! * `disable_fixed_size` - Disables `fixed_size` feature.
-//!   Purpose is to prevent `--all-features` enabling fixed sized allocators.
-//!
 //! * `disable_track_allocations` - Disables `track_allocations` feature.
 //!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
@@ -80,12 +77,7 @@ pub use vec::Vec;
 // Fixed size allocators are only supported on 64-bit little-endian platforms at present.
 //
 // Note: Importing the `fixed_size_constants` module would cause a compilation error on 32-bit systems.
-#[cfg(all(
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
 mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
