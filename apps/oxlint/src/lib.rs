@@ -25,7 +25,12 @@ mod raw_fs;
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
-pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
+/// Run the linter.
+///
+/// # Panics
+/// Panics if `--experimental-js-plugins` CLI arg is present,
+/// but this function is not called by `napi/oxlint2`.
+pub fn lint(mut external_linter: Option<ExternalLinter>) -> CliRunResult {
     init_tracing();
     init_miette();
 
@@ -51,6 +56,14 @@ pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
     };
 
     command.handle_threads();
+
+    if command.experimental_js_plugins {
+        // If this assertion fails, this function was not called by `napi/oxlint2`.
+        assert!(external_linter.is_some(), "JS plugins are not supported at present");
+    } else {
+        external_linter = None;
+    }
+
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());

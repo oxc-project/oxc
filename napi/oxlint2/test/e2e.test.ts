@@ -8,7 +8,7 @@ const PACKAGE_ROOT_PATH = path.dirname(import.meta.dirname);
 const ENTRY_POINT_PATH = path.join(PACKAGE_ROOT_PATH, 'dist/index.js');
 
 async function runOxlint(cwd: string, args: string[] = []) {
-  return await execa('node', [ENTRY_POINT_PATH, ...args], {
+  return await execa('node', [ENTRY_POINT_PATH, '--experimental-js-plugins', ...args], {
     cwd: path.join(PACKAGE_ROOT_PATH, cwd),
     reject: false,
   });
