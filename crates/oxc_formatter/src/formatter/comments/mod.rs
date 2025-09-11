@@ -7,7 +7,7 @@ use std::{
 
 use oxc_allocator::Vec;
 use oxc_ast::{
-    Comment, CommentKind,
+    Comment, CommentContent, CommentKind,
     ast::{self, CallExpression, NewExpression},
 };
 use oxc_span::{GetSpan, Span};
@@ -23,14 +23,16 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
-    pub source_text: &'a str,
+    source_text: &'a str,
     comments: &'a Vec<'a, Comment>,
     printed_count: usize,
+    // The index of the type cast comment that has been printed already.
+    handled_type_cast_comment: usize,
 }
 
 impl<'a> Comments<'a> {
     pub fn new(source_text: &'a str, comments: &'a Vec<'a, Comment>) -> Self {
-        Comments { source_text, comments, printed_count: 0 }
+        Comments { source_text, comments, printed_count: 0, handled_type_cast_comment: 0 }
     }
 
     /// Returns comments that not printed yet.
@@ -392,6 +394,12 @@ impl<'a> Comments<'a> {
                 break;
             }
 
+            if matches!(comment.content, CommentContent::Jsdoc)
+                && self.is_type_cast_comment(comment)
+            {
+                break;
+            }
+
             if is_own_line_comment(comment, source_text) {
                 // TODO: describe the logic here
                 // Reached an own line comment, which means it is the leading comment for the next node.
@@ -472,7 +480,7 @@ impl<'a> Comments<'a> {
         for cur_index in (0..comment_index).rev() {
             let comment = &comments[cur_index];
             let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
-            if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
+            if gap_str.as_bytes().iter().all(|&s| s.is_ascii_whitespace() || s == b'(') {
                 gap_end = comment.span.start;
             } else {
                 // If there is a non-whitespace character, we stop here
@@ -485,11 +493,95 @@ impl<'a> Comments<'a> {
 
     /// Check whether the node has an ignore comment.
     pub fn is_suppressed(&self, start: u32) -> bool {
-        self.comments_before(start).iter().any(|comment| {
-            // TODO: should replace `prettier-ignore` with `oxc-formatter-ignore` or something else later.
-            comment.content_span().source_text(self.source_text).trim() == "prettier-ignore"
-        })
+        self.comments_before(start).iter().any(|comment| self.is_suppressed_comment(comment))
     }
+
+    fn is_suppressed_comment(&self, comment: &Comment) -> bool {
+        // TODO: should replace `prettier-ignore` with `oxc-formatter-ignore` or something else later.
+        comment.content_span().source_text(self.source_text).trim() == "prettier-ignore"
+    }
+
+    pub fn is_type_cast_comment(&self, comment: &Comment) -> bool {
+        const TYPE_PATTERN: &[u8] = b"@type";
+        const SATISFIES_PATTERN: &[u8] = b"@satisfies";
+
+        if !matches!(comment.content, CommentContent::Jsdoc) {
+            return false;
+        }
+
+        let start = comment.span.start as usize;
+        let end = comment.span.end as usize;
+        let bytes = self.source_text.as_bytes();
+
+        for i in start..end {
+            if bytes[i] == b'@'
+                && (matches_pattern_at(bytes, i, TYPE_PATTERN)
+                    || matches_pattern_at(bytes, i, SATISFIES_PATTERN))
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Find the index of a type cast comment that precedes the given span.
+    ///
+    /// A type cast comment is a JSDoc comment (like `/** @type {string} */`) that
+    /// appears immediately before an opening parenthesis `(`.
+    ///
+    /// This method searches through unprinted comments that end before the span starts,
+    /// looking for a type cast comment followed by an opening parenthesis.
+    ///
+    /// Returns the index of the type cast comment in the unprinted comments array,
+    /// or None if no matching type cast comment is found.
+    pub fn get_type_cast_comment_index(&self, span: Span) -> Option<usize> {
+        let start = span.start;
+
+        let mut index = 0;
+        let mut comments =
+            self.unprinted_comments().iter().take_while(|c| c.span.end <= start).peekable();
+
+        while let Some(comment) = comments.next() {
+            if comment.span.end > start {
+                return None;
+            }
+
+            if self.source_text.as_bytes()[comment.span.end as usize
+                ..=comments.peek().map_or(start as usize, |c| c.span.start as usize)]
+                .trim_ascii_start()
+                .first()
+                .is_some_and(|&b| b == b'(')
+                && self.is_type_cast_comment(comment)
+            {
+                return Some(index);
+            }
+
+            index += 1;
+        }
+
+        None
+    }
+
+    /// Marks the last printed type cast comment as handled.
+    pub fn mark_as_handled_type_cast_comment(&mut self) {
+        self.handled_type_cast_comment = self.printed_count;
+    }
+
+    /// Returns `true` if the last printed type cast comment that has been handled.
+    pub fn is_already_handled_type_cast_comment(&self) -> bool {
+        self.printed_count == self.handled_type_cast_comment
+    }
+}
+
+fn is_word_boundary_byte(byte: Option<&u8>) -> bool {
+    matches!(byte, Some(b' ' | b'\t' | b'\n' | b'\r' | b'{'))
+}
+
+fn matches_pattern_at(bytes: &[u8], pos: usize, pattern: &[u8]) -> bool {
+    pos + pattern.len() <= bytes.len()
+        && &bytes[pos..pos + pattern.len()] == pattern
+        && is_word_boundary_byte(bytes.get(pos + pattern.len()))
 }
 
 fn handle_if_and_while_statement_comments<'a>(

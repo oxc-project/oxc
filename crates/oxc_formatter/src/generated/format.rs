@@ -9,7 +9,7 @@ use crate::{
     formatter::{Buffer, Format, FormatResult, Formatter, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, AstNodes, transmute_self},
     parentheses::NeedsParentheses,
-    utils::suppressed::FormatSuppressedNode,
+    utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
     write::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
 };
 
@@ -374,6 +374,9 @@ impl<'a> Format<'a> for AstNode<'a, IdentifierName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, IdentifierReference<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -414,6 +417,9 @@ impl<'a> Format<'a> for AstNode<'a, LabelIdentifier<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ThisExpression> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -432,6 +438,9 @@ impl<'a> Format<'a> for AstNode<'a, ThisExpression> {
 impl<'a> Format<'a> for AstNode<'a, ArrayExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, true, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -498,6 +507,9 @@ impl<'a> Format<'a> for AstNode<'a, Elision> {
 impl<'a> Format<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, true, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -590,6 +602,9 @@ impl<'a> Format<'a> for AstNode<'a, PropertyKey<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -608,6 +623,9 @@ impl<'a> Format<'a> for AstNode<'a, TemplateLiteral<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -673,6 +691,9 @@ impl<'a> Format<'a> for AstNode<'a, MemberExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -691,6 +712,9 @@ impl<'a> Format<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, StaticMemberExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -709,6 +733,9 @@ impl<'a> Format<'a> for AstNode<'a, StaticMemberExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -727,6 +754,9 @@ impl<'a> Format<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, CallExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -745,6 +775,9 @@ impl<'a> Format<'a> for AstNode<'a, CallExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, NewExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -763,6 +796,9 @@ impl<'a> Format<'a> for AstNode<'a, NewExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, MetaProperty<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -821,6 +857,9 @@ impl<'a> Format<'a> for AstNode<'a, Argument<'a>> {
 impl<'a> Format<'a> for AstNode<'a, UpdateExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -839,6 +878,9 @@ impl<'a> Format<'a> for AstNode<'a, UpdateExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, UnaryExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -857,6 +899,9 @@ impl<'a> Format<'a> for AstNode<'a, UnaryExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, BinaryExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -875,6 +920,9 @@ impl<'a> Format<'a> for AstNode<'a, BinaryExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, PrivateInExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -893,6 +941,9 @@ impl<'a> Format<'a> for AstNode<'a, PrivateInExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, LogicalExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -911,6 +962,9 @@ impl<'a> Format<'a> for AstNode<'a, LogicalExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ConditionalExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -929,6 +983,9 @@ impl<'a> Format<'a> for AstNode<'a, ConditionalExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, AssignmentExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -1187,6 +1244,9 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
 impl<'a> Format<'a> for AstNode<'a, SequenceExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -1205,6 +1265,9 @@ impl<'a> Format<'a> for AstNode<'a, SequenceExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Super> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -1223,6 +1286,9 @@ impl<'a> Format<'a> for AstNode<'a, Super> {
 impl<'a> Format<'a> for AstNode<'a, AwaitExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -1241,6 +1307,9 @@ impl<'a> Format<'a> for AstNode<'a, AwaitExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ChainExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -1296,6 +1365,9 @@ impl<'a> Format<'a> for AstNode<'a, ChainElement<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -1629,12 +1701,7 @@ impl<'a> Format<'a> for AstNode<'a, EmptyStatement> {
 
 impl<'a> Format<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
+        self.write(f)
     }
 }
 
@@ -2009,6 +2076,9 @@ impl<'a> Format<'a> for AstNode<'a, BindingRestElement<'a>> {
 impl<'a> Format<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2029,6 +2099,9 @@ impl<'a> Format<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
         f: &mut Formatter<'_, 'a>,
     ) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2089,6 +2162,9 @@ impl<'a> Format<'a, FormatJsArrowFunctionExpressionOptions>
 {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2109,6 +2185,9 @@ impl<'a> Format<'a, FormatJsArrowFunctionExpressionOptions>
         f: &mut Formatter<'_, 'a>,
     ) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2130,6 +2209,9 @@ impl<'a> Format<'a, FormatJsArrowFunctionExpressionOptions>
 impl<'a> Format<'a> for AstNode<'a, YieldExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2148,6 +2230,9 @@ impl<'a> Format<'a> for AstNode<'a, YieldExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Class<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2342,6 +2427,9 @@ impl<'a> Format<'a> for AstNode<'a, AccessorProperty<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ImportExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2613,6 +2701,9 @@ impl<'a> Format<'a> for AstNode<'a, ModuleExportName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, V8IntrinsicExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2631,6 +2722,9 @@ impl<'a> Format<'a> for AstNode<'a, V8IntrinsicExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, BooleanLiteral> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2649,6 +2743,9 @@ impl<'a> Format<'a> for AstNode<'a, BooleanLiteral> {
 impl<'a> Format<'a> for AstNode<'a, NullLiteral> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2667,6 +2764,9 @@ impl<'a> Format<'a> for AstNode<'a, NullLiteral> {
 impl<'a> Format<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2685,6 +2785,9 @@ impl<'a> Format<'a> for AstNode<'a, NumericLiteral<'a>> {
 impl<'a> Format<'a> for AstNode<'a, StringLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2703,6 +2806,9 @@ impl<'a> Format<'a> for AstNode<'a, StringLiteral<'a>> {
 impl<'a> Format<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2721,6 +2827,9 @@ impl<'a> Format<'a> for AstNode<'a, BigIntLiteral<'a>> {
 impl<'a> Format<'a> for AstNode<'a, RegExpLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -2738,6 +2847,9 @@ impl<'a> Format<'a> for AstNode<'a, RegExpLiteral<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
@@ -2774,6 +2886,9 @@ impl<'a> Format<'a> for AstNode<'a, JSXClosingElement<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, JSXFragment<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
@@ -4478,6 +4593,9 @@ impl<'a> Format<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSAsExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -4496,6 +4614,9 @@ impl<'a> Format<'a> for AstNode<'a, TSAsExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -4514,6 +4635,9 @@ impl<'a> Format<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -4583,6 +4707,9 @@ impl<'a> Format<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSNonNullExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
@@ -4636,6 +4763,9 @@ impl<'a> Format<'a> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
