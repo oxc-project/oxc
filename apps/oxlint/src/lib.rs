@@ -24,10 +24,6 @@ use cli::{CliRunResult, LintRunner};
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 /// Run the linter.
-///
-/// # Panics
-/// Panics if `--experimental-js-plugins` CLI arg is present,
-/// but this function is not called by `napi/oxlint2`.
 pub fn lint(mut external_linter: Option<ExternalLinter>) -> CliRunResult {
     init_tracing();
     init_miette();
