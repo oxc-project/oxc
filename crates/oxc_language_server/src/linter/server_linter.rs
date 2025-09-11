@@ -331,9 +331,12 @@ impl ServerLinter {
             (ServerLinterRun::OnType, Run::OnType) => (true, false),
             // it does not match, run nothing
             (ServerLinterRun::OnType, Run::OnSave) => (false, false),
-            // run only tsglint on save, even if the user wants it with type
-            // tsgolint only supports the OS file system.
-            (ServerLinterRun::OnSave, Run::OnType) => (false, true),
+            // In onType mode, only TypeScript type checking runs on save
+            // If type_aware is disabled (tsgo_linter is None), skip everything to preserve diagnostics
+            (ServerLinterRun::OnSave, Run::OnType) => {
+                let should_run_tsgo = self.tsgo_linter.as_ref().is_some();
+                (false, should_run_tsgo)
+            }
         };
 
         // return `None` when both tools do not want to be used
@@ -481,6 +484,16 @@ mod test {
             Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lint_on_run_on_type_on_save_without_type_aware() {
+        Tester::new(
+            "fixtures/linter/lint_on_run/on_type",
+            Some(Options { type_aware: false, run: Run::OnType, ..Default::default() }),
+        )
+        .test_and_snapshot_single_file_with_run_type("on-save-no-type-aware.ts", Run::OnSave);
     }
 
     #[test]
