@@ -307,9 +307,12 @@ impl<'a> SourcemapBuilder<'a> {
         let mut lines = vec![];
         let mut column_offsets = IndexVec::new();
 
-        // Used as a buffer to reduce memory reallocations
-        // Pre-allocate with reasonable capacity to avoid frequent reallocations
-        let mut columns = Vec::with_capacity(256);
+        // Used as a buffer to reduce memory reallocations.
+        // Pre-allocate with reasonable capacity to avoid frequent reallocations.
+        // 16 is a guess, probably adequate for most files which don't heavily use unicode chars.
+        // 16 entries is 64 bytes = 1 CPU cache line on most CPUs.
+        // If file does heavily use unicode chars, `columns` will grow adaptively as needed.
+        let mut columns = Vec::with_capacity(16);
 
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
