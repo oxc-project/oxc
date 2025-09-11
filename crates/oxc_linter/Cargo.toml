@@ -17,7 +17,6 @@ description.workspace = true
 default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 language_server = ["oxc_data_structures/rope"] # For the Runtime to support needed information for the language server
-oxlint2 = ["dep:oxc_ast_macros", "oxc_allocator/fixed_size", "oxc_ast_visit/serialize"]
 force_test_reporter = []
 
 [lints]
@@ -27,10 +26,10 @@ workspace = true
 doctest = true
 
 [dependencies]
-oxc_allocator = { workspace = true, features = ["pool"] }
+oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_ast = { workspace = true }
-oxc_ast_macros = { workspace = true, optional = true }
-oxc_ast_visit = { workspace = true }
+oxc_ast_macros = { workspace = true }
+oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["box_macros"] }

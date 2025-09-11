@@ -8,6 +8,7 @@ pub use oxc_linter::{
 mod command;
 mod lint;
 mod output_formatter;
+mod raw_fs;
 mod result;
 mod tester;
 mod walk;
@@ -17,9 +18,6 @@ pub mod cli {
 }
 
 use cli::{CliRunResult, LintRunner};
-
-#[cfg(feature = "oxlint2")]
-mod raw_fs;
 
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]

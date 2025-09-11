@@ -39,7 +39,6 @@ pub struct Loc {
 }
 
 #[derive(Clone)]
-#[cfg_attr(not(feature = "oxlint2"), expect(dead_code))]
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
