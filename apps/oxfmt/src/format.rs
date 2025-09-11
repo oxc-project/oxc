@@ -84,6 +84,9 @@ impl FormatRunner {
         // NOTE: This is a blocking
         let res = diagnostic_service.run(stdout);
 
+        // Add a new line between diagnostics and summary
+        print_and_flush_stdout(stdout, "\n");
+
         if 0 < res.errors_count() {
             // Each error is already printed in reporter
             print_and_flush_stdout(
