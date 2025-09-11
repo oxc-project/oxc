@@ -284,13 +284,6 @@ impl<'a> Comments<'a> {
             return self.comments_before(enclosing_span.end);
         }
 
-        // If preceding_node is a callee, let the following node handle its comments
-        // Based on Prettier's comment handling logic
-        if matches!(enclosing_node, SiblingNode::CallExpression(CallExpression { callee, ..}) | SiblingNode::NewExpression(NewExpression { callee, ..}) if callee.span().contains_inclusive(preceding_node.span()))
-        {
-            return &[];
-        }
-
         let comments = self.unprinted_comments();
         if comments.is_empty() {
             return &[];
