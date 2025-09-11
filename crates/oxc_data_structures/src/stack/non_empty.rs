@@ -353,17 +353,22 @@ impl<T> NonEmptyStack<T> {
         <Self as StackCommon<T>>::len(self)
     }
 
-    /// Get if stack is empty. Always returns `false`.
+    /// Get if stack is empty.
     ///
-    /// Probably you want [`is_exhausted`] instead.
+    /// This method is pointless, as the stack is never empty.
+    /// Only present to override the default method from `[T]::is_empty` which is inherited via `Deref`.
+    ///
+    /// Using this method is a compile-time error, because using it is certainly a logic error.
+    ///
+    /// Use [`is_exhausted`] instead.
     ///
     /// [`is_exhausted`]: Self::is_exhausted
     #[expect(clippy::unused_self)]
     #[inline]
     pub fn is_empty(&self) -> bool {
-        // This method is pointless, as the stack is never empty. But provide it to override
-        // the default method from `slice::is_empty` which is inherited via `Deref`
-        false
+        const {
+            panic!("`NonEmptyStack` is never empty. Use `is_exhausted` instead.");
+        }
     }
 
     /// Get if stack is back in its initial state.
