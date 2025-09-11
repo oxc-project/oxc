@@ -1,0 +1,29 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(define-props-declaration): Use type-based declaration instead of runtime declaration
+   ╭─[define_props_declaration.tsx:3:24]
+ 2 │                       <script setup lang="ts">
+ 3 │ ╭─▶                   const props = defineProps({
+ 4 │ │                       kind: { type: String },
+ 5 │ ╰─▶                   })
+ 6 │                       </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-props-declaration): Use type-based declaration instead of runtime declaration
+   ╭─[define_props_declaration.tsx:3:24]
+ 2 │                       <script setup lang="ts">
+ 3 │ ╭─▶                   const props = defineProps({
+ 4 │ │                       kind: { type: String },
+ 5 │ ╰─▶                   })
+ 6 │                       </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-props-declaration): Use runtime declaration instead of type-based declaration
+   ╭─[define_props_declaration.tsx:3:24]
+ 2 │                       <script setup lang="ts">
+ 3 │ ╭─▶                   const props = defineProps<{
+ 4 │ │                       kind: string;
+ 5 │ ╰─▶                   }>()
+ 6 │                       </script>
+   ╰────
