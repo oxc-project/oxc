@@ -55,9 +55,13 @@ pub fn lint(mut external_linter: Option<ExternalLinter>) -> CliRunResult {
 
     command.handle_threads();
 
+    #[expect(clippy::print_stderr)]
     if command.experimental_js_plugins {
-        // If this assertion fails, this function was not called by `napi/oxlint2`.
-        assert!(external_linter.is_some(), "JS plugins are not supported at present");
+        // If no `ExternalLinter`, this function was not called by `napi/oxlint2`
+        if external_linter.is_none() {
+            eprintln!("ERROR: JS plugins are not supported at present");
+            return CliRunResult::InvalidOptionConfig;
+        }
     } else {
         external_linter = None;
     }
