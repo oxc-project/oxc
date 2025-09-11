@@ -60,6 +60,7 @@ use crate::{
         assignment_like::AssignmentLike,
         call_expression::{contains_a_test_pattern, is_test_call_expression, is_test_each_pattern},
         conditional::ConditionalLike,
+        expression::FormatExpressionWithoutTrailingComments,
         member_chain::MemberChain,
         object::format_property_key,
         string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -216,7 +217,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             MemberChain::from_call_expression(self, f).fmt(f)
         } else {
             let format_inner = format_with(|f| {
-                write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
+                if self.type_arguments.is_some() {
+                    write!(f, [callee]);
+                } else {
+                    write!(f, [FormatExpressionWithoutTrailingComments(callee)]);
+                }
+                write!(f, [optional.then_some("?."), type_arguments, arguments])
             });
             if matches!(callee.as_ref(), Expression::CallExpression(_)) {
                 write!(f, [group(&format_inner)])
@@ -229,7 +235,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()])
+        write!(f, ["new", space()]);
+        if self.type_arguments.is_some() {
+            write!(f, [self.callee()]);
+        } else {
+            write!(f, [FormatExpressionWithoutTrailingComments(self.callee())]);
+        }
+        write!(f, [self.type_arguments(), self.arguments()])
     }
 }
 
