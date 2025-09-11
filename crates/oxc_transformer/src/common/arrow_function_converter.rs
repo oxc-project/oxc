@@ -195,18 +195,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             ctx,
         );
 
-        debug_assert!(self.this_var_stack.len() == 1);
+        debug_assert!(self.this_var_stack.is_exhausted());
         debug_assert!(self.this_var_stack.first().is_none());
-        debug_assert!(self.arguments_var_stack.len() == 1);
+        debug_assert!(self.arguments_var_stack.is_exhausted());
         debug_assert!(self.arguments_var_stack.first().is_none());
-        debug_assert!(self.constructor_super_stack.len() == 1);
+        debug_assert!(self.constructor_super_stack.is_exhausted());
         // TODO: This assertion currently failing because we don't handle `super` in arrow functions
         // in class static properties correctly.
         // e.g. `class C { static f = () => super.prop; }`
         // debug_assert!(self.constructor_super_stack.first() == &false);
-        debug_assert!(self.super_methods_stack.len() == 1);
+        debug_assert!(self.super_methods_stack.is_exhausted());
         debug_assert!(self.super_methods_stack.first().is_empty());
-        debug_assert!(self.super_needs_transform_stack.len() == 1);
+        debug_assert!(self.super_needs_transform_stack.is_exhausted());
         debug_assert!(self.super_needs_transform_stack.first() == &false);
     }
 

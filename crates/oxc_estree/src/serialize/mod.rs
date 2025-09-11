@@ -148,7 +148,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 
         node.serialize(&mut self);
 
-        debug_assert_eq!(self.trace_path.len(), 1);
+        debug_assert!(self.trace_path.is_exhausted());
         debug_assert_eq!(self.trace_path[0], TracePathPart::DUMMY);
 
         self.buffer.print_str("\n,\"fixes\":[");
