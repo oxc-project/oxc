@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
 import { IDisposable } from './types';
 import { VSCodeConfig } from './VSCodeConfig';
@@ -57,6 +58,24 @@ export class ConfigService implements IDisposable {
       }
     }
     return false;
+  }
+
+  public getUserServerBinPath(): string | undefined {
+    let bin = this.vsCodeConfig.binPath;
+    if (!bin) {
+      return;
+    }
+
+    if (!path.isAbsolute(bin)) {
+      // if the path is not absolute, resolve it to the first workspace folder
+      let cwd = this.workspaceConfigs.keys().next().value;
+      if (!cwd) {
+        return;
+      }
+      bin = path.normalize(path.join(cwd, bin));
+    }
+
+    return bin;
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
