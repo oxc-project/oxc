@@ -28,6 +28,7 @@ oxlint = { workspace = true, features = ["oxlint2", "allocator"] }
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
 serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [build-dependencies]
 napi-build = { workspace = true }

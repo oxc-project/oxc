@@ -2052,7 +2052,6 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
- "tokio",
 ]
 
 [[package]]
@@ -2075,6 +2074,7 @@ dependencies = [
  "oxc_allocator",
  "oxlint",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
