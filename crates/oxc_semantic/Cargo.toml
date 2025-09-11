@@ -45,3 +45,4 @@ serde_json = { workspace = true }
 [features]
 default = []
 serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]
+full_ast_nodes = []

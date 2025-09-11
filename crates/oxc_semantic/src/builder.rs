@@ -316,7 +316,16 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     fn pop_ast_node(&mut self) {
-        self.current_node_id = self.nodes.parent_id(self.current_node_id);
+        #[cfg(feature = "full_ast_nodes")]
+        {
+            self.current_node_id = self.nodes.parent_id(self.current_node_id);
+        }
+
+        #[cfg(not(feature = "full_ast_nodes"))]
+        {
+            self.nodes.pop_parent_stack();
+            self.current_node_id = self.nodes.parent_id(self.current_node_id);
+        }
     }
 
     #[inline]
