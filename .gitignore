@@ -47,6 +47,8 @@ tasks/prettier_conformance/prettier/
 # https://github.com/oraios/serena cache
 .serena/cache
 
+.claude
+
 # NOTE: For non-project files such as `.vscode` or `.idea`, please add them to your `.gitignore_global`.
 # In `.gitconfig`, add `[core] excludesfile = ~/.gitignore_global`
 # See also
