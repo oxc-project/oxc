@@ -43,10 +43,12 @@ impl FormatService {
 
             let ret = Parser::new(&allocator, &source_text, source_type)
                 .with_options(ParseOptions {
+                    parse_regular_expression: false,
                     // Enable all syntax features
                     allow_v8_intrinsics: true,
                     allow_return_outside_function: true,
-                    ..ParseOptions::default()
+                    // `oxc_formatter` expects this to be false
+                    preserve_parens: false,
                 })
                 .parse();
             if !ret.errors.is_empty() {
