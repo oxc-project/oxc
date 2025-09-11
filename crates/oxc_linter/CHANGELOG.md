@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.15.0] - 2025-09-11
+
+### 🚀 Features
+
+- b20b56d linter: Add `vue/no-multiple-slot-args` rule (#13579) (Sysix)
+- aafe08c linter: Add `vue/define-emits-declaration` rule (#13567) (Sysix)
+- 2ed5059 linter: Add `vue/define-props-declaration` rule (#13566) (Sysix)
+- a718c23 linter: Add `vue/valid-define-props` rule (#13565) (Sysix)
+- 4af886b linter: Add `unicorn/no-array-reverse` rule (#13530) (yefan)
+- 2db32eb data_structures: Add `boxed_slice!` and `boxed_array!` macros (#13596) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e17fccc linter: Update `RuleRunner` impl after merge (#13642) (camc314)
+- 3d27c5b linter/no-unused-private-class-members: False positive with spread expr (#13634) (yefan)
+- 8314ed5 linter/tsgolint: Correct comment (#13589) (camc314)
+- 198243b semantic: Dont parse `@` as jsdoc tags inside quotes (#13571) (Gwenn Le Bihan)
+- 89084d7 linter/custom-plugins: Enforce exact matching for disable directives (#13538) (Copilot)
+- 277c5e1 linter: Output `eslint-plugin-vue` for vue diagnostics (#13564) (Sysix)
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+- 5fccafc linter: `unicorn/prefer-array-flat-map` ignore `React.Children` (#13534) (Sysix)
+- 7e78e39 linter: Don't panic when parsing regex with multiple parentheses (#13524) (Sysix)
+- 0d867b1 linter: Skip running tsgolint when no files need type aware linting (#13502) (Copilot)
+- e87d7bd linter: Parse regex inside `new RegExp()` with parentheses (#13448) (Sysix)
+- 5990f17 linter: Change `typescript/no-confusing-void-expression` to pedantic (#13473) (Boshen)
+
+### 🚜 Refactor
+
+- 7775c21 linter/plugins: Remove `oxlint2` Cargo feature (#13648) (overlookmotel)
+- 8f37e88 linter: Update tsgolint payload (#13547) (camchenry)
+- 2d53203 linter/plugins: Move `tokio` usage from `oxc_linter` to `napi/oxlint2` (#13647) (overlookmotel)
+- 476729b linter: Simplify `RuleRunner` trait definition (#13637) (camchenry)
+- 2f02ac6 linter/plugins: Remove `disable_oxlint2` Cargo feature (#13626) (overlookmotel)
+- ff9e4fb linter/plugins: Use fixed-size allocators when `ExternalLinter` exists (#13623) (overlookmotel)
+- f9bff64 linter_codegen: Improve code style for collecting nodes (#13636) (camchenry)
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+- 91759c6 linter/plugins: Only use `RawTransferFileSystem` if JS plugins registered (#13599) (overlookmotel)
+- 118020c linter/plugins: Discard `ExternalLinter` if no JS plugins registered (#13598) (overlookmotel)
+- 8d30bce linter/tsgolint: Report an error if the tsgolint exe could not be found (#13590) (camc314)
+- bccc276 eslint/for-direction: Clean up implementation and improve documentation (#13532) (Antoine Zanardi)
+- 1425da2 eslint/default-case-last: Simplify default case last check in switch statement (#13529) (Antoine Zanardi)
+- 53f2fc1 eslint/default-case: Simplify implementation and enhance readability (#13430) (Antoine Zanardi)
+- 6f15060 eslint/block-scoped-var: Clean up implementation and improve documentation (#13417) (Antoine Zanardi)
+- 1b425d6 eslint/default-case-last: Simplify implementation and enhance readability (#13515) (Antoine Zanardi)
+- e4bbbce eslint/default-param-last: Simplify implementation and enhance readability (#13516) (Antoine Zanardi)
+- e0396fd linter: Remove `static` lifetime from disable directives function argument (#13492) (camc314)
+
+### 📚 Documentation
+
+- eb1f167 linter: Note which rules require type info to run on rule page (#13675) (camc314)
+- e66f93b linter: Fix backtick formatting in no-return-wrap (#13633) (camc314)
+
+### ⚡ Performance
+
+- e6a25e7 linter: Remove unnecessary `should_run` check (#13639) (camchenry)
+- f6a9687 linter: Store rules by AST type in a boxed array (#13578) (overlookmotel)
+- b81f081 linter: Reduce indirection (#13574) (overlookmotel)
+- a744aff linter: Skip rules that do not have any relevant node types (#13138) (camchenry)
+
+### 🎨 Styling
+
+- e110476 linter: Reformat code (#13573) (overlookmotel)
+
+
 ## [1.14.0] - 2025-08-30
 
 ### 💥 BREAKING CHANGES
