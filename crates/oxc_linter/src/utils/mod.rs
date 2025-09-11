@@ -22,10 +22,11 @@ mod regex;
 mod unicorn;
 mod url;
 mod vitest;
+mod vue;
 
 pub use self::{
     comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
-    react_perf::*, regex::*, unicorn::*, url::*, vitest::*,
+    react_perf::*, regex::*, unicorn::*, url::*, vitest::*, vue::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.

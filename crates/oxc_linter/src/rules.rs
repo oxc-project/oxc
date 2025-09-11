@@ -625,6 +625,7 @@ pub(crate) mod node {
 
 pub(crate) mod vue {
     pub mod valid_define_emits;
+    pub mod valid_define_props;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -1203,4 +1204,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
     vue::valid_define_emits,
+    vue::valid_define_props,
 }

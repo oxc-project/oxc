@@ -2440,3 +2440,7 @@ impl RuleRunner for crate::rules::vitest::require_local_test_context_for_concurr
 impl RuleRunner for crate::rules::vue::valid_define_emits::ValidDefineEmits {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
+
+impl RuleRunner for crate::rules::vue::valid_define_props::ValidDefineProps {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
