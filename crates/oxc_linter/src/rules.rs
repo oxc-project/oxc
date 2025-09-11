@@ -626,6 +626,7 @@ pub(crate) mod node {
 pub(crate) mod vue {
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
+    pub mod no_multiple_slot_args;
     pub mod valid_define_emits;
     pub mod valid_define_props;
 }
@@ -1207,6 +1208,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::require_local_test_context_for_concurrent_snapshots,
     vue::define_emits_declaration,
     vue::define_props_declaration,
+    vue::no_multiple_slot_args,
     vue::valid_define_emits,
     vue::valid_define_props,
 }

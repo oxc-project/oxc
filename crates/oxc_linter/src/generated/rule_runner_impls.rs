@@ -2445,6 +2445,10 @@ impl RuleRunner for crate::rules::vue::define_props_declaration::DefinePropsDecl
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::vue::valid_define_emits::ValidDefineEmits {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
