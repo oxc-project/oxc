@@ -389,14 +389,18 @@ impl<'a> SourcemapBuilder<'a> {
                             // `chunk_byte_offset` is now the offset of *end* of the line break.
                             line_byte_offset += chunk_byte_offset;
 
-                            // Record column offsets
-                            // Use mem::take to avoid clone - moves columns out and replaces with empty Vec
+                            // Record column offsets.
+                            // `columns.clone().into_boxed_slice()` does perform an allocation,
+                            // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
+                            // so `Vec::into_boxed_slice` just drops the `capacity` field,
+                            // and does not need to reallocate again.
+                            // `columns` is reused for next line, and will grow adaptively depending on
+                            // how heavily the file uses unicode chars.
                             column_offsets.push(ColumnOffsets {
                                 byte_offset_to_first: byte_offset_from_line_start,
-                                columns: std::mem::take(&mut columns).into_boxed_slice(),
+                                columns: columns.clone().into_boxed_slice(),
                             });
-                            // Reserve capacity for next line to avoid reallocation
-                            columns.reserve(256);
+                            columns.clear();
 
                             // Revert back to outer loop for next line
                             continue 'lines;
