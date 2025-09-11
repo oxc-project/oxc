@@ -139,6 +139,9 @@ impl Walk {
         let mut builder = WalkBuilder { sender };
         self.inner.visit(&mut builder);
         drop(builder);
-        receiver.into_iter().flatten().collect()
+
+        let mut entries: Vec<WalkEntry> = receiver.into_iter().flatten().collect();
+        entries.sort_unstable_by(|a, b| a.path.cmp(&b.path));
+        entries
     }
 }
