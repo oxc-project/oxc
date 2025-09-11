@@ -74,7 +74,7 @@
 
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../dist/parser/generated/lazy/types.mjs';
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/parser/generated/lazy/types.mjs';
 import { assertIs } from './utils.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
