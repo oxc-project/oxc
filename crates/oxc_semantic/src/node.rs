@@ -11,6 +11,9 @@ use oxc_syntax::{
     scope::ScopeId,
 };
 
+#[cfg(not(feature = "full_ast_nodes"))]
+use rustc_hash::FxHashMap;
+
 use crate::ast_types_bitset::AstTypesBitset;
 
 /// Semantic node contains all the semantic information about an ast node.
@@ -43,7 +46,7 @@ impl<'a> AstNode<'a> {
         Self { id, kind, scope_id, cfg_id, flags }
     }
 
-    #[cfg(not(feature = "cfg"))]
+    #[cfg(all(not(feature = "cfg"), feature = "full_ast_nodes"))]
     pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
@@ -115,7 +118,14 @@ impl GetAddress for AstNode<'_> {
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug, Default)]
 pub struct AstNodes<'a> {
+    #[cfg(feature = "full_ast_nodes")]
     nodes: IndexVec<NodeId, AstNode<'a>>,
+
+    #[cfg(not(feature = "full_ast_nodes"))]
+    parent_stack: Vec<NodeId>,
+    #[cfg(not(feature = "full_ast_nodes"))]
+    kinds: FxHashMap<NodeId, AstKind<'a>>,
+
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
     /// Stores a set of bits of a fixed size, where each bit represents a single [`AstKind`]. If the bit is set (1),
@@ -126,20 +136,38 @@ pub struct AstNodes<'a> {
 
 impl<'a> AstNodes<'a> {
     /// Iterate over all [`AstNode`]s in this AST.
+    #[cfg(feature = "full_ast_nodes")]
     pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
         self.nodes.iter()
     }
 
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+        std::iter::empty()
+    }
+
     /// Returns the number of node in this AST.
     #[inline]
+    #[cfg(feature = "full_ast_nodes")]
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
 
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn len(&self) -> usize {
+        self.parent_ids.len()
+    }
+
     /// Returns `true` if there are no nodes in this AST.
     #[inline]
+    #[cfg(feature = "full_ast_nodes")]
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
+    }
+
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn is_empty(&self) -> bool {
+        self.parent_ids.is_empty()
     }
 
     /// Walk up the AST, iterating over each parent [`NodeId`].
@@ -174,8 +202,14 @@ impl<'a> AstNodes<'a> {
 
     /// Access the underlying struct from [`oxc_ast`].
     #[inline]
+    #[cfg(feature = "full_ast_nodes")]
     pub fn kind(&self, node_id: NodeId) -> AstKind<'a> {
         self.nodes[node_id].kind
+    }
+
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn kind(&self, node_id: NodeId) -> AstKind<'a> {
+        *self.kinds.get(&node_id).expect("NodeId not found in kinds map")
     }
 
     /// Get id of this node's parent.
@@ -190,22 +224,41 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get a reference to a node's parent.
+    #[cfg(feature = "full_ast_nodes")]
     pub fn parent_node(&self, node_id: NodeId) -> &AstNode<'a> {
         self.get_node(self.parent_id(node_id))
     }
 
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn parent_node(&self, _node_id: NodeId) -> &AstNode<'a> {
+        panic!("parent_node requires the 'full_ast_nodes' feature to be enabled")
+    }
+
     #[inline]
+    #[cfg(feature = "full_ast_nodes")]
     pub fn get_node(&self, node_id: NodeId) -> &AstNode<'a> {
         &self.nodes[node_id]
     }
 
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn get_node(&self, _node_id: NodeId) -> &AstNode<'a> {
+        panic!("get_node requires the 'full_ast_nodes' feature to be enabled")
+    }
+
     #[inline]
+    #[cfg(feature = "full_ast_nodes")]
     pub fn get_node_mut(&mut self, node_id: NodeId) -> &mut AstNode<'a> {
         &mut self.nodes[node_id]
     }
 
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn get_node_mut(&mut self, _node_id: NodeId) -> &mut AstNode<'a> {
+        panic!("get_node_mut requires the 'full_ast_nodes' feature to be enabled")
+    }
+
     /// Get the [`Program`] that's also the root of the AST.
     #[inline]
+    #[cfg(feature = "full_ast_nodes")]
     pub fn program(&self) -> &'a Program<'a> {
         if let Some(node) = self.nodes.first() {
             if let AstKind::Program(program) = node.kind {
@@ -216,13 +269,21 @@ impl<'a> AstNodes<'a> {
         unreachable!();
     }
 
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn program(&self) -> &'a Program<'a> {
+        if let Some(AstKind::Program(program)) = self.kinds.get(&NodeId::ROOT) {
+            return program;
+        }
+        unreachable!();
+    }
+
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
     /// Node must not be [`Program`]; if it is, use [`add_program_node`] instead.
     ///
     /// [`Program`]: oxc_ast::ast::Program
     /// [`add_program_node`]: AstNodes::add_program_node
     #[inline]
-    #[cfg(feature = "cfg")]
+    #[cfg(all(feature = "cfg", feature = "full_ast_nodes"))]
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
@@ -239,7 +300,24 @@ impl<'a> AstNodes<'a> {
     }
 
     #[inline]
-    #[cfg(not(feature = "cfg"))]
+    #[cfg(all(feature = "cfg", not(feature = "full_ast_nodes")))]
+    pub fn add_node(
+        &mut self,
+        kind: AstKind<'a>,
+        _scope_id: ScopeId,
+        parent_node_id: NodeId,
+        _cfg_id: BlockNodeId,
+        _flags: NodeFlags,
+    ) -> NodeId {
+        let node_id = self.parent_ids.push(parent_node_id);
+        self.parent_stack.push(node_id);
+        self.kinds.insert(node_id, kind);
+        self.node_kinds_set.set(kind.ty());
+        node_id
+    }
+
+    #[inline]
+    #[cfg(all(not(feature = "cfg"), feature = "full_ast_nodes"))]
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
@@ -255,12 +333,29 @@ impl<'a> AstNodes<'a> {
         node_id
     }
 
+    #[inline]
+    #[cfg(all(not(feature = "cfg"), not(feature = "full_ast_nodes")))]
+    pub fn add_node(
+        &mut self,
+        kind: AstKind<'a>,
+        _scope_id: ScopeId,
+        parent_node_id: NodeId,
+        _cfg_id: (),
+        _flags: NodeFlags,
+    ) -> NodeId {
+        let node_id = self.parent_ids.push(parent_node_id);
+        self.parent_stack.push(node_id);
+        self.kinds.insert(node_id, kind);
+        self.node_kinds_set.set(kind.ty());
+        node_id
+    }
+
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
     ///
     /// # Panics
     ///
     /// Panics if this is not the first node being added to the AST.
-    #[cfg(feature = "cfg")]
+    #[cfg(all(feature = "cfg", feature = "full_ast_nodes"))]
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
@@ -279,7 +374,27 @@ impl<'a> AstNodes<'a> {
         NodeId::ROOT
     }
 
-    #[cfg(not(feature = "cfg"))]
+    #[cfg(all(feature = "cfg", not(feature = "full_ast_nodes")))]
+    pub fn add_program_node(
+        &mut self,
+        kind: AstKind<'a>,
+        _scope_id: ScopeId,
+        _cfg_id: BlockNodeId,
+        _flags: NodeFlags,
+    ) -> NodeId {
+        assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
+        debug_assert!(
+            matches!(kind, AstKind::Program(_)),
+            "Program node must be of kind `AstKind::Program`"
+        );
+        self.parent_ids.push(NodeId::ROOT);
+        self.parent_stack.push(NodeId::ROOT);
+        self.kinds.insert(NodeId::ROOT, kind);
+        self.node_kinds_set.set(AstType::Program);
+        NodeId::ROOT
+    }
+
+    #[cfg(all(not(feature = "cfg"), feature = "full_ast_nodes"))]
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
@@ -298,10 +413,44 @@ impl<'a> AstNodes<'a> {
         NodeId::ROOT
     }
 
+    #[cfg(all(not(feature = "cfg"), not(feature = "full_ast_nodes")))]
+    pub fn add_program_node(
+        &mut self,
+        kind: AstKind<'a>,
+        _scope_id: ScopeId,
+        _cfg_id: (),
+        _flags: NodeFlags,
+    ) -> NodeId {
+        assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
+        debug_assert!(
+            matches!(kind, AstKind::Program(_)),
+            "Program node must be of kind `AstKind::Program`"
+        );
+        self.parent_ids.push(NodeId::ROOT);
+        self.parent_stack.push(NodeId::ROOT);
+        self.kinds.insert(NodeId::ROOT, kind);
+        self.node_kinds_set.set(AstType::Program);
+        NodeId::ROOT
+    }
+
     /// Reserve space for at least `additional` more nodes.
     pub fn reserve(&mut self, additional: usize) {
+        #[cfg(feature = "full_ast_nodes")]
         self.nodes.reserve(additional);
+
+        #[cfg(not(feature = "full_ast_nodes"))]
+        {
+            self.parent_stack.reserve(additional);
+            self.kinds.reserve(additional);
+        }
+
         self.parent_ids.reserve(additional);
+    }
+
+    /// Pop the last node from the parent stack (used only in parent stack mode)
+    #[cfg(not(feature = "full_ast_nodes"))]
+    pub fn pop_parent_stack(&mut self) {
+        self.parent_stack.pop();
     }
 
     /// Checks if the AST contains any nodes of the given types.
@@ -374,12 +523,23 @@ impl<'a> AstNodes<'a> {
     }
 }
 
+#[cfg(feature = "full_ast_nodes")]
 impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
     type IntoIter = std::slice::Iter<'n, AstNode<'a>>;
     type Item = &'n AstNode<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.nodes.iter()
+    }
+}
+
+#[cfg(not(feature = "full_ast_nodes"))]
+impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
+    type IntoIter = std::iter::Empty<&'n AstNode<'a>>;
+    type Item = &'n AstNode<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        std::iter::empty()
     }
 }
 

@@ -40,7 +40,7 @@ oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
-oxc_semantic = { workspace = true, features = ["cfg"] }
+oxc_semantic = { workspace = true, features = ["cfg", "full_ast_nodes"] }
 oxc_span = { workspace = true, features = ["schemars", "serialize"] }
 oxc_syntax = { workspace = true, features = ["serialize"] }
 
