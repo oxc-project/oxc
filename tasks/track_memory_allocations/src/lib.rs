@@ -9,7 +9,9 @@ use mimalloc_safe::MiMalloc;
 use oxc_allocator::Allocator;
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::{ParseOptions, Parser};
+use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::{TestFiles, project_root};
+use oxc_transformer::{TransformOptions, Transformer};
 
 use std::alloc::{GlobalAlloc, Layout};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
@@ -145,10 +147,15 @@ pub fn run() -> Result<(), io::Error> {
         let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
             .with_options(parse_options)
             .parse();
-        // Minifier cannot process TypeScript
-        if file.source_type.is_javascript() {
-            Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
-        }
+
+        // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
+        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let _ =
+            Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
+                .build_with_scoping(scoping, &mut parsed.program);
+
+        Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
     }
 
     for file in files.files() {
@@ -171,12 +178,14 @@ pub fn run() -> Result<(), io::Error> {
             width,
         ));
 
-        let before_minify_stats = record_stats(&allocator);
+        // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
+        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+        let transform_options = TransformOptions::from_target("esnext").unwrap();
+        let _ =
+            Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
+                .build_with_scoping(scoping, &mut parsed.program);
 
-        // Minifier cannot process TypeScript
-        if !file.source_type.is_javascript() {
-            continue;
-        }
+        let before_minify_stats = record_stats(&allocator);
 
         Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
 

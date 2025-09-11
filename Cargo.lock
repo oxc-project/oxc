@@ -2405,7 +2405,9 @@ dependencies = [
  "oxc_allocator",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_tasks_common",
+ "oxc_transformer",
 ]
 
 [[package]]
