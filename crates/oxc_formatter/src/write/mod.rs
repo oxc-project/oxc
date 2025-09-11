@@ -590,6 +590,41 @@ impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
     }
 }
 
+/// Formats comments that appear before empty statements in control structures.
+///
+/// Example:
+/// ```js
+/// // Input:
+/// for (init;;) /* comment */ ;
+/// for (init;;update) /* comment */ ;
+/// for (init of iterable) /* comment */ ;
+/// for (init in iterable) /* comment */ ;
+/// while (test) /* comment */ ;
+/// if (test) /* comment */ ;
+///
+/// // Output:
+/// for (init /* comment */;; );
+/// for (init; ; update /* comment */);
+/// for (init of iterable /* comment */) ;
+/// for (init in iterable /* comment */) ;
+/// while (test /* comment */) ;
+/// if (test /* comment */) ;
+/// ```
+///
+/// This ensures compatibility with [Prettier's comment handling for empty statements](https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/printer-methods.js#L15).
+struct FormatCommentForEmptyStatement<'a, 'b>(&'b AstNode<'a, Statement<'a>>);
+impl<'a> Format<'a> for FormatCommentForEmptyStatement<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if let AstNodes::EmptyStatement(empty) = self.0.as_ast_nodes() {
+            let comments = f.context().comments().comments_before(empty.span.start);
+            FormatTrailingComments::Comments(comments).fmt(f)?;
+            empty.format_trailing_comments(f)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(
@@ -598,7 +633,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
                 "while",
                 space(),
                 "(",
-                group(&soft_block_indent(self.test())),
+                group(&soft_block_indent(&format_args!(
+                    &self.test(),
+                    FormatCommentForEmptyStatement(self.body())
+                ))),
                 ")",
                 FormatStatementBody::new(self.body())
             ))
@@ -639,12 +677,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
                     "(",
                     group(&soft_block_indent(&format_args!(
                         init,
+                        (test.is_none() && update.is_none())
+                            .then_some(FormatCommentForEmptyStatement(body)),
                         ";",
                         soft_line_break_or_space(),
                         test,
+                        (update.is_none()).then_some(FormatCommentForEmptyStatement(body)),
                         ";",
                         soft_line_break_or_space(),
-                        update
+                        update,
+                        FormatCommentForEmptyStatement(body)
                     ))),
                     ")",
                     format_body
@@ -658,6 +700,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+        let body = self.body();
         write!(
             f,
             [
@@ -671,8 +714,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
                     "in",
                     space(),
                     self.right(),
+                    FormatCommentForEmptyStatement(body),
                     ")",
-                    FormatStatementBody::new(self.body())
+                    FormatStatementBody::new(body)
                 ))
             ]
         )
@@ -702,6 +746,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
                     "of",
                     space(),
                     right,
+                    FormatCommentForEmptyStatement(body),
                     ")",
                     FormatStatementBody::new(body)
                 ]
@@ -716,13 +761,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
         let test = self.test();
         let consequent = self.consequent();
         let alternate = self.alternate();
+
         write!(
             f,
             group(&format_args!(
                 "if",
                 space(),
                 "(",
-                group(&soft_block_indent(&test)),
+                group(&soft_block_indent(&format_args!(
+                    &test,
+                    FormatCommentForEmptyStatement(consequent)
+                ))),
                 ")",
                 FormatStatementBody::new(consequent),
             ))
@@ -801,6 +850,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let format_comment_for_empty_body = format_with(|f| {
+            if let Statement::EmptyStatement(empty) = &self.body {
+                let comments = f.context().comments().comments_before(empty.span.start);
+                FormatTrailingComments::Comments(comments).fmt(f)?;
+            }
+            Ok(())
+        });
+
         write!(
             f,
             group(&format_args!(

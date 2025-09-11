@@ -270,20 +270,6 @@ impl<'a> Comments<'a> {
         preceding_node: &SiblingNode<'a>,
         mut following_node: Option<&SiblingNode<'a>>,
     ) -> &'a [Comment] {
-        if !matches!(
-            enclosing_node,
-            SiblingNode::Program(_)
-                | SiblingNode::BlockStatement(_)
-                | SiblingNode::FunctionBody(_)
-                | SiblingNode::TSModuleBlock(_)
-                | SiblingNode::SwitchStatement(_)
-                | SiblingNode::StaticBlock(_)
-        ) && matches!(following_node, Some(SiblingNode::EmptyStatement(_)))
-        {
-            let enclosing_span = enclosing_node.span();
-            return self.comments_before(enclosing_span.end);
-        }
-
         let comments = self.unprinted_comments();
         if comments.is_empty() {
             return &[];
