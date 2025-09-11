@@ -1605,19 +1605,18 @@ impl Gen for ObjectProperty<'_> {
             }
         }
 
-        if computed {
-            p.print_ascii_byte(b'[');
-        }
         if !shorthand {
+            if computed {
+                p.print_ascii_byte(b'[');
+            }
             self.key.print(p, ctx);
-        }
-        if computed {
-            p.print_ascii_byte(b']');
-        }
-        if !shorthand {
+            if computed {
+                p.print_ascii_byte(b']');
+            }
             p.print_colon();
             p.print_soft_space();
         }
+
         self.value.print_expr(p, Precedence::Comma, Context::empty());
     }
 }
@@ -2800,10 +2799,6 @@ impl Gen for ObjectPattern<'_> {
 
 impl Gen for BindingProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.computed {
-            p.print_ascii_byte(b'[');
-        }
-
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
             match &self.value.kind {
@@ -2826,15 +2821,17 @@ impl Gen for BindingProperty<'_> {
         }
 
         if !shorthand {
+            if self.computed {
+                p.print_ascii_byte(b'[');
+            }
             self.key.print(p, ctx);
-        }
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
-        if !shorthand {
+            if self.computed {
+                p.print_ascii_byte(b']');
+            }
             p.print_colon();
             p.print_soft_space();
         }
+
         self.value.print(p, ctx);
     }
 }
