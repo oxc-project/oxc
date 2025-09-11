@@ -308,7 +308,8 @@ impl<'a> SourcemapBuilder<'a> {
         let mut column_offsets = IndexVec::new();
 
         // Used as a buffer to reduce memory reallocations
-        let mut columns = vec![];
+        // Pre-allocate with reasonable capacity to avoid frequent reallocations
+        let mut columns = Vec::with_capacity(256);
 
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
@@ -389,11 +390,13 @@ impl<'a> SourcemapBuilder<'a> {
                             line_byte_offset += chunk_byte_offset;
 
                             // Record column offsets
+                            // Use mem::take to avoid clone - moves columns out and replaces with empty Vec
                             column_offsets.push(ColumnOffsets {
                                 byte_offset_to_first: byte_offset_from_line_start,
-                                columns: columns.clone().into_boxed_slice(),
+                                columns: std::mem::take(&mut columns).into_boxed_slice(),
                             });
-                            columns.clear();
+                            // Reserve capacity for next line to avoid reallocation
+                            columns.reserve(256);
 
                             // Revert back to outer loop for next line
                             continue 'lines;
