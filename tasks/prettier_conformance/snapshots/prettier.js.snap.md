@@ -1,4 +1,4 @@
-js compatibility: 658/699 (94.13%)
+js compatibility: 660/699 (94.42%)
 
 # Failed
 
@@ -21,8 +21,6 @@ js compatibility: 658/699 (94.13%)
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
-| js/import-assertions/keyword-detect.js | 💥 | 71.43% |
-| js/import-attributes/keyword-detect.js | 💥 | 71.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |

@@ -5,7 +5,10 @@ use oxc_span::GetSpan;
 use crate::{
     FormatResult, FormatTrailingCommas,
     formatter::{
-        Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
+        Formatter,
+        prelude::*,
+        separated::FormatSeparatedIter,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
@@ -96,23 +99,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
             write!(f, decl)?;
         } else {
             self.format_leading_comments(f)?;
-            write!(f, ["export", space()])?;
+            write!(f, ["export", space(), export_kind])?;
 
             let comments = f.context().comments().comments_before_character(self.span.start, b'{');
             write!(f, [FormatLeadingComments::Comments(comments), export_kind, "{"])?;
+
+            let needs_space = f.options().bracket_spacing.value();
             if specifiers.is_empty() {
                 write!(f, [format_dangling_comments(self.span).with_block_indent()])?;
+            } else if specifiers.len() == 1
+                && f.comments().comments_before_character(self.span.start, b'}').is_empty()
+            {
+                let space = maybe_space(needs_space).memoized();
+                write!(f, [space, specifiers.first(), space])?;
             } else {
-                let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-                write!(
-                    f,
-                    group(&soft_block_indent_with_maybe_space(
-                        &specifiers,
-                        should_insert_space_around_brackets
-                    ))
-                )?;
+                write!(f, group(&soft_block_indent_with_maybe_space(&specifiers, needs_space)))?;
             }
-            write!(f, [export_kind, "}"])?;
+            write!(f, ["}"])?;
 
             if let Some(source) = source {
                 write!(f, [space(), "from", space(), source])?;
@@ -173,9 +176,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
 
         write!(f, [self.export_kind()]);
         if self.local.span() == self.exported.span() {
-            write!(f, self.exported())
+            write!(f, self.exported())?;
         } else {
-            write!(f, [self.local(), space(), "as", space(), self.exported()])
+            write!(f, [self.local(), space(), "as", space(), self.exported()])?;
+        }
+
+        if f.source_text().next_non_whitespace_byte_is(self.span.end, b'}') {
+            // `export { a as b /* comment */ } from 'mod'
+            //                  ^^^^^^^^^^^^ get comments that before `}` to print
+            let comments = f.context().comments().comments_before_character(self.span.end, b'}');
+            write!(f, [FormatTrailingComments::Comments(comments)])
+        } else {
+            self.format_trailing_comments(f)
         }
     }
 }
