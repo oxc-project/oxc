@@ -62,6 +62,15 @@ pub fn lint(mut external_linter: Option<ExternalLinter>) -> CliRunResult {
             eprintln!("ERROR: JS plugins are not supported at present");
             return CliRunResult::InvalidOptionConfig;
         }
+
+        // Exit early if not 64-bit little-endian, to avoid a panic later on when trying to create
+        // a fixed-size allocator for raw transfer
+        if cfg!(not(all(target_pointer_width = "64", target_endian = "little"))) {
+            eprintln!(
+                "ERROR: JS plugins are only supported on 64-bit little-endian platforms at present"
+            );
+            return CliRunResult::InvalidOptionConfig;
+        }
     } else {
         external_linter = None;
     }
