@@ -365,6 +365,7 @@ fn test() {
         r"new RegExp(`${prefix}\\1(a)`)",
         r"let RegExp; new RegExp('\\1(a)');",
         r"function foo() { var RegExp; RegExp('\\1(a)', 'u'); }",
+        r"function foo() { var RegExp; RegExp('\\1(a)', `u`); }",
         r"function foo(RegExp) { new RegExp('\\1(a)'); }",
         r"if (foo) { const RegExp = bar; RegExp('\\1(a)'); }",
         // we don't support globals off yet
