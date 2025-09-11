@@ -433,28 +433,79 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Function<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, AssignmentExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self.parent {
+            // Expression statements, only object destructuring needs parens:
+            // - `a = b` = no parens
+            // - `{ x } = obj` -> `({ x } = obj)` = needed to prevent parsing as block statement
+            // - `() => { x } = obj` -> `() => ({ x } = obj)` = needed in arrow function body
+            // - `() => a = b` -> `() => (a = b)` = also parens needed
             AstNodes::ExpressionStatement(parent) => {
                 let parent_parent = parent.parent;
                 if let AstNodes::FunctionBody(body) = parent_parent {
                     let parent_parent_parent = body.parent;
-                    matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression())
-                } else {
-                    is_first_in_statement(
+                    if matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression())
+                    {
+                        return true;
+                    }
+                }
+                matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
+                    && is_first_in_statement(
                         self.span,
                         self.parent,
                         FirstInStatementMode::ExpressionStatementOrArrow,
-                    ) && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
-                }
+                    )
             }
+            // Sequence expressions, need to traverse up to find if we're in a for statement context:
+            // - `a = 1, b = 2` in for loops don't need parens
+            // - `(a = 1, b = 2)` elsewhere usually need parens
             AstNodes::SequenceExpression(sequence) => {
-                !matches!(sequence.parent, AstNodes::ForStatement(_))
+                let mut current_parent = self.parent;
+                loop {
+                    match current_parent {
+                        AstNodes::SequenceExpression(_) | AstNodes::ParenthesizedExpression(_) => {
+                            current_parent = current_parent.parent();
+                        }
+                        AstNodes::ForStatement(for_stmt) => {
+                            let is_initializer = for_stmt
+                                .init
+                                .as_ref()
+                                .is_some_and(|init| init.span().contains_inclusive(self.span()));
+                            let is_update = for_stmt.update.as_ref().is_some_and(|update| {
+                                update.span().contains_inclusive(self.span())
+                            });
+                            return !(is_initializer || is_update);
+                        }
+                        _ => break,
+                    }
+                }
+                true
             }
-            AstNodes::AssignmentExpression(_) | AstNodes::ComputedMemberExpression(_) => false,
-            AstNodes::ForStatement(stmt)
-                if stmt.init.as_ref().is_some_and(|init| init.span() == self.span()) =>
-            {
-                false
+            // Never need parentheses in these contexts:
+            // - `a = (b = c)` = nested assignments don't need extra parens
+            AstNodes::AssignmentExpression(_) => false,
+            // Computed member expressions: need parens when assignment is the object
+            // - `obj[a = b]` = no parens needed for property
+            // - `(a = b)[obj]` = parens needed for object
+            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
+            // For statements, no parens needed in initializer or update sections:
+            // - `for (a = 1; ...; a = 2) {}` = both assignments don't need parens
+            AstNodes::ForStatement(stmt) => {
+                let is_initializer =
+                    stmt.init.as_ref().is_some_and(|init| init.span() == self.span());
+                let is_update =
+                    stmt.update.as_ref().is_some_and(|update| update.span() == self.span());
+                !(is_initializer || is_update)
             }
+            // Arrow functions, only need parens if assignment is the direct body:
+            // - `() => a = b` -> `() => (a = b)` = needed
+            // - `() => someFunc(a = b)` = no extra parens needed
+            AstNodes::ArrowFunctionExpression(arrow) => {
+                arrow.expression() && arrow.body.span() == self.span()
+            }
+            // Default: need parentheses in most other contexts
+            // - `new (a = b)`
+            // - `(a = b).prop`
+            // - `await (a = b)`
+            // - etc.
             _ => true,
         }
     }

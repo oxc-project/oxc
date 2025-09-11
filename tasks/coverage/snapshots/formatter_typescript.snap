@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 7911/8816 (89.73%)
+Positive Passed: 7923/8816 (89.87%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/addMoreCallSignaturesToBaseSignature.ts
@@ -213,8 +213,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constIndexedAcce
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constraintOfRecursivelyMappedTypeWithConditionalIsResolvable.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constructorWithParameterPropertiesAndPrivateFields.es2015.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstatiationContravariance.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualSignatureInstatiationCovariance.ts
@@ -328,10 +326,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredConditio
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/derivedInterfaceCallSignature.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/derivedTypeIncompatibleSignatures.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithDefault.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/destructuringPropertyAssignmentNameIsNotAssignmentTarget.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/discriminantNarrowingCouldBeCircular.ts
 
@@ -775,11 +769,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noInferUnionExce
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noUncheckedIndexAccess.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noUnusedLocals_destructuringAssignment.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noUnusedLocals_selfReference.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noUnusedLocals_writeOnly.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nonConflictingRecursiveBaseTypeMembers.ts
 
@@ -1059,23 +1049,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/ambient/ambie
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientEnumDeclaration2.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuperConflict_es6.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncMethodWithSuper_es2017.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es2017/awaitInheritedPromise_es2017.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es5/asyncMethodWithSuper_es5.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncMethodWithSuper_es6.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/mergedInheritedClassInterface.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldDestructuredBinding.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameInInExpressionUnused.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDestructuredBinding.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesAssertion.ts
 
@@ -1156,8 +1134,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedP
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames7_ES6.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringArrayBindingPatternAndAssignment2.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment5.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment7.ts
 
