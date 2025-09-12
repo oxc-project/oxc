@@ -52,7 +52,7 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                 {
                     filler.entry(
                         &format_once(|f| {
-                            if get_lines_before(element.span(), f) > 1 {
+                            if f.source_text().get_lines_before(element.span(), f.comments()) > 1 {
                                 write!(f, empty_line())
                             } else if f
                                 .comments()

@@ -172,7 +172,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     if property.shorthand {
                         Ok(false)
                     } else {
-                        Ok(property.key.span().source_text(f.source_text()).width() + 2
+                        Ok(f.source_text().span_width(property.key.span()) + 2
                             < text_width_for_break)
                     }
                 } else if property.shorthand {
@@ -534,7 +534,7 @@ fn should_break_after_operator<'a>(
 
     for comment in f.comments().comments_before(right.span().start) {
         if !is_jsx
-            && (get_lines_after(comment.span.end, f.source_text()) > 0
+            && (f.source_text().lines_after(comment.span.end) > 0
                 || is_own_line_comment(comment, f.source_text()))
         {
             return true;
@@ -837,7 +837,7 @@ fn is_short_argument(argument: &Argument, threshold: u16, f: &Formatter) -> bool
         Argument::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
         Argument::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
-                literal.span.source_text(f.source_text()),
+                f.source_text().text_for(literal.as_ref()),
                 literal.span,
                 false,
                 StringLiteralParentKind::Expression,

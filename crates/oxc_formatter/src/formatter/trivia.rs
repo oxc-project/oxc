@@ -13,7 +13,7 @@ use crate::{
     write,
 };
 
-use super::{Argument, Arguments, GroupId, SyntaxToken, prelude::*};
+use super::{Argument, Arguments, GroupId, SourceText, SyntaxToken, prelude::*};
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -33,13 +33,13 @@ use super::{Argument, Arguments, GroupId, SyntaxToken, prelude::*};
 fn should_nestle_adjacent_doc_comments(
     current: &Comment,
     next: &Comment,
-    source_text: &str,
+    source_text: SourceText,
 ) -> bool {
     matches!(current.content, CommentContent::Jsdoc)
         && matches!(next.content, CommentContent::Jsdoc)
         && current.span.end == next.span.start
-        && current.span.source_text(source_text).contains('\n')
-        && next.span.source_text(source_text).contains('\n')
+        && source_text.contains_newline(current.span)
+        && source_text.contains_newline(next.span)
 }
 
 /// Formats the leading comments of `node`
@@ -66,31 +66,29 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
                 write!(f, comment)?;
 
                 match comment.kind {
-                    CommentKind::Block => {
-                        match get_lines_after(comment.span.end, f.source_text()) {
-                            0 => {
-                                let should_nestle =
-                                    leading_comments_iter.peek().is_some_and(|next_comment| {
-                                        should_nestle_adjacent_doc_comments(
-                                            comment,
-                                            next_comment,
-                                            f.source_text(),
-                                        )
-                                    });
+                    CommentKind::Block => match f.source_text().lines_after(comment.span.end) {
+                        0 => {
+                            let should_nestle =
+                                leading_comments_iter.peek().is_some_and(|next_comment| {
+                                    should_nestle_adjacent_doc_comments(
+                                        comment,
+                                        next_comment,
+                                        f.source_text(),
+                                    )
+                                });
 
-                                write!(f, [maybe_space(!should_nestle)])?;
-                            }
-                            1 => {
-                                if get_lines_before(comment.span, f) == 0 {
-                                    write!(f, [soft_line_break_or_space()])?;
-                                } else {
-                                    write!(f, [hard_line_break()])?;
-                                }
-                            }
-                            _ => write!(f, [empty_line()])?,
+                            write!(f, [maybe_space(!should_nestle)])?;
                         }
-                    }
-                    CommentKind::Line => match get_lines_after(comment.span.end, f.source_text()) {
+                        1 => {
+                            if f.source_text().get_lines_before(comment.span, f.comments()) == 0 {
+                                write!(f, [soft_line_break_or_space()])?;
+                            } else {
+                                write!(f, [hard_line_break()])?;
+                            }
+                        }
+                        _ => write!(f, [empty_line()])?,
+                    },
+                    CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
                         0 | 1 => write!(f, [hard_line_break()])?,
                         _ => write!(f, [empty_line()])?,
                     },
@@ -139,7 +137,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
             for comment in comments {
                 f.context_mut().comments_mut().increment_printed_count();
 
-                let lines_before = get_lines_before(comment.span, f);
+                let lines_before = f.source_text().get_lines_before(comment.span, f.comments());
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
@@ -627,7 +625,7 @@ impl Format<'_> for FormatSkippedTokenTrivia {
 impl<'a> Format<'a> for Comment {
     #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = self.span.source_text(f.source_text()).trim_end();
+        let source_text = f.source_text().text_for(&self.span).trim_end();
         if is_alignable_comment(source_text) {
             let mut source_offset = self.span.start;
 
