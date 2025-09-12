@@ -67,6 +67,12 @@ describe('oxlint CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should report an error if a custom plugin in config but JS plugins are not enabled', async () => {
+    const { stdout, exitCode } = await runOxlintWithoutPlugins('test/fixtures/basic_custom_plugin');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should report an error if a custom plugin cannot be loaded', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/missing_custom_plugin');
     expect(exitCode).toBe(1);

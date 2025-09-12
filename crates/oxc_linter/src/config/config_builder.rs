@@ -594,11 +594,13 @@ impl Display for ConfigBuilderError {
                 write!(f, "invalid config file {file}: {reason}")
             }
             ConfigBuilderError::PluginLoadFailed { plugin_specifier, error } => {
-                write!(f, "Failed to load external plugin: {plugin_specifier}\n  {error}")?;
+                write!(f, "Failed to load JS plugin: {plugin_specifier}\n  {error}")?;
                 Ok(())
             }
             ConfigBuilderError::NoExternalLinterConfigured => {
-                f.write_str("Failed to load external plugin because no external linter was configured. This means the Oxlint binary was executed directly rather than via napi bindings.")?;
+                f.write_str(
+                    "JS plugins are not supported without `--experimental-js-plugins` CLI option",
+                )?;
                 Ok(())
             }
             ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
