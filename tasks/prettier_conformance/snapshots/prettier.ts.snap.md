@@ -1,4 +1,4 @@
-ts compatibility: 331/573 (57.77%)
+ts compatibility: 332/573 (57.94%)
 
 # Failed
 
@@ -145,7 +145,6 @@ ts compatibility: 331/573 (57.77%)
 | typescript/generic/issue-6899.ts | 💥 | 21.05% |
 | typescript/generic/object-method.ts | 💥 | 72.73% |
 | typescript/generic/ungrouped-parameters.ts | 💥 | 74.07% |
-| typescript/import-export/type-modifier.ts | 💥 | 66.67% |
 | typescript/import-type/import-type.ts | 💥💥 | 93.33% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/infer-extends/basic.ts | 💥 | 66.67% |

@@ -305,12 +305,6 @@ impl<'a> Comments<'a> {
         );
 
         let Some(following_node) = following_node else {
-            if let SiblingNode::ImportDeclaration(import) = enclosing_node
-                && import.source.span.start > preceding_span.end
-            {
-                return self.comments_before(import.source.span.start);
-            }
-
             let enclosing_span = enclosing_node.span();
             return self.comments_before(enclosing_span.end);
         };

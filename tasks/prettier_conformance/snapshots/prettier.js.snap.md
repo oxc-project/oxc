@@ -1,4 +1,4 @@
-js compatibility: 659/699 (94.28%)
+js compatibility: 662/699 (94.71%)
 
 # Failed
 
@@ -6,7 +6,6 @@ js compatibility: 659/699 (94.28%)
 | :-------- | :--------------: | :---------: |
 | js/comments/15661.js | 💥💥 | 55.81% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
-| js/comments/export.js | 💥💥 | 97.37% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/return-statement.js | 💥💥 | 98.85% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
@@ -20,8 +19,6 @@ js compatibility: 659/699 (94.28%)
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
-| js/import-assertions/keyword-detect.js | 💥 | 71.43% |
-| js/import-attributes/keyword-detect.js | 💥 | 71.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |

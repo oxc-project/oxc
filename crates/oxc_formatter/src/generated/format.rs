@@ -2496,33 +2496,39 @@ impl<'a> Format<'a> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ImportSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
+        if is_suppressed {
+            self.format_leading_comments(f)?;
+            FormatSuppressedNode(self.span()).fmt(f)?;
+            self.format_trailing_comments(f)
+        } else {
+            self.write(f)
+        }
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, ImportDefaultSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
+        if is_suppressed {
+            self.format_leading_comments(f)?;
+            FormatSuppressedNode(self.span()).fmt(f)?;
+            self.format_trailing_comments(f)
+        } else {
+            self.write(f)
+        }
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
+        if is_suppressed {
+            self.format_leading_comments(f)?;
+            FormatSuppressedNode(self.span()).fmt(f)?;
+            self.format_trailing_comments(f)
+        } else {
+            self.write(f)
+        }
     }
 }
 
@@ -2614,11 +2620,13 @@ impl<'a> Format<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ExportSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f)?;
-        let result =
-            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
-        self.format_trailing_comments(f)?;
-        result
+        if is_suppressed {
+            self.format_leading_comments(f)?;
+            FormatSuppressedNode(self.span()).fmt(f)?;
+            self.format_trailing_comments(f)
+        } else {
+            self.write(f)
+        }
     }
 }
 

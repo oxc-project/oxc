@@ -2,12 +2,10 @@ commit: 41d96516
 
 formatter_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2379/2423 (98.18%)
+Positive Passed: 2383/2423 (98.35%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/try-statement/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/regression/13750/input.js
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class/division/input.js
 
@@ -61,10 +59,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma-with-initializer-babel-7/input.ts
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type-from/input.ts
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/predicate-types/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends/input.ts
@@ -78,8 +72,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module-and-top-level/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/conditional-infer/input.ts
 

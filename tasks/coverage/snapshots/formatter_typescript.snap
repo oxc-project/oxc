@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 7922/8816 (89.86%)
+Positive Passed: 7935/8816 (90.01%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/addMoreCallSignaturesToBaseSignature.ts
@@ -316,8 +316,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitU
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationsForIndirectTypeAliasReference.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataTypeOnlyExport.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deepKeysIndexing.ts
 
@@ -1095,8 +1093,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/declarationEm
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName02.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/typeofImportTypeOnlyExport.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/1.0lib-noErrors.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorChecksFunctionBodies.ts
@@ -1317,33 +1313,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModul
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/circular1.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/circular3.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_moduleSpecifier-isolatedModules.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_value.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importsNotUsedAsValues_error.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/namespaceImportTypeQuery.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/namespaceImportTypeQuery2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/nestedNamespace.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/preserveValueImports_errors.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnlyMerge1.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxConstEnum.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxConstEnumUsage.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsESM.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/generators/generatorReturnTypeIndirectReferenceToGlobalType.ts
 
@@ -1446,8 +1422,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttrib
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxLibraryManagedAttributes.tsx
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesTripleSlashReferenceModeDeclarationEmit1.ts
 

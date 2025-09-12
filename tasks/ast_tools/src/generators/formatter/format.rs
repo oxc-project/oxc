@@ -31,6 +31,10 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "JSXFragment",
     //
     "TemplateElement",
+    "ImportSpecifier",
+    "ImportDefaultSpecifier",
+    "ImportNamespaceSpecifier",
+    "ExportSpecifier",
 ];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &["TSTypeAssertion"];
