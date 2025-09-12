@@ -96,6 +96,9 @@ impl Rule for SwitchCaseBraces {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let switch_clause_regex =
+            Regex::new(r#"(case|default)\s*(`.+`|'.+'|".+"|[^:]*):"#).unwrap();
+
         let AstKind::SwitchStatement(switch) = node.kind() else {
             return;
         };
@@ -143,9 +146,10 @@ impl Rule for SwitchCaseBraces {
             };
 
             if self.always_braces && missing_braces {
-                let regex = Regex::new(r#"(case|default)\s*(`.+`|'.+'|".+"|[^:]*):"#).unwrap();
-                let colon_end =
-                    u32::try_from(regex.find(ctx.source_range(case.span)).unwrap().end()).unwrap();
+                let colon_end = u32::try_from(
+                    switch_clause_regex.find(ctx.source_range(case.span)).unwrap().end(),
+                )
+                .unwrap();
                 let span = Span::sized(case.span.start, colon_end);
                 ctx.diagnostic_with_fix(
                     switch_case_braces_diagnostic_missing_braces(span),
