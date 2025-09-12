@@ -6,9 +6,9 @@ pub use oxc_linter::{
 };
 
 mod command;
+mod js_plugins;
 mod lint;
 mod output_formatter;
-mod raw_fs;
 mod result;
 mod tester;
 mod walk;

@@ -22,6 +22,7 @@ use oxc_linter::{
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
+    js_plugins::RawTransferFileSystem,
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -367,7 +368,6 @@ impl LintRunner {
             // Use `RawTransferFileSystem` if `ExternalLinter` exists.
             // This reads the source text into start of allocator, instead of the end.
             if has_external_linter {
-                use crate::raw_fs::RawTransferFileSystem;
                 lint_service.with_file_system(Box::new(RawTransferFileSystem));
             }
 
