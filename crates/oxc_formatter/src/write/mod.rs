@@ -1132,6 +1132,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.declare() {
+            write!(f, ["declare", space()])?;
+        }
         if self.r#const() {
             write!(f, ["const", space()])?;
         }
@@ -1163,6 +1166,10 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.id()])?;
+        if let Some(init) = self.initializer() {
+            write!(f, [space(), "=", space(), init])?;
+        }
         Ok(())
     }
 }
