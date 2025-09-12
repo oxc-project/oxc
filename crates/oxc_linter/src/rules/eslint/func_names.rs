@@ -1,9 +1,10 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     AstKind,
-    ast::ObjectAssignmentTarget,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
-        FunctionType, PropertyKind,
+        FunctionType, ObjectAssignmentTarget, PropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -11,10 +12,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
-use std::borrow::Cow;
 
-use crate::fixer::{RuleFix, RuleFixer};
-use crate::{AstNode, ast_util::get_function_name_with_kind, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::get_function_name_with_kind,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected named {function_name}."))
@@ -242,12 +247,7 @@ impl FuncNames {
                 // check if the calling function is inside its own body
                 // then, remove it from invalid_functions because recursion are always named
                 AstKind::CallExpression(expression) => {
-                    retain_recursive_function_from_invalid_functions(
-                        &mut invalid_functions,
-                        expression,
-                        node,
-                        ctx,
-                    );
+                    remove_recursive_functions(&mut invalid_functions, expression, node, ctx);
                 }
                 _ => {}
             }
@@ -280,7 +280,7 @@ impl Rule for FuncNames {
     }
 }
 
-fn retain_recursive_function_from_invalid_functions(
+fn remove_recursive_functions(
     invalid_functions: &mut Vec<(&Function, &AstNode, &AstNode)>,
     expression: &oxc_ast::ast::CallExpression,
     node: &AstNode,
@@ -363,16 +363,17 @@ fn is_object_or_class_method(parent_node: &AstNode) -> bool {
     }
 }
 
-fn does_object_assignment_target_have_name(target: &ObjectAssignmentTarget) -> bool {
+fn has_object_assignment_target_name<'a>(
+    target: &ObjectAssignmentTarget<'a>,
+    function: &Function<'a>,
+) -> bool {
     target.properties.iter().any(|property| {
-        matches!(
-            property,
-            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier)
-                if matches!(
-                    identifier.init,
-                    Some(Expression::FunctionExpression(_))
-                )
-        )
+        if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) = property {
+            if let Some(Expression::FunctionExpression(func_expr)) = &identifier.init {
+                return get_function_identifier(func_expr) == get_function_identifier(function);
+            }
+        }
+        false
     })
 }
 
@@ -407,7 +408,9 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
         AstKind::AssignmentTargetPropertyIdentifier(ident) => {
             ident.init.as_ref().is_some_and(|expr| is_same_function(expr, function))
         }
-        AstKind::ObjectAssignmentTarget(target) => does_object_assignment_target_have_name(target),
+        AstKind::ObjectAssignmentTarget(target) => {
+            has_object_assignment_target_name(target, function)
+        }
         _ => false,
     }
 }
