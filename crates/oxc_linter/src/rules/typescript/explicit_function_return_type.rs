@@ -207,7 +207,7 @@ impl Rule for ExplicitFunctionReturnType {
                     }
                 }
 
-                if let Some(parent) = get_parent_node(node, ctx) {
+                if let Some(parent) = outermost_paren_parent(node, ctx) {
                     match parent.kind() {
                         AstKind::MethodDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
@@ -276,7 +276,7 @@ impl Rule for ExplicitFunctionReturnType {
                     return;
                 }
 
-                if let Some(parent) = get_parent_node(node, ctx) {
+                if let Some(parent) = outermost_paren_parent(node, ctx) {
                     match parent.kind() {
                         AstKind::MethodDefinition(def) => {
                             ctx.diagnostic(explicit_function_return_type_diagnostic(Span::new(
@@ -370,7 +370,7 @@ impl ExplicitFunctionReturnType {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let Some(parent) = get_parent_node(node, ctx) else { return false };
+        let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
         match parent.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
@@ -528,19 +528,8 @@ fn is_setter(node: &AstNode) -> bool {
     }
 }
 
-fn get_parent_node<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
-    let parent = outermost_paren_parent(node, ctx)?;
-    match parent.kind() {
-        AstKind::Argument(_) => outermost_paren_parent(parent, ctx),
-        _ => Some(parent),
-    }
-}
-
 fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = get_parent_node(node, ctx) else { return false };
+    let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
     is_typed_parent(parent, Some(node))
         || is_property_of_object_with_type(parent, ctx)
         || is_constructor_argument(parent)
@@ -624,7 +613,7 @@ fn is_function(expr: &Expression) -> bool {
 }
 
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = get_parent_node(node, ctx) else { return false };
+    let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
     if let AstKind::ObjectProperty(prop) = parent.kind() {
         if let Expression::ArrowFunctionExpression(func) = &prop.value {
@@ -732,7 +721,7 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
         return false;
     }
-    let Some(obj_expr_parent) = get_parent_node(parent, ctx) else {
+    let Some(obj_expr_parent) = outermost_paren_parent(parent, ctx) else {
         return false;
     };
     is_typed_parent(obj_expr_parent, None) || is_property_of_object_with_type(obj_expr_parent, ctx)

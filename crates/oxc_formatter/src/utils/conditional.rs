@@ -353,9 +353,20 @@ impl<'a> FormatConditionalLike<'a, '_> {
 
     /// Checks if any part of the conditional has multiline comments
     #[inline]
-    fn has_multiline_comment(&self, _f: &Formatter<'_, 'a>) -> bool {
-        // TODO: Implement multiline comment detection
-        false
+    fn has_multiline_comment(&self, f: &Formatter<'_, 'a>) -> bool {
+        let span = self.span();
+
+        // Check for any comments in the conditional span and check if they contain newlines
+        f.comments().has_comment_in_span(span) && {
+            let source_text = f.source_text();
+            let start = span.start as usize;
+            let end = span.end as usize;
+            if start < source_text.len() && end <= source_text.len() {
+                source_text[start..end].contains("/*") && source_text[start..end].contains('\n')
+            } else {
+                false
+            }
+        }
     }
 
     /// Returns `true` if this is the root conditional expression and the parent is a [`StaticMemberExpression`].

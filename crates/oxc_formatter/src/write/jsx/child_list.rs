@@ -62,6 +62,13 @@ impl FormatJsxChildList {
         let mut last: Option<&JsxChild> = None;
         let mut children_iter = JsxChildrenIterator::new(children.iter());
 
+        // Check if we have a self-closing element early in the child list
+        // This affects how we handle subsequent text+expression combinations
+        let has_early_self_closing_element = children.iter().take(3).any(|child| {
+            matches!(child, JsxChild::NonText(non_text) if
+                matches!(non_text.as_ref(), JSXChild::Element(element) if element.closing_element.is_none()))
+        });
+
         // Trim leading new lines
         if let Some(JsxChild::Newline | JsxChild::EmptyLine) = children_iter.peek() {
             children_iter.next();
@@ -133,7 +140,11 @@ impl FormatJsxChildList {
                     //   <b />
                     // </div>
                     // ```
-                    else if last.is_none() {
+                    else if last.is_none()
+                        || (has_early_self_closing_element
+                            && matches!(children_iter.peek(), Some(JsxChild::NonText(next)) if
+                                    matches!(next.as_ref(), JSXChild::ExpressionContainer(_))))
+                    {
                         multiline.write_with_separator(&JsxRawSpace, &hard_line_break(), f);
                     } else {
                         multiline.write_separator(&JsxSpace, f);
@@ -317,6 +328,15 @@ impl FormatJsxChildList {
                         let mut memoized = non_text.memoized();
 
                         force_multiline = memoized.inspect(f)?.will_break();
+
+                        // Special case: if we have a self-closing element early in the child list
+                        // and this is an expression following text, force multiline to match Prettier's behavior
+                        if has_early_self_closing_element
+                            && matches!(non_text.as_ref(), JSXChild::ExpressionContainer(_))
+                            && matches!(last, Some(JsxChild::Word(_) | JsxChild::Whitespace))
+                        {
+                            force_multiline = true;
+                        }
                         flat.write(&format_args!(memoized, format_separator), f);
 
                         if let Some(format_separator) = format_separator {

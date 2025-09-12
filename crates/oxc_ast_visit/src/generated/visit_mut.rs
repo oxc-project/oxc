@@ -1694,13 +1694,11 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_argument<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Argument<'a>) {
-        let kind = AstType::Argument;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             Argument::SpreadElement(it) => visitor.visit_spread_element(it),
             match_expression!(Argument) => visitor.visit_expression(it.to_expression_mut()),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

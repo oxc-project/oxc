@@ -115,6 +115,10 @@ fn layout<'a>(
 
     match first_non_static_member_ancestor {
         AstNodes::NewExpression(_) => StaticMemberLayout::NoBreak,
+        AstNodes::JSXExpressionContainer(_) => {
+            // Strategic fix: Keep member expressions inline in JSX text contexts
+            StaticMemberLayout::NoBreak
+        }
         AstNodes::AssignmentExpression(assignment) => {
             if matches!(assignment.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
                 StaticMemberLayout::BreakAfterObject

@@ -63,11 +63,8 @@ impl FormatService {
                 return;
             }
 
-            let options = FormatOptions {
-                // semicolons: "always".parse().unwrap(),
-                semicolons: "as-needed".parse().unwrap(),
-                ..FormatOptions::default()
-            };
+            let options =
+                FormatOptions { semicolons: "always".parse().unwrap(), ..FormatOptions::default() };
             let code = Formatter::new(&allocator, options).build(&ret.program);
 
             let elapsed = start_time.elapsed();

@@ -18,6 +18,23 @@ use crate::{
     write::parameter_list::has_only_simple_parameters,
 };
 
+/// Check if an arrow function is within a for statement context by traversing up the parent chain
+fn is_in_for_statement_context(arrow: &AstNode<'_, ArrowFunctionExpression<'_>>) -> bool {
+    let mut current_parent = arrow.parent;
+
+    // Traverse up the parent chain looking for a ForStatement
+    loop {
+        match current_parent {
+            AstNodes::ForStatement(_) => return true,
+            AstNodes::Program(_) => return false, // Reached root without finding ForStatement
+            _ => {
+                // Get the parent of the current node
+                current_parent = current_parent.parent();
+            }
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
@@ -200,9 +217,8 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
 
                     let should_add_soft_line = (is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        || matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(_)));
-                    // TODO: it seems no difference whether check there is a comment or not.
-                    //&& !f.context().comments().has_comments(node.syntax());
+                        || matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(_)))
+                        && !f.context().comments().has_comment_in_span(self.arrow.span);
 
                     if body_is_condition_type {
                         write!(
@@ -446,8 +462,11 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         //        () => () =>
         //          a
         //      )();
-        let is_callee =
-            matches!(head_parent, AstNodes::CallExpression(_) | AstNodes::NewExpression(_));
+        let is_callee = match head_parent {
+            AstNodes::CallExpression(call) => call.callee.span() == self.head.span(),
+            AstNodes::NewExpression(new_expr) => new_expr.callee.span() == self.head.span(),
+            _ => false,
+        };
 
         // With arrays, objects, sequence expressions, and block function bodies,
         // the opening brace gives a convenient boundary to insert a line break,
@@ -495,6 +514,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // This tracks that state and is used to prevent the insertion of
         // additional indents under `format_arrow_signatures`, then also to
         // add the outer indent under `format_inner`.
+        // Note: Call arguments should NOT get this treatment - they should format like standalone expressions
         let has_initial_indent = is_callee || is_assignment_rhs;
 
         let format_arrow_signatures = format_with(|f| {
@@ -631,12 +651,17 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
             let should_add_soft_line = matches!(head_parent, AstNodes::JSXExpressionContainer(_));
 
+            // Add extra spacing for arrow functions with block bodies in for statements
+            let in_for_statement = is_in_for_statement_context(self.head);
+            let add_for_spacing = in_for_statement && !tail.expression();
+
             if body_on_separate_line {
                 write!(
                     f,
                     [
                         indent(&format_args!(soft_line_break_or_space(), format_tail_body_inner)),
-                        should_add_soft_line.then_some(soft_line_break())
+                        should_add_soft_line.then_some(soft_line_break()),
+                        add_for_spacing.then_some(empty_line())
                     ]
                 )
             } else {
@@ -754,9 +779,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
                     AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
                     AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
                     AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
-                    _ => {
-                        unreachable!()
-                    }
+                    _ => None,
                 },
                 _ => None,
             },
@@ -808,9 +831,11 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
 }
 
 fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
-    let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
-    else {
-        unreachable!()
+    let Some(first_stmt) = body.statements().first() else {
+        return false;
+    };
+    let AstNodes::ExpressionStatement(stmt) = first_stmt.as_ast_nodes() else {
+        return false;
     };
 
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
@@ -938,10 +963,10 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
 impl<'a> FormatMaybeCachedFunctionBody<'a, '_> {
     fn format(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if self.expression {
-            if let AstNodes::ExpressionStatement(s) =
-                &self.body.statements().first().unwrap().as_ast_nodes()
-            {
-                return s.expression().fmt(f);
+            if let Some(first_stmt) = self.body.statements().first() {
+                if let AstNodes::ExpressionStatement(s) = &first_stmt.as_ast_nodes() {
+                    return s.expression().fmt(f);
+                }
             }
         }
         self.body.fmt(f)

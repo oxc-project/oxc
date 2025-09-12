@@ -390,9 +390,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
         let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
 
         let is_callee_or_object = match self.parent {
-            AstNodes::CallExpression(_)
-            | AstNodes::NewExpression(_)
-            | AstNodes::StaticMemberExpression(_) => true,
+            AstNodes::CallExpression(call) => call.callee.span() == self.span(),
+            AstNodes::NewExpression(new_expr) => new_expr.callee.span() == self.span(),
+            AstNodes::StaticMemberExpression(member) => member.object.span() == self.span(),
             AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
             _ => false,
         };
@@ -437,7 +437,50 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        unreachable!("No `ParenthesizedExpression` as we disabled `preserve_parens` in the parser")
+        // Check for optional chaining patterns where parentheses can be safely removed
+        match &**self.expression() {
+            Expression::ChainExpression(_) => {
+                match self.parent {
+                    // Remove parentheses in expression statements: (a?.b) -> a?.b
+                    // Remove parentheses in chain contexts: (a?.b)?.c -> a?.b?.c
+                    // Remove parentheses when used as call/member object: (a?.b).c() -> a?.b.c()
+                    AstNodes::ExpressionStatement(_)
+                    | AstNodes::ChainExpression(_)
+                    | AstNodes::StaticMemberExpression(_)
+                    | AstNodes::ComputedMemberExpression(_)
+                    | AstNodes::CallExpression(_) => {
+                        write!(f, [self.expression()])
+                    }
+                    _ => {
+                        // Keep parentheses in other contexts (new expressions, decorators, etc.)
+                        write!(f, [text("("), self.expression(), text(")")])
+                    }
+                }
+            }
+            _ => {
+                // Handle specific cases for non-chain expressions
+                match (self.parent, &**self.expression()) {
+                    // Remove parentheses around update expressions in computed member context
+                    // a?.[(++x)] -> a?.[++x]
+                    // Remove parentheses around await expressions in computed member context
+                    // a?.[(await b)] -> a?.[await b]
+                    // Remove parentheses around conditional expressions in computed member context
+                    // a?.[(b ? c : d)] -> a?.[b ? c : d]
+                    (
+                        AstNodes::ComputedMemberExpression(_),
+                        Expression::UpdateExpression(_)
+                        | Expression::AwaitExpression(_)
+                        | Expression::ConditionalExpression(_),
+                    ) => {
+                        write!(f, [self.expression()])
+                    }
+                    _ => {
+                        // Keep existing behavior for other non-chain expressions
+                        write!(f, [text("("), self.expression(), text(")")])
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -594,6 +637,67 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
     }
 }
 
+/// Check if a ForStatement contains arrow functions with block bodies
+fn contains_arrow_function_with_block_body(for_stmt: &ForStatement) -> bool {
+    use oxc_ast::ast::*;
+
+    // Helper function to check if an expression contains arrow functions with block bodies
+    fn check_expression(expr: &Expression) -> bool {
+        match expr {
+            Expression::ArrowFunctionExpression(arrow) => {
+                // Check if this arrow function has a block body with actual statements (not just empty block)
+                !arrow.expression && !arrow.body.statements.is_empty()
+            }
+            Expression::BinaryExpression(bin) => {
+                check_expression(&bin.left) || check_expression(&bin.right)
+            }
+            Expression::LogicalExpression(logical) => {
+                check_expression(&logical.left) || check_expression(&logical.right)
+            }
+            Expression::ConditionalExpression(cond) => {
+                check_expression(&cond.test)
+                    || check_expression(&cond.consequent)
+                    || check_expression(&cond.alternate)
+            }
+            Expression::AssignmentExpression(assign) => check_expression(&assign.right),
+            Expression::SequenceExpression(seq) => seq.expressions.iter().any(check_expression),
+            Expression::CallExpression(call) => {
+                check_expression(&call.callee)
+                    || call.arguments.iter().any(|arg| match arg {
+                        Argument::SpreadElement(spread) => check_expression(&spread.argument),
+                        match_expression!(Argument) => check_expression(arg.to_expression()),
+                    })
+            }
+            Expression::ArrayExpression(arr) => arr.elements.iter().any(|elem| match elem {
+                ArrayExpressionElement::SpreadElement(spread) => check_expression(&spread.argument),
+                match_expression!(ArrayExpressionElement) => check_expression(elem.to_expression()),
+                ArrayExpressionElement::Elision(_) => false,
+            }),
+            Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| match prop {
+                ObjectPropertyKind::ObjectProperty(p) => check_expression(&p.value),
+                ObjectPropertyKind::SpreadProperty(spread) => check_expression(&spread.argument),
+            }),
+            _ => false,
+        }
+    }
+
+    // Helper function to check ForStatementInit
+    fn check_for_init(init: &ForStatementInit) -> bool {
+        match init {
+            ForStatementInit::VariableDeclaration(decl) => decl
+                .declarations
+                .iter()
+                .any(|declarator| declarator.init.as_ref().is_some_and(check_expression)),
+            match_expression!(ForStatementInit) => check_expression(init.to_expression()),
+        }
+    }
+
+    // Check init, test, and update parts of the for statement
+    for_stmt.init.as_ref().is_some_and(check_for_init)
+        || for_stmt.test.as_ref().is_some_and(check_expression)
+        || for_stmt.update.as_ref().is_some_and(check_expression)
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let init = self.init();
@@ -618,6 +722,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
             return write!(f, [group(&format_args!("for", space(), "(;;)", format_body))]);
         }
 
+        let has_arrow_with_block_body = contains_arrow_function_with_block_body(self.as_ref());
+
         let format_inner = format_with(|f| {
             write!(
                 f,
@@ -632,7 +738,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
                         test,
                         ";",
                         soft_line_break_or_space(),
-                        update
+                        update,
+                        has_arrow_with_block_body.then_some(empty_line())
                     ))),
                     ")",
                     format_body
@@ -947,18 +1054,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
         let can_hug = should_hug_function_parameters(self, parentheses_not_needed, f)
             && !has_any_decorated_parameter;
 
-        let layout = if !self.has_parameter() {
-            ParameterLayout::NoParameters
-        } else if can_hug || {
-            // `self.parent`: Function
-            // `self.parent.parent()`: Argument
-            // `self.parent.parent().parent()` CallExpression
-            if let AstNodes::CallExpression(call) = self.parent.parent().parent() {
+        // Check if parameters are in a test call
+        // After AstKind::Argument removal, parent chain is: FormalParameters -> Function -> CallExpression
+        let is_test_call = if let AstNodes::Function(func) = &self.parent {
+            if let AstNodes::CallExpression(call) = &func.parent {
                 is_test_call_expression(call)
             } else {
                 false
             }
-        } {
+        } else {
+            false
+        };
+
+        let layout = if !self.has_parameter() {
+            ParameterLayout::NoParameters
+        } else if can_hug || is_test_call {
             ParameterLayout::Hug
         } else {
             ParameterLayout::Default
@@ -1574,17 +1684,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
         if self.readonly() {
             write!(f, ["readonly", space()])?;
         }
-        // TODO: parameters only have one element for now.
-        write!(
-            f,
-            [
-                "[",
-                self.parameters().first().unwrap(),
-                "]",
-                self.type_annotation(),
-                OptionalSemicolon
-            ]
-        )
+        // Handle multiple parameters properly
+        write!(f, "[")?;
+        let mut params_iter = self.parameters().iter();
+        if let Some(first_param) = params_iter.next() {
+            write!(f, first_param)?;
+            for param in params_iter {
+                write!(f, [", ", param])?;
+            }
+        }
+        write!(f, ["]", self.type_annotation(), OptionalSemicolon])
     }
 }
 
@@ -1850,7 +1959,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         let type_parameter = self.type_parameter();
         let name_type = self.name_type();
 
-        let should_expand = false; // TODO has_line_break_before_property_name(node)?;
+        // Check if there are line breaks before property name to determine expansion
+        let should_expand = f.comments().has_comment_in_span(self.span)
+            || f.source_text()[self.span.start as usize..self.span.end as usize].contains('\n');
 
         let type_annotation_has_leading_comment = false;
         //TODO

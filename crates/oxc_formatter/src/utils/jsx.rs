@@ -70,6 +70,14 @@ pub enum WrapState {
 /// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which
 /// indicates when the element should be wrapped in parentheses.
 pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
+    get_wrap_state_with_span(parent, None)
+}
+
+/// Enhanced version that can check argument context when JSX span is available
+pub fn get_wrap_state_with_span(
+    parent: &AstNodes<'_>,
+    jsx_span: Option<oxc_span::Span>,
+) -> WrapState {
     // Call site has ensures that only non-nested JSX elements are passed.
     debug_assert!(!matches!(parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)));
 
@@ -77,8 +85,21 @@ pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
         AstNodes::ArrayExpression(_)
         | AstNodes::JSXAttribute(_)
         | AstNodes::JSXExpressionContainer(_)
-        | AstNodes::Argument(_)
         | AstNodes::ConditionalExpression(_) => WrapState::NoWrap,
+        call_or_new_parent @ (AstNodes::CallExpression(_) | AstNodes::NewExpression(_)) => {
+            // Only apply NoWrap if this JSX element is actually used as an argument
+            // This replaces the original AstNodes::Argument(_) check with proper detection
+            if let Some(span) = jsx_span {
+                if crate::utils::is_expression_used_as_call_argument(span, call_or_new_parent) {
+                    WrapState::NoWrap
+                } else {
+                    WrapState::WrapOnBreak
+                }
+            } else {
+                // Fallback to previous behavior when span not available
+                WrapState::NoWrap
+            }
+        }
         AstNodes::StaticMemberExpression(member) => {
             if member.optional {
                 WrapState::NoWrap
@@ -96,6 +117,10 @@ pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
             } else {
                 WrapState::NoWrap
             }
+        }
+        AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_) => {
+            // JSX in assignments should wrap when they break - key for jsx/text-wrap/test.js
+            WrapState::WrapOnBreak
         }
         AstNodes::ComputedMemberExpression(member) => {
             if member.optional {

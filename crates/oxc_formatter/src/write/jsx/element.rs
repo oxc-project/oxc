@@ -124,7 +124,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
             return write!(f, [format_tag]);
         }
 
-        let wrap = get_wrap_state(self.parent());
+        let wrap = crate::utils::jsx::get_wrap_state_with_span(self.parent(), Some(self.span()));
         match wrap {
             WrapState::NoWrap => {
                 write!(
@@ -186,17 +186,23 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         parent = parent.parent().parent();
     }
     let maybe_jsx_expression_child = match parent {
-        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent {
-            // Argument
-            AstNodes::Argument(argument)
-                if matches!(argument.parent, AstNodes::CallExpression(_)) =>
-            {
-                argument.parent.parent()
+        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => {
+            // Check if this arrow function is used as a call argument
+            if crate::utils::is_expression_used_as_call_argument(arrow.span, arrow.parent) {
+                // Get the call expression's parent
+                match arrow.parent {
+                    AstNodes::CallExpression(call) => call.parent,
+                    AstNodes::NewExpression(new_expr) => new_expr.parent,
+                    _ => return false,
+                }
+            } else {
+                // If it's the callee
+                match arrow.parent {
+                    AstNodes::CallExpression(call) => call.parent,
+                    _ => return false,
+                }
             }
-            // Callee
-            AstNodes::CallExpression(call) => call.parent,
-            _ => return false,
-        },
+        }
         _ => return false,
     };
     matches!(maybe_jsx_expression_child, AstNodes::JSXExpressionContainer(container)

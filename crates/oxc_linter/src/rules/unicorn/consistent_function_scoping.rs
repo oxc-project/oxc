@@ -9,7 +9,9 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     AstNode,
-    ast_util::{get_function_like_declaration, nth_outermost_paren_parent, outermost_paren_parent},
+    ast_util::{
+        get_function_like_declaration, is_node_exact_call_argument, outermost_paren_parent,
+    },
     context::LintContext,
     rule::Rule,
     utils::is_react_hook,
@@ -261,8 +263,9 @@ impl Rule for ConsistentFunctionScoping {
 
         if matches!(
             outermost_paren_parent(node, ctx).map(AstNode::kind),
-            Some(AstKind::ReturnStatement(_) | AstKind::Argument(_))
-        ) {
+            Some(AstKind::ReturnStatement(_))
+        ) || is_node_exact_call_argument(node, ctx)
+        {
             return;
         }
 
@@ -355,8 +358,14 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
                 parent_node.kind(),
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
             ) {
-                if let Some(parent_node) = outermost_paren_parent(parent_node, ctx) {
-                    return matches!(parent_node.kind(), AstKind::CallExpression(_));
+                if let Some(call_node) = outermost_paren_parent(parent_node, ctx) {
+                    if let AstKind::CallExpression(call) = call_node.kind() {
+                        // Check if the function is the callee (true IIFE)
+                        // Handle both direct calls and parenthesized calls
+                        let callee = &call.callee.without_parentheses();
+                        return callee.span().start <= parent_node.span().start
+                            && parent_node.span().end <= callee.span().end;
+                    }
                 }
             }
         }
@@ -366,11 +375,18 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    // we want the 3rd outermost parent
-    // parents are: function body -> function -> argument -> call expression
-    if let Some(parent) = nth_outermost_paren_parent(node, ctx, 3) {
-        if let AstKind::CallExpression(call_expr) = parent.kind() {
-            return is_react_hook(&call_expr.callee);
+    // Walk up ancestors looking for React hook calls, but stop at function boundaries
+    let mut function_count = 0;
+    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
+        match ancestor.kind() {
+            AstKind::CallExpression(call_expr) if is_react_hook(&call_expr.callee) => return true,
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                function_count += 1;
+                if function_count > 1 {
+                    break;
+                }
+            }
+            _ => {}
         }
     }
     false

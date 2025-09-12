@@ -11,7 +11,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{get_boolean_ancestor, is_boolean_node},
+    utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node},
 };
 
 fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
@@ -198,7 +198,17 @@ impl ExplicitLengthCheck {
             }
         };
 
-        let span = kind.span();
+        let span = match node.kind() {
+            AstKind::CallExpression(call) if is_boolean_call(&node.kind()) => {
+                // Check if we should replace just the member expression or the whole call
+                call.arguments
+                    .first()
+                    .and_then(|arg| arg.as_expression())
+                    .filter(|expr| matches!(expr, Expression::LogicalExpression(_)))
+                    .map_or_else(|| node.span(), |_| static_member_expr.span)
+            }
+            _ => node.span(),
+        };
         let mut need_pad_start = false;
         let mut need_pad_end = false;
         let parent = ctx.nodes().parent_kind(node.id());
@@ -213,15 +223,28 @@ impl ExplicitLengthCheck {
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }
 
-        let fixed = format!(
-            "{}{}{} {}{}{}",
-            if need_pad_start { " " } else { "" },
-            if need_paren { "(" } else { "" },
-            static_member_expr.span.source_text(ctx.source_text()),
-            check_code,
-            if need_paren { ")" } else { "" },
-            if need_pad_end { " " } else { "" },
-        );
+        // Pre-compute source text to avoid repeated calls
+        let source_text = static_member_expr.span.source_text(ctx.source_text());
+
+        // Use capacity hint to reduce allocations - estimate based on components
+        let estimated_capacity = source_text.len() + check_code.len() + 6; // +6 for spaces and parens
+        let mut fixed = String::with_capacity(estimated_capacity);
+
+        if need_pad_start {
+            fixed.push(' ');
+        }
+        if need_paren {
+            fixed.push('(');
+        }
+        fixed.push_str(source_text);
+        fixed.push(' ');
+        fixed.push_str(check_code);
+        if need_paren {
+            fixed.push(')');
+        }
+        if need_pad_end {
+            fixed.push(' ');
+        }
         let property = static_member_expr.property.name;
         let help = if auto_fix {
             None

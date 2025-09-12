@@ -260,25 +260,43 @@ pub fn should_inline_jsx_expression(
         | JSXExpression::MetaProperty(_)
         | JSXExpression::FunctionExpression(_)
         | JSXExpression::TemplateLiteral(_)
-        | JSXExpression::TaggedTemplateExpression(_) => true,
+        | JSXExpression::TaggedTemplateExpression(_)
+        | JSXExpression::StaticMemberExpression(_)
+        | JSXExpression::ComputedMemberExpression(_)
+        | JSXExpression::PrivateFieldExpression(_) => true,
         JSXExpression::ChainExpression(chain_expression) => {
             matches!(chain_expression.expression, ChainElement::CallExpression(_))
         }
         JSXExpression::AwaitExpression(await_expression) => {
-            matches!(
-                await_expression.argument,
-                Expression::ArrayExpression(_)
-                    | Expression::ObjectExpression(_)
-                    | Expression::ArrowFunctionExpression(_)
-                    | Expression::CallExpression(_)
-                    | Expression::ImportExpression(_)
-                    | Expression::MetaProperty(_)
-                    | Expression::FunctionExpression(_)
-                    | Expression::TemplateLiteral(_)
-                    | Expression::TaggedTemplateExpression(_)
-                    | Expression::JSXElement(_)
-                    | Expression::JSXFragment(_)
-            )
+            should_inline_await_argument(&await_expression.argument)
+        }
+        _ => false,
+    }
+}
+
+/// Helper function to recursively check if an await argument should be inlined.
+/// This handles nested member expressions like `a.b.c.d` where each level
+/// creates a new StaticMemberExpression with the previous as its object.
+fn should_inline_await_argument(expr: &Expression<'_>) -> bool {
+    match expr {
+        Expression::ArrayExpression(_)
+        | Expression::ObjectExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::CallExpression(_)
+        | Expression::ImportExpression(_)
+        | Expression::MetaProperty(_)
+        | Expression::FunctionExpression(_)
+        | Expression::TemplateLiteral(_)
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::ComputedMemberExpression(_)
+        | Expression::PrivateFieldExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_)
+        | Expression::Identifier(_) => true, // Identifiers are simple and should be inlined
+        Expression::StaticMemberExpression(member_expr) => {
+            // For nested member expressions like a.b.c.d, recursively check
+            // if the object is also a simple inlinable expression
+            should_inline_await_argument(&member_expr.object)
         }
         _ => false,
     }
