@@ -22,8 +22,6 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "CatchParameter",
     "CatchClause",
     "Decorator",
-    // Manually prints it because it needs to specially handle leading comments.
-    "ExpressionStatement",
     // Manually prints it because class's decorators can be appears before `export class Cls {}`.
     "ExportNamedDeclaration",
     "ExportDefaultDeclaration",

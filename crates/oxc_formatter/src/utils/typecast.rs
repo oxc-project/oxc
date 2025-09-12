@@ -66,7 +66,10 @@ pub fn format_type_cast_comment_node<'a, T>(
         // If the printed cast comment is already handled, return early to avoid infinite recursion.
         if !comments.is_already_handled_type_cast_comment()
             && comments.printed_comments().last().is_some_and(|c| {
-                source.next_non_whitespace_byte_is(c.span.end, b'(')
+                c.span.end <= span.start
+                    && source.all_bytes_match(c.span.end, span.start, |c| {
+                        c.is_ascii_whitespace() || c == b'('
+                    })
                     && f.comments().is_type_cast_comment(c)
             })
         {

@@ -1,4 +1,4 @@
-js compatibility: 658/699 (94.13%)
+js compatibility: 659/699 (94.28%)
 
 # Failed
 
@@ -8,7 +8,6 @@ js compatibility: 658/699 (94.13%)
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/export.js | 💥💥 | 97.37% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
-| js/comments/jsdoc.js | 💥💥 | 81.48% |
 | js/comments/return-statement.js | 💥💥 | 98.85% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
 | js/comments-closure-typecast/comment-in-the-middle.js | 💥 | 90.91% |
