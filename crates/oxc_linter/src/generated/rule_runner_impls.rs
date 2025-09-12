@@ -546,6 +546,10 @@ impl RuleRunner for crate::rules::eslint::no_useless_catch::NoUselessCatch {
         Some(&AstTypesBitset::from_types(&[AstType::TryStatement]));
 }
 
+impl RuleRunner for crate::rules::eslint::no_useless_computed_key::NoUselessComputedKey {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::eslint::no_useless_concat::NoUselessConcat {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
