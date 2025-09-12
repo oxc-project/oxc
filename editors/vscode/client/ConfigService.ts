@@ -73,6 +73,10 @@ export class ConfigService implements IDisposable {
         return;
       }
       bin = path.normalize(path.join(cwd, bin));
+      // on Windows we will get a path like `\C:\path\to\bin`, remove the leading \
+      if (process.platform === 'win32' && bin.startsWith('\\')) {
+        bin = bin.slice(1);
+      }
     }
 
     return bin;

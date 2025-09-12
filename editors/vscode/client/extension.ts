@@ -159,6 +159,9 @@ export async function activate(context: ExtensionContext) {
   const run: Executable = {
     command: command!,
     options: {
+      // Execute with shell, because user can define custom `oxc.path.server`.
+      // This allows for more flexibility in the server path configuration with cross-platform support.
+      shell: true,
       env: {
         ...process.env,
         RUST_LOG: process.env.RUST_LOG || 'info',
