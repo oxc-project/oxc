@@ -16,10 +16,14 @@ impl ServerFormatter {
     }
 
     #[expect(clippy::unused_self)]
-    pub fn run_single(&self, uri: &Uri) -> Option<Vec<TextEdit>> {
+    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
         let path = uri.to_file_path()?;
         let source_type = get_supported_source_type(&path)?;
-        let source_text = std::fs::read_to_string(path).expect("Failed to read file");
+        let source_text = if let Some(content) = content {
+            content
+        } else {
+            std::fs::read_to_string(&path).ok()?
+        };
 
         let allocator = Allocator::new();
         let ret = Parser::new(&allocator, &source_text, source_type)

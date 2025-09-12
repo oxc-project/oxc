@@ -593,7 +593,7 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return Ok(None);
         };
-        Ok(worker.format_file(uri).await)
+        Ok(worker.format_file(uri, self.file_system.read().await.get(uri)).await)
     }
 }
 

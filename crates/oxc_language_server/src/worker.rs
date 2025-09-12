@@ -156,12 +156,12 @@ impl WorkspaceWorker {
         server_linter.run_single(uri, content, run_type).await
     }
 
-    pub async fn format_file(&self, uri: &Uri) -> Option<Vec<TextEdit>> {
+    pub async fn format_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
         let Some(server_formatter) = &*self.server_formatter.read().await else {
             return None;
         };
 
-        server_formatter.run_single(uri)
+        server_formatter.run_single(uri, content)
     }
 
     async fn revalidate_diagnostics(
