@@ -83,3 +83,43 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── The prop was declared here
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:27]
+ 1 │ const Foo = () => { const x: Foo = {}; return <Bar x={x} /> }
+   ·                           ───┬──   ─┬                 ┬
+   ·                              │      │                 ╰── And used here
+   ·                              │      ╰── And assigned a new value here
+   ·                              ╰── The prop was declared here
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:27]
+ 1 │ const Foo = () => { const x: Foo = {} as Foo; return <Bar x={x} /> }
+   ·                           ───┬──   ─┬                        ┬
+   ·                              │      │                        ╰── And used here
+   ·                              │      ╰── And assigned a new value here
+   ·                              ╰── The prop was declared here
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:27]
+ 1 │ const Foo = () => { const x: Foo = {} satisfies Foo; return <Bar x={x} /> }
+   ·                           ───┬──   ─┬                               ┬
+   ·                              │      │                               ╰── And used here
+   ·                              │      ╰── And assigned a new value here
+   ·                              ╰── The prop was declared here
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:27]
+ 1 │ const Foo = () => { const x: Foo = {} as const; return <Bar x={x} /> }
+   ·                           ───┬──   ─┬                          ┬
+   ·                              │      │                          ╰── And used here
+   ·                              │      ╰── And assigned a new value here
+   ·                              ╰── The prop was declared here
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
