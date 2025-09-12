@@ -24,9 +24,7 @@ fn format_export_keyword_with_class_decorators<'a>(
     //            ^ print leading comments here
     let format_leading_comments = |f: &mut Formatter<'_, 'a>| -> FormatResult<()> {
         let comments = f.context().comments().comments_before(span.start);
-        if !comments.is_empty() {
-            FormatLeadingComments::Comments(comments).fmt(f)?;
-        }
+        FormatLeadingComments::Comments(comments).fmt(f)?;
         Ok(())
     };
 
@@ -101,10 +99,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
             write!(f, ["export", space()])?;
 
             let comments = f.context().comments().comments_before_character(self.span.start, b'{');
-            if !comments.is_empty() {
-                write!(f, [FormatLeadingComments::Comments(comments)])?;
-            }
-            write!(f, [export_kind, "{"])?;
+            write!(f, [FormatLeadingComments::Comments(comments), export_kind, "{"])?;
             if specifiers.is_empty() {
                 write!(f, [format_dangling_comments(self.span).with_block_indent()])?;
             } else {

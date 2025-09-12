@@ -161,9 +161,7 @@ fn format_trailing_comments<'a>(
     };
 
     let comments = get_comments(f);
-    if !comments.is_empty() {
-        FormatTrailingComments::Comments(comments).fmt(f)?;
-    }
+    FormatTrailingComments::Comments(comments).fmt(f)?;
 
     Ok(())
 }

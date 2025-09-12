@@ -45,7 +45,6 @@ use crate::{
     format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
-        comments::is_own_line_comment,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
@@ -266,8 +265,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
             write!(f, space());
         }
         let Span { start, end, .. } = self.argument.span();
-        if f.comments().has_comments_before(start)
-            || f.comments().has_comments_between(end, self.span().end)
+        if f.comments().has_comment_before(start)
+            || f.comments().has_comment_in_range(end, self.span().end)
         {
             write!(
                 f,

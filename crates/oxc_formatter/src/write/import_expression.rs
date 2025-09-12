@@ -24,7 +24,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
                     | Expression::TemplateLiteral(_)
                     // Theoretically dynamic import shouldn't have this.
                     | Expression::TaggedTemplateExpression(_)
-            ) || f.comments().has_comments_before(self.span.end))
+            ) || f.comments().has_comment_before(self.span.end))
         {
             return write!(
                 f,

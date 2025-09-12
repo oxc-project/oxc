@@ -128,7 +128,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 let arrow_expression = arrow.get_expression();
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
-                    return if f.context().comments().has_comments_before(sequence.span().start) {
+                    return if f.context().comments().has_comment_before(sequence.span().start) {
                         write!(
                             f,
                             [group(&format_args!(
@@ -507,7 +507,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // comments manually, since they won't have their own
                     // Format node to handle it.
                     let should_format_comments = !is_first_in_chain
-                        && f.context().comments().has_comments_before(arrow.span.start);
+                        && f.context().comments().has_comment_before(arrow.span.start);
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
@@ -581,7 +581,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
-                if f.context().comments().has_comments_before(sequence.span().start) {
+                if f.context().comments().has_comment_before(sequence.span().start) {
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(

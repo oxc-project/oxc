@@ -7,10 +7,7 @@ use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
     FormatOptions, QuoteProperties, QuoteStyle,
-    formatter::{
-        Format, FormatResult, Formatter, prelude::*, token::string::normalize_string,
-        trivia::format_replaced,
-    },
+    formatter::{Format, FormatResult, Formatter, prelude::*, token::string::normalize_string},
 };
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
@@ -89,7 +86,7 @@ impl CleanedStringLiteralText<'_> {
 
 impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_replaced(self.span, &syntax_token_cow_slice(self.text.clone(), self.span)).fmt(f)
+        syntax_token_cow_slice(self.text.clone(), self.span).fmt(f)
     }
 }
 
