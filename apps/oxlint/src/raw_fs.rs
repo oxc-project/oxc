@@ -9,7 +9,7 @@ use std::{
 use oxc_allocator::Allocator;
 use oxc_linter::RuntimeFileSystem;
 
-/// File system used by `oxlint2`.
+/// File system used when JS plugins are in use.
 ///
 /// Identical to `OsFileSystem`, except that `read_to_arena_str` reads the file's contents into
 /// start of the allocator, instead of the end. This conforms to what raw transfer needs.

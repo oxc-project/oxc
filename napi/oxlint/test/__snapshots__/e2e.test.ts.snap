@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`oxlint2 CLI > should have UTF-16 spans in AST 1`] = `
+exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
 "
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
    ,-[index.js:1:1]
@@ -55,7 +55,7 @@ Found 3 warnings and 3 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint2 CLI > should lint a directory with errors 1`] = `
+exports[`oxlint CLI > should lint a directory with errors 1`] = `
 "
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
    ,-[index.js:1:1]
@@ -68,12 +68,12 @@ Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint2 CLI > should lint a directory without errors 1`] = `
+exports[`oxlint CLI > should lint a directory without errors 1`] = `
 "Found 0 warnings and 0 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint2 CLI > should load a custom plugin 1`] = `
+exports[`oxlint CLI > should load a custom plugin 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[index.js:1:1]
@@ -92,7 +92,7 @@ Found 1 warning and 1 error.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint2 CLI > should load a custom plugin when configured in overrides 1`] = `
+exports[`oxlint CLI > should load a custom plugin when configured in overrides 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[index.js:1:1]
@@ -111,7 +111,7 @@ Found 1 warning and 1 error.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint2 CLI > should load a custom plugin with multiple files 1`] = `
+exports[`oxlint CLI > should load a custom plugin with multiple files 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/01.js:1:1]
@@ -377,7 +377,7 @@ Found 20 warnings and 20 errors.
 Finished in Xms on 20 files using X threads."
 `;
 
-exports[`oxlint2 CLI > should receive data via \`context\` 1`] = `
+exports[`oxlint CLI > should receive data via \`context\` 1`] = `
 "
   x context-plugin(log-context): id: context-plugin/log-context
    ,-[files/1.js:1:1]
@@ -419,14 +419,14 @@ Found 0 warnings and 6 errors.
 Finished in Xms on 2 files using X threads."
 `;
 
-exports[`oxlint2 CLI > should report an error if a a rule is not found within a custom plugin (via overrides) 1`] = `
+exports[`oxlint CLI > should report an error if a a rule is not found within a custom plugin (via overrides) 1`] = `
 "Failed to build configuration.
 
   x Rule 'missing' not found in plugin 'basic-custom-plugin'
 "
 `;
 
-exports[`oxlint2 CLI > should report an error if a custom plugin cannot be loaded 1`] = `
+exports[`oxlint CLI > should report an error if a custom plugin cannot be loaded 1`] = `
 "Failed to parse configuration file.
 
   x Failed to load external plugin: ./test_plugin
@@ -434,14 +434,14 @@ exports[`oxlint2 CLI > should report an error if a custom plugin cannot be loade
 "
 `;
 
-exports[`oxlint2 CLI > should report an error if a rule is not found within a custom plugin 1`] = `
+exports[`oxlint CLI > should report an error if a rule is not found within a custom plugin 1`] = `
 "Failed to parse configuration file.
 
   x Rule 'unknown-rule' not found in plugin 'basic-custom-plugin'
 "
 `;
 
-exports[`oxlint2 CLI > should report the correct severity when using a custom plugin 1`] = `
+exports[`oxlint CLI > should report the correct severity when using a custom plugin 1`] = `
 "
   ! basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[index.js:1:1]
@@ -460,7 +460,7 @@ Found 2 warnings and 0 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint2 CLI > should respect disable directives for custom plugin rules 1`] = `
+exports[`oxlint CLI > should respect disable directives for custom plugin rules 1`] = `
 "
   x test-plugin(no-var): Use let or const instead of var
    ,-[index.js:1:1]
@@ -505,7 +505,7 @@ Found 0 warnings and 5 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint2 CLI > should work with multiple rules 1`] = `
+exports[`oxlint CLI > should work with multiple rules 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[index.js:1:1]

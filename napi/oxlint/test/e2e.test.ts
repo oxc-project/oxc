@@ -20,7 +20,7 @@ function normalizeOutput(output: string): string {
     .replace(/using \d+ threads./, 'using X threads.');
 }
 
-describe('oxlint2 CLI', () => {
+describe('oxlint CLI', () => {
   it('should lint a directory without errors', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/built_in_no_errors');
     expect(exitCode).toBe(0);

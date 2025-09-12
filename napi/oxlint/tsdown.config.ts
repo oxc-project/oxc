@@ -11,7 +11,7 @@ export default defineConfig({
   external: [
     // External native bindings
     './oxlint.*.node',
-    'oxlint2-*',
+    'oxlint-*',
     // External the generated constants file - we'll copy it separately
     './generated/constants.mjs',
     // These are generated (also used by oxc-parser, so we'll copy them separately)
