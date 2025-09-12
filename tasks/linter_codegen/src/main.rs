@@ -2,6 +2,7 @@
 
 use crate::{
     if_else_detector::IfElseKindDetector,
+    let_else_detector::LetElseDetector,
     node_type_set::NodeTypeSet,
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
     utils::{find_impl_function, find_rule_impl_block},
@@ -15,6 +16,7 @@ use std::{
 use syn::File;
 
 mod if_else_detector;
+mod let_else_detector;
 mod node_type_set;
 mod rules;
 mod utils;
@@ -86,12 +88,21 @@ fn detect_top_level_node_types(file: &File, rule: &RuleEntry) -> Option<NodeType
     let rule_impl = find_rule_impl_block(file, &rule.rule_struct_name())?;
     let run_func = find_impl_function(rule_impl, "run")?;
 
-    let node_types = IfElseKindDetector::from_run_func(run_func)?;
-    if node_types.is_empty() {
-        return None;
+    let node_types = LetElseDetector::from_run_func(run_func);
+    if let Some(node_types) = node_types
+        && !node_types.is_empty()
+    {
+        return Some(node_types);
     }
 
-    Some(node_types)
+    let node_types = IfElseKindDetector::from_run_func(run_func);
+    if let Some(node_types) = node_types
+        && !node_types.is_empty()
+    {
+        return Some(node_types);
+    }
+
+    None
 }
 
 /// Result of attempting to collect node type variants.

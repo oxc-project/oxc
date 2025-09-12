@@ -346,20 +346,37 @@ mod test {
         assert_rule_runs_on_node_types(&eslint::no_debugger::NoDebugger, &[DebuggerStatement]);
         assert_rule_runs_on_node_types(&eslint::no_with::NoWith, &[WithStatement]);
         assert_rule_runs_on_node_types(
+            &eslint::arrow_body_style::ArrowBodyStyle::default(),
+            &[ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::no_else_return::NoElseReturn::default(),
+            &[IfStatement],
+        );
+        assert_rule_runs_on_node_types(
             &jest::prefer_jest_mocked::PreferJestMocked,
             &[TSAsExpression, TSTypeAssertion],
         );
+        assert_rule_runs_on_node_types(&jest::prefer_spy_on::PreferSpyOn, &[AssignmentExpression]);
         assert_rule_runs_on_node_types(
             &jsx_a11y::anchor_is_valid::AnchorIsValid::default(),
             &[JSXElement],
+        );
+        assert_rule_runs_on_node_types(
+            &jsx_a11y::aria_activedescendant_has_tabindex::AriaActivedescendantHasTabindex,
+            &[JSXOpeningElement],
         );
         assert_rule_runs_on_node_types(
             &nextjs::no_head_element::NoHeadElement,
             &[JSXOpeningElement],
         );
         assert_rule_runs_on_node_types(
-            &unicorn::explicit_length_check::ExplicitLengthCheck::default(),
-            &[StaticMemberExpression],
+            &nextjs::google_font_display::GoogleFontDisplay,
+            &[JSXOpeningElement],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::consistent_assert::ConsistentAssert,
+            &[ImportDeclaration],
         );
     }
 
