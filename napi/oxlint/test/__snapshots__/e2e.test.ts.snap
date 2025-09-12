@@ -55,7 +55,7 @@ Found 3 warnings and 3 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint CLI > should lint a directory with errors 1`] = `
+exports[`oxlint CLI > should lint a directory with errors with JS plugins enabled 1`] = `
 "
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
    ,-[index.js:1:1]
@@ -68,7 +68,25 @@ Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
 `;
 
-exports[`oxlint CLI > should lint a directory without errors 1`] = `
+exports[`oxlint CLI > should lint a directory with errors without JS plugins enabled 1`] = `
+"
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+Found 0 warnings and 1 error.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should lint a directory without errors with JS plugins enabled 1`] = `
+"Found 0 warnings and 0 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should lint a directory without errors without JS plugins enabled 1`] = `
 "Found 0 warnings and 0 errors.
 Finished in Xms on 1 file using X threads."
 `;
