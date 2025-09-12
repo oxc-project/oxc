@@ -17,6 +17,7 @@ use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
 };
 
+/// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
@@ -27,6 +28,12 @@ pub fn create_external_linter(
     ExternalLinter::new(rust_load_plugin, rust_lint_file)
 }
 
+/// Wrap `loadPlugin` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     let cb = Arc::new(cb);
     Arc::new(move |plugin_path| {
@@ -41,6 +48,15 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     })
 }
 
+/// Wrap `lintFile` JS callback as a normal Rust function.
+///
+/// The returned function creates a `Uint8Array` referencing the memory of the given `Allocator`,
+/// and passes it to JS side, unless the `Allocator`'s buffer has already been sent to JS.
+///
+/// Unlike `loadPlugin`, `lintFile` JS callback is not async. But `ThreadsafeFunction` executes the callback
+/// on main JS thread, and therefore it may have to wait for a previous `lintFile` call to complete.
+/// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
+/// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     let cb = Arc::new(cb);
     Arc::new(move |file_path: String, rule_ids: Vec<u32>, allocator: &Allocator| {
@@ -48,8 +64,13 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
         let (tx, rx) = channel();
 
-        // SAFETY: This crate enables the `fixed_size` feature on `oxc_allocator`,
-        // so all AST `Allocator`s are created via `FixedSizeAllocator`
+        // SAFETY: This function is only called when an `ExternalLinter` exists.
+        // When that is the case, the `AllocatorPool` used to create `Allocator`s is created with
+        // `AllocatorPool::new_fixed_size`, so all `Allocator`s are created via `FixedSizeAllocator`.
+        // This is somewhat sketchy, as we don't have a type-level guarantee of this invariant,
+        // but it does hold at present.
+        // When we replace `bumpalo` with a custom allocator, we can close this soundness hole.
+        // TODO: Do that.
         let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
 
         // Send data to JS

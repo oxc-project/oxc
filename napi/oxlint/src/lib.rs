@@ -19,6 +19,7 @@ mod generated {
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 mod external_linter;
 
+/// JS callback to load a JS plugin.
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
     // Arguments
@@ -33,6 +34,7 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to lint a file.
 #[napi]
 pub type JsLintFileCb = ThreadsafeFunction<
     // Arguments
@@ -52,6 +54,13 @@ pub type JsLintFileCb = ThreadsafeFunction<
     false,
 >;
 
+/// NAPI entry point.
+///
+/// JS side passes in two callbacks:
+/// 1. `load_plugin`: Load a JS plugin from a file path.
+/// 2. `lint_file`: Lint a file.
+///
+/// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
