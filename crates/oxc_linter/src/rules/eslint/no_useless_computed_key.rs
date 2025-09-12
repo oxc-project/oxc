@@ -1,14 +1,16 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagnostic {
-    let key = raw.map_or(String::new(), |atom| atom.to_string());
-    OxcDiagnostic::warn(format!("Unnecessarily computed property [{key}] found."))
+    // false positive, if we remove the closure, `borrowed data escapes outside of function `raw` escapes the function body here`
+    #[expect(clippy::redundant_closure)]
+    let key = raw.unwrap_or_else(|| Atom::empty());
+    OxcDiagnostic::warn(format!("Unnecessarily computed property `{key}` found."))
         .with_help("Replace the computed property with a plain identifier or string literal")
         .with_label(span)
 }
@@ -132,7 +134,7 @@ impl Rule for NoUselessComputedKey {
                 {
                     check_computed_class_member(
                         ctx,
-                        property.span,
+                        property.key.span(),
                         expr,
                         false,
                         &[],
@@ -155,7 +157,7 @@ impl Rule for NoUselessComputedKey {
                 {
                     check_computed_class_member(
                         ctx,
-                        prop_def.span,
+                        prop_def.key.span(),
                         expr,
                         prop_def.r#static,
                         &["prototype", "constructor"],
