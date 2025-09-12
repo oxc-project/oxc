@@ -1,0 +1,3 @@
+This is a file without extension
+It should not be processed by oxfmt
+const notJavaScript = "this won't be formatted"

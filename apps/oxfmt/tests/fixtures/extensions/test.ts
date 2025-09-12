@@ -1,0 +1,1 @@
+const typed: string = "ts"

@@ -2518,7 +2518,10 @@ name = "oxfmt"
 version = "0.0.2"
 dependencies = [
  "bpaf",
+ "cow-utils",
  "ignore",
+ "insta",
+ "lazy-regex",
  "mimalloc-safe",
  "oxc-miette",
  "oxc_allocator",

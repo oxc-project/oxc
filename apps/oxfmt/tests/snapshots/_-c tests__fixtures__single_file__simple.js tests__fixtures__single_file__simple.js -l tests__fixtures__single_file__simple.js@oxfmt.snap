@@ -1,0 +1,38 @@
+---
+source: apps/oxfmt/tests/tester.rs
+---
+########## 
+arguments: -c tests/fixtures/single_file/simple.js
+working directory: 
+----------
+Checking formatting...
+tests/fixtures/single_file/simple.js (<variable>ms)
+
+Format issues found in above 1 files. Run with `-w` or `--write` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
+
+########## 
+arguments: tests/fixtures/single_file/simple.js
+working directory: 
+----------
+Checking formatting...
+tests/fixtures/single_file/simple.js (<variable>ms)
+
+Format issues found in above 1 files. Run with `-w` or `--write` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
+
+########## 
+arguments: -l tests/fixtures/single_file/simple.js
+working directory: 
+----------
+tests/fixtures/single_file/simple.js
+
+----------
+CLI result: FormatMismatch
+----------

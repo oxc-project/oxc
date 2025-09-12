@@ -1,0 +1,14 @@
+---
+source: apps/oxfmt/tests/tester.rs
+---
+########## 
+arguments: tests/fixtures/extensions
+working directory: 
+----------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 11 files using 1 threads.
+----------
+CLI result: FormatSucceeded
+----------
