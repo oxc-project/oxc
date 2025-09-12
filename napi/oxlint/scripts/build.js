@@ -1,101 +1,52 @@
-#!/usr/bin/env node
+import { execSync } from 'node:child_process';
+import { copyFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
-import { execSync } from 'child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+const oxlintDirPath = join(import.meta.dirname, '..'),
+  distDirPath = join(oxlintDirPath, 'dist'),
+  parserDirPath = join(oxlintDirPath, '../parser');
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, '..');
-
+// Build with tsdown
 console.log('Building with tsdown...');
-try {
-  execSync('pnpm tsdown', { stdio: 'inherit', cwd: rootDir });
-} catch (error) {
-  console.error('Build failed:', error);
-  process.exit(1);
-}
+execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 
-// Create directories after tsdown build.
-const distDir = join(rootDir, 'dist');
-const distGeneratedDir = join(distDir, 'generated');
-const parserRawTransferDir = join(distDir, 'parser', 'raw-transfer');
-const parserGeneratedDir = join(distDir, 'parser', 'generated', 'lazy');
-
-// Create all necessary directories
-if (!existsSync(distGeneratedDir)) {
-  mkdirSync(distGeneratedDir, { recursive: true });
-}
-if (!existsSync(parserRawTransferDir)) {
-  mkdirSync(parserRawTransferDir, { recursive: true });
-}
-if (!existsSync(parserGeneratedDir)) {
-  mkdirSync(parserGeneratedDir, { recursive: true });
-}
-
-console.log('Copying generated files...');
 // Copy generated constants file
-const constantsPath = join(rootDir, 'src-js/generated/constants.mjs');
-if (existsSync(constantsPath)) {
-  copyFileSync(constantsPath, join(distGeneratedDir, 'constants.mjs'));
-  console.log('Copied constants.mjs');
-} else {
-  console.error(
-    'Warning: generated/constants.mjs not found. Make sure to run napi build first.',
-  );
-}
+console.log('Copying generated files...');
+copyFile(join(oxlintDirPath, 'src-js/generated/constants.mjs'), join(distDirPath, 'generated/constants.mjs'));
 
-// Copy parser files
-const parserFiles = [
-  {
-    src: join(rootDir, '../parser/raw-transfer/lazy-common.mjs'),
-    dest: join(parserRawTransferDir, 'lazy-common.mjs'),
-  },
-  {
-    src: join(rootDir, '../parser/raw-transfer/node-array.mjs'),
-    dest: join(parserRawTransferDir, 'node-array.mjs'),
-  },
-  {
-    src: join(rootDir, '../parser/generated/lazy/walk.mjs'),
-    dest: join(parserGeneratedDir, 'walk.mjs'),
-  },
-  {
-    src: join(rootDir, '../parser/generated/lazy/types.mjs'),
-    dest: join(parserGeneratedDir, 'types.mjs'),
-  },
-  {
-    src: join(rootDir, '../parser/generated/lazy/constructors.mjs'),
-    dest: join(parserGeneratedDir, 'constructors.mjs'),
-  },
+// Copy files from `napi/parser` to `napi/oxlint/dist/parser`
+console.log('Copying files from parser...');
+
+const parserFilePaths = [
+  'raw-transfer/lazy-common.mjs',
+  'raw-transfer/node-array.mjs',
+  'generated/lazy/constructors.mjs',
+  'generated/lazy/types.mjs',
+  'generated/lazy/walk.mjs',
 ];
 
-for (const { src, dest } of parserFiles) {
-  if (existsSync(src)) {
-    copyFileSync(src, dest);
-    console.log(`Copied ${src.split('/').pop()}`);
-  } else {
-    console.error(`Warning: parser file not found: ${src}`);
-  }
+for (const parserFilePath of parserFilePaths) {
+  copyFile(join(parserDirPath, parserFilePath), join(distDirPath, 'parser', parserFilePath));
 }
 
-// Copy native .node files that might exist in src-js
-const nodeFiles = [
-  'oxlint.darwin-arm64.node',
-  'oxlint.darwin-x64.node',
-  'oxlint.linux-x64-gnu.node',
-  'oxlint.linux-arm64-gnu.node',
-  'oxlint.linux-x64-musl.node',
-  'oxlint.linux-arm64-musl.node',
-  'oxlint.win32-x64-msvc.node',
-  'oxlint.win32-arm64-msvc.node',
-];
+// Copy native `.node` files from `src-js`
+console.log('Copying `.node` files...');
 
-for (const nodeFile of nodeFiles) {
-  const srcPath = join(rootDir, 'src-js', nodeFile);
-  if (existsSync(srcPath)) {
-    copyFileSync(srcPath, join(distDir, nodeFile));
-    console.log(`Copied ${nodeFile}`);
-  }
+for (const filename of readdirSync(join(oxlintDirPath, 'src-js'))) {
+  if (!filename.endsWith('.node')) continue;
+  copyFile(join(oxlintDirPath, 'src-js', filename), join(distDirPath, filename));
 }
 
 console.log('Build complete!');
+
+/**
+ * Copy a file, creating parent directories if needed.
+ * @param {string} srcPath - Source file path, absolute
+ * @param {string} destPath - Destination file path, absolute
+ * @returns {void}
+ */
+function copyFile(srcPath, destPath) {
+  mkdirSync(join(destPath, '..'), { recursive: true });
+  copyFileSync(srcPath, destPath);
+  console.log(`- Copied ${srcPath.split('/').pop()}`);
+}
