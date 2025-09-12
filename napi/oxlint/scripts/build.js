@@ -10,10 +10,6 @@ const oxlintDirPath = join(import.meta.dirname, '..'),
 console.log('Building with tsdown...');
 execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 
-// Copy generated constants file
-console.log('Copying generated files...');
-copyFile(join(oxlintDirPath, 'src-js/generated/constants.mjs'), join(distDirPath, 'generated/constants.mjs'));
-
 // Copy files from `napi/parser` to `napi/oxlint/dist/parser`
 console.log('Copying files from parser...');
 
