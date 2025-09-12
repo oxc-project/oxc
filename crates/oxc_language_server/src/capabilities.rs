@@ -92,6 +92,9 @@ impl From<Capabilities> for ServerCapabilities {
             } else {
                 None
             },
+            // ToDo: should by dynamic registered with workspace configuration
+            // THIS MUST NOT BE COMMITTED TO MAIN!!!
+            document_formatting_provider: Some(OneOf::Left(true)),
             ..ServerCapabilities::default()
         }
     }

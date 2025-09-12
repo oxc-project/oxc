@@ -14,8 +14,8 @@ use tower_lsp_server::{
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
-        ServerInfo, Unregistration, Uri, WorkspaceEdit,
+        DocumentFormattingParams, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, Registration, ServerInfo, TextEdit, Unregistration, Uri, WorkspaceEdit,
     },
 };
 
@@ -42,6 +42,10 @@ use crate::file_system::LSPFileSystem;
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
 const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
+
+// max range for LSP integer is 2^31 - 1
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseTypes
+const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
 
 struct Backend {
     client: Client,
@@ -163,6 +167,8 @@ impl LanguageServer for Backend {
             if worker.needs_init_linter().await {
                 needed_configurations.insert(worker.get_root_uri().clone(), worker);
             }
+            // ToDo: check for configuration
+            worker.init_formatter().await;
         }
 
         if !needed_configurations.is_empty() {
@@ -579,6 +585,15 @@ impl LanguageServer for Backend {
         }
 
         Err(Error::invalid_request())
+    }
+
+    async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
+        let uri = &params.text_document.uri;
+        let workers = self.workspace_workers.read().await;
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+            return Ok(None);
+        };
+        Ok(worker.format_file(uri, self.file_system.read().await.get(uri)).await)
     }
 }
 

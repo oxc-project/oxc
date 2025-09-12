@@ -16,6 +16,7 @@ use crate::{
         apply_all_fix_code_action, apply_fix_code_actions, ignore_this_line_code_action,
         ignore_this_rule_code_action,
     },
+    formatter::server_formatter::ServerFormatter,
     linter::{
         error_with_position::{DiagnosticReport, PossibleFixContent},
         options::LintOptions,
@@ -26,12 +27,18 @@ use crate::{
 pub struct WorkspaceWorker {
     root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
+    server_formatter: RwLock<Option<ServerFormatter>>,
     options: Mutex<Options>,
 }
 
 impl WorkspaceWorker {
     pub fn new(root_uri: Uri) -> Self {
-        Self { root_uri, server_linter: RwLock::new(None), options: Mutex::new(Options::default()) }
+        Self {
+            root_uri,
+            server_linter: RwLock::new(None),
+            server_formatter: RwLock::new(None),
+            options: Mutex::new(Options::default()),
+        }
     }
 
     pub fn get_root_uri(&self) -> &Uri {
@@ -48,6 +55,10 @@ impl WorkspaceWorker {
     pub async fn init_linter(&self, options: &Options) {
         *self.options.lock().await = options.clone();
         *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
+    }
+
+    pub async fn init_formatter(&self) {
+        *self.server_formatter.write().await = Some(ServerFormatter::new());
     }
 
     // WARNING: start all programs (linter, formatter) before calling this function
@@ -143,6 +154,14 @@ impl WorkspaceWorker {
         };
 
         server_linter.run_single(uri, content, run_type).await
+    }
+
+    pub async fn format_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
+        let Some(server_formatter) = &*self.server_formatter.read().await else {
+            return None;
+        };
+
+        server_formatter.run_single(uri, content)
     }
 
     async fn revalidate_diagnostics(
