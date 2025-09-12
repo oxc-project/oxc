@@ -2065,19 +2065,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_linter_napi"
-version = "0.1.0"
-dependencies = [
- "napi",
- "napi-build",
- "napi-derive",
- "oxc_allocator",
- "oxlint",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
@@ -2544,6 +2531,8 @@ dependencies = [
  "lazy-regex",
  "mimalloc-safe",
  "napi",
+ "napi-build",
+ "napi-derive",
  "oxc-miette",
  "oxc_allocator",
  "oxc_diagnostics",
@@ -2555,6 +2544,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "tempfile",
+ "tokio",
  "tracing-subscriber",
 ]
 

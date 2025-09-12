@@ -6,10 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 const OXLINT_BIN_NAME = 'oxlint';
 const OXLS_BIN_NAME = 'oxc_language_server';
-const OXLINT_ROOT = resolve(fileURLToPath(import.meta.url), '../..');
-const PACKAGES_ROOT = resolve(OXLINT_ROOT, '..');
+const OXLINT_ROOT = resolve(fileURLToPath(import.meta.url), '../..'); // <REPO ROOT>/npm/oxlint
+const PACKAGES_ROOT = resolve(OXLINT_ROOT, '..'); // <REPO ROOT>/npm
 const REPO_ROOT = resolve(PACKAGES_ROOT, '..');
-const MANIFEST_PATH = resolve(OXLINT_ROOT, 'package.json');
+const MANIFEST_PATH = resolve(OXLINT_ROOT, 'package.json'); // <REPO ROOT>/npm/oxlint/package.json
+const OXLINT_DIST_SRC = resolve(REPO_ROOT, 'apps/oxlint/dist'); // <REPO ROOT>/apps/oxlint/dist
+const OXLINT_DIST_DEST = resolve(OXLINT_ROOT, 'dist'); // <REPO ROOT>/npm/oxlint/dist
 
 const rootManifest = JSON.parse(
   fs.readFileSync(MANIFEST_PATH).toString('utf-8'),
@@ -42,6 +44,8 @@ function generateNativePackage(target) {
   const manifest = {
     name: packageName,
     version,
+    type: 'commonjs',
+    main: `${OXLINT_BIN_NAME}.${target}.node`,
     author,
     license,
     homepage,
@@ -51,7 +55,7 @@ function generateNativePackage(target) {
     cpu: [arch],
     ...libc,
     publishConfig: {
-      executableFiles: ['oxlint', 'oxc_language_server'],
+      executableFiles: ['oxc_language_server'],
     },
   };
 
@@ -59,21 +63,16 @@ function generateNativePackage(target) {
   console.log(`Create manifest ${manifestPath}`);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
-  // Copy the binary
+  // Copy the binaries
+  const oxlintBinSource = resolve(REPO_ROOT, `${OXLINT_BIN_NAME}.${target}.node`);
+  const oxlintBinTarget = resolve(packageRoot, `${OXLINT_BIN_NAME}.${target}.node`);
+
   const ext = platform === 'win32' ? '.exe' : '';
-
-  const oxlintBinSource = resolve(
-    REPO_ROOT,
-    `${OXLINT_BIN_NAME}-${target}${ext}`,
-  );
-  const oxlintBinTarget = resolve(packageRoot, `${OXLINT_BIN_NAME}${ext}`);
-
   const oxlsBinSource = resolve(REPO_ROOT, `${OXLS_BIN_NAME}-${target}${ext}`);
   const oxlsBinTarget = resolve(packageRoot, `${OXLS_BIN_NAME}${ext}`);
 
   console.log(`Copy linter binary ${oxlintBinSource}`);
   fs.copyFileSync(oxlintBinSource, oxlintBinTarget);
-  fs.chmodSync(oxlintBinTarget, 0o755);
 
   console.log(`Copy language server binary ${oxlsBinSource}`);
   fs.copyFileSync(oxlsBinSource, oxlsBinTarget);
@@ -111,8 +110,13 @@ function writeManifest() {
   fs.writeFileSync(manifestPath, content);
 }
 
-// NOTE: Must update npm/oxlint/bin/oxlint
-// and npm/oxlint/bin/oxc_language_server
+// Copy `dist` directory from `apps/oxlint/dist` to `npm/oxlint/dist`.
+// `apps/oxlint/scripts/build.js` must be run before this script to create the `dist` directory.
+function copyDistFiles() {
+  fs.cpSync(OXLINT_DIST_SRC, OXLINT_DIST_DEST, { recursive: true });
+}
+
+// NOTE: Must update npm/oxlint/bin/oxc_language_server
 const TARGETS = [
   'win32-x64',
   'win32-arm64',
@@ -129,3 +133,4 @@ for (const target of TARGETS) {
 }
 
 writeManifest();
+copyDistFiles();

@@ -26,7 +26,8 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --all-features
+      - run: cargo test --workspace --all-features --exclude website
+      - run: cargo test -p website # Run separately to avoid feature unification problems with `oxlint`
       - run: git diff --exit-code # Must commit everything
 
   test-ubuntu-aarch64:
@@ -41,7 +42,8 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm-aarch64
       - run: cargo ck
-      - run: cargo test --all-features
+      - run: cargo test --workspace --all-features --exclude website
+      - run: cargo test -p website # Run separately to avoid feature unification problems with `oxlint`
       - run: git diff --exit-code # Must commit everything
 
   test-mac: # Separate job to save a job on PRs
@@ -56,7 +58,8 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --all-features
+      - run: cargo test --workspace --all-features --exclude website
+      - run: cargo test -p website # Run separately to avoid feature unification problems with `oxlint`
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
@@ -98,7 +101,12 @@ jobs:
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: windows-latest
 
-      - run: cargo test --all-features # cargo ck # no need to `cargo ck` because it's already checked in linux
+      - name: Run tests
+        # No need for `cargo ck` because it's already checked in linux
+        # Run `website` tests separately to avoid feature unification problems with `oxlint`
+        run: |
+          cargo test --workspace --all-features --exclude website
+          cargo test -p website
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
 
@@ -114,7 +122,9 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: s390x-unknown-linux-gnu
           tools: cross
-      - run: cross test --all-features --target s390x-unknown-linux-gnu
+      - run: cross test --workspace --all-features --exclude website --target s390x-unknown-linux-gnu
+      # Run separately to avoid feature unification problems with `oxlint`
+      - run: cross test -p website --target s390x-unknown-linux-gnu
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads

@@ -42,6 +42,7 @@
     "npm/runtime/**",
     "tasks/coverage/**",
     "crates/oxc_semantic/tests/**",
-    "napi/**" // TODO
+    "napi/**", // TODO
+    "apps/oxlint" // TODO
   ]
 }

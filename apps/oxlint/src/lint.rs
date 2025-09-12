@@ -22,7 +22,6 @@ use oxc_linter::{
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
-    js_plugins::RawTransferFileSystem,
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -368,7 +367,21 @@ impl LintRunner {
             // Use `RawTransferFileSystem` if `ExternalLinter` exists.
             // This reads the source text into start of allocator, instead of the end.
             if has_external_linter {
-                lint_service.with_file_system(Box::new(RawTransferFileSystem));
+                #[cfg(all(
+                    feature = "napi",
+                    target_pointer_width = "64",
+                    target_endian = "little"
+                ))]
+                lint_service.with_file_system(Box::new(crate::js_plugins::RawTransferFileSystem));
+
+                #[cfg(not(all(
+                    feature = "napi",
+                    target_pointer_width = "64",
+                    target_endian = "little"
+                )))]
+                unreachable!(
+                    "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
+                );
             }
 
             lint_service.run(&tx_error);
