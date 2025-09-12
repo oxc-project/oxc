@@ -9,12 +9,15 @@ use napi_derive::napi;
 
 use oxlint::lint as oxlint_lint;
 
+// JS plugins are only supported on 64-bit little-endian platforms at present.
+// Note: `raw_transfer_constants` module will not compile on 32-bit systems.
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 mod generated {
     pub mod raw_transfer_constants;
 }
 
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 mod external_linter;
-use external_linter::create_external_linter;
 
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
@@ -53,6 +56,12 @@ pub type JsLintFileCb = ThreadsafeFunction<
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
 pub async fn lint(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
-    let external_linter = create_external_linter(load_plugin, lint_file);
-    oxlint_lint(Some(external_linter)).report() == ExitCode::SUCCESS
+    // JS plugins are only supported on 64-bit little-endian platforms at present
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    let external_linter = Some(external_linter::create_external_linter(load_plugin, lint_file));
+
+    #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+    let external_linter = None;
+
+    oxlint_lint(external_linter).report() == ExitCode::SUCCESS
 }
