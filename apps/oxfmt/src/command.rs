@@ -35,8 +35,15 @@ pub struct FormatCommand {
 /// Output Options
 #[derive(Debug, Clone, Bpaf)]
 pub enum OutputOptions {
+    /// Default - when no output option is specified, behaves like `--check`
     #[bpaf(hide)]
     Default,
+    /// Check mode - check if files are formatted
+    #[bpaf(long, short)]
+    Check,
+    /// List mode - list files that would be changed
+    #[bpaf(long, short)]
+    ListDifferent,
     /// Write mode - write formatted code back
     #[bpaf(long, short)]
     Write,
@@ -45,6 +52,9 @@ pub enum OutputOptions {
 /// Miscellaneous
 #[derive(Debug, Clone, Bpaf)]
 pub struct MiscOptions {
+    /// Do not exit with error when pattern is unmatched
+    #[bpaf(switch, hide_usage)]
+    pub no_error_on_unmatched_pattern: bool,
     /// Number of threads to use. Set to 1 for using only 1 CPU core
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,

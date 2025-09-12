@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- 2cd4c7b minifier: Inline constant that is declared in normal for statement initializer (#13509) (sapphi-red)
+- 52f3e89 minifier: Remove unused variables in for init (#13508) (sapphi-red)
+- b4dfddd minifier: Store symbol information for for init variables (#13507) (sapphi-red)
+- 05def8c minifier: Constant fold `RegExp.prototype.source` (#13472) (sapphi-red)
+- 78dcfc6 minifier: Return total iterations ran for DCE as well (#13476) (sapphi-red)
+- ecf69bb minifier: Respect `--max-iterations` for DCE as well (#13475) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+- 946669b minifier: Inline multiple variable declarations at once (#13477) (sapphi-red)
+
+### ⚡ Performance
+
+- 60dd9c9 minifier: Prealloc template exprs vec (#13410) (camchenry)
+
+
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- 2931356 minifier: Inline single use functions past sideeffectful expressions (#13426) (sapphi-red)
+- f97283b ecmascript: Support more cases for IsLiteralValue with `include_functions` (#13425) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 68b9b33 minifier: Set proper scope information for injected if blocks (#13444) (sapphi-red)
+- 73b93ce minifier: Set reference_id when removing `window.` from `window?.Object` (#13442) (sapphi-red)
+- 6d0e355 minifier: Avoid inlining single use variables when the name needs to be preserved (#13422) (sapphi-red)
+
+### 🚜 Refactor
+
+- 46fc83d minifier: Use `.reference_id()` instead of `.reference_id` (#13443) (sapphi-red)
+
+
 
 ## [0.84.0] - 2025-08-30
 

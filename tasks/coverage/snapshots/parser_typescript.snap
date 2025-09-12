@@ -3,7 +3,7 @@ commit: 261630d6
 parser_typescript Summary:
 AST Parsed     : 8814/8816 (99.98%)
 Positive Passed: 8803/8816 (99.85%)
-Negative Passed: 1435/3535 (40.59%)
+Negative Passed: 1442/3535 (40.79%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -2270,8 +2270,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/p
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/defineProperty.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorLocals.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorParameters.ts
@@ -2337,8 +2335,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorator
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod10.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod11.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod12.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod6.ts
 
@@ -2507,14 +2503,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/compu
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames23_ES5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames23_ES6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames24_ES5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames24_ES6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames26_ES5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames26_ES6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames2_ES5.ts
 
@@ -3607,8 +3595,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration9.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration3.ts
 
@@ -6746,7 +6732,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors3.ts:2:25]
  1 │ class foo {
  2 │     constructor (public public a: number) {
@@ -6755,7 +6741,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors4.ts:2:26]
  1 │ class foo {
  2 │     constructor (private public a: number) {
@@ -9972,14 +9958,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │ };
    ╰────
 
-  × TS(1070): 'public' modifier cannot appear on a type member.
-   ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
- 1 │ interface I {
- 2 │   public [a: string]: number;
-   ·   ──────
- 3 │ }
-   ╰────
-
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/compiler/modifiersOnInterfaceIndexSignature1.ts:2:3]
  1 │ interface I {
@@ -10234,7 +10212,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │     .then((role: Role) =>
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/multipleClassPropertyModifiersErrors.ts:2:9]
  1 │ class C {
  2 │     public public p1;
@@ -10243,7 +10221,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/compiler/multipleClassPropertyModifiersErrors.ts:3:10]
  2 │     public public p1;
  3 │     private private p2;
@@ -13226,30 +13204,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:39:17]
- 38 │             method() {
- 39 │                 super.method();
-    ·                 ─────
- 40 │             },
-    ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:42:17]
- 41 │             get prop() {
- 42 │                 super.method();
-    ·                 ─────
- 43 │                 return 10;
-    ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:46:17]
- 45 │             set prop(value) {
- 46 │                 super.method();
-    ·                 ─────
- 47 │             },
-    ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES5.ts:49:17]
  48 │             p1: function () {
  49 │                 super.method();
@@ -13287,30 +13241,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  23 │         super.method();
     ·         ─────
  24 │     }
-    ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:39:17]
- 38 │             method() {
- 39 │                 super.method();
-    ·                 ─────
- 40 │             },
-    ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:42:17]
- 41 │             get prop() {
- 42 │                 super.method();
-    ·                 ─────
- 43 │                 return 10;
-    ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[typescript/tests/cases/compiler/superInObjectLiterals_ES6.ts:46:17]
- 45 │             set prop(value) {
- 46 │                 super.method();
-    ·                 ─────
- 47 │             },
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
@@ -13362,14 +13292,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  11 │             return super._foo;
     ·                    ─────
  12 │         }
-    ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-    ╭─[typescript/tests/cases/compiler/super_inside-object-literal-getters-and-setters.ts:21:24]
- 20 │             get F() {
- 21 │                 return super.test();
-    ·                        ─────
- 22 │             }
     ╰────
 
   × Keywords cannot contain escape characters
@@ -16176,6 +16098,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  11 │     readonly #quxMethod() { return  3; }       // Error
     ╰────
 
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:11:5]
+ 10 │     protected #bazMethod() { return  3; }      // Error
+ 11 │     readonly #quxMethod() { return  3; }       // Error
+    ·     ────────
+ 12 │     declare #whatMethod()                      // Error
+    ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:12:5]
+ 11 │     readonly #quxMethod() { return  3; }       // Error
+ 12 │     declare #whatMethod()                      // Error
+    ·     ───────
+ 13 │     async #asyncMethod() { return 1; }         //OK
+    ╰────
+
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:17:5]
  16 │ 
@@ -16327,7 +16265,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:39:13]
  38 │ class E {
  39 │     private public protected property;
@@ -16336,7 +16274,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:39:20]
  38 │ class E {
  39 │     private public protected property;
@@ -16345,7 +16283,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:40:12]
  39 │     private public protected property;
  40 │     public protected method() { }
@@ -16354,7 +16292,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'protected' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:41:13]
  40 │     public protected method() { }
  41 │     private protected get getter() { return 0; }
@@ -16363,7 +16301,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:42:12]
  41 │     private protected get getter() { return 0; }
  42 │     public public set setter(a: number) { }
@@ -16525,6 +16463,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │ };
     ╰────
 
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:15:5]
+ 14 │ class BOther extends A {
+ 15 │     declare m() { return 2 } // not allowed on methods
+    ·     ───────
+ 16 │     declare nonce: any; // ok, even though it's not in the base
+    ╰────
+
   × Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:3:12]
  2 │     foo();
@@ -16681,7 +16627,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ }
    ╰────
 
-  × TS(1070): 'static' modifier cannot appear on a type member.
+  × TS(1071): 'static' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:12:5]
  11 │ interface IB {
  12 │     static [s: string]: number;
@@ -16689,7 +16635,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │     static [s: number]: 42 | 233;
     ╰────
 
-  × TS(1070): 'static' modifier cannot appear on a type member.
+  × TS(1071): 'static' modifier cannot appear on an index signature.
     ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature4.ts:13:5]
  12 │     static [s: string]: number;
  13 │     static [s: number]: 42 | 233;
@@ -16697,7 +16643,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  14 │ }
     ╰────
 
-  × TS(1070): 'static' modifier cannot appear on a type member.
+  × TS(1071): 'static' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:7:5]
  6 │ interface I {
  7 │     static readonly [s: string]: number;
@@ -16705,7 +16651,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │     static readonly [s: number]: 42 | 233
    ╰────
 
-  × TS(1070): 'static' modifier cannot appear on a type member.
+  × TS(1071): 'static' modifier cannot appear on an index signature.
    ╭─[typescript/tests/cases/conformance/classes/staticIndexSignature/staticIndexSignature5.ts:8:5]
  7 │     static readonly [s: string]: number;
  8 │     static readonly [s: number]: 42 | 233
@@ -16771,6 +16717,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                        ┬
    ·                        ╰── `,` expected
  5 │ }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod12.ts:6:11]
+ 5 │     class C extends S {
+ 6 │         @(super.decorator)
+   ·           ─────
+ 7 │         method() { }
    ╰────
 
   × Expected `;` but found `@`
@@ -17261,6 +17215,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·      ─
  6 │     static [{}]() { }
    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames24_ES5.ts:7:6]
+ 6 │ class C extends Base {
+ 7 │     [super.bar()]() { }
+   ·      ─────
+ 8 │ }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames24_ES6.ts:9:6]
+  8 │     // use of super in static properties initializers.
+  9 │     [super.bar()]() { }
+    ·      ─────
+ 10 │ }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames26_ES5.ts:8:12]
+ 7 │     [
+ 8 │         { [super.bar()]: 1 }[0]
+   ·            ─────
+ 9 │     ]() { }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames26_ES6.ts:10:12]
+  9 │     [
+ 10 │         { [super.bar()]: 1 }[0]
+    ·            ─────
+ 11 │     ]() { }
+    ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames27_ES5.ts:4:7]
@@ -22554,7 +22540,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts:2:10]
  1 │ class C {
  2 │   public public constructor() { }
@@ -22563,7 +22549,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts:2:10]
  1 │ class C {
  2 │   public private constructor() { }
@@ -23594,7 +23580,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration7.ts:2:12]
  1 │ class C {
  2 │     public public get Foo() { }
@@ -23612,7 +23598,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration1.ts:2:12]
  1 │ class C {
  2 │     public public Foo() { }
@@ -23635,6 +23621,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ class C {
  2 │     export Foo() { }
    ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts:2:5]
+ 1 │ class C {
+ 2 │     declare Foo() { }
+   ·     ───────
  3 │ }
    ╰────
 
@@ -23694,7 +23688,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │ }
     ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration1.ts:2:10]
  1 │ class C {
  2 │   public public Foo;
@@ -23907,7 +23901,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × TS(1030): 'public' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected4.ts:2:13]
  1 │ class C {
  2 │   protected public m() { }
@@ -23916,7 +23910,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): 'private' modifier already seen.
+  × TS(1028): Accessibility modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected7.ts:2:13]
  1 │ class C {
  2 │   protected private m() { }

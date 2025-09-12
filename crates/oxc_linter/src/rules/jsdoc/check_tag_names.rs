@@ -607,6 +607,17 @@ fn test() {
           Some(serde_json::json!([ { "definedTags": [] } ])),
           None,
       ),
+       // https://github.com/oxc-project/oxc/issues/13570
+        (
+          "
+          /**
+           * @import { Page } from '@playwright/test';
+           */
+          function quux (foo) { }
+      ",
+          Some(serde_json::json!([ { "definedTags": [] } ])),
+          None,
+      ),
         (
           "
           /**

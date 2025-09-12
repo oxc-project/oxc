@@ -123,7 +123,13 @@ transformer = [
   "dep:oxc_tasks_common",
   "dep:oxc_transformer",
 ]
-semantic = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_semantic", "dep:oxc_span", "dep:oxc_tasks_common"]
+semantic = [
+  "dep:oxc_allocator",
+  "dep:oxc_parser",
+  "dep:oxc_semantic",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
 minifier = [
   "dep:oxc_allocator",
   "dep:oxc_minifier",
@@ -150,5 +156,6 @@ linter = [
   "dep:oxc_semantic",
   "dep:oxc_span",
   "dep:oxc_tasks_common",
+  "oxc_semantic/cfg",
 ]
 formatter = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_formatter", "dep:oxc_span", "dep:oxc_tasks_common"]

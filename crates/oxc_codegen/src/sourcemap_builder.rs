@@ -2,6 +2,7 @@ use std::path::Path;
 
 use nonmax::NonMaxU32;
 
+use oxc_data_structures::slice_iter::SliceIter;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
@@ -257,7 +258,7 @@ impl<'a> SourcemapBuilder<'a> {
                 b'\n' => {}
                 b'\r' => {
                     // Handle Windows-specific "\r\n" newlines
-                    if iter.clone().next() == Some(&b'\n') {
+                    if iter.peek() == Some(&b'\n') {
                         iter.next();
                     }
                 }
@@ -281,7 +282,7 @@ impl<'a> SourcemapBuilder<'a> {
 
             // Line break found.
             // `iter` is now positioned after line break.
-            line_start_ptr = iter.as_slice().as_ptr();
+            line_start_ptr = iter.ptr();
             self.generated_line += 1;
             self.generated_column = 0;
             last_line_is_ascii = true;
@@ -289,8 +290,8 @@ impl<'a> SourcemapBuilder<'a> {
 
         // Calculate column
         self.generated_column += if last_line_is_ascii {
-            // `iter` is now exhausted, so `iter.as_slice().as_ptr()` is pointer to end of `output`
-            (iter.as_slice().as_ptr() as usize - line_start_ptr as usize) as u32
+            // `iter` is now exhausted, so `iter.ptr()` is pointer to end of `output`
+            (iter.ptr() as usize - line_start_ptr as usize) as u32
         } else {
             let line_byte_offset = line_start_ptr as usize - remaining.as_ptr() as usize;
             // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this
@@ -306,8 +307,12 @@ impl<'a> SourcemapBuilder<'a> {
         let mut lines = vec![];
         let mut column_offsets = IndexVec::new();
 
-        // Used as a buffer to reduce memory reallocations
-        let mut columns = vec![];
+        // Used as a buffer to reduce memory reallocations.
+        // Pre-allocate with reasonable capacity to avoid frequent reallocations.
+        // 16 is a guess, probably adequate for most files which don't heavily use unicode chars.
+        // 16 entries is 64 bytes = 1 CPU cache line on most CPUs.
+        // If file does heavily use unicode chars, `columns` will grow adaptively as needed.
+        let mut columns = Vec::with_capacity(16);
 
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
@@ -387,7 +392,13 @@ impl<'a> SourcemapBuilder<'a> {
                             // `chunk_byte_offset` is now the offset of *end* of the line break.
                             line_byte_offset += chunk_byte_offset;
 
-                            // Record column offsets
+                            // Record column offsets.
+                            // `columns.clone().into_boxed_slice()` does perform an allocation,
+                            // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
+                            // so `Vec::into_boxed_slice` just drops the `capacity` field,
+                            // and does not need to reallocate again.
+                            // `columns` is reused for next line, and will grow adaptively depending on
+                            // how heavily the file uses unicode chars.
                             column_offsets.push(ColumnOffsets {
                                 byte_offset_to_first: byte_offset_from_line_start,
                                 columns: columns.clone().into_boxed_slice(),

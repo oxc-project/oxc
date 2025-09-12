@@ -9,7 +9,7 @@ use oxc_syntax::comment_node;
 
 use crate::{
     formatter::comments::{is_alignable_comment, is_end_of_line_comment, is_own_line_comment},
-    generated::{ast_nodes::SiblingNode, format},
+    generated::ast_nodes::SiblingNode,
     write,
 };
 

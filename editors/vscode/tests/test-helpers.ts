@@ -101,12 +101,29 @@ export async function loadFixture(fixture: string, workspaceDir: Uri = fixturesW
 }
 
 export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<Diagnostic[]> {
+  const diagnostics = await getDiagnosticsWithoutClose(file, workspaceDir);
+  await commands.executeCommand('workbench.action.closeActiveEditor');
+  return diagnostics;
+}
+
+export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<Diagnostic[]> {
   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
   await window.showTextDocument(fileUri);
   await sleep(500);
   const diagnostics = languages.getDiagnostics(fileUri);
-  await commands.executeCommand('workbench.action.closeActiveEditor');
   return diagnostics;
+}
+
+export async function writeToFixtureFile(file: string, content: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<void> {
+   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
+  await window.showTextDocument(fileUri);
+
+  for (const char of content) {
+      // oxlint-disable eslint/no-await-in-loop -- simulate key presses
+      await commands.executeCommand('type', { text: char });
+      await sleep(50);
+      // oxlint-enable
+  }
 }
 
 export async function waitForDiagnosticChange(): Promise<void> {
@@ -116,3 +133,4 @@ export async function waitForDiagnosticChange(): Promise<void> {
       })
     );
 }
+

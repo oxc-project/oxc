@@ -1,4 +1,4 @@
-use std::{env, ffi::OsStr, io::Write, path::PathBuf, sync::Arc};
+use std::{env, io::Write, path::PathBuf, time::Instant};
 
 use ignore::overrides::OverrideBuilder;
 
@@ -6,6 +6,7 @@ use oxc_diagnostics::DiagnosticService;
 
 use crate::{
     cli::{CliRunResult, FormatCommand},
+    command::OutputOptions,
     reporter::DefaultReporter,
     service::FormatService,
     walk::Walk,
@@ -23,19 +24,18 @@ impl FormatRunner {
     }
 
     pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
-        let cwd = self.cwd;
-        let FormatCommand { paths, output_options, .. } = self.options;
+        let start_time = Instant::now();
 
-        let (exclude_patterns, regular_paths): (Vec<_>, Vec<_>) =
+        let cwd = self.cwd;
+        let FormatCommand { paths, output_options, misc_options } = self.options;
+
+        // Instead of `--ignore-pattern=PAT`, we support `!` prefix in paths
+        let (exclude_patterns, target_paths): (Vec<_>, Vec<_>) =
             paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
 
-        // Need at least one regular path
-        if regular_paths.is_empty() {
-            print_and_flush_stdout(
-                stdout,
-                "Expected at least one target file/dir/glob(non-override pattern)\n",
-            );
-            return CliRunResult::FormatNoFilesFound;
+        if target_paths.is_empty() {
+            print_and_flush_stdout(stdout, "Expected at least one target file/dir/glob\n");
+            return CliRunResult::NoFilesFound;
         }
 
         // Build exclude patterns if any exist
@@ -49,37 +49,98 @@ impl FormatRunner {
             })
             .flatten();
 
-        let walker = Walk::new(&regular_paths, override_builder);
-        let paths = walker.paths();
+        let walker = Walk::new(&target_paths, override_builder);
+        let entries = walker.collect_entries();
 
-        let files_to_format = paths
+        let files_to_format = entries
             .into_iter()
-            // .filter(|path| !config_store.should_ignore(Path::new(path)))
-            .collect::<Vec<Arc<OsStr>>>();
+            // TODO: Support .pretttierignore
+            // TODO: Support default ignores like node_modules, .git, etc.
+            // .filter(|entry| !config_store.should_ignore(Path::new(&entry.path)))
+            .collect::<Vec<_>>();
 
+        // It may be empty after filtering ignored files
         if files_to_format.is_empty() {
             print_and_flush_stdout(stdout, "Expected at least one target file\n");
-            return CliRunResult::FormatNoFilesFound;
+            if misc_options.no_error_on_unmatched_pattern {
+                return CliRunResult::None;
+            }
+            return CliRunResult::NoFilesFound;
         }
 
-        let reporter = Box::new(DefaultReporter::default());
-        let (mut diagnostic_service, tx_error) = DiagnosticService::new(reporter);
+        let (mut diagnostic_service, tx_error) =
+            DiagnosticService::new(Box::new(DefaultReporter::default()));
 
+        if matches!(output_options, OutputOptions::Check | OutputOptions::Default) {
+            print_and_flush_stdout(stdout, "Checking formatting...\n");
+        }
+
+        let target_files_count = files_to_format.len();
+        let output_options_clone = output_options.clone();
+
+        // Spawn a thread to run formatting service and wait diagnostics
         rayon::spawn(move || {
-            let mut format_service = FormatService::new(cwd, &output_options);
-            format_service.with_paths(files_to_format);
+            let mut format_service = FormatService::new(cwd, &output_options_clone);
+            format_service.with_entries(files_to_format);
             format_service.run(&tx_error);
         });
         // NOTE: This is a blocking
         let res = diagnostic_service.run(stdout);
 
-        print_and_flush_stdout(stdout, &format!("{res:?}"));
+        // Add a new line between diagnostics and summary
+        print_and_flush_stdout(stdout, "\n");
 
-        CliRunResult::FormatSucceeded
+        if 0 < res.errors_count() {
+            // Each error is already printed in reporter
+            print_and_flush_stdout(
+                stdout,
+                "Error occurred when checking code style in the above files.\n",
+            );
+            return CliRunResult::FormatFailed;
+        }
+
+        let print_stats = |stdout| {
+            print_and_flush_stdout(
+                stdout,
+                &format!(
+                    "Finished in {}ms on {target_files_count} files using {} threads.\n",
+                    start_time.elapsed().as_millis(),
+                    rayon::current_num_threads()
+                ),
+            );
+        };
+
+        match (&output_options, res.warnings_count()) {
+            // `-l` outputs nothing here, mismatched paths are already printed in reporter
+            (OutputOptions::ListDifferent, 0) => CliRunResult::FormatSucceeded,
+            (OutputOptions::ListDifferent, _) => CliRunResult::FormatMismatch,
+            // `-c` outputs friendly summary
+            (OutputOptions::Check | OutputOptions::Default, 0) => {
+                print_and_flush_stdout(stdout, "All matched files use the correct format.\n");
+                print_stats(stdout);
+                CliRunResult::FormatSucceeded
+            }
+            (OutputOptions::Check | OutputOptions::Default, mismatched_count) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Format issues found in above {mismatched_count} files. Run with `-w` or `--write` to fix.\n",
+                    ),
+                );
+                print_stats(stdout);
+                CliRunResult::FormatMismatch
+            }
+            // `-w` also outputs friendly summary
+            (OutputOptions::Write, formatted_count) => {
+                print_and_flush_stdout(stdout, &format!("Formatted {formatted_count} files.\n"));
+                print_stats(stdout);
+                CliRunResult::FormatSucceeded
+            }
+        }
     }
 }
 
-pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
+fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
     use std::io::{Error, ErrorKind};
     fn check_for_writer_error(error: Error) -> Result<(), Error> {
         // Do not panic when the process is killed (e.g. piping into `less`).

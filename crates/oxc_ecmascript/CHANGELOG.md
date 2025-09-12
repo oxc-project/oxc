@@ -5,6 +5,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- f97283b ecmascript: Support more cases for IsLiteralValue with `include_functions` (#13425) (sapphi-red)
+
+
+
 ## [0.84.0] - 2025-08-30
 
 ### 🚀 Features

@@ -494,19 +494,6 @@ impl ConfigStoreBuilder {
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
-    #[cfg(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))))]
-    #[expect(unused_variables, clippy::needless_pass_by_ref_mut)]
-    fn load_external_plugin(
-        oxlintrc_dir_path: &Path,
-        plugin_specifier: &str,
-        external_linter: &ExternalLinter,
-        resolver: &Resolver,
-        external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<(), ConfigBuilderError> {
-        unreachable!()
-    }
-
-    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
     fn load_external_plugin(
         oxlintrc_dir_path: &Path,
         plugin_specifier: &str,
@@ -531,13 +518,11 @@ impl ConfigStoreBuilder {
 
         let result = {
             let plugin_path = plugin_path.clone();
-            tokio::task::block_in_place(move || {
-                tokio::runtime::Handle::current()
-                    .block_on((external_linter.load_plugin)(plugin_path))
-            })
-            .map_err(|e| ConfigBuilderError::PluginLoadFailed {
-                plugin_specifier: plugin_specifier.to_string(),
-                error: e.to_string(),
+            (external_linter.load_plugin)(plugin_path).map_err(|e| {
+                ConfigBuilderError::PluginLoadFailed {
+                    plugin_specifier: plugin_specifier.to_string(),
+                    error: e.to_string(),
+                }
             })
         }?;
 

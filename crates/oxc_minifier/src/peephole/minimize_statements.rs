@@ -7,7 +7,7 @@ use oxc_ecmascript::{
     constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_semantic::ScopeId;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
 use oxc_traverse::Ancestor;
 
@@ -520,7 +520,10 @@ impl<'a> PeepholeOptimizations {
                 break;
             };
             if kind.name == id.name {
-                if decl.init.is_none() {
+                if decl.init.is_none()
+                    && (decl.kind == VariableDeclarationKind::Var
+                        || assign_expr.right.is_literal_value(true, ctx))
+                {
                     // "var a; a = b();" => "var a = b();"
                     decl.init = Some(assign_expr.right.take_in(ctx.ast));
                     return true;
@@ -530,6 +533,8 @@ impl<'a> PeepholeOptimizations {
                 //   This is not possible as we need to consider cases when `c()` accesses `a`
                 // - "var a = 1; a = b();" => "var a = b();"
                 //   This is not possible as we need to consider cases when `b()` accesses `a`
+                // - "let a; a = foo(a);" => "let a = foo(a);"
+                //   This is not possible as TDZ error would be introduced
                 break;
             }
             // should not move assignment above variables with initializer to keep the execution order
@@ -572,7 +577,6 @@ impl<'a> PeepholeOptimizations {
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
-    #[expect(clippy::cast_possible_truncation)]
     fn handle_if_statement(
         i: usize,
         stmts: &mut Vec<'a, Statement<'a>>,
@@ -691,7 +695,7 @@ impl<'a> PeepholeOptimizations {
                         let consequent = if body.len() == 1 {
                             body.remove(0)
                         } else {
-                            let scope_id = ScopeId::new(ctx.scoping().scopes_len() as u32);
+                            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
                             let block_stmt =
                                 ctx.ast.block_statement_with_scope_id(span, body, scope_id);
                             Statement::BlockStatement(ctx.ast.alloc(block_stmt))
@@ -818,6 +822,20 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
+            let old_len = var_decl.declarations.len();
+            var_decl.declarations.retain(|decl| {
+                !Self::should_remove_unused_declarator(decl, ctx)
+                    || decl.init.as_ref().is_some_and(|init| init.may_have_side_effects(ctx))
+            });
+            if old_len != var_decl.declarations.len() {
+                if var_decl.declarations.is_empty() {
+                    for_stmt.init = None;
+                }
+                ctx.state.changed = true;
+            }
+        }
+
         if ctx.options().sequences {
             match result.last_mut() {
                 Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
@@ -1039,65 +1057,70 @@ impl<'a> PeepholeOptimizations {
         if Self::keep_top_level_var_in_script_mode(ctx) {
             return false;
         }
-        let Some(Statement::VariableDeclaration(prev_var_decl)) = stmts.last_mut() else {
-            return false;
-        };
-        if prev_var_decl.kind.is_using() {
-            return false;
-        }
 
-        let last_non_inlined_index = prev_var_decl.declarations.iter_mut().rposition(|prev_decl| {
-            let Some(prev_decl_init) = &mut prev_decl.init else {
-                return true;
-            };
-            let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind else {
-                return true;
-            };
-            if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
-                return true;
+        let mut inlined = false;
+        while let Some(Statement::VariableDeclaration(prev_var_decl)) = stmts.last_mut() {
+            if prev_var_decl.kind.is_using() {
+                break;
             }
-            let Some(symbol_value) =
-                ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
-            else {
-                return true;
-            };
-            // we should check whether it's exported by `symbol_value.exported`
-            // because the variable might be exported with `export { foo }` rather than `export var foo`
-            if symbol_value.exported
-                || symbol_value.read_references_count > 1
-                || symbol_value.write_references_count > 0
-            {
-                return true;
-            }
-            let replaced = Self::substitute_single_use_symbol_in_expression(
-                expr_in_stmt,
-                &prev_decl_id.name,
-                prev_decl_init,
-                prev_decl_init.may_have_side_effects(ctx),
-                ctx,
-            );
-            if replaced != Some(true) {
-                return true;
-            }
-            false
-        });
-        match last_non_inlined_index {
-            None => {
-                // all inlined
-                stmts.pop();
-                true
-            }
-            Some(last_non_inlined_index)
-                if last_non_inlined_index + 1 == prev_var_decl.declarations.len() =>
-            {
-                // no change
-                false
-            }
-            Some(last_non_inlined_index) => {
-                prev_var_decl.declarations.truncate(last_non_inlined_index + 1);
-                true
+
+            let last_non_inlined_index =
+                prev_var_decl.declarations.iter_mut().rposition(|prev_decl| {
+                    let Some(prev_decl_init) = &mut prev_decl.init else {
+                        return true;
+                    };
+                    let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind
+                    else {
+                        return true;
+                    };
+                    if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
+                        return true;
+                    }
+                    let Some(symbol_value) =
+                        ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
+                    else {
+                        return true;
+                    };
+                    // we should check whether it's exported by `symbol_value.exported`
+                    // because the variable might be exported with `export { foo }` rather than `export var foo`
+                    if symbol_value.exported
+                        || symbol_value.read_references_count > 1
+                        || symbol_value.write_references_count > 0
+                    {
+                        return true;
+                    }
+                    let replaced = Self::substitute_single_use_symbol_in_expression(
+                        expr_in_stmt,
+                        &prev_decl_id.name,
+                        prev_decl_init,
+                        prev_decl_init.may_have_side_effects(ctx),
+                        ctx,
+                    );
+                    if replaced != Some(true) {
+                        return true;
+                    }
+                    false
+                });
+            match last_non_inlined_index {
+                None => {
+                    // all inlined
+                    stmts.pop();
+                    inlined = true;
+                }
+                Some(last_non_inlined_index)
+                    if last_non_inlined_index + 1 == prev_var_decl.declarations.len() =>
+                {
+                    // no change
+                    break;
+                }
+                Some(last_non_inlined_index) => {
+                    prev_var_decl.declarations.truncate(last_non_inlined_index + 1);
+                    inlined = true;
+                    break;
+                }
             }
         }
+        inlined
     }
 
     /// Returns Some(true) when the expression is successfully replaced.

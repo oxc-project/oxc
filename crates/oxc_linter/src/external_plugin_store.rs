@@ -22,6 +22,11 @@ pub struct ExternalPluginStore {
 }
 
 impl ExternalPluginStore {
+    /// Returns `true` if no external plugins have been loaded.
+    pub fn is_empty(&self) -> bool {
+        self.plugins.is_empty()
+    }
+
     pub fn is_plugin_registered(&self, plugin_path: &str) -> bool {
         self.registered_plugin_paths.contains(plugin_path)
     }

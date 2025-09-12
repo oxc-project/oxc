@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -43,6 +43,9 @@ declare_oxc_lint!(
     fix
 );
 
+// skip React.Children because we are only looking at `StaticMemberExpression.property` and not its object
+const IGNORE_OBJECTS: [&str; 1] = [/* "React.Children", */ "Children"];
+
 impl Rule for PreferArrayFlatMap {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(flat_call_expr) = node.kind() else {
@@ -64,6 +67,11 @@ impl Rule for PreferArrayFlatMap {
             return;
         };
         if !is_method_call(call_expr, None, Some(&["map"]), None, None) {
+            return;
+        }
+
+        // Check for Call Expressions which should be ignored
+        if is_ignored_call_expression(call_expr) {
             return;
         }
 
@@ -96,6 +104,20 @@ impl Rule for PreferArrayFlatMap {
     }
 }
 
+/// Returns true if the object of the method call is `Children` or `React.Children`.
+fn is_ignored_call_expression(call_expr: &CallExpression) -> bool {
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
+    match member_expr.object().get_inner_expression() {
+        Expression::Identifier(ident) => IGNORE_OBJECTS.contains(&ident.name.as_str()),
+        Expression::StaticMemberExpression(mem) => {
+            IGNORE_OBJECTS.contains(&mem.property.name.as_str())
+        }
+        _ => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -125,6 +147,9 @@ fn test() {
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(+1)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo)", None),
         ("const bar = [[1],[2],[3]].map(i => [i]).flat(foo.bar)", None),
+        // Allowed
+        ("Children.map(children, fn).flat()", None), // `import {Children} from 'react';`
+        ("React.Children.map(children, fn).flat()", None),
     ];
 
     let fail = vec![

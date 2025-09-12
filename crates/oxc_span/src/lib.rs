@@ -20,10 +20,10 @@ pub use span::{GetSpan, GetSpanMut, SPAN, Span};
 
 mod generated {
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
     mod derive_dummy;
     #[cfg(feature = "serialize")]
-    pub mod derive_estree;
+    mod derive_estree;
 }
 
 #[doc(hidden)]

@@ -207,7 +207,7 @@ use utils::create_ident;
 
 /// Paths to source files containing AST types
 static SOURCE_PATHS: &[&str] = &[
-    "crates/oxc_allocator/src/pool_fixed_size.rs",
+    "crates/oxc_allocator/src/pool/fixed_size.rs",
     "crates/oxc_ast/src/ast/js.rs",
     "crates/oxc_ast/src/ast/literal.rs",
     "crates/oxc_ast/src/ast/jsx.rs",
@@ -257,7 +257,7 @@ const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 const NAPI_PARSER_PACKAGE_PATH: &str = "napi/parser";
 
 /// Path to NAPI oxlint package
-const NAPI_OXLINT_PACKAGE_PATH: &str = "napi/oxlint2";
+const NAPI_OXLINT_PACKAGE_PATH: &str = "napi/oxlint";
 
 /// Path to write AST changes filter list to
 const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";

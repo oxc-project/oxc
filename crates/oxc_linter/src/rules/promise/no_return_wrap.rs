@@ -52,7 +52,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// It is unnecessary to use `Promise.resolve` and Promise.reject` for converting raw values
+    /// It is unnecessary to use `Promise.resolve` and `Promise.reject` for converting raw values
     /// to promises in the return statements of `then` and `catch` callbacks. Using these
     /// operations to convert raw values to promises is unnecessary as simply returning the raw
     /// value for the success case and throwing the raw error value in the failure case have the

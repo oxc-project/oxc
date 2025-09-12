@@ -2,12 +2,15 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{Box, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::MayHaveSideEffects,
+};
+use oxc_regular_expression::{
+    RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
 use oxc_span::SPAN;
 use oxc_syntax::es_target::ESTarget;
@@ -284,7 +287,7 @@ impl<'a> PeepholeOptimizations {
 
                 let mut quasi_strs: Vec<Cow<'a, str>> =
                     vec![Cow::Borrowed(base_str.value.as_str())];
-                let mut expressions = ctx.ast.vec();
+                let mut expressions = ctx.ast.vec_with_capacity(expression_count);
                 let mut pushed_quasi = true;
                 for argument in args.drain(..) {
                     if let Argument::StringLiteral(str_lit) = argument {
@@ -367,11 +370,15 @@ impl<'a> PeepholeOptimizations {
 
         let (name, object, span) = match node {
             Expression::StaticMemberExpression(member) if !member.optional => {
-                (member.property.name.as_str(), &member.object, member.span)
+                let span = member.span;
+                (member.property.name.as_str(), &mut member.object, span)
             }
             Expression::ComputedMemberExpression(member) if !member.optional => {
                 match &member.expression {
-                    Expression::StringLiteral(s) => (s.value.as_str(), &member.object, member.span),
+                    Expression::StringLiteral(s) => {
+                        let span = member.span;
+                        (s.value.as_str(), &mut member.object, span)
+                    }
                     Expression::NumericLiteral(n) => {
                         if let Some(integer_index) = n.value.to_integer_index() {
                             let span = member.span;
@@ -411,15 +418,60 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return,
         };
-        let Expression::Identifier(ident) = object else { return };
 
-        if !ctx.is_global_reference(ident) {
-            return;
-        }
+        let replacement = match object {
+            Expression::Identifier(ident) => {
+                if !ctx.is_global_reference(ident) {
+                    return;
+                }
+                match ident.name.as_str() {
+                    "Number" => Self::try_fold_number_constants(name, span, ctx),
+                    _ => None,
+                }
+            }
+            Expression::RegExpLiteral(regex) => match name {
+                "source" => {
+                    const ES2015_UNSUPPORTED_FLAGS: RegExpFlags = RegExpFlags::G
+                        .union(RegExpFlags::I)
+                        .union(RegExpFlags::M)
+                        .union(RegExpFlags::S)
+                        .union(RegExpFlags::Y)
+                        .complement();
+                    const ES2015_UNSUPPORTED_PATTERNS: RegexUnsupportedPatterns =
+                        RegexUnsupportedPatterns {
+                            look_behind_assertions: true,
+                            named_capture_groups: true,
+                            unicode_property_escapes: true,
+                            pattern_modifiers: true,
+                        };
 
-        let replacement = match ident.name.as_str() {
-            "Number" => Self::try_fold_number_constants(name, span, ctx),
-            _ => None,
+                    if regex.regex.pattern.pattern.is_none()
+                        && let Ok(pattern) = regex.parse_pattern(ctx.ast.allocator)
+                    {
+                        regex.regex.pattern.pattern = Some(Box::new_in(pattern, ctx.ast.allocator));
+                    }
+                    if let Some(pattern) = &regex.regex.pattern.pattern
+                        // for now, only replace regexes that are supported by ES2015 to preserve the syntax error
+                        // we can check whether each feature is supported for the target range to improve this
+                        && regex.regex.flags.intersection(ES2015_UNSUPPORTED_FLAGS).is_empty()
+                        && !has_unsupported_regular_expression_pattern(
+                            pattern,
+                            &ES2015_UNSUPPORTED_PATTERNS,
+                        )
+                    {
+                        Some(ctx.ast.expression_string_literal(
+                            span,
+                            regex.regex.pattern.text,
+                            None,
+                        ))
+                    } else {
+                        // the pattern might be invalid, keep it as-is to preserve the error
+                        None
+                    }
+                }
+                _ => None,
+            },
+            _ => return,
         };
         if let Some(replacement) = replacement {
             ctx.state.changed = true;
@@ -556,15 +608,18 @@ mod test {
         tester::{test, test_options, test_same},
     };
 
+    #[track_caller]
     fn test_es2015(code: &str, expected: &str) {
         let options = CompressOptions { target: ESTarget::ES2015, ..CompressOptions::default() };
         test_options(code, expected, &options);
     }
 
+    #[track_caller]
     fn test_value(code: &str, expected: &str) {
         test(format!("x = {code}").as_str(), format!("x = {expected}").as_str());
     }
 
+    #[track_caller]
     fn test_same_value(code: &str) {
         test_same(format!("x = {code}").as_str());
     }
@@ -611,20 +666,20 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join optimization with sparse arrays not yet implemented"]
     fn test_string_join_add_sparse() {
         test("x = [,,'a'].join(',')", "x = ',,a'");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join optimization edge cases not yet implemented"]
     fn test_no_string_join() {
         test_same("x = [].join(',',2)");
         test_same("x = [].join(f)");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join to string concatenation optimization not yet implemented"]
     fn test_string_join_add() {
         test("x = ['a', 'b', 'c'].join('')", "x = \"abc\"");
         test("x = [].join(',')", "x = \"\"");
@@ -684,7 +739,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join single element optimization not yet implemented"]
     fn test_string_join_add_b1992789() {
         test("x = ['a'].join('')", "x = \"a\"");
         test_same("x = [foo()].join('')");
@@ -835,7 +890,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: String.split optimization not yet implemented"]
     fn test_fold_string_split() {
         // late = false;
         test("x = 'abcde'.split('foo')", "x = ['abcde']");
@@ -873,7 +928,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join edge case optimization not yet implemented"]
     fn test_join_bug() {
         test("var x = [].join();", "var x = '';");
         test_same("var x = [x].join();");
@@ -893,7 +948,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
     fn test_join_spread1() {
         test_same("var x = [...foo].join('');");
         test_same("var x = [...someMap.keys()].join('');");
@@ -905,7 +960,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
     fn test_join_spread2() {
         test("var x = [...foo].join(',');", "var x = [...foo].join();");
         test("var x = [...someMap.keys()].join(',');", "var x = [...someMap.keys()].join();");
@@ -1164,7 +1219,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Math.pow optimization not yet implemented"]
     fn test_fold_math_functions_pow() {
         test("Math.pow(1, 2)", "1");
         test("Math.pow(2, 0)", "1");
@@ -1291,7 +1346,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: String charAt replacement optimization not yet implemented"]
     fn test_replace_with_char_at() {
         // enableTypeCheck();
         // replaceTypesWithColors();
@@ -1777,5 +1832,21 @@ mod test {
         test_value("isFinite('abc')", "!1");
         test_same_value("isFinite(unknown)");
         test_same_value("isFinite((foo, 0))"); // foo may have sideeffect
+    }
+
+    #[test]
+    fn test_fold_regex_source() {
+        test_value("/abc def/.source", "'abc def'");
+        test_value("/\\d+/.source", "'\\\\d+'");
+        test_value("/[a-z]/.source", "'[a-z]'");
+        test_value("/a|b/.source", "'a|b'");
+        test_value("/^test$/.source", "'^test$'");
+        test_value("/./.source", "'.'");
+        test_value("/.*/.source", "'.*'");
+
+        test_value("/abc def/i.source", "'abc def'");
+        test_same_value("/(/.source"); // this regex is invalid
+        test_value("/\\u{}/.source", "'\\\\u{}'");
+        test_same_value("/\\u{}/u.source"); // this regex is invalid, also u flag is not supported by ES2015
     }
 }

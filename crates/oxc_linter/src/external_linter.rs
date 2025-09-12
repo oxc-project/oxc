@@ -1,21 +1,13 @@
-use std::{fmt::Debug, pin::Pin, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
 use oxc_allocator::Allocator;
 
 pub type ExternalLinterLoadPluginCb = Arc<
-    dyn Fn(
-            String,
-        ) -> Pin<
-            Box<
-                dyn Future<
-                        Output = Result<PluginLoadResult, Box<dyn std::error::Error + Send + Sync>>,
-                    > + Send,
-            >,
-        > + Send
-        + Sync
-        + 'static,
+    dyn Fn(String) -> Result<PluginLoadResult, Box<dyn std::error::Error + Send + Sync>>
+        + Send
+        + Sync,
 >;
 
 pub type ExternalLinterLintFileCb =
@@ -47,7 +39,6 @@ pub struct Loc {
 }
 
 #[derive(Clone)]
-#[cfg_attr(not(all(feature = "oxlint2", not(feature = "disable_oxlint2"))), expect(dead_code))]
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,

@@ -1,0 +1,229 @@
+name: Release Oxfmt
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - npm/oxfmt/package.json # Please only commit this file, so we don't need to wait for all the other CI jobs to finish.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Check version changes
+        uses: EndBug/version-check@5102328418c0130d66ca712d755c303e93368ce2 # v2.1.7
+        id: version
+        with:
+          static-checking: localIsNew
+          file-url: https://unpkg.com/oxfmt@latest/package.json
+          file-name: npm/oxfmt/package.json
+
+      - name: Print version
+        if: steps.version.outputs.changed == 'true'
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          echo "Version change found! New version: ${NEW_VERSION}"
+
+  build:
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            code-target: win32-x64
+
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            code-target: win32-arm64
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            code-target: linux-x64-gnu
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64-gnu
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            code-target: linux-x64-musl
+
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            code-target: linux-arm64-musl
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            code-target: darwin-x64
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            code-target: darwin-arm64
+
+    name: Package ${{ matrix.code-target }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      OXC_VERSION: ${{ needs.check.outputs.version }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Install cross
+        uses: taiki-e/install-action@57511bcdf8cdb0eab6448cb7fa632952d9f25742 # v2.59.1
+        with:
+          tool: cross
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+        with:
+          shared-key: release-${{ matrix.target }}
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build
+        shell: bash
+        env:
+          TARGET_CC: clang # for mimalloc
+        run: |
+          cross build --release -p oxfmt --bin oxfmt --features allocator --target=${{ matrix.target }}
+
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
+        if: runner.os == 'Windows'
+        run: |
+          OXFMT_BIN_NAME=oxfmt-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxfmt.exe $OXFMT_BIN_NAME.exe
+          7z a $OXFMT_BIN_NAME.zip $OXFMT_BIN_NAME.exe
+
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
+        if: runner.os != 'Windows'
+        run: |
+          OXFMT_BIN_NAME=oxfmt-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxfmt $OXFMT_BIN_NAME
+          tar czf $OXFMT_BIN_NAME.tar.gz $OXFMT_BIN_NAME
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          if-no-files-found: error
+          name: binaries-${{ matrix.code-target }}
+          path: |
+            *.zip
+            *.tar.gz
+
+  publish:
+    name: Publish
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # for softprops/action-gh-release@v1.3.1
+      id-token: write # for `pnpm publish --provenance`
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0 # for changelog
+          persist-credentials: false
+
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          restore-cache: false
+          tools: cargo-release-oxc
+
+      - name: Run
+        id: run
+        run: |
+          mkdir -p target
+          cargo release-oxc changelog --release oxfmt
+          {
+            echo 'CHANGELOG<<EOF'
+            cat ./target/OXC_CHANGELOG
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          merge-multiple: true
+
+      - name: Unzip
+        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
+        with:
+          args: unzip -qq *.zip -d .
+
+      - name: Untar
+        run: ls *.gz | xargs -i tar xf {}
+
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+
+      - name: Generate npm packages
+        run: |
+          node npm/oxfmt/scripts/generate-packages.mjs
+          cat npm/oxfmt/package.json
+          for package in npm/oxfmt*; do cat $package/package.json ; echo ; done
+
+      - run: npm install -g npm@latest # For trusted publishing support
+
+      - name: Publish npm packages as latest
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+        run: |
+          for package in npm/oxfmt*
+          do
+            pnpm publish $package/ --provenance --access public --no-git-checks
+            echo '----'
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+        with:
+          body: ${{ steps.run.outputs.CHANGELOG }}
+          draft: false
+          files: oxfmt-*
+          name: oxfmt v${{ needs.check.outputs.version }}
+          tag_name: oxfmt_v${{ needs.check.outputs.version }}
+          fail_on_unmatched_files: true
+          target_commitish: ${{ github.sha }}
+
+      - name: wait 3 minutes for smoke test
+        run: sleep 180s
+
+  smoke:
+    needs: [check, publish]
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-latest
+          - os: ubuntu-latest
+            container: node:18-alpine # musl
+          - os: macos-latest
+    name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+    steps:
+      - name: Test
+        env:
+          OXFMT_VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          touch test.js
+          ldd --version || true
+          npx oxfmt@${OXFMT_VERSION} ./test.js

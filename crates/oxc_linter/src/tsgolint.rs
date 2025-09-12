@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeSet,
     ffi::OsStr,
     io::{ErrorKind, Read, Write},
     path::{Path, PathBuf},
@@ -22,7 +23,7 @@ use crate::{
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
 pub struct TsGoLintState {
-    /// The path to the `tsgolint` executable (at least our our best guess at it).
+    /// The path to the `tsgolint` executable (at least our best guess at it).
     executable_path: PathBuf,
     /// Current working directory, used for rendering paths in diagnostics.
     cwd: PathBuf,
@@ -35,12 +36,20 @@ pub struct TsGoLintState {
 
 impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
-        TsGoLintState {
-            config_store,
-            executable_path: try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint")),
-            cwd: cwd.to_path_buf(),
-            silent: false,
-        }
+        let executable_path =
+            try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint"));
+
+        TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false }
+    }
+
+    /// Try to create a new TsGoLintState, returning an error if the executable cannot be found.
+    ///
+    /// # Errors
+    /// Returns an error if the tsgolint executable cannot be found.
+    pub fn try_new(cwd: &Path, config_store: ConfigStore) -> Result<Self, String> {
+        let executable_path = try_find_tsgolint_executable(cwd)?;
+
+        Ok(TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false })
     }
 
     /// Set to `true` to skip file system reads.
@@ -68,6 +77,9 @@ impl TsGoLintState {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         let json_input = self.json_input(paths, &mut resolved_configs);
+        if json_input.configs.is_empty() {
+            return Ok(());
+        }
 
         let handler = std::thread::spawn(move || {
             let mut cmd = std::process::Command::new(&self.executable_path);
@@ -457,32 +469,41 @@ impl TsGoLintState {
         &self,
         paths: &[Arc<OsStr>],
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
-    ) -> TsGoLintInput {
-        TsGoLintInput {
-            files: paths
-                .iter()
-                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
-                .map(|path| TsGoLintInputFile {
-                    file_path: path.to_string_lossy().to_string(),
-                    rules: {
-                        let path_buf = PathBuf::from(path);
-                        let resolved_config = resolved_configs
-                            .entry(path_buf.clone())
-                            .or_insert_with(|| self.config_store.resolve(&path_buf));
+    ) -> Payload {
+        let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
 
-                        // Collect the rules that are enabled for this file
-                        resolved_config
-                            .rules
-                            .iter()
-                            .filter_map(|(rule, status)| {
-                                if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                                    Some(rule.name().to_string())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect()
-                    },
+        for path in paths {
+            if SourceType::from_path(Path::new(path)).is_ok() {
+                let path_buf = PathBuf::from(path);
+                let file_path = path.to_string_lossy().to_string();
+
+                let resolved_config = resolved_configs
+                    .entry(path_buf.clone())
+                    .or_insert_with(|| self.config_store.resolve(&path_buf));
+
+                let rules: BTreeSet<Rule> = resolved_config
+                    .rules
+                    .iter()
+                    .filter_map(|(rule, status)| {
+                        if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                            Some(Rule { name: rule.name().to_string() })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                config_groups.entry(rules).or_default().push(file_path);
+            }
+        }
+
+        Payload {
+            version: 2,
+            configs: config_groups
+                .into_iter()
+                .map(|(rules, file_paths)| Config {
+                    file_paths,
+                    rules: rules.into_iter().collect(),
                 })
                 .collect(),
         }
@@ -493,26 +514,35 @@ impl TsGoLintState {
 ///
 /// ```json
 /// {
-///   "files": [
+///   "configs": [
 ///     {
-///       "file_path": "/absolute/path/to/file.ts",
-///       "rules": ["rule-1", "another-rule"]
+///       "file_paths": ["/absolute/path/to/file.ts", "/another/file.ts"],
+///       "rules": [
+///         { "name": "rule-1" },
+///         { "name": "another-rule" },
+///       ]
 ///     }
 ///   ]
 /// }
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TsGoLintInput {
-    pub files: Vec<TsGoLintInputFile>,
+pub struct Payload {
+    pub version: i32,
+    pub configs: Vec<Config>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TsGoLintInputFile {
+pub struct Config {
     /// Absolute path to the file to lint
-    pub file_path: String,
+    pub file_paths: Vec<String>,
     /// List of rules to apply to this file
     /// Example: `["no-floating-promises"]`
-    pub rules: Vec<String>,
+    pub rules: Vec<Rule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
+pub struct Rule {
+    pub name: String,
 }
 
 /// Represents the raw output binary data from `tsgolint`.
@@ -706,15 +736,29 @@ fn parse_single_message(
 /// Tries to find the `tsgolint` executable. In priority order, this will check:
 /// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
 /// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
-pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
+///
+/// # Errors
+/// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
+/// Returns an error if the tsgolint executable could not be resolve inside `node_modules/.bin`.
+pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     // Check the environment variable first
-    if let Ok(path) = std::env::var("OXLINT_TSGOLINT_PATH") {
-        let path = PathBuf::from(path);
+    if let Ok(path_str) = std::env::var("OXLINT_TSGOLINT_PATH") {
+        let path = PathBuf::from(&path_str);
         if path.is_dir() {
-            return Some(path.join("tsgolint"));
-        } else if path.is_file() {
-            return Some(path);
+            let tsgolint_path = path.join("tsgolint");
+            if tsgolint_path.exists() {
+                return Ok(tsgolint_path);
+            }
+            return Err(format!(
+                "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to directory '{path_str}' but 'tsgolint' binary not found inside"
+            ));
         }
+        if path.is_file() {
+            return Ok(path);
+        }
+        return Err(format!(
+            "Failed to find tsgolint executable: OXLINT_TSGOLINT_PATH points to '{path_str}' which does not exist"
+        ));
     }
 
     // executing a sub command in windows, needs a `cmd` or `ps1` extension.
@@ -726,7 +770,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
     loop {
         let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
         if node_modules_bin.exists() {
-            return Some(node_modules_bin);
+            return Ok(node_modules_bin);
         }
 
         // If we reach the root directory, stop searching
@@ -735,7 +779,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Option<PathBuf> {
         }
     }
 
-    None
+    Err("Failed to find tsgolint executable".to_string())
 }
 
 #[cfg(test)]

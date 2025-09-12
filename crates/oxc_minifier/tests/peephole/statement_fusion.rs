@@ -73,7 +73,7 @@ fn fuse_into_vanilla_for2() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "TODO: Label statement fusion optimization not yet implemented"]
 fn fuse_into_label() {
     test("a;b;c;label:for(x in y){}", "label:for(x in a,b,c,y);");
     test("a;b;c;label:for(;g;){}", "label:for(a,b,c;g;);");

@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- e11a946 rust: Fix missing docs (#13541) (Boshen)
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+
+## [0.86.0] - 2025-08-31
+
+### 💥 BREAKING CHANGES
+
+- edeebc6 data_structures: [**BREAKING**] Rename `SliceIterExt` to `SliceIter` (#13439) (overlookmotel)
+
+### 🚀 Features
+
+- 5b139aa data_structures: Add `ptr` and `end_ptr` methods to `SliceIterExt` (#13435) (overlookmotel)
+- d8b027f data_structures: Add `SliceIterExt::peek` method (#13434) (overlookmotel)
+
+### 🚜 Refactor
+
+- 9c3b060 codegen: Clarify choice of quote when printing strings (#13440) (overlookmotel)
+
+### ⚡ Performance
+
+- 39fc0d6 codegen: Use `isize` for quote counters (#13441) (overlookmotel)
+
+
 
 
 ## [0.83.0] - 2025-08-29

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "1.14.0"
+version = "1.15.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -17,8 +17,6 @@ description.workspace = true
 default = []
 ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
 language_server = ["oxc_data_structures/rope"] # For the Runtime to support needed information for the language server
-oxlint2 = ["dep:oxc_ast_macros", "oxc_ast_visit/serialize", "tokio/rt-multi-thread"]
-disable_oxlint2 = []
 force_test_reporter = []
 
 [lints]
@@ -28,13 +26,13 @@ workspace = true
 doctest = true
 
 [dependencies]
-oxc_allocator = { workspace = true, features = ["pool"] }
+oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_ast = { workspace = true }
-oxc_ast_macros = { workspace = true, optional = true }
-oxc_ast_visit = { workspace = true }
+oxc_ast_macros = { workspace = true }
+oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true }
-oxc_data_structures = { workspace = true, optional = true }
+oxc_data_structures = { workspace = true, features = ["box_macros"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true, features = ["serde"] }
@@ -42,7 +40,7 @@ oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
-oxc_semantic = { workspace = true }
+oxc_semantic = { workspace = true, features = ["cfg"] }
 oxc_span = { workspace = true, features = ["schemars", "serialize"] }
 oxc_syntax = { workspace = true, features = ["serialize"] }
 
@@ -72,7 +70,6 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, features = ["preserve_order"] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
-tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
 insta = { workspace = true }

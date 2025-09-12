@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+
+
+## [0.86.0] - 2025-08-31
+
+### 💥 BREAKING CHANGES
+
+- edeebc6 data_structures: [**BREAKING**] Rename `SliceIterExt` to `SliceIter` (#13439) (overlookmotel)
+
+### 🚀 Features
+
+- d0479e9 data_structures: Add `as_mut_slice` method to `IterMut` via `SliceIterMutExt` trait (#13437) (overlookmotel)
+- 5b139aa data_structures: Add `ptr` and `end_ptr` methods to `SliceIterExt` (#13435) (overlookmotel)
+- d8b027f data_structures: Add `SliceIterExt::peek` method (#13434) (overlookmotel)
+
+### 🚜 Refactor
+
+- 51919c2 data_structures: Rename lifetime in `SliceIterExt` (#13433) (overlookmotel)
+
+### ⚡ Performance
+
+- 475205f data_structures: Reduce `IterMut::advance_unchecked` to 1 instruction (#13438) (overlookmotel)
+
+
 
 
 

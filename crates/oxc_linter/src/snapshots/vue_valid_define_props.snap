@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(valid-define-props): `defineProps` is referencing locally declared variables.
+   ╭─[valid_define_props.tsx:5:12]
+ 4 │                     const def = { msg: String }
+ 5 │                     defineProps(def)
+   ·                     ────────────────
+ 6 │                   </script>
+   ╰────
+  help: inline the variable or import it from another module.
+
+  ⚠ eslint-plugin-vue(valid-define-props): `defineProps` has both a type-only emit and an argument.
+   ╭─[valid_define_props.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineProps<{ msg?:string }>({ msg: String })
+   ·                     ─────────────────────────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: remove the argument for better type inference.
+
+  ⚠ eslint-plugin-vue(valid-define-props): `defineProps` has been called multiple times.
+   ╭─[valid_define_props.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineProps({ msg: String })
+   ·                     ──────────────┬─────────────
+   ·                                   ╰── `defineProps` is called here too
+ 5 │                     defineProps({ count: Number })
+   ·                     ───────────────┬──────────────
+   ·                                    ╰── `defineProps` is called here
+ 6 │                   </script>
+   ╰────
+  help: combine all `defineProps` calls into a single `defineProps` call.
+
+  ⚠ eslint-plugin-vue(valid-define-props): Props are defined in both `defineProps` and `export default {}`.
+    ╭─[valid_define_props.tsx:9:12]
+  8 │                     /* ✗ BAD */
+  9 │                     defineProps({ count: Number })
+    ·                     ──────────────────────────────
+ 10 │                   </script>
+    ╰────
+  help: Remove `export default`.
+
+  ⚠ eslint-plugin-vue(valid-define-props): Props are not defined.
+   ╭─[valid_define_props.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineProps()
+   ·                     ─────────────
+ 5 │                   </script>
+   ╰────
+  help: Define at least one prop in `defineProps`.

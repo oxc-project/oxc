@@ -1,4 +1,5 @@
 use std::path::{Component, Path, PathBuf};
+use std::str::FromStr;
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
@@ -37,7 +38,45 @@ pub struct ServerLinter {
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     lint_on_run: Run,
+    diagnostics: ServerLinterDiagnostics,
     pub extended_paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Default)]
+struct ServerLinterDiagnostics {
+    isolated_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+    tsgo_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+}
+
+impl ServerLinterDiagnostics {
+    pub fn get_diagnostics(&self, path: &str) -> Option<Vec<DiagnosticReport>> {
+        let mut reports = Vec::new();
+        let mut found = false;
+        if let Some(Some(diagnostics)) = self.isolated_linter.pin().get(path) {
+            reports.extend(diagnostics.clone());
+            found = true;
+        }
+        if let Some(Some(diagnostics)) = self.tsgo_linter.pin().get(path) {
+            reports.extend(diagnostics.clone());
+            found = true;
+        }
+        if found { Some(reports) } else { None }
+    }
+
+    pub fn remove_diagnostics(&self, path: &str) {
+        self.isolated_linter.pin().remove(path);
+        self.tsgo_linter.pin().remove(path);
+    }
+
+    pub fn get_cached_files_of_diagnostics(&self) -> Vec<String> {
+        let mut files = Vec::new();
+        let isolated_files = self.isolated_linter.pin().keys().cloned().collect::<Vec<_>>();
+        let tsgo_files = self.tsgo_linter.pin().keys().cloned().collect::<Vec<_>>();
+        files.extend(isolated_files);
+        files.extend(tsgo_files);
+        files.dedup();
+        files
+    }
 }
 
 impl ServerLinter {
@@ -134,6 +173,7 @@ impl ServerLinter {
             gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
             lint_on_run: options.run,
+            diagnostics: ServerLinterDiagnostics::default(),
             tsgo_linter: if options.type_aware {
                 Arc::new(Some(TsgoLinter::new(&root_path, config_store)))
             } else {
@@ -226,6 +266,35 @@ impl ServerLinter {
         gitignore_globs
     }
 
+    pub fn remove_diagnostics(&self, uri: &Uri) {
+        self.diagnostics.remove_diagnostics(&uri.to_string());
+    }
+
+    pub fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
+        self.diagnostics.get_diagnostics(&uri.to_string())
+    }
+
+    pub fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
+        self.diagnostics
+            .get_cached_files_of_diagnostics()
+            .into_iter()
+            .filter_map(|s| Uri::from_str(&s).ok())
+            .collect()
+    }
+
+    pub async fn revalidate_diagnostics(
+        &self,
+        uris: Vec<Uri>,
+    ) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
+        let map = ConcurrentHashMap::default();
+        for uri in uris {
+            if let Some(diagnostics) = self.run_single(&uri, None, ServerLinterRun::Always).await {
+                map.pin().insert(uri.to_string(), diagnostics);
+            }
+        }
+        map
+    }
+
     fn is_ignored(&self, uri: &Uri) -> bool {
         let Some(uri_path) = uri.to_file_path() else {
             return true;
@@ -262,9 +331,12 @@ impl ServerLinter {
             (ServerLinterRun::OnType, Run::OnType) => (true, false),
             // it does not match, run nothing
             (ServerLinterRun::OnType, Run::OnSave) => (false, false),
-            // run only tsglint on save, even if the user wants it with type
-            // tsgolint only supports the OS file system.
-            (ServerLinterRun::OnSave, Run::OnType) => (false, true),
+            // In onType mode, only TypeScript type checking runs on save
+            // If type_aware is disabled (tsgo_linter is None), skip everything to preserve diagnostics
+            (ServerLinterRun::OnSave, Run::OnType) => {
+                let should_run_tsgo = self.tsgo_linter.as_ref().is_some();
+                (false, should_run_tsgo)
+            }
         };
 
         // return `None` when both tools do not want to be used
@@ -276,28 +348,22 @@ impl ServerLinter {
             return None;
         }
 
-        let mut reports = Vec::with_capacity(0);
-
-        if oxlint
-            && let Some(oxlint_reports) =
-                self.isolated_linter.lock().await.run_single(uri, content.clone())
-        {
-            reports.extend(oxlint_reports);
+        if oxlint {
+            let diagnostics = {
+                let mut isolated_linter = self.isolated_linter.lock().await;
+                isolated_linter.run_single(uri, content.clone())
+            };
+            self.diagnostics.isolated_linter.pin().insert(uri.to_string(), diagnostics);
         }
 
-        if !tsgolint {
-            return Some(reports);
+        if tsgolint && let Some(tsgo_linter) = self.tsgo_linter.as_ref() {
+            self.diagnostics
+                .tsgo_linter
+                .pin()
+                .insert(uri.to_string(), tsgo_linter.lint_file(uri, content.clone()));
         }
 
-        let Some(tsgo_linter) = &*self.tsgo_linter else {
-            return Some(reports);
-        };
-
-        if let Some(tsgo_reports) = tsgo_linter.lint_file(uri, content) {
-            reports.extend(tsgo_reports);
-        }
-
-        Some(reports)
+        self.diagnostics.get_diagnostics(&uri.to_string())
     }
 }
 
@@ -418,6 +484,16 @@ mod test {
             Some(Options { type_aware: true, run: Run::OnSave, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_lint_on_run_on_type_on_save_without_type_aware() {
+        Tester::new(
+            "fixtures/linter/lint_on_run/on_type",
+            Some(Options { type_aware: false, run: Run::OnType, ..Default::default() }),
+        )
+        .test_and_snapshot_single_file_with_run_type("on-save-no-type-aware.ts", Run::OnSave);
     }
 
     #[test]

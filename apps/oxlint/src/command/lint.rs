@@ -50,6 +50,10 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub type_aware: bool,
 
+    /// Enables JS plugins.
+    #[bpaf(switch, hide)]
+    pub experimental_js_plugins: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 

@@ -10,6 +10,7 @@ use std::ops::RangeBounds;
 use oxc_ast::{
     AstKind, Comment, CommentsRange, ast::IdentifierReference, comments_range, has_comments_between,
 };
+#[cfg(feature = "cfg")]
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
 // Re-export flags and ID types
@@ -20,8 +21,10 @@ pub use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+#[cfg(feature = "cfg")]
 pub mod dot;
 
+mod ast_types_bitset;
 mod binder;
 mod builder;
 mod checker;
@@ -35,6 +38,7 @@ mod scoping;
 mod stats;
 mod unresolved_stack;
 
+pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
@@ -80,7 +84,11 @@ pub struct Semantic<'a> {
 
     /// Control flow graph. Only present if [`Semantic`] is built with cfg
     /// creation enabled using [`SemanticBuilder::with_cfg`].
+    #[cfg(feature = "cfg")]
     cfg: Option<ControlFlowGraph>,
+    #[cfg(not(feature = "cfg"))]
+    #[allow(unused)]
+    cfg: (),
 }
 
 impl<'a> Semantic<'a> {
@@ -164,8 +172,14 @@ impl<'a> Semantic<'a> {
     ///
     /// Only present if [`Semantic`] is built with cfg creation enabled using
     /// [`SemanticBuilder::with_cfg`].
+    #[cfg(feature = "cfg")]
     pub fn cfg(&self) -> Option<&ControlFlowGraph> {
         self.cfg.as_ref()
+    }
+
+    #[cfg(not(feature = "cfg"))]
+    pub fn cfg(&self) -> Option<&()> {
+        None
     }
 
     /// Get statistics about data held in `Semantic`.

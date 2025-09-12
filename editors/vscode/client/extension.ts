@@ -138,7 +138,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   async function findBinary(): Promise<string> {
-    let bin = configService.vsCodeConfig.binPath;
+    let bin = configService.getUserServerBinPath();
     if (bin) {
       try {
         await fsPromises.access(bin);
@@ -186,6 +186,15 @@ export async function activate(context: ExtensionContext) {
     outputChannel,
     traceOutputChannel: outputChannel,
     middleware: {
+      handleDiagnostics: (uri, diagnostics, next) => {
+        for (const diag of diagnostics) {
+          // https://github.com/oxc-project/oxc/issues/12404
+          if (typeof diag.code === 'object' && diag.code?.value === 'eslint-plugin-unicorn(filename-case)') {
+            diag.message += '\nYou may need to close the file and restart VSCode after renaming a file by only casing.';
+          }
+        }
+        next(uri, diagnostics);
+      },
       workspace: {
         configuration: (params: ConfigurationParams) => {
           return params.items.map(item => {

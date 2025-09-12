@@ -1,0 +1,200 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:5:45]
+ 4 │                     render (h) {
+ 5 │                       this.$scopedSlots.default(foo, bar)
+   ·                                                      ───
+ 6 │                       this.$scopedSlots.foo(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:6:41]
+ 5 │                       this.$scopedSlots.default(foo, bar)
+ 6 │                       this.$scopedSlots.foo(foo, bar)
+   ·                                                  ───
+ 7 │                     }
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:5:49]
+ 4 │                     render (h) {
+ 5 │                       this?.$scopedSlots?.default?.(foo, bar)
+   ·                                                          ───
+ 6 │                       this?.$scopedSlots?.foo?.(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:6:45]
+ 5 │                       this?.$scopedSlots?.default?.(foo, bar)
+ 6 │                       this?.$scopedSlots?.foo?.(foo, bar)
+   ·                                                      ───
+ 7 │                       const vm = this
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:8:47]
+ 7 │                       const vm = this
+ 8 │                       vm?.$scopedSlots?.default?.(foo, bar)
+   ·                                                        ───
+ 9 │                       vm?.$scopedSlots?.foo?.(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+    ╭─[no_multiple_slot_args.tsx:9:43]
+  8 │                       vm?.$scopedSlots?.default?.(foo, bar)
+  9 │                       vm?.$scopedSlots?.foo?.(foo, bar)
+    ·                                                    ───
+ 10 │                     }
+    ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:5:47]
+ 4 │                     render (h) {
+ 5 │                       this.$scopedSlots.default?.(foo, bar)
+   ·                                                        ───
+ 6 │                       this.$scopedSlots.foo?.(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:6:43]
+ 5 │                       this.$scopedSlots.default?.(foo, bar)
+ 6 │                       this.$scopedSlots.foo?.(foo, bar)
+   ·                                                    ───
+ 7 │                       const vm = this
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:8:45]
+ 7 │                       const vm = this
+ 8 │                       vm.$scopedSlots.default?.(foo, bar)
+   ·                                                      ───
+ 9 │                       vm.$scopedSlots.foo?.(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+    ╭─[no_multiple_slot_args.tsx:9:41]
+  8 │                       vm.$scopedSlots.default?.(foo, bar)
+  9 │                       vm.$scopedSlots.foo?.(foo, bar)
+    ·                                                  ───
+ 10 │                     }
+    ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:5:52]
+ 4 │                     render (h) {
+ 5 │                       ;(this?.$scopedSlots)?.default?.(foo, bar)
+   ·                                                             ───
+ 6 │                       ;(this?.$scopedSlots?.foo)?.(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:6:48]
+ 5 │                       ;(this?.$scopedSlots)?.default?.(foo, bar)
+ 6 │                       ;(this?.$scopedSlots?.foo)?.(foo, bar)
+   ·                                                         ───
+ 7 │                       const vm = this
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:8:50]
+ 7 │                       const vm = this
+ 8 │                       ;(vm?.$scopedSlots)?.default?.(foo, bar)
+   ·                                                           ───
+ 9 │                       ;(vm?.$scopedSlots?.foo)?.(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+    ╭─[no_multiple_slot_args.tsx:9:46]
+  8 │                       ;(vm?.$scopedSlots)?.default?.(foo, bar)
+  9 │                       ;(vm?.$scopedSlots?.foo)?.(foo, bar)
+    ·                                                       ───
+ 10 │                     }
+    ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:5:49]
+ 4 │                     render (h) {
+ 5 │                       ;(this?.$scopedSlots).default(foo, bar)
+   ·                                                          ───
+ 6 │                       ;(this?.$scopedSlots?.foo)(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:6:46]
+ 5 │                       ;(this?.$scopedSlots).default(foo, bar)
+ 6 │                       ;(this?.$scopedSlots?.foo)(foo, bar)
+   ·                                                       ───
+ 7 │                       const vm = this
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:8:47]
+ 7 │                       const vm = this
+ 8 │                       ;(vm?.$scopedSlots).default(foo, bar)
+   ·                                                        ───
+ 9 │                       ;(vm?.$scopedSlots?.foo)(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+    ╭─[no_multiple_slot_args.tsx:9:44]
+  8 │                       ;(vm?.$scopedSlots).default(foo, bar)
+  9 │                       ;(vm?.$scopedSlots?.foo)(foo, bar)
+    ·                                                     ───
+ 10 │                     }
+    ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:7:45]
+ 6 │ 
+ 7 │                       this.$scopedSlots.default(foo, { bar })
+   ·                                                      ───────
+ 8 │ 
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected spread argument.
+    ╭─[no_multiple_slot_args.tsx:10:37]
+  9 │                       children = this.$scopedSlots.foo
+ 10 │                       if (children) children(...foo)
+    ·                                              ──────
+ 11 │                     }
+    ╰────
+  help: Do not use spread arguments when calling slot functions.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:6:39]
+ 5 │                       // for Vue3
+ 6 │                       this.$slots.default(foo, bar)
+   ·                                                ───
+ 7 │                       this.$slots.foo(foo, bar)
+   ╰────
+  help: Pass only one argument to the slot function.
+
+  ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
+   ╭─[no_multiple_slot_args.tsx:7:35]
+ 6 │                       this.$slots.default(foo, bar)
+ 7 │                       this.$slots.foo(foo, bar)
+   ·                                            ───
+ 8 │                     }
+   ╰────
+  help: Pass only one argument to the slot function.

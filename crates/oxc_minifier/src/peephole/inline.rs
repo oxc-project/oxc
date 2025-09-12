@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
 use oxc_span::GetSpan;
+use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
@@ -10,8 +11,9 @@ impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
         let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
-        let value = if decl.kind.is_var() {
-            // Skip constant value inlining for `var` declarations, due to TDZ problems.
+        let value = if decl.kind.is_var() || Self::is_for_statement_init(ctx) {
+            // - Skip constant value inlining for `var` declarations, due to TDZ problems.
+            // - Set None for for statement initializers as the value of these are set by the for statement.
             None
         } else {
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |e| e.evaluate_value(ctx))
@@ -19,18 +21,19 @@ impl<'a> PeepholeOptimizations {
         ctx.init_value(symbol_id, value);
     }
 
+    fn is_for_statement_init(ctx: &Ctx<'a, '_>) -> bool {
+        ctx.ancestors().nth(1).is_some_and(Ancestor::is_parent_of_for_statement_left)
+    }
+
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::Identifier(ident) = expr else { return };
-        let Some(reference_id) = ident.reference_id.get() else { return };
+        let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
         let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
             return;
         };
         // Skip if there are write references.
         if symbol_value.write_references_count > 0 {
-            return;
-        }
-        if symbol_value.for_statement_init {
             return;
         }
         let Some(cv) = &symbol_value.initialized_constant else { return };

@@ -206,6 +206,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.exit_program(program, ctx);
         self.x1_jsx.exit_program(program, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_program(program, ctx);
@@ -463,6 +464,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         }
     }
 
+    fn exit_method_definition(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator.exit_method_definition(def, ctx);
+    }
+
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_new_expression(expr, ctx);
@@ -486,6 +495,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         def: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.exit_property_definition(def, ctx);
         self.x2_es2022.exit_property_definition(def, ctx);
     }
 
@@ -498,6 +508,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_accessor_property(node, ctx);
         }
+    }
+
+    fn exit_accessor_property(
+        &mut self,
+        node: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator.exit_accessor_property(node, ctx);
     }
 
     fn enter_statements(
@@ -690,5 +708,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_ts_export_assignment(export_assignment, ctx);
         }
+    }
+
+    fn enter_decorator(
+        &mut self,
+        node: &mut oxc_ast::ast::Decorator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator.enter_decorator(node, ctx);
     }
 }
