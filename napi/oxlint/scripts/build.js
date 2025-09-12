@@ -10,7 +10,7 @@ const oxlintDirPath = join(import.meta.dirname, '..'),
 console.log('Building with tsdown...');
 execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 
-// Copy files from `napi/parser` to `napi/oxlint/dist/parser`
+// Copy files from `napi/parser` to `napi/oxlint/dist`
 console.log('Copying files from parser...');
 
 const parserFilePaths = [
@@ -22,7 +22,7 @@ const parserFilePaths = [
 ];
 
 for (const parserFilePath of parserFilePaths) {
-  copyFile(join(parserDirPath, parserFilePath), join(distDirPath, 'parser', parserFilePath));
+  copyFile(join(parserDirPath, parserFilePath), join(distDirPath, parserFilePath));
 }
 
 // Copy native `.node` files from `src-js`

@@ -10,9 +10,9 @@ import { assertIs } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { TOKEN } from '../../dist/parser/raw-transfer/lazy-common.mjs';
+import { TOKEN } from '../../dist/raw-transfer/lazy-common.mjs';
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { walkProgram } from '../../dist/parser/generated/lazy/walk.mjs';
+import { walkProgram } from '../../dist/generated/lazy/walk.mjs';
 
 // Buffer with typed array views of itself stored as properties
 interface BufferWithArrays extends Uint8Array {

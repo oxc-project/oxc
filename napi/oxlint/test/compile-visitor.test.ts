@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
-import { NODE_TYPE_IDS_MAP } from '../../parser/generated/lazy/types.mjs';
+import { NODE_TYPE_IDS_MAP } from '../dist/generated/lazy/types.mjs';
 import {
   addVisitorToCompiled,
   compiledVisitor,

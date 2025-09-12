@@ -12,8 +12,9 @@ export default defineConfig({
     // External native bindings
     './oxlint.*.node',
     'oxlint-*',
-    // These are generated (also used by oxc-parser, so we'll copy them separately)
-    /..\/parser\/.*/,
+    // Files copied from `oxc-parser`.
+    // Not bundled, to avoid needing sourcemaps when debugging.
+    /\/dist\//,
   ],
   // At present only compress syntax.
   // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
