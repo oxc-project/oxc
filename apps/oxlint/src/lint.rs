@@ -903,10 +903,12 @@ mod test {
     #[test]
     fn test_tsconfig_option() {
         // passed
-        Tester::new().test(&["--tsconfig", "fixtures/tsconfig/tsconfig.json"]);
+        Tester::new().with_cwd("fixtures".into()).test(&["--tsconfig", "tsconfig/tsconfig.json"]);
 
         // failed
-        Tester::new().test_and_snapshot(&["--tsconfig", "oxc/tsconfig.json"]);
+        Tester::new()
+            .with_cwd("fixtures".into())
+            .test_and_snapshot(&["--tsconfig", "oxc/tsconfig.json"]);
     }
 
     #[test]
@@ -953,7 +955,7 @@ mod test {
     #[test]
     fn test_print_config_ban_all_rules() {
         let args = &["-A", "all", "--print-config"];
-        Tester::new().test_and_snapshot(args);
+        Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
     }
 
     #[test]
@@ -975,7 +977,7 @@ mod test {
         assert!(!fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
 
         let args = &["--init"];
-        Tester::new().test(args);
+        Tester::new().with_cwd("fixtures".into()).test(args);
 
         assert!(fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
 

@@ -3,7 +3,7 @@ source: apps/oxlint/src/tester.rs
 ---
 ########## 
 arguments: -A all --print-config
-working directory: 
+working directory: fixtures
 ----------
 {
   "plugins": [
