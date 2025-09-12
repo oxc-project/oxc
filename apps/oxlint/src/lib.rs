@@ -15,11 +15,13 @@ mod walk;
 #[cfg(test)]
 mod tester;
 
-pub mod cli {
-    pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
-}
+use lint::LintRunner;
+use result::CliRunResult;
 
-use cli::{CliRunResult, LintRunner};
+/// Re-exported CLI-related items for use in `tasks/website`.
+pub mod cli {
+    pub use super::{command::*, lint::LintRunner, result::CliRunResult};
+}
 
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
@@ -80,7 +82,7 @@ pub fn lint(mut external_linter: Option<ExternalLinter>) -> CliRunResult {
     LintRunner::new(command, external_linter).run(&mut stdout)
 }
 
-// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.
+/// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.
 fn init_miette() {
     miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().build()))).unwrap();
 }
