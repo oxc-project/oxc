@@ -10,8 +10,10 @@ mod js_plugins;
 mod lint;
 mod output_formatter;
 mod result;
-mod tester;
 mod walk;
+
+#[cfg(test)]
+mod tester;
 
 pub mod cli {
     pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
