@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.0.2"
+version = "0.1.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
