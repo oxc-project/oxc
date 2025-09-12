@@ -64,6 +64,7 @@ use crate::{
         member_chain::MemberChain,
         object::format_property_key,
         string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
+        suppressed::FormatSuppressedNode,
     },
     write,
     write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
@@ -544,6 +545,22 @@ fn expression_statement_needs_semicolon<'a>(
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed
+            && let Some(last_comment_index) =
+                f.context().comments().get_type_cast_comment_index(self.span)
+        {
+            let comments = &f.context().comments().unprinted_comments()[..last_comment_index];
+            write!(f, [FormatLeadingComments::Comments(comments)])?;
+        } else {
+            self.format_leading_comments(f)?;
+        }
+
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f)?;
+            return self.format_trailing_comments(f);
+        }
+
         // Check if we need a leading semicolon to prevent ASI issues
         if f.options().semicolons == Semicolons::AsNeeded
             && expression_statement_needs_semicolon(self, f)
@@ -551,7 +568,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
             write!(f, ";")?;
         }
 
-        write!(f, [self.expression(), OptionalSemicolon])
+        write!(f, [self.expression(), OptionalSemicolon])?;
+
+        self.format_trailing_comments(f)
     }
 }
 

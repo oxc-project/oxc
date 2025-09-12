@@ -1,4 +1,4 @@
-js compatibility: 645/699 (92.27%)
+js compatibility: 658/699 (94.13%)
 
 # Failed
 
@@ -8,23 +8,10 @@ js compatibility: 645/699 (92.27%)
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/export.js | 💥💥 | 97.37% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
+| js/comments/jsdoc.js | 💥💥 | 81.48% |
 | js/comments/return-statement.js | 💥💥 | 98.85% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
-| js/comments-closure-typecast/binary-expr.js | 💥 | 0.00% |
-| js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 66.13% |
 | js/comments-closure-typecast/comment-in-the-middle.js | 💥 | 90.91% |
-| js/comments-closure-typecast/comment-placement.js | 💥 | 61.54% |
-| js/comments-closure-typecast/extra-spaces-and-asterisks.js | 💥 | 0.00% |
-| js/comments-closure-typecast/iife.js | 💥 | 27.27% |
-| js/comments-closure-typecast/issue-4124.js | 💥 | 47.37% |
-| js/comments-closure-typecast/issue-8045.js | 💥 | 75.86% |
-| js/comments-closure-typecast/issue-9358.js | 💥 | 16.00% |
-| js/comments-closure-typecast/member.js | 💥 | 0.00% |
-| js/comments-closure-typecast/nested.js | 💥 | 23.53% |
-| js/comments-closure-typecast/object-with-comment.js | 💥 | 38.10% |
-| js/comments-closure-typecast/satisfies.js | 💥 | 33.33% |
-| js/comments-closure-typecast/superclass.js | 💥 | 0.00% |
-| js/comments-closure-typecast/ways-to-specify-type.js | 💥 | 15.38% |
 | js/conditional/comments.js | 💥✨ | 23.69% |
 | js/conditional/new-ternary-examples.js | 💥✨ | 20.14% |
 | js/conditional/new-ternary-spec.js | 💥✨ | 24.35% |

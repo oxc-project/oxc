@@ -35,7 +35,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         f: &Formatter<'_, 'a>,
     ) -> Self {
         let parent = &call_expression.parent;
-        let mut chain_members = chain_members_iter(call_expression).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
@@ -378,6 +378,7 @@ fn has_short_name(name: &Atom, tab_width: u8) -> bool {
 
 fn chain_members_iter<'a, 'b>(
     root: &'b AstNode<'a, CallExpression<'a>>,
+    f: &Formatter<'_, 'a>,
 ) -> impl Iterator<Item = ChainMember<'a, 'b>> {
     let mut is_root = true;
     let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
@@ -409,6 +410,19 @@ fn chain_members_iter<'a, 'b>(
         }
 
         let expression = next.take()?;
+
+        if f.comments().get_type_cast_comment_index(expression.span()).is_some()
+            || f.comments()
+                .printed_comments()
+                .last()
+                .is_some_and(|c| f.comments().is_type_cast_comment(c))
+                && f.source_text().as_bytes()[expression.span().end as usize..]
+                    .trim_ascii_start()
+                    .first()
+                    .is_some_and(|&b| b == b')')
+        {
+            return ChainMember::Node(expression).into();
+        }
 
         let member = match expression.as_ast_nodes() {
             AstNodes::CallExpression(expr) => {
