@@ -222,8 +222,54 @@ impl Linter {
                         }
                     }
                 }
+
+                // Debug assertion: verify the optimized version produces the same diagnostics as unoptimized
+                #[cfg(debug_assertions)]
+                {
+                    // Save the diagnostics from the optimized run
+                    let optimized_diagnostics = ctx_host.take_diagnostics();
+                    let optimized_count = optimized_diagnostics.len();
+
+                    // Run all rules on all nodes WITHOUT any type filtering (unoptimized)
+                    for (rule, ctx) in &rules {
+                        rule.run_once(ctx);
+
+                        for symbol in semantic.scoping().symbol_ids() {
+                            rule.run_on_symbol(symbol, ctx);
+                        }
+
+                        // Run on ALL nodes regardless of types_info - this is the unoptimized version
+                        for node in semantic.nodes() {
+                            rule.run(node, ctx);
+                        }
+
+                        if should_run_on_jest_node {
+                            for jest_node in iter_possible_jest_call_node(semantic) {
+                                rule.run_on_jest_node(&jest_node, ctx);
+                            }
+                        }
+                    }
+
+                    // Get the diagnostics from the unoptimized run
+                    let unoptimized_diagnostics = ctx_host.take_diagnostics();
+                    let unoptimized_count = unoptimized_diagnostics.len();
+
+                    // Assert that both versions produce the same number of diagnostics
+                    debug_assert_eq!(
+                        optimized_count, unoptimized_count,
+                        "Node kind optimization produced different diagnostic count: {optimized_count} (optimized) vs {unoptimized_count} (unoptimized)"
+                    );
+
+                    // Restore the original diagnostics from the optimized run
+                    for diagnostic in optimized_diagnostics {
+                        ctx_host.push_diagnostic(diagnostic);
+                    }
+                }
             } else {
-                for (rule, ref ctx) in rules {
+                // Need to collect rules for potential reuse in debug assertion
+                let rules = rules.collect::<Vec<_>>();
+
+                for (rule, ctx) in &rules {
                     rule.run_once(ctx);
 
                     for symbol in semantic.scoping().symbol_ids() {
@@ -248,6 +294,40 @@ impl Linter {
                         for jest_node in iter_possible_jest_call_node(semantic) {
                             rule.run_on_jest_node(&jest_node, ctx);
                         }
+                    }
+                }
+
+                #[cfg(debug_assertions)]
+                {
+                    let optimized_diagnostics = ctx_host.take_diagnostics();
+                    let optimized_count = optimized_diagnostics.len();
+
+                    for (rule, ctx) in &rules {
+                        rule.run_once(ctx);
+
+                        for symbol in semantic.scoping().symbol_ids() {
+                            rule.run_on_symbol(symbol, ctx);
+                        }
+                        for node in semantic.nodes() {
+                            rule.run(node, ctx);
+                        }
+                        if should_run_on_jest_node {
+                            for jest_node in iter_possible_jest_call_node(semantic) {
+                                rule.run_on_jest_node(&jest_node, ctx);
+                            }
+                        }
+                    }
+
+                    let unoptimized_diagnostics = ctx_host.take_diagnostics();
+                    let unoptimized_count = unoptimized_diagnostics.len();
+
+                    debug_assert_eq!(
+                        optimized_count, unoptimized_count,
+                        "Node kind optimization produced different diagnostic count: {optimized_count} (optimized) vs {unoptimized_count} (unoptimized)"
+                    );
+
+                    for diagnostic in optimized_diagnostics {
+                        ctx_host.push_diagnostic(diagnostic);
                     }
                 }
             }
