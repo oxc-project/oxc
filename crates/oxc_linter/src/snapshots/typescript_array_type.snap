@@ -541,34 +541,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `Array<string & number>` with `(string & number)[]`.
 
-  ⚠ typescript-eslint(array-type): Array type using 'Array<any>' is forbidden. Use 'any[]' instead.
-   ╭─[array_type.ts:1:8]
- 1 │ let x: Array;
-   ·        ─────
-   ╰────
-  help: Replace `Array` with `any[]`.
-
-  ⚠ typescript-eslint(array-type): Array type using 'Array<any>' is forbidden. Use 'any[]' instead.
-   ╭─[array_type.ts:1:8]
- 1 │ let x: Array<>;
-   ·        ───────
-   ╰────
-  help: Replace `Array<>` with `any[]`.
-
-  ⚠ typescript-eslint(array-type): Array type using 'Array<any>' is forbidden for simple types. Use 'any[]' instead.
-   ╭─[array_type.ts:1:8]
- 1 │ let x: Array;
-   ·        ─────
-   ╰────
-  help: Replace `Array` with `any[]`.
-
-  ⚠ typescript-eslint(array-type): Array type using 'Array<any>' is forbidden for simple types. Use 'any[]' instead.
-   ╭─[array_type.ts:1:8]
- 1 │ let x: Array<>;
-   ·        ───────
-   ╰────
-  help: Replace `Array<>` with `any[]`.
-
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:1:31]
  1 │ let x: Array<number> = [1] as number[];

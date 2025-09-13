@@ -1490,7 +1490,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
                 } else {
                     write!(f, soft_line_break_or_space())?;
                 }
-                write!(f, "extends")?;
+                write!(f, ["extends", space()])?;
                 if extends.len() == 1 {
                     write!(f, extends)?;
                 } else {

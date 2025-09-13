@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 86/86 (100.00%)
+Negative Passed: 90/90 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -2832,6 +2832,30 @@ Negative Passed: 86/86 (100.00%)
     ·                      ─────
  17 │ };
     ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-1.ts:1:4]
+ 1 │ foo<>()
+   ·    ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-2.ts:1:8]
+ 1 │ new Foo<>()
+   ·        ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-3.ts:1:25]
+ 1 │ class Foo {property: Bar<> = 1}
+   ·                         ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-4.ts:1:15]
+ 1 │ const foo: Foo<> = 1
+   ·               ──
+   ╰────
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]

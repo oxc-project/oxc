@@ -413,6 +413,11 @@ pub fn ts_empty_type_parameter_list(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
+    ts_error("1099", "Type argument list cannot be empty.").with_label(span)
+}
+
+#[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
         .with_help("replace with `super()` or `super.prop` or `super[prop]`")

@@ -1,4 +1,4 @@
-ts compatibility: 340/573 (59.34%)
+ts compatibility: 341/573 (59.51%)
 
 # Failed
 
@@ -60,14 +60,14 @@ ts compatibility: 340/573 (59.34%)
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 50.00% |
 | typescript/compiler/castOfAwait.ts | 💥 | 87.50% |
 | typescript/compiler/castTest.ts | 💥 | 96.67% |
-| typescript/compiler/checkInfiniteExpansionTermination.ts | 💥 | 80.00% |
+| typescript/compiler/checkInfiniteExpansionTermination.ts | 💥 | 85.00% |
 | typescript/compiler/commentsInterface.ts | 💥 | 66.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 59.46% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
 | typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
-| typescript/conditional-types/conditonal-types.ts | 💥💥 | 53.24% |
+| typescript/conditional-types/conditonal-types.ts | 💥💥 | 55.47% |
 | typescript/conditional-types/infer-type.ts | 💥💥 | 47.07% |
 | typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 48.48% |
@@ -81,7 +81,7 @@ ts compatibility: 340/573 (59.34%)
 | typescript/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts | 💥 | 90.00% |
 | typescript/conformance/es6/Symbols/symbolProperty15.ts | 💥 | 66.67% |
 | typescript/conformance/expressions/functionCalls/callWithSpreadES6.ts | 💥 | 97.96% |
-| typescript/conformance/interfaces/interfaceDeclarations/interfaceWithMultipleBaseTypes2.ts | 💥 | 52.00% |
+| typescript/conformance/interfaces/interfaceDeclarations/interfaceWithMultipleBaseTypes2.ts | 💥 | 64.00% |
 | typescript/conformance/internalModules/importDeclarations/exportImportAlias.ts | 💥 | 91.67% |
 | typescript/conformance/internalModules/importDeclarations/importAliasIdentifiers.ts | 💥 | 86.00% |
 | typescript/conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts | 💥 | 95.83% |
@@ -143,15 +143,14 @@ ts compatibility: 340/573 (59.34%)
 | typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/infer-extends/basic.ts | 💥 | 66.67% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
-| typescript/interface/generic.ts | 💥💥 | 75.00% |
 | typescript/interface/ignore.ts | 💥💥 | 94.84% |
-| typescript/interface/long-extends.ts | 💥💥 | 72.22% |
+| typescript/interface/long-extends.ts | 💥✨ | 40.74% |
 | typescript/interface/separator.ts | 💥✨ | 36.11% |
-| typescript/interface/long-type-parameters/long-type-parameters.ts | 💥💥 | 41.46% |
+| typescript/interface/long-type-parameters/long-type-parameters.ts | 💥💥 | 52.10% |
 | typescript/interface2/comments-declare.ts | 💥 | 44.44% |
-| typescript/interface2/comments.ts | 💥 | 76.06% |
+| typescript/interface2/comments.ts | 💥 | 78.87% |
 | typescript/interface2/module.ts | 💥 | 80.00% |
-| typescript/interface2/break/break.ts | 💥💥💥 | 57.63% |
+| typescript/interface2/break/break.ts | 💥💥💥 | 68.93% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 54.84% |
 | typescript/intersection/type-arguments.ts | 💥💥 | 46.67% |
 | typescript/intersection/consistent-with-flow/comment.ts | 💥 | 0.00% |
