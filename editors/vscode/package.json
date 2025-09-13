@@ -200,7 +200,7 @@
     "cross-env": "^10.0.0",
     "glob": "^11.0.3",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.37",
+    "rolldown": "^1.0.0",
     "typescript": "catalog:"
   },
   "dependencies": {

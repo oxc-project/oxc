@@ -1,9 +1,10 @@
 import type { RolldownOptions } from 'rolldown';
-import * as glob from 'glob';
+import { glob } from 'glob';
 
-export default (): RolldownOptions => {
+export default async (): Promise<RolldownOptions> => {
+  const input = await glob('tests/*.spec.ts');
   return {
-    input: glob.sync('tests/*.spec.ts'),
+    input,
     output: {
       dir: 'out',
       sourcemap: true,
