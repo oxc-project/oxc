@@ -2,9 +2,6 @@
   "name": "oxc",
   "private": true,
   "packageManager": "pnpm@10.15.1",
-  "volta": {
-    "node": "22.14.0"
-  },
   "scripts": {
     "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
     "build-dev": "pnpm --workspace-concurrency=1 --filter './napi/*' build-dev",
