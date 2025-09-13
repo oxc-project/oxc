@@ -1826,7 +1826,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
             write!(f, [space(), "=>", space(), return_type.type_annotation()])
         });
 
-        write!(f, group(&format_inner))
+        if self.needs_parentheses(f) {
+            "(".fmt(f)?;
+        }
+        write!(f, group(&format_inner))?;
+        if self.needs_parentheses(f) {
+            ")".fmt(f)?;
+        }
+        Ok(())
     }
 }
 

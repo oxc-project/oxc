@@ -221,7 +221,7 @@ ts compatibility: 346/573 (60.38%)
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 66.67% |
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |
-| typescript/union/inlining.ts | 💥 | 29.92% |
+| typescript/union/inlining.ts | 💥 | 36.22% |
 | typescript/union/union-parens.ts | 💥 | 54.00% |
 | typescript/union/with-type-params.ts | 💥 | 0.00% |
 | typescript/union/consistent-with-flow/comment.ts | 💥 | 0.00% |
