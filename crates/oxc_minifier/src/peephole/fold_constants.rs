@@ -8,7 +8,7 @@ use oxc_ecmascript::{
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::ctx::Ctx;
+use crate::{ctx::Ctx, peephole::DeleteCode};
 
 use super::PeepholeOptimizations;
 
@@ -30,6 +30,7 @@ impl<'a> PeepholeOptimizations {
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
                 if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
+                    expr.delete(ctx);
                     *expr = changed;
                     ctx.state.changed = true;
                 }
@@ -44,6 +45,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
+            expr.delete(ctx);
             *expr = changed;
             ctx.state.changed = true;
         }
@@ -56,6 +58,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(changed) = e.evaluate_value(ctx).map(|value| ctx.value_to_expr(e.span, value)) {
+            expr.delete(ctx);
             *expr = changed;
             ctx.state.changed = true;
         }
@@ -67,6 +70,7 @@ impl<'a> PeepholeOptimizations {
             LogicalOperator::And | LogicalOperator::Or => Self::try_fold_and_or(e, ctx),
             LogicalOperator::Coalesce => Self::try_fold_coalesce(e, ctx),
         } {
+            expr.delete(ctx);
             *expr = changed;
             ctx.state.changed = true;
         }
@@ -94,6 +98,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(changed) = (ty.is_null() || ty.is_undefined())
             .then(|| ctx.value_to_expr(e.span, ConstantValue::Undefined))
         {
+            expr.delete(ctx);
             *expr = changed;
             ctx.state.changed = true;
         }
@@ -334,6 +339,7 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::In => None,
         };
         if let Some(changed) = changed {
+            expr.delete(ctx);
             *expr = changed;
             ctx.state.changed = true;
         }
@@ -541,11 +547,14 @@ impl<'a> PeepholeOptimizations {
                 if let Some(n) = arg.evaluate_value_to_number(ctx) {
                     n
                 } else {
-                    *expr = ctx.ast.expression_unary(
+                    let new_expr = ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
                         ctx.ast.expression_string_literal(n.span, n.value, n.raw),
                     );
+
+                    expr.delete(ctx);
+                    *expr = new_expr;
                     ctx.state.changed = true;
                     return;
                 }
@@ -553,7 +562,9 @@ impl<'a> PeepholeOptimizations {
             e if e.is_void_0() => f64::NAN,
             _ => return,
         });
-        *expr = ctx.value_to_expr(e.span, value);
+        let new_expr = ctx.value_to_expr(e.span, value);
+        expr.delete(ctx);
+        *expr = new_expr;
         ctx.state.changed = true;
     }
 
@@ -575,7 +586,9 @@ impl<'a> PeepholeOptimizations {
                                 e.operator,
                                 BinaryOperator::StrictEquality | BinaryOperator::Equality
                             );
-                            *expr = ctx.ast.expression_boolean_literal(e.span, b);
+                            let new_expr = ctx.ast.expression_boolean_literal(e.span, b);
+                            expr.delete(ctx);
+                            *expr = new_expr;
                             ctx.state.changed = true;
                             return;
                         }
@@ -591,11 +604,13 @@ impl<'a> PeepholeOptimizations {
                 let right_ty = e.right.value_type(ctx);
 
                 if !right_ty.is_undetermined() && right_ty != ValueType::String {
-                    *expr = ctx.ast.expression_boolean_literal(
+                    let new_expr = ctx.ast.expression_boolean_literal(
                         e.span,
                         e.operator == BinaryOperator::Inequality
                             || e.operator == BinaryOperator::StrictInequality,
                     );
+                    expr.delete(ctx);
+                    *expr = new_expr;
                     ctx.state.changed = true;
                     return;
                 }
@@ -612,11 +627,13 @@ impl<'a> PeepholeOptimizations {
                             | "function"
                             | "unknown" // IE
                     ) {
-                        *expr = ctx.ast.expression_boolean_literal(
+                        let new_expr = ctx.ast.expression_boolean_literal(
                             e.span,
                             e.operator == BinaryOperator::Inequality
                                 || e.operator == BinaryOperator::StrictInequality,
                         );
+                        expr.delete(ctx);
+                        *expr = new_expr;
                         ctx.state.changed = true;
                     }
                 }

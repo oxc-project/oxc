@@ -5,7 +5,7 @@ use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{DeleteCode, PeepholeOptimizations};
 
 impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) {
@@ -45,7 +45,9 @@ impl<'a> PeepholeOptimizations {
                 ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
             }
         {
-            *expr = ctx.value_to_expr(expr.span(), cv.clone());
+            let new_expr = ctx.value_to_expr(expr.span(), cv.clone());
+            expr.delete(ctx);
+            *expr = new_expr;
             ctx.state.changed = true;
         }
     }
