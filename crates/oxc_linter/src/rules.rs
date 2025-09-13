@@ -177,6 +177,7 @@ pub(crate) mod eslint {
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod prefer_template;
+    pub mod preserve_caught_error;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -771,6 +772,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::prefer_object_spread,
     eslint::prefer_rest_params,
     eslint::prefer_spread,
+    eslint::preserve_caught_error,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,

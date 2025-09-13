@@ -633,6 +633,11 @@ impl RuleRunner for crate::rules::eslint::prefer_template::PreferTemplate {
         Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
 }
 
+impl RuleRunner for crate::rules::eslint::preserve_caught_error::PreserveCaughtError {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TryStatement]));
+}
+
 impl RuleRunner for crate::rules::eslint::radix::Radix {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
