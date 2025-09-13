@@ -1,5 +1,6 @@
 use std::{fs, path::Path, time::Instant};
 
+use cow_utils::CowUtils;
 use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
@@ -80,17 +81,16 @@ impl FormatService {
             }
 
             // Notify if needed
+            // Normalize path separators to forward slashes for consistent output across platforms
+            let display_path = path.to_string_lossy().cow_replace('\\', "/").to_string();
+            let elapsed = elapsed.as_millis();
             if let Some(diagnostic) = match (&self.output_options, is_changed) {
-                (OutputOptions::Check | OutputOptions::Default, true) => Some(OxcDiagnostic::warn(
-                    format!("{} ({}ms)", path.to_string_lossy(), elapsed.as_millis()),
-                )),
-                (OutputOptions::ListDifferent, true) => {
-                    Some(OxcDiagnostic::warn(format!("{}", path.to_string_lossy())))
+                (OutputOptions::Check | OutputOptions::Default, true) => {
+                    Some(OxcDiagnostic::warn(format!("{display_path} ({elapsed}ms)")))
                 }
+                (OutputOptions::ListDifferent, true) => Some(OxcDiagnostic::warn(display_path)),
                 (OutputOptions::Write, _) => Some(OxcDiagnostic::warn(format!(
-                    "{} {}ms{}",
-                    path.to_string_lossy(),
-                    elapsed.as_millis(),
+                    "{display_path} {elapsed}ms{}",
                     if is_changed { "" } else { " (unchanged)" }
                 ))),
                 _ => None,

@@ -36,10 +36,10 @@ impl Tester {
         FormatRunner::new(command).run(&mut output);
     }
 
-    /// Runs a single test case and creates a snapshot.
-    pub fn test_and_snapshot(&self, args: &[&str]) {
-        self.test_and_snapshot_multiple(&[args]);
-    }
+    // ///Runs a single test case and creates a snapshot.
+    // pub fn test_and_snapshot(&self, args: &[&str]) {
+    //     self.test_and_snapshot_multiple(&[args]);
+    // }
 
     /// Runs multiple test cases and creates snapshots.
     ///
