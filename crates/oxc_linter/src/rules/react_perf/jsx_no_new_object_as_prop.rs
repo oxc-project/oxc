@@ -77,7 +77,7 @@ impl ReactPerfRule for JsxNoNewObjectAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parentheses() {
+    match expr.get_inner_expression() {
         Expression::ObjectExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Object")
@@ -158,6 +158,10 @@ fn test() {
         r"const Foo = () => (<Item config={this.props.config || (this.props.default ? this.props.default : {})} />)",
         r"const Foo = () => { const x = {}; return <Bar x={x} /> }",
         r"const Foo = ({ x = {} }) => <Item x={x} />",
+        r"const Foo = () => { const x: Foo = {}; return <Bar x={x} /> }",
+        r"const Foo = () => { const x: Foo = {} as Foo; return <Bar x={x} /> }",
+        r"const Foo = () => { const x: Foo = {} satisfies Foo; return <Bar x={x} /> }",
+        r"const Foo = () => { const x: Foo = {} as const; return <Bar x={x} /> }",
     ];
 
     Tester::new(JsxNoNewObjectAsProp::NAME, JsxNoNewObjectAsProp::PLUGIN, pass, fail)

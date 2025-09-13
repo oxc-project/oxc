@@ -1,0 +1,1 @@
+const jsModule = "javascript module"

@@ -241,9 +241,9 @@ impl<'a> VarDeclarationsStore<'a> {
                 .insert_statements(var_statement.into_iter().chain(let_statement));
         }
 
-        // Check stack is emptied
+        // Check stack is exhausted
         let stack = self.stack.borrow();
-        debug_assert!(stack.len() == 1);
+        debug_assert!(stack.is_exhausted());
         debug_assert!(stack.last().is_none());
     }
 

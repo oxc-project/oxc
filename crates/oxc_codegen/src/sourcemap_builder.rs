@@ -307,8 +307,12 @@ impl<'a> SourcemapBuilder<'a> {
         let mut lines = vec![];
         let mut column_offsets = IndexVec::new();
 
-        // Used as a buffer to reduce memory reallocations
-        let mut columns = vec![];
+        // Used as a buffer to reduce memory reallocations.
+        // Pre-allocate with reasonable capacity to avoid frequent reallocations.
+        // 16 is a guess, probably adequate for most files which don't heavily use unicode chars.
+        // 16 entries is 64 bytes = 1 CPU cache line on most CPUs.
+        // If file does heavily use unicode chars, `columns` will grow adaptively as needed.
+        let mut columns = Vec::with_capacity(16);
 
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
@@ -388,7 +392,13 @@ impl<'a> SourcemapBuilder<'a> {
                             // `chunk_byte_offset` is now the offset of *end* of the line break.
                             line_byte_offset += chunk_byte_offset;
 
-                            // Record column offsets
+                            // Record column offsets.
+                            // `columns.clone().into_boxed_slice()` does perform an allocation,
+                            // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
+                            // so `Vec::into_boxed_slice` just drops the `capacity` field,
+                            // and does not need to reallocate again.
+                            // `columns` is reused for next line, and will grow adaptively depending on
+                            // how heavily the file uses unicode chars.
                             column_offsets.push(ColumnOffsets {
                                 byte_offset_to_first: byte_offset_from_line_start,
                                 columns: columns.clone().into_boxed_slice(),

@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.15.0] - 2025-09-11
+
+### 💥 BREAKING CHANGES
+
+- edc70ea allocator/pool: [**BREAKING**] Remove `disable_fixed_size` Cargo feature (#13625) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0d867b1 linter: Skip running tsgolint when no files need type aware linting (#13502) (Copilot)
+
+### 🚜 Refactor
+
+- 7775c21 linter/plugins: Remove `oxlint2` Cargo feature (#13648) (overlookmotel)
+- 6cd6be2 linter: Add `--experimental-js-plugins` CLI arg (#13658) (overlookmotel)
+- 2f02ac6 linter/plugins: Remove `disable_oxlint2` Cargo feature (#13626) (overlookmotel)
+- ff9e4fb linter/plugins: Use fixed-size allocators when `ExternalLinter` exists (#13623) (overlookmotel)
+- 91759c6 linter/plugins: Only use `RawTransferFileSystem` if JS plugins registered (#13599) (overlookmotel)
+- 118020c linter/plugins: Discard `ExternalLinter` if no JS plugins registered (#13598) (overlookmotel)
+- 8d30bce linter/tsgolint: Report an error if the tsgolint exe could not be found (#13590) (camc314)
+- d245376 oxlint: Remove unused `runner` module (#13561) (camc314)
+
+### 🧪 Testing
+
+- 58e6c94 oxlint: Add test for ignorePatterns whitelist (#13372) (Sysix)
+
+
 ## [1.14.0] - 2025-08-30
 
 ### 🚜 Refactor

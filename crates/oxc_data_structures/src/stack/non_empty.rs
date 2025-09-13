@@ -353,13 +353,38 @@ impl<T> NonEmptyStack<T> {
         <Self as StackCommon<T>>::len(self)
     }
 
-    /// Get if stack is empty. Always returns `false`.
+    /// Get if stack is empty.
+    ///
+    /// This method is pointless, as the stack is never empty.
+    /// Only present to override the default method from `[T]::is_empty` which is inherited via `Deref`.
+    ///
+    /// Using this method is a compile-time error, because using it is certainly a logic error.
+    ///
+    /// Use [`is_exhausted`] instead.
+    ///
+    /// [`is_exhausted`]: Self::is_exhausted
     #[expect(clippy::unused_self)]
     #[inline]
     pub fn is_empty(&self) -> bool {
-        // This method is pointless, as the stack is never empty. But provide it to override
-        // the default method from `slice::is_empty` which is inherited via `Deref`
-        false
+        const {
+            panic!("`NonEmptyStack` is never empty. Use `is_exhausted` instead.");
+        }
+    }
+
+    /// Get if stack is back in its initial state.
+    /// i.e. Every `push` has been followed by a corresponding `pop`.
+    ///
+    /// [`NonEmptyStack`] is never empty, so this is the closest thing to `is_empty` that makes sense.
+    ///
+    /// If this method returns `true`, the stack only contains the initial element,
+    /// and calling [`pop`] will panic.
+    ///
+    /// Equivalent to `stack.len() == 1`.
+    ///
+    /// [`pop`]: Self::pop
+    #[inline]
+    pub fn is_exhausted(&self) -> bool {
+        self.cursor == self.start
     }
 
     /// Get capacity.
@@ -458,6 +483,22 @@ mod tests {
     #[should_panic(expected = "`capacity` cannot be zero")]
     fn with_capacity_zero() {
         NonEmptyStack::with_capacity(0, 10u64);
+    }
+
+    #[test]
+    fn is_exhausted() {
+        let mut stack = NonEmptyStack::new(0u64);
+        assert!(stack.is_exhausted());
+
+        stack.push(10);
+        assert!(!stack.is_exhausted());
+        stack.push(20);
+        assert!(!stack.is_exhausted());
+
+        stack.pop();
+        assert!(!stack.is_exhausted());
+        stack.pop();
+        assert!(stack.is_exhausted());
     }
 
     #[test]

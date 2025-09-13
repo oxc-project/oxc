@@ -140,10 +140,8 @@ fn format_trailing_comments<'a>(
             //   |        |        |
             //   |        |        |
             //  these are the gaps between comments
-            let gap_str = &source_text.as_bytes()[start as usize..comment.span.start as usize];
-
             // If this comment is in a new line, we stop here and return the comments before this comment
-            if gap_str.contains(&b'\n') {
+            if source_text.contains_newline_between(start, comment.span.start) {
                 return &comments[..index];
             }
             // If this comment is a line comment, then it is a end of line comment, so we stop here and return the comments with this comment
@@ -151,7 +149,7 @@ fn format_trailing_comments<'a>(
                 return &comments[..=index];
             }
             // Store the index of the comment before the operator, if no line comment or no new line is found, then return all comments before operator
-            else if gap_str.contains(&operator) {
+            else if source_text.bytes_contain(start, comment.span.start, operator) {
                 index_before_operator = Some(index + 1);
             }
 
@@ -163,9 +161,7 @@ fn format_trailing_comments<'a>(
     };
 
     let comments = get_comments(f);
-    if !comments.is_empty() {
-        FormatTrailingComments::Comments(comments).fmt(f)?;
-    }
+    FormatTrailingComments::Comments(comments).fmt(f)?;
 
     Ok(())
 }

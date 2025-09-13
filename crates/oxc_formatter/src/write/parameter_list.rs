@@ -158,7 +158,7 @@ pub fn can_avoid_parentheses(
                 && !param.pattern.optional
                 && param.pattern.kind.is_binding_identifier()
         }
-        && !f.comments().has_comments_in_span(arrow.params.span)
+        && !f.comments().has_comment_in_span(arrow.params.span)
 }
 
 pub fn should_hug_function_parameters<'a>(
@@ -180,8 +180,8 @@ pub fn should_hug_function_parameters<'a>(
 
     // `(/* comment before */ only_parameter /* comment after */)`
     // Checker whether there are comments around the only parameter.
-    if f.comments().has_comments_between(parameters.span.start, only_parameter.span.start)
-        || f.comments().has_comments_between(only_parameter.span.end, parameters.span.end)
+    if f.comments().has_comment_in_range(parameters.span.start, only_parameter.span.start)
+        || f.comments().has_comment_in_range(only_parameter.span.end, parameters.span.end)
     {
         return false;
     }

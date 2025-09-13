@@ -54,7 +54,8 @@ where
                         let next_span =
                             array_iter.peek().map_or(SPAN, |e| e.1.map_or(SPAN, GetSpan::span));
 
-                        let comma_position = source_text.as_bytes()[..next_span.start as usize]
+                        let comma_position = source_text
+                            .bytes_to(next_span.start)
                             .iter()
                             .rev()
                             .position(|c| *c == b',');

@@ -1,0 +1,19 @@
+---
+source: apps/oxfmt/tests/tester.rs
+---
+########## 
+arguments: --no-error-on-unmatched-pattern __non__existent__file.js
+working directory: 
+----------
+----------
+CLI result: None
+----------
+
+########## 
+arguments: __non__existent__file.js
+working directory: 
+----------
+Expected at least one target file
+----------
+CLI result: NoFilesFound
+----------

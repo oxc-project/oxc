@@ -35,31 +35,28 @@ impl<'a, 'b> FormatOpeningElement<'a, 'b> {
 
         let comments = f.context().comments();
 
-        let last_attribute_has_comments = self
+        let last_attribute_has_comment = self
             .attributes
             .last()
-            .is_some_and(|a| comments.has_comments_between(a.span().end, self.span.end));
+            .is_some_and(|a| comments.has_comment_in_range(a.span().end, self.span.end));
 
         let type_arguments_or_name_end =
             self.type_arguments().map_or_else(|| self.name.span().end, |t| t.span.end);
         let first_attribute_start_or_element_end =
             self.attributes.first().map_or_else(|| self.span.end, |a| a.span().start);
-        let mut name_has_comments = comments
-            .has_comments_between(type_arguments_or_name_end, first_attribute_start_or_element_end);
+        let mut name_has_comment = comments
+            .has_comment_in_range(type_arguments_or_name_end, first_attribute_start_or_element_end);
 
-        if self.is_self_closing && attributes.is_empty() && !name_has_comments {
+        if self.is_self_closing && attributes.is_empty() && !name_has_comment {
             OpeningElementLayout::Inline
         } else if attributes.len() == 1
-            && !name_has_comments
-            && !last_attribute_has_comments
+            && !name_has_comment
+            && !last_attribute_has_comment
             && is_single_line_string_literal_attribute(&attributes[0])
         {
             OpeningElementLayout::SingleStringAttribute
         } else {
-            OpeningElementLayout::IndentAttributes {
-                name_has_comments,
-                last_attribute_has_comments,
-            }
+            OpeningElementLayout::IndentAttributes { name_has_comment, last_attribute_has_comment }
         }
     }
 }
@@ -95,8 +92,8 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
                 )
             }
             OpeningElementLayout::IndentAttributes {
-                name_has_comments,
-                last_attribute_has_comments,
+                name_has_comment,
+                last_attribute_has_comment,
             } => {
                 let format_inner = format_with(|f| {
                     write!(f, [format_open, soft_line_indent_or_space(&self.attributes())])?;
@@ -105,11 +102,11 @@ impl<'a> Format<'a> for FormatOpeningElement<'a, '_> {
                     FormatTrailingComments::Comments(comments).fmt(f)?;
 
                     let force_bracket_same_line = f.options().bracket_same_line.value();
-                    let wants_bracket_same_line = attributes.is_empty() && !name_has_comments;
+                    let wants_bracket_same_line = attributes.is_empty() && !name_has_comment;
 
                     if self.is_self_closing {
                         write!(f, [soft_line_break_or_space(), format_close])
-                    } else if last_attribute_has_comments {
+                    } else if last_attribute_has_comment {
                         write!(f, [soft_line_break(), format_close])
                     } else if (force_bracket_same_line && !self.attributes.is_empty())
                         || wants_bracket_same_line
@@ -156,7 +153,7 @@ pub enum OpeningElementLayout {
     ///   moreAttributes={withSomeExpression}
     /// ></div>;
     /// ```
-    IndentAttributes { name_has_comments: bool, last_attribute_has_comments: bool },
+    IndentAttributes { name_has_comment: bool, last_attribute_has_comment: bool },
 }
 
 /// Returns `true` if this is an attribute with a string literal initializer that does not contain any new line characters.

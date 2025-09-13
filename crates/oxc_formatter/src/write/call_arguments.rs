@@ -7,16 +7,14 @@ use oxc_span::GetSpan;
 use crate::{
     Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator, format_args,
     formatter::{
-        BufferExtensions, Comments, FormatElement, FormatError, Formatter, VecBuffer,
+        BufferExtensions, Comments, FormatElement, FormatError, Formatter, SourceText, VecBuffer,
         format_element,
         prelude::{
             FormatElements, FormatOnce, FormatWith, MemoizeFormat, Tag, empty_line, expand_parent,
-            format_once, format_with, get_lines_before, group, soft_block_indent,
-            soft_line_break_or_space, space,
+            format_once, format_with, group, soft_block_indent, soft_line_break_or_space, space,
         },
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, format_dangling_comments},
-        write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     utils::{
@@ -98,7 +96,8 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let has_empty_line = self.iter().any(|arg| get_lines_before(arg.span(), f) > 1);
+        let has_empty_line =
+            self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
         if has_empty_line || is_function_composition_args(self) {
             return format_all_args_broken_out(self, true, f);
         }
@@ -216,7 +215,7 @@ fn format_all_args_broken_out<'a, 'b>(
             soft_block_indent(&format_once(move |f| {
                 for (index, argument) in node.iter().enumerate() {
                     if index > 0 {
-                        match get_lines_before(argument.span(), f) {
+                        match f.source_text().get_lines_before(argument.span(), f.comments()) {
                             0 | 1 => write!(f, [soft_line_break_or_space()])?,
                             _ => write!(f, [empty_line()])?,
                         }
@@ -280,7 +279,7 @@ fn should_group_first_argument(
                 return false;
             }
 
-            !f.comments().has_comments(call_like_span.start, first.span(), second.span().start)
+            !f.comments().has_comment(call_like_span.start, first.span(), second.span().start)
                 && !can_group_expression_argument(second, f)
                 && is_relatively_short_argument(second)
         }
@@ -308,7 +307,7 @@ fn should_group_last_argument(
             }
 
             let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
-            if f.comments().has_comments(previous_span, last.span(), call_like_span.end) {
+            if f.comments().has_comment(previous_span, last.span(), call_like_span.end) {
                 return false;
             }
 
@@ -450,12 +449,12 @@ fn can_group_expression_argument(argument: &Expression<'_>, f: &Formatter<'_, '_
     match argument {
         Expression::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
-                || f.comments().has_comments_in_span(object_expression.span)
+                || f.comments().has_comment_in_span(object_expression.span)
         }
 
         Expression::ArrayExpression(array_expression) => {
             !array_expression.elements.is_empty()
-                || f.comments().has_comments_in_span(array_expression.span)
+                || f.comments().has_comment_in_span(array_expression.span)
         }
         Expression::TSTypeAssertion(assertion_expression) => {
             can_group_expression_argument(&assertion_expression.expression, f)
@@ -515,7 +514,7 @@ fn can_group_arrow_function_expression_argument(
                         true
                     }
                     _ => true,
-                }) || (body.statements.is_empty() && f.comments().has_dangling_comments(body.span))
+                }) || (body.statements.is_empty() && f.comments().has_comment_before(body.span.end))
             }
             _ => true,
         }
@@ -596,7 +595,7 @@ fn write_grouped_arguments<'a>(
             // We have to get the lines before the argument has been formatted, because it relies on
             // the comments before the argument. After formatting, the comments might marked as printed,
             // which would lead to a wrong line count.
-            let lines_before = get_lines_before(argument.span(), f);
+            let lines_before = f.source_text().get_lines_before(argument.span(), f.comments());
 
             let interned = f.intern(&format_once(|f| {
                 format_argument.fmt(f)?;
@@ -932,7 +931,7 @@ fn is_commonjs_or_amd_call(
 }
 
 /// Returns `true` if `arguments` contains a single [multiline template literal argument that starts on its own ](is_multiline_template_starting_on_same_line).
-fn is_multiline_template_only_args(arguments: &[Argument], source_text: &str) -> bool {
+fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceText) -> bool {
     if arguments.len() != 1 {
         return false;
     }
@@ -984,7 +983,7 @@ fn is_react_hook_with_deps_array(
             }
 
             // Is there a comment that isn't around the callback or deps?
-            !comments.filter_comments_in_span(arguments.parent.span()).any(|comment| {
+            !comments.comments_before(arguments.parent.span().end).iter().any(|comment| {
                 !callback.span.contains_inclusive(comment.span)
                     && !deps.span.contains_inclusive(comment.span)
             })

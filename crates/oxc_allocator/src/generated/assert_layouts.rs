@@ -18,7 +18,7 @@ const _: () = {
 };
 
 #[cfg(target_pointer_width = "32")]
-const _: () = {
+const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 3 bytes
     assert!(size_of::<FixedSizeAllocatorMetadata>() == 12);
     assert!(align_of::<FixedSizeAllocatorMetadata>() == 4);

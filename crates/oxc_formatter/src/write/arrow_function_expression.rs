@@ -6,12 +6,10 @@ use oxc_span::GetSpan;
 use crate::{
     format_args,
     formatter::{
-        Buffer, Comments, Format, FormatError, FormatResult, Formatter,
+        Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
         buffer::RemoveSoftLinesBuffer,
-        comments::has_new_line_backward,
         prelude::*,
         trivia::{FormatLeadingComments, format_trailing_comments},
-        write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
@@ -130,7 +128,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 let arrow_expression = arrow.get_expression();
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
-                    return if f.context().comments().has_comments_before(sequence.span().start) {
+                    return if f.context().comments().has_comment_before(sequence.span().start) {
                         write!(
                             f,
                             [group(&format_args!(
@@ -398,10 +396,10 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 pub fn is_multiline_template_starting_on_same_line(
     start: u32,
     template: &TemplateLiteral,
-    source_text: &str,
+    source_text: SourceText,
 ) -> bool {
-    template.quasis.iter().any(|quasi| quasi.value.raw.contains('\n'))
-        && !has_new_line_backward(&source_text[..start as usize])
+    template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
+        && !source_text.has_newline_before(start)
 }
 
 struct ArrowChain<'a, 'b> {
@@ -509,7 +507,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // comments manually, since they won't have their own
                     // Format node to handle it.
                     let should_format_comments = !is_first_in_chain
-                        && f.context().comments().has_comments_before(arrow.span.start);
+                        && f.context().comments().has_comment_before(arrow.span.start);
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
@@ -583,7 +581,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
-                if f.context().comments().has_comments_before(sequence.span().start) {
+                if f.context().comments().has_comment_before(sequence.span().start) {
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(

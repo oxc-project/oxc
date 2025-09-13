@@ -19,15 +19,19 @@ pub struct FormatRunner {
 }
 
 impl FormatRunner {
-    pub(crate) fn new(options: FormatCommand) -> Self {
+    /// Creates a new FormatRunner instance.
+    ///
+    /// # Panics
+    /// Panics if the current working directory cannot be determined.
+    pub fn new(options: FormatCommand) -> Self {
         Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
     }
 
-    pub(crate) fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, output_options, .. } = self.options;
+        let FormatCommand { paths, output_options, misc_options } = self.options;
 
         // Instead of `--ignore-pattern=PAT`, we support `!` prefix in paths
         let (exclude_patterns, target_paths): (Vec<_>, Vec<_>) =
@@ -35,7 +39,7 @@ impl FormatRunner {
 
         if target_paths.is_empty() {
             print_and_flush_stdout(stdout, "Expected at least one target file/dir/glob\n");
-            return CliRunResult::FormatNoFilesFound;
+            return CliRunResult::NoFilesFound;
         }
 
         // Build exclude patterns if any exist
@@ -61,14 +65,18 @@ impl FormatRunner {
 
         // It may be empty after filtering ignored files
         if files_to_format.is_empty() {
+            if misc_options.no_error_on_unmatched_pattern {
+                return CliRunResult::None;
+            }
+
             print_and_flush_stdout(stdout, "Expected at least one target file\n");
-            return CliRunResult::FormatNoFilesFound;
+            return CliRunResult::NoFilesFound;
         }
 
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
 
-        if matches!(output_options, OutputOptions::Check) {
+        if matches!(output_options, OutputOptions::Check | OutputOptions::Default) {
             print_and_flush_stdout(stdout, "Checking formatting...\n");
         }
 

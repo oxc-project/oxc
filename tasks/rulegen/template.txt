@@ -1,6 +1,16 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+{{#if has_hash_map}}
+use rustc_hash::FxHashMap;
+{{/if}}
+{{#if has_hash_set}}
+use rustc_hash::FxHashSet;
+{{/if}}
+{{#if rule_config}}
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+{{/if}}
 
 use crate::{
     context::LintContext,
@@ -16,8 +26,10 @@ fn {{snake_rule_name}}_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct {{pascal_rule_name}};
+{{rule_config}}
+
+#[derive(Debug, Default, Clone{{#if rule_config_tuple}}, Deserialize, Serialize, JsonSchema{{/if}})]
+pub struct {{pascal_rule_name}}{{#if rule_config_tuple}}{{rule_config_tuple}}{{/if}};
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
@@ -47,9 +59,18 @@ declare_oxc_lint!(
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+{{#if rule_config}}
+    config = {{pascal_rule_name}},
+{{/if}}
 );
 
 impl Rule for {{pascal_rule_name}} {
+{{#if rule_config}}
+    fn from_configuration(value: serde_json::Value) -> Self {
+        serde_json::from_value(value).unwrap()
+    }
+
+{{/if}}
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
 
     }

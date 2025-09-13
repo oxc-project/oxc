@@ -16,6 +16,7 @@ mod generated {
 mod formatter;
 mod options;
 mod parentheses;
+mod service;
 mod utils;
 mod write;
 
@@ -33,6 +34,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use write::FormatWrite;
 
 pub use crate::options::*;
+pub use crate::service::source_type::get_supported_source_type;
 use crate::{
     formatter::FormatContext,
     generated::ast_nodes::{AstNode, AstNodes},

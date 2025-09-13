@@ -6,26 +6,29 @@ pub use oxc_linter::{
 };
 
 mod command;
+mod js_plugins;
 mod lint;
 mod output_formatter;
 mod result;
-mod tester;
 mod walk;
 
+#[cfg(test)]
+mod tester;
+
+use lint::LintRunner;
+use result::CliRunResult;
+
+/// Re-exported CLI-related items for use in `tasks/website`.
 pub mod cli {
-    pub use crate::{command::*, lint::LintRunner, result::CliRunResult};
+    pub use super::{command::*, lint::LintRunner, result::CliRunResult};
 }
-
-use cli::{CliRunResult, LintRunner};
-
-#[cfg(feature = "oxlint2")]
-mod raw_fs;
 
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
-pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
+/// Run the linter.
+pub fn lint(mut external_linter: Option<ExternalLinter>) -> CliRunResult {
     init_tracing();
     init_miette();
 
@@ -51,6 +54,27 @@ pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
     };
 
     command.handle_threads();
+
+    #[expect(clippy::print_stderr)]
+    if command.experimental_js_plugins {
+        // If no `ExternalLinter`, this function was not called by `napi/oxlint`
+        if external_linter.is_none() {
+            eprintln!("ERROR: JS plugins are not supported at present");
+            return CliRunResult::InvalidOptionConfig;
+        }
+
+        // Exit early if not 64-bit little-endian, to avoid a panic later on when trying to create
+        // a fixed-size allocator for raw transfer
+        if cfg!(not(all(target_pointer_width = "64", target_endian = "little"))) {
+            eprintln!(
+                "ERROR: JS plugins are only supported on 64-bit little-endian platforms at present"
+            );
+            return CliRunResult::InvalidOptionConfig;
+        }
+    } else {
+        external_linter = None;
+    }
+
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
@@ -58,7 +82,7 @@ pub fn lint(external_linter: Option<ExternalLinter>) -> CliRunResult {
     LintRunner::new(command, external_linter).run(&mut stdout)
 }
 
-// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.
+/// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.
 fn init_miette() {
     miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().build()))).unwrap();
 }

@@ -7,7 +7,10 @@ use crate::{
     Format, FormatResult, FormatTrailingCommas, QuoteProperties, TrailingSeparator, best_fitting,
     format_args,
     formatter::{
-        Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
+        Formatter,
+        prelude::*,
+        separated::FormatSeparatedIter,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
@@ -61,11 +64,11 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
 
         if self.is_empty() {
-            write!(f, ["{", "}"])?;
+            write!(f, ["{}"])?;
         } else if self.len() == 1
             && let Some(ImportDeclarationSpecifier::ImportSpecifier(specifier)) =
                 specifiers_iter.peek().map(AsRef::as_ref)
-            && !f.comments().has_comments_before(specifier.local.span.start)
+            && !f.comments().has_comment_before(specifier.local.span.start)
         {
             write!(
                 f,
@@ -96,7 +99,10 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                                             .comments()
                                             .comments_before(specifier.span().start);
                                         if !comments.is_empty() {
-                                            if get_lines_before(comments[0].span, f) > 1 {
+                                            if f.source_text()
+                                                .get_lines_before(comments[0].span, f.comments())
+                                                > 1
+                                            {
                                                 write!(f, [empty_line()])?;
                                             }
                                             write!(f, [FormatLeadingComments::Comments(comments)])?;
@@ -134,7 +140,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
         } else {
             write!(f, [self.imported(), space(), "as", space(), self.local()])?;
         }
-        Ok(())
+
+        if f.source_text().next_non_whitespace_byte_is(self.span.end, b'}') {
+            let comments = f.context().comments().comments_before_character(self.span.end, b'}');
+            write!(f, [FormatTrailingComments::Comments(comments)])
+        } else {
+            self.format_trailing_comments(f)
+        }
     }
 }
 
@@ -146,7 +158,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDefaultSpecifier<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["*", space(), "as", space(), self.local()])
+        write!(f, ["*", space(), "as", space()])?;
+        let local = self.local();
+        local.format_leading_comments(f)?;
+        local.write(f)?;
+        // `import * as all /* comment */ from 'mod'`
+        //                  ^^^^^^^^^^^^ get comments that before `from` keyword to print
+        // `f` is the first character of `from`
+        let comments = f.context().comments().comments_before_character(local.span().start, b'f');
+        write!(f, [space(), FormatTrailingComments::Comments(comments)])
     }
 }
 

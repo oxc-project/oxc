@@ -1942,7 +1942,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "cow-utils",
  "oxc_allocator",
@@ -1985,7 +1985,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_language_server"
-version = "1.14.0"
+version = "1.15.0"
 dependencies = [
  "env_logger",
  "futures",
@@ -2005,7 +2005,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.14.0"
+version = "1.15.0"
 dependencies = [
  "bitflags 2.9.4",
  "constcat",
@@ -2052,7 +2052,6 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
- "tokio",
 ]
 
 [[package]]
@@ -2075,6 +2074,7 @@ dependencies = [
  "oxc_allocator",
  "oxlint",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]
@@ -2405,7 +2405,9 @@ dependencies = [
  "oxc_allocator",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_tasks_common",
+ "oxc_transformer",
 ]
 
 [[package]]
@@ -2513,10 +2515,13 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "bpaf",
+ "cow-utils",
  "ignore",
+ "insta",
+ "lazy-regex",
  "mimalloc-safe",
  "oxc-miette",
  "oxc_allocator",
@@ -2530,7 +2535,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "1.14.0"
+version = "1.15.0"
 dependencies = [
  "bpaf",
  "cow-utils",

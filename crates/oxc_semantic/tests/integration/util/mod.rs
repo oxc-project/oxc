@@ -3,9 +3,12 @@ use std::sync::Arc;
 use itertools::Itertools;
 
 use oxc_allocator::Allocator;
+#[cfg(feature = "cfg")]
 use oxc_cfg::DisplayDot;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
-use oxc_semantic::{Semantic, SemanticBuilder, SemanticBuilderReturn, dot::DebugDot};
+#[cfg(feature = "cfg")]
+use oxc_semantic::dot::DebugDot;
+use oxc_semantic::{Semantic, SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 
 mod class_tester;
@@ -176,11 +179,18 @@ impl<'a> SemanticTester<'a> {
             .build(self.allocator.alloc(parse.program))
     }
 
+    #[cfg(feature = "cfg")]
     pub fn basic_blocks_count(&self) -> usize {
         let built = self.build();
         built.cfg().map_or(0, |cfg| cfg.basic_blocks.len())
     }
 
+    #[cfg(not(feature = "cfg"))]
+    pub fn basic_blocks_count(&self) -> usize {
+        0
+    }
+
+    #[cfg(feature = "cfg")]
     pub fn basic_blocks_printed(&self) -> String {
         let built = self.build();
         built.cfg().map_or_else(String::default, |cfg| {
@@ -198,9 +208,20 @@ impl<'a> SemanticTester<'a> {
         })
     }
 
+    #[cfg(not(feature = "cfg"))]
+    pub fn basic_blocks_printed(&self) -> String {
+        String::default()
+    }
+
+    #[cfg(feature = "cfg")]
     pub fn cfg_dot_diagram(&self) -> String {
         let semantic = self.build();
         semantic.cfg().map_or_else(String::default, |cfg| cfg.debug_dot(semantic.nodes().into()))
+    }
+
+    #[cfg(not(feature = "cfg"))]
+    pub fn cfg_dot_diagram(&self) -> String {
+        String::default()
     }
 
     /// Tests that a symbol with the given name exists at the top-level scope and provides a

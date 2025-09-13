@@ -1,3 +1,4 @@
+#![cfg(feature = "cfg")]
 #![expect(clippy::print_stdout)]
 //! # Control Flow Graph (CFG) Example
 //!

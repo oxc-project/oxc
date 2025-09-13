@@ -494,19 +494,6 @@ impl ConfigStoreBuilder {
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
-    #[cfg(not(feature = "oxlint2"))]
-    #[expect(unused_variables, clippy::needless_pass_by_ref_mut)]
-    fn load_external_plugin(
-        oxlintrc_dir_path: &Path,
-        plugin_specifier: &str,
-        external_linter: &ExternalLinter,
-        resolver: &Resolver,
-        external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<(), ConfigBuilderError> {
-        unreachable!()
-    }
-
-    #[cfg(feature = "oxlint2")]
     fn load_external_plugin(
         oxlintrc_dir_path: &Path,
         plugin_specifier: &str,
@@ -531,13 +518,11 @@ impl ConfigStoreBuilder {
 
         let result = {
             let plugin_path = plugin_path.clone();
-            tokio::task::block_in_place(move || {
-                tokio::runtime::Handle::current()
-                    .block_on((external_linter.load_plugin)(plugin_path))
-            })
-            .map_err(|e| ConfigBuilderError::PluginLoadFailed {
-                plugin_specifier: plugin_specifier.to_string(),
-                error: e.to_string(),
+            (external_linter.load_plugin)(plugin_path).map_err(|e| {
+                ConfigBuilderError::PluginLoadFailed {
+                    plugin_specifier: plugin_specifier.to_string(),
+                    error: e.to_string(),
+                }
             })
         }?;
 
@@ -609,11 +594,13 @@ impl Display for ConfigBuilderError {
                 write!(f, "invalid config file {file}: {reason}")
             }
             ConfigBuilderError::PluginLoadFailed { plugin_specifier, error } => {
-                write!(f, "Failed to load external plugin: {plugin_specifier}\n  {error}")?;
+                write!(f, "Failed to load JS plugin: {plugin_specifier}\n  {error}")?;
                 Ok(())
             }
             ConfigBuilderError::NoExternalLinterConfigured => {
-                f.write_str("Failed to load external plugin because no external linter was configured. This means the Oxlint binary was executed directly rather than via napi bindings.")?;
+                f.write_str(
+                    "JS plugins are not supported without `--experimental-js-plugins` CLI option",
+                )?;
                 Ok(())
             }
             ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),

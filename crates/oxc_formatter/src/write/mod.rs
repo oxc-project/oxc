@@ -45,7 +45,6 @@ use crate::{
     format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
-        comments::is_own_line_comment,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
@@ -64,6 +63,7 @@ use crate::{
         member_chain::MemberChain,
         object::format_property_key,
         string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
+        suppressed::FormatSuppressedNode,
     },
     write,
     write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
@@ -265,8 +265,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
             write!(f, space());
         }
         let Span { start, end, .. } = self.argument.span();
-        if f.comments().has_comments_before(start)
-            || f.comments().has_comments_between(end, self.span().end)
+        if f.comments().has_comment_before(start)
+            || f.comments().has_comment_in_range(end, self.span().end)
         {
             write!(
                 f,
@@ -724,8 +724,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 || comments.last().is_some_and(|last_comment| {
                     // Ensure the comments are placed before the else keyword or on a new line
                     let gap_str =
-                        &f.source_text()[last_comment.span.end as usize..alternate_start as usize];
-                    gap_str.contains("else") || gap_str.contains('\n')
+                        f.source_text().slice_range(last_comment.span.end, alternate_start);
+                    gap_str.contains("else")
+                        || f.source_text()
+                            .contains_newline_between(last_comment.span.end, alternate_start)
                 });
 
             let else_on_same_line =
@@ -1072,7 +1074,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NullLiteral> {
 impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_number_token(
-            self.span().source_text(f.source_text()),
+            f.source_text().text_for(self),
             self.span(),
             NumberFormatOptions::default().keep_one_trailing_decimal_zero(),
         )
@@ -1084,7 +1086,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_jsx = matches!(self.parent, AstNodes::JSXAttribute(_));
         FormatLiteralStringToken::new(
-            self.span().source_text(f.source_text()),
+            f.source_text().text_for(self),
             self.span(),
             /* jsx */
             is_jsx,
@@ -1130,6 +1132,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.declare() {
+            write!(f, ["declare", space()])?;
+        }
         if self.r#const() {
             write!(f, ["const", space()])?;
         }
@@ -1161,6 +1166,10 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.id()])?;
+        if let Some(init) = self.initializer() {
+            write!(f, [space(), "=", space(), init])?;
+        }
         Ok(())
     }
 }

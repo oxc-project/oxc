@@ -1,13 +1,12 @@
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use crate::parser::reader::string_literal_parser::{
-    ast,
+use crate::parser::reader::{
+    CodePoint, Options,
     characters::{
         CR, LF, LS, PS, is_line_terminator, is_non_escape_character, is_single_escape_character,
     },
-    diagnostics,
-    options::Options,
+    string_literal_parser::{ast, diagnostics},
 };
 
 // Internal representation of escape sequence resolved unit in a string literal.
@@ -19,7 +18,7 @@ pub fn parse_regexp_literal(
     source_text: &str,
     span_offset: u32,
     combine_surrogate_pair: bool,
-) -> Vec<ast::CodePoint> {
+) -> Vec<CodePoint> {
     let mut body = vec![];
 
     let mut offset = 0;
@@ -50,7 +49,7 @@ pub struct Parser {
 impl Parser {
     // This is public because it is used in `parse_regexp_literal()`.
     pub fn handle_code_point(
-        body: &mut Vec<ast::CodePoint>,
+        body: &mut Vec<CodePoint>,
         (offsets, cp): OffsetsAndCp,
         span_offset: u32,
         combine_surrogate_pair: bool,
@@ -59,13 +58,13 @@ impl Parser {
 
         if combine_surrogate_pair || (0..=0xffff).contains(&cp) {
             // If the code point is in the BMP or if forced, just push it
-            body.push(ast::CodePoint { span, value: cp });
+            body.push(CodePoint { span, value: cp });
         } else {
             // Otherwise, split the code point into a surrogate pair, sharing the same span
             let (lead, trail) =
                 (0xd800 + ((cp - 0x10000) >> 10), 0xdc00 + ((cp - 0x10000) & 0x3ff));
-            body.push(ast::CodePoint { span, value: lead });
-            body.push(ast::CodePoint { span, value: trail });
+            body.push(CodePoint { span, value: lead });
+            body.push(CodePoint { span, value: trail });
         }
     }
 
@@ -114,10 +113,7 @@ impl Parser {
     // SingleStringCharacters ::
     //   SingleStringCharacter SingleStringCharacters[opt]
     // ```
-    fn parse_string_characters(
-        &mut self,
-        single_or_double_quote: char,
-    ) -> Result<Vec<ast::CodePoint>> {
+    fn parse_string_characters(&mut self, single_or_double_quote: char) -> Result<Vec<CodePoint>> {
         let mut body = vec![];
         while let Some(code_point) = self.parse_string_character(single_or_double_quote)? {
             Parser::handle_code_point(

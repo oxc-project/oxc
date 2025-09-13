@@ -4,7 +4,7 @@ use oxc_span::{GetSpan, Span};
 
 use super::chain_member::ChainMember;
 use crate::{
-    formatter::{Format, FormatResult, Formatter, prelude::*},
+    formatter::{Format, FormatResult, Formatter, SourceText, prelude::*},
     generated::ast_nodes::AstNode,
     parentheses::NeedsParentheses,
     write,
@@ -192,14 +192,14 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
             return false;
         };
 
-        let source_text = f.source_text().as_bytes();
+        let source = f.source_text();
 
         // `A \n\n/* comment . */ . / comment . */ B`
         //    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         // Check whether has more than 1 continuous new lines before the operator (`.`)
         let start = expression.object().span().end;
         let mut end = expression.property().span().start;
-        let mut comments = f.comments().comments_between(start, end).iter();
+        let mut comments = f.comments().comments_in_range(start, end).iter();
         let mut last_comment_span = comments.next_back();
 
         while start < end {
@@ -210,7 +210,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
                 end = last_comment.span.start - 1;
                 last_comment_span = comments.next_back();
                 continue;
-            } else if matches!(source_text[end as usize], b'.') {
+            } else if matches!(source.byte_at(end), Some(b'.')) {
                 // Found the operator, stop the loop
                 break;
             }
@@ -225,7 +225,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
 
         // Count the number of continuous new lines
         let mut new_lines_count = 0;
-        for &b in &source_text[start as usize..end as usize] {
+        for &b in source.bytes_range(start, end) {
             if matches!(b, b'\n' | b'\r') {
                 new_lines_count += 1;
                 // If there are more than 1 continuous new lines, return true

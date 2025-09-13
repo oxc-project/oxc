@@ -50,6 +50,7 @@ use std::mem;
 use oxc_allocator::{Address, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{Visit, VisitMut};
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
@@ -62,23 +63,37 @@ use crate::{
     state::TransformState,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
-use metadata::{LegacyDecoratorMetadata, MethodMetadata};
-
-#[derive(Default)]
-struct ClassDecoratorInfo {
-    /// `@dec class C {}` or `class C { constructor(@dec p) {} }`
-    class_or_constructor_parameter_is_decorated: bool,
-    /// `class C { @dec m() {} }`
-    class_element_is_decorated: bool,
-    /// `class C { @(#a in C ? dec() : dec2()) prop = 0; }`
-    has_private_in_expression_in_decorator: bool,
-}
+use metadata::LegacyDecoratorMetadata;
 
 struct ClassDecoratedData<'a> {
     // Class binding. When a class is without binding, it will be `_default`,
     binding: BoundIdentifier<'a>,
     // Alias binding exist when the class body contains a reference that refers to class itself.
     alias_binding: Option<BoundIdentifier<'a>>,
+}
+
+/// Class decorations state for the current class being processed.
+#[derive(Default)]
+struct ClassDecorations<'a> {
+    /// Flag indicating whether the current class needs to transform or not,
+    /// `false` if the class is an expression or `declare`.
+    should_transform: bool,
+    /// Decoration statements accumulated for the current class.
+    /// These will be applied when the class processing is complete.
+    decoration_stmts: Vec<Statement<'a>>,
+    /// Binding for the current class being processed.
+    /// Generated on-demand when the first decorator needs it.
+    class_binding: Option<BoundIdentifier<'a>>,
+    /// Flag indicating whether the current class has a private `in` expression in any decorator.
+    /// This affects where decorations are placed (in static block vs after class).
+    class_has_private_in_expression_in_decorator: bool,
+}
+
+impl ClassDecorations<'_> {
+    fn with_should_transform(mut self, should_transform: bool) -> Self {
+        self.should_transform = should_transform;
+        self
+    }
 }
 
 pub struct LegacyDecorator<'a, 'ctx> {
@@ -95,6 +110,10 @@ pub struct LegacyDecorator<'a, 'ctx> {
     class_decorated_data: Option<ClassDecoratedData<'a>>,
     /// Transformed decorators, they will be inserted in the statements at [`Self::exit_class_at_end`].
     decorations: FxHashMap<Address, Vec<Statement<'a>>>,
+    /// Stack for managing nested class decoration state.
+    /// Each level represents the decoration state for a class in the hierarchy,
+    /// with the top being the currently processed class.
+    class_decorations_stack: NonEmptyStack<ClassDecorations<'a>>,
     ctx: &'ctx TransformCtx<'a>,
 }
 
@@ -104,13 +123,27 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
             emit_decorator_metadata,
             metadata: LegacyDecoratorMetadata::new(ctx),
             class_decorated_data: None,
-            ctx,
             decorations: FxHashMap::default(),
+            class_decorations_stack: NonEmptyStack::new(ClassDecorations::default()),
+            ctx,
         }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
+    #[inline]
+    fn exit_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.emit_decorator_metadata {
+            self.metadata.exit_program(node, ctx);
+        }
+
+        debug_assert!(
+            self.class_decorations_stack.is_exhausted(),
+            "All class decorations should have been popped."
+        );
+    }
+
+    #[inline]
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.emit_decorator_metadata {
             self.metadata.enter_statement(stmt, ctx);
@@ -119,6 +152,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
 
     #[inline]
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.class_decorations_stack.push(
+            ClassDecorations::default()
+                .with_should_transform(!(class.is_expression() || class.declare)),
+        );
+
         if self.emit_decorator_metadata {
             self.metadata.enter_class(class, ctx);
         }
@@ -176,9 +214,125 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
             self.metadata.enter_property_definition(node, ctx);
         }
     }
+
+    #[inline]
+    fn exit_method_definition(
+        &mut self,
+        method: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // `constructor` will handle in `transform_decorators_of_class_and_constructor`.
+        if method.kind.is_constructor() {
+            return;
+        }
+
+        if let Some(decorations) = self.get_all_decorators_of_class_method(method, ctx) {
+            // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
+            let descriptor = ctx.ast.expression_null_literal(SPAN);
+            self.handle_decorated_class_element(
+                method.r#static,
+                &mut method.key,
+                descriptor,
+                decorations,
+                ctx,
+            );
+        }
+    }
+
+    #[inline]
+    fn exit_property_definition(
+        &mut self,
+        prop: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if prop.decorators.is_empty() {
+            return;
+        }
+
+        let decorations =
+            Self::convert_decorators_to_array_expression(prop.decorators.drain(..), ctx);
+
+        // We emit `void 0` here to indicate to `_decorate` that it can invoke `Object.defineProperty` directly.
+        let descriptor = ctx.ast.void_0(SPAN);
+        self.handle_decorated_class_element(
+            prop.r#static,
+            &mut prop.key,
+            descriptor,
+            decorations,
+            ctx,
+        );
+    }
+
+    #[inline]
+    fn exit_accessor_property(
+        &mut self,
+        accessor: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if accessor.decorators.is_empty() {
+            return;
+        }
+
+        let decorations =
+            Self::convert_decorators_to_array_expression(accessor.decorators.drain(..), ctx);
+        // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
+        let descriptor = ctx.ast.expression_null_literal(SPAN);
+        self.handle_decorated_class_element(
+            accessor.r#static,
+            &mut accessor.key,
+            descriptor,
+            decorations,
+            ctx,
+        );
+    }
+
+    fn enter_decorator(&mut self, node: &mut Decorator<'a>, _ctx: &mut TraverseCtx<'a>) {
+        let current_class = self.class_decorations_stack.last_mut();
+        if current_class.should_transform
+            && !current_class.class_has_private_in_expression_in_decorator
+        {
+            current_class.class_has_private_in_expression_in_decorator =
+                PrivateInExpressionDetector::has_private_in_expression(&node.expression);
+        }
+    }
 }
 
 impl<'a> LegacyDecorator<'a, '_> {
+    /// Helper method to handle a decorated class element (method, property, or accessor).
+    /// Accumulates decoration statements in the current decoration stack.
+    fn handle_decorated_class_element(
+        &mut self,
+        is_static: bool,
+        key: &mut PropertyKey<'a>,
+        descriptor: Expression<'a>,
+        decorations: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let current_class = self.class_decorations_stack.last_mut();
+
+        if !current_class.should_transform {
+            return;
+        }
+
+        // Get current class binding from stack
+        let class_binding = current_class.class_binding.get_or_insert_with(|| {
+            let Ancestor::ClassBody(class) = ctx.ancestor(1) else {
+                unreachable!("The grandparent of a class element is always a class.");
+            };
+            if let Some(ident) = class.id() {
+                BoundIdentifier::from_binding_ident(ident)
+            } else {
+                ctx.generate_uid_in_current_scope("default", SymbolFlags::Class)
+            }
+        });
+
+        let prefix = Self::get_class_member_prefix(class_binding, is_static, ctx);
+        let name = self.get_name_of_property_key(key, ctx);
+        let decorator_stmt = self.create_decorator(decorations, prefix, name, descriptor, ctx);
+
+        // Push to current decoration stack
+        self.class_decorations_stack.last_mut().decoration_stmts.push(decorator_stmt);
+    }
     /// Transforms a statement that is a class declaration
     ///
     ///
@@ -326,25 +480,38 @@ impl<'a> LegacyDecorator<'a, '_> {
     }
 
     fn transform_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        let ClassDecoratorInfo {
-            class_or_constructor_parameter_is_decorated,
-            class_element_is_decorated,
-            has_private_in_expression_in_decorator,
-        } = Self::check_class_has_decorated(class);
+        let current_class_decorations = self.class_decorations_stack.pop();
 
-        if class_or_constructor_parameter_is_decorated {
-            self.transform_class_declaration_with_class_decorators(
-                class,
-                has_private_in_expression_in_decorator,
-                ctx,
-            );
-        } else if class_element_is_decorated {
-            self.transform_class_declaration_without_class_decorators(
-                class,
-                has_private_in_expression_in_decorator,
-                ctx,
+        // Legacy decorator does not allow in class expression.
+        if current_class_decorations.should_transform {
+            let class_or_constructor_parameter_is_decorated =
+                Self::check_class_has_decorated(class);
+
+            if class_or_constructor_parameter_is_decorated {
+                self.transform_class_declaration_with_class_decorators(
+                    class,
+                    current_class_decorations,
+                    ctx,
+                );
+                return;
+            } else if !current_class_decorations.decoration_stmts.is_empty() {
+                self.transform_class_declaration_without_class_decorators(
+                    class,
+                    current_class_decorations,
+                    ctx,
+                );
+            }
+        } else {
+            debug_assert!(
+                current_class_decorations.class_binding.is_none(),
+                "Legacy decorator does not allow class expression, so that it should not have class binding."
             );
         }
+
+        debug_assert!(
+            !self.emit_decorator_metadata || self.metadata.pop_constructor_metadata().is_none(),
+            "`pop_constructor_metadata` should be `None` because there are no class decorators, so no metadata was generated."
+        );
     }
 
     /// Transforms a decorated class declaration and appends the resulting statements. If
@@ -352,7 +519,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     fn transform_class_declaration_with_class_decorators(
         &mut self,
         class: &mut Class<'a>,
-        has_private_in_expression_in_decorator: bool,
+        current_class_decorations: ClassDecorations<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // When we emit an ES6 class that has a class decorator, we must tailor the
@@ -458,8 +625,19 @@ impl<'a> LegacyDecorator<'a, '_> {
             ClassReferenceChanger::new(id.clone(), ctx, self.ctx)
                 .get_class_alias_if_needed(&mut class.body)
         });
-        let class_binding = class_binding
-            .unwrap_or_else(|| ctx.generate_uid_in_current_scope("default", SymbolFlags::Class));
+
+        let ClassDecorations {
+            class_binding: class_binding_tmp,
+            mut decoration_stmts,
+            class_has_private_in_expression_in_decorator,
+            should_transform: _,
+        } = current_class_decorations;
+
+        let class_binding = class_binding.unwrap_or_else(|| {
+            // `class_binding_tmp` maybe already generated a default class binding for unnamed classes, so use it.
+            class_binding_tmp
+                .unwrap_or_else(|| ctx.generate_uid_in_current_scope("default", SymbolFlags::Class))
+        });
 
         let constructor_decoration = self.transform_decorators_of_class_and_constructor(
             class,
@@ -467,8 +645,6 @@ impl<'a> LegacyDecorator<'a, '_> {
             class_alias_binding.as_ref(),
             ctx,
         );
-        let mut decoration_stmts =
-            self.transform_decorators_of_class_elements(class, &class_binding, ctx);
 
         let class_alias_with_this_assignment = if self.ctx.is_class_properties_plugin_enabled {
             None
@@ -501,7 +677,7 @@ impl<'a> LegacyDecorator<'a, '_> {
             })
         };
 
-        if has_private_in_expression_in_decorator {
+        if class_has_private_in_expression_in_decorator {
             let decorations = mem::take(&mut decoration_stmts);
             Self::insert_decorations_into_class_static_block(class, decorations, ctx);
         } else {
@@ -573,22 +749,29 @@ impl<'a> LegacyDecorator<'a, '_> {
     fn transform_class_declaration_without_class_decorators(
         &mut self,
         class: &mut Class<'a>,
-        has_private_in_expression_in_decorator: bool,
+        current_class_decorations: ClassDecorations<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // `export default class {}`
-        let class_binding = if let Some(ident) = &class.id {
-            BoundIdentifier::from_binding_ident(ident)
-        } else {
-            let class_binding = ctx.generate_uid_in_current_scope("default", SymbolFlags::Class);
-            class.id.replace(class_binding.create_binding_identifier(ctx));
-            class_binding
+        let ClassDecorations {
+            class_binding,
+            mut decoration_stmts,
+            class_has_private_in_expression_in_decorator,
+            should_transform: _,
+        } = current_class_decorations;
+
+        let Some(class_binding) = class_binding else {
+            unreachable!(
+                "Always has a class binding because there are decorators in class elements,
+                so that it has been added in `handle_decorated_class_element`"
+            );
         };
 
-        let mut decoration_stmts =
-            self.transform_decorators_of_class_elements(class, &class_binding, ctx);
+        // No class id, add one by using the class binding
+        if class.id.is_none() {
+            class.id = Some(class_binding.create_binding_identifier(ctx));
+        }
 
-        if has_private_in_expression_in_decorator {
+        if class_has_private_in_expression_in_decorator {
             Self::insert_decorations_into_class_static_block(class, decoration_stmts, ctx);
         } else {
             let stmt_address = match ctx.parent() {
@@ -599,70 +782,6 @@ impl<'a> LegacyDecorator<'a, '_> {
             };
             self.decorations.entry(stmt_address).or_default().append(&mut decoration_stmts);
         }
-    }
-
-    /// Transform decorators of [`ClassElement::MethodDefinition`],
-    /// [`ClassElement::PropertyDefinition`] and [`ClassElement::AccessorProperty`].
-    fn transform_decorators_of_class_elements(
-        &mut self,
-        class: &mut Class<'a>,
-        class_binding: &BoundIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<Statement<'a>> {
-        let mut decoration_stmts = Vec::with_capacity(class.body.body.len());
-
-        for element in &mut class.body.body {
-            let (is_static, key, descriptor, decorations) = match element {
-                ClassElement::MethodDefinition(method) if !method.value.is_typescript_syntax() => {
-                    let Some(decorations) = self.get_all_decorators_of_class_method(method, ctx)
-                    else {
-                        continue;
-                    };
-
-                    // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
-                    // We have this extra argument here so that we can inject an explicit property descriptor at a later date.
-                    let descriptor = ctx.ast.expression_null_literal(SPAN);
-
-                    (method.r#static, &mut method.key, descriptor, decorations)
-                }
-                ClassElement::PropertyDefinition(prop) if !prop.decorators.is_empty() => {
-                    let decorations = Self::convert_decorators_to_array_expression(
-                        prop.decorators.drain(..),
-                        ctx,
-                    );
-
-                    // We emit `void 0` here to indicate to `_decorate` that it can invoke `Object.defineProperty` directly, but that it
-                    // should not invoke `Object.getOwnPropertyDescriptor`.
-                    let descriptor = ctx.ast.void_0(SPAN);
-
-                    (prop.r#static, &mut prop.key, descriptor, decorations)
-                }
-                ClassElement::AccessorProperty(accessor) => {
-                    let decorations = Self::convert_decorators_to_array_expression(
-                        accessor.decorators.drain(..),
-                        ctx,
-                    );
-
-                    // We emit `null` here to indicate to `_decorate` that it can invoke `Object.getOwnPropertyDescriptor` directly.
-                    // We have this extra argument here so that we can inject an explicit property descriptor at a later date.
-                    let descriptor = ctx.ast.expression_null_literal(SPAN);
-
-                    (accessor.r#static, &mut accessor.key, descriptor, decorations)
-                }
-                _ => {
-                    continue;
-                }
-            };
-
-            // `Class` or `Class.prototype`
-            let prefix = Self::get_class_member_prefix(class_binding, is_static, ctx);
-            let name = self.get_name_of_property_key(key, ctx);
-            // `_decorator([...decorators], Class, name, descriptor)`
-            let decorator_stmt = self.create_decorator(decorations, prefix, name, descriptor, ctx);
-            decoration_stmts.push(decorator_stmt);
-        }
-
-        decoration_stmts
     }
 
     /// Transform the decorators of class and constructor method.
@@ -706,6 +825,10 @@ impl<'a> LegacyDecorator<'a, '_> {
             self.get_all_decorators_of_class_method(constructor, ctx)
                 .expect("At least one decorator")
         } else {
+            debug_assert!(
+                !self.emit_decorator_metadata || self.metadata.pop_constructor_metadata().is_none(),
+                "`pop_constructor_metadata` should be `None` because there is no `constructor`, so no metadata was generated."
+            );
             Self::convert_decorators_to_array_expression(class.decorators.drain(..), ctx)
         };
 
@@ -837,6 +960,19 @@ impl<'a> LegacyDecorator<'a, '_> {
         let method_decoration_count = method.decorators.len() + param_decoration_count;
 
         if method_decoration_count == 0 {
+            if self.emit_decorator_metadata {
+                if method.kind.is_constructor() {
+                    debug_assert!(
+                        self.metadata.pop_constructor_metadata().is_none(),
+                        "No method decorators, so `pop_constructor_metadata` should be `None`"
+                    );
+                } else {
+                    debug_assert!(
+                        self.metadata.pop_method_metadata().is_none(),
+                        "No method decorators, so `pop_method_metadata` should be `None`"
+                    );
+                }
+            }
             return None;
         }
 
@@ -856,15 +992,14 @@ impl<'a> LegacyDecorator<'a, '_> {
             self.transform_decorators_of_parameters(&mut decorations, params, ctx);
         }
 
-        // `decorateMetadata` should always be injected after param decorators
-        if let Some(metadata) = self.metadata.pop_method_metadata() {
-            match metadata {
-                MethodMetadata::Constructor(meta) => {
-                    decorations.push(ArrayExpressionElement::from(meta));
+        if self.emit_decorator_metadata {
+            // `decorateMetadata` should always be injected after param decorators
+            if method.kind.is_constructor() {
+                if let Some(metadata) = self.metadata.pop_constructor_metadata() {
+                    decorations.push(ArrayExpressionElement::from(metadata));
                 }
-                MethodMetadata::Normal(meta) => {
-                    decorations.extend(meta.map(ArrayExpressionElement::from));
-                }
+            } else if let Some(metadata) = self.metadata.pop_method_metadata() {
+                decorations.extend(metadata.map(ArrayExpressionElement::from));
             }
         }
 
@@ -886,68 +1021,18 @@ impl<'a> LegacyDecorator<'a, '_> {
         }
     }
 
-    /// Check if a class or its elements have decorators.
-    fn check_class_has_decorated(class: &Class<'a>) -> ClassDecoratorInfo {
-        // Legacy decorator does not allow in class expression.
-        if class.is_expression() || class.declare {
-            return ClassDecoratorInfo::default();
+    /// Check if a class or its constructor parameters have decorators.
+    fn check_class_has_decorated(class: &Class<'a>) -> bool {
+        if !class.decorators.is_empty() {
+            return true;
         }
 
-        let mut class_or_constructor_parameter_is_decorated = !class.decorators.is_empty();
-        let mut class_element_is_decorated = false;
-        let mut has_private_in_expression_in_decorator = false;
-
-        for element in &class.body.body {
-            match element {
-                ClassElement::MethodDefinition(method) if method.kind.is_constructor() => {
-                    class_or_constructor_parameter_is_decorated |=
-                        Self::class_method_parameter_is_decorated(&method.value);
-
-                    if class_or_constructor_parameter_is_decorated
-                        && !has_private_in_expression_in_decorator
-                    {
-                        has_private_in_expression_in_decorator =
-                            PrivateInExpressionDetector::has_private_in_expression_in_method_decorator(method);
-                    }
-                }
-                ClassElement::MethodDefinition(method) if !method.value.is_typescript_syntax() => {
-                    class_element_is_decorated |= !method.decorators.is_empty()
-                        || Self::class_method_parameter_is_decorated(&method.value);
-
-                    if class_element_is_decorated && !has_private_in_expression_in_decorator {
-                        has_private_in_expression_in_decorator =
-                            PrivateInExpressionDetector::has_private_in_expression_in_method_decorator(method);
-                    }
-                }
-                ClassElement::PropertyDefinition(prop) if !prop.decorators.is_empty() => {
-                    class_element_is_decorated = true;
-
-                    if class_element_is_decorated && !has_private_in_expression_in_decorator {
-                        has_private_in_expression_in_decorator =
-                            PrivateInExpressionDetector::has_private_in_expression(
-                                &prop.decorators,
-                            );
-                    }
-                }
-                ClassElement::AccessorProperty(accessor) if !accessor.decorators.is_empty() => {
-                    class_element_is_decorated = true;
-
-                    if class_element_is_decorated && !has_private_in_expression_in_decorator {
-                        has_private_in_expression_in_decorator =
-                            PrivateInExpressionDetector::has_private_in_expression(
-                                &accessor.decorators,
-                            );
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        ClassDecoratorInfo {
-            class_or_constructor_parameter_is_decorated,
-            class_element_is_decorated,
-            has_private_in_expression_in_decorator,
-        }
+        class.body.body.iter().any(|element| {
+            matches!(element,
+                ClassElement::MethodDefinition(method) if method.kind.is_constructor() &&
+                    Self::class_method_parameter_is_decorated(&method.value)
+            )
+        })
     }
 
     /// Check if a class method parameter is decorated.
@@ -1099,22 +1184,10 @@ impl Visit<'_> for PrivateInExpressionDetector {
 }
 
 impl PrivateInExpressionDetector {
-    fn has_private_in_expression(decorators: &ArenaVec<'_, Decorator<'_>>) -> bool {
+    fn has_private_in_expression(expression: &Expression<'_>) -> bool {
         let mut detector = Self::default();
-        detector.visit_decorators(decorators);
+        detector.visit_expression(expression);
         detector.has_private_in_expression
-    }
-
-    fn has_private_in_expression_in_method_decorator(method: &MethodDefinition<'_>) -> bool {
-        let mut detector = Self::default();
-        detector.visit_decorators(&method.decorators);
-        if detector.has_private_in_expression {
-            return true;
-        }
-        method.value.params.items.iter().any(|param| {
-            detector.visit_decorators(&param.decorators);
-            detector.has_private_in_expression
-        })
     }
 }
 

@@ -2,20 +2,14 @@ commit: 41d96516
 
 formatter_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2379/2423 (98.18%)
+Positive Passed: 2397/2423 (98.93%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/try-statement/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/regression/13750/input.js
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class/division/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/private-in-class-heritage/input.js
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/enum/input.js
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/enum-babel-7/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property/input.js
 
@@ -37,34 +31,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/predicate-types/input.ts
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-reserved-words/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-reserved-words-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-strings/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-strings-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma-with-initializer/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma-with-initializer-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type-from/input.ts
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/predicate-types/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends/input.ts
@@ -78,8 +44,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module-and-top-level/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/conditional-infer/input.ts
 

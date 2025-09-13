@@ -48,17 +48,12 @@ impl<'a> ObjectLike<'a, '_> {
     }
 
     fn members_have_leading_newline(&self, f: &Formatter<'_, 'a>) -> bool {
-        // TODO: Polish the code
         match self {
             Self::ObjectExpression(o) => o.as_ref().properties.first().is_some_and(|p| {
-                Span::new(o.span().start, p.span().start)
-                    .source_text(f.source_text())
-                    .contains('\n')
+                f.source_text().contains_newline_between(o.span.start, p.span().start)
             }),
             Self::TSTypeLiteral(o) => o.as_ref().members.first().is_some_and(|p| {
-                Span::new(o.span().start, p.span().start)
-                    .source_text(f.source_text())
-                    .contains('\n')
+                f.source_text().contains_newline_between(o.span().start, p.span().start)
             }),
         }
     }

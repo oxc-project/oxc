@@ -1,0 +1,48 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -A all --print-config
+working directory: fixtures
+----------
+{
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "oxc"
+  ],
+  "categories": {},
+  "rules": {},
+  "settings": {
+    "jsx-a11y": {
+      "polymorphicPropName": null,
+      "components": {},
+      "attributes": {}
+    },
+    "next": {
+      "rootDir": []
+    },
+    "react": {
+      "formComponents": [],
+      "linkComponents": []
+    },
+    "jsdoc": {
+      "ignorePrivate": false,
+      "ignoreInternal": false,
+      "ignoreReplacesDocs": true,
+      "overrideReplacesDocs": true,
+      "augmentsExtendsReplacesDocs": false,
+      "implementsReplacesDocs": false,
+      "exemptDestructuredRootsFromChecks": false,
+      "tagNamePreference": {}
+    }
+  },
+  "env": {
+    "builtin": true
+  },
+  "globals": {},
+  "ignorePatterns": []
+}
+----------
+CLI result: PrintConfigResult
+----------

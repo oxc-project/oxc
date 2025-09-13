@@ -39,6 +39,7 @@ impl Context {
             turned_on_by_default,
             autofix,
             category,
+            is_tsgolint_rule,
         } = rule;
         let resolved =
             schema.as_ref().map(|schema| self.schemas.dereference(schema).unwrap_or(schema));
@@ -69,6 +70,13 @@ const source = `{}`;
             if *turned_on_by_default {
                 p.Alert(r#"class="default-on" type="success""#, |p| {
                     p.writeln(r#"<span class="emoji">✅</span> This rule is turned on by default."#)
+                })?;
+            }
+            if *is_tsgolint_rule {
+                p.Alert(r#"type="info""#, |p| {
+                    p.writeln(
+                        r#"<span class="emoji">💭</span> This rule requires <a href="https://oxc.rs/docs/guide/usage/linter/type-aware.html" target="_blank" rel="noreferrer">type information</a>."#
+                    )
                 })?;
             }
 

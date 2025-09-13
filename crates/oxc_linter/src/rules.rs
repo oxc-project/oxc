@@ -159,6 +159,7 @@ pub(crate) mod eslint {
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
+    pub mod no_useless_computed_key;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
     pub mod no_useless_escape;
@@ -624,7 +625,11 @@ pub(crate) mod node {
 }
 
 pub(crate) mod vue {
+    pub mod define_emits_declaration;
+    pub mod define_props_declaration;
+    pub mod no_multiple_slot_args;
     pub mod valid_define_emits;
+    pub mod valid_define_props;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -651,6 +656,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
     eslint::no_alert,
@@ -1202,5 +1208,9 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    vue::define_emits_declaration,
+    vue::define_props_declaration,
+    vue::no_multiple_slot_args,
     vue::valid_define_emits,
+    vue::valid_define_props,
 }

@@ -52,11 +52,16 @@ impl<'a> Template<'a> {
         let out_path = path.join(format!("{}.rs", self.context.snake_rule_name));
 
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
-        format_rule_output(&out_path).map(|mut child| {
-            child.wait().expect("failed to format");
-        })?;
+        println!("Saved file to {}", out_path.display());
 
-        println!("Saved test file to {}", out_path.display());
+        let res =
+            format_rule_output(&out_path).map(|mut child| child.wait().expect("failed to format"));
+
+        match res {
+            Ok(exit_status) if exit_status.success() => println!("Formatted rule file"),
+            Ok(exit_status) => println!("Failed to format rule file: exited with {exit_status}"),
+            Err(e) => println!("Failed to format rule file: {e}"),
+        }
 
         Ok(())
     }

@@ -1,14 +1,19 @@
 use oxc_diagnostics::Result;
 use oxc_span::Atom;
 
-use crate::parser::reader::string_literal_parser::{
-    Options as StringLiteralParserOptions, Parser as StringLiteralParser, ast as StringLiteralAst,
-    parse_regexp_literal,
+use crate::parser::reader::{
+    Options,
+    ast::CodePoint,
+    string_literal_parser::{
+        Parser as StringLiteralParser, ast as StringLiteralAst, parse_regexp_literal,
+    },
+    template_literal_parser::{Parser as TemplateLiteralParser, ast as TemplateLiteralAst},
 };
 
+#[derive(Debug)]
 pub struct Reader<'a> {
     source_text: &'a str,
-    units: Vec<StringLiteralAst::CodePoint>,
+    units: Vec<CodePoint>,
     index: usize,
     offset: u32,
 }
@@ -17,24 +22,37 @@ impl<'a> Reader<'a> {
     pub fn initialize(
         source_text: &'a str,
         unicode_mode: bool,
-        parse_string_literal: bool,
+        parse_string_or_template_literal: bool,
     ) -> Result<Self> {
         // NOTE: This must be `0`.
         // Since `source_text` here may be a slice of the original source text,
         // using `Span` for `span.source_text(source_text)` will be out of range in some cases.
         let span_offset = 0;
 
-        let units = if parse_string_literal {
-            let StringLiteralAst::StringLiteral { body, .. } = StringLiteralParser::new(
-                source_text,
-                StringLiteralParserOptions {
-                    strict_mode: false,
-                    span_offset,
-                    combine_surrogate_pair: unicode_mode,
-                },
-            )
-            .parse()?;
-            body
+        let units = if parse_string_or_template_literal {
+            if source_text.chars().next().is_some_and(|c| c == '`') {
+                let TemplateLiteralAst::TemplateLiteral { body, .. } = TemplateLiteralParser::new(
+                    source_text,
+                    Options {
+                        strict_mode: false,
+                        span_offset,
+                        combine_surrogate_pair: unicode_mode,
+                    },
+                )
+                .parse()?;
+                body
+            } else {
+                let StringLiteralAst::StringLiteral { body, .. } = StringLiteralParser::new(
+                    source_text,
+                    Options {
+                        strict_mode: false,
+                        span_offset,
+                        combine_surrogate_pair: unicode_mode,
+                    },
+                )
+                .parse()?;
+                body
+            }
         } else {
             parse_regexp_literal(source_text, span_offset, unicode_mode)
         };
@@ -43,9 +61,9 @@ impl<'a> Reader<'a> {
             source_text,
             units,
             index: 0,
-            // If `parse_string_literal` is `true`, the first character is the opening quote.
+            // If `parse_string_or_template_literal` is `true`, the first character is the opening quote.
             // We need to +1 to skip it.
-            offset: u32::from(parse_string_literal),
+            offset: u32::from(parse_string_or_template_literal),
         })
     }
 

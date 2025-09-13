@@ -33,6 +33,7 @@ pub mod prelude;
 pub mod printed_tokens;
 pub mod printer;
 pub mod separated;
+mod source_text;
 mod state;
 mod syntax_element_key;
 mod syntax_node;
@@ -65,6 +66,7 @@ pub use self::{
     context::FormatContext,
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
+    source_text::SourceText,
     state::{FormatState, FormatStateSnapshot},
     syntax_node::SyntaxNode,
     syntax_token::SyntaxToken,

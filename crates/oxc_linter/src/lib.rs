@@ -5,13 +5,10 @@ use std::{path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast_kind::AST_TYPE_MAX;
+use oxc_ast_macros::ast;
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_semantic::AstNode;
-
-#[cfg(feature = "oxlint2")]
-use oxc_ast_macros::ast;
-#[cfg(feature = "oxlint2")]
-use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 
 #[cfg(test)]
 mod tester;
@@ -40,7 +37,7 @@ pub mod rules;
 pub mod table;
 
 mod generated {
-    #[cfg(all(feature = "oxlint2", debug_assertions))]
+    #[cfg(debug_assertions)]
     mod assert_layouts;
     mod rule_runner_impls;
 }
@@ -255,12 +252,7 @@ impl Linter {
                 }
             }
 
-            #[cfg(feature = "oxlint2")]
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
-
-            // Stop clippy complaining about unused vars
-            #[cfg(not(feature = "oxlint2"))]
-            let (_, _, _) = (&external_rules, &mut ctx_host, allocator);
 
             if let Some(severity) = self.options.report_unused_directive {
                 if severity.is_warn_deny() {
@@ -277,7 +269,6 @@ impl Linter {
         ctx_host.take_diagnostics()
     }
 
-    #[cfg(feature = "oxlint2")]
     fn run_external_rules<'a>(
         &self,
         external_rules: &[(ExternalRuleId, AllowWarnDeny)],
@@ -300,7 +291,7 @@ impl Linter {
             return;
         }
 
-        // `external_linter` always exists when `oxlint2` feature is enabled
+        // `external_linter` always exists when `external_rules` is not empty
         let external_linter = self.external_linter.as_ref().unwrap();
 
         let (program_offset, span_converter) = {
@@ -395,7 +386,6 @@ impl Linter {
     }
 }
 
-#[cfg(feature = "oxlint2")]
 /// Metadata written to end of buffer.
 ///
 /// Duplicate of `RawTransferMetadata` in `napi/parser/src/raw_transfer_types.rs`.
@@ -413,10 +403,8 @@ struct RawTransferMetadata2 {
     pub(crate) _padding: u64,
 }
 
-#[cfg(feature = "oxlint2")]
 use RawTransferMetadata2 as RawTransferMetadata;
 
-#[cfg(feature = "oxlint2")]
 impl RawTransferMetadata {
     pub fn new(data_offset: u32) -> Self {
         Self { data_offset, is_ts: false, _padding: 0 }

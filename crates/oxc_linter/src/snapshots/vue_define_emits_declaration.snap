@@ -1,0 +1,68 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use type based declaration instead of runtime declaration
+   ╭─[define_emits_declaration.tsx:3:24]
+ 2 │                    <script setup lang="ts">
+ 3 │                    const emit = defineEmits(['change', 'update'])
+   ·                                 ─────────────────────────────────
+ 4 │                    </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use type based declaration instead of runtime declaration
+   ╭─[define_emits_declaration.tsx:3:24]
+ 2 │                    <script setup lang="ts">
+ 3 │                    const emit = defineEmits(['change', 'update'])
+   ·                                 ─────────────────────────────────
+ 4 │                    </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use type based declaration instead of runtime declaration
+   ╭─[define_emits_declaration.tsx:3:24]
+ 2 │                    <script setup lang="ts">
+ 3 │                    const emit = defineEmits(['change', 'update'])
+   ·                                 ─────────────────────────────────
+ 4 │                    </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use runtime declaration instead of type based declaration
+   ╭─[define_emits_declaration.tsx:3:25]
+ 2 │                         <script setup lang="ts">
+ 3 │ ╭─▶                     const emit = defineEmits<{
+ 4 │ │                         (e: 'change', id: number): void
+ 5 │ │                         (e: 'update', value: string): void
+ 6 │ ╰─▶                     }>()
+ 7 │                         </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
+   ╭─[define_emits_declaration.tsx:4:14]
+ 3 │                     const emit = defineEmits<{
+ 4 │                       (e: 'change', id: number): void
+   ·                       ───────────────────────────────
+ 5 │                       (e: 'update', value: string): void
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
+   ╭─[define_emits_declaration.tsx:5:14]
+ 4 │                       (e: 'change', id: number): void
+ 5 │                       (e: 'update', value: string): void
+   ·                       ──────────────────────────────────
+ 6 │                     }>()
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
+   ╭─[define_emits_declaration.tsx:5:14]
+ 4 │                       'change': [id: number]
+ 5 │                       (e: 'update', value: string): void
+   ·                       ──────────────────────────────────
+ 6 │                     }>()
+   ╰────
+
+  ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
+   ╭─[define_emits_declaration.tsx:3:37]
+ 2 │                     <script setup lang="ts">
+ 3 │                     const emit = defineEmits<(e: 'change', id: number) => void>()
+   ·                                              ─────────────────────────────────
+ 4 │                     </script>
+   ╰────

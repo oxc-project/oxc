@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.15.0] - 2025-09-11
+
+### 🐛 Bug Fixes
+
+- fb9d0f4 language_server: Don't resend diagnostic on save, when `typeAware` is disabled and run is onType (#13604) (YongSeok Jang (장용석))
+- b677376 language_server: Include the diagnostic of the other linter (#13490) (Sysix)
+- 5990f17 linter: Change `typescript/no-confusing-void-expression` to pedantic (#13473) (Boshen)
+
+### 🚜 Refactor
+
+- 671e0fd language_server: Only store one instance of a diagnostic (#13514) (Sysix)
+
+
 ## [1.14.0] - 2025-08-30
 
 ### 🐛 Bug Fixes

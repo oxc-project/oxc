@@ -196,6 +196,7 @@ jobs:
         uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
+          prerelease: true
           draft: false
           files: oxfmt-*
           name: oxfmt v${{ needs.check.outputs.version }}

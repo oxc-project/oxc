@@ -22,7 +22,7 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "CatchParameter",
     "CatchClause",
     "Decorator",
-    // Manually prints it, because class's decorators can be appears before `export class Cls {}`.
+    // Manually prints it because class's decorators can be appears before `export class Cls {}`.
     "ExportNamedDeclaration",
     "ExportDefaultDeclaration",
     "TSClassImplements",
@@ -31,6 +31,10 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "JSXFragment",
     //
     "TemplateElement",
+    "ImportSpecifier",
+    "ImportDefaultSpecifier",
+    "ImportNamespaceSpecifier",
+    "ExportSpecifier",
 ];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &["TSTypeAssertion"];
@@ -82,7 +86,7 @@ impl Generator for FormatterFormatGenerator {
                 },
                 parentheses::NeedsParentheses,
                 generated::ast_nodes::{AstNode, AstNodes, transmute_self},
-                utils::suppressed::FormatSuppressedNode,
+                utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
                 write::{FormatWrite #(#options)*},
             };
 
@@ -158,15 +162,17 @@ fn generate_struct_implementation(
 
         // `Program` can't be suppressed.
         // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic
-        let suppressed_check = if matches!(struct_name, "Program" | "JSXElement" | "JSXFragment") {
-            quote! {}
-        } else {
+        let suppressed_check = (!matches!(
+            struct_name,
+            "Program" | "JSXElement" | "JSXFragment" | "ExpressionStatement"
+        ))
+        .then(|| {
             quote! {
                 let is_suppressed = f.comments().is_suppressed(self.span().start);
             }
-        };
+        });
 
-        let write_implementation = if suppressed_check.is_empty() {
+        let write_implementation = if suppressed_check.is_none() {
             write_call
         } else if trailing_comments.is_empty() {
             quote! {
@@ -188,14 +194,39 @@ fn generate_struct_implementation(
             }
         };
 
+        let type_cast_comment_formatting = parenthesis_type_ids.contains(&struct_def.id).then(|| {
+            let is_object_or_array_argument =
+                if matches!(struct_def.name.as_str(), "ObjectExpression" | "ArrayExpression") {
+                    quote! {
+                        true
+                    }
+                } else {
+                    quote! { false }
+                };
+
+            let suppressed_check_for_typecast = suppressed_check.is_some().then(|| {
+                quote! {
+                    !is_suppressed &&
+                }
+            });
+
+            quote! {
+                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f)? {
+                    return Ok(());
+                }
+            }
+        });
+
         if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
             quote! {
                 #suppressed_check
+                #type_cast_comment_formatting
                 #write_implementation
             }
         } else {
             quote! {
                 #suppressed_check
+                #type_cast_comment_formatting
                 #leading_comments
                 #needs_parentheses_before
                 let result = #write_implementation;

@@ -1,15 +1,14 @@
-use oxc_ast::{
-    AstKind,
-    ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind,
-    },
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ContextSubHost, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{
+    context::LintContext,
+    frameworks::FrameworkOptions,
+    rule::Rule,
+    utils::{DefineMacroProblem, check_define_macro_call_expression, has_default_exports_property},
+};
 
 fn has_type_and_arguments_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`defineEmits` has both a type-only emit and an argument.")
@@ -140,7 +139,7 @@ impl Rule for ValidDefineEmits {
     fn run_once(&self, ctx: &LintContext) {
         let mut found: Option<Span> = None;
 
-        let has_other_script_emits = has_default_emits_exports(&ctx.other_file_hosts());
+        let has_other_script_emits = has_default_exports_property(&ctx.other_file_hosts(), "emits");
         for node in ctx.nodes() {
             let AstKind::CallExpression(call_expr) = node.kind() else {
                 continue;
@@ -161,105 +160,27 @@ impl Rule for ValidDefineEmits {
             }
             found = Some(call_expr.span);
 
-            handle_call_expression(call_expr, ctx, has_other_script_emits);
+            let Some(problem) =
+                check_define_macro_call_expression(call_expr, ctx, has_other_script_emits)
+            else {
+                continue;
+            };
+
+            let diagnostic = match problem {
+                DefineMacroProblem::DefineInBoth => define_in_both(call_expr.span),
+                DefineMacroProblem::HasTypeAndArguments => {
+                    has_type_and_arguments_diagnostic(call_expr.span)
+                }
+                DefineMacroProblem::EventsNotDefined => events_not_defined(call_expr.span),
+                DefineMacroProblem::ReferencingLocally => referencing_locally(call_expr.span),
+            };
+            ctx.diagnostic(diagnostic);
         }
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
         ctx.frameworks_options() == FrameworkOptions::VueSetup
     }
-}
-
-fn handle_call_expression(
-    call_expr: &CallExpression,
-    ctx: &LintContext,
-    has_other_script_emits: bool,
-) {
-    let has_type_args = call_expr.type_arguments.is_some();
-
-    if has_type_args && has_other_script_emits {
-        ctx.diagnostic(define_in_both(call_expr.span));
-        return;
-    }
-
-    // `defineEmits` has type arguments and js arguments. Vue Compiler allows only one of them.
-    if has_type_args && !call_expr.arguments.is_empty() {
-        ctx.diagnostic(has_type_and_arguments_diagnostic(call_expr.span));
-        return; // Skip if there are type arguments
-    }
-
-    if has_type_args {
-        // If there are type arguments, we don't need to check the arguments.
-        return;
-    }
-
-    let Some(expression) = call_expr.arguments.first().and_then(|first| first.as_expression())
-    else {
-        // `defineEmits();` is valid when `export default { emits: [] }` is defined
-        if !has_other_script_emits {
-            ctx.diagnostic(events_not_defined(call_expr.span));
-        }
-        return;
-    };
-
-    if has_other_script_emits {
-        ctx.diagnostic(define_in_both(call_expr.span));
-        return;
-    }
-
-    match expression {
-        Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => {}
-        Expression::Identifier(identifier) => {
-            if !is_non_local_reference(identifier, ctx) {
-                ctx.diagnostic(referencing_locally(call_expr.span));
-            }
-        }
-        _ => {
-            ctx.diagnostic(referencing_locally(call_expr.span));
-        }
-    }
-}
-
-pub fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(&identifier.name) {
-        return matches!(
-            ctx.semantic().symbol_declaration(symbol_id).kind(),
-            AstKind::ImportSpecifier(_)
-        );
-    }
-
-    // variables outside the current `<script>` block are valid.
-    // This is the same for unresolved variables.
-    true
-}
-
-fn has_default_emits_exports(others: &Vec<&ContextSubHost<'_>>) -> bool {
-    for host in others {
-        for other_node in host.semantic().nodes() {
-            let AstKind::ExportDefaultDeclaration(export) = other_node.kind() else {
-                continue;
-            };
-
-            let ExportDefaultDeclarationKind::ObjectExpression(export_obj) = &export.declaration
-            else {
-                continue;
-            };
-
-            let has_emits_exports = export_obj.properties.iter().any(|property| {
-                let ObjectPropertyKind::ObjectProperty(property) = property else {
-                    return false;
-                };
-
-                property.key.name().is_some_and(|name| name == "emits")
-            });
-
-            if has_emits_exports {
-                return true;
-            }
-        }
-    }
-
-    false
 }
 
 #[test]

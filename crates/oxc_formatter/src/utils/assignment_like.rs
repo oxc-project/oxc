@@ -171,7 +171,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     if property.shorthand {
                         Ok(false)
                     } else {
-                        Ok(property.key.span().source_text(f.source_text()).width() + 2
+                        Ok(f.source_text().span_width(property.key.span()) + 2
                             < text_width_for_break)
                     }
                 } else if property.shorthand {
@@ -529,10 +529,21 @@ fn should_break_after_operator<'a>(
     right: &AstNode<'a, Expression<'a>>,
     f: &Formatter<'_, 'a>,
 ) -> bool {
-    if f.comments().has_leading_own_line_comments(right.span().start)
-        && !matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
-    {
-        return true;
+    let is_jsx = matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_));
+
+    let source_text = f.source_text();
+    for comment in f.comments().comments_before(right.span().start) {
+        if !is_jsx
+            && (source_text.lines_after(comment.span.end) > 0
+                || source_text.is_own_line_comment(comment))
+        {
+            return true;
+        }
+
+        // Needs to wrap a parenthesis for the node, so it won't break.
+        if f.comments().is_type_cast_comment(comment) {
+            return false;
+        }
     }
 
     match right.as_ref() {
@@ -779,7 +790,7 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         return true;
     }
 
-    if f.comments().has_comments_in_span(call_expressions[0].span) {
+    if f.comments().has_comment_in_span(call_expressions[0].span) {
         return false;
     }
 
@@ -826,7 +837,7 @@ fn is_short_argument(argument: &Argument, threshold: u16, f: &Formatter) -> bool
         Argument::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
         Argument::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
-                literal.span.source_text(f.source_text()),
+                f.source_text().text_for(literal.as_ref()),
                 literal.span,
                 false,
                 StringLiteralParentKind::Expression,

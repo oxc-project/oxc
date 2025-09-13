@@ -16,7 +16,7 @@ pub fn format_property_key<'a>(
 ) -> FormatResult<()> {
     if let PropertyKey::StringLiteral(s) = key.as_ref() {
         FormatLiteralStringToken::new(
-            s.span.source_text(f.source_text()),
+            f.source_text().text_for(s.as_ref()),
             s.span,
             /* jsx */
             false,
@@ -34,7 +34,7 @@ pub fn write_member_name<'a>(
 ) -> FormatResult<usize> {
     if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
         let format = FormatLiteralStringToken::new(
-            string.span.source_text(f.source_text()),
+            f.source_text().text_for(string),
             string.span,
             false,
             StringLiteralParentKind::Member,
@@ -49,6 +49,6 @@ pub fn write_member_name<'a>(
     } else {
         write!(f, key)?;
 
-        Ok(key.span().source_text(f.source_text()).width())
+        Ok(f.source_text().span_width(key.span()))
     }
 }
