@@ -90,6 +90,9 @@ pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
+    /// Allow disabling node type optimization for testing and debugging to ensure that we are correctly
+    /// generating diagnostics regardless of the optimization.
+    disable_node_type_optimization: bool,
 }
 
 impl Linter {
@@ -98,7 +101,7 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter }
+        Self { options, config, external_linter, disable_node_type_optimization: false }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -111,6 +114,14 @@ impl Linter {
     #[must_use]
     pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
         self.options.report_unused_directive = report_config;
+        self
+    }
+
+    /// Allows disabling runtime optimizations for testing and debugging. Should only be called
+    /// via some sort of debug flag and not called normally.
+    #[must_use]
+    pub fn with_disabled_optimizations(mut self, do_not_optimize: bool) -> Self {
+        self.disable_node_type_optimization = do_not_optimize;
         self
     }
 
@@ -188,7 +199,9 @@ impl Linter {
                     let rule = *rule;
                     // Collect node type information for rules. In large files, benchmarking showed it was worth
                     // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                    if let Some(ast_types) = rule.types_info() {
+                    if !self.disable_node_type_optimization
+                        && let Some(ast_types) = rule.types_info()
+                    {
                         for ty in ast_types {
                             rules_by_ast_type[ty as usize].push((rule, ctx));
                         }
@@ -232,7 +245,9 @@ impl Linter {
 
                     // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
                     // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                    if let Some(ast_types) = rule.types_info() {
+                    if !self.disable_node_type_optimization
+                        && let Some(ast_types) = rule.types_info()
+                    {
                         for node in semantic.nodes() {
                             if ast_types.has(node.kind().ty()) {
                                 rule.run(node, ctx);
