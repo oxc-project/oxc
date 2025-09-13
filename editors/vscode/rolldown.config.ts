@@ -13,7 +13,7 @@ export default (): RolldownOptions => {
     external: ['vscode'],
     platform: 'node',
     transform: {
-      target: 'node16'
-    }
-  }
-}
+      target: 'node16',
+    },
+  };
+};

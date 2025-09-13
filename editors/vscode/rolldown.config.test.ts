@@ -1,5 +1,5 @@
-import type { RolldownOptions } from 'rolldown';
 import { glob } from 'glob';
+import type { RolldownOptions } from 'rolldown';
 
 export default async (): Promise<RolldownOptions> => {
   const input = await glob('tests/*.spec.ts');
@@ -14,7 +14,7 @@ export default async (): Promise<RolldownOptions> => {
     external: ['vscode'],
     platform: 'node',
     transform: {
-      target: 'node16'
-    }
-  }
-}
+      target: 'node16',
+    },
+  };
+};
