@@ -333,7 +333,10 @@ impl LintRunner {
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+            .with_report_unused_directives(report_unused_directives)
+            .with_disabled_optimizations(
+                std::env::var("OXLINT_NO_OPTIMIZE").is_ok_and(|v| v == "1" || v == "true"),
+            );
 
         let number_of_files = files_to_lint.len();
 
