@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-useless-assignment): Useless assignment to variable x
+   ╭─[no_useless_assignment.tsx:1:12]
+ 1 │ let x = 5; x = 7;
+   ·            ┬
+   ·            ╰── x is written to here but never read
+   ╰────
