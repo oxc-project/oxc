@@ -170,6 +170,14 @@ export interface ParserOptions {
    */
   range?: boolean
   /**
+   * Controls whether the `loc` property is included on AST nodes.
+   * The `loc` property contains line and column information for the start and end
+   * of each node.
+   *
+   * @default false
+   */
+  loc?: boolean
+  /**
    * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
    * If this option is true, parenthesized expressions are represented by
