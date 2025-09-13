@@ -2,7 +2,7 @@ commit: 41d96516
 
 formatter_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2397/2423 (98.93%)
+Positive Passed: 2403/2423 (99.17%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/try-statement/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/regression/13750/input.js
@@ -32,18 +32,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/predicate-types/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/predicate-types/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends-identifier-type-arguments/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-babel-7/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/conditional-infer/input.ts
 
