@@ -43,6 +43,7 @@
 
 mod assignment;
 mod expression;
+mod ts_type;
 
 use crate::formatter::Formatter;
 
