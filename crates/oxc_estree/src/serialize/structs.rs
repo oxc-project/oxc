@@ -40,14 +40,28 @@ pub trait StructSerializer {
     /// Serialize `Span`.
     ///
     /// * If `serializer.ranges() == true`, outputs `start`, `end`, and `range` fields.
+    /// * If `serializer.loc() == true`, outputs `loc` field with line/column information.
     /// * Otherwise, outputs only `start` and `end`.
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S);
+
+    /// Serialize `Span` with line/column information.
+    ///
+    /// This is used when loc information is available from a translation table.
+    fn serialize_span_with_loc<S: ESTreeSpan>(
+        &mut self,
+        span: S,
+        start_loc: (u32, u32),
+        end_loc: (u32, u32),
+    );
 
     /// Finish serializing struct.
     fn end(self);
 
     /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
+
+    /// Get whether output should contain `loc` fields.
+    fn loc(&self) -> bool;
 }
 
 /// Serializer for structs.
@@ -140,13 +154,50 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
     /// Serialize `Span`.
     ///
     /// * If `serializer.ranges() == true`, outputs `start`, `end`, and `range` fields.
+    /// * If `serializer.loc() == true`, outputs `loc` field with line/column information.
     /// * Otherwise, outputs only `start` and `end`.
+    ///
+    /// * Now automatically uses translation table if available via LocProvider
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S) {
         let range = span.range();
         self.serialize_field("start", &range[0]);
         self.serialize_field("end", &range[1]);
         if self.serializer.ranges() {
             self.serialize_field("range", &range);
+        }
+        if self.serializer.loc() {
+            // Try to get real location info from provider
+            let loc_provider = self.serializer.config.loc_provider();
+            if let (Some(start_loc), Some(end_loc)) = (
+                loc_provider.offset_to_line_column(range[0]),
+                loc_provider.offset_to_line_column(range[1]),
+            ) {
+                // Use real location information! 🎉
+                self.serialize_field("loc", &SourceLocation { start: start_loc, end: end_loc });
+            } else {
+                // Fallback to placeholder (backward compatibility)
+                self.serialize_field("loc", &SourceLocation { start: (0, 0), end: (0, 0) });
+            }
+        }
+    }
+
+    /// Serialize `Span` with line/column information.
+    ///
+    /// This is used when loc information is available from a translation table.
+    fn serialize_span_with_loc<S: ESTreeSpan>(
+        &mut self,
+        span: S,
+        start_loc: (u32, u32),
+        end_loc: (u32, u32),
+    ) {
+        let range = span.range();
+        self.serialize_field("start", &range[0]);
+        self.serialize_field("end", &range[1]);
+        if self.serializer.ranges() {
+            self.serialize_field("range", &range);
+        }
+        if self.serializer.loc() {
+            self.serialize_field("loc", &SourceLocation { start: start_loc, end: end_loc });
         }
     }
 
@@ -173,6 +224,12 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
     #[inline(always)]
     fn ranges(&self) -> bool {
         self.serializer.ranges()
+    }
+
+    /// Get whether output should contain `loc` fields.
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.serializer.loc()
     }
 }
 
@@ -249,6 +306,12 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
     fn ranges(&self) -> bool {
         self.0.ranges()
     }
+
+    /// Get whether output should contain `loc` fields.
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.0.loc()
+    }
 }
 
 impl<P: StructSerializer> SerializerPrivate for FlatStructSerializer<'_, P> {
@@ -313,9 +376,22 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     /// Serialize `Span`.
     ///
     /// * If `serializer.ranges() == true`, outputs `start`, `end`, and `range` fields.
+    /// * If `serializer.loc() == true`, outputs `loc` field with line/column information.
     /// * Otherwise, outputs only `start` and `end`.
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S) {
         self.0.serialize_span(span);
+    }
+
+    /// Serialize `Span` with line/column information.
+    ///
+    /// This is used when loc information is available from a translation table.
+    fn serialize_span_with_loc<S: ESTreeSpan>(
+        &mut self,
+        span: S,
+        start_loc: (u32, u32),
+        end_loc: (u32, u32),
+    ) {
+        self.0.serialize_span_with_loc(span, start_loc, end_loc);
     }
 
     /// Finish serializing struct.
@@ -328,6 +404,12 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     fn ranges(&self) -> bool {
         self.0.ranges()
     }
+
+    /// Get whether output should contain `loc` fields.
+    #[inline(always)]
+    fn loc(&self) -> bool {
+        self.0.loc()
+    }
 }
 
 /// Trait for `Span` to implement.
@@ -336,6 +418,53 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
 /// so we can't import `Span` directly from `oxc_span` here.
 pub trait ESTreeSpan: Copy {
     fn range(self) -> [u32; 2];
+}
+
+/// Trait for providing location information (line/column) from offsets.
+/// This allows serializers to optionally access translation tables without circular dependencies.
+pub trait LocProvider {
+    /// Convert UTF-8 offset to (line, column) where both are 0-based.
+    /// Returns None if no translation is available.
+    fn offset_to_line_column(&self, utf8_offset: u32) -> Option<(u32, u32)>;
+}
+
+/// Dummy implementation for when no translation is needed
+pub struct NoLocProvider;
+
+impl LocProvider for NoLocProvider {
+    fn offset_to_line_column(&self, _utf8_offset: u32) -> Option<(u32, u32)> {
+        None
+    }
+}
+
+/// Source location information for ESTree loc field.
+pub struct SourceLocation {
+    pub start: (u32, u32), // (line, column) - 0-based
+    pub end: (u32, u32),   // (line, column) - 0-based
+}
+
+impl ESTree for SourceLocation {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("start", &Position { line: self.start.0 + 1, column: self.start.1 });
+        state.serialize_field("end", &Position { line: self.end.0 + 1, column: self.end.1 });
+        state.end();
+    }
+}
+
+/// Position information for ESTree loc.start and loc.end fields.
+pub struct Position {
+    pub line: u32,   // 1-based
+    pub column: u32, // 0-based
+}
+
+impl ESTree for Position {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("line", &self.line);
+        state.serialize_field("column", &self.column);
+        state.end();
+    }
 }
 
 #[cfg(test)]

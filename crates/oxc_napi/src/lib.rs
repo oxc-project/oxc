@@ -16,7 +16,18 @@ pub fn convert_utf8_to_utf16(
     module_record: &mut ModuleRecord,
     errors: &mut [OxcError],
 ) -> Vec<Comment> {
-    let span_converter = Utf8ToUtf16::new(source_text);
+    convert_utf8_to_utf16_with_loc(source_text, program, module_record, errors, false)
+}
+
+/// Convert spans to UTF-16, optionally with line information
+pub fn convert_utf8_to_utf16_with_loc(
+    source_text: &str,
+    program: &mut Program,
+    module_record: &mut ModuleRecord,
+    errors: &mut [OxcError],
+    include_lines: bool,
+) -> Vec<Comment> {
+    let span_converter = Utf8ToUtf16::new_with_lines(source_text, include_lines);
     span_converter.convert_program(program);
 
     // Convert comments
