@@ -27,6 +27,7 @@
     "bin/oxlint",
     "bin/oxc_language_server",
     "configuration_schema.json",
+    "dist",
     "README.md"
   ]
 }
