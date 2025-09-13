@@ -148,6 +148,7 @@ pub fn build_translations_and_lines(
 
                 if line_break_len > 0 {
                     let line_end_offset = start_offset + index + line_break_len;
+                    // Always record line breaks, even if at end of file
                     #[expect(clippy::cast_possible_truncation)]
                     let utf8_offset = line_end_offset as u32;
                     lines.as_mut().unwrap().push(LineTranslation { utf8_offset, utf16_difference });
@@ -250,15 +251,14 @@ pub fn build_translations_and_lines(
         #[expect(clippy::cast_ptr_alignment)]
         let chunk = unsafe { ptr.cast::<AlignedChunk>().as_ref().unwrap_unchecked() };
 
-        // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
-        // `ptr` is derived from `start_ptr`.
-        let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
-
         // Process chunk for Unicode characters
         let has_unicode = chunk.contains_unicode();
         let has_line_breaks = track_lines && chunk.contains_line_breaks();
 
         if has_unicode || has_line_breaks {
+            // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
+            // `ptr` is derived from `start_ptr`.
+            let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
             process_slice(chunk.as_slice(), offset);
         }
 
