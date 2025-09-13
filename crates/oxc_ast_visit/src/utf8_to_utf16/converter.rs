@@ -330,6 +330,32 @@ impl<'t> Utf8ToUtf16Converter<'t> {
     pub fn offset_to_line_column(table: &Utf8ToUtf16, utf8_offset: u32) -> Option<(u32, u32)> {
         table.offset_to_line_column(utf8_offset)
     }
+
+    /// Convert UTF-16 offset to UTF-8 offset.
+    pub fn convert_offset_back(&self, offset: &mut u32) {
+        // Find first translation whose UTF-16 offset is after `utf16_offset`
+        let utf16_offset = *offset;
+        let next_index = self.translations.partition_point(|translation| {
+            utf16_offset >= translation.utf8_offset - translation.utf16_difference
+        });
+
+        // First entry in table is `0, 0`. `partition_point` finds the first entry where
+        // `utf16_offset < translation.utf8_offset - translation.utf16_difference`
+        // (or `translations.len()` if none exists).
+        // So guaranteed `next_index > 0`, and `next_index <= translations.len()`.
+        let index = next_index - 1;
+
+        // SAFETY: `next_index <= translations.len()`, so `next_index - 1` is in bounds
+        let translation = unsafe { self.translations.get_unchecked(index) };
+
+        *offset += translation.utf16_difference;
+    }
+
+    /// Convert [`Span`] from UTF-16 offsets to UTF-8 offsets.
+    pub fn convert_span_back(&self, span: &mut Span) {
+        self.convert_offset_back(&mut span.start);
+        self.convert_offset_back(&mut span.end);
+    }
 }
 
 impl VisitMutModuleRecord for Utf8ToUtf16Converter<'_> {
