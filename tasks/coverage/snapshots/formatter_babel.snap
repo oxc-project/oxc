@@ -2,7 +2,7 @@ commit: 41d96516
 
 formatter_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2403/2423 (99.17%)
+Positive Passed: 2414/2423 (99.63%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/try-statement/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/regression/13750/input.js
@@ -10,28 +10,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/commen
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class/division/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/private-in-class-heritage/input.js
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property/input.js
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/loc-index-property-babel-7/input.js
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/predicate-types/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/arrow-function/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-this/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-this-with-predicate/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-var/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-var-with-predicate/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/declare-asserts-var-with-predicate/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/predicate-types/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/predicate-types/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/conditional-infer/input.ts
 
