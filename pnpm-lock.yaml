@@ -6,18 +6,9 @@ settings:
 
 catalogs:
   default:
-    '@napi-rs/cli':
-      specifier: 3.0.0
-      version: 3.0.0
-    '@napi-rs/wasm-runtime':
-      specifier: 1.0.3
-      version: 1.0.3
     typescript:
       specifier: 5.9.2
       version: 5.9.2
-    vitest:
-      specifier: 3.2.4
-      version: 3.2.4
 
 importers:
 
@@ -69,12 +60,15 @@ importers:
       cross-env:
         specifier: ^10.0.0
         version: 10.0.0
-      esbuild:
-        specifier: ^0.25.0
-        version: 0.25.9
+      glob:
+        specifier: ^11.0.3
+        version: 11.0.3
       ovsx:
         specifier: ^0.10.0
         version: 0.10.5
+      rolldown:
+        specifier: 1.0.0-beta.37
+        version: 1.0.0-beta.37
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
