@@ -73,6 +73,10 @@ export class ConfigService implements IDisposable {
         return;
       }
       bin = path.normalize(path.join(cwd, bin));
+      // strip the leading slash on Windows
+      if (process.platform === 'win32' && bin.startsWith('\\')) {
+        bin = bin.slice(1);
+      }
     }
 
     return bin;
