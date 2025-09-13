@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
+import { validateSafeBinaryPath } from './PathValidator';
 import { IDisposable } from './types';
 import { VSCodeConfig } from './VSCodeConfig';
 import { WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
@@ -63,6 +64,11 @@ export class ConfigService implements IDisposable {
   public getUserServerBinPath(): string | undefined {
     let bin = this.vsCodeConfig.binPath;
     if (!bin) {
+      return;
+    }
+
+    // validates the given path is safe to use
+    if (validateSafeBinaryPath(bin) === false) {
       return;
     }
 

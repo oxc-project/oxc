@@ -24,14 +24,14 @@ suite('ConfigService', () => {
 
     strictEqual(nonDefinedServerPath, undefined);
 
-    await conf.update('path.server', '/absolute/binary');
+    await conf.update('path.server', '/absolute/oxc_language_server');
     const absoluteServerPath = service.getUserServerBinPath();
 
-    strictEqual(absoluteServerPath, '/absolute/binary');
+    strictEqual(absoluteServerPath, '/absolute/oxc_language_server');
 
-    await conf.update('path.server', './relative/binary');
+    await conf.update('path.server', './relative/oxc_language_server');
     const relativeServerPath = service.getUserServerBinPath();
 
-    strictEqual(relativeServerPath, WORKSPACE_FOLDER.uri.path + '/relative/binary');
+    strictEqual(relativeServerPath, WORKSPACE_FOLDER.uri.path + '/relative/oxc_language_server');
   });
 });
