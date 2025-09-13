@@ -1,3 +1,4 @@
+use lazy_regex::Regex;
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -95,6 +96,9 @@ impl Rule for SwitchCaseBraces {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let switch_clause_regex =
+            Regex::new(r#"(case|default)\s*(`.+`|'.+'|".+"|[^:]*):"#).unwrap();
+
         let AstKind::SwitchStatement(switch) = node.kind() else {
             return;
         };
@@ -142,8 +146,11 @@ impl Rule for SwitchCaseBraces {
             };
 
             if self.always_braces && missing_braces {
-                let colon = u32::try_from(ctx.source_range(case.span).find(':').unwrap()).unwrap();
-                let span = Span::sized(case.span.start, colon + 1);
+                let colon_end = u32::try_from(
+                    switch_clause_regex.find(ctx.source_range(case.span)).unwrap().end(),
+                )
+                .unwrap();
+                let span = Span::sized(case.span.start, colon_end);
                 ctx.diagnostic_with_fix(
                     switch_case_braces_diagnostic_missing_braces(span),
                     |fixer| {
@@ -251,6 +258,21 @@ fn test() {
             None,
         ),
         ("switch(foo){ case 1: {}; break; }", "switch(foo){ case 1: { {}; break;} }", None),
+        (
+            "switch(something) { case `scope:type`: doSomething();}",
+            "switch(something) { case `scope:type`: { doSomething();}}",
+            None,
+        ),
+        (
+            "switch(something) { case \"scope:type\": doSomething();}",
+            "switch(something) { case \"scope:type\": { doSomething();}}",
+            None,
+        ),
+        (
+            "switch(something) { case 'scope:type': doSomething();}",
+            "switch(something) { case 'scope:type': { doSomething();}}",
+            None,
+        ),
     ];
 
     Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::PLUGIN, pass, fail)
