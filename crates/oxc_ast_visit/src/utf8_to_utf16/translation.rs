@@ -14,6 +14,18 @@ pub struct Translation {
     pub utf16_difference: u32,
 }
 
+/// A translation from UTF-8 offset to line number.
+#[derive(Clone, Copy)]
+#[repr(align(8))]
+pub struct LineTranslation {
+    /// UTF-8 byte offset of the start of the line.
+    pub utf8_offset: u32,
+    /// UTF-16 offset difference at the start of this line.
+    /// Note: Currently unused but kept for potential future use and struct layout compatibility
+    #[expect(dead_code)]
+    pub utf16_difference: u32,
+}
+
 const CHUNK_SIZE: usize = 32;
 const CHUNK_ALIGNMENT: usize = align_of::<AlignedChunk>();
 const _: () = {
@@ -37,6 +49,17 @@ impl AlignedChunk {
     fn contains_unicode(&self) -> bool {
         for index in 0..CHUNK_SIZE {
             if !self.0[index].is_ascii() {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Check if chunk contains any line breaks (\r or \n).
+    #[inline]
+    fn contains_line_breaks(&self) -> bool {
+        for index in 0..CHUNK_SIZE {
+            if matches!(self.0[index], b'\r' | b'\n') {
                 return true;
             }
         }
@@ -75,13 +98,87 @@ impl AlignedChunk {
 ///   UTF-16 len = UTF-8 len - 2
 ///
 /// So UTF-16 offset = UTF-8 offset - count of bytes `>= 0xC0` - count of bytes `>= 0xE0`
+#[expect(dead_code)]
 pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>) {
+    build_translations_and_lines(source_text, translations, None);
+}
+
+/// Build tables of translations from UTF-8 offsets to UTF-16 offsets and line numbers.
+///
+/// Line breaks handled are \r, \n, \r\n (considered as 1 line break), LS, and PS.
+/// LS and PS are Unicode chars, so handled in the cold path for non-ASCII.
+pub fn build_translations_and_lines(
+    source_text: &str,
+    translations: &mut Vec<Translation>,
+    lines: Option<&mut Vec<LineTranslation>>,
+) {
     // Running counter of difference between UTF-8 and UTF-16 offset
     let mut utf16_difference = 0;
 
-    // Closure that processes a slice of bytes
+    // Line tracking
+    let track_lines = lines.is_some();
+    let mut lines = lines;
+    if track_lines {
+        // Add first line starting at offset 0
+        lines.as_mut().unwrap().push(LineTranslation { utf8_offset: 0, utf16_difference });
+    }
+
+    // Closure that processes a slice of bytes for both unicode and line breaks
     let mut process_slice = |slice: &[u8], start_offset: usize| {
-        for (index, &byte) in slice.iter().enumerate() {
+        let mut index = 0;
+        while index < slice.len() {
+            let byte = slice[index];
+
+            // Handle ASCII line breaks first
+            if track_lines {
+                let line_break_len = match byte {
+                    b'\n' => 1,
+                    b'\r' => {
+                        // Check for \r\n - always use full source text to handle chunk boundaries
+                        if start_offset + index + 1 < source_text.len()
+                            && source_text.as_bytes()[start_offset + index + 1] == b'\n'
+                        {
+                            2
+                        } else {
+                            1
+                        }
+                    }
+                    _ => 0,
+                };
+
+                if line_break_len > 0 {
+                    let line_end_offset = start_offset + index + line_break_len;
+                    #[expect(clippy::cast_possible_truncation)]
+                    let utf8_offset = line_end_offset as u32;
+                    lines.as_mut().unwrap().push(LineTranslation { utf8_offset, utf16_difference });
+                    index += line_break_len;
+                    continue;
+                }
+            }
+
+            // Handle Unicode line separators LS (\u2028) and PS (\u2029) if tracking lines
+            if track_lines && byte == 0xE2 {
+                let full_offset = start_offset + index;
+
+                // Always use full source text for PS/LS detection to simplify logic
+                // source_text is guaranteed valid UTF-8, so if byte is 0xE2, there are always 2 more bytes
+                assert!(full_offset + 2 < source_text.len());
+
+                let source_bytes = source_text.as_bytes();
+                let has_ls_ps = source_bytes[full_offset + 1] == 0x80
+                    && (source_bytes[full_offset + 2] == 0xA8
+                        || source_bytes[full_offset + 2] == 0xA9);
+
+                if has_ls_ps {
+                    let line_end_offset = full_offset + 3;
+                    #[expect(clippy::cast_possible_truncation)]
+                    let utf8_offset = line_end_offset as u32;
+                    lines.as_mut().unwrap().push(LineTranslation { utf8_offset, utf16_difference });
+                    // Don't skip - continue processing for unicode translation as PS/LS are Unicode chars
+                }
+            }
+
+            // Handle Unicode characters
             if byte >= 0xC0 {
                 let difference_for_this_byte = u32::from(byte >= 0xE0) + 1;
                 utf16_difference += difference_for_this_byte;
@@ -95,6 +192,8 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
                 let utf8_offset = (start_offset + index + bytes_in_char) as u32;
                 translations.push(Translation { utf8_offset, utf16_difference });
             }
+
+            index += 1;
         }
     };
 
@@ -150,10 +249,16 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
         // `ptr < body_end_ptr` check ensures it's valid to read `CHUNK_SIZE` bytes starting at `ptr`.
         #[expect(clippy::cast_ptr_alignment)]
         let chunk = unsafe { ptr.cast::<AlignedChunk>().as_ref().unwrap_unchecked() };
-        if chunk.contains_unicode() {
-            // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
-            // `ptr` is derived from `start_ptr`.
-            let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
+
+        // SAFETY: `ptr` is equal to or after `start_ptr`. Both are within bounds of `bytes`.
+        // `ptr` is derived from `start_ptr`.
+        let offset = unsafe { ptr.offset_from_unsigned(start_ptr) };
+
+        // Process chunk for Unicode characters
+        let has_unicode = chunk.contains_unicode();
+        let has_line_breaks = track_lines && chunk.contains_line_breaks();
+
+        if has_unicode || has_line_breaks {
             process_slice(chunk.as_slice(), offset);
         }
 
