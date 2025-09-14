@@ -1,4 +1,4 @@
-ts compatibility: 341/573 (59.51%)
+ts compatibility: 346/573 (60.38%)
 
 # Failed
 
@@ -26,8 +26,6 @@ ts compatibility: 341/573 (59.51%)
 | typescript/as/long-identifiers.ts | 💥 | 92.86% |
 | typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
 | typescript/as/ternary.ts | 💥 | 82.00% |
-| typescript/assert/comment.ts | 💥 | 0.00% |
-| typescript/assert/index.ts | 💥 | 75.00% |
 | typescript/assignment/issue-10846.ts | 💥 | 38.60% |
 | typescript/assignment/issue-10848.tsx | 💥 | 48.48% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
@@ -71,14 +69,13 @@ ts compatibility: 341/573 (59.51%)
 | typescript/conditional-types/infer-type.ts | 💥💥 | 47.07% |
 | typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 48.48% |
-| typescript/conditional-types/parentheses.ts | 💥💥 | 19.38% |
+| typescript/conditional-types/parentheses.ts | 💥💥 | 42.21% |
 | typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 53.85% |
 | typescript/conformance/classes/mixinAccessModifiers.ts | 💥 | 99.07% |
 | typescript/conformance/classes/mixinClassesAnnotated.ts | 💥 | 98.57% |
 | typescript/conformance/classes/mixinClassesMembers.ts | 💥 | 95.05% |
 | typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
 | typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts | 💥 | 96.77% |
-| typescript/conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts | 💥 | 90.00% |
 | typescript/conformance/es6/Symbols/symbolProperty15.ts | 💥 | 66.67% |
 | typescript/conformance/expressions/functionCalls/callWithSpreadES6.ts | 💥 | 97.96% |
 | typescript/conformance/interfaces/interfaceDeclarations/interfaceWithMultipleBaseTypes2.ts | 💥 | 64.00% |
@@ -87,7 +84,6 @@ ts compatibility: 341/573 (59.51%)
 | typescript/conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts | 💥 | 95.83% |
 | typescript/conformance/internalModules/importDeclarations/shadowedInternalModule.ts | 💥 | 87.88% |
 | typescript/conformance/types/ambient/ambientDeclarations.ts | 💥 | 70.00% |
-| typescript/conformance/types/firstTypeNode/firstTypeNode.ts | 💥 | 51.61% |
 | typescript/conformance/types/functions/functionImplementations.ts | 💥 | 99.44% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts | 💥 | 75.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts | 💥 | 75.00% |
@@ -180,7 +176,6 @@ ts compatibility: 341/573 (59.51%)
 | typescript/optional-variance/basic.ts | 💥 | 59.02% |
 | typescript/optional-variance/with-jsx.tsx | 💥 | 59.02% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
-| typescript/predicate-types/predicate-types.ts | 💥 | 50.00% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 54.72% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 15.79% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |

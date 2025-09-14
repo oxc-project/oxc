@@ -1176,7 +1176,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [":", space(), self.type_annotation()])
+        if matches!(self.parent, AstNodes::TSTypePredicate(_)) {
+            write!(f, [self.type_annotation()])
+        } else {
+            write!(f, [":", space(), self.type_annotation()])
+        }
     }
 }
 
@@ -1687,6 +1691,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceHeritage<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypePredicate<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.asserts() {
+            write!(f, ["asserts", space()])?;
+        }
+        write!(f, [self.parameter_name()])?;
+        if let Some(type_annotation) = self.type_annotation() {
+            write!(f, [space(), "is", space(), type_annotation])?;
+        }
         Ok(())
     }
 }
