@@ -65,6 +65,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_logical_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+        if !e.may_have_side_effects(ctx) {
+            return true;
+        }
         let Expression::LogicalExpression(logical_expr) = e else { return false };
         if !logical_expr.operator.is_coalesce() {
             Self::minimize_expression_in_boolean_context(&mut logical_expr.left, ctx);
@@ -378,6 +381,9 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn remove_unused_conditional_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+        if !e.may_have_side_effects(ctx) {
+            return true;
+        }
         let Expression::ConditionalExpression(conditional_expr) = e else {
             return false;
         };
@@ -884,6 +890,11 @@ mod test {
         test_same("v = a == null && (a = b)");
         test_same("v = a != null || (a = b)");
         test("void (x == null && y)", "x ?? y");
+
+        test("typeof x != 'undefined' && x", "");
+        test("typeof x == 'undefined' || x", "");
+        test("typeof x < 'u' && x", "");
+        test("typeof x > 'u' || x", "");
     }
 
     #[expect(clippy::literal_string_with_formatting_args)]
@@ -925,6 +936,11 @@ mod test {
         test("foo() ? 1 : bar()", "foo() || bar()");
         test("foo() ? bar() : 2", "foo() && bar()");
         test_same("foo() ? bar() : baz()");
+
+        test("typeof x == 'undefined' ? 0 : x", "");
+        test("typeof x != 'undefined' ? x : 0", "");
+        test("typeof x > 'u' ? 0 : x", "");
+        test("typeof x < 'u' ? x : 0", "");
     }
 
     #[test]
