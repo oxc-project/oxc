@@ -56,7 +56,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             AstNodes::TSAsExpression(it) => it.needs_parentheses(f),
             AstNodes::TSSatisfiesExpression(it) => it.needs_parentheses(f),
             AstNodes::TSTypeAssertion(it) => it.needs_parentheses(f),
-            AstNodes::TSInferType(it) => it.needs_parentheses(f),
             AstNodes::TSNonNullExpression(it) => it.needs_parentheses(f),
             AstNodes::TSInstantiationExpression(it) => it.needs_parentheses(f),
             AstNodes::V8IntrinsicExpression(it) => it.needs_parentheses(f),
@@ -664,12 +663,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
                 | AstNodes::AssignmentExpression(_)
                 | AstNodes::AssignmentTargetWithDefault(_)
         )
-    }
-}
-
-impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInferType<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::TSArrayType(_))
     }
 }
 
