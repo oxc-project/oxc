@@ -1,4 +1,4 @@
-ts compatibility: 346/573 (60.38%)
+ts compatibility: 349/573 (60.91%)
 
 # Failed
 
@@ -62,7 +62,7 @@ ts compatibility: 346/573 (60.38%)
 | typescript/compiler/commentsInterface.ts | 💥 | 66.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
-| typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 59.46% |
+| typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 64.86% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
 | typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
 | typescript/conditional-types/conditonal-types.ts | 💥💥 | 55.47% |
@@ -70,10 +70,9 @@ ts compatibility: 346/573 (60.38%)
 | typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 48.48% |
 | typescript/conditional-types/parentheses.ts | 💥💥 | 42.21% |
-| typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 53.85% |
+| typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 61.54% |
 | typescript/conformance/classes/mixinAccessModifiers.ts | 💥 | 99.07% |
 | typescript/conformance/classes/mixinClassesAnnotated.ts | 💥 | 98.57% |
-| typescript/conformance/classes/mixinClassesMembers.ts | 💥 | 95.05% |
 | typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
 | typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts | 💥 | 96.77% |
 | typescript/conformance/es6/Symbols/symbolProperty15.ts | 💥 | 66.67% |
@@ -83,7 +82,7 @@ ts compatibility: 346/573 (60.38%)
 | typescript/conformance/internalModules/importDeclarations/importAliasIdentifiers.ts | 💥 | 86.00% |
 | typescript/conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts | 💥 | 95.83% |
 | typescript/conformance/internalModules/importDeclarations/shadowedInternalModule.ts | 💥 | 87.88% |
-| typescript/conformance/types/ambient/ambientDeclarations.ts | 💥 | 70.00% |
+| typescript/conformance/types/ambient/ambientDeclarations.ts | 💥 | 90.00% |
 | typescript/conformance/types/functions/functionImplementations.ts | 💥 | 99.44% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts | 💥 | 75.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts | 💥 | 75.00% |
@@ -104,7 +103,7 @@ ts compatibility: 346/573 (60.38%)
 | typescript/custom/abstract/abstractProperties.ts | 💥 | 75.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
 | typescript/custom/computedProperties/symbol.ts | 💥 | 71.43% |
-| typescript/custom/declare/declareModifier.d.ts | 💥 | 55.56% |
+| typescript/custom/declare/declareModifier.d.ts | 💥 | 88.89% |
 | typescript/custom/modifiers/minustoken.ts | 💥 | 20.00% |
 | typescript/custom/modifiers/question.ts | 💥 | 0.00% |
 | typescript/custom/modifiers/readonly.ts | 💥 | 0.00% |
@@ -113,7 +112,6 @@ ts compatibility: 346/573 (60.38%)
 | typescript/custom/typeParameters/functionTypeLong.ts | 💥 | 50.00% |
 | typescript/custom/typeParameters/typeParametersLong.ts | 💥 | 0.00% |
 | typescript/declare/declare_function.ts | 💥 | 44.44% |
-| typescript/declare/declare_var.ts | 💥 | 80.00% |
 | typescript/declare/object-type-in-declare-function.ts | 💥 | 23.08% |
 | typescript/declare/trailing-comma/function-rest-trailing-comma.ts | 💥💥💥 | 25.00% |
 | typescript/decorators/comments.ts | 💥 | 60.00% |
@@ -180,7 +178,6 @@ ts compatibility: 346/573 (60.38%)
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 15.79% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
 | typescript/quote-props/types.ts | 💥💥💥 | 55.56% |
-| typescript/readonly/array.ts | 💥 | 0.00% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 72.00% |
 | typescript/satisfies-operators/argument-expansion.ts | 💥✨ | 46.77% |
