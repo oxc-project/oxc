@@ -154,6 +154,27 @@ fn test_inline_single_use_variable() {
         "function wrapper() { let x = function () { console.log() }; foo(x) }",
         "function wrapper() { foo(function() { console.log() }) }",
     );
+
+    test(
+        "function wrapper() { var x = foo; for (var i = x; i < 10; i++) console.log(i) }",
+        "function wrapper() { for (var i = foo; i < 10; i++) console.log(i) }",
+    );
+    test(
+        "function wrapper() { var i, x = foo; for (i = x; i < 10; i++) console.log(i) }",
+        "function wrapper() { var i; for (i = foo; i < 10; i++) console.log(i) }",
+    );
+    test(
+        "function wrapper() { var x = {}; for (var a in x) console.log(a) }",
+        "function wrapper() { for (var a in {}) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = {}; for (var a = 0 in x) console.log(a) }",
+        "function wrapper() { var x = {}; for (var a = 0 in x) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = []; for (var a of x) console.log(a) }",
+        "function wrapper() { for (var a of []) console.log(a) }",
+    );
 }
 
 #[test]

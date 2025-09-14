@@ -824,6 +824,33 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(init) = &mut for_stmt.init {
+            match init {
+                ForStatementInit::VariableDeclaration(var_decl) => {
+                    if let Some(first_decl) = var_decl.declarations.first_mut()
+                        && let Some(first_decl_init) = first_decl.init.as_mut()
+                    {
+                        let changed = Self::substitute_single_use_symbol_in_statement(
+                            first_decl_init,
+                            result,
+                            ctx,
+                        );
+                        if changed {
+                            ctx.state.changed = true;
+                        }
+                    }
+                }
+                match_expression!(ForStatementInit) => {
+                    let init = init.to_expression_mut();
+                    let changed =
+                        Self::substitute_single_use_symbol_in_statement(init, result, ctx);
+                    if changed {
+                        ctx.state.changed = true;
+                    }
+                }
+            }
+        }
+
         if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain(|decl| {
@@ -890,6 +917,21 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        // Annex B.3.5 allows initializers in non-strict mode
+        // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
+        // That is evaluated before the right hand side is evaluated. So, in that case, skip the single use substitution.
+        if !matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if var_decl.has_init())
+        {
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                &mut for_in_stmt.right,
+                result,
+                ctx,
+            );
+            if changed {
+                ctx.state.changed = true;
+            }
+        }
+
         if ctx.options().sequences {
             match result.last_mut() {
                 // "a; for (var b in c) d" => "for (var b in a, c) d"
@@ -963,6 +1005,12 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let changed =
+            Self::substitute_single_use_symbol_in_statement(&mut for_of_stmt.right, result, ctx);
+        if changed {
+            ctx.state.changed = true;
+        }
+
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
             if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left {
