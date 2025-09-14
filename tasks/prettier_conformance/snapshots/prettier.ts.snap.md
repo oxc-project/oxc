@@ -179,7 +179,7 @@ ts compatibility: 349/573 (60.91%)
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
 | typescript/quote-props/types.ts | 💥💥💥 | 55.56% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
-| typescript/rest-type/infer-type.ts | 💥 | 72.00% |
+| typescript/rest-type/infer-type.ts | 💥 | 80.00% |
 | typescript/satisfies-operators/argument-expansion.ts | 💥✨ | 46.77% |
 | typescript/satisfies-operators/assignment.ts | 💥💥 | 72.73% |
 | typescript/satisfies-operators/basic.ts | 💥✨ | 45.00% |
