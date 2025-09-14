@@ -90,7 +90,9 @@ impl<'a> PeepholeOptimizations {
             } else {
                 keep_var.visit_statement(&if_stmt.consequent);
             }
-            let var_stmt = keep_var.get_variable_declaration_statement();
+            let var_stmt = keep_var
+                .get_variable_declaration_statement()
+                .and_then(|stmt| Self::remove_unused_variable_declaration(stmt, ctx));
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {
                 if boolean {
@@ -508,9 +510,16 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        CompressOptions,
-        tester::{test, test_options, test_same, test_same_options},
+        CompressOptions, CompressOptionsUnused,
+        tester::{default_options, test, test_options, test_same, test_same_options},
     };
+
+    #[track_caller]
+    fn test_unused(source_text: &str, expected: &str) {
+        let options =
+            CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() };
+        test_options(source_text, expected, &options);
+    }
 
     #[test]
     fn test_fold_block() {
@@ -629,6 +638,8 @@ mod test {
         test("if (foo) {} else {}", "foo");
         test("if (false) {}", "");
         test("if (true) {}", "");
+        test("if (false) { var a; console.log(a) }", "if (0) var a");
+        test_unused("if (false) { var a; console.log(a) }", "");
     }
 
     #[test]
@@ -668,6 +679,9 @@ mod test {
         test("while(true) { continue a; unreachable;}", "for(;;) continue a");
         test("while(true) { throw a; unreachable;}", "for(;;) throw a");
         test("while(true) { return a; unreachable;}", "for(;;) return a");
+
+        test("(function () { return; var a })()", "(function () { return; var a })()");
+        test_unused("(function () { return; var a })()", "");
     }
 
     #[test]

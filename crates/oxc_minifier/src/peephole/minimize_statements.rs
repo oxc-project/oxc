@@ -59,7 +59,9 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement()
+            && let Some(stmt) = Self::remove_unused_variable_declaration(stmt, ctx)
+        {
             stmts.push(stmt);
         }
 
