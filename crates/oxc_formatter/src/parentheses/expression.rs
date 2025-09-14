@@ -669,10 +669,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInferType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(
-            self.parent,
-            AstNodes::TSArrayType(_)
-        )
+        matches!(self.parent, AstNodes::TSArrayType(_))
     }
 }
 
