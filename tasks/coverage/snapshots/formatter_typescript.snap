@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8727/8816 (98.99%)
+Positive Passed: 8729/8816 (99.01%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
@@ -29,8 +29,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBa
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCastReusesTypeNode4.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNestedGenerics.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPartialReuseComputedProperty.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPromise.ts
@@ -46,8 +44,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultPar
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericRestTypes.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/identityRelationNeverTypes.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/inferTypesWithFixedTupleExtendsAtVariadicPosition.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/infiniteConstraints.ts
 
