@@ -1378,7 +1378,7 @@ impl<'a> PeepholeOptimizations {
         let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
 
         // "str1,str2".split(',')
-        *expr = ctx.ast.expression_call(
+        *expr = ctx.ast.expression_call_with_pure(
             expr.span(),
             Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                 expr.span(),
@@ -1397,6 +1397,7 @@ impl<'a> PeepholeOptimizations {
                 None,
             ))),
             false,
+            true,
         );
         ctx.state.changed = true;
     }
@@ -1519,9 +1520,9 @@ mod test {
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
-        CompressOptions,
+        CompressOptions, CompressOptionsUnused,
         options::CompressOptionsKeepNames,
-        tester::{default_options, test, test_same, test_same_options},
+        tester::{default_options, test, test_options, test_same, test_same_options},
     };
 
     #[test]
@@ -1786,7 +1787,7 @@ mod test {
         let test_with_longer_args =
             |source_text_partial: &str, expected_partial: &str, delimiter: &str| {
                 let expected = &format!(
-                    "var x='{expected_partial}{}'.split('{delimiter}')",
+                    "var x=/* @__PURE__ */'{expected_partial}{}'.split('{delimiter}')",
                     format!("{delimiter}1").repeat(REPEAT)
                 );
                 test(&format!("var x=[{source_text_partial}{additional_args}]"), expected);
@@ -1809,6 +1810,12 @@ mod test {
 
         // all possible delimiters used, leave it alone
         test_same_with_longer_args("'.', ',', '(', ')', ' '");
+
+        test_options(
+            &format!("var x=['1','2','3','4','5','6'{additional_args}]"),
+            "",
+            &CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() },
+        );
     }
 
     #[test]
