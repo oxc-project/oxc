@@ -2,24 +2,18 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8695/8816 (98.63%)
+Positive Passed: 8727/8816 (98.99%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/betterErrorForUnionCall.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callsOnComplexSignatures.tsx
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/castExpressionParentheses.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/castFunctionExpressionShouldBeParenthesized.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/circularReferenceInReturnType2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classNonUniqueSymbolMethodHasSymbolIndexer.ts
 
@@ -27,19 +21,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVaria
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences6.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences8.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/conditionalEqualityTestingNullability.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeBasedContextualTypeReturnTypeWidening.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix3.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualTypeFunctionObjectPropertyIntersection.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationUnionType.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCastReusesTypeNode4.ts
 
@@ -53,13 +39,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitR
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/divergentAccessorsTypes7.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultParenthesizeES6.ts
 
@@ -91,12 +71,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowingByTypeo
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nestedGenericConditionalTypeWithGenericImportType.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/noInferUnionExcessPropertyCheck1.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nonNullableReduction.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nonNullableReductionNonStrict.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
@@ -115,11 +89,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTyp
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters1.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters5.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClasses.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/specedNoStackBlown.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
 
@@ -135,13 +105,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typePredicateFre
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeVariableTypeGuards.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unionOfFunctionAndSignatureIsCallable.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThisParameter.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unusedLocalsAndParametersTypeAliases.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
 
@@ -175,23 +139,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/a
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/functionExpressionContextualTyping1.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/functionExpressionContextualTyping2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator9.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/callChain.2.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/callChain/callChain.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInTypeAssertions.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormTypeOfFunction.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormTypeOfIsOrderIndependent.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfAndAndOperator.ts
 
@@ -209,11 +159,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUn
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends1.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/literal/literalTypes2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes4.ts
 
@@ -229,17 +175,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specify
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/unionTypeLiterals.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInClasses.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInFunctions2.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInInterfaces.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInObjectLiterals2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembers.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/genericTypeAliases.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbols.ts
 
