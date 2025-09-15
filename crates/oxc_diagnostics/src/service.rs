@@ -296,7 +296,7 @@ fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
 }
 
 /// On Windows, rewrites the wide path prefix `\\?\C:` to `C:`
-/// Source: https://stackoverflow.com/a/70970317
+/// Source: <https://stackoverflow.com/a/70970317>
 #[inline]
 #[cfg(windows)]
 fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
