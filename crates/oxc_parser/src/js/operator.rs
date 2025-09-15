@@ -11,7 +11,7 @@ use crate::lexer::Kind;
 // Size: 256 bytes (assuming Kind enum has up to 256 variants)
 const PRECEDENCE_TABLE: [Option<Precedence>; 256] = {
     let mut table = [None; 256];
-    
+
     // Populate the table with known precedences
     table[Kind::Question2 as usize] = Some(Precedence::NullishCoalescing);
     table[Kind::Pipe2 as usize] = Some(Precedence::LogicalOr);
@@ -40,7 +40,7 @@ const PRECEDENCE_TABLE: [Option<Precedence>; 256] = {
     table[Kind::Star2 as usize] = Some(Precedence::Exponentiation);
     table[Kind::As as usize] = Some(Precedence::Compare);
     table[Kind::Satisfies as usize] = Some(Precedence::Compare);
-    
+
     table
 };
 
@@ -55,7 +55,7 @@ pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
 // will map to a valid value, making Option unnecessary for this case
 const BINARY_OP_TABLE: [Option<BinaryOperator>; 256] = {
     let mut table = [None; 256];
-    
+
     table[Kind::Eq2 as usize] = Some(BinaryOperator::Equality);
     table[Kind::Neq as usize] = Some(BinaryOperator::Inequality);
     table[Kind::Eq3 as usize] = Some(BinaryOperator::StrictEquality);
@@ -78,7 +78,7 @@ const BINARY_OP_TABLE: [Option<BinaryOperator>; 256] = {
     table[Kind::In as usize] = Some(BinaryOperator::In);
     table[Kind::Instanceof as usize] = Some(BinaryOperator::Instanceof);
     table[Kind::Star2 as usize] = Some(BinaryOperator::Exponential);
-    
+
     table
 };
 
@@ -89,7 +89,7 @@ pub fn map_binary_operator(kind: Kind) -> BinaryOperator {
 
 const UNARY_OP_TABLE: [Option<UnaryOperator>; 256] = {
     let mut table = [None; 256];
-    
+
     table[Kind::Minus as usize] = Some(UnaryOperator::UnaryNegation);
     table[Kind::Plus as usize] = Some(UnaryOperator::UnaryPlus);
     table[Kind::Bang as usize] = Some(UnaryOperator::LogicalNot);
@@ -97,7 +97,7 @@ const UNARY_OP_TABLE: [Option<UnaryOperator>; 256] = {
     table[Kind::Typeof as usize] = Some(UnaryOperator::Typeof);
     table[Kind::Void as usize] = Some(UnaryOperator::Void);
     table[Kind::Delete as usize] = Some(UnaryOperator::Delete);
-    
+
     table
 };
 
@@ -108,11 +108,11 @@ pub fn map_unary_operator(kind: Kind) -> UnaryOperator {
 
 const LOGICAL_OP_TABLE: [Option<LogicalOperator>; 256] = {
     let mut table = [None; 256];
-    
+
     table[Kind::Pipe2 as usize] = Some(LogicalOperator::Or);
     table[Kind::Amp2 as usize] = Some(LogicalOperator::And);
     table[Kind::Question2 as usize] = Some(LogicalOperator::Coalesce);
-    
+
     table
 };
 
@@ -123,10 +123,10 @@ pub fn map_logical_operator(kind: Kind) -> LogicalOperator {
 
 const UPDATE_OP_TABLE: [Option<UpdateOperator>; 256] = {
     let mut table = [None; 256];
-    
+
     table[Kind::Plus2 as usize] = Some(UpdateOperator::Increment);
     table[Kind::Minus2 as usize] = Some(UpdateOperator::Decrement);
-    
+
     table
 };
 
@@ -137,7 +137,7 @@ pub fn map_update_operator(kind: Kind) -> UpdateOperator {
 
 const ASSIGNMENT_OP_TABLE: [Option<AssignmentOperator>; 256] = {
     let mut table = [None; 256];
-    
+
     table[Kind::Eq as usize] = Some(AssignmentOperator::Assign);
     table[Kind::PlusEq as usize] = Some(AssignmentOperator::Addition);
     table[Kind::MinusEq as usize] = Some(AssignmentOperator::Subtraction);
@@ -154,11 +154,12 @@ const ASSIGNMENT_OP_TABLE: [Option<AssignmentOperator>; 256] = {
     table[Kind::Pipe2Eq as usize] = Some(AssignmentOperator::LogicalOr);
     table[Kind::Question2Eq as usize] = Some(AssignmentOperator::LogicalNullish);
     table[Kind::Star2Eq as usize] = Some(AssignmentOperator::Exponential);
-    
+
     table
 };
 
 #[inline(always)]
 pub fn map_assignment_operator(kind: Kind) -> AssignmentOperator {
-    ASSIGNMENT_OP_TABLE[kind as usize].unwrap_or_else(|| unreachable!("Assignment Operator: {kind:?}"))
+    ASSIGNMENT_OP_TABLE[kind as usize]
+        .unwrap_or_else(|| unreachable!("Assignment Operator: {kind:?}"))
 }
