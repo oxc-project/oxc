@@ -26,6 +26,7 @@ jobs:
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         with:
           cache-key: warm
+          tools: just,dprint,cargo-shear@1.3.0
           components: rustfmt
 
       - name: Get latest compat-table SHA
@@ -79,7 +80,7 @@ jobs:
           pnpm run init
           pnpm run build
           cargo run -p oxc_compat_data
-          cargo fmt
+          just fmt
 
       - name: Check for changes
         if: steps.check-update.outputs.update_needed == 'true'
