@@ -60,7 +60,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    if: ${{ github.ref_name == 'main' }}
+    # if: ${{ github.ref_name == 'main' }}
     name: Test Windows
     runs-on: windows-latest
     steps:
@@ -97,6 +97,13 @@ jobs:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: ${{ github.ref_name == 'main' }}
           shared-key: windows-latest
+
+      - run: |
+          ls
+          cd node_modules
+          ls
+          cd .bin
+          ls
 
       - run: cargo test --all-features # cargo ck # no need to `cargo ck` because it's already checked in linux
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
