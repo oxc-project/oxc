@@ -178,6 +178,15 @@
       }
     ]
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "The Extension will always use the Language Server shipped with the Extension.",
+      "restrictedConfigurations": [
+        "oxc.path.server"
+      ]
+    }
+  },
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
