@@ -12,8 +12,19 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
-fn bad_handler_name_diagnostic(span: Span, prop_key: &str, handler_prefix: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Bad handler name")
+fn bad_handler_name_diagnostic(
+    span: Span,
+    prop_key: &str,
+    handler_name: Option<CompactStr>,
+    handler_prefix: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        if let Some(handler_name) = handler_name {
+            format!("Invalid handler name: {handler_name}")
+        } else {
+            "Bad handler name".to_string()
+        },
+)
         .with_help(format!(
             "Handler function for {prop_key} prop key must be a camelCase name beginning with \'{handler_prefix}\' only"
         ))
@@ -22,11 +33,16 @@ fn bad_handler_name_diagnostic(span: Span, prop_key: &str, handler_prefix: &str)
 
 fn bad_handler_prop_name_diagnostic(
     span: Span,
-    prop_value: &str,
+    prop_key: &str,
+    prop_value: Option<CompactStr>,
     handler_prop_prefix: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Bad handler prop name")
-        .with_help(format!("Prop key for {prop_value} must begin with \'{handler_prop_prefix}\'"))
+    OxcDiagnostic::warn(format!("Invalid handler prop name: {prop_key}"))
+        .with_help(if let Some(prop_value) = prop_value {
+            format!("Prop key for {prop_value} must begin with \'{handler_prop_prefix}\'")
+        } else {
+            format!("Prop key must begin with \'{handler_prop_prefix}\'")
+        })
         .with_label(span)
 }
 
@@ -296,17 +312,19 @@ impl Rule for JsxHandlerNames {
             .map_or(Some(false), |v| self.event_handler_regex.as_ref().map(|r| r.is_match(v)));
 
         match (prop_value, prop_is_event_handler, is_handler_name_correct) {
-            (_, Some(true), Some(false)) => {
+            (value, Some(true), Some(false)) => {
                 ctx.diagnostic(bad_handler_name_diagnostic(
                     expression_container.span,
                     prop_key,
+                    value,
                     &self.event_handler_prefixes,
                 ));
             }
-            (Some(value), Some(false), Some(true)) => {
+            (value, Some(false), Some(true)) => {
                 ctx.diagnostic(bad_handler_prop_name_diagnostic(
                     prop_span,
-                    value.as_str(),
+                    prop_key,
+                    value,
                     &self.event_handler_prop_prefixes,
                 ));
             }
