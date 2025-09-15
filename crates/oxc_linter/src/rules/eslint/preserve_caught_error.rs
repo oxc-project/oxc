@@ -1,11 +1,12 @@
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    Argument, BindingPattern, CatchClause, Expression, ObjectExpression, ObjectPropertyKind,
-    PropertyKey, Statement, ThrowStatement, TryStatement,
+    Argument, BindingPattern, CatchClause, Expression, Function, ObjectExpression,
+    ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
+use oxc_semantic::{IsGlobalReference, ScopeFlags};
 use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -36,81 +37,41 @@ struct ConfigElement0 {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PreserveCaughtError(ConfigElement0);
 
-// Helper functions - global scope for better reusability and testing
-
-// Recursively check statements for throw expressions
-fn check_statement<'a>(
-    stmt: &Statement<'a>,
-    catch_param: &BindingPattern<'a>,
-    ctx: &LintContext<'a>,
-) {
-    match stmt {
-        Statement::ThrowStatement(throw_stmt) => {
-            check_throw_statement(throw_stmt, catch_param, ctx);
-        }
-        Statement::IfStatement(if_stmt) => {
-            check_statement(&if_stmt.consequent, catch_param, ctx);
-            if let Some(alternate) = &if_stmt.alternate {
-                check_statement(alternate, catch_param, ctx);
-            }
-        }
-        Statement::WhileStatement(while_stmt) => {
-            check_statement(&while_stmt.body, catch_param, ctx);
-        }
-        Statement::ForStatement(for_stmt) => {
-            check_statement(&for_stmt.body, catch_param, ctx);
-        }
-        Statement::BlockStatement(block_stmt) => {
-            for stmt in &block_stmt.body {
-                check_statement(stmt, catch_param, ctx);
-            }
-        }
-        Statement::SwitchStatement(switch_stmt) => {
-            for case in &switch_stmt.cases {
-                for stmt in &case.consequent {
-                    check_statement(stmt, catch_param, ctx);
-                }
-            }
-        }
-        Statement::LabeledStatement(label_stmt) => {
-            check_statement(&label_stmt.body, catch_param, ctx);
-        }
-        _ => {}
-    }
+struct ThrowFinder<'a, 'ctx> {
+    catch_param: &'a BindingPattern<'a>,
+    ctx: &'ctx LintContext<'a>,
 }
 
-// Check if a throw statement re-throws built-in errors without preserving the original
-fn check_throw_statement<'a>(
-    throw_stmt: &ThrowStatement<'a>,
-    catch_param: &BindingPattern<'a>,
-    ctx: &LintContext<'a>,
-) {
-    let (callee, args) = match &throw_stmt.argument {
-        Expression::NewExpression(new_expr) => (&new_expr.callee, &new_expr.arguments),
-        Expression::CallExpression(call_expr) => (&call_expr.callee, &call_expr.arguments),
-        _ => return,
-    };
+impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
+    fn visit_throw_statement(&mut self, throw_stmt: &ThrowStatement<'a>) {
+        let (callee, args) = match &throw_stmt.argument {
+            Expression::NewExpression(new_expr) => (&new_expr.callee, &new_expr.arguments),
+            Expression::CallExpression(call_expr) => (&call_expr.callee, &call_expr.arguments),
+            _ => return,
+        };
 
-    if !is_builtin_error_constructor(callee, ctx) {
-        return;
-    }
-
-    // Check if second argument has proper cause property
-    if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1) {
-        if has_cause_property(obj_expr, catch_param, ctx) {
+        if !is_builtin_error_constructor(callee, self.ctx) {
             return;
         }
+
+        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1) {
+            if has_cause_property(obj_expr, self.catch_param, self.ctx) {
+                return;
+            }
+        }
+
+        // Allow spread arguments - they may contain cause property
+        if args.iter().any(|arg| matches!(arg, Argument::SpreadElement(_))) {
+            return;
+        }
+
+        self.ctx.diagnostic(preserve_caught_error_diagnostic(throw_stmt.span));
     }
 
-    // Allow spread arguments - they may contain cause property
-    if args.iter().any(|arg| matches!(arg, Argument::SpreadElement(_))) {
-        return;
-    }
-
-    ctx.diagnostic(preserve_caught_error_diagnostic(throw_stmt.span));
+    // Do not traverse into nested functions/closures within the catch block
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 }
 
-// Check if expression is a built-in Error constructor
 fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
     let Expression::Identifier(ident) = expr else {
         return false;
@@ -121,7 +82,6 @@ fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
         || ident.is_global_reference_name("AggregateError", ctx.scoping())
 }
 
-// Check if object expression has a 'cause' property with the catch parameter
 fn has_cause_property(
     obj_expr: &ObjectExpression,
     catch_param: &BindingPattern,
@@ -137,18 +97,15 @@ fn has_cause_property(
                     return is_catch_parameter(&prop.value, catch_param, ctx);
                 }
             }
-            // Spread properties might contain cause
             ObjectPropertyKind::SpreadProperty(_) => return true,
         }
     }
     false
 }
 
-// Check if expression references the catch parameter
 fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &LintContext) -> bool {
-    // Only handle simple identifier catch parameters for now
     let oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding) = &catch_param.kind else {
-        return false; // Destructuring patterns not supported
+        return false;
     };
 
     let Some(catch_symbol_id) = binding.symbol_id.get() else {
@@ -203,22 +160,22 @@ declare_oxc_lint!(
     /// ```
     PreserveCaughtError,
     eslint,
-    correctness,
+    suspicious,
     pending,
     config = ConfigElement0,
 );
 impl PreserveCaughtError {
-    fn check_try_statement<'a>(&self, try_stmt: &TryStatement<'a>, ctx: &LintContext<'a>) {
+    fn check_try_statement<'a>(&self, try_stmt: &'a TryStatement<'a>, ctx: &LintContext<'a>) {
         if let Some(catch_clause) = &try_stmt.handler {
             self.check_catch_clause(catch_clause, ctx);
         }
     }
 
-    fn check_catch_clause<'a>(&self, catch_clause: &CatchClause<'a>, ctx: &LintContext<'a>) {
+    fn check_catch_clause<'a>(&self, catch_clause: &'a CatchClause<'a>, ctx: &LintContext<'a>) {
         if let Some(catch_param) = &catch_clause.param {
-            for stmt in &catch_clause.body.body {
-                check_statement(stmt, &catch_param.pattern, ctx);
-            }
+            let mut finder: ThrowFinder<'a, '_> =
+                ThrowFinder { catch_param: &catch_param.pattern, ctx };
+            finder.visit_block_statement(catch_clause.body.as_ref());
         } else if self.0.require_catch_parameter {
             ctx.diagnostic(missing_catch_parameter_diagnostic(catch_clause.span));
         }
