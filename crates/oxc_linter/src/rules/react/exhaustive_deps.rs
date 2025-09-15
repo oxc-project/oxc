@@ -628,9 +628,12 @@ impl Rule for ExhaustiveDeps {
             if dep.chain.is_empty() && is_symbol_declaration_referentially_unique(symbol_id, ctx) {
                 let name = ctx.scoping().symbol_name(symbol_id);
                 let decl_span = ctx.scoping().symbol_span(symbol_id);
-                ctx.diagnostic(dependency_changes_on_every_render_diagnostic(
-                    hook_name, dep.span, name, decl_span,
-                ));
+                ctx.diagnostic_with_dangerous_suggestion(
+                    dependency_changes_on_every_render_diagnostic(
+                        hook_name, dep.span, name, decl_span,
+                    ),
+                    |fixer| fix::remove_dependency(fixer, &dep, dependencies_node),
+                );
             }
         }
     }
@@ -1464,10 +1467,16 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 mod fix {
     use super::Name;
     use oxc_allocator::{Allocator, CloneIn};
-    use oxc_ast::{AstBuilder, ast::ArrayExpression};
-    use oxc_span::{Atom, SPAN};
+    use oxc_ast::{
+        AstBuilder,
+        ast::{ArrayExpression, Expression},
+    };
+    use oxc_span::{Atom, GetSpan, SPAN};
 
-    use crate::fixer::{RuleFix, RuleFixer};
+    use crate::{
+        fixer::{RuleFix, RuleFixer},
+        rules::react::exhaustive_deps::Dependency,
+    };
 
     pub fn append_dependencies<'c, 'a: 'c>(
         fixer: RuleFixer<'c, 'a>,
@@ -1490,6 +1499,29 @@ mod fix {
         }
 
         codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        fixer.replace(deps.span, codegen.into_source_text())
+    }
+
+    pub fn remove_dependency<'c, 'a: 'c>(
+        fixer: RuleFixer<'c, 'a>,
+        dependency: &Dependency,
+        deps: &ArrayExpression<'a>,
+    ) -> RuleFix<'a> {
+        let mut codegen = fixer.codegen();
+
+        let alloc = Allocator::default();
+        let ast_builder = AstBuilder::new(&alloc);
+
+        let new_deps = deps
+            .elements
+            .iter()
+            .filter(|el| (*el).span() != dependency.span)
+            .map(|el| el.clone_in(&alloc));
+
+        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
+            deps.span,
+            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
+        )));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 }
@@ -4128,6 +4160,43 @@ fn test() {
         //     // None,
         //     // FixKind::DangerousSuggestion,
         // ),
+        // Test missing dependency fixes
+        (
+            "function MyComponent() { const local = someFunc(); useEffect(() => { console.log(local); }, []); }",
+            "function MyComponent() { const local = someFunc(); useEffect(() => { console.log(local); }, [local]); }",
+        ),
+        (
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo); }, []); }",
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo); }, [props.foo]); }",
+        ),
+        (
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo, props.bar); }, []); }",
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo, props.bar); }, [props.foo, props.bar]); }",
+        ),
+        // Test adding to existing dependencies
+        (
+            "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo]); }",
+            "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo, local]); }",
+        ),
+        // Test dependency array creation for hooks that require it
+        (
+            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
+            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }, []); }",
+        ),
+        (
+            "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
+            "function MyComponent() { const value = useMemo(() => { return 2*2; }, []); }",
+        ),
+        // Test unnecessary dependency removal for non-effect hooks
+        (
+            "function MyComponent() { const local1 = {}; useCallback(() => {}, [local1]); }",
+            "function MyComponent() { const local1 = {}; useCallback(() => {}, []); }",
+        ),
+        // Test duplicate dependency removal
+        (
+            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local, local]); }",
+            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local]); }",
+        ),
     ];
 
     Tester::new(
