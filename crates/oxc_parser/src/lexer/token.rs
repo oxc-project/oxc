@@ -1,6 +1,6 @@
 //! Token
 
-use std::{fmt, mem, ptr};
+use std::{fmt, mem};
 
 use oxc_span::Span;
 
@@ -27,7 +27,6 @@ const HAS_SEPARATOR_SHIFT: usize = 96;
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const KIND_MASK: u128 = 0xFF; // 8 bits
-const BOOL_MASK: u128 = 0xFF; // 8 bits
 
 const _: () = {
     // Check flags fields are aligned on 8 and in bounds, so can be read via pointers
@@ -78,10 +77,9 @@ impl fmt::Debug for Token {
 impl Token {
     #[inline]
     pub(super) fn new_on_new_line() -> Self {
-        // Start with a default token, then set the flag
-        let mut token = Self::default();
-        token.set_is_on_new_line(true);
-        token
+        // Directly create token with is_on_new_line flag set
+        // All other fields are 0 (same as default)
+        Self(1 << IS_ON_NEW_LINE_SHIFT)
     }
 }
 
@@ -132,77 +130,45 @@ impl Token {
 
     #[inline]
     pub fn is_on_new_line(&self) -> bool {
-        // Use a pointer read rather than arithmetic as it produces less instructions.
-        // SAFETY: 8 bits starting at `IS_ON_NEW_LINE_SHIFT` are only set in `Token::default` and
-        // `Token::set_is_on_new_line`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
-        unsafe { self.read_bool(IS_ON_NEW_LINE_SHIFT) }
+        (self.0 >> IS_ON_NEW_LINE_SHIFT) & 1 != 0
     }
 
     #[inline]
     pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
-        self.0 &= !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT); // Clear current `is_on_new_line` bits
-        self.0 |= u128::from(value) << IS_ON_NEW_LINE_SHIFT;
+        self.0 =
+            (self.0 & !(1 << IS_ON_NEW_LINE_SHIFT)) | (u128::from(value) << IS_ON_NEW_LINE_SHIFT);
     }
 
     #[inline]
     pub fn escaped(&self) -> bool {
-        // Use a pointer read rather than arithmetic as it produces less instructions.
-        // SAFETY: 8 bits starting at `ESCAPED_SHIFT` are only set in `Token::default` and
-        // `Token::set_escaped`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
-        unsafe { self.read_bool(ESCAPED_SHIFT) }
+        (self.0 >> ESCAPED_SHIFT) & 1 != 0
     }
 
     #[inline]
     pub(crate) fn set_escaped(&mut self, escaped: bool) {
-        self.0 &= !(BOOL_MASK << ESCAPED_SHIFT); // Clear current `escaped` bits
-        self.0 |= u128::from(escaped) << ESCAPED_SHIFT;
+        self.0 = (self.0 & !(1 << ESCAPED_SHIFT)) | (u128::from(escaped) << ESCAPED_SHIFT);
     }
 
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
-        // Use a pointer read rather than arithmetic as it produces less instructions.
-        // SAFETY: 8 bits starting at `LONE_SURROGATES_SHIFT` are only set in `Token::default` and
-        // `Token::set_lone_surrogates`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
-        unsafe { self.read_bool(LONE_SURROGATES_SHIFT) }
+        (self.0 >> LONE_SURROGATES_SHIFT) & 1 != 0
     }
 
     #[inline]
     pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
-        self.0 &= !(BOOL_MASK << LONE_SURROGATES_SHIFT); // Clear current `lone_surrogates` bits
-        self.0 |= u128::from(value) << LONE_SURROGATES_SHIFT;
+        self.0 =
+            (self.0 & !(1 << LONE_SURROGATES_SHIFT)) | (u128::from(value) << LONE_SURROGATES_SHIFT);
     }
 
     #[inline]
     pub fn has_separator(&self) -> bool {
-        // Use a pointer read rather than arithmetic as it produces less instructions.
-        // SAFETY: 8 bits starting at `HAS_SEPARATOR_SHIFT` are only set in `Token::default` and
-        // `Token::set_has_separator`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
-        unsafe { self.read_bool(HAS_SEPARATOR_SHIFT) }
+        (self.0 >> HAS_SEPARATOR_SHIFT) & 1 != 0
     }
 
     #[inline]
     pub(crate) fn set_has_separator(&mut self, value: bool) {
-        self.0 &= !(BOOL_MASK << HAS_SEPARATOR_SHIFT); // Clear current `has_separator` bits
-        self.0 |= u128::from(value) << HAS_SEPARATOR_SHIFT;
-    }
-
-    /// Read `bool` from 8 bits starting at bit position `shift`.
-    ///
-    /// # SAFETY
-    /// `shift` must be the location of a valid boolean "field" in [`Token`]
-    /// e.g. `ESCAPED_SHIFT`
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // So `shift` is statically known
-    unsafe fn read_bool(&self, shift: usize) -> bool {
-        // Byte offset depends on endianness of the system
-        let offset = if cfg!(target_endian = "little") { shift / 8 } else { 15 - (shift / 8) };
-        // SAFETY: Caller guarantees `shift` points to valid `bool`.
-        // This method borrows `Token`, so valid to read field via a reference - can't be aliased.
-        unsafe {
-            let field_ptr = ptr::from_ref(self).cast::<bool>().add(offset);
-            debug_assert!(*field_ptr.cast::<u8>() <= 1);
-            *field_ptr.as_ref().unwrap_unchecked()
-        }
+        self.0 =
+            (self.0 & !(1 << HAS_SEPARATOR_SHIFT)) | (u128::from(value) << HAS_SEPARATOR_SHIFT);
     }
 }
 
