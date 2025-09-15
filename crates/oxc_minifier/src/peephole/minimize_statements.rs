@@ -1732,3 +1732,30 @@ impl<'a> PeepholeOptimizations {
         Some(false)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::tester::test;
+
+    #[test]
+    fn test_for_variable_declaration() {
+        test(
+            "function _() { var x; for (var i = 0; i < 10; i++) console.log(i) }",
+            "function _() { for (var x, i = 0; i < 10; i++) console.log(i) }",
+        );
+        test(
+            "function _() { var x = 1; for (var i = 0; i < 10; i++) console.log(i) }",
+            "function _() { for (var x = 1, i = 0; i < 10; i++) console.log(i) }",
+        );
+        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
+        test(
+            "function _() { var x = function () { return console.log(j), 1 }; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+            "function _() { for (var x = function () { return console.log(j), 1 }, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+        );
+        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
+        test(
+            "function _() { var x = j; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+            "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+        );
+    }
+}
