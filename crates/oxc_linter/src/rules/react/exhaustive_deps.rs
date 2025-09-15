@@ -556,11 +556,14 @@ impl Rule for ExhaustiveDeps {
                 }
             }
 
-            ctx.diagnostic(unnecessary_outer_scope_dependency_diagnostic(
-                hook_name,
-                &dependency.name,
-                dependency.span,
-            ));
+            ctx.diagnostic_with_fix(
+                unnecessary_outer_scope_dependency_diagnostic(
+                    hook_name,
+                    &dependency.name,
+                    dependency.span,
+                ),
+                |fixer| fix::remove_dependency(fixer, dependency, dependencies_node),
+            );
         }
 
         let undeclared_deps = found_dependencies.difference(&declared_dependencies).filter(|dep| {
@@ -4196,6 +4199,10 @@ fn test() {
         (
             "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local, local]); }",
             "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local]); }",
+        ),
+        (
+            "const x = {}; function Comp() { useEffect(() => {}, [x]) }",
+            "const x = {}; function Comp() { useEffect(() => {}, []) }",
         ),
     ];
 
