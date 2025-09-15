@@ -183,6 +183,10 @@ fn test() {
         ("function test() { return arguments; }", None, None),
         ("var fn = function() { return arguments[0]; };", None, None),
         ("const obj = { method() { return arguments.length; } };", None, None),
+        // arguments in nested block scope within function should not be reported
+        ("function correct(a) { { return arguments; } }", None, None),
+        ("function test() { if (true) { return arguments[0]; } }", None, None),
+        ("function test() { for (let i = 0; i < 1; i++) { return arguments; } }", None, None),
         // ("AsyncDisposableStack; DisposableStack; SuppressedError", None, None), / es2026
         ("function resolve<T>(path: string): T { return { path } as T; }", None, None),
         ("let xyz: NodeListOf<HTMLElement>", None, None),
