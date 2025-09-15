@@ -10,7 +10,7 @@ use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
-use super::PeepholeOptimizations;
+use super::{DeleteCode, PeepholeOptimizations};
 
 /// Minimize Conditions
 ///
@@ -108,6 +108,8 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Equality => {}
             _ => return,
         }
+        e.left.delete(ctx);
+        e.right.delete(ctx);
         *expr = if b {
             e.left.take_in(ctx.ast)
         } else {
@@ -130,6 +132,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
+            e.left.delete(ctx);
             e.left = ctx.ast.expression_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
@@ -140,6 +143,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
+            e.right.delete(ctx);
             e.right = ctx.ast.expression_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
@@ -206,7 +210,9 @@ impl<'a> PeepholeOptimizations {
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
-        expr.right = logical_expr.right.take_in(ctx.ast);
+        let new_expr = logical_expr.right.take_in(ctx.ast);
+        expr.right.delete(ctx);
+        expr.right = new_expr;
         ctx.state.changed = true;
     }
 
@@ -226,9 +232,10 @@ impl<'a> PeepholeOptimizations {
         }
 
         Self::mark_assignment_target_as_read(&expr.left, ctx);
-
+        let new_expr = binary_expr.right.take_in(ctx.ast);
+        expr.right.delete(ctx);
         expr.operator = new_op;
-        expr.right = binary_expr.right.take_in(ctx.ast);
+        expr.right = new_expr;
         ctx.state.changed = true;
     }
 

@@ -13,7 +13,7 @@ use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::PeepholeOptimizations;
+use super::{DeleteCode, PeepholeOptimizations};
 
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
@@ -1099,7 +1099,7 @@ impl<'a> PeepholeOptimizations {
     fn substitute_single_use_symbol_in_statement(
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         // TODO: we should skip this compression when direct eval exists
         //       because the code inside eval may reference the variable
@@ -1183,11 +1183,12 @@ impl<'a> PeepholeOptimizations {
         search_for: &str,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
-        ctx: &Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<bool> {
         match target_expr {
             Expression::Identifier(id) => {
                 if id.name == search_for {
+                    target_expr.delete(ctx);
                     *target_expr = replacement.take_in(ctx.ast);
                     return Some(true);
                 }
