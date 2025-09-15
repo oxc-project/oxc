@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- a49d7cf minifier: Remove `typeof` guarded global access expressions (#13751) (sapphi-red)
+- c364ad1 minifier: Support ForStatements for single use variable inlining (#13755) (sapphi-red)
+- c868796 minifier: Remove unused variable declarations in dead code (#13754) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 3d895cf minifier: Remove unused long array expressions (#13752) (sapphi-red)
+- f9fd65b minifier: Disallow merging assignments to let declarations when TDZ error would be introduced (#13635) (sapphi-red)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🚀 Features
