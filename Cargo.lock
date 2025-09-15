@@ -1654,7 +1654,7 @@ checksum = "48dd4f4a2c8405440fd0462561f0e5806bd0f77e86f51c761481bdd4018b545e"
 
 [[package]]
 name = "oxc"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1730,7 +1730,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1745,7 +1745,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "bitflags 2.9.4",
  "oxc_allocator",
@@ -1760,7 +1760,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "phf",
  "proc-macro2",
@@ -1793,7 +1793,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_visit"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1827,7 +1827,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "bitflags 2.9.4",
  "itertools",
@@ -1840,7 +1840,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "bitflags 2.9.4",
  "cow-utils",
@@ -1904,14 +1904,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_data_structures"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "ropey",
 ]
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -1920,7 +1920,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ecmascript"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -1933,7 +1933,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "dragonbox_ecma",
  "itoa",
@@ -1967,7 +1967,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "bitflags 2.9.4",
  "insta",
@@ -2090,7 +2090,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "itertools",
  "oxc_allocator",
@@ -2105,7 +2105,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2129,7 +2129,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minify_napi"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2168,7 +2168,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_napi"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -2182,7 +2182,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "bitflags 2.9.4",
  "cow-utils",
@@ -2205,7 +2205,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser_napi"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2255,7 +2255,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "bitflags 2.9.4",
  "oxc_allocator",
@@ -2302,7 +2302,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "insta",
  "itertools",
@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -2353,7 +2353,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "bitflags 2.9.4",
  "cow-utils",
@@ -2427,7 +2427,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2441,7 +2441,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "base64",
  "compact_str",
@@ -2473,7 +2473,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer_plugins"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2500,7 +2500,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.88.0"
+version = "0.89.0"
 dependencies = [
  "itoa",
  "oxc_allocator",

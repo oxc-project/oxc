@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.89.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- f0af9a4 minifier: Don't inline single use variables that are not literals to for statement initializers (#13769) (sapphi-red)
+
+### 🧪 Testing
+
+- fcc3663 minifier: Merge variable declarations into for statement initializers (#13770) (sapphi-red)
+
+
 ## [0.88.0] - 2025-09-15
 
 ### 🚀 Features
