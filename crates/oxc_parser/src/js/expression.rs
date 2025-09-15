@@ -165,7 +165,8 @@ impl<'a> ParserImpl<'a> {
             return self.parse_function_expression(span, r#async);
         }
 
-        match self.cur_kind() {
+        let kind = self.cur_kind();
+        match kind {
             Kind::Ident => self.parse_identifier_expression(), // fast path, keywords are checked at the end
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
@@ -255,7 +256,8 @@ impl<'a> ParserImpl<'a> {
     /// [Literal Expression](https://tc39.es/ecma262/#prod-Literal)
     /// parses string | true | false | null | number
     pub(crate) fn parse_literal_expression(&mut self) -> Expression<'a> {
-        match self.cur_kind() {
+        let kind = self.cur_kind();
+        match kind {
             Kind::Str => {
                 let lit = self.parse_literal_string();
                 Expression::StringLiteral(self.alloc(lit))
@@ -301,10 +303,11 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_literal_number(&mut self) -> NumericLiteral<'a> {
         let token = self.cur_token();
         let span = token.span();
+        let kind = token.kind();
         let src = self.cur_src();
-        let value = match token.kind() {
+        let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                parse_int(src, token.kind(), token.has_separator())
+                parse_int(src, kind, token.has_separator())
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src, token.has_separator())
@@ -315,7 +318,7 @@ impl<'a> ParserImpl<'a> {
             self.set_fatal_error(diagnostics::invalid_number(err, span));
             0.0 // Dummy value
         });
-        let base = match token.kind() {
+        let base = match kind {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
@@ -335,18 +338,19 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
-        let base = match self.cur_kind() {
+        let token = self.cur_token();
+        let kind = token.kind();
+        let base = match kind {
             Kind::Decimal => BigintBase::Decimal,
             Kind::Binary => BigintBase::Binary,
             Kind::Octal => BigintBase::Octal,
             Kind::Hex => BigintBase::Hex,
             _ => return self.unexpected(),
         };
-        let token = self.cur_token();
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, token.kind(), token.has_separator(), self.ast.allocator);
+        let value = parse_big_int(src, kind, token.has_separator(), self.ast.allocator);
 
         self.bump_any();
         self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
@@ -1017,8 +1021,9 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let lhs = self.parse_lhs_expression_or_higher();
         // ++ -- postfix update expressions
-        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line() {
-            let operator = map_update_operator(self.cur_kind());
+        let post_kind = self.cur_kind();
+        if post_kind.is_update_operator() && !self.cur_token().is_on_new_line() {
+            let operator = map_update_operator(post_kind);
             self.bump_any();
             let lhs = SimpleAssignmentTarget::cover(lhs, self);
             return self.ast.expression_update(self.end_span(span), operator, false, lhs);
