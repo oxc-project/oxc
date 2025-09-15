@@ -7,103 +7,158 @@ use oxc_syntax::{
 
 use crate::lexer::Kind;
 
+// Lookup table for operator precedence - indexed by Kind discriminant value
+// Size: 256 bytes (assuming Kind enum has up to 256 variants)
+const PRECEDENCE_TABLE: [Option<Precedence>; 256] = {
+    let mut table = [None; 256];
+    
+    // Populate the table with known precedences
+    table[Kind::Question2 as usize] = Some(Precedence::NullishCoalescing);
+    table[Kind::Pipe2 as usize] = Some(Precedence::LogicalOr);
+    table[Kind::Amp2 as usize] = Some(Precedence::LogicalAnd);
+    table[Kind::Pipe as usize] = Some(Precedence::BitwiseOr);
+    table[Kind::Caret as usize] = Some(Precedence::BitwiseXor);
+    table[Kind::Amp as usize] = Some(Precedence::BitwiseAnd);
+    table[Kind::Eq2 as usize] = Some(Precedence::Equals);
+    table[Kind::Eq3 as usize] = Some(Precedence::Equals);
+    table[Kind::Neq as usize] = Some(Precedence::Equals);
+    table[Kind::Neq2 as usize] = Some(Precedence::Equals);
+    table[Kind::LAngle as usize] = Some(Precedence::Compare);
+    table[Kind::RAngle as usize] = Some(Precedence::Compare);
+    table[Kind::LtEq as usize] = Some(Precedence::Compare);
+    table[Kind::GtEq as usize] = Some(Precedence::Compare);
+    table[Kind::Instanceof as usize] = Some(Precedence::Compare);
+    table[Kind::In as usize] = Some(Precedence::Compare);
+    table[Kind::ShiftLeft as usize] = Some(Precedence::Shift);
+    table[Kind::ShiftRight as usize] = Some(Precedence::Shift);
+    table[Kind::ShiftRight3 as usize] = Some(Precedence::Shift);
+    table[Kind::Plus as usize] = Some(Precedence::Add);
+    table[Kind::Minus as usize] = Some(Precedence::Add);
+    table[Kind::Star as usize] = Some(Precedence::Multiply);
+    table[Kind::Slash as usize] = Some(Precedence::Multiply);
+    table[Kind::Percent as usize] = Some(Precedence::Multiply);
+    table[Kind::Star2 as usize] = Some(Precedence::Exponentiation);
+    table[Kind::As as usize] = Some(Precedence::Compare);
+    table[Kind::Satisfies as usize] = Some(Precedence::Compare);
+    
+    table
+};
+
+#[inline(always)]
 pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
-    match kind {
-        Kind::Question2 => Some(Precedence::NullishCoalescing),
-        Kind::Pipe2 => Some(Precedence::LogicalOr),
-        Kind::Amp2 => Some(Precedence::LogicalAnd),
-        Kind::Pipe => Some(Precedence::BitwiseOr),
-        Kind::Caret => Some(Precedence::BitwiseXor),
-        Kind::Amp => Some(Precedence::BitwiseAnd),
-        Kind::Eq2 | Kind::Eq3 | Kind::Neq | Kind::Neq2 => Some(Precedence::Equals),
-        Kind::LAngle | Kind::RAngle | Kind::LtEq | Kind::GtEq | Kind::Instanceof | Kind::In => {
-            Some(Precedence::Compare)
-        }
-        Kind::ShiftLeft | Kind::ShiftRight | Kind::ShiftRight3 => Some(Precedence::Shift),
-        Kind::Plus | Kind::Minus => Some(Precedence::Add),
-        Kind::Star | Kind::Slash | Kind::Percent => Some(Precedence::Multiply),
-        Kind::Star2 => Some(Precedence::Exponentiation),
-        Kind::As | Kind::Satisfies => Some(Precedence::Compare),
-        _ => None,
-    }
+    // Direct array lookup - O(1) operation
+    // Safe because Kind discriminant is u8 (max 255)
+    PRECEDENCE_TABLE[kind as usize]
 }
 
+// Lookup table for binary operators - using a simple array since most operators
+// will map to a valid value, making Option unnecessary for this case
+const BINARY_OP_TABLE: [Option<BinaryOperator>; 256] = {
+    let mut table = [None; 256];
+    
+    table[Kind::Eq2 as usize] = Some(BinaryOperator::Equality);
+    table[Kind::Neq as usize] = Some(BinaryOperator::Inequality);
+    table[Kind::Eq3 as usize] = Some(BinaryOperator::StrictEquality);
+    table[Kind::Neq2 as usize] = Some(BinaryOperator::StrictInequality);
+    table[Kind::LAngle as usize] = Some(BinaryOperator::LessThan);
+    table[Kind::LtEq as usize] = Some(BinaryOperator::LessEqualThan);
+    table[Kind::RAngle as usize] = Some(BinaryOperator::GreaterThan);
+    table[Kind::GtEq as usize] = Some(BinaryOperator::GreaterEqualThan);
+    table[Kind::ShiftLeft as usize] = Some(BinaryOperator::ShiftLeft);
+    table[Kind::ShiftRight as usize] = Some(BinaryOperator::ShiftRight);
+    table[Kind::ShiftRight3 as usize] = Some(BinaryOperator::ShiftRightZeroFill);
+    table[Kind::Plus as usize] = Some(BinaryOperator::Addition);
+    table[Kind::Minus as usize] = Some(BinaryOperator::Subtraction);
+    table[Kind::Star as usize] = Some(BinaryOperator::Multiplication);
+    table[Kind::Slash as usize] = Some(BinaryOperator::Division);
+    table[Kind::Percent as usize] = Some(BinaryOperator::Remainder);
+    table[Kind::Pipe as usize] = Some(BinaryOperator::BitwiseOR);
+    table[Kind::Caret as usize] = Some(BinaryOperator::BitwiseXOR);
+    table[Kind::Amp as usize] = Some(BinaryOperator::BitwiseAnd);
+    table[Kind::In as usize] = Some(BinaryOperator::In);
+    table[Kind::Instanceof as usize] = Some(BinaryOperator::Instanceof);
+    table[Kind::Star2 as usize] = Some(BinaryOperator::Exponential);
+    
+    table
+};
+
+#[inline(always)]
 pub fn map_binary_operator(kind: Kind) -> BinaryOperator {
-    match kind {
-        Kind::Eq2 => BinaryOperator::Equality,
-        Kind::Neq => BinaryOperator::Inequality,
-        Kind::Eq3 => BinaryOperator::StrictEquality,
-        Kind::Neq2 => BinaryOperator::StrictInequality,
-        Kind::LAngle => BinaryOperator::LessThan,
-        Kind::LtEq => BinaryOperator::LessEqualThan,
-        Kind::RAngle => BinaryOperator::GreaterThan,
-        Kind::GtEq => BinaryOperator::GreaterEqualThan,
-        Kind::ShiftLeft => BinaryOperator::ShiftLeft,
-        Kind::ShiftRight => BinaryOperator::ShiftRight,
-        Kind::ShiftRight3 => BinaryOperator::ShiftRightZeroFill,
-        Kind::Plus => BinaryOperator::Addition,
-        Kind::Minus => BinaryOperator::Subtraction,
-        Kind::Star => BinaryOperator::Multiplication,
-        Kind::Slash => BinaryOperator::Division,
-        Kind::Percent => BinaryOperator::Remainder,
-        Kind::Pipe => BinaryOperator::BitwiseOR,
-        Kind::Caret => BinaryOperator::BitwiseXOR,
-        Kind::Amp => BinaryOperator::BitwiseAnd,
-        Kind::In => BinaryOperator::In,
-        Kind::Instanceof => BinaryOperator::Instanceof,
-        Kind::Star2 => BinaryOperator::Exponential,
-        _ => unreachable!("Binary Operator: {kind:?}"),
-    }
+    BINARY_OP_TABLE[kind as usize].unwrap_or_else(|| unreachable!("Binary Operator: {kind:?}"))
 }
 
+const UNARY_OP_TABLE: [Option<UnaryOperator>; 256] = {
+    let mut table = [None; 256];
+    
+    table[Kind::Minus as usize] = Some(UnaryOperator::UnaryNegation);
+    table[Kind::Plus as usize] = Some(UnaryOperator::UnaryPlus);
+    table[Kind::Bang as usize] = Some(UnaryOperator::LogicalNot);
+    table[Kind::Tilde as usize] = Some(UnaryOperator::BitwiseNot);
+    table[Kind::Typeof as usize] = Some(UnaryOperator::Typeof);
+    table[Kind::Void as usize] = Some(UnaryOperator::Void);
+    table[Kind::Delete as usize] = Some(UnaryOperator::Delete);
+    
+    table
+};
+
+#[inline(always)]
 pub fn map_unary_operator(kind: Kind) -> UnaryOperator {
-    match kind {
-        Kind::Minus => UnaryOperator::UnaryNegation,
-        Kind::Plus => UnaryOperator::UnaryPlus,
-        Kind::Bang => UnaryOperator::LogicalNot,
-        Kind::Tilde => UnaryOperator::BitwiseNot,
-        Kind::Typeof => UnaryOperator::Typeof,
-        Kind::Void => UnaryOperator::Void,
-        Kind::Delete => UnaryOperator::Delete,
-        _ => unreachable!("Unary Operator: {kind:?}"),
-    }
+    UNARY_OP_TABLE[kind as usize].unwrap_or_else(|| unreachable!("Unary Operator: {kind:?}"))
 }
 
+const LOGICAL_OP_TABLE: [Option<LogicalOperator>; 256] = {
+    let mut table = [None; 256];
+    
+    table[Kind::Pipe2 as usize] = Some(LogicalOperator::Or);
+    table[Kind::Amp2 as usize] = Some(LogicalOperator::And);
+    table[Kind::Question2 as usize] = Some(LogicalOperator::Coalesce);
+    
+    table
+};
+
+#[inline(always)]
 pub fn map_logical_operator(kind: Kind) -> LogicalOperator {
-    match kind {
-        Kind::Pipe2 => LogicalOperator::Or,
-        Kind::Amp2 => LogicalOperator::And,
-        Kind::Question2 => LogicalOperator::Coalesce,
-        _ => unreachable!("Logical Operator: {kind:?}"),
-    }
+    LOGICAL_OP_TABLE[kind as usize].unwrap_or_else(|| unreachable!("Logical Operator: {kind:?}"))
 }
 
+const UPDATE_OP_TABLE: [Option<UpdateOperator>; 256] = {
+    let mut table = [None; 256];
+    
+    table[Kind::Plus2 as usize] = Some(UpdateOperator::Increment);
+    table[Kind::Minus2 as usize] = Some(UpdateOperator::Decrement);
+    
+    table
+};
+
+#[inline(always)]
 pub fn map_update_operator(kind: Kind) -> UpdateOperator {
-    match kind {
-        Kind::Plus2 => UpdateOperator::Increment,
-        Kind::Minus2 => UpdateOperator::Decrement,
-        _ => unreachable!("Update Operator: {kind:?}"),
-    }
+    UPDATE_OP_TABLE[kind as usize].unwrap_or_else(|| unreachable!("Update Operator: {kind:?}"))
 }
 
+const ASSIGNMENT_OP_TABLE: [Option<AssignmentOperator>; 256] = {
+    let mut table = [None; 256];
+    
+    table[Kind::Eq as usize] = Some(AssignmentOperator::Assign);
+    table[Kind::PlusEq as usize] = Some(AssignmentOperator::Addition);
+    table[Kind::MinusEq as usize] = Some(AssignmentOperator::Subtraction);
+    table[Kind::StarEq as usize] = Some(AssignmentOperator::Multiplication);
+    table[Kind::SlashEq as usize] = Some(AssignmentOperator::Division);
+    table[Kind::PercentEq as usize] = Some(AssignmentOperator::Remainder);
+    table[Kind::ShiftLeftEq as usize] = Some(AssignmentOperator::ShiftLeft);
+    table[Kind::ShiftRightEq as usize] = Some(AssignmentOperator::ShiftRight);
+    table[Kind::ShiftRight3Eq as usize] = Some(AssignmentOperator::ShiftRightZeroFill);
+    table[Kind::PipeEq as usize] = Some(AssignmentOperator::BitwiseOR);
+    table[Kind::CaretEq as usize] = Some(AssignmentOperator::BitwiseXOR);
+    table[Kind::AmpEq as usize] = Some(AssignmentOperator::BitwiseAnd);
+    table[Kind::Amp2Eq as usize] = Some(AssignmentOperator::LogicalAnd);
+    table[Kind::Pipe2Eq as usize] = Some(AssignmentOperator::LogicalOr);
+    table[Kind::Question2Eq as usize] = Some(AssignmentOperator::LogicalNullish);
+    table[Kind::Star2Eq as usize] = Some(AssignmentOperator::Exponential);
+    
+    table
+};
+
+#[inline(always)]
 pub fn map_assignment_operator(kind: Kind) -> AssignmentOperator {
-    match kind {
-        Kind::Eq => AssignmentOperator::Assign,
-        Kind::PlusEq => AssignmentOperator::Addition,
-        Kind::MinusEq => AssignmentOperator::Subtraction,
-        Kind::StarEq => AssignmentOperator::Multiplication,
-        Kind::SlashEq => AssignmentOperator::Division,
-        Kind::PercentEq => AssignmentOperator::Remainder,
-        Kind::ShiftLeftEq => AssignmentOperator::ShiftLeft,
-        Kind::ShiftRightEq => AssignmentOperator::ShiftRight,
-        Kind::ShiftRight3Eq => AssignmentOperator::ShiftRightZeroFill,
-        Kind::PipeEq => AssignmentOperator::BitwiseOR,
-        Kind::CaretEq => AssignmentOperator::BitwiseXOR,
-        Kind::AmpEq => AssignmentOperator::BitwiseAnd,
-        Kind::Amp2Eq => AssignmentOperator::LogicalAnd,
-        Kind::Pipe2Eq => AssignmentOperator::LogicalOr,
-        Kind::Question2Eq => AssignmentOperator::LogicalNullish,
-        Kind::Star2Eq => AssignmentOperator::Exponential,
-        _ => unreachable!("Update Operator: {kind:?}"),
-    }
+    ASSIGNMENT_OP_TABLE[kind as usize].unwrap_or_else(|| unreachable!("Assignment Operator: {kind:?}"))
 }
