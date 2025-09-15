@@ -1550,10 +1550,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceBody<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if self.readonly() {
-            write!(f, "readonly")?;
+            write!(f, ["readonly", space()])?;
         }
         if self.computed() {
-            write!(f, [space(), "[", self.key(), "]"])?;
+            write!(f, ["[", self.key(), "]"])?;
         } else {
             write!(f, self.key())?;
         }
