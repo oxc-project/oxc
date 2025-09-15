@@ -2,6 +2,8 @@
 
 ## Official
 
+[JetBrains IntelliJ](https://github.com/oxc-project/oxc-intellij-plugin)
+
 [VSCode](https://github.com/oxc-project/oxc/tree/main/editors/vscode)
 
 [(Neo)Vim](https://github.com/oxc-project/coc-oxc)
