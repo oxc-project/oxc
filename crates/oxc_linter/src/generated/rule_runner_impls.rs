@@ -22,6 +22,10 @@ impl RuleRunner for crate::rules::eslint::block_scoped_var::BlockScopedVar {
         Some(&AstTypesBitset::from_types(&[AstType::VariableDeclaration]));
 }
 
+impl RuleRunner for crate::rules::eslint::class_methods_use_this::ClassMethodsUseThis {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::eslint::curly::Curly {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
