@@ -1,0 +1,422 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() {} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() {/**this**/} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() {var a = function () {this};} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() {var a = function () {var b = function(){this}};} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() {window.this} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() {that.this = 'this';} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() { () => undefined; } }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `bar` to have this.
+   ╭─[class_methods_use_this.tsx:1:19]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                   ─────
+   ╰────
+  help: Consider converting method `bar` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `123` to have this.
+   ╭─[class_methods_use_this.tsx:1:29]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                             ───
+   ╰────
+  help: Consider converting method `123` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `baz` to have this.
+   ╭─[class_methods_use_this.tsx:1:38]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                                      ─────
+   ╰────
+  help: Consider converting method `baz` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method to have this.
+   ╭─[class_methods_use_this.tsx:1:50]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                                                  ─
+   ╰────
+  help: Consider converting method to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method to have this.
+   ╭─[class_methods_use_this.tsx:1:58]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                                                          ────
+   ╰────
+  help: Consider converting method to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `quux` to have this.
+   ╭─[class_methods_use_this.tsx:1:72]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                                                                        ────
+   ╰────
+  help: Consider converting method `quux` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method to have this.
+   ╭─[class_methods_use_this.tsx:1:85]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                                                                                     ─
+   ╰────
+  help: Consider converting method to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `quuux` to have this.
+   ╭─[class_methods_use_this.tsx:1:94]
+ 1 │ class A { foo(){} 'bar'(){} 123(){} [`baz`](){} [a](){} [f(a)](){} get quux(){} set[a](b){} *quuux(){} }
+   ·                                                                                              ─────
+   ╰────
+  help: Consider converting method `quuux` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo = function() {} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo = () => {} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { #foo = function() {} }
+   ·           ────
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { #foo = () => {} }
+   ·           ────
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { #foo() {} }
+   ·           ────
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:15]
+ 1 │ class A { get #foo() {} }
+   ·               ────
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:15]
+ 1 │ class A { set #foo(x) {} }
+   ·               ────
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo () { return class { foo = this }; } }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo () { return function () { foo = this }; } }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo () { return class { static { this; } } } }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:21]
+ 1 │ class Foo { private method() {} }
+   ·                     ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:23]
+ 1 │ class Foo { protected method() {} }
+   ·                       ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:22]
+ 1 │ class Foo { accessor method = function () {} }
+   ·                      ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:22]
+ 1 │ class Foo { accessor method = () => {} }
+   ·                      ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:30]
+ 1 │ class Foo { private accessor method = () => {} }
+   ·                              ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:32]
+ 1 │ class Foo { protected accessor method = () => {} }
+   ·                                ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo () { return class { accessor bar = this }; } }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:39]
+ 1 │ class Derived extends Base { override method() {} }
+   ·                                       ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `property` to have this.
+   ╭─[class_methods_use_this.tsx:1:30]
+ 1 │ class Derived extends Base { property = () => {} }
+   ·                              ────────
+   ╰────
+  help: Consider converting method `property` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `property` to have this.
+   ╭─[class_methods_use_this.tsx:1:37]
+ 1 │ class Derived extends Base { public property = () => {} }
+   ·                                     ────────
+   ╰────
+  help: Consider converting method `property` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `property` to have this.
+   ╭─[class_methods_use_this.tsx:1:39]
+ 1 │ class Derived extends Base { override property = () => {} }
+   ·                                       ────────
+   ╰────
+  help: Consider converting method `property` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `getter` to have this.
+   ╭─[class_methods_use_this.tsx:1:25]
+ 1 │ class Foo { private get getter(): number {} }
+   ·                         ──────
+   ╰────
+  help: Consider converting method `getter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `getter` to have this.
+   ╭─[class_methods_use_this.tsx:1:27]
+ 1 │ class Foo { protected get getter(): number {} }
+   ·                           ──────
+   ╰────
+  help: Consider converting method `getter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `setter` to have this.
+   ╭─[class_methods_use_this.tsx:1:25]
+ 1 │ class Foo { private set setter(b: number) {} }
+   ·                         ──────
+   ╰────
+  help: Consider converting method `setter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `setter` to have this.
+   ╭─[class_methods_use_this.tsx:1:27]
+ 1 │ class Foo { protected set setter(b: number) {} }
+   ·                           ──────
+   ╰────
+  help: Consider converting method `setter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:45]
+ 1 │ function fn() { this.foo = 303; class Foo { method() {} } }
+   ·                                             ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `property` to have this.
+   ╭─[class_methods_use_this.tsx:1:37]
+ 1 │ class Foo implements Bar { override property = () => {}; }
+   ·                                     ────────
+   ╰────
+  help: Consider converting method `property` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:11]
+ 1 │ class A { foo() {} bar() {} }
+   ·           ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `hasOwnProperty` to have this.
+   ╭─[class_methods_use_this.tsx:1:20]
+ 1 │ class A { foo() {} hasOwnProperty() {} }
+   ·                    ──────────────
+   ╰────
+  help: Consider converting method `hasOwnProperty` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method to have this.
+   ╭─[class_methods_use_this.tsx:1:12]
+ 1 │ class A { [foo]() {} }
+   ·            ───
+   ╰────
+  help: Consider converting method to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `foo` to have this.
+   ╭─[class_methods_use_this.tsx:1:22]
+ 1 │ class A { #foo() { } foo() {} #bar() {} }
+   ·                      ───
+   ╰────
+  help: Consider converting method `foo` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `bar` to have this.
+   ╭─[class_methods_use_this.tsx:1:31]
+ 1 │ class A { #foo() { } foo() {} #bar() {} }
+   ·                               ────
+   ╰────
+  help: Consider converting method `bar` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:28]
+ 1 │ class Foo implements Bar { #method() {} }
+   ·                            ───────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:36]
+ 1 │ class Foo implements Bar { private method() {} }
+   ·                                    ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `method` to have this.
+   ╭─[class_methods_use_this.tsx:1:38]
+ 1 │ class Foo implements Bar { protected method() {} }
+   ·                                      ──────
+   ╰────
+  help: Consider converting method `method` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `getter` to have this.
+   ╭─[class_methods_use_this.tsx:1:32]
+ 1 │ class Foo implements Bar { get #getter(): number {} }
+   ·                                ───────
+   ╰────
+  help: Consider converting method `getter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `getter` to have this.
+   ╭─[class_methods_use_this.tsx:1:40]
+ 1 │ class Foo implements Bar { private get getter(): number {} }
+   ·                                        ──────
+   ╰────
+  help: Consider converting method `getter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `getter` to have this.
+   ╭─[class_methods_use_this.tsx:1:42]
+ 1 │ class Foo implements Bar { protected get getter(): number {} }
+   ·                                          ──────
+   ╰────
+  help: Consider converting method `getter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `setter` to have this.
+   ╭─[class_methods_use_this.tsx:1:32]
+ 1 │ class Foo implements Bar { set #setter(v: number) {} }
+   ·                                ───────
+   ╰────
+  help: Consider converting method `setter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `setter` to have this.
+   ╭─[class_methods_use_this.tsx:1:40]
+ 1 │ class Foo implements Bar { private set setter(v: number) {} }
+   ·                                        ──────
+   ╰────
+  help: Consider converting method `setter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `setter` to have this.
+   ╭─[class_methods_use_this.tsx:1:42]
+ 1 │ class Foo implements Bar { protected set setter(v: number) {} }
+   ·                                          ──────
+   ╰────
+  help: Consider converting method `setter` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `property` to have this.
+   ╭─[class_methods_use_this.tsx:1:28]
+ 1 │ class Foo implements Bar { #property = () => {}; }
+   ·                            ─────────
+   ╰────
+  help: Consider converting method `property` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `property` to have this.
+   ╭─[class_methods_use_this.tsx:1:36]
+ 1 │ class Foo implements Bar { private property = () => {}; }
+   ·                                    ────────
+   ╰────
+  help: Consider converting method `property` to a static method.
+
+  ⚠ eslint(class-methods-use-this): Expected method `property` to have this.
+   ╭─[class_methods_use_this.tsx:1:38]
+ 1 │ class Foo implements Bar { protected property = () => {}; }
+   ·                                      ────────
+   ╰────
+  help: Consider converting method `property` to a static method.
