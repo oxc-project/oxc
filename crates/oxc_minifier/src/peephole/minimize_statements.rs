@@ -384,8 +384,12 @@ impl<'a> PeepholeOptimizations {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
-            let changed =
-                Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx);
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                first_decl_init,
+                result,
+                ctx,
+                false,
+            );
             if changed {
                 ctx.state.changed = true;
             }
@@ -433,8 +437,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut expr_stmt.expression, result, ctx);
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut expr_stmt.expression,
+            result,
+            ctx,
+            false,
+        );
         if changed {
             ctx.state.changed = true;
         }
@@ -562,6 +570,7 @@ impl<'a> PeepholeOptimizations {
             &mut switch_stmt.discriminant,
             result,
             ctx,
+            false,
         );
         if changed {
             ctx.state.changed = true;
@@ -588,7 +597,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> ControlFlow<()> {
         let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx);
+            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
         if changed {
             ctx.state.changed = true;
         }
@@ -747,8 +756,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
-            let changed =
-                Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx);
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                ret_argument_expr,
+                result,
+                ctx,
+                false,
+            );
             if changed {
                 ctx.state.changed = true;
             }
@@ -799,8 +812,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut throw_stmt.argument, result, ctx);
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut throw_stmt.argument,
+            result,
+            ctx,
+            false,
+        );
         if changed {
             ctx.state.changed = true;
         }
@@ -830,10 +847,12 @@ impl<'a> PeepholeOptimizations {
                     if let Some(first_decl) = var_decl.declarations.first_mut()
                         && let Some(first_decl_init) = first_decl.init.as_mut()
                     {
+                        let is_block_scoped_decl = !first_decl.kind.is_var();
                         let changed = Self::substitute_single_use_symbol_in_statement(
                             first_decl_init,
                             result,
                             ctx,
+                            is_block_scoped_decl,
                         );
                         if changed {
                             ctx.state.changed = true;
@@ -843,7 +862,7 @@ impl<'a> PeepholeOptimizations {
                 match_expression!(ForStatementInit) => {
                     let init = init.to_expression_mut();
                     let changed =
-                        Self::substitute_single_use_symbol_in_statement(init, result, ctx);
+                        Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
                     if changed {
                         ctx.state.changed = true;
                     }
@@ -922,10 +941,12 @@ impl<'a> PeepholeOptimizations {
         // That is evaluated before the right hand side is evaluated. So, in that case, skip the single use substitution.
         if !matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if var_decl.has_init())
         {
+            let is_block_scoped_decl = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
             let changed = Self::substitute_single_use_symbol_in_statement(
                 &mut for_in_stmt.right,
                 result,
                 ctx,
+                is_block_scoped_decl,
             );
             if changed {
                 ctx.state.changed = true;
@@ -1005,8 +1026,13 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut for_of_stmt.right, result, ctx);
+        let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut for_of_stmt.right,
+            result,
+            ctx,
+            is_block_scoped_decl,
+        );
         if changed {
             ctx.state.changed = true;
         }
@@ -1100,6 +1126,7 @@ impl<'a> PeepholeOptimizations {
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
         ctx: &Ctx<'a, '_>,
+        non_scoped_literal_only: bool,
     ) -> bool {
         // TODO: we should skip this compression when direct eval exists
         //       because the code inside eval may reference the variable
@@ -1137,6 +1164,9 @@ impl<'a> PeepholeOptimizations {
                         || symbol_value.read_references_count > 1
                         || symbol_value.write_references_count > 0
                     {
+                        return true;
+                    }
+                    if non_scoped_literal_only && !prev_decl_init.is_literal_value(false, ctx) {
                         return true;
                     }
                     let replaced = Self::substitute_single_use_symbol_in_expression(
