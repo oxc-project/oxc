@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- bb2bcf0 transformer: Improve legacy decorator handling and fix constructor parameter decorators (#13632) (Dunqing)
+
+### 🚜 Refactor
+
+- 08cbd39 transformer, estree: Clarify code using `is_exhausted` stack methods (#13674) (overlookmotel)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🚀 Features

@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- 9fa551a semantic: Handle edge cases checking `super` (#13499) (overlookmotel)
+- 198243b semantic: Dont parse `@` as jsdoc tags inside quotes (#13571) (Gwenn Le Bihan)
+
+### 📚 Documentation
+
+- 5dc82ff semantic: Make doc tests for `AstNode::contains_any` etc runnable (#13595) (overlookmotel)
+
+### ⚡ Performance
+
+- 08c05df semantic: Make CFG construction a compile-time feature (#13678) (Boshen)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🚀 Features

@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- 9a205d1 regex-parser: Parse simple `TemplateLiterals` (#13265) (Sysix)
+
+### 🐛 Bug Fixes
+
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🚀 Features
