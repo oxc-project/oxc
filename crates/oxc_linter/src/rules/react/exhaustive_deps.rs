@@ -1074,10 +1074,15 @@ fn is_stable_value<'a, 'b>(
                         ctx.scoping().get_reference(ident_reference_id).symbol_id().unwrap(),
                     )
                     .any(|reference| {
-                        matches!(
-                            ctx.nodes().parent_kind(reference.node_id()),
-                            AstKind::AssignmentExpression(_)
-                        )
+                        if let AstKind::AssignmentExpression(assignment_expression) =
+                            ctx.nodes().parent_kind(reference.node_id())
+                        {
+                            assignment_expression.left.span().contains_inclusive(
+                                ctx.nodes().get_node(reference.node_id()).span(),
+                            )
+                        } else {
+                            false
+                        }
                     })
             {
                 return true;
@@ -2600,6 +2605,7 @@ fn test() {
         r"function MyComponent(props) { useEffect(() => { console.log((props.foo).bar) }, [props.foo!.bar]) }",
         r"function MyComponent(props) { const external = {}; const y = useMemo(() => { const z = foo<typeof external>(); return z; }, []) }",
         r#"function Test() { const [state, setState] = useState(); useEffect(() => { console.log("state", state); }); }"#,
+        "function Test() { const [foo, setFoo] = useState(true); _setFoo = setFoo; useEffect(() => { setFoo(false) }, []); }",
     ];
 
     let fail = vec![
