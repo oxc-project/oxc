@@ -56,7 +56,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
-            _ => false
+            _ => false,
         }
     }
 }
