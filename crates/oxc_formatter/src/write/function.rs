@@ -42,8 +42,12 @@ impl<'a> Deref for FormatFunction<'a, '_> {
 
 impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.declare() {
+            write!(f, ["declare", space()])?;
+        }
+
         if self.r#async() {
-            write!(f, ["async", space()]);
+            write!(f, ["async", space()])?;
         }
         write!(
             f,

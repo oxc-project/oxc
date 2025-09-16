@@ -46,7 +46,7 @@ ts compatibility: 349/573 (60.91%)
 | typescript/comments/16065.ts | 💥 | 63.64% |
 | typescript/comments/16207.ts | 💥 | 71.43% |
 | typescript/comments/16889.ts | 💥 | 62.61% |
-| typescript/comments/declare_function.ts | 💥 | 50.00% |
+| typescript/comments/declare_function.ts | 💥 | 66.67% |
 | typescript/comments/interface.ts | 💥 | 92.86% |
 | typescript/comments/issues.ts | 💥 | 21.21% |
 | typescript/comments/location.ts | 💥 | 75.00% |
@@ -112,8 +112,8 @@ ts compatibility: 349/573 (60.91%)
 | typescript/custom/typeParameters/functionTypeLong.ts | 💥 | 50.00% |
 | typescript/custom/typeParameters/typeParametersLong.ts | 💥 | 0.00% |
 | typescript/declare/declare_function.ts | 💥 | 44.44% |
-| typescript/declare/object-type-in-declare-function.ts | 💥 | 23.08% |
-| typescript/declare/trailing-comma/function-rest-trailing-comma.ts | 💥💥💥 | 25.00% |
+| typescript/declare/object-type-in-declare-function.ts | 💥 | 58.82% |
+| typescript/declare/trailing-comma/function-rest-trailing-comma.ts | 💥💥💥 | 50.00% |
 | typescript/decorators/comments.ts | 💥 | 60.00% |
 | typescript/decorators/decorator-type-assertion.ts | 💥 | 60.00% |
 | typescript/decorators/decorators-comments.ts | 💥 | 65.71% |
@@ -192,7 +192,7 @@ ts compatibility: 349/573 (60.91%)
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 81.82% |
 | typescript/satisfies-operators/ternary.ts | 💥💥 | 82.00% |
 | typescript/semi/no-semi.ts | 💥 | 88.89% |
-| typescript/template-literal-types/template-literal-types.ts | 💥 | 73.33% |
+| typescript/template-literal-types/template-literal-types.ts | 💥 | 80.00% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
 | typescript/trailing-comma/type-arguments.ts | 💥💥💥 | 10.53% |
