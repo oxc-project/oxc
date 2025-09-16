@@ -375,7 +375,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
                     false
                 }
             }
-            _ => false
+            _ => false,
         }
     }
 }
