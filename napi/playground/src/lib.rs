@@ -36,9 +36,15 @@ use oxc_linter::{
     ModuleRecord, Oxlintrc,
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
-use oxc_transformer_plugins::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
+use oxc_transformer_plugins::{
+    InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport, ReplaceGlobalDefines,
+    ReplaceGlobalDefinesConfig,
+};
 
-use crate::options::{OxcLinterOptions, OxcOptions, OxcRunOptions};
+use crate::options::{
+    OxcControlFlowOptions, OxcDefineOptions, OxcInjectOptions, OxcIsolatedDeclarationsOptions,
+    OxcLinterOptions, OxcOptions, OxcParserOptions, OxcRunOptions, OxcTransformerOptions,
+};
 
 mod options;
 
@@ -100,6 +106,7 @@ impl Oxc {
             isolated_declarations: ref isolated_declarations_options,
             codegen: ref codegen_options,
             inject: ref inject_options,
+            define: ref define_options,
             ..
         } = options;
         let linter_options = linter_options.clone().unwrap_or_default();
@@ -107,6 +114,7 @@ impl Oxc {
         let control_flow_options = control_flow_options.clone().unwrap_or_default();
         let codegen_options = codegen_options.clone().unwrap_or_default();
         let inject_options = inject_options.clone();
+        let define_options = define_options.clone();
 
         let allocator = Allocator::default();
 
@@ -168,11 +176,11 @@ impl Oxc {
             return Ok(());
         }
 
-        // Phase 5.5: Apply InjectGlobalVariables
-        if let Some(inject_opts) = inject_options {
-            let inject_config = self.build_inject_config(&inject_opts)?;
+        // Phase 5.5: Apply ReplaceGlobalDefines (before transformations)
+        if let Some(define_opts) = define_options {
+            let define_config = Self::build_define_config(&define_opts)?;
             let ret =
-                InjectGlobalVariables::new(&allocator, inject_config).build(scoping, &mut program);
+                ReplaceGlobalDefines::new(&allocator, define_config).build(scoping, &mut program);
             scoping = ret.scoping;
         }
 
@@ -185,6 +193,13 @@ impl Oxc {
                 scoping,
                 &transform_options,
             );
+        }
+
+        // Phase 6.5: Apply InjectGlobalVariables (after transformations)
+        if let Some(inject_opts) = inject_options {
+            let inject_config = Self::build_inject_config(&inject_opts)?;
+            let _ =
+                InjectGlobalVariables::new(&allocator, inject_config).build(scoping, &mut program);
         }
 
         // Phase 7: Apply minification
@@ -204,7 +219,7 @@ impl Oxc {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
-        parser_options: &crate::options::OxcParserOptions,
+        parser_options: &OxcParserOptions,
     ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>) {
         let parser_options = ParseOptions {
             parse_regular_expression: true,
@@ -222,7 +237,7 @@ impl Oxc {
         &mut self,
         program: &'a Program<'a>,
         run_options: &OxcRunOptions,
-        control_flow_options: &crate::options::OxcControlFlowOptions,
+        control_flow_options: &OxcControlFlowOptions,
     ) -> oxc::semantic::Semantic<'a> {
         let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform {
@@ -250,7 +265,7 @@ impl Oxc {
         program: &Program<'a>,
         run_options: &OxcRunOptions,
         codegen_options: &OxcCodegenOptions,
-        isolated_declarations_options: Option<crate::options::OxcIsolatedDeclarationsOptions>,
+        isolated_declarations_options: Option<OxcIsolatedDeclarationsOptions>,
     ) {
         let id_options = isolated_declarations_options
             .map(|o| IsolatedDeclarationsOptions { strip_internal: o.strip_internal })
@@ -271,7 +286,7 @@ impl Oxc {
         path: &Path,
         program: &mut Program<'a>,
         scoping: Scoping,
-        transform_options: &crate::options::OxcTransformerOptions,
+        transform_options: &OxcTransformerOptions,
     ) -> Scoping {
         let mut options = transform_options
             .target
@@ -506,8 +521,7 @@ impl Oxc {
     }
 
     fn build_inject_config(
-        &self,
-        inject_opts: &crate::options::OxcInjectOptions,
+        inject_opts: &OxcInjectOptions,
     ) -> napi::Result<InjectGlobalVariablesConfig> {
         let mut imports = Vec::new();
 
@@ -532,6 +546,21 @@ impl Oxc {
         }
 
         Ok(InjectGlobalVariablesConfig::new(imports))
+    }
+
+    fn build_define_config(
+        define_opts: &OxcDefineOptions,
+    ) -> napi::Result<ReplaceGlobalDefinesConfig> {
+        let define_pairs: Vec<(String, String)> =
+            define_opts.define.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+
+        ReplaceGlobalDefinesConfig::new(&define_pairs).map_err(|errors| {
+            let error_messages: Vec<String> = errors.iter().map(ToString::to_string).collect();
+            napi::Error::from_reason(format!(
+                "Invalid define config: {}",
+                error_messages.join(", ")
+            ))
+        })
     }
 
     fn get_symbols_text(scoping: &Scoping) -> napi::Result<String> {

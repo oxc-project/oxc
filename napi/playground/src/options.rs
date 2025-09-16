@@ -15,6 +15,7 @@ pub struct OxcOptions {
     pub mangle: Option<OxcMangleOptions>,
     pub control_flow: Option<OxcControlFlowOptions>,
     pub inject: Option<OxcInjectOptions>,
+    pub define: Option<OxcDefineOptions>,
 }
 
 #[napi(object)]
@@ -62,6 +63,14 @@ pub struct OxcInjectOptions {
     /// Map of variable name to module source or [source, specifier]
     #[napi(ts_type = "Record<string, string | [string, string]>")]
     pub inject: FxHashMap<String, Either<String, Vec<String>>>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcDefineOptions {
+    /// Map of variable name to value for replacement
+    #[napi(ts_type = "Record<string, string>")]
+    pub define: FxHashMap<String, String>,
 }
 
 #[napi(object)]

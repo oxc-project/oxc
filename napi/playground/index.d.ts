@@ -63,6 +63,16 @@ export interface OxcControlFlowOptions {
   verbose?: boolean
 }
 
+export interface OxcDefineOptions {
+  /** Map of variable name to value for replacement */
+  define: Record<string, string>
+}
+
+export interface OxcInjectOptions {
+  /** Map of variable name to module source or [source, specifier] */
+  inject: Record<string, string | [string, string]>
+}
+
 export interface OxcIsolatedDeclarationsOptions {
   stripInternal: boolean
 }
@@ -86,6 +96,8 @@ export interface OxcOptions {
   compress?: OxcCompressOptions
   mangle?: OxcMangleOptions
   controlFlow?: OxcControlFlowOptions
+  inject?: OxcInjectOptions
+  define?: OxcDefineOptions
 }
 
 export interface OxcParserOptions {
