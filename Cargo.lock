@@ -2230,6 +2230,7 @@ dependencies = [
  "oxc_index",
  "oxc_linter",
  "oxc_napi",
+ "oxc_transformer_plugins",
  "rustc-hash",
  "serde",
  "serde_json",
