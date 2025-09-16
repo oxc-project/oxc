@@ -64,11 +64,11 @@ ts compatibility: 350/573 (61.08%)
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 64.86% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
-| typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
-| typescript/conditional-types/conditonal-types.ts | 💥💥 | 55.47% |
-| typescript/conditional-types/infer-type.ts | 💥💥 | 47.07% |
-| typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 48.48% |
+| typescript/conditional-types/comments.ts | 💥💥 | 58.68% |
+| typescript/conditional-types/conditonal-types.ts | 💥💥 | 65.75% |
+| typescript/conditional-types/infer-type.ts | 💥💥 | 35.53% |
+| typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
+| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 33.20% |
 | typescript/conditional-types/parentheses.ts | 💥💥 | 42.21% |
 | typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 61.54% |
 | typescript/conformance/classes/mixinAccessModifiers.ts | 💥 | 99.07% |
@@ -135,7 +135,7 @@ ts compatibility: 350/573 (61.08%)
 | typescript/generic/ungrouped-parameters.ts | 💥 | 74.07% |
 | typescript/import-type/import-type.ts | 💥💥 | 93.33% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
-| typescript/infer-extends/basic.ts | 💥 | 66.67% |
+| typescript/infer-extends/basic.ts | 💥 | 71.43% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
 | typescript/interface/ignore.ts | 💥💥 | 94.84% |
 | typescript/interface/long-extends.ts | 💥✨ | 40.74% |
@@ -151,7 +151,7 @@ ts compatibility: 350/573 (61.08%)
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 60.47% |
 | typescript/key-remapping-in-mapped-types/key-remapping.ts | 💥 | 23.53% |
 | typescript/keyof/keyof.ts | 💥 | 20.00% |
-| typescript/keyword-types/conditional-types.ts | 💥 | 87.50% |
+| typescript/keyword-types/conditional-types.ts | 💥 | 62.50% |
 | typescript/keywords/keywords-2.ts | 💥 | 79.41% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 22.81% |
 | typescript/mapped-type/intersection.ts | 💥 | 0.00% |
@@ -203,7 +203,7 @@ ts compatibility: 350/573 (61.08%)
 | typescript/tuple/trailing-comma-trailing-rest.ts | 💥💥💥 | 0.00% |
 | typescript/tuple/trailing-comma.ts | 💥💥💥 | 15.38% |
 | typescript/tuple/tuple.ts | 💥💥💥 | 0.00% |
-| typescript/type-alias/conditional.ts | 💥 | 23.33% |
+| typescript/type-alias/conditional.ts | 💥 | 20.00% |
 | typescript/type-alias/issue-100857.ts | 💥 | 25.35% |
 | typescript/type-alias/issue-9874.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/1.ts | 💥 | 0.00% |
