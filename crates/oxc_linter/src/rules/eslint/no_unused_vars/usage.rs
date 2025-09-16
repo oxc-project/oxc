@@ -181,6 +181,44 @@ impl<'a> Symbol<'_, 'a> {
             return true;
         }
 
+        // JSX plain identifier fallback (for symbols with no semantic references)
+        //
+        // Parser only converts JSX tags starting with uppercase/`_`/`$` to `IdentifierReference`.
+        // Lowercase-starting tags remain as plain `Identifier` with no references generated,
+        // so we check for usage here if they are actual components.
+        //
+        // ## Examples
+        // ```tsx
+        // // should return true
+        // const 테스트 = () => null; <테스트 />;
+        // const fooBar = () => null; <fooBar />;
+        //
+        // // should return false
+        // const foo = 1; <foo />;
+        // ```
+        if self.is_in_jsx() && self.references().next().is_none() {
+            let target = self.name();
+            let is_intrinsic = |name: &str| name.chars().all(|c| c.is_ascii_lowercase());
+
+            for node in self.nodes().iter() {
+                let maybe_ident = match node.kind() {
+                    AstKind::JSXOpeningElement(open) => {
+                        if let JSXElementName::Identifier(id) = &open.name { Some(id) } else { None }
+                    }
+                    AstKind::JSXClosingElement(close) => {
+                        if let JSXElementName::Identifier(id) = &close.name { Some(id) } else { None }
+                    }
+                    _ => None,
+                };
+
+                if let Some(ident) = maybe_ident {
+                    if ident.name == target && !is_intrinsic(ident.name.as_str()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         false
     }
 

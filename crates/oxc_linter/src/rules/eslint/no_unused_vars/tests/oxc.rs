@@ -1361,6 +1361,22 @@ import Layout from '../layouts/Layout.astro';
         .test();
 }
 
+#[test]
+fn test_jsx_plain_identifier_fallback() {
+    let pass = vec![
+        ("const 테스트 = () => null; <테스트 />;", None),
+        ("const fooBar = () => null; <fooBar/>", None),
+    ];
+    let fail = vec![
+        ("const foo = () => null; <foo />;", None),
+        ("const value = 1; <div />;", None),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .change_rule_path_extension("tsx")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
 // #[test]
 // fn test_template() {
 //     let pass = vec![];
