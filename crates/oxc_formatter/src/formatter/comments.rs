@@ -255,7 +255,7 @@ impl<'a> Comments<'a> {
     /// Used when multiple comments are processed in batch. Each unit of `count`
     /// represents one comment that has been formatted and should be marked as processed.
     ///
-    /// Like [`increment_printed_count`], this is essential for maintaining the
+    /// Like [`Comments::increment_printed_count`], this is essential for maintaining the
     /// integrity of the comment tracking system.
     #[inline]
     pub fn increase_printed_count_by(&mut self, count: usize) {
