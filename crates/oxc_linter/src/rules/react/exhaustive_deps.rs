@@ -1076,7 +1076,7 @@ fn is_stable_value<'a, 'b>(
                     .any(|reference| {
                         matches!(
                             ctx.nodes().parent_kind(reference.node_id()),
-                            AstKind::IdentifierReference(_) | AstKind::AssignmentExpression(_)
+                            AstKind::AssignmentExpression(_)
                         )
                     })
             {
