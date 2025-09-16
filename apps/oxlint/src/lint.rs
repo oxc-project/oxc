@@ -1252,13 +1252,13 @@ mod test {
     }
 
     #[test]
-    fn test_exhaustive_deps_disable_directive_issue_13311() {
+    fn test_disable_directive_issue_13311() {
         // Test that exhaustive-deps diagnostics are reported at the dependency array
         // so that disable directives work correctly
         // Issue: https://github.com/oxc-project/oxc/issues/13311
-        let args = &["test.jsx"];
+        let args = &["test.jsx", "test2.d.ts"];
         Tester::new()
-            .with_cwd("fixtures/exhaustive_deps_disable_directive_issue_13311".into())
+            .with_cwd("fixtures/disable_directive_issue_13311".into())
             .test_and_snapshot(args);
     }
 

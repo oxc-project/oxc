@@ -13,7 +13,7 @@ use crate::{
 fn no_unsafe_declaration_merging_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe declaration merging between classes and interfaces.")
         .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.")
-        .with_labels([span, span1])
+        .with_labels(if span < span1 { [span, span1]} else { [span1, span] })
 }
 
 #[derive(Debug, Default, Clone)]

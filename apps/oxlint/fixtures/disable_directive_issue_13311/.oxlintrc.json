@@ -1,0 +1,10 @@
+{
+  "plugins": ["eslint", "typescript", "react"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "react/exhaustive-deps": "warn",
+    "typescript/no-unsafe-declaration-merging": "error"
+  }
+}
