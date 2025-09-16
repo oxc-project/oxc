@@ -197,7 +197,7 @@ lazy-regex = "3.4.1"
 log = "0.4.27"
 markdown = "1.0.0"
 memchr = "2.7.5"
-miette = { package = "oxc-miette", version = "2.4.0", features = ["fancy-no-syscall"] }
+miette = { package = "oxc-miette", version = "2.5.0", features = ["fancy-no-syscall"] }
 mimalloc-safe = "0.1.54"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"

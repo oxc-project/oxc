@@ -177,7 +177,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_irregular_whitespace.tsx:2:14]
  1 │ var any 　 = 'thing', other 　 = 'thing';
  2 │             var third 　 = 'thing';
-   ·                       ──
+   ·                       ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -237,7 +237,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_irregular_whitespace.tsx:2:13]
  1 │ `　multiline
  2 │             template`　
-   ·                      ──
+   ·                      ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_irregular_whitespace.tsx:2:4]
  1 │ `　template`
  2 │             　
-   ·             ──
+   ·             ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -253,7 +253,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_irregular_whitespace.tsx:3:4]
  2 │             template`
  3 │             　
-   ·             ──
+   ·             ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -281,7 +281,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
    ╭─[no_irregular_whitespace.tsx:1:12]
  1 │ var foo =  bar;
-   ·           ─
+   ·            ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -295,7 +295,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
    ╭─[no_irregular_whitespace.tsx:1:12]
  1 │ var foo =  bar;
-   ·           ─
+   ·            ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -309,7 +309,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
    ╭─[no_irregular_whitespace.tsx:1:13]
  1 │ var foo =   bar;
-   ·            ─
+   ·             ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -323,7 +323,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
    ╭─[no_irregular_whitespace.tsx:1:15]
  1 │ var foo = bar;
-   ·              ─
+   ·               ─
    ╰────
   help: Try to remove the irregular whitespace
 
@@ -376,7 +376,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_irregular_whitespace.tsx:2:10]
  1 │ var foo =
  2 │         bar
-   ·         ─
+   ·          ─
  3 │         ;
    ╰────
   help: Try to remove the irregular whitespace
@@ -385,7 +385,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_irregular_whitespace.tsx:2:11]
  1 │ var foo =
  2 │         bar
-   ·         ─
+   ·           ─
  3 │         ;
    ╰────
   help: Try to remove the irregular whitespace
