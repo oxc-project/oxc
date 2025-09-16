@@ -7,6 +7,7 @@ use std::{
 use options::OxcCodegenOptions;
 use rustc_hash::FxHashMap;
 
+use napi::Either;
 use napi_derive::napi;
 use serde::Serialize;
 
@@ -35,6 +36,7 @@ use oxc_linter::{
     ModuleRecord, Oxlintrc,
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
+use oxc_transformer_plugins::{InjectGlobalVariables, InjectGlobalVariablesConfig, InjectImport};
 
 use crate::options::{OxcLinterOptions, OxcOptions, OxcRunOptions};
 
@@ -97,12 +99,14 @@ impl Oxc {
             control_flow: ref control_flow_options,
             isolated_declarations: ref isolated_declarations_options,
             codegen: ref codegen_options,
+            inject: ref inject_options,
             ..
         } = options;
         let linter_options = linter_options.clone().unwrap_or_default();
         let transform_options = transform_options.clone().unwrap_or_default();
         let control_flow_options = control_flow_options.clone().unwrap_or_default();
         let codegen_options = codegen_options.clone().unwrap_or_default();
+        let inject_options = inject_options.clone();
 
         let allocator = Allocator::default();
 
@@ -139,7 +143,7 @@ impl Oxc {
         };
         self.run_formatter(run_options, parse_options, &source_text, source_type);
 
-        let scoping = semantic.into_scoping();
+        let mut scoping = semantic.into_scoping();
 
         // Extract scope and symbol information if needed
         if !source_type.is_typescript_definition() {
@@ -164,9 +168,17 @@ impl Oxc {
             return Ok(());
         }
 
+        // Phase 5.5: Apply InjectGlobalVariables
+        if let Some(inject_opts) = inject_options {
+            let inject_config = self.build_inject_config(&inject_opts)?;
+            let ret =
+                InjectGlobalVariables::new(&allocator, inject_config).build(scoping, &mut program);
+            scoping = ret.scoping;
+        }
+
         // Phase 6: Apply transformations
         if run_options.transform {
-            self.apply_transformations(
+            scoping = self.apply_transformations(
                 &allocator,
                 &path,
                 &mut program,
@@ -491,6 +503,35 @@ impl Oxc {
         let mut writer = ScopesTextWriter::new(scoping);
         writer.visit_program(program);
         writer.scope_text
+    }
+
+    fn build_inject_config(
+        &self,
+        inject_opts: &crate::options::OxcInjectOptions,
+    ) -> napi::Result<InjectGlobalVariablesConfig> {
+        let mut imports = Vec::new();
+
+        for (local, value) in &inject_opts.inject {
+            let import = match value {
+                Either::A(source) => InjectImport::default_specifier(source, local),
+                Either::B(v) => {
+                    if v.len() != 2 {
+                        return Err(napi::Error::from_reason(
+                            "Inject plugin did not receive a tuple [string, string].",
+                        ));
+                    }
+                    let source = &v[0];
+                    if v[1] == "*" {
+                        InjectImport::namespace_specifier(source, local)
+                    } else {
+                        InjectImport::named_specifier(source, Some(&v[1]), local)
+                    }
+                }
+            };
+            imports.push(import);
+        }
+
+        Ok(InjectGlobalVariablesConfig::new(imports))
     }
 
     fn get_symbols_text(scoping: &Scoping) -> napi::Result<String> {
