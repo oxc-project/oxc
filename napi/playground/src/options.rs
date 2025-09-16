@@ -30,7 +30,7 @@ pub struct OxcRunOptions {
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcParserOptions {
     pub extension: String,
     pub allow_return_outside_function: bool,
@@ -39,13 +39,13 @@ pub struct OxcParserOptions {
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcLinterOptions {
     pub config: Option<String>,
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcTransformerOptions {
     pub target: Option<String>,
     pub use_define_for_class_fields: bool,
@@ -54,12 +54,13 @@ pub struct OxcTransformerOptions {
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcIsolatedDeclarationsOptions {
     pub strip_internal: bool,
 }
 
 #[napi(object)]
+#[derive(Clone)]
 pub struct OxcCodegenOptions {
     pub normal: bool,
     pub jsdoc: bool,
@@ -74,7 +75,7 @@ impl Default for OxcCodegenOptions {
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcControlFlowOptions {
     pub verbose: Option<bool>,
 }

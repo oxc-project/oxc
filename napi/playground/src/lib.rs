@@ -82,63 +82,47 @@ impl Oxc {
     #[napi]
     #[allow(clippy::allow_attributes, clippy::needless_pass_by_value)]
     pub fn run(&mut self, source_text: String, options: OxcOptions) -> napi::Result<()> {
+        // Initialize state
         self.source_text.clone_from(&source_text);
         self.diagnostics = vec![];
         self.scope_text = String::new();
         self.symbols_json = String::new();
 
+        // Extract options
         let OxcOptions {
-            run: run_options,
-            parser: parser_options,
-            linter: linter_options,
-            transformer: transform_options,
-            control_flow: control_flow_options,
-            isolated_declarations: isolated_declarations_options,
-            codegen: codegen_options,
+            run: ref run_options,
+            parser: ref parser_options,
+            linter: ref linter_options,
+            transformer: ref transform_options,
+            control_flow: ref control_flow_options,
+            isolated_declarations: ref isolated_declarations_options,
+            codegen: ref codegen_options,
             ..
         } = options;
-        let linter_options = linter_options.unwrap_or_default();
-        let transform_options = transform_options.unwrap_or_default();
-        let control_flow_options = control_flow_options.unwrap_or_default();
-        let codegen_options = codegen_options.unwrap_or_default();
+        let linter_options = linter_options.clone().unwrap_or_default();
+        let transform_options = transform_options.clone().unwrap_or_default();
+        let control_flow_options = control_flow_options.clone().unwrap_or_default();
+        let codegen_options = codegen_options.clone().unwrap_or_default();
 
         let allocator = Allocator::default();
 
+        // Setup path and source type
         let filename = format!("test.{}", parser_options.extension);
         let path = PathBuf::from(filename);
         let source_type =
             SourceType::from_path(&path).map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
-        let parser_options = ParseOptions {
-            parse_regular_expression: true,
-            allow_return_outside_function: parser_options.allow_return_outside_function,
-            preserve_parens: parser_options.preserve_parens,
-            allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
-        };
-        let ParserReturn { mut program, errors, mut module_record, .. } =
-            Parser::new(&allocator, &source_text, source_type).with_options(parser_options).parse();
-        self.diagnostics.extend(errors);
+        // Phase 1: Parse source
+        let (mut program, mut module_record) =
+            self.parse_source(&allocator, &source_text, source_type, parser_options);
 
-        let mut semantic_builder = SemanticBuilder::new();
-        if run_options.transform {
-            // Estimate transformer will triple scopes, symbols, references
-            semantic_builder = semantic_builder.with_excess_capacity(2.0);
-        }
-        let semantic_ret =
-            semantic_builder.with_check_syntax_error(true).with_cfg(true).build(&program);
-        let semantic = semantic_ret.semantic;
-        self.diagnostics.extend(semantic_ret.errors);
+        // Phase 2: Build semantic analysis
+        let semantic = self.build_semantic(&program, run_options, &control_flow_options);
 
-        self.control_flow_graph = semantic.cfg().map_or_else(String::default, |cfg| {
-            cfg.debug_dot(DebugDotContext::new(
-                semantic.nodes(),
-                control_flow_options.verbose.unwrap_or_default(),
-            ))
-        });
-
+        // Phase 3: Run linter
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
         self.run_linter(
-            &run_options,
+            run_options,
             &linter_options,
             &path,
             &program,
@@ -146,10 +130,18 @@ impl Oxc {
             &allocator,
         );
 
-        self.run_formatter(&run_options, parser_options, &source_text, source_type);
+        // Phase 4: Run formatter
+        let parse_options = ParseOptions {
+            parse_regular_expression: true,
+            allow_return_outside_function: parser_options.allow_return_outside_function,
+            preserve_parens: parser_options.preserve_parens,
+            allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
+        };
+        self.run_formatter(run_options, parse_options, &source_text, source_type);
 
         let scoping = semantic.into_scoping();
 
+        // Extract scope and symbol information if needed
         if !source_type.is_typescript_definition() {
             if run_options.scope {
                 self.scope_text = Self::get_scope_text(&program, &scoping);
@@ -159,62 +151,166 @@ impl Oxc {
             }
         }
 
+        // Phase 5: Handle isolated declarations (early return path)
         if run_options.isolated_declarations {
-            let id_options = isolated_declarations_options
-                .map(|o| IsolatedDeclarationsOptions { strip_internal: o.strip_internal })
-                .unwrap_or_default();
-            let ret = IsolatedDeclarations::new(&allocator, id_options).build(&program);
-            if ret.errors.is_empty() {
-                self.codegen(&path, &ret.program, None, &run_options, &codegen_options);
-            } else {
-                self.diagnostics.extend(ret.errors);
-                self.codegen_text = String::new();
-                self.codegen_sourcemap_text = None;
-            }
+            self.process_isolated_declarations(
+                &allocator,
+                &path,
+                &program,
+                run_options,
+                &codegen_options,
+                isolated_declarations_options.clone(),
+            );
             return Ok(());
         }
 
+        // Phase 6: Apply transformations
         if run_options.transform {
-            let mut options = transform_options
-                .target
-                .as_ref()
-                .and_then(|target| {
-                    TransformOptions::from_target(target)
-                        .map_err(|err| {
-                            self.diagnostics.push(OxcDiagnostic::error(err));
-                        })
-                        .ok()
-                })
-                .unwrap_or_default();
-            options.assumptions.set_public_class_fields =
-                !transform_options.use_define_for_class_fields;
-            options.typescript.remove_class_fields_without_initializer =
-                !transform_options.use_define_for_class_fields;
-            options.decorator.legacy = transform_options.experimental_decorators;
-            options.decorator.emit_decorator_metadata = transform_options.emit_decorator_metadata;
-            let result = Transformer::new(&allocator, &path, &options)
-                .build_with_scoping(scoping, &mut program);
-            self.diagnostics.extend(result.errors);
+            self.apply_transformations(
+                &allocator,
+                &path,
+                &mut program,
+                scoping,
+                &transform_options,
+            );
         }
 
-        let scoping = if options.run.compress || options.run.mangle {
+        // Phase 7: Apply minification
+        let scoping = Self::apply_minification(&allocator, &mut program, &options);
+
+        // Phase 8: Generate code
+        self.codegen(&path, &program, scoping, run_options, &codegen_options);
+
+        // Phase 9: Finalize output
+        self.finalize_output(&source_text, &mut program, &mut module_record, source_type);
+
+        Ok(())
+    }
+
+    fn parse_source<'a>(
+        &mut self,
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        parser_options: &crate::options::OxcParserOptions,
+    ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>) {
+        let parser_options = ParseOptions {
+            parse_regular_expression: true,
+            allow_return_outside_function: parser_options.allow_return_outside_function,
+            preserve_parens: parser_options.preserve_parens,
+            allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
+        };
+        let ParserReturn { program, errors, module_record, .. } =
+            Parser::new(allocator, source_text, source_type).with_options(parser_options).parse();
+        self.diagnostics.extend(errors);
+        (program, module_record)
+    }
+
+    fn build_semantic<'a>(
+        &mut self,
+        program: &'a Program<'a>,
+        run_options: &OxcRunOptions,
+        control_flow_options: &crate::options::OxcControlFlowOptions,
+    ) -> oxc::semantic::Semantic<'a> {
+        let mut semantic_builder = SemanticBuilder::new();
+        if run_options.transform {
+            // Estimate transformer will triple scopes, symbols, references
+            semantic_builder = semantic_builder.with_excess_capacity(2.0);
+        }
+        let semantic_ret =
+            semantic_builder.with_check_syntax_error(true).with_cfg(true).build(program);
+        self.diagnostics.extend(semantic_ret.errors);
+
+        self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
+            cfg.debug_dot(DebugDotContext::new(
+                semantic_ret.semantic.nodes(),
+                control_flow_options.verbose.unwrap_or_default(),
+            ))
+        });
+
+        semantic_ret.semantic
+    }
+
+    fn process_isolated_declarations<'a>(
+        &mut self,
+        allocator: &'a Allocator,
+        path: &Path,
+        program: &Program<'a>,
+        run_options: &OxcRunOptions,
+        codegen_options: &OxcCodegenOptions,
+        isolated_declarations_options: Option<crate::options::OxcIsolatedDeclarationsOptions>,
+    ) {
+        let id_options = isolated_declarations_options
+            .map(|o| IsolatedDeclarationsOptions { strip_internal: o.strip_internal })
+            .unwrap_or_default();
+        let ret = IsolatedDeclarations::new(allocator, id_options).build(program);
+        if ret.errors.is_empty() {
+            self.codegen(path, &ret.program, None, run_options, codegen_options);
+        } else {
+            self.diagnostics.extend(ret.errors);
+            self.codegen_text = String::new();
+            self.codegen_sourcemap_text = None;
+        }
+    }
+
+    fn apply_transformations<'a>(
+        &mut self,
+        allocator: &'a Allocator,
+        path: &Path,
+        program: &mut Program<'a>,
+        scoping: Scoping,
+        transform_options: &crate::options::OxcTransformerOptions,
+    ) -> Scoping {
+        let mut options = transform_options
+            .target
+            .as_ref()
+            .and_then(|target| {
+                TransformOptions::from_target(target)
+                    .map_err(|err| {
+                        self.diagnostics.push(OxcDiagnostic::error(err));
+                    })
+                    .ok()
+            })
+            .unwrap_or_default();
+        options.assumptions.set_public_class_fields =
+            !transform_options.use_define_for_class_fields;
+        options.typescript.remove_class_fields_without_initializer =
+            !transform_options.use_define_for_class_fields;
+        options.decorator.legacy = transform_options.experimental_decorators;
+        options.decorator.emit_decorator_metadata = transform_options.emit_decorator_metadata;
+        let result =
+            Transformer::new(allocator, path, &options).build_with_scoping(scoping, program);
+        self.diagnostics.extend(result.errors);
+        result.scoping
+    }
+
+    fn apply_minification<'a>(
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+        options: &OxcOptions,
+    ) -> Option<Scoping> {
+        if options.run.compress || options.run.mangle {
             let compress = options.compress.map(|_| CompressOptions::smallest());
             let mangle = options.mangle.map(|o| MangleOptions {
                 top_level: o.top_level,
                 keep_names: MangleOptionsKeepNames { function: o.keep_names, class: o.keep_names },
                 debug: false,
             });
-            Minifier::new(MinifierOptions { mangle, compress })
-                .minify(&allocator, &mut program)
-                .scoping
+            Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program).scoping
         } else {
             None
-        };
+        }
+    }
 
-        self.codegen(&path, &program, scoping, &run_options, &codegen_options);
+    fn finalize_output<'a>(
+        &mut self,
+        source_text: &str,
+        program: &mut Program<'a>,
+        module_record: &mut oxc::syntax::module_record::ModuleRecord<'a>,
+        source_type: SourceType,
+    ) {
         self.ir = format!("{:#?}", program.body);
-        let mut comments =
-            convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut []);
+        let mut comments = convert_utf8_to_utf16(source_text, program, module_record, &mut []);
 
         self.ast_json = if source_type.is_javascript() {
             // Add hashbang to start of comments
@@ -235,8 +331,6 @@ impl Oxc {
             program.to_pretty_estree_ts_json_with_fixes(false)
         };
         self.comments = comments;
-
-        Ok(())
     }
 
     fn run_linter(
