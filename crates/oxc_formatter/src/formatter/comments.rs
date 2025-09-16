@@ -305,42 +305,8 @@ impl<'a> Comments<'a> {
 
             if source_text.is_own_line_comment(comment) {
                 // Own line comments are typically leading comments for the next node
-
-                if matches!(enclosing_node, SiblingNode::IfStatement(stmt) if stmt.test.span() == preceding_span)
-                    || matches!(enclosing_node, SiblingNode::WhileStatement(stmt) if stmt.test.span() == preceding_span)
-                {
-                    return handle_if_and_while_statement_comments(
-                        following_span.start,
-                        comment_index,
-                        comments,
-                        source_text,
-                    );
-                }
-
                 break;
             } else if self.source_text.is_end_of_line_comment(comment) {
-                if let SiblingNode::IfStatement(if_stmt) = enclosing_node {
-                    if if_stmt.consequent.span() == preceding_span {
-                        // If comment is after the `else` keyword, it is not a trailing comment of consequent.
-                        if source_text[preceding_span.end as usize..comment.span.start as usize]
-                            .contains("else")
-                        {
-                            return &[];
-                        }
-                    }
-                }
-
-                if matches!(enclosing_node, SiblingNode::IfStatement(stmt) if stmt.test.span() == preceding_span)
-                    || matches!(enclosing_node, SiblingNode::WhileStatement(stmt) if stmt.test.span() == preceding_span)
-                {
-                    return handle_if_and_while_statement_comments(
-                        following_span.start,
-                        comment_index,
-                        comments,
-                        source_text,
-                    );
-                }
-
                 return &comments[..=comment_index];
             }
 
@@ -420,23 +386,4 @@ impl<'a> Comments<'a> {
 fn matches_pattern_at(bytes: &[u8], pos: usize, pattern: &[u8]) -> bool {
     bytes[pos..].starts_with(pattern)
         && matches!(bytes.get(pos + pattern.len()), Some(b' ' | b'\t' | b'\n' | b'\r' | b'{'))
-}
-
-/// Handles comment placement logic for if and while statements.
-fn handle_if_and_while_statement_comments<'a>(
-    mut end: u32,
-    comment_index: usize,
-    comments: &'a [Comment],
-    source_text: SourceText,
-) -> &'a [Comment] {
-    // Handle pattern: `if (a /* comment */) // trailing comment`
-    // Find the last comment that contains ')' between its end and the current end
-    for (idx, comment) in comments[..=comment_index].iter().enumerate().rev() {
-        if source_text.bytes_contain(comment.span.end, end, b')') {
-            return &comments[..=idx];
-        }
-        end = comment.span.start;
-    }
-
-    &[]
 }

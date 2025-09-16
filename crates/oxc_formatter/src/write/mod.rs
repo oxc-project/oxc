@@ -60,7 +60,7 @@ use crate::{
         assignment_like::AssignmentLike,
         call_expression::{contains_a_test_pattern, is_test_call_expression, is_test_each_pattern},
         conditional::ConditionalLike,
-        expression::FormatExpressionWithoutTrailingComments,
+        expression::{self, FormatExpressionWithoutTrailingComments},
         member_chain::MemberChain,
         object::format_property_key,
         string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -625,8 +625,20 @@ impl<'a> Format<'a> for FormatCommentForEmptyStatement<'a, '_> {
     }
 }
 
+struct FormatTestOfIfAndWhileStatement<'a, 'b>(&'b AstNode<'a, Expression<'a>>);
+impl<'a> Format<'a> for FormatTestOfIfAndWhileStatement<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        FormatExpressionWithoutTrailingComments(self.0).fmt(f);
+        let comments = f.context().comments().comments_before_character(self.0.span().end, b')');
+        if !comments.is_empty() {
+            write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
+        }
+        Ok(())
+    }
+}
 impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let body = self.body();
         write!(
             f,
             group(&format_args!(
@@ -634,11 +646,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
                 space(),
                 "(",
                 group(&soft_block_indent(&format_args!(
-                    &self.test(),
+                    FormatTestOfIfAndWhileStatement(self.test()),
                     FormatCommentForEmptyStatement(self.body())
                 ))),
                 ")",
-                FormatStatementBody::new(self.body())
+                FormatStatementBody::new(body)
             ))
         )
     }
@@ -769,7 +781,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 space(),
                 "(",
                 group(&soft_block_indent(&format_args!(
-                    &test,
+                    FormatTestOfIfAndWhileStatement(test),
                     FormatCommentForEmptyStatement(consequent)
                 ))),
                 ")",
@@ -784,11 +796,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             let has_dangling_comments = has_line_comment
                 || comments.last().is_some_and(|last_comment| {
                     // Ensure the comments are placed before the else keyword or on a new line
-                    let gap_str =
-                        f.source_text().slice_range(last_comment.span.end, alternate_start);
-                    gap_str.contains("else")
-                        || f.source_text()
+                    // `e` is the first letter of `else`
+                    f.source_text().bytes_contain(last_comment.span.end, alternate_start, b'e') || {
+                        f.source_text()
                             .contains_newline_between(last_comment.span.end, alternate_start)
+                    }
                 });
 
             let else_on_same_line =
