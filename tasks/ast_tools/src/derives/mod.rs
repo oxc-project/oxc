@@ -10,7 +10,7 @@ use crate::{
     Codegen, Result, Runner,
     output::{Output, output_path},
     parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
-    schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
+    schema::{Def, FileId, Schema, StructOrEnum, TypeDef},
     utils::format_cow,
 };
 
@@ -265,63 +265,3 @@ macro_rules! define_derive {
     };
 }
 pub(crate) use define_derive;
-
-/// Reference to a [`StructDef`] or [`EnumDef`].
-///
-/// This type is what's passed to [`Derive::derive`] method.
-#[derive(Clone, Copy)]
-pub enum StructOrEnum<'d> {
-    Struct(&'d StructDef),
-    Enum(&'d EnumDef),
-}
-
-impl Def for StructOrEnum<'_> {
-    /// Get [`TypeId`] for type.
-    fn id(&self) -> TypeId {
-        match self {
-            Self::Struct(struct_def) => struct_def.id(),
-            Self::Enum(enum_def) => enum_def.id(),
-        }
-    }
-
-    /// Get type name.
-    fn name(&self) -> &str {
-        match self {
-            Self::Struct(struct_def) => struct_def.name(),
-            Self::Enum(enum_def) => enum_def.name(),
-        }
-    }
-
-    /// Get all traits which have derives generated for this type.
-    fn generated_derives(&self) -> Derives {
-        match self {
-            Self::Struct(struct_def) => struct_def.generated_derives(),
-            Self::Enum(enum_def) => enum_def.generated_derives(),
-        }
-    }
-
-    /// Get if type has a lifetime.
-    fn has_lifetime(&self, schema: &Schema) -> bool {
-        match self {
-            Self::Struct(struct_def) => struct_def.has_lifetime(schema),
-            Self::Enum(enum_def) => enum_def.has_lifetime(schema),
-        }
-    }
-
-    /// Get type signature (including lifetimes).
-    /// Lifetimes are anonymous (`'_`) if `anon` is true.
-    fn ty_with_lifetime(&self, schema: &Schema, anon: bool) -> TokenStream {
-        match self {
-            Self::Struct(struct_def) => struct_def.ty_with_lifetime(schema, anon),
-            Self::Enum(enum_def) => enum_def.ty_with_lifetime(schema, anon),
-        }
-    }
-
-    /// Get inner type, if type has one.
-    ///
-    /// Structs and enums don't have a single inner type, so returns `None`.
-    #[expect(unused_variables)]
-    fn maybe_inner_type<'s>(&self, schema: &'s Schema) -> Option<&'s TypeDef> {
-        None
-    }
-}
