@@ -279,7 +279,7 @@ impl<'a> Deref for RuleFix<'a> {
 /// A completed, normalized fix ready to be applied to the source code.
 ///
 /// Used internally by this module. Lint rules should use [`RuleFix`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
@@ -334,7 +334,7 @@ impl<'a> Fix<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PossibleFixes<'a> {
     None,
     Single(Fix<'a>),
@@ -600,12 +600,6 @@ impl<'a> CompositeFix<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    impl PartialEq for Fix<'_> {
-        fn eq(&self, other: &Self) -> bool {
-            self.span == other.span && self.content == other.content
-        }
-    }
 
     impl Clone for CompositeFix<'_> {
         fn clone(&self) -> Self {

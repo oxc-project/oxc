@@ -218,7 +218,7 @@ pub struct FixResult<'a> {
     pub messages: Vec<Message<'a>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes<'a>,
