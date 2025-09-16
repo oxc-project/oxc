@@ -219,7 +219,7 @@ ts compatibility: 349/573 (60.91%)
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |
 | typescript/union/inlining.ts | 💥 | 36.22% |
-| typescript/union/union-parens.ts | 💥 | 54.00% |
+| typescript/union/union-parens.ts | 💥 | 55.00% |
 | typescript/union/with-type-params.ts | 💥 | 0.00% |
 | typescript/union/consistent-with-flow/comment.ts | 💥 | 0.00% |
 | typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 19.05% |

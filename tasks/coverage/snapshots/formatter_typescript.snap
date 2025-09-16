@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8729/8816 (99.01%)
+Positive Passed: 8732/8816 (99.05%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
@@ -18,8 +18,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/castFunctionExpr
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classNonUniqueSymbolMethodHasSymbolIndexer.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences3.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences6.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
 
@@ -99,8 +97,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeName1.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typePredicateFreshLiteralWidening.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeVariableTypeGuards.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThisParameter.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
@@ -168,8 +164,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectT
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/rest/genericObjectRest.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/parenthesizedTypes.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/unionTypeLiterals.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembers.ts
 

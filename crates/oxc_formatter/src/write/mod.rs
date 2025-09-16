@@ -1844,6 +1844,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
         let params = self.params();
         let return_type = self.return_type();
 
+        if self.needs_parentheses(f) {
+            write!(f, "(")?;
+        }
         if r#abstract {
             write!(f, ["abstract", space()])?;
         }
@@ -1859,7 +1862,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
                 space(),
                 return_type.type_annotation()
             ]
-        )
+        );
+        if self.needs_parentheses(f) {
+            write!(f, ")")?;
+        }
+        Ok(())
     }
 }
 
