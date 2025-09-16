@@ -31,7 +31,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSFunctionType<'a>> {
         match self.parent {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
-            },
+            }
             AstNodes::TSUnionType(_) => true,
             _ => false,
         }
@@ -49,7 +49,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConstructorType<'a>> {
         match self.parent {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
-            },
+            }
             AstNodes::TSUnionType(_) => true,
             _ => false,
         }
