@@ -1,34 +1,30 @@
 mod tester;
 
+use std::path::PathBuf;
+
 use tester::Tester;
 
 #[test]
 fn single_file() {
     // Test different flags on the same file
-    Tester::new().test_and_snapshot_multiple(&[
-        &["--check", "tests/fixtures/single_file/simple.js"],
-        &["--list-different", "tests/fixtures/single_file/simple.js"],
-    ]);
+    Tester::new().with_cwd(PathBuf::from("tests/fixtures/single_file")).test_and_snapshot_multiple(
+        &[&["--check", "simple.js"], &["--list-different", "simple.js"]],
+    );
 }
 
 #[test]
 fn multiple_files() {
     // Test different ways to specify multiple files
-    Tester::new().test_and_snapshot_multiple(&[
-        // Explicit file list
-        &[
-            "--check",
-            "tests/fixtures/multiple_files/simple.js",
-            "tests/fixtures/multiple_files/arrow.js",
-        ],
-        // Directory
-        &["--check", "tests/fixtures/multiple_files"],
-        // Glob pattern (not expanded in tests, but usually expanded by the shell)
-        &["--check", "tests/fixtures/multiple_files/*.js"],
-        // Quoted glob pattern
-        // TODO: Implement glob expansion w/ `fast-glob`
-        &["--check", "'tests/fixtures/multiple_files/*.js'"],
-    ]);
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/multiple_files"))
+        .test_and_snapshot_multiple(&[
+            // Explicit file list
+            &["--check", "simple.js", "arrow.js"],
+            // Directory
+            &["--check", "."],
+            // Default to current directory
+            &["--check"],
+        ]);
 }
 
 #[test]

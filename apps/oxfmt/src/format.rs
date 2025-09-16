@@ -27,6 +27,12 @@ impl FormatRunner {
         Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
     }
 
+    #[must_use]
+    pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
+        self.cwd = cwd;
+        self
+    }
+
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
         let start_time = Instant::now();
 
@@ -39,6 +45,12 @@ impl FormatRunner {
         // Instead of `--ignore-pattern=PAT`, we support `!` prefix in paths
         let (exclude_patterns, target_paths): (Vec<_>, Vec<_>) =
             paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
+
+        // Resolve relative paths against the current working directory
+        let target_paths: Vec<PathBuf> = target_paths
+            .into_iter()
+            .map(|path| if path.is_relative() { cwd.join(path) } else { path })
+            .collect();
 
         // Build exclude patterns if any exist
         let override_builder = (!exclude_patterns.is_empty())

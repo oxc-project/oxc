@@ -81,8 +81,14 @@ impl FormatService {
             }
 
             // Notify if needed
-            // Normalize path separators to forward slashes for consistent output across platforms
-            let display_path = path.to_string_lossy().cow_replace('\\', "/").to_string();
+            let display_path = path
+                // Show path relative to `cwd` for cleaner output
+                .strip_prefix(&self.cwd)
+                .unwrap_or(path)
+                .to_string_lossy()
+                // Normalize path separators for consistent output across platforms
+                .cow_replace('\\', "/")
+                .to_string();
             let elapsed = elapsed.as_millis();
             if let Some(diagnostic) = match (&self.output_options, is_changed) {
                 (OutputOptions::Check, true) => {
