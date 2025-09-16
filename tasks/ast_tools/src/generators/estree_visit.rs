@@ -1,18 +1,26 @@
 //! Generator for raw transfer lazy deserializer and visitor.
 
-use std::str;
+use std::{borrow::Cow, collections::hash_map::Entry, str};
 
-use oxc_index::{IndexVec, index_vec};
+use rustc_hash::FxHashMap;
+
+use oxc_index::{IndexVec, define_index_type, index_vec};
 
 use crate::{
-    Generator,
+    Generator, NAPI_PARSER_PACKAGE_PATH,
     codegen::{Codegen, DeriveId},
-    derives::estree::should_skip_field,
+    derives::estree::{get_fieldless_variant_value, should_skip_field},
     output::Output,
-    schema::{Def, Schema, TypeDef, TypeId, extensions::estree::WalkType},
+    schema::{Def, Schema, StructDef, StructOrEnum, TypeDef, TypeId, extensions::estree::WalkType},
+    utils::write_it,
 };
 
 use super::define_generator;
+
+define_index_type! {
+    /// ID of type in the AST
+    pub struct NodeId = u32;
+}
 
 /// Generator for raw transfer lazy deserializer and visitor.
 pub struct ESTreeVisitGenerator;
@@ -25,9 +33,13 @@ impl Generator for ESTreeVisitGenerator {
         WalkTypeCalculator::calculate(estree_derive_id, schema);
     }
 
-    fn generate_many(&self, _schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
-        // TODO
-        vec![]
+    fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
+        let types = generate(schema);
+
+        vec![Output::Javascript {
+            path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/types.mjs"),
+            code: types,
+        }]
     }
 }
 
@@ -146,5 +158,114 @@ impl<'s> WalkTypeCalculator<'s> {
         self.schema.enum_def_mut(type_id).estree.is_walked = is_walked;
 
         is_walked
+    }
+}
+
+struct ESTreeNode<'s> {
+    name: Cow<'s, str>,
+    struct_defs: Vec<&'s StructDef>,
+    is_leaf: bool,
+}
+
+fn generate(schema: &Schema) -> String {
+    // Compile hashmap mapping ESTree type name to struct(s) which represent that node type.
+    // Can be multiple structs for a single ESTree type.
+    // e.g. Rust types `IdentifierName`, `IdentifierReference`, and 3 other types all become ESTree type `Identifier`.
+    let mut estree_nodes = FxHashMap::<_, (Vec<&StructDef>, bool)>::default();
+
+    let mut add_estree_node = |name, struct_def| match estree_nodes.entry(name) {
+        Entry::Occupied(entry) => {
+            let entry = entry.into_mut();
+            entry.0.push(struct_def);
+            if struct_def.estree.walk_type == WalkType::Node {
+                entry.1 = false;
+            }
+        }
+        Entry::Vacant(entry) => {
+            entry.insert((vec![struct_def], struct_def.estree.walk_type == WalkType::Leaf));
+        }
+    };
+
+    'types: for type_def in schema.structs_and_enums() {
+        let StructOrEnum::Struct(struct_def) = type_def else {
+            continue;
+        };
+        if matches!(struct_def.estree.walk_type, WalkType::NoWalk | WalkType::Walk) {
+            continue;
+        }
+
+        for field in &struct_def.fields {
+            if field.name() == "type" {
+                let field_enum = field.type_def(schema).as_enum().unwrap();
+                for variant in &field_enum.variants {
+                    assert!(variant.is_fieldless());
+
+                    let name = get_fieldless_variant_value(field_enum, variant);
+                    add_estree_node(name, struct_def);
+                }
+                continue 'types;
+            }
+        }
+
+        if !struct_def.estree.no_type {
+            let name = struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
+            add_estree_node(Cow::Borrowed(name), struct_def);
+        }
+    }
+
+    let mut estree_nodes = estree_nodes
+        .into_iter()
+        .map(|(name, (struct_defs, is_leaf))| ESTreeNode { name, struct_defs, is_leaf })
+        .collect::<IndexVec<NodeId, _>>();
+    estree_nodes.sort_by(|t1, t2| match t1.is_leaf.cmp(&t2.is_leaf) {
+        std::cmp::Ordering::Equal => t1.name.cmp(&t2.name),
+        ord => ord.reverse(),
+    });
+
+    let mut types_code = "
+        // Mapping from node type name to node type ID
+        export const NODE_TYPE_IDS_MAP = new Map([
+            // Leaf nodes"
+        .to_string();
+
+    let mut leaf_nodes_count = None;
+    for (node_id, estree_node) in estree_nodes.iter_mut_enumerated() {
+        let node_id = node_id.raw();
+        if !estree_node.is_leaf && leaf_nodes_count.is_none() {
+            leaf_nodes_count = Some(node_id);
+            types_code.push_str("\n// Non-leaf nodes");
+        }
+
+        let name = &estree_node.name;
+        write_it!(types_code, "\n['{name}', {node_id}],");
+    }
+
+    let node_types_count = estree_nodes.len();
+    let leaf_nodes_count = leaf_nodes_count.unwrap();
+
+    #[rustfmt::skip]
+    write_it!(types_code, "
+        ]);
+
+        export const NODE_TYPES_COUNT = {node_types_count};
+        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
+    ");
+
+    // TODO
+
+    types_code
+}
+
+/// Get whether a type is walked in ESTree AST.
+fn is_walked(type_def: &TypeDef, schema: &Schema) -> bool {
+    match type_def {
+        TypeDef::Struct(struct_def) => struct_def.estree.walk_type != WalkType::NoWalk,
+        TypeDef::Enum(enum_def) => enum_def.estree.is_walked,
+        TypeDef::Primitive(_) => false,
+        TypeDef::Option(option_def) => is_walked(option_def.inner_type(schema), schema),
+        TypeDef::Box(box_def) => is_walked(box_def.inner_type(schema), schema),
+        TypeDef::Vec(vec_def) => is_walked(vec_def.inner_type(schema), schema),
+        TypeDef::Cell(cell_def) => is_walked(cell_def.inner_type(schema), schema),
+        TypeDef::Pointer(pointer_def) => is_walked(pointer_def.inner_type(schema), schema),
     }
 }
