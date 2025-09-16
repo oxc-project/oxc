@@ -6,7 +6,12 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    Options, linter::server_linter::ServerLinterRun, options::Run, worker::WorkspaceWorker,
+    Options,
+    linter::{
+        options::{LintOptions, Run},
+        server_linter::ServerLinterRun,
+    },
+    worker::WorkspaceWorker,
 };
 
 use super::linter::error_with_position::DiagnosticReport;
@@ -94,11 +99,11 @@ fixed: {fixed:?}
 /// Testing struct for the [linter server][crate::linter::server_linter::ServerLinter].
 pub struct Tester<'t> {
     relative_root_dir: &'t str,
-    options: Option<Options>,
+    options: Option<LintOptions>,
 }
 
 impl Tester<'_> {
-    pub fn new(relative_root_dir: &'static str, options: Option<Options>) -> Self {
+    pub fn new(relative_root_dir: &'static str, options: Option<LintOptions>) -> Self {
         Self { relative_root_dir, options }
     }
 
@@ -108,7 +113,12 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
         let worker = WorkspaceWorker::new(uri);
-        worker.init_linter(&self.options.clone().unwrap_or_default()).await;
+        worker
+            .init_linter(&Options {
+                lint: self.options.clone().unwrap_or_default(),
+                ..Default::default()
+            })
+            .await;
 
         worker
     }
