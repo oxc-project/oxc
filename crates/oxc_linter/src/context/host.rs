@@ -342,6 +342,16 @@ impl<'a> ContextHost<'a> {
         std::mem::take(&mut *messages)
     }
 
+    #[cfg(debug_assertions)]
+    pub fn get_diagnostics(&self, cb: impl FnOnce(&mut Vec<Message<'a>>)) {
+        cb(self.diagnostics.borrow_mut().as_mut());
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn diagnostic_count(&self) -> usize {
+        self.diagnostics.borrow().len()
+    }
+
     /// Creates a new [`LintContext`] for a specific rule.
     pub fn spawn(self: Rc<Self>, rule: &RuleEnum, severity: AllowWarnDeny) -> LintContext<'a> {
         let rule_name = rule.name();
