@@ -31,6 +31,22 @@ pub struct ESTreeStruct {
     /// Additional custom TS type definition to add along with the generated one.
     /// Does not include `export`.
     pub add_ts_def: Option<String>,
+    /// Type of visitation.
+    pub walk_type: WalkType,
+}
+
+/// Enum describing whether + how a type is walked in ESTree AST.
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+pub enum WalkType {
+    /// Not walked.
+    #[default]
+    NoWalk,
+    /// Walked but not visited.
+    Walk,
+    /// Visited leaf node. i.e. does not have children which are also visited.
+    Leaf,
+    /// Visited node, not leaf. i.e. is visited itself and has children which are also visited.
+    Node,
 }
 
 /// Configuration for ESTree generator on an enum.
@@ -55,6 +71,8 @@ pub struct ESTreeEnum {
     /// Additional custom TS type definition to add along with the generated one.
     /// Does not include `export`.
     pub add_ts_def: Option<String>,
+    /// `true` if this type is walked in the ESTree AST.
+    pub is_walked: bool,
 }
 
 /// Configuration for ESTree generator on a struct field.

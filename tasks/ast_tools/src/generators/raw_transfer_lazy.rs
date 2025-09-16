@@ -14,8 +14,11 @@ use crate::{
     output::Output,
     schema::{
         BoxDef, CellDef, Def, EnumDef, OptionDef, PointerDef, PrimitiveDef, Schema, StructDef,
-        TypeDef, TypeId, VecDef,
-        extensions::layout::{GetLayout, GetOffset},
+        StructOrEnum, TypeDef, TypeId, VecDef,
+        extensions::{
+            estree::WalkType,
+            layout::{GetLayout, GetOffset},
+        },
     },
     utils::{format_cow, upper_case_first, write_it},
 };
@@ -23,7 +26,7 @@ use crate::{
 use super::define_generator;
 use super::raw_transfer::{
     VEC_LEN_FIELD_OFFSET, VEC_PTR_FIELD_OFFSET, pos_offset, pos_offset_shift, pos32_offset,
-    should_skip_innermost_type,
+    should_skip_type,
 };
 
 /// Generator for raw transfer lazy deserializer and visitor.
@@ -87,9 +90,15 @@ fn generate(
     // Initialize structure for determining if types need local cache. Used in `generate_struct`.
     let mut local_cache_types = LocalCacheTypes::new(schema);
 
-    // Determine which types are walked
-    // (not including types which aren't part of AST e.g. `Error`, and AST types which aren't visited).
-    let (walk_statuses, leaf_nodes_count) = WalkStatuses::calculate(estree_derive_id, schema);
+    // Get number of leaf node types
+    let mut leaf_nodes_count = 0;
+    for type_def in schema.structs_and_enums() {
+        if let StructOrEnum::Struct(struct_def) = type_def
+            && struct_def.estree.walk_type == WalkType::Leaf
+        {
+            leaf_nodes_count += 1;
+        }
+    }
 
     // Generate code
     let mut state = State {
@@ -105,8 +114,6 @@ fn generate(
     let span_struct_def = schema.struct_def(span_type_id);
 
     for type_def in &schema.types {
-        let is_walked = walk_statuses[type_def.id()] == WalkStatus::Walk;
-
         match type_def {
             TypeDef::Struct(struct_def) => {
                 generate_struct(
@@ -114,34 +121,25 @@ fn generate(
                     &mut state,
                     &cache_key_offsets,
                     &mut local_cache_types,
-                    is_walked,
-                    &walk_statuses,
                     estree_derive_id,
                     span_struct_def,
                     schema,
                 );
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum(
-                    enum_def,
-                    &mut state,
-                    is_walked,
-                    &walk_statuses,
-                    estree_derive_id,
-                    schema,
-                );
+                generate_enum(enum_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
                 generate_primitive(primitive_def, &mut state, schema);
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut state, is_walked, estree_derive_id, schema);
+                generate_option(option_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut state, is_walked, estree_derive_id, schema);
+                generate_box(box_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut state, is_walked, estree_derive_id, schema);
+                generate_vec(vec_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Cell(_cell_def) => {
                 // No constructor for `Cell`s - use inner type's constructor
@@ -200,125 +198,6 @@ fn generate(
     ");
 
     (constructors, walkers, node_type_ids_map)
-}
-
-/// Structure for calculating which types need walk functions.
-struct WalkStatuses<'s> {
-    statuses: IndexVec<TypeId, WalkStatus>,
-    leaf_nodes_count: u32,
-    estree_derive_id: DeriveId,
-    schema: &'s Schema,
-}
-
-/// Enum describing whether a type needs a walk function.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum WalkStatus {
-    NoWalk,
-    Walk,
-    Uncalculated,
-}
-
-impl<'s> WalkStatuses<'s> {
-    /// Calculate whether types need walk functions.
-    ///
-    /// Performs a recursive walk through the dependencies of types, starting from `Program`.
-    /// For each type, determine if it needs a walk function.
-    ///
-    /// * Structs needs a walk function if either:
-    ///   1. It is an AST node i.e. has a `type` field. or
-    ///   2. One of it's fields needs to be walked.
-    /// * Enums need a walk function if any variant needs to be walked.
-    /// * Primitives are never walked.
-    /// * Container types (`Box`, `Vec`, `Cell`) need a walk function if their contained type is walked.
-    ///
-    /// Return an `IndexVec` keyed by `TypeId`. Each type in AST has status `Walk` or `NoWalk`.
-    /// Types which are not part of the AST (e.g. `Error`) are not visited and have status `Uncalculated`.
-    ///
-    /// Also calculate the number of leaf nodes i.e. nodes which don't have any children which are walked
-    /// e.g. `IdentifierReference`, `StringLiteral`.
-    fn calculate(
-        estree_derive_id: DeriveId,
-        schema: &'s Schema,
-    ) -> (/* walk statuses */ IndexVec<TypeId, WalkStatus>, /* leaf nodes count */ u32) {
-        let statuses = index_vec![WalkStatus::Uncalculated; schema.types.len()];
-
-        let mut statuses = Self { statuses, leaf_nodes_count: 0, estree_derive_id, schema };
-
-        let program_type = schema.type_by_name("Program");
-        statuses.is_walked(program_type);
-
-        (statuses.statuses, statuses.leaf_nodes_count)
-    }
-
-    fn is_walked(&mut self, type_def: &TypeDef) -> bool {
-        let type_id = type_def.id();
-        let status = self.statuses[type_id];
-        if status != WalkStatus::Uncalculated {
-            return status == WalkStatus::Walk;
-        }
-
-        let is_walked = match type_def {
-            TypeDef::Struct(struct_def) => self.struct_is_walked(struct_def),
-            TypeDef::Enum(enum_def) => self.enum_is_walked(enum_def),
-            TypeDef::Primitive(_) => false,
-            TypeDef::Option(option_def) => self.is_walked(option_def.inner_type(self.schema)),
-            TypeDef::Box(box_def) => self.is_walked(box_def.inner_type(self.schema)),
-            TypeDef::Vec(vec_def) => self.is_walked(vec_def.inner_type(self.schema)),
-            TypeDef::Cell(cell_def) => self.is_walked(cell_def.inner_type(self.schema)),
-            TypeDef::Pointer(pointer_def) => self.is_walked(pointer_def.inner_type(self.schema)),
-        };
-
-        self.statuses[type_id] = if is_walked { WalkStatus::Walk } else { WalkStatus::NoWalk };
-
-        is_walked
-    }
-
-    fn struct_is_walked(&mut self, struct_def: &StructDef) -> bool {
-        if !struct_def.generates_derive(self.estree_derive_id) || struct_def.estree.skip {
-            return false;
-        }
-
-        let mut has_type_field = !struct_def.estree.no_type;
-        if has_type_field {
-            // Set status early to avoid infinite loop
-            self.statuses[struct_def.id()] = WalkStatus::Walk;
-        }
-
-        let mut has_walked_field = false;
-        for field in &struct_def.fields {
-            if field.name() == "type" {
-                if !has_type_field {
-                    has_type_field = true;
-                    self.statuses[struct_def.id()] = WalkStatus::Walk;
-                }
-            } else if !should_skip_field(field, self.schema) {
-                has_walked_field |= self.is_walked(field.type_def(self.schema));
-            }
-        }
-
-        if has_walked_field {
-            true
-        } else if has_type_field {
-            self.leaf_nodes_count += 1;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn enum_is_walked(&mut self, enum_def: &EnumDef) -> bool {
-        if !enum_def.generates_derive(self.estree_derive_id) || enum_def.estree.skip {
-            return false;
-        }
-
-        let mut is_walked = false;
-        for variant in enum_def.all_variants(self.schema) {
-            if let Some(variant_type) = variant.field_type(self.schema) {
-                is_walked |= self.is_walked(variant_type);
-            }
-        }
-        is_walked
-    }
 }
 
 /// Sentinel value for a cache key offset which has not been calculated yet
@@ -595,8 +474,6 @@ fn generate_struct(
     state: &mut State,
     cache_key_offsets: &IndexVec<TypeId, u8>,
     local_cache_types: &mut LocalCacheTypes,
-    is_walked: bool,
-    walk_statuses: &IndexVec<TypeId, WalkStatus>,
     estree_derive_id: DeriveId,
     span_struct_def: &StructDef,
     schema: &Schema,
@@ -685,7 +562,7 @@ fn generate_struct(
         write_it!(to_json, "{field_name}: this.{field_name},\n");
 
         // Only walk fields which need to be walked themselves
-        if walk_statuses[field_type.id()] == WalkStatus::Walk {
+        if is_walked(field_type, schema) {
             let inner_walk_fn_name = field_type.walk_name(schema);
             let pos = pos_offset(field.offset_64());
             write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
@@ -746,14 +623,13 @@ fn generate_struct(
     ");
 
     // Generate walk function
-    if !is_walked {
+    if struct_def.estree.walk_type == WalkType::NoWalk {
         return;
     }
 
     let walk_fn_name = struct_def.walk_name(schema);
 
-    let is_node = has_type_field || !struct_def.estree.no_type;
-    if !is_node {
+    if struct_def.estree.walk_type == WalkType::Walk {
         // Type which is intermediary only. Is not an AST node, and cannot be visited.
         // Just walk its fields.
         #[rustfmt::skip]
@@ -812,8 +688,6 @@ fn generate_struct(
 fn generate_enum(
     enum_def: &EnumDef,
     state: &mut State,
-    is_walked: bool,
-    walk_statuses: &IndexVec<TypeId, WalkStatus>,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -843,7 +717,7 @@ fn generate_enum(
             write_it!(construct_cases, "return {variant_construct_fn_name}({payload_pos}, ast);");
 
             // Only walk variants which need to be walked themselves
-            if walk_statuses[variant_type.id()] == WalkStatus::Walk {
+            if is_walked(variant_type, schema) {
                 let variant_walk_fn_name = variant_type.walk_name(schema);
                 write_it!(
                     walk_cases,
@@ -876,7 +750,7 @@ fn generate_enum(
     ");
 
     // Generate walk function
-    if is_walked {
+    if enum_def.estree.is_walked {
         let walk_fn_name = enum_def.walk_name(schema);
 
         #[rustfmt::skip]
@@ -965,12 +839,12 @@ static STR_DESERIALIZER_BODY: &str = "
 fn generate_option(
     option_def: &OptionDef,
     state: &mut State,
-    is_walked: bool,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
     let inner_type = option_def.inner_type(schema);
-    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+    let innermost_type = inner_type.innermost_type(schema);
+    if should_skip_type(innermost_type, estree_derive_id) {
         return;
     }
 
@@ -1018,7 +892,7 @@ fn generate_option(
     ");
 
     // Generate walk function
-    if is_walked {
+    if is_walked(innermost_type, schema) {
         let walk_fn_name = option_def.walk_name(schema);
         let inner_walk_fn_name = inner_type.walk_name(schema);
 
@@ -1032,15 +906,10 @@ fn generate_option(
 }
 
 /// Generate construct and walk functions for a `Box`.
-fn generate_box(
-    box_def: &BoxDef,
-    state: &mut State,
-    is_walked: bool,
-    estree_derive_id: DeriveId,
-    schema: &Schema,
-) {
+fn generate_box(box_def: &BoxDef, state: &mut State, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = box_def.inner_type(schema);
-    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+    let innermost_type = inner_type.innermost_type(schema);
+    if should_skip_type(innermost_type, estree_derive_id) {
         return;
     }
 
@@ -1056,7 +925,7 @@ fn generate_box(
     ");
 
     // Generate walk function
-    if is_walked {
+    if is_walked(innermost_type, schema) {
         let walk_fn_name = box_def.walk_name(schema);
         let inner_walk_fn_name = inner_type.walk_name(schema);
 
@@ -1070,15 +939,10 @@ fn generate_box(
 }
 
 /// Generate construct and walk functions for a `Vec`.
-fn generate_vec(
-    vec_def: &VecDef,
-    state: &mut State,
-    is_walked: bool,
-    estree_derive_id: DeriveId,
-    schema: &Schema,
-) {
+fn generate_vec(vec_def: &VecDef, state: &mut State, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = vec_def.inner_type(schema);
-    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+    let innermost_type = inner_type.innermost_type(schema);
+    if should_skip_type(innermost_type, estree_derive_id) {
         return;
     }
 
@@ -1121,7 +985,7 @@ fn generate_vec(
     ");
 
     // Generate walk function
-    if is_walked {
+    if is_walked(innermost_type, schema) {
         let walk_fn_name = vec_def.walk_name(schema);
         let inner_walk_fn_name = inner_type.walk_name(schema);
 
@@ -1138,6 +1002,20 @@ fn generate_vec(
                 }}
             }}
         ");
+    }
+}
+
+/// Get whether a type is walked in ESTree AST.
+fn is_walked(type_def: &TypeDef, schema: &Schema) -> bool {
+    match type_def {
+        TypeDef::Struct(struct_def) => struct_def.estree.walk_type != WalkType::NoWalk,
+        TypeDef::Enum(enum_def) => enum_def.estree.is_walked,
+        TypeDef::Primitive(_) => false,
+        TypeDef::Option(option_def) => is_walked(option_def.inner_type(schema), schema),
+        TypeDef::Box(box_def) => is_walked(box_def.inner_type(schema), schema),
+        TypeDef::Vec(vec_def) => is_walked(vec_def.inner_type(schema), schema),
+        TypeDef::Cell(cell_def) => is_walked(cell_def.inner_type(schema), schema),
+        TypeDef::Pointer(pointer_def) => is_walked(pointer_def.inner_type(schema), schema),
     }
 }
 
