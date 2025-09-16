@@ -36,12 +36,12 @@ fn no_error_on_unmatched_pattern() {
     ]);
 }
 
-// TODO: Fix this test fails on Windows
-// #[test]
-// fn supported_extensions() {
-//     let args = &["tests/fixtures/extensions"];
-//     Tester::new().test_and_snapshot(args);
-// }
+#[test]
+fn supported_extensions() {
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/extensions"))
+        .test_and_snapshot_multiple(&[&["--check"]]);
+}
 
 #[test]
 fn write_mode() {
