@@ -73,8 +73,8 @@ impl FormatService {
             let elapsed = start_time.elapsed();
             let is_changed = source_text != code;
 
-            // Write back if needed
-            if matches!(self.output_options, OutputOptions::Write) && is_changed {
+            // Write back if needed (default behavior is to write)
+            if matches!(self.output_options, OutputOptions::DefaultWrite) && is_changed {
                 fs::write(path, code)
                     .map_err(|_| format!("Failed to write to '{}'", path.to_string_lossy()))
                     .unwrap();
@@ -85,11 +85,11 @@ impl FormatService {
             let display_path = path.to_string_lossy().cow_replace('\\', "/").to_string();
             let elapsed = elapsed.as_millis();
             if let Some(diagnostic) = match (&self.output_options, is_changed) {
-                (OutputOptions::Check | OutputOptions::Default, true) => {
+                (OutputOptions::Check, true) => {
                     Some(OxcDiagnostic::warn(format!("{display_path} ({elapsed}ms)")))
                 }
                 (OutputOptions::ListDifferent, true) => Some(OxcDiagnostic::warn(display_path)),
-                (OutputOptions::Write, _) => Some(OxcDiagnostic::warn(format!(
+                (OutputOptions::DefaultWrite, _) => Some(OxcDiagnostic::warn(format!(
                     "{display_path} {elapsed}ms{}",
                     if is_changed { "" } else { " (unchanged)" }
                 ))),

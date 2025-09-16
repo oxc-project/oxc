@@ -33,14 +33,12 @@ impl FormatRunner {
         let cwd = self.cwd;
         let FormatCommand { paths, output_options, misc_options } = self.options;
 
+        // Default to current working directory if no paths are provided
+        let paths = if paths.is_empty() { vec![cwd.clone()] } else { paths };
+
         // Instead of `--ignore-pattern=PAT`, we support `!` prefix in paths
         let (exclude_patterns, target_paths): (Vec<_>, Vec<_>) =
             paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
-
-        if target_paths.is_empty() {
-            print_and_flush_stdout(stdout, "Expected at least one target file/dir/glob\n");
-            return CliRunResult::NoFilesFound;
-        }
 
         // Build exclude patterns if any exist
         let override_builder = (!exclude_patterns.is_empty())
@@ -76,7 +74,7 @@ impl FormatRunner {
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
 
-        if matches!(output_options, OutputOptions::Check | OutputOptions::Default) {
+        if matches!(output_options, OutputOptions::Check) {
             print_and_flush_stdout(stdout, "Checking formatting...\n");
         }
 
@@ -116,27 +114,27 @@ impl FormatRunner {
         };
 
         match (&output_options, res.warnings_count()) {
-            // `-l` outputs nothing here, mismatched paths are already printed in reporter
+            // `--list-different` outputs nothing here, mismatched paths are already printed in reporter
             (OutputOptions::ListDifferent, 0) => CliRunResult::FormatSucceeded,
             (OutputOptions::ListDifferent, _) => CliRunResult::FormatMismatch,
-            // `-c` outputs friendly summary
-            (OutputOptions::Check | OutputOptions::Default, 0) => {
+            // `--check` outputs friendly summary
+            (OutputOptions::Check, 0) => {
                 print_and_flush_stdout(stdout, "All matched files use the correct format.\n");
                 print_stats(stdout);
                 CliRunResult::FormatSucceeded
             }
-            (OutputOptions::Check | OutputOptions::Default, mismatched_count) => {
+            (OutputOptions::Check, mismatched_count) => {
                 print_and_flush_stdout(
                     stdout,
                     &format!(
-                        "Format issues found in above {mismatched_count} files. Run with `-w` or `--write` to fix.\n",
+                        "Format issues found in above {mismatched_count} files. Run without `--check` to fix.\n",
                     ),
                 );
                 print_stats(stdout);
                 CliRunResult::FormatMismatch
             }
-            // `-w` also outputs friendly summary
-            (OutputOptions::Write, formatted_count) => {
+            // Default (write) also outputs friendly summary
+            (OutputOptions::DefaultWrite, formatted_count) => {
                 print_and_flush_stdout(stdout, &format!("Formatted {formatted_count} files.\n"));
                 print_stats(stdout);
                 CliRunResult::FormatSucceeded

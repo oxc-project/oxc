@@ -105,8 +105,8 @@ impl Tester {
         // Write initial content to file
         fs::write(file, before).unwrap();
 
-        // Run formatter with --write flag
-        Self::test(&["-w", file]);
+        // Run formatter (default is write mode)
+        Self::test(&[file]);
 
         // Verify file was modified correctly
         #[expect(clippy::disallowed_methods)]
@@ -114,8 +114,8 @@ impl Tester {
         assert_eq!(new_content, after, "Formatted file content doesn't match expected");
 
         let modified_before = fs::metadata(file).unwrap().modified().unwrap();
-        // Run formatter again with --write flag
-        Self::test(&["-w", file]);
+        // Run formatter again (default is write mode)
+        Self::test(&[file]);
 
         let modified_after = fs::metadata(file).unwrap().modified().unwrap();
         assert_eq!(
