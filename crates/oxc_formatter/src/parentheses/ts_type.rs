@@ -28,7 +28,13 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSType<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSFunctionType<'a>> {
     #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::TSUnionType(_))
+        match self.parent {
+            AstNodes::TSConditionalType(ty) => {
+                ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
+            },
+            AstNodes::TSUnionType(_) => true,
+            _ => false,
+        }
     }
 }
 
@@ -40,7 +46,13 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInferType<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConstructorType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::TSUnionType(_))
+        match self.parent {
+            AstNodes::TSConditionalType(ty) => {
+                ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
+            },
+            AstNodes::TSUnionType(_) => true,
+            _ => false,
+        }
     }
 }
 
