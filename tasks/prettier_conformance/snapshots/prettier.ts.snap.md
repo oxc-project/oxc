@@ -65,9 +65,9 @@ ts compatibility: 350/573 (61.08%)
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 64.86% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
 | typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
-| typescript/conditional-types/conditonal-types.ts | 💥💥 | 55.47% |
+| typescript/conditional-types/conditonal-types.ts | 💥💥 | 73.36% |
 | typescript/conditional-types/infer-type.ts | 💥💥 | 47.07% |
-| typescript/conditional-types/nested-in-condition.ts | 💥💥 | 58.46% |
+| typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 48.48% |
 | typescript/conditional-types/parentheses.ts | 💥💥 | 42.21% |
 | typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 61.54% |
@@ -135,7 +135,7 @@ ts compatibility: 350/573 (61.08%)
 | typescript/generic/ungrouped-parameters.ts | 💥 | 74.07% |
 | typescript/import-type/import-type.ts | 💥💥 | 93.33% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
-| typescript/infer-extends/basic.ts | 💥 | 66.67% |
+| typescript/infer-extends/basic.ts | 💥 | 71.43% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
 | typescript/interface/ignore.ts | 💥💥 | 94.84% |
 | typescript/interface/long-extends.ts | 💥✨ | 40.74% |

@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8733/8816 (99.06%)
+Positive Passed: 8736/8816 (99.09%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
@@ -63,8 +63,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/multiSignatureTy
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowingByTypeofInSwitch.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/nestedGenericConditionalTypeWithGenericImportType.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
@@ -72,8 +70,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfi
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/readonlyAssignmentInSubclassOfClassExpression.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalTypes2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reducibleIndexedAccessTypes.ts
 
@@ -128,8 +124,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOpEmitParens.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/instanceofOperator/instanceofOperatorWithRHSHasSymbolHasInstance.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
 
