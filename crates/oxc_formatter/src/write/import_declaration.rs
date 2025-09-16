@@ -25,6 +25,25 @@ impl<'a> Format<'a> for ImportOrExportKind {
     }
 }
 
+pub fn format_import_and_export_source_with_clause<'a>(
+    source: &AstNode<'a, StringLiteral>,
+    with_clause: Option<&AstNode<'a, WithClause>>,
+    f: &mut Formatter<'_, 'a>,
+) -> FormatResult<()> {
+    source.format_leading_comments(f)?;
+    source.write(f)?;
+
+    let has_comment_before_with_clause = with_clause
+        .as_ref()
+        .is_some_and(|with_clause| f.comments().has_comment_before(with_clause.span.start));
+
+    if has_comment_before_with_clause {
+        write!(f, [space()])?;
+    }
+
+    Ok(())
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["import", space(), self.import_kind])?;
@@ -33,7 +52,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
             write!(f, [specifiers, space(), "from", space()])?;
         }
 
-        write!(f, [self.source(), self.with_clause(), OptionalSemicolon])
+        let with_clause = self.with_clause();
+        format_import_and_export_source_with_clause(self.source(), with_clause, f)?;
+
+        write!(f, [with_clause, OptionalSemicolon])
     }
 }
 

@@ -347,18 +347,6 @@ impl<'a> Comments<'a> {
             comment_index += 1;
         }
 
-        if comment_index == 0 {
-            // No comments to print
-            return &[];
-        }
-
-        if matches!(
-            enclosing_node,
-            SiblingNode::ImportDeclaration(_) | SiblingNode::ExportAllDeclaration(_)
-        ) {
-            return &comments[..comment_index];
-        }
-
         // Find the first comment (from the end) that has non-whitespace/non-paren content after it
         let mut gap_end = following_span.start;
         for (idx, comment) in comments[..comment_index].iter().enumerate().rev() {
