@@ -679,12 +679,19 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
 }
 
 /// Check if innermost type does not require a deserializer.
-pub(super) fn should_skip_innermost_type(
+fn should_skip_innermost_type(
     type_def: &TypeDef,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) -> bool {
-    match type_def.innermost_type(schema) {
+    should_skip_type(type_def.innermost_type(schema), estree_derive_id)
+}
+
+/// Check if type does not require a deserializer.
+///
+/// Also used by `raw_transfer_lazy` generator.
+pub(super) fn should_skip_type(type_def: &TypeDef, estree_derive_id: DeriveId) -> bool {
+    match type_def {
         TypeDef::Struct(struct_def) => {
             !struct_def.generates_derive(estree_derive_id) || struct_def.estree.skip
         }

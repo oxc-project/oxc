@@ -93,7 +93,6 @@ impl Schema {
     }
 
     /// Get iterator over all structs and enums.
-    #[expect(dead_code)]
     pub fn structs_and_enums(&self) -> StructsAndEnums<'_> {
         StructsAndEnums::new(self)
     }
