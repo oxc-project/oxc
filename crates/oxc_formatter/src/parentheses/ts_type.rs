@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use super::NeedsParentheses;
 use crate::{
@@ -51,6 +52,11 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSUnionType<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::TSConditionalType(_))
+        match self.parent {
+            AstNodes::TSConditionalType(ty) => {
+                ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
+            }
+            _ => false
+        }
     }
 }

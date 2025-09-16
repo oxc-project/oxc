@@ -1192,16 +1192,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteralType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.needs_parentheses(f) {
-            "(".fmt(f)?;
-        }
-
-        ConditionalLike::TSConditionalType(self).fmt(f)?;
-
-        if self.needs_parentheses(f) {
-            ")".fmt(f)?;
-        }
-        Ok(())
+        ConditionalLike::TSConditionalType(self).fmt(f)
     }
 }
 
