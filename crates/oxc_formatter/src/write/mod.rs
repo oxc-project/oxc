@@ -1196,7 +1196,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
             "(".fmt(f)?;
         }
 
-        ConditionalLike::TSConditionalType(self).fmt(f);
+        ConditionalLike::TSConditionalType(self).fmt(f)?;
 
         if self.needs_parentheses(f) {
             ")".fmt(f)?;
