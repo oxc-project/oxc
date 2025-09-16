@@ -30,9 +30,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// If a prop is declared with a default value, whether it is required or not, 
-    /// we can always skip it in actual use. In that situation, the default value would be applied. 
-    /// So, a required prop with a default value is essentially the same as an optional prop. 
+    /// If a prop is declared with a default value, whether it is required or not,
+    /// we can always skip it in actual use. In that situation, the default value would be applied.
+    /// So, a required prop with a default value is essentially the same as an optional prop.
     ///
     /// ### Examples
     ///

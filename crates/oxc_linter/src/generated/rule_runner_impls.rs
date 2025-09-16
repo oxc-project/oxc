@@ -2694,8 +2694,7 @@ impl RuleRunner for crate::rules::vue::require_typed_ref::RequireTypedRef {
 }
 
 impl RuleRunner for crate::rules::vue::no_required_prop_with_default::NoRequiredPropWithDefault {
-    const NODE_TYPES: &AstTypesBitset = &AstTypesBitset::new();
-    const ANY_NODE_TYPE: bool = true;
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
 impl RuleRunner for crate::rules::vue::valid_define_emits::ValidDefineEmits {
