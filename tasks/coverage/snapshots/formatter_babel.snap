@@ -2,7 +2,7 @@ commit: 41d96516
 
 formatter_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2417/2423 (99.75%)
+Positive Passed: 2419/2423 (99.83%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/try-statement/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/regression/13750/input.js
@@ -10,8 +10,4 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/commen
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class/division/input.js
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/private-in-class-heritage/input.js
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/infer-with-constraints/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/infer-with-constraints-babel-7/input.ts
 

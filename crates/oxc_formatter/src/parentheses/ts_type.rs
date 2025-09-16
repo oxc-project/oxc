@@ -15,6 +15,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSType<'a>> {
             AstNodes::TSInferType(it) => it.needs_parentheses(f),
             AstNodes::TSConstructorType(it) => it.needs_parentheses(f),
             AstNodes::TSUnionType(it) => it.needs_parentheses(f),
+            AstNodes::TSConditionalType(it) => it.needs_parentheses(f),
             _ => {
                 // TODO: incomplete
                 false
@@ -45,5 +46,11 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConstructorType<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSUnionType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         matches!(self.parent, AstNodes::TSArrayType(_))
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        matches!(self.parent, AstNodes::TSConditionalType(_))
     }
 }
