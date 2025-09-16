@@ -55,7 +55,8 @@ impl RuleRunner for crate::rules::eslint::for_direction::ForDirection {
 }
 
 impl RuleRunner for crate::rules::eslint::func_names::FuncNames {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Function]));
 }
 
 impl RuleRunner for crate::rules::eslint::func_style::FuncStyle {

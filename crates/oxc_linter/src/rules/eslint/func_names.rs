@@ -224,39 +224,6 @@ declare_oxc_lint!(
     conditional_fix_suggestion
 );
 
-impl FuncNames {
-    fn get_invalid_functions<'a>(
-        &self,
-        ctx: &'a LintContext<'_>,
-    ) -> Vec<(&'a Function<'a>, &'a AstNode<'a>, &'a AstNode<'a>)> {
-        let mut invalid_functions: Vec<(&Function, &AstNode, &AstNode)> = Vec::new();
-
-        for node in ctx.nodes() {
-            match node.kind() {
-                // check function if it invalid, do not report it because maybe later the function is calling itself
-                AstKind::Function(func) => {
-                    let parent_node = ctx.nodes().parent_node(node.id());
-                    let config =
-                        if func.generator { self.config.generators } else { self.config.functions };
-
-                    if is_invalid_function(config, func, parent_node) {
-                        invalid_functions.push((func, node, parent_node));
-                    }
-                }
-
-                // check if the calling function is inside its own body
-                // then, remove it from invalid_functions because recursion are always named
-                AstKind::CallExpression(expression) => {
-                    remove_recursive_functions(&mut invalid_functions, expression, node, ctx);
-                }
-                _ => {}
-            }
-        }
-
-        invalid_functions
-    }
-}
-
 impl Rule for FuncNames {
     fn from_configuration(value: serde_json::Value) -> Self {
         let Some(functions_config) = value.get(0) else {
@@ -273,41 +240,48 @@ impl Rule for FuncNames {
         }
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        for (func, node, parent_node) in self.get_invalid_functions(ctx) {
-            diagnostic_invalid_function(func, node, parent_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::Function(func) = node.kind() {
+            let parent_node = ctx.nodes().parent_node(node.id());
+            let config =
+                if func.generator { self.config.generators } else { self.config.functions };
+
+            if is_invalid_function(config, func, parent_node) {
+                // For named functions, check if they're recursive (need their name for recursion)
+                if let Some(func_name) = func.name() {
+                    if is_recursive_function(func, func_name.as_str(), ctx) {
+                        return;
+                    }
+                }
+                diagnostic_invalid_function(func, node, parent_node, ctx);
+            }
         }
     }
 }
 
-fn remove_recursive_functions(
-    invalid_functions: &mut Vec<(&Function, &AstNode, &AstNode)>,
-    expression: &oxc_ast::ast::CallExpression,
-    node: &AstNode,
-    ctx: &LintContext,
-) {
-    let Expression::Identifier(identifier) = &expression.callee else {
-        return;
+fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) -> bool {
+    let Some(func_scope_id) = func.scope_id.get() else {
+        return false;
     };
-    // check at first if the callee calls an invalid function
-    if !invalid_functions
-        .iter()
-        .filter_map(|(func, _, _)| func.name())
-        .any(|func_name| func_name == identifier.name)
-    {
-        return;
+
+    if let Some(binding) = ctx.scoping().find_binding(func_scope_id, func_name) {
+        return ctx.semantic().symbol_references(binding).any(|reference| {
+            let parent = ctx.nodes().parent_node(reference.node_id());
+            if matches!(parent.kind(), AstKind::CallExpression(_)) {
+                ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
+                    if let AstKind::Function(f) = ancestor.kind() {
+                        f.scope_id.get() == Some(func_scope_id)
+                    } else {
+                        false
+                    }
+                })
+            } else {
+                false
+            }
+        });
     }
 
-    // a function which is calling itself inside is always valid
-    if let Some(span) = ctx.nodes().ancestors(node.id()).find_map(|p| {
-        if let AstKind::Function(func) = p.kind() {
-            func.name().filter(|n| *n == identifier.name).map(|_| func.span)
-        } else {
-            None
-        }
-    }) {
-        invalid_functions.retain(|(func, _, _)| func.span != span);
-    }
+    false
 }
 
 const INVALID_IDENTIFIER_NAMES: [&str; 9] =
@@ -526,6 +500,30 @@ fn test() {
         ("function foo() {}", never.clone()),
         ("var a = function() {};", never.clone()),
         ("var a = function foo() { foo(); };", never.clone()),
+        (
+            "var factorial = function fact(n) { return n <= 1 ? 1 : n * fact(n - 1); };",
+            never.clone(),
+        ),
+        (
+            "const fibonacci = function fib(n) { if (n <= 1) return n; return fib(n - 1) + fib(n - 2); };",
+            never.clone(),
+        ),
+        // Multiple references, but only one is a call - still recursive
+        ("var a = function foo() { var x = foo; foo(); };", never.clone()),
+        // Direct recursive call in setTimeout - this is actually recursive
+        ("setTimeout(function ticker() { ticker(); }, 1000);", never.clone()),
+        // Mutual recursion doesn't count as self-recursion (would need different handling)
+        ("var a = function foo() { function bar() { foo(); } bar(); };", never.clone()),
+        // Critical test: function with multiple references where the recursive call is not the first reference
+        // This tests the fix for the control flow bug where early returns could miss later recursive calls
+        (
+            "var x = function foo() { var ref1 = foo.name; var ref2 = foo.length; foo(); };",
+            never.clone(),
+        ),
+        (
+            "var y = function bar() { if (false) { bar.toString(); } if (true) { bar(); } };",
+            never.clone(),
+        ),
         ("var foo = {bar: function() {}};", never.clone()),
         ("$('#foo').click(function() {});", never.clone()),
         ("Foo.prototype.bar = function() {};", never.clone()),
@@ -597,6 +595,11 @@ fn test() {
         ("var { a: [b] = function(){} } = foo;", as_needed.clone()), // { "ecmaVersion": 6 },
         ("function foo({ a } = function(){}) {};", as_needed.clone()), // { "ecmaVersion": 6 },
         ("var x = function foo() {};", never.clone()),
+        ("var x = function foo() { return foo.length; };", never.clone()),
+        ("var foo = 1; var x = function foo() { return foo + 1; };", never.clone()),
+        ("var x = function foo() { console.log('hello'); };", never.clone()),
+        ("var outer = function inner() { function nested() { nested(); } };", never.clone()),
+        ("setTimeout(function ticker() { setTimeout(ticker, 1000); }, 1000);", never.clone()),
         ("Foo.prototype.bar = function foo() {};", never.clone()),
         ("({foo: function foo() {}})", never.clone()),
         ("export default function() {}", always.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
