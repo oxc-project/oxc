@@ -288,6 +288,10 @@ impl Linter {
                 });
             }
 
+            // Drop `rules` to release its `Rc` clones of `ctx_host`, ensuring `run_external_rules`
+            // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
+            drop(rules);
+
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
             if let Some(severity) = self.options.report_unused_directive {
