@@ -341,24 +341,6 @@ impl<'a> Comments<'a> {
                     );
                 }
 
-                // End-of-line comments in specific contexts should be leading comments
-                if matches!(
-                    enclosing_node,
-                    SiblingNode::VariableDeclarator(_)
-                        | SiblingNode::AssignmentExpression(_)
-                        | SiblingNode::TSTypeAliasDeclaration(_)
-                ) && (comment.is_block()
-                    || matches!(
-                        following_node,
-                        SiblingNode::ObjectExpression(_)
-                            | SiblingNode::ArrayExpression(_)
-                            | SiblingNode::TSTypeLiteral(_)
-                            | SiblingNode::TemplateLiteral(_)
-                            | SiblingNode::TaggedTemplateExpression(_)
-                    ))
-                {
-                    return &[];
-                }
                 return &comments[..=comment_index];
             }
 
