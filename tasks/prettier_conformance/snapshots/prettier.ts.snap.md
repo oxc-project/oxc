@@ -145,7 +145,7 @@ ts compatibility: 350/573 (61.08%)
 | typescript/interface2/comments.ts | 💥 | 78.87% |
 | typescript/interface2/module.ts | 💥 | 80.00% |
 | typescript/interface2/break/break.ts | 💥💥💥 | 68.93% |
-| typescript/intersection/intersection-parens.ts | 💥💥 | 54.84% |
+| typescript/intersection/intersection-parens.ts | 💥💥 | 55.91% |
 | typescript/intersection/type-arguments.ts | 💥💥 | 46.67% |
 | typescript/intersection/consistent-with-flow/comment.ts | 💥 | 0.00% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 60.47% |
