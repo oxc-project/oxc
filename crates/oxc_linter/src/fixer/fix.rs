@@ -548,9 +548,14 @@ impl<'a> CompositeFix<'a> {
         let end = fixes[fixes.len() - 1].span.end;
         let mut last_pos = start;
         let mut output = String::new();
+        let mut merged_fix_message = None;
 
         for fix in fixes {
-            let Fix { content, span, .. } = fix;
+            let Fix { content, span, message } = fix;
+            if let Some(message) = message {
+                merged_fix_message.get_or_insert(message);
+            }
+
             // negative range or overlapping ranges is invalid
             if span.start > span.end {
                 debug_assert!(false, "Negative range is invalid: {span:?}");
@@ -583,7 +588,12 @@ impl<'a> CompositeFix<'a> {
 
         output.push_str(after);
         output.shrink_to_fit();
-        Fix::new(output, Span::new(start, end))
+
+        let mut fix = Fix::new(output, Span::new(start, end));
+        if let Some(message) = merged_fix_message {
+            fix = fix.with_message(message);
+        }
+        fix
     }
 }
 
