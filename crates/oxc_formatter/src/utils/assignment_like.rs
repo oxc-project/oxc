@@ -9,10 +9,11 @@ use crate::{
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
-        trivia::format_dangling_comments,
+        trivia::FormatTrailingComments,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
+    parentheses::NeedsParentheses,
     utils::{
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
@@ -20,7 +21,7 @@ use crate::{
     write,
     write::{
         BinaryLikeExpression, FormatJsArrowFunctionExpression,
-        FormatJsArrowFunctionExpressionOptions,
+        FormatJsArrowFunctionExpressionOptions, FormatWrite,
     },
 };
 
@@ -150,15 +151,60 @@ pub enum AssignmentLikeLayout {
 
 const MIN_OVERLAP_FOR_BREAK: u8 = 3;
 
+fn get_left_trailing_comments<'a>(
+    start: u32,
+    expr: &Expression<'_>,
+    f: &mut Formatter<'_, 'a>,
+) -> Option<&'a [Comment]> {
+    let comments = f.context().comments().comments_in_range(start, expr.span().start);
+    if let Some(end_of_line_comment_index) = comments.iter().position(|comment| {
+        !f.source_text().is_own_line_comment(comment)
+            && f.source_text().is_end_of_line_comment(comment)
+    }) {
+        let trailing_comment = comments[end_of_line_comment_index];
+        if matches!(
+            expr,
+            Expression::ObjectExpression(_)
+                | Expression::ArrayExpression(_)
+                | Expression::TemplateLiteral(_)
+                | Expression::TaggedTemplateExpression(_)
+        ) || trailing_comment.is_block()
+        {
+            // No trailing comments for these expressions or if the trailing comment is a block comment
+            return Some(&[]);
+        }
+
+        return Some(&comments[..=end_of_line_comment_index]);
+    }
+
+    // No end of line comment found
+    None
+}
+
 impl<'a> AssignmentLike<'a, '_> {
     fn write_left(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
         match self {
-            AssignmentLike::VariableDeclarator(variable_declarator) => {
-                write!(f, variable_declarator.id())?;
+            AssignmentLike::VariableDeclarator(declarator) => {
+                if let Some(init) = &declarator.init
+                    && let Some(trailing_comments) =
+                        get_left_trailing_comments(declarator.id.span().end, init, f)
+                {
+                    FormatBindingPatternWithoutTrailingComments(declarator.id()).fmt(f)?;
+                    write!(f, FormatTrailingComments::Comments(trailing_comments))?;
+                } else {
+                    write!(f, declarator.id())?;
+                }
                 Ok(false)
             }
             AssignmentLike::AssignmentExpression(assignment) => {
-                write!(f, [assignment.left()]);
+                if let Some(trailing_comments) =
+                    get_left_trailing_comments(assignment.left.span().end, &assignment.right, f)
+                {
+                    FormatAssignmentTargetWithoutTrailingComments(assignment.left()).fmt(f)?;
+                    write!(f, FormatTrailingComments::Comments(trailing_comments))?;
+                } else {
+                    write!(f, assignment.left())?;
+                }
                 Ok(false)
             }
             AssignmentLike::ObjectProperty(property) => {
@@ -951,5 +997,108 @@ pub fn is_complex_type_annotation(annotation: &TSTypeAnnotation) -> bool {
                 })
         }
         _ => false,
+    }
+}
+
+pub struct FormatAssignmentTargetWithoutTrailingComments<'a, 'b>(
+    pub &'b AstNode<'a, AssignmentTarget<'a>>,
+);
+
+impl<'a> Format<'a> for FormatAssignmentTargetWithoutTrailingComments<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        match self.0.as_ast_nodes() {
+            AstNodes::IdentifierReference(n) => {
+                n.format_leading_comments(f)?;
+                if n.needs_parentheses(f) {
+                    write!(f, "(")?;
+                }
+                n.write(f)?;
+                if n.needs_parentheses(f) {
+                    write!(f, ")")?;
+                }
+                Ok(())
+            }
+            AstNodes::TSAsExpression(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::TSSatisfiesExpression(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::TSTypeAssertion(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::TSNonNullExpression(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::StaticMemberExpression(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::ComputedMemberExpression(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::PrivateFieldExpression(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::ArrayAssignmentTarget(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            AstNodes::ObjectAssignmentTarget(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub struct FormatBindingPatternWithoutTrailingComments<'a, 'b>(
+    pub &'b AstNode<'a, BindingPattern<'a>>,
+);
+
+impl<'a> Format<'a> for FormatBindingPatternWithoutTrailingComments<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let has_type_annotation = self.0.type_annotation().is_some();
+
+        let binding_pattern = self.0;
+        match binding_pattern.kind().as_ast_nodes() {
+            AstNodes::BindingIdentifier(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)?;
+            }
+            AstNodes::ArrayPattern(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)?;
+            }
+            AstNodes::ObjectPattern(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)?;
+            }
+            AstNodes::AssignmentPattern(n) => {
+                n.format_leading_comments(f)?;
+                n.write(f)?;
+            }
+            _ => {
+                unreachable!()
+            }
+        }
+
+        if self.0.optional() {
+            write!(f, "?")?;
+        }
+
+        if let Some(type_annotation) = binding_pattern.type_annotation() {
+            type_annotation.format_leading_comments(f)?;
+            type_annotation.write(f)?;
+        }
+
+        Ok(())
     }
 }

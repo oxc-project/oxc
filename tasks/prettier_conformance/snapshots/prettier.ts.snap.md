@@ -53,7 +53,7 @@ ts compatibility: 350/573 (61.08%)
 | typescript/comments/mapped_types.ts | 💥 | 58.82% |
 | typescript/comments/method_types.ts | 💥 | 76.92% |
 | typescript/comments/type-parameters.ts | 💥 | 36.36% |
-| typescript/comments/type_literals.ts | 💥 | 55.17% |
+| typescript/comments/type_literals.ts | 💥 | 57.14% |
 | typescript/comments/union.ts | 💥 | 5.26% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 50.00% |
 | typescript/compiler/castOfAwait.ts | 💥 | 87.50% |

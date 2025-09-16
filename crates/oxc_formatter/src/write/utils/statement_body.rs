@@ -1,10 +1,14 @@
 use oxc_ast::ast::Statement;
+use oxc_span::GetSpan;
 
 use crate::{
     format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
-        prelude::{indent, soft_line_break_or_space, space},
+        prelude::{
+            format_once, group, indent, soft_line_break_or_space, soft_line_indent_or_space, space,
+        },
+        trivia::FormatTrailingComments,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
@@ -41,7 +45,33 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
         } else if self.force_space {
             write!(f, [space(), self.body])
         } else {
-            write!(f, [indent(&format_args!(soft_line_break_or_space(), &self.body))])
+            write!(
+                f,
+                [indent(&format_args!(
+                    &soft_line_break_or_space(),
+                    &format_once(|f| {
+                        let is_consequent_of_if_statement_parent = matches!(
+                            self.body.parent,
+                            AstNodes::IfStatement(if_stmt)
+                            if if_stmt.consequent.span() == self.body.span() && if_stmt.alternate.is_some()
+                        );
+                        if is_consequent_of_if_statement_parent
+                            && let AstNodes::ExpressionStatement(expression) =
+                                self.body.as_ast_nodes()
+                        {
+                            expression.format_leading_comments(f)?;
+                            expression.write(f)?;
+                            let comments = f
+                                .context()
+                                .comments()
+                                .comments_before_character(expression.span.end, b'\n');
+                            FormatTrailingComments::Comments(comments).fmt(f)
+                        } else {
+                            self.body.fmt(f)
+                        }
+                    })
+                ))]
+            )
         }
     }
 }
