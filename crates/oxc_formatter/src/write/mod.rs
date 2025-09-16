@@ -1199,13 +1199,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let mut types = self.types().iter();
+        if self.needs_parentheses(f) {
+            write!(f, "(")?;
+        }
         if let Some(item) = types.next() {
             write!(f, item)?;
 
             for item in types {
                 write!(f, [" | ", item])?;
             }
-            return Ok(());
+        }
+        if self.needs_parentheses(f) {
+            write!(f, ")")?;
         }
         Ok(())
     }

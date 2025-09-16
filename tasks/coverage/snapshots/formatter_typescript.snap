@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8732/8816 (99.05%)
+Positive Passed: 8733/8816 (99.06%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
@@ -162,8 +162,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/mapped/
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/propertyNamesOfReservedWords.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/rest/genericObjectRest.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/parenthesizedTypes.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembers.ts
 

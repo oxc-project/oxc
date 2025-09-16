@@ -1,4 +1,4 @@
-ts compatibility: 349/573 (60.91%)
+ts compatibility: 350/573 (61.08%)
 
 # Failed
 
@@ -9,7 +9,7 @@ ts compatibility: 349/573 (60.91%)
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
-| typescript/ambient/ambient.ts | 💥 | 88.24% |
+| typescript/ambient/ambient.ts | 💥 | 94.12% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
@@ -219,9 +219,8 @@ ts compatibility: 349/573 (60.91%)
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |
 | typescript/union/inlining.ts | 💥 | 36.22% |
-| typescript/union/union-parens.ts | 💥 | 55.00% |
+| typescript/union/union-parens.ts | 💥 | 56.00% |
 | typescript/union/with-type-params.ts | 💥 | 0.00% |
-| typescript/union/consistent-with-flow/comment.ts | 💥 | 0.00% |
 | typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 19.05% |
 | typescript/union/consistent-with-flow/single-type.ts | 💥 | 3.39% |
 | typescript/union/consistent-with-flow/within-tuple.ts | 💥 | 16.51% |
