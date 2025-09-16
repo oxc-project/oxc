@@ -65,11 +65,11 @@ ts compatibility: 350/573 (61.08%)
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 64.86% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
 | typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
-| typescript/conditional-types/conditonal-types.ts | 💥💥 | 73.36% |
-| typescript/conditional-types/infer-type.ts | 💥💥 | 47.07% |
+| typescript/conditional-types/conditonal-types.ts | 💥💥 | 77.84% |
+| typescript/conditional-types/infer-type.ts | 💥💥 | 39.38% |
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 48.48% |
-| typescript/conditional-types/parentheses.ts | 💥💥 | 42.21% |
+| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 47.09% |
+| typescript/conditional-types/parentheses.ts | 💥💥 | 53.71% |
 | typescript/conformance/ambient/ambientDeclarations.ts | 💥 | 61.54% |
 | typescript/conformance/classes/mixinAccessModifiers.ts | 💥 | 99.07% |
 | typescript/conformance/classes/mixinClassesAnnotated.ts | 💥 | 98.57% |

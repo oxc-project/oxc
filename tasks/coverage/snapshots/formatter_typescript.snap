@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8736/8816 (99.09%)
+Positive Passed: 8746/8816 (99.21%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
@@ -21,8 +21,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVaria
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/conditionalEqualityTestingNullability.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix3.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCastReusesTypeNode4.ts
@@ -35,17 +33,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitR
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultParenthesizeES6.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/genericRestTypes.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/identityRelationNeverTypes.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/infiniteConstraints.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/intersectionConstraintReduction.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/intersectionWithConstructSignaturePrototypeResult.ts
 
@@ -57,15 +45,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImpl
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/largeTupleTypes.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/multiSignatureTypeInference.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowingByTypeofInSwitch.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
 
@@ -145,11 +129,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUn
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends1.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes4.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeAsClauses.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeModifiers.ts
 
