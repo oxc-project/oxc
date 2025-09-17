@@ -1,4 +1,4 @@
-ts compatibility: 350/573 (61.08%)
+ts compatibility: 351/573 (61.26%)
 
 # Failed
 
@@ -18,7 +18,7 @@ ts compatibility: 350/573 (61.08%)
 | typescript/array/comment.ts | 💥 | 87.50% |
 | typescript/arrow/16067.ts | 💥💥 | 95.92% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/as/as.ts | 💥 | 67.72% |
+| typescript/as/as.ts | 💥 | 69.29% |
 | typescript/as/assignment.ts | 💥 | 86.67% |
 | typescript/as/assignment2.ts | 💥 | 94.12% |
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
@@ -225,5 +225,4 @@ ts compatibility: 350/573 (61.08%)
 | typescript/union/consistent-with-flow/single-type.ts | 💥 | 3.39% |
 | typescript/union/consistent-with-flow/within-tuple.ts | 💥 | 16.51% |
 | typescript/union/single-type/single-type.ts | 💥 | 33.33% |
-| typescript/update-expression/update-expressions.ts | 💥 | 81.25% |
 | typescript/webhost/webtsc.ts | 💥 | 99.08% |

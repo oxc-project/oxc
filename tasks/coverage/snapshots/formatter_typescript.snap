@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8757/8816 (99.33%)
+Positive Passed: 8758/8816 (99.34%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
@@ -44,8 +44,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/propertyAccessEx
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/readonlyAssignmentInSubclassOfClassExpression.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reducibleIndexedAccessTypes.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/referenceSatisfiesExpression.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
 

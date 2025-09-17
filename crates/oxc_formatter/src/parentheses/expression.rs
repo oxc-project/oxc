@@ -662,6 +662,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
                 | AstNodes::IdentifierReference(_)
                 | AstNodes::AssignmentExpression(_)
                 | AstNodes::AssignmentTargetWithDefault(_)
+                | AstNodes::UpdateExpression(_)
         )
     }
 }
@@ -937,6 +938,7 @@ fn ts_as_or_satisfies_needs_parens(parent: &AstNodes<'_>) -> bool {
             | AstNodes::PrivateFieldExpression(_)
             | AstNodes::AssignmentExpression(_)
             | AstNodes::AssignmentTargetWithDefault(_)
+            | AstNodes::UpdateExpression(_)
     )
 }
 
