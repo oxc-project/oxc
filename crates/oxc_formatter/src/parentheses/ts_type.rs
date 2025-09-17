@@ -60,13 +60,23 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConstructorType<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSUnionType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::TSArrayType(_) | AstNodes::TSTypeOperator(_) | AstNodes::TSIndexedAccessType(_))
+        matches!(
+            self.parent,
+            AstNodes::TSArrayType(_)
+                | AstNodes::TSTypeOperator(_)
+                | AstNodes::TSIndexedAccessType(_)
+        )
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::TSArrayType(_) | AstNodes::TSTypeOperator(_) | AstNodes::TSIndexedAccessType(_))
+        matches!(
+            self.parent,
+            AstNodes::TSArrayType(_)
+                | AstNodes::TSTypeOperator(_)
+                | AstNodes::TSIndexedAccessType(_)
+        )
     }
 }
 
@@ -84,6 +94,11 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::TSArrayType(_) | AstNodes::TSTypeOperator(_) | AstNodes::TSIndexedAccessType(_))
+        matches!(
+            self.parent,
+            AstNodes::TSArrayType(_)
+                | AstNodes::TSTypeOperator(_)
+                | AstNodes::TSIndexedAccessType(_)
+        )
     }
 }
