@@ -21,7 +21,7 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// Remove block from single line blocks
     /// `{ block } -> block`
-    pub fn try_optimize_block(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub(crate) fn try_optimize_block(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::BlockStatement(s) = stmt else { return };
         match s.body.len() {
             0 => {

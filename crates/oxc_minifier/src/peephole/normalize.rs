@@ -11,12 +11,6 @@ use crate::{
     state::MinifierState,
 };
 
-#[derive(Default)]
-pub struct NormalizeOptions {
-    pub convert_while_to_fors: bool,
-    pub convert_const_to_let: bool,
-}
-
 /// Normalize AST
 ///
 /// Make subsequent AST passes easier to analyze:
@@ -37,9 +31,7 @@ pub struct NormalizeOptions {
 /// * remove `debugger` and `console.log` (optional)
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
-pub struct Normalize {
-    options: NormalizeOptions,
-}
+pub struct Normalize;
 
 impl<'a> Normalize {
     pub fn build(
@@ -71,14 +63,14 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.convert_const_to_let {
+        if !ctx.state.dce {
             Self::convert_const_to_let(decl, ctx);
         }
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
-            Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
+            Statement::WhileStatement(_) if !ctx.state.dce => {
                 Self::convert_while_to_for(stmt, ctx);
             }
             _ => {}
@@ -123,10 +115,6 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn new(options: NormalizeOptions) -> Self {
-        Self { options }
-    }
-
     /// Drop `drop_debugger` statement.
     ///
     /// Enabled by `compress.drop_debugger`

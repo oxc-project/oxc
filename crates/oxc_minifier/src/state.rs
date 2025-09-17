@@ -17,6 +17,8 @@ pub struct MinifierState<'a> {
     pub symbol_values: SymbolValues<'a>,
 
     pub changed: bool,
+
+    pub dce: bool,
 }
 
 impl MinifierState<'_> {
@@ -27,6 +29,7 @@ impl MinifierState<'_> {
             pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
             changed: false,
+            dce: false,
         }
     }
 }
