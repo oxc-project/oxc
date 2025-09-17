@@ -1,4 +1,4 @@
-ts compatibility: 402/573 (70.16%)
+ts compatibility: 404/573 (70.51%)
 
 # Failed
 
@@ -51,7 +51,7 @@ ts compatibility: 402/573 (70.16%)
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 91.89% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 99.32% |
 | typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
-| typescript/conditional-types/conditonal-types.ts | 💥💥 | 77.84% |
+| typescript/conditional-types/conditonal-types.ts | 💥💥 | 75.60% |
 | typescript/conditional-types/infer-type.ts | 💥💥 | 39.38% |
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 47.09% |
@@ -110,12 +110,10 @@ ts compatibility: 402/573 (70.16%)
 | typescript/interface2/comments-declare.ts | 💥 | 66.67% |
 | typescript/interface2/comments.ts | 💥 | 78.87% |
 | typescript/interface2/break/break.ts | 💥💥💥 | 80.23% |
-| typescript/intersection/intersection-parens.ts | 💥💥 | 58.06% |
+| typescript/intersection/intersection-parens.ts | 💥💥 | 59.14% |
 | typescript/intersection/type-arguments.ts | 💥💥 | 46.67% |
-| typescript/intersection/consistent-with-flow/comment.ts | 💥 | 0.00% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 60.47% |
 | typescript/key-remapping-in-mapped-types/key-remapping.ts | 💥 | 23.53% |
-| typescript/keyof/keyof.ts | 💥 | 40.00% |
 | typescript/keyword-types/conditional-types.ts | 💥 | 87.50% |
 | typescript/keywords/keywords-2.ts | 💥 | 79.41% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
@@ -132,8 +130,8 @@ ts compatibility: 402/573 (70.16%)
 | typescript/nosemi/index-signature.ts | 💥 | 75.00% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/optional-type/complex.ts | 💥 | 0.00% |
-| typescript/optional-variance/basic.ts | 💥 | 83.61% |
-| typescript/optional-variance/with-jsx.tsx | 💥 | 83.61% |
+| typescript/optional-variance/basic.ts | 💥 | 81.97% |
+| typescript/optional-variance/with-jsx.tsx | 💥 | 81.97% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 54.72% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 15.79% |
@@ -168,7 +166,7 @@ ts compatibility: 402/573 (70.16%)
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 66.67% |
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
 | typescript/union/comments.ts | 💥 | 15.38% |
-| typescript/union/inlining.ts | 💥 | 45.67% |
+| typescript/union/inlining.ts | 💥 | 51.97% |
 | typescript/union/union-parens.ts | 💥 | 58.00% |
 | typescript/union/with-type-params.ts | 💥 | 0.00% |
 | typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 19.05% |

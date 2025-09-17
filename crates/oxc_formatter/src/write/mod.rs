@@ -1231,13 +1231,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let mut types = self.types().iter();
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            write!(f, "(")?;
+        }
         if let Some(item) = types.next() {
             write!(f, item)?;
 
             for item in types {
                 write!(f, [" & ", item])?;
             }
-            return Ok(());
+        }
+        if needs_parentheses {
+            write!(f, ")")?;
         }
         Ok(())
     }
