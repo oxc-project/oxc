@@ -1790,6 +1790,7 @@ dependencies = [
  "rayon",
  "rustc-hash",
  "serde",
+ "serde_json",
  "syn",
 ]
 
