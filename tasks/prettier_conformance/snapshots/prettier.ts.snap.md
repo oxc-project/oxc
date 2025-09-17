@@ -1,4 +1,4 @@
-ts compatibility: 401/573 (69.98%)
+ts compatibility: 402/573 (70.16%)
 
 # Failed
 
@@ -69,7 +69,6 @@ ts compatibility: 401/573 (69.98%)
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
 | typescript/conformance/types/tuple/wideningTuples1.ts | 💥 | 80.00% |
-| typescript/conformance/types/typeOperator/typeOperator.ts | 💥 | 0.00% |
 | typescript/conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne2.ts | 💥 | 93.33% |
 | typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 64.95% |
 | typescript/conformance/types/union/unionTypeCallSignatures3.ts | 💥 | 68.97% |
@@ -116,7 +115,7 @@ ts compatibility: 401/573 (69.98%)
 | typescript/intersection/consistent-with-flow/comment.ts | 💥 | 0.00% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 60.47% |
 | typescript/key-remapping-in-mapped-types/key-remapping.ts | 💥 | 23.53% |
-| typescript/keyof/keyof.ts | 💥 | 20.00% |
+| typescript/keyof/keyof.ts | 💥 | 40.00% |
 | typescript/keyword-types/conditional-types.ts | 💥 | 87.50% |
 | typescript/keywords/keywords-2.ts | 💥 | 79.41% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
