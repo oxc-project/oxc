@@ -638,16 +638,44 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(
-            self.parent,
-            AstNodes::ComputedMemberExpression(_)
-                | AstNodes::StaticMemberExpression(_)
-                | AstNodes::PrivateFieldExpression(_)
-                | AstNodes::IdentifierReference(_)
-                | AstNodes::AssignmentExpression(_)
-                | AstNodes::AssignmentTargetWithDefault(_)
-                | AstNodes::UpdateExpression(_)
-        )
+        match self.parent {
+            AstNodes::TSAsExpression(_) | AstNodes::TSSatisfiesExpression(_) => true,
+            AstNodes::BinaryExpression(binary) => {
+                matches!(binary.operator, BinaryOperator::ShiftLeft)
+            }
+            _ => type_cast_like_needs_parens(self.span(), self.parent),
+        }
+    }
+}
+
+fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
+    #[expect(clippy::match_same_arms)]
+    match parent {
+        AstNodes::ExportDefaultDeclaration(_)
+        | AstNodes::TSTypeAssertion(_)
+        | AstNodes::UnaryExpression(_)
+        | AstNodes::AwaitExpression(_)
+        | AstNodes::TSNonNullExpression(_)
+        // Callee
+        | AstNodes::CallExpression(_)
+        | AstNodes::NewExpression(_)
+        // template tag
+        | AstNodes::TaggedTemplateExpression(_)
+        // in spread
+        | AstNodes::JSXSpreadChild(_)
+        | AstNodes::SpreadElement(_)
+        | AstNodes::JSXSpreadAttribute(_)
+        // static member
+        | AstNodes::StaticMemberExpression(_) => true,
+        AstNodes::ComputedMemberExpression(member) => {
+            member.object.span() == span
+        }
+        // assignment left hand side
+        AstNodes::UpdateExpression(_) | AstNodes::AssignmentTargetWithDefault(_) => true,
+        AstNodes::AssignmentExpression(assignment) => {
+            assignment.left.span() == span
+        }
+        _ => is_class_extends(span, parent),
     }
 }
 

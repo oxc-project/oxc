@@ -1,4 +1,4 @@
-ts compatibility: 386/573 (67.36%)
+ts compatibility: 389/573 (67.89%)
 
 # Failed
 
@@ -50,7 +50,6 @@ ts compatibility: 386/573 (67.36%)
 | typescript/comments/type_literals.ts | 💥 | 68.97% |
 | typescript/comments/union.ts | 💥 | 5.26% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 75.00% |
-| typescript/compiler/castOfAwait.ts | 💥 | 87.50% |
 | typescript/compiler/castTest.ts | 💥 | 96.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
@@ -68,7 +67,6 @@ ts compatibility: 386/573 (67.36%)
 | typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
 | typescript/conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts | 💥 | 96.77% |
 | typescript/conformance/es6/Symbols/symbolProperty15.ts | 💥 | 73.33% |
-| typescript/conformance/expressions/functionCalls/callWithSpreadES6.ts | 💥 | 97.96% |
 | typescript/conformance/types/ambient/ambientDeclarations.ts | 💥 | 90.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts | 💥 | 75.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts | 💥 | 75.00% |
@@ -172,7 +170,6 @@ ts compatibility: 386/573 (67.36%)
 | typescript/type-alias/conditional.ts | 💥 | 23.33% |
 | typescript/type-alias/issue-100857.ts | 💥 | 67.61% |
 | typescript/type-alias/issue-9874.ts | 💥 | 0.00% |
-| typescript/type-arguments-bit-shift-left-like/1.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
