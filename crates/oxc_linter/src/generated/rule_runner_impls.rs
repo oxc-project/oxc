@@ -2683,6 +2683,10 @@ impl RuleRunner for crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::vue::require_typed_ref::RequireTypedRef {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::vue::valid_define_emits::ValidDefineEmits {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }

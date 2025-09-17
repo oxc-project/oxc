@@ -630,6 +630,7 @@ pub(crate) mod vue {
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
     pub mod no_multiple_slot_args;
+    pub mod require_typed_ref;
     pub mod valid_define_emits;
     pub mod valid_define_props;
 }
@@ -1215,6 +1216,7 @@ oxc_macros::declare_all_lint_rules! {
     vue::define_emits_declaration,
     vue::define_props_declaration,
     vue::no_multiple_slot_args,
+    vue::require_typed_ref,
     vue::valid_define_emits,
     vue::valid_define_props,
 }
