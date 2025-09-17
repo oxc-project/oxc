@@ -1,15 +1,15 @@
-import path from 'node:path';
+import { dirname, join as pathJoin } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { execa } from 'execa';
 
-const PACKAGE_ROOT_PATH = path.dirname(import.meta.dirname);
-const CLI_PATH = path.join(PACKAGE_ROOT_PATH, 'dist/cli.js');
+const PACKAGE_ROOT_PATH = dirname(import.meta.dirname);
+const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'dist/cli.js');
 
 async function runOxlintWithoutPlugins(cwd: string, args: string[] = []) {
   return await execa('node', [CLI_PATH, ...args], {
-    cwd: path.join(PACKAGE_ROOT_PATH, cwd),
+    cwd: pathJoin(PACKAGE_ROOT_PATH, cwd),
     reject: false,
   });
 }
