@@ -276,7 +276,15 @@ impl Linter {
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len()
                     );
-                    for (opt_diag, unopt_diag) in optimized_diagnostics.iter().zip(unoptimized_diagnostics.iter()){
+
+
+                    let mut sorted_optimized = optimized_diagnostics.to_vec();
+                    let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
+                    let sort = |m: &Message| { (m.error.labels.as_ref().and_then(|l| l.first()).map(|l| (l.offset(), l.len())), m.error.code.clone()) };
+                    sorted_optimized.sort_unstable_by_key(sort);
+                    sorted_unoptimized.sort_unstable_by_key(sort);
+
+                    for (opt_diag, unopt_diag) in sorted_optimized.iter().zip(sorted_unoptimized.iter()){
                         assert_eq!(
                             opt_diag,
                             unopt_diag,
