@@ -28,7 +28,7 @@ jobs:
       - name: Clone submodules
         uses: ./.github/actions/clone-submodules
 
-      - uses: oxc-project/setup-node@beeabdfbd12652a18a61ff476a59b62518bc1c7b # v1.0.3
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
       - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
         with:
