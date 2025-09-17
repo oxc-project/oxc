@@ -89,7 +89,7 @@ fn lint_impl(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> CliRunResu
 
     command.handle_threads();
 
-    let external_linter = if command.experimental_js_plugins {
+    let external_linter = if command.js_plugins {
         // JS plugins are only supported on 64-bit little-endian platforms at present
         #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
         {

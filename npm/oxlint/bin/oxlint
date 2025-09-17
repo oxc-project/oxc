@@ -4,7 +4,7 @@
 // Even if runtime supports require(ESM), can't use `require` here, because `dist/cli.js`
 // uses top-level `await`.
 //
-// `dist/cli.js` uses require(ESM) internally, but only on path where `--experimental-js-plugins`
+// `dist/cli.js` uses require(ESM) internally, but only on path where `--js-plugins`
 // CLI option is used. So we still support runtimes without require(ESM) for users who aren't
 // using experimental options.
 import("../dist/cli.js").catch(onError);

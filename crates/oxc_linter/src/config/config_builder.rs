@@ -605,7 +605,7 @@ impl Display for ConfigBuilderError {
             ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier } => {
                 write!(
                     f,
-                    "`plugins` config contains '{plugin_specifier}'. JS plugins are not supported without `--experimental-js-plugins` CLI option",
+                    "`plugins` config contains '{plugin_specifier}'. JS plugins are not supported without `--js-plugins` CLI option. Note: JS plugin support is experimental.",
                 )?;
                 Ok(())
             }

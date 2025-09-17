@@ -17,7 +17,7 @@ async function runOxlintWithoutPlugins(cwd: string, args: string[] = []) {
 }
 
 async function runOxlint(cwd: string, args: string[] = []) {
-  return await runOxlintWithoutPlugins(cwd, ['--experimental-js-plugins', ...args]);
+  return await runOxlintWithoutPlugins(cwd, ['--js-plugins', ...args]);
 }
 
 function normalizeOutput(output: string): string {
