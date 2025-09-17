@@ -367,7 +367,7 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
     #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        false
+        is_class_extends(self.span, self.parent)
     }
 }
 
