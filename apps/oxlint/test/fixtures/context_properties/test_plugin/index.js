@@ -27,7 +27,11 @@ const rule = {
 
     if (this !== rule) context.report({ message: 'this !== rule', node: SPAN });
 
-    return {};
+    return {
+      VariableDeclaration(node) {
+        if (this !== undefined) context.report({ message: 'this !== undefined', node });
+      }
+    };
   },
 };
 
