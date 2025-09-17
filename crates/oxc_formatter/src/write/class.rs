@@ -259,10 +259,12 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
         // Decorators are handled differently depending on the parent context
         // When the class is exported, the export statement handles decorator formatting
         // to ensure proper placement relative to the export keyword
-        if !matches!(
-            self.parent,
-            AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
-        ) {
+        if self.is_expression()
+            || !matches!(
+                self.parent,
+                AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
+            )
+        {
             write!(f, decorators)?;
         }
 
