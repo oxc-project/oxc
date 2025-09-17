@@ -59,7 +59,7 @@ pub use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
-    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunner},
+    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
@@ -148,7 +148,25 @@ impl Linter {
         loop {
             let rules = rules
                 .iter()
-                .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
+                .filter(|(rule, _)| {
+                    // Skip rules that shouldn't run
+                    if !rule.should_run(&ctx_host) {
+                        return false;
+                    }
+                    // Skip rules that are implemented in `tsgolint`
+                    if rule.is_tsgolint_rule() {
+                        return false;
+                    }
+                    // Skip rules that only run node types, but there are no relevant node types
+                    // in the current file.
+                    if rule.run_info() == RuleRunFunctionsImplemented::Run
+                        && let Some(types) = rule.types_info()
+                        && !ctx_host.semantic().nodes().contains_any(types)
+                    {
+                        return false;
+                    }
+                    true
+                })
                 .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
                 .collect::<Vec<_>>();
 
