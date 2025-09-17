@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - oxlint-prerelease
     paths:
       - npm/oxlint/package.json # Please only commit this file, so we don't need to wait for all the other CI jobs to finish.
 
@@ -218,25 +219,25 @@ jobs:
 
       - run: npm install -g npm@latest # For trusted publishing support
 
-      - name: Publish npm packages as latest
+      - name: Publish npm packages as alpha
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
           for package in npm/oxlint*
           do
-            pnpm publish $package/ --provenance --access public --no-git-checks
+            pnpm publish $package/ --provenance --access public --no-git-checks --tag alpha
             echo '----'
           done
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
-        with:
-          body: ${{ steps.run.outputs.CHANGELOG }}
-          draft: false
-          files: oxlint-*
-          name: oxlint v${{ needs.check.outputs.version }}
-          tag_name: oxlint_v${{ needs.check.outputs.version }}
-          fail_on_unmatched_files: true
-          target_commitish: ${{ github.sha }}
+      # - name: Create GitHub Release
+        # uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+        # with:
+          # body: ${{ steps.run.outputs.CHANGELOG }}
+          # draft: false
+          # files: oxlint-*
+          # name: oxlint v${{ needs.check.outputs.version }}
+          # tag_name: oxlint_v${{ needs.check.outputs.version }}
+          # fail_on_unmatched_files: true
+          # target_commitish: ${{ github.sha }}
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
