@@ -76,6 +76,12 @@ describe('oxlint CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should load a custom plugin with various import styles', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/load_paths');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should load a custom plugin with multiple files', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/basic_custom_plugin_many_files');
     expect(exitCode).toBe(1);
