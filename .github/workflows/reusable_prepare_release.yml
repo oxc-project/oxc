@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
         with:
           cache-key: warm
           tools: cargo-release-oxc
