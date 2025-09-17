@@ -1547,8 +1547,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = f.context().source_text();
-        f.join_nodes_with_soft_line().entries(self.body()).finish()
+        self.body().fmt(f)
     }
 }
 
@@ -1572,9 +1571,50 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
     }
 }
 
+struct FormatTSSignature<'a, 'b> {
+    last: bool,
+    signature: &'b AstNode<'a, TSSignature<'a>>,
+}
+
+impl GetSpan for FormatTSSignature<'_, '_> {
+    fn span(&self) -> Span {
+        self.signature.span()
+    }
+}
+
+impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.signature.fmt(f)?;
+
+        match f.options().semicolons {
+            Semicolons::Always => {
+                if self.last {
+                    write!(f, [if_group_breaks(&text(";"))])?;
+                } else {
+                    text(";").fmt(f)?;
+                }
+            }
+            Semicolons::AsNeeded => {
+                if !self.last {
+                    write!(f, [if_group_fits_on_line(&text(";"))])?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.join_nodes_with_soft_line().entries(self).finish()
+        let last_index = self.len().saturating_sub(1);
+        f.join_nodes_with_soft_line()
+            .entries(
+                self.iter()
+                    .enumerate()
+                    .map(|(i, signature)| FormatTSSignature { last: i == last_index, signature }),
+            )
+            .finish()
     }
 }
 
@@ -1584,16 +1624,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
             write!(f, ["readonly", space()])?;
         }
         // TODO: parameters only have one element for now.
-        write!(
-            f,
-            [
-                "[",
-                self.parameters().first().unwrap(),
-                "]",
-                self.type_annotation(),
-                OptionalSemicolon
-            ]
-        )
+        write!(f, ["[", self.parameters().first().unwrap(), "]", self.type_annotation(),])
     }
 }
 
@@ -1610,7 +1641,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
         if let Some(return_type) = &self.return_type() {
             write!(f, return_type)?;
         }
-        write!(f, OptionalSemicolon)
+        Ok(())
     }
 }
 
@@ -1656,7 +1687,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
         if let Some(return_type) = &self.return_type() {
             write!(f, return_type)?;
         }
-        write!(f, OptionalSemicolon)
+        Ok(())
     }
 }
 
@@ -1670,7 +1701,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
         if let Some(return_type) = self.return_type() {
             write!(f, return_type)?;
         }
-        write!(f, OptionalSemicolon)
+        Ok(())
     }
 }
 
