@@ -447,7 +447,7 @@ exports[`oxlint CLI > should report an error if a a rule is not found within a c
 exports[`oxlint CLI > should report an error if a custom plugin in config but JS plugins are not enabled 1`] = `
 "Failed to parse configuration file.
 
-  x JS plugins are not supported without \`--experimental-js-plugins\` CLI option
+  x \`plugins\` config contains './test_plugin'. JS plugins are not supported without \`--experimental-js-plugins\` CLI option
 "
 `;
 
