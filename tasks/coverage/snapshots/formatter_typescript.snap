@@ -2,120 +2,126 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8758/8816 (99.34%)
+Positive Passed: 8755/8816 (99.31%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
+Expected `]` but found `:`
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
+`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/castExpressionParentheses.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/castFunctionExpressionShouldBeParenthesized.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences3.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences3.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCastReusesTypeNode4.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCastReusesTypeNode4.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPartialReuseComputedProperty.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPromise.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRecursiveConditionalAliasPreserved.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRecursiveConditionalAliasPreserved.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultParenthesizeES6.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexport.tsx
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexport.tsx
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexportMissingAliasTarget.tsx
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexportMissingAliasTarget.tsx
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespace.tsx
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespace.tsx
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowingByTypeofInSwitch.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/readonlyAssignmentInSubclassOfClassExpression.ts
-
+Expected `{` but found `as`
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reducibleIndexedAccessTypes.ts
-
+Expected `]` but found `:`
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
+An implementation cannot be declared in ambient contexts.
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClasses.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClasses.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/substitutionTypeForIndexedAccessType2.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/substitutionTypeForIndexedAccessType2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/superAccessCastedCall.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/tryStatementInternalComments.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tryStatementInternalComments.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeName1.ts
+Expected `]` but found `:`
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThisParameter.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThisParameter.ts
-
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/overrideInterfaceProperty.ts
+'readonly' type modifier is only permitted on array and tuple literal types.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
-
+Unexpected token
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
+Classes may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototype
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
-
+An implementation cannot be declared in ambient contexts.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorChecksFunctionBodies.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck59.ts
-
+Cannot use `yield` as an identifier in a generator context
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck61.ts
-
+Cannot use `yield` as an identifier in a generator contextUnexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.2.ts
-
+Expected `{` but found `as`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.2.ts
-
+Expected `{` but found `as`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.3.ts
-
+Decorators are not valid here.Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.8.ts
-
+Decorators are not valid here.Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.2.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOpEmitParens.ts
-
+Expected a semicolon or an implicit semicolon after a statement, but found none
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInTypeAssertions.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfAndAndOperator.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfAndAndOperator.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts
-
+Cannot use `await` as an identifier in an async contextUnexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithPrivates2.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithPrivates2.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithProtecteds2.ts
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithProtecteds2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUncheckedIndexedAccess.ts
-
+Expected `]` but found `:`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
-
+Expected `,` but found `(`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeModifiers.ts
-
+Expected `]` but found `:`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/propertyNamesOfReservedWords.ts
-
+'static' modifier cannot appear on a type member.'static' modifier cannot appear on a type member.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/rest/genericObjectRest.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembers.ts
+Unexpected token
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembers.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbols.ts
-
+Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsDeclarations.ts
-
+Unexpected token

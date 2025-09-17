@@ -2,10 +2,12 @@ commit: baa48a41
 
 formatter_test262 Summary:
 AST Parsed     : 44517/44517 (100.00%)
-Positive Passed: 44514/44517 (99.99%)
-Expect to Parse: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
+Positive Passed: 44513/44517 (99.99%)
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
 
-Expect to Parse: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
 
-Expect to Parse: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
 
+Expect to Parse: tasks/coverage/test262/test/language/expressions/in/private-field-rhs-yield-present.js
+Cannot use `yield` as an identifier in a generator context

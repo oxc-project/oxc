@@ -26,14 +26,22 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
 
     let allocator = Allocator::default();
-    let ParserReturn { program, .. } =
+    let ParserReturn { program, errors, .. } =
         Parser::new(&allocator, &source_text1, source_type).with_options(parse_options).parse();
+
+    if !errors.is_empty() {
+        return TestResult::ParseError(
+            errors.iter().map(std::string::ToString::to_string).collect(),
+            false,
+        );
+    }
+
     let source_text2 = Formatter::new(&allocator, options).build(&program);
 
     if source_text1 == source_text2 {
         TestResult::Passed
     } else {
-        TestResult::ParseError(String::new(), false)
+        TestResult::Mismatch("Mismatch", source_text1, source_text2)
     }
 }
 
