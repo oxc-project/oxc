@@ -1,13 +1,13 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
 
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
 
-export function deserialize(buffer, sourceTextInput, sourceByteLenInput) {
+export function deserialize(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
@@ -15,6 +15,7 @@ export function deserialize(buffer, sourceTextInput, sourceByteLenInput) {
   sourceText = sourceTextInput;
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
+  preserveParens = preserveParensInput;
 
   const data = deserializeRawTransferData(uint32[536870902]);
 
@@ -438,12 +439,16 @@ function deserializeChainExpression(pos) {
 }
 
 function deserializeParenthesizedExpression(pos) {
-  return {
-    type: 'ParenthesizedExpression',
-    expression: deserializeExpression(pos + 8),
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
+  let node = deserializeExpression(pos + 8);
+  if (preserveParens) {
+    node = {
+      type: 'ParenthesizedExpression',
+      expression: node,
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+    };
+  }
+  return node;
 }
 
 function deserializeDirective(pos) {
