@@ -8,11 +8,19 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
-    format, format_args, formatter::{
-        buffer::RemoveSoftLinesBuffer, prelude::{document::Document, *}, printer::Printer, trivia::{FormatLeadingComments, FormatTrailingComments}, Format, FormatElement, FormatResult, Formatter, VecBuffer
-    }, generated::ast_nodes::{AstNode, AstNodeIterator, AstNodes}, utils::{
+    IndentWidth, format, format_args,
+    formatter::{
+        Format, FormatElement, FormatResult, Formatter, VecBuffer,
+        buffer::RemoveSoftLinesBuffer,
+        prelude::{document::Document, *},
+        printer::Printer,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
+    },
+    generated::ast_nodes::{AstNode, AstNodeIterator, AstNodes},
+    utils::{
         call_expression::is_test_each_pattern, expression::FormatExpressionWithoutTrailingComments,
-    }, write, IndentWidth
+    },
+    write,
 };
 
 use super::FormatWrite;
