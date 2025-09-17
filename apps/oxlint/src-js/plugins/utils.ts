@@ -3,18 +3,28 @@
  *
  * `err` is expected to be an `Error` object, but can be anything.
  *
- * This function will never throw, and always returns a string, even if:
+ * * If it's an `Error`, the error message and stack trace is returned.
+ * * If it's another object with a string `message` property, `message` is returned.
+ * * Otherwise, a generic "Unknown error" message is returned.
+ *
+ * This function will never throw, and always returns a non-empty string, even if:
  *
  * * `err` is `null` or `undefined`.
  * * `err` is an object with a getter for `message` property which throws.
- * * `err` has a getter for `message` property which returns a different value each time it's accessed.
+ * * `err` has a getter for `stack` or `message` property which returns a different value each time it's accessed.
  *
  * @param err - Error
  * @returns Error message
  */
 export function getErrorMessage(err: unknown): string {
   try {
-    const { message } = err as undefined | { message: string };
+    if (err instanceof Error) {
+      // Note: `stack` includes the error message
+      const { stack } = err;
+      if (typeof stack === 'string' && stack !== '') return stack;
+    }
+
+    const { message } = err as { message?: unknown };
     if (typeof message === 'string' && message !== '') return message;
   } catch {}
 

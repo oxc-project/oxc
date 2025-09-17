@@ -444,7 +444,14 @@ exports[`oxlint CLI > should report an error if a a rule is not found within a c
 "
 `;
 
-exports[`oxlint CLI > should report an error if a custom plugin cannot be loaded 1`] = `
+exports[`oxlint CLI > should report an error if a custom plugin in config but JS plugins are not enabled 1`] = `
+"Failed to parse configuration file.
+
+  x JS plugins are not supported without \`--experimental-js-plugins\` CLI option
+"
+`;
+
+exports[`oxlint CLI > should report an error if a custom plugin is missing 1`] = `
 "Failed to parse configuration file.
 
   x Failed to load JS plugin: ./test_plugin
@@ -452,10 +459,12 @@ exports[`oxlint CLI > should report an error if a custom plugin cannot be loaded
 "
 `;
 
-exports[`oxlint CLI > should report an error if a custom plugin in config but JS plugins are not enabled 1`] = `
+exports[`oxlint CLI > should report an error if a custom plugin throws an error during import 1`] = `
 "Failed to parse configuration file.
 
-  x JS plugins are not supported without \`--experimental-js-plugins\` CLI option
+  x Failed to load JS plugin: ./test_plugin
+  |   Error: whoops!
+  |     at <root>/apps/oxlint/test/fixtures/custom_plugin_import_error/test_plugin/index.js:1:7
 "
 `;
 

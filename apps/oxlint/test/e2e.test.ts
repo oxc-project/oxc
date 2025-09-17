@@ -6,6 +6,8 @@ import { execa } from 'execa';
 
 const PACKAGE_ROOT_PATH = dirname(import.meta.dirname);
 const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'dist/cli.js');
+const ROOT_URL = new URL('../../../', import.meta.url).href;
+const FIXTURES_URL = new URL('./fixtures/', import.meta.url).href;
 
 async function runOxlintWithoutPlugins(cwd: string, args: string[] = []) {
   return await execa('node', [CLI_PATH, ...args], {
@@ -19,9 +21,28 @@ async function runOxlint(cwd: string, args: string[] = []) {
 }
 
 function normalizeOutput(output: string): string {
-  return output
-    .replace(/Finished in \d+(\.\d+)?(s|ms|us|ns)/, 'Finished in Xms')
-    .replace(/using \d+ threads./, 'using X threads.');
+  let lines = output.split('\n');
+
+  // Remove timing and thread count info which can vary between runs
+  lines[lines.length - 1] = lines[lines.length - 1].replace(
+    /^Finished in \d+(?:\.\d+)?(?:s|ms|us|ns) on (\d+) file(s?) using \d+ threads.$/,
+    'Finished in Xms on $1 file$2 using X threads.',
+  );
+
+  // Remove lines from stack traces which are outside `fixtures` directory.
+  // Replace path to repo root in stack traces with `<root>`.
+  lines = lines.flatMap((line) => {
+    // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foor/bar.js:1:1`
+    // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foor/bar.js:1:1)`
+    const match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
+    if (match) {
+      const [, premable, at] = match;
+      return at.startsWith(FIXTURES_URL) ? [`${premable}<root>/${at.slice(ROOT_URL.length)}`] : [];
+    }
+    return [line];
+  });
+
+  return lines.join('\n');
 }
 
 describe('oxlint CLI', () => {
@@ -73,8 +94,14 @@ describe('oxlint CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
-  it('should report an error if a custom plugin cannot be loaded', async () => {
+  it('should report an error if a custom plugin is missing', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/missing_custom_plugin');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should report an error if a custom plugin throws an error during import', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_import_error');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
