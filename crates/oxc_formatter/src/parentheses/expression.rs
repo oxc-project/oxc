@@ -213,7 +213,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, MemberExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self.parent, AstNodes::Decorator(_))
+        false
     }
 }
 
@@ -236,26 +236,10 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
     }
 }
 
-fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
-    let mut expr = callee;
-    loop {
-        match expr {
-            Expression::Identifier(_) => return true,
-            Expression::StaticMemberExpression(static_member) => {
-                expr = &static_member.object;
-            }
-            _ => break,
-        }
-    }
-
-    false
-}
-
 impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self.parent {
             AstNodes::NewExpression(_) => true,
-            AstNodes::Decorator(_) => !is_identifier_or_static_member_only(&self.callee),
             AstNodes::ExportDefaultDeclaration(_) => {
                 let callee = &self.callee();
                 let callee_span = callee.span();
@@ -535,7 +519,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AwaitExpression<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self.parent {
-            AstNodes::NewExpression(_) | AstNodes::Decorator(_) => true,
+            AstNodes::NewExpression(_) => true,
             AstNodes::CallExpression(call) => !call.optional,
             AstNodes::StaticMemberExpression(member) => !member.optional,
             AstNodes::ComputedMemberExpression(member) => {

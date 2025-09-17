@@ -50,10 +50,48 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
     }
 }
 
+fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
+    let mut expr = callee;
+    loop {
+        match expr {
+            Expression::Identifier(_) => return true,
+            Expression::StaticMemberExpression(static_member) => {
+                expr = &static_member.object;
+            }
+            _ => break,
+        }
+    }
+
+    false
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
-        write!(f, ["@", self.expression()])
+        write!(f, ["@"]);
+
+        // Determine if parentheses are required around decorator expressions
+        let needs_parentheses = match &self.expression {
+            // Identifiers: `@decorator` needs no parens
+            Expression::Identifier(_) => false,
+            // Call expressions: `@obj.method()` needs no parens, `@(complex().method)()` needs parens
+            Expression::CallExpression(call) => !is_identifier_or_static_member_only(&call.callee),
+            // Static member expressions: `@obj.prop` needs no parens, `@(complex[key])` needs parens
+            Expression::StaticMemberExpression(static_member) => {
+                !is_identifier_or_static_member_only(&static_member.object)
+            }
+            // All other expressions need parentheses: `@(a + b)`, `@(condition ? a : b)`
+            _ => true,
+        };
+
+        if needs_parentheses {
+            write!(f, "(")?;
+        }
+        write!(f, [self.expression()])?;
+        if needs_parentheses {
+            write!(f, ")")?;
+        }
+        Ok(())
     }
 }
 

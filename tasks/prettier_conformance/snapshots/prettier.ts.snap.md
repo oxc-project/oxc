@@ -1,4 +1,4 @@
-ts compatibility: 351/573 (61.26%)
+ts compatibility: 352/573 (61.43%)
 
 # Failed
 
@@ -115,7 +115,6 @@ ts compatibility: 351/573 (61.26%)
 | typescript/declare/object-type-in-declare-function.ts | 💥 | 58.82% |
 | typescript/declare/trailing-comma/function-rest-trailing-comma.ts | 💥💥💥 | 50.00% |
 | typescript/decorators/comments.ts | 💥 | 60.00% |
-| typescript/decorators/decorator-type-assertion.ts | 💥 | 60.00% |
 | typescript/decorators/decorators-comments.ts | 💥 | 65.71% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |

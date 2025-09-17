@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8755/8816 (99.31%)
+Positive Passed: 8763/8816 (99.40%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 Expected `]` but found `:`
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
@@ -65,20 +65,10 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThis
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/overrideInterfaceProperty.ts
 'readonly' type modifier is only permitted on array and tuple literal types.
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
-Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
 Classes may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototype
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
 An implementation cannot be declared in ambient contexts.
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/class/decoratorChecksFunctionBodies.ts
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/decorators/legacyDecorators-contextualTypes.ts
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck59.ts
-Cannot use `yield` as an identifier in a generator context
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck61.ts
-Cannot use `yield` as an identifier in a generator contextUnexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.2.ts
 Expected `{` but found `as`
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.2.ts
@@ -87,10 +77,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/
 Decorators are not valid here.Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.8.ts
 Decorators are not valid here.Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.ts
-Unexpected token
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.2.ts
-Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOpEmitParens.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
@@ -101,8 +87,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuar
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.1.ts
-Cannot use `await` as an identifier in an async contextUnexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithPrivates2.ts
