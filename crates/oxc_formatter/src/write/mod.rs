@@ -1432,7 +1432,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
         let assignment_like = format_with(|f| {
             write!(
                 f,
-                [self.id(), self.type_parameters(), space(), "=", space(), self.type_annotation()]
+                [self.id(), group(&self.type_parameters()), space(), "=", space(), self.type_annotation()]
             )
         });
         write!(
