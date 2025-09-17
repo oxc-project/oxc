@@ -3,6 +3,8 @@
 
 src:
   - '.github/generated/ast_changes_watch_list.yml'
+  - 'apps/oxlint/src-js/generated/constants.mjs'
+  - 'apps/oxlint/src/generated/raw_transfer_constants.rs'
   - 'crates/oxc_allocator/src/generated/assert_layouts.rs'
   - 'crates/oxc_allocator/src/generated/fixed_size_constants.rs'
   - 'crates/oxc_allocator/src/pool/fixed_size.rs'
@@ -64,8 +66,6 @@ src:
   - 'crates/oxc_syntax/src/serialize.rs'
   - 'crates/oxc_syntax/src/symbol.rs'
   - 'crates/oxc_traverse/src/generated/scopes_collector.rs'
-  - 'napi/oxlint/src-js/generated/constants.mjs'
-  - 'napi/oxlint/src/generated/raw_transfer_constants.rs'
   - 'napi/parser/generated/constants.mjs'
   - 'napi/parser/generated/deserialize/js.mjs'
   - 'napi/parser/generated/deserialize/ts.mjs'

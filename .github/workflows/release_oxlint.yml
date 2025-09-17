@@ -48,34 +48,42 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             code-target: win32-x64
+            build-oxlint: pnpm run build-napi-release --target x86_64-pc-windows-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
             code-target: win32-arm64
+            build-oxlint: pnpm run build-napi-release --target aarch64-pc-windows-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             code-target: linux-x64-gnu
+            build-oxlint: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             code-target: linux-arm64-gnu
+            build-oxlint: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             code-target: linux-x64-musl
+            build-oxlint: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             code-target: linux-arm64-musl
+            build-oxlint: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
             code-target: darwin-x64
+            build-oxlint: pnpm run build-napi-release --target x86_64-apple-darwin
 
           - os: macos-latest
             target: aarch64-apple-darwin
             code-target: darwin-arm64
+            build-oxlint: pnpm run build-napi-release --target aarch64-apple-darwin
 
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
@@ -100,21 +108,35 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Build
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+
+      - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
+        if: ${{ contains(matrix.target, 'musl') }}
+        with:
+          version: 0.13.0
+
+      - name: Build oxlint
+        working-directory: apps/oxlint
+        run: ${{ matrix.build-oxlint }} --features allocator
         shell: bash
         env:
           TARGET_CC: clang # for mimalloc
-        run: |
-          cross build --release -p oxlint --bin oxlint --features allocator --target=${{ matrix.target }}
-          cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
+
+      - name: Build language server
+        shell: bash
+        env:
+          TARGET_CC: clang # for mimalloc
+        run: cross build --release -p oxc_language_server --bin oxc_language_server --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries
         if: runner.os == 'Windows'
+        # Windows `.node` files have `-msvc` postfix e.g. `oxlint.win32-x64-msvc.node`. Remove the postfix.
         run: |
-          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint.exe $OXLINT_BIN_NAME.exe
-          7z a $OXLINT_BIN_NAME.zip $OXLINT_BIN_NAME.exe
+          OXLINT_BIN_SRC_NAME=oxlint.${{ matrix.code-target }}-msvc.node
+          OXLINT_BIN_NAME=oxlint.${{ matrix.code-target }}.node
+          mv apps/oxlint/src-js/$OXLINT_BIN_SRC_NAME $OXLINT_BIN_NAME
+          7z a oxlint-${{ matrix.code-target }}.zip $OXLINT_BIN_NAME
 
           OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
           mv target/${{ matrix.target }}/release/oxc_language_server.exe $OXLS_BIN_NAME.exe
@@ -124,9 +146,9 @@ jobs:
       - name: Archive Binaries
         if: runner.os != 'Windows'
         run: |
-          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint $OXLINT_BIN_NAME
-          tar czf $OXLINT_BIN_NAME.tar.gz $OXLINT_BIN_NAME
+          OXLINT_BIN_NAME=oxlint.${{ matrix.code-target }}.node
+          mv apps/oxlint/src-js/$OXLINT_BIN_NAME .
+          tar czf oxlint-${{ matrix.code-target }}.tar.gz $OXLINT_BIN_NAME
 
           OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
           mv target/${{ matrix.target }}/release/oxc_language_server $OXLS_BIN_NAME
@@ -183,6 +205,10 @@ jobs:
         run: ls *.gz | xargs -i tar xf {}
 
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+
+      - name: Generate oxlint JS build
+        working-directory: apps/oxlint
+        run: pnpm run build-js
 
       - name: Generate npm packages
         run: |
@@ -253,7 +279,7 @@ jobs:
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.version }}" }'
 
-      - name: Bump oxc-project/eslint-plugin-oxlint
+      - name: Bump oxc-project/oxlint-migrate
         uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxlint-migrate

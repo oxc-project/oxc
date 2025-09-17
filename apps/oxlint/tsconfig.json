@@ -6,5 +6,9 @@
     "target": "ESNext",
     "noImplicitAny": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "fixtures"
+  ]
 }

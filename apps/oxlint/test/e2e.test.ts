@@ -5,10 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { execa } from 'execa';
 
 const PACKAGE_ROOT_PATH = path.dirname(import.meta.dirname);
-const ENTRY_POINT_PATH = path.join(PACKAGE_ROOT_PATH, 'dist/index.js');
+const CLI_PATH = path.join(PACKAGE_ROOT_PATH, 'dist/cli.js');
 
 async function runOxlintWithoutPlugins(cwd: string, args: string[] = []) {
-  return await execa('node', [ENTRY_POINT_PATH, ...args], {
+  return await execa('node', [CLI_PATH, ...args], {
     cwd: path.join(PACKAGE_ROOT_PATH, cwd),
     reject: false,
   });

@@ -7,14 +7,14 @@ use napi::{
 };
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
-use oxlint::{
+use oxc_linter::{
     ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
     PluginLoadResult,
 };
 
 use crate::{
-    JsLintFileCb, JsLoadPluginCb,
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
+    run::{JsLintFileCb, JsLoadPluginCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
