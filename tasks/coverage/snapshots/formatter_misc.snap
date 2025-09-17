@@ -1,9 +1,7 @@
 formatter_misc Summary:
 AST Parsed     : 49/49 (100.00%)
-Positive Passed: 46/49 (93.88%)
+Positive Passed: 47/49 (95.92%)
 Expect to Parse: tasks/coverage/misc/pass/oxc-11487.cjs
 Cannot use `await` as an identifier in an async context
 Mismatch: tasks/coverage/misc/pass/oxc-2592.ts
 
-Expect to Parse: tasks/coverage/misc/pass/oxc-4449.ts
-Computed property names are not allowed in enums.

@@ -8,27 +8,31 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
-    IndentWidth, format, format_args,
-    formatter::{
-        Format, FormatElement, FormatResult, Formatter, VecBuffer,
-        buffer::RemoveSoftLinesBuffer,
-        prelude::{document::Document, *},
-        printer::Printer,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
-    },
-    generated::ast_nodes::{AstNode, AstNodeIterator},
-    utils::{
+    format, format_args, formatter::{
+        buffer::RemoveSoftLinesBuffer, prelude::{document::Document, *}, printer::Printer, trivia::{FormatLeadingComments, FormatTrailingComments}, Format, FormatElement, FormatResult, Formatter, VecBuffer
+    }, generated::ast_nodes::{AstNode, AstNodeIterator, AstNodes}, utils::{
         call_expression::is_test_each_pattern, expression::FormatExpressionWithoutTrailingComments,
-    },
-    write,
+    }, write, IndentWidth
 };
 
 use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_computed_literal = matches!(self.parent, AstNodes::TSEnumMember(_));
+
+        if is_computed_literal {
+            write!(f, "[")?;
+        }
+
         let template = TemplateLike::TemplateLiteral(self);
-        write!(f, template)
+        write!(f, template)?;
+
+        if is_computed_literal {
+            write!(f, "]")?;
+        }
+
+        Ok(())
     }
 }
 
