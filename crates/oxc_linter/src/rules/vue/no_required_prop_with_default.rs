@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
 fn no_required_prop_with_default_diagnostic(span: Span, prop_name: &str) -> OxcDiagnostic {
     let msg = format!("Prop \"{prop_name}\" should be optional.");
@@ -78,8 +78,9 @@ impl Rule for NoRequiredPropWithDefault {
                 let Expression::Identifier(ident) = &call_expr.callee else {
                     return;
                 };
+                let is_vue_setup = ctx.frameworks_options() == FrameworkOptions::VueSetup;
                 match ident.name.as_str() {
-                    "defineProps" => {
+                    "defineProps" if is_vue_setup => {
                         if let Some(arge) = call_expr.arguments.first() {
                             let Some(Expression::ObjectExpression(obj)) = arge.as_expression()
                             else {
@@ -114,7 +115,7 @@ impl Rule for NoRequiredPropWithDefault {
                         };
                         handle_object_expression(ctx, obj);
                     }
-                    "withDefaults" if call_expr.arguments.len() == 2 => {
+                    "withDefaults" if call_expr.arguments.len() == 2 && is_vue_setup => {
                         let [first_arg, second_arg] = call_expr.arguments.as_slice() else {
                             return;
                         };
