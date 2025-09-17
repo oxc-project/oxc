@@ -44,6 +44,8 @@ interface InternalContext {
   ruleIndex: number;
   // Absolute path of file being linted
   filePath: string;
+  // Options
+  options: unknown[];
 }
 
 /**
@@ -65,6 +67,7 @@ export class Context {
       id: fullRuleName,
       filePath: '',
       ruleIndex: 0,
+      options: [],
     };
   }
 
@@ -84,6 +87,11 @@ export class Context {
     return this.#internal.filePath;
   }
 
+  // Getter for options for file being linted.
+  get options() {
+    return this.#internal.options;
+  }
+
   /**
    * Report error.
    * @param diagnostic - Diagnostic object
@@ -98,6 +106,7 @@ export class Context {
 
   static {
     setupContextForFile = (context, ruleIndex, filePath) => {
+      // TODO: Support `options`
       const internal = context.#internal;
       internal.ruleIndex = ruleIndex;
       internal.filePath = filePath;
