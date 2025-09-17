@@ -2,10 +2,8 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8746/8816 (99.21%)
+Positive Passed: 8757/8816 (99.33%)
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
@@ -15,13 +13,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/castExpressionPa
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/castFunctionExpressionShouldBeParenthesized.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/classNonUniqueSymbolMethodHasSymbolIndexer.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences3.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix3.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCastReusesTypeNode4.ts
 
@@ -35,8 +29,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/declarationEmitS
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/exportDefaultParenthesizeES6.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/intersectionWithConstructSignaturePrototypeResult.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexport.tsx
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexportMissingAliasTarget.tsx
@@ -45,13 +37,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImpl
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/multiSignatureTypeInference.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/narrowingByTypeofInSwitch.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/readonlyAssignmentInSubclassOfClassExpression.ts
 
@@ -60,8 +48,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reducibleIndexed
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/referenceSatisfiesExpression.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/signatureCombiningRestParameters1.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClasses.ts
 
@@ -75,13 +61,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/tryStatementInte
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeName1.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typePredicateFreshLiteralWidening.ts
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThisParameter.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty9.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts
 
@@ -128,8 +108,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/interfaces/in
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/pedantic/noUncheckedIndexedAccess.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes4.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeModifiers.ts
 
