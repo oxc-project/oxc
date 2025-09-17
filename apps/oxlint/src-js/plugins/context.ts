@@ -21,8 +21,8 @@ export const diagnostics: DiagnosticReport[] = [];
 /**
  * Update a `Context` with file-specific data.
  *
- * We have to define this function within class body, as it's not possible to set private property
- * `#ruleIndex` from outside the class.
+ * We have to define this function within class body, as it's not possible to access private property
+ * `#internal` from outside the class.
  * We don't use a normal class method, because we don't want to expose this to user.
  *
  * @param context - `Context` object
@@ -35,27 +35,53 @@ export let setupContextForFile: (
   filePath: string,
 ) => void;
 
+// Internal data within `Context` that don't want to expose to plugins.
+// Stored as `#internal` property of `Context`.
+interface InternalContext {
+  // Full rule name, including plugin name e.g. `my-plugin/my-rule`.
+  id: string;
+  // Index into `ruleIds` sent from Rust
+  ruleIndex: number;
+  // Absolute path of file being linted
+  filePath: string;
+}
+
 /**
  * Context class.
  *
  * Each rule has its own `Context` object. It is passed to that rule's `create` function.
  */
 export class Context {
-  // Full rule name, including plugin name e.g. `my-plugin/my-rule`.
-  id: string;
-  // Index into `ruleIds` sent from Rust. Set before calling `rule`'s `create` method.
-  #ruleIndex: number;
-  // Absolute path of file being linted. Set before calling `rule`'s `create` method.
-  filename: string;
-  // Absolute path of file being linted. Set before calling `rule`'s `create` method.
-  physicalFilename: string;
+  // Internal data.
+  // Initialized in constructor, updated by `setupContextForFile` before running visitor on file.
+  #internal: InternalContext;
 
   /**
    * @class
    * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
    */
   constructor(fullRuleName: string) {
-    this.id = fullRuleName;
+    this.#internal = {
+      id: fullRuleName,
+      filePath: '',
+      ruleIndex: 0,
+    };
+  }
+
+  // Getter for full rule name, in form `<plugin>/<rule>`
+  get id() {
+    return this.#internal.id;
+  }
+
+  // Getter for absolute path of file being linted.
+  get filename() {
+    return this.#internal.filePath;
+  }
+
+  // Getter for absolute path of file being linted.
+  // TODO: Unclear how this differs from `filename`.
+  get physicalFilename() {
+    return this.#internal.filePath;
   }
 
   /**
@@ -66,15 +92,15 @@ export class Context {
     diagnostics.push({
       message: diagnostic.message,
       loc: { start: diagnostic.node.start, end: diagnostic.node.end },
-      ruleIndex: this.#ruleIndex,
+      ruleIndex: this.#internal.ruleIndex,
     });
   }
 
   static {
     setupContextForFile = (context, ruleIndex, filePath) => {
-      context.#ruleIndex = ruleIndex;
-      context.filename = filePath;
-      context.physicalFilename = filePath;
+      const internal = context.#internal;
+      internal.ruleIndex = ruleIndex;
+      internal.filePath = filePath;
     };
   }
 }
