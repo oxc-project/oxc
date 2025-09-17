@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-17
+
+### 🚀 Features
+
+- c75ae8c linter/plugins: Add options to `Context` (#13810) (overlookmotel)
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6245c8c linter/plugins: Make `Context` properties getters (#13809) (overlookmotel)
+- a2342a6 linter/plugins: Import named in tests (#13807) (overlookmotel)
+
+### 🧪 Testing
+
+- 407c95e linter/plugins: Check `this` is undefined in visit functions (#13811) (overlookmotel)
+- f023a22 linter/plugins: Include stack trace in plugin loading errors (#13808) (overlookmotel)
+
+
 ## [1.16.0] - 2025-09-16
 
 ### 🐛 Bug Fixes

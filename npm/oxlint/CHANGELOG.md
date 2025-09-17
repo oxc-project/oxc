@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-17
+
+### 🚀 Features
+
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+
 
 
 ## [1.14.0] - 2025-08-30
