@@ -626,13 +626,13 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, JSXEmptyExpression> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSAsExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        ts_as_or_satisfies_needs_parens(self.parent)
+        ts_as_or_satisfies_needs_parens(self.span(), &self.expression, self.parent)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        ts_as_or_satisfies_needs_parens(self.parent)
+        ts_as_or_satisfies_needs_parens(self.span(), &self.expression, self.parent)
     }
 }
 
@@ -649,7 +649,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
 }
 
 fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
-    #[expect(clippy::match_same_arms)]
+    #[expect(clippy::match_same_arms)] // for better readability
     match parent {
         AstNodes::ExportDefaultDeclaration(_)
         | AstNodes::TSTypeAssertion(_)
@@ -942,16 +942,23 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {
     }
 }
 
-fn ts_as_or_satisfies_needs_parens(parent: &AstNodes<'_>) -> bool {
-    matches!(
-        parent,
-        AstNodes::ComputedMemberExpression(_)
-            | AstNodes::StaticMemberExpression(_)
-            | AstNodes::PrivateFieldExpression(_)
-            | AstNodes::AssignmentExpression(_)
-            | AstNodes::AssignmentTargetWithDefault(_)
-            | AstNodes::UpdateExpression(_)
-    )
+fn ts_as_or_satisfies_needs_parens(
+    span: Span,
+    inner: &Expression<'_>,
+    parent: &AstNodes<'_>,
+) -> bool {
+    match parent {
+        AstNodes::ConditionalExpression(_)
+        // Binary-like
+        | AstNodes::LogicalExpression(_)
+        | AstNodes::BinaryExpression(_) => true,
+        // `export default (function foo() {} as bar)` and `export default (class {} as bar)`
+        AstNodes::ExportDefaultDeclaration(_) =>
+            matches!(inner, Expression::FunctionExpression(_) | Expression::ClassExpression(_)),
+        _ => {
+            type_cast_like_needs_parens(span, parent)
+        }
+    }
 }
 
 fn is_class_extends(span: Span, parent: &AstNodes<'_>) -> bool {
