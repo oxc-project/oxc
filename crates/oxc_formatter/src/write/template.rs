@@ -16,7 +16,7 @@ use crate::{
         printer::Printer,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodeIterator, AstNodes},
+    generated::ast_nodes::{AstNode, AstNodeIterator},
     utils::{
         call_expression::is_test_each_pattern, expression::FormatExpressionWithoutTrailingComments,
     },
@@ -27,20 +27,8 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let is_computed_literal = matches!(self.parent, AstNodes::TSEnumMember(_));
-
-        if is_computed_literal {
-            write!(f, "[")?;
-        }
-
         let template = TemplateLike::TemplateLiteral(self);
-        write!(f, template)?;
-
-        if is_computed_literal {
-            write!(f, "]")?;
-        }
-
-        Ok(())
+        write!(f, template)
     }
 }
 

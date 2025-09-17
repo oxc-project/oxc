@@ -1166,7 +1166,22 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.id()])?;
+        let id = self.id();
+        let is_computed = match id.as_ref() {
+            TSEnumMemberName::ComputedTemplateString(_) => true,
+            _ => false,
+        };
+
+        if is_computed {
+            write!(f, "[")?;
+        }
+
+        write!(f, [id])?;
+
+        if is_computed {
+            write!(f, "]")?;
+        }
+
         if let Some(init) = self.initializer() {
             write!(f, [space(), "=", space(), init])?;
         }
