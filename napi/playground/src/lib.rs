@@ -248,7 +248,7 @@ impl Oxc {
         }
         let semantic_ret = semantic_builder
             .with_check_syntax_error(parser_options.semantic_errors)
-            .with_cfg(true)
+            .with_cfg(run_options.cfg)
             .build(program);
         self.diagnostics.extend(semantic_ret.errors);
 
@@ -376,7 +376,7 @@ impl Oxc {
         // Only lint if there are no syntax errors
         if run_options.lint && self.diagnostics.is_empty() {
             let external_plugin_store = ExternalPluginStore::default();
-            let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
+            let semantic_ret = SemanticBuilder::new().with_cfg(run_options.cfg).build(program);
             let semantic = semantic_ret.semantic;
             let lint_config = if linter_options.config.is_some() {
                 let oxlintrc =

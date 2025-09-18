@@ -31,6 +31,7 @@ pub struct OxcRunOptions {
     pub mangle: bool,
     pub scope: bool,
     pub symbol: bool,
+    pub cfg: bool,
 }
 
 #[napi(object)]

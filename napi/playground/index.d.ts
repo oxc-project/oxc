@@ -119,6 +119,7 @@ export interface OxcRunOptions {
   mangle: boolean
   scope: boolean
   symbol: boolean
+  cfg: boolean
 }
 
 export interface OxcTransformerOptions {
