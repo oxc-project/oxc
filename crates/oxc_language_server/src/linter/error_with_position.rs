@@ -124,7 +124,10 @@ fn fix_with_position_to_fix_content(fix: &FixWithPosition<'_>) -> FixedContent {
         message: fix.span.message().map(std::string::ToString::to_string),
         code: fix.content.to_string(),
         range: Range {
-            start: Position { line: fix.span.start().line + 1, character: fix.span.start().character },
+            start: Position {
+                line: fix.span.start().line + 1,
+                character: fix.span.start().character,
+            },
             end: Position { line: fix.span.end().line + 1, character: fix.span.end().character },
         },
     }
