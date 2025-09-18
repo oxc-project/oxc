@@ -8,200 +8,63 @@ file: fixtures/linter/unused_disabled_directives/test.js
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
 message: "Unexpected console statement.\nhelp: Delete this console statement."
-range: Range { start: Position { line: 9, character: 0 }, end: Position { line: 9, character: 11 } }
+range: Range { start: Position { line: 10, character: 0 }, end: Position { line: 10, character: 11 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/unused_disabled_directives/test.js"
-related_information[0].location.range: Range { start: Position { line: 9, character: 0 }, end: Position { line: 9, character: 11 } }
+related_information[0].location.range: Range { start: Position { line: 10, character: 0 }, end: Position { line: 10, character: 11 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-console for this line",
-            ),
-            code: "// oxlint-disable-next-line no-console\n",
-            range: Range {
-                start: Position {
-                    line: 9,
-                    character: 0,
-                },
-                end: Position {
-                    line: 9,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-console for this file",
-            ),
-            code: "// oxlint-disable no-console\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
+fixed: None
 
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 2, character: 2 }, end: Position { line: 2, character: 11 } }
+range: Range { start: Position { line: 3, character: 2 }, end: Position { line: 3, character: 11 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/unused_disabled_directives/test.js"
-related_information[0].location.range: Range { start: Position { line: 2, character: 2 }, end: Position { line: 2, character: 11 } }
+related_information[0].location.range: Range { start: Position { line: 3, character: 2 }, end: Position { line: 3, character: 11 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Remove the debugger statement",
-            ),
-            code: "",
-            range: Range {
-                start: Position {
-                    line: 2,
-                    character: 2,
-                },
-                end: Position {
-                    line: 2,
-                    character: 11,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-debugger for this line",
-            ),
-            code: "// oxlint-disable-next-line no-debugger\n",
-            range: Range {
-                start: Position {
-                    line: 2,
-                    character: 0,
-                },
-                end: Position {
-                    line: 2,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-debugger for this file",
-            ),
-            code: "// oxlint-disable no-debugger\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 3, character: 2 }, end: Position { line: 3, character: 11 } } })
 
 
 code: ""
 code_description.href: "None"
 message: "Unused eslint-disable directive (no problems were reported)."
-range: Range { start: Position { line: 0, character: 2 }, end: Position { line: 0, character: 56 } }
+range: Range { start: Position { line: 1, character: 2 }, end: Position { line: 1, character: 56 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/unused_disabled_directives/test.js"
-related_information[0].location.range: Range { start: Position { line: 0, character: 2 }, end: Position { line: 0, character: 56 } }
+related_information[0].location.range: Range { start: Position { line: 1, character: 2 }, end: Position { line: 1, character: 56 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 0,
-                character: 2,
-            },
-            end: Position {
-                line: 0,
-                character: 56,
-            },
-        },
-    },
-)
+fixed: Single(FixedContent { message: Some("remove unused disable directive"), code: "", range: Range { start: Position { line: 1, character: 2 }, end: Position { line: 1, character: 56 } } })
 
 
 code: ""
 code_description.href: "None"
 message: "Unused eslint-disable directive (no problems were reported from no-for-loop)."
-range: Range { start: Position { line: 5, character: 41 }, end: Position { line: 5, character: 52 } }
+range: Range { start: Position { line: 6, character: 41 }, end: Position { line: 6, character: 52 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/unused_disabled_directives/test.js"
-related_information[0].location.range: Range { start: Position { line: 5, character: 41 }, end: Position { line: 5, character: 52 } }
+related_information[0].location.range: Range { start: Position { line: 6, character: 41 }, end: Position { line: 6, character: 52 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 5,
-                character: 39,
-            },
-            end: Position {
-                line: 5,
-                character: 52,
-            },
-        },
-    },
-)
+fixed: Single(FixedContent { message: Some("remove unused disable directive"), code: "", range: Range { start: Position { line: 6, character: 39 }, end: Position { line: 6, character: 52 } } })
 
 
 code: ""
 code_description.href: "None"
 message: "Unused eslint-disable directive (no problems were reported)."
-range: Range { start: Position { line: 8, character: 2 }, end: Position { line: 8, character: 52 } }
+range: Range { start: Position { line: 9, character: 2 }, end: Position { line: 9, character: 52 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/unused_disabled_directives/test.js"
-related_information[0].location.range: Range { start: Position { line: 8, character: 2 }, end: Position { line: 8, character: 52 } }
+related_information[0].location.range: Range { start: Position { line: 9, character: 2 }, end: Position { line: 9, character: 52 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 8,
-                character: 2,
-            },
-            end: Position {
-                line: 8,
-                character: 52,
-            },
-        },
-    },
-)
+fixed: Single(FixedContent { message: Some("remove unused disable directive"), code: "", range: Range { start: Position { line: 9, character: 2 }, end: Position { line: 9, character: 52 } } })
