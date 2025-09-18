@@ -14,7 +14,7 @@
     "test": "tsc && vitest --dir ./test run"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "description": "Linter for the JavaScript Oxidation Compiler",
   "author": "Boshen and oxc contributors",
