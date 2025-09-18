@@ -1,7 +1,7 @@
 {
   "name": "oxfmt",
   "version": "0.2.0",
-  "type": "commonjs",
+  "type": "module",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
