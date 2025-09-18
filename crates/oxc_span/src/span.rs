@@ -216,8 +216,8 @@ impl Span {
     pub const fn eq_fast(self, other: Span) -> bool {
         // Combine start+end into 64-bit values for single comparison
         // This is faster than two separate u32 comparisons on 64-bit systems
-        ((self.start as u64) << 32 | self.end as u64) == 
-        ((other.start as u64) << 32 | other.end as u64)
+        ((self.start as u64) << 32 | self.end as u64)
+            == ((other.start as u64) << 32 | other.end as u64)
     }
 
     /// Create a [`Span`] covering the maximum range of two [`Span`]s.
