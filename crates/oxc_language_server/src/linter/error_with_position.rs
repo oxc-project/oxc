@@ -47,16 +47,18 @@ pub fn message_to_lsp_diagnostic(
     let related_information = message.error.labels.as_ref().map(|spans| {
         spans
             .iter()
-            .map(|span| {
-                let offset = span.offset() as u32;
-                let start_position = offset_to_position(rope, offset, source_text);
-                let end_position =
-                    offset_to_position(rope, offset + span.len() as u32, source_text);
-
-                lsp_types::DiagnosticRelatedInformation {
-                    location: lsp_types::Location {
-                        uri: uri.clone(),
-                        range: lsp_types::Range::new(start_position, end_position),
+            .map(|span| lsp_types::DiagnosticRelatedInformation {
+                location: lsp_types::Location {
+                    uri: uri.clone(),
+                    range: lsp_types::Range {
+                        start: lsp_types::Position {
+                            line: span.start().line + 1,
+                            character: span.start().character,
+                        },
+                        end: lsp_types::Position {
+                            line: span.end().line + 1,
+                            character: span.end().character,
+                        },
                     },
                     message: span
                         .label()
@@ -142,7 +144,28 @@ fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedConte
     FixedContent {
         message: fix.message.as_ref().map(std::string::ToString::to_string),
         code: fix.content.to_string(),
-        range: Range::new(start_position, end_position),
+        range: Range {
+            start: Position { line: fix.span.start().line + 1, character: fix.span.start().character },
+            end: Position { line: fix.span.end().line + 1, character: fix.span.end().character },
+        },
+    }
+}
+
+pub fn message_with_position_to_lsp_diagnostic_report(
+    message: &MessageWithPosition<'_>,
+    uri: &Uri,
+) -> DiagnosticReport {
+    DiagnosticReport {
+        diagnostic: message_with_position_to_lsp_diagnostic(message, uri),
+        fixed_content: match &message.fixes {
+            PossibleFixesWithPosition::None => PossibleFixContent::None,
+            PossibleFixesWithPosition::Single(fix) => {
+                PossibleFixContent::Single(fix_with_position_to_fix_content(fix))
+            }
+            PossibleFixesWithPosition::Multiple(fixes) => PossibleFixContent::Multiple(
+                fixes.iter().map(fix_with_position_to_fix_content).collect(),
+            ),
+        },
     }
 }
 
