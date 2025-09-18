@@ -2,6 +2,17 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:25]
+ 3 │                         props: {
+ 4 │ ╭─▶                         'name': {
+ 5 │ │                           required: true,
+ 6 │ │                           default: 'Hello'
+ 7 │ ╰─▶                         }
+ 8 │                         }
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
    ╭─[no_required_prop_with_default.tsx:4:19]
  3 │                       interface TestPropType {
  4 │                         name: string

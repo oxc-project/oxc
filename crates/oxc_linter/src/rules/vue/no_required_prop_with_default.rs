@@ -73,70 +73,104 @@ declare_oxc_lint!(
 
 impl Rule for NoRequiredPropWithDefault {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::CallExpression(call_expr) => {
-                let Expression::Identifier(ident) = &call_expr.callee else {
-                    return;
-                };
-                let is_vue_setup = ctx.frameworks_options() == FrameworkOptions::VueSetup;
-                match ident.name.as_str() {
-                    "defineProps" if is_vue_setup => {
-                        if let Some(arge) = call_expr.arguments.first() {
-                            let Some(Expression::ObjectExpression(obj)) = arge.as_expression()
-                            else {
-                                return;
-                            };
-                            // Here we need to consider the following two examples
-                            // 1. const props = defineProps({ name: { required: true, default: 'a' } })
-                            // 2. const { name = 'a' } =  defineProps({ name: { required: true } })
-                            let key_hash = collect_hash_from_variable_declarator(ctx, node)
-                                .unwrap_or_default();
-                            handle_prop_object(ctx, obj, Some(&key_hash));
-                        }
-                        if call_expr.arguments.is_empty() {
-                            // if `defineProps` is used without arguments, we need to check the type arguments
-                            // e.g. `const { name = 'a' } = defineProps<IProp>()`
-                            let Some(type_args) = &call_expr.type_arguments else {
-                                return;
-                            };
-                            let Some(first_type_argument) = type_args.params.first() else {
-                                return;
-                            };
-                            if let Some(key_hash) = collect_hash_from_variable_declarator(ctx, node)
-                            {
-                                handle_type_argument(ctx, first_type_argument, &key_hash);
-                            }
-                        }
+        let is_vue = ctx.file_path().extension().is_some_and(|ext| ext == "vue");
+        if is_vue {
+            self.run_on_vue(node, ctx);
+        } else {
+            self.check_define_component(node, ctx);
+        }
+    }
+}
+
+impl NoRequiredPropWithDefault {
+    fn run_on_vue<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
+            self.run_on_setup(node, ctx);
+        } else {
+            self.run_on_composition(node, ctx);
+        }
+    }
+
+    #[expect(clippy::unused_self)]
+    fn check_define_component(&self, node: &AstNode<'_>, ctx: &LintContext<'_>) {
+        // only check `defineComponent` method
+        // e.g. `let component = defineComponent({ props: { name: { required: true, default: 'a' } } })`
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(ident) = call_expr.callee.get_identifier_reference() else {
+            return;
+        };
+        if ident.name.as_str() == "defineComponent" && call_expr.arguments.len() == 1 {
+            let arg = &call_expr.arguments[0];
+            let Some(Expression::ObjectExpression(obj)) = arg.as_expression() else {
+                return;
+            };
+            handle_object_expression(ctx, obj);
+        }
+    }
+
+    fn run_on_setup<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(ident) = call_expr.callee.get_identifier_reference() else {
+            return;
+        };
+
+        match ident.name.as_str() {
+            "defineProps" => {
+                if let Some(arge) = call_expr.arguments.first() {
+                    let Some(Expression::ObjectExpression(obj)) = arge.as_expression() else {
+                        return;
+                    };
+                    // Here we need to consider the following two examples
+                    // 1. const props = defineProps({ name: { required: true, default: 'a' } })
+                    // 2. const { name = 'a' } =  defineProps({ name: { required: true } })
+                    let key_hash =
+                        collect_hash_from_variable_declarator(ctx, node).unwrap_or_default();
+                    handle_prop_object(ctx, obj, Some(&key_hash));
+                }
+                if call_expr.arguments.is_empty() {
+                    // if `defineProps` is used without arguments, we need to check the type arguments
+                    // e.g. `const { name = 'a' } = defineProps<IProp>()`
+                    let Some(type_args) = &call_expr.type_arguments else {
+                        return;
+                    };
+                    let Some(first_type_argument) = type_args.params.first() else {
+                        return;
+                    };
+                    if let Some(key_hash) = collect_hash_from_variable_declarator(ctx, node) {
+                        handle_type_argument(ctx, first_type_argument, &key_hash);
                     }
-                    "defineComponent" if call_expr.arguments.len() == 1 => {
-                        let arg = &call_expr.arguments[0];
-                        let Some(Expression::ObjectExpression(obj)) = arg.as_expression() else {
-                            return;
-                        };
-                        handle_object_expression(ctx, obj);
-                    }
-                    "withDefaults" if call_expr.arguments.len() == 2 && is_vue_setup => {
-                        let [first_arg, second_arg] = call_expr.arguments.as_slice() else {
-                            return;
-                        };
-                        if let (Some(first_arg_expr), Some(second_arg_expr)) =
-                            (first_arg.as_expression(), second_arg.as_expression())
-                        {
-                            let Expression::ObjectExpression(second_obj_expr) =
-                                second_arg_expr.get_inner_expression()
-                            else {
-                                return;
-                            };
-                            let Some(key_hash) = collect_hash_from_object_expr(second_obj_expr)
-                            else {
-                                return;
-                            };
-                            process_define_props_call(ctx, first_arg_expr, &key_hash);
-                        }
-                    }
-                    _ => {}
                 }
             }
+            "withDefaults" if call_expr.arguments.len() == 2 => {
+                let [first_arg, second_arg] = call_expr.arguments.as_slice() else {
+                    return;
+                };
+                if let (Some(first_arg_expr), Some(second_arg_expr)) =
+                    (first_arg.as_expression(), second_arg.as_expression())
+                {
+                    let Expression::ObjectExpression(second_obj_expr) =
+                        second_arg_expr.get_inner_expression()
+                    else {
+                        return;
+                    };
+                    let Some(key_hash) = collect_hash_from_object_expr(second_obj_expr) else {
+                        return;
+                    };
+                    process_define_props_call(ctx, first_arg_expr, &key_hash);
+                }
+            }
+            _ => {
+                self.check_define_component(node, ctx);
+            }
+        }
+    }
+
+    fn run_on_composition<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
             AstKind::ExportDefaultDeclaration(export_default_decl) => {
                 let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
                     &export_default_decl.declaration
@@ -145,12 +179,10 @@ impl Rule for NoRequiredPropWithDefault {
                 };
                 handle_object_expression(ctx, obj_expr);
             }
-            _ => {}
+            _ => {
+                self.check_define_component(node, ctx);
+            }
         }
-    }
-
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_path().extension().is_some_and(|ext| ext == "vue")
     }
 }
 
@@ -577,6 +609,21 @@ fn test() {
     ];
 
     let fail = vec![
+        (
+            "
+                const a = defineComponent({
+                    props: {
+                        'name': {
+                        required: true,
+                        default: 'Hello'
+                        }
+                    }
+                    })
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.ts")),
+        ),
         (
             r#"
     		        <script setup lang="ts">
