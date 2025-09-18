@@ -31,6 +31,14 @@ pub struct ParserOptions {
     #[napi(ts_type = "boolean")]
     pub range: Option<bool>,
 
+    /// Controls whether the `loc` property is included on AST nodes.
+    /// The `loc` property contains line and column information for the start and end
+    /// of each node.
+    ///
+    /// @default false
+    #[napi(ts_type = "boolean")]
+    pub loc: Option<bool>,
+
     /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by

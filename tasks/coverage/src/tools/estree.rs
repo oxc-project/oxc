@@ -118,7 +118,7 @@ impl Case for EstreeTest262Case {
             }
         };
 
-        let oxc_json = program.to_pretty_estree_js_json(false);
+        let oxc_json = program.to_pretty_estree_js_json(false, false);
 
         if oxc_json == acorn_json {
             self.base.set_result(TestResult::Passed);
@@ -228,7 +228,7 @@ impl Case for EstreeJsxCase {
             }
         };
 
-        let oxc_json = program.to_pretty_estree_js_json(false);
+        let oxc_json = program.to_pretty_estree_js_json(false, false);
 
         if oxc_json == acorn_json {
             self.result = TestResult::Passed;
@@ -375,7 +375,7 @@ impl Case for EstreeTypescriptCase {
             let mut program = ret.program;
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
-            let oxc_json = program.to_pretty_estree_ts_json(false);
+            let oxc_json = program.to_pretty_estree_ts_json(false, false);
             if oxc_json == estree_json {
                 continue;
             }

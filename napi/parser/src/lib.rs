@@ -19,7 +19,7 @@ use oxc::{
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
+use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16_with_loc, get_source_type};
 
 mod convert;
 mod types;
@@ -95,6 +95,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
+    let loc = options.loc.unwrap_or(false);
     let ret = parse(&allocator, source_type, &source_text, options);
 
     let mut program = ret.program;
@@ -108,8 +109,13 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
 
     let mut errors = OxcError::from_diagnostics(filename, &source_text, diagnostics);
 
-    let mut comments =
-        convert_utf8_to_utf16(&source_text, &mut program, &mut module_record, &mut errors);
+    let mut comments = convert_utf8_to_utf16_with_loc(
+        &source_text,
+        &mut program,
+        &mut module_record,
+        &mut errors,
+        loc,
+    );
 
     let program_and_fixes = match ast_type {
         AstType::JavaScript => {
@@ -126,14 +132,14 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                 );
             }
 
-            program.to_estree_js_json_with_fixes(ranges)
+            program.to_estree_js_json_with_fixes(ranges, loc)
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // despite appearances to the contrary in AST explorers.
             // So we ignore them too.
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes(ranges)
+            program.to_estree_ts_json_with_fixes(ranges, loc)
         }
     };
 
