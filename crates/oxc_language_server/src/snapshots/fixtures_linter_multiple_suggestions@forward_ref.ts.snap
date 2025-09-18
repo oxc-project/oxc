@@ -8,78 +8,11 @@ file: fixtures/linter/multiple_suggestions/forward_ref.ts
 code: "eslint-plugin-react(forward-ref-uses-ref)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/react/forward-ref-uses-ref.html"
 message: "Components wrapped with `forwardRef` must have a `ref` parameter\nhelp: Add a `ref` parameter, or remove `forwardRef`"
-range: Range { start: Position { line: 0, character: 11 }, end: Position { line: 0, character: 24 } }
+range: Range { start: Position { line: 1, character: 11 }, end: Position { line: 1, character: 24 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/multiple_suggestions/forward_ref.ts"
-related_information[0].location.range: Range { start: Position { line: 0, character: 11 }, end: Position { line: 0, character: 24 } }
+related_information[0].location.range: Range { start: Position { line: 1, character: 11 }, end: Position { line: 1, character: 24 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "remove `forwardRef` wrapper",
-            ),
-            code: "(props) => {}",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 25,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "add `ref` parameter",
-            ),
-            code: "(props, ref)",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 11,
-                },
-                end: Position {
-                    line: 0,
-                    character: 18,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable forward-ref-uses-ref for this line",
-            ),
-            code: "// oxlint-disable-next-line forward-ref-uses-ref\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable forward-ref-uses-ref for this file",
-            ),
-            code: "// oxlint-disable forward-ref-uses-ref\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
+fixed: Multiple([FixedContent { message: Some("remove `forwardRef` wrapper"), code: "(props) => {}", range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 25 } } }, FixedContent { message: Some("add `ref` parameter"), code: "(props, ref)", range: Range { start: Position { line: 1, character: 11 }, end: Position { line: 1, character: 18 } } }])
