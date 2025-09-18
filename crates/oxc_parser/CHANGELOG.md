@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.90.0] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- 00e4477 parser: Update ident reference check in jsx (#13819) (camc314)
+
+### 📚 Documentation
+
+- 3a03b85 parser: Improve docs for `Token::read_bool` (#13873) (overlookmotel)
+- 5d4e4f0 parser: Document is_on_new_line and read_bool performance characteristics (#13867) (Boshen)
+
+### ⚡ Performance
+
+- ca4a081 parser: Cache redundant token operations in hot paths (#13775) (Boshen)
+
+
 
 ## [0.88.0] - 2025-09-15
 

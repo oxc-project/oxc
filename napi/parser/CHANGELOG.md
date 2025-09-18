@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- 24a21b3 napi/parser: `preserveParens` option for raw transfer (#13855) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 9796ec1 napi: Fix binding files (Boshen)
+
+### 🚜 Refactor
+
+- 42b1000 napi/parser: Export functions directly (#13854) (overlookmotel)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- 24a21b3 napi/parser: `preserveParens` option for raw transfer (#13855) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 9796ec1 napi: Fix binding files (Boshen)
+
+### 🚜 Refactor
+
+- 42b1000 napi/parser: Export functions directly (#13854) (overlookmotel)
+
+
 ## [0.89.0] - 2025-09-15
 
 ### 🐛 Bug Fixes
