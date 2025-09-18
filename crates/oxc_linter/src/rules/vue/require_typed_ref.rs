@@ -5,7 +5,10 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn require_typed_ref_diagnostic(span: Span, msg: String) -> OxcDiagnostic {
+fn require_typed_ref_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
+    let msg = format!(
+        "Specify type parameter for `{name}` function, otherwise created variable will not be typechecked."
+    );
     OxcDiagnostic::warn(msg)
         .with_help("Provide an explicit type parameter or an initial value.")
         .with_label(span)
@@ -17,22 +20,26 @@ pub struct RequireTypedRef;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// Require `ref` and `shallowRef` functions to be strongly typed.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// With TypeScript it is easy to prevent usage of any by using noImplicitAny.
+    /// Unfortunately this rule is easily bypassed with Vue ref() function.
+    /// Calling ref() function without a generic parameter or an initial value leads to ref having Ref<any> type.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```typescript
+    /// const count = ref();
+    /// const name = shallowRef()
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```typescript
+    /// const count = ref<number>()
+    /// const a = ref(0)
     /// ```
     RequireTypedRef,
     vue,
@@ -78,7 +85,7 @@ impl Rule for RequireTypedRef {
                     return;
                 }
             }
-            ctx.diagnostic(require_typed_ref_diagnostic(call_expr.span, format!("Specify type parameter for `{name}` function, otherwise created variable will not be typechecked.")));
+            ctx.diagnostic(require_typed_ref_diagnostic(call_expr.span, &name));
         }
     }
 
@@ -285,7 +292,6 @@ fn test() {
 			            }
 			          }
 			        </script>
-			      }
 			      "#,
             None,
             None,
