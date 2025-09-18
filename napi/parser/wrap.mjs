@@ -1,6 +1,3 @@
-// Note: This code is repeated in `wrap.cjs`.
-// Any changes should be applied in that file too.
-
 export function wrap(result) {
   let program, module, comments, errors;
   return {
