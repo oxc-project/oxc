@@ -12,7 +12,7 @@ use oxc_span::{GetSpan, Span};
 use crate::ast::*;
 
 /// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
-pub const AST_TYPE_MAX: u8 = 186;
+pub const AST_TYPE_MAX: u8 = 185;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
