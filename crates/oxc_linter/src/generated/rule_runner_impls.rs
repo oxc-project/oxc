@@ -345,6 +345,12 @@ impl RuleRunner for crate::rules::eslint::no_magic_numbers::NoMagicNumbers {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner
+    for crate::rules::eslint::no_misleading_character_class::NoMisleadingCharacterClass
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::eslint::no_multi_assign::NoMultiAssign {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
