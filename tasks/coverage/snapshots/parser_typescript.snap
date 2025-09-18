@@ -11818,7 +11818,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:7:8]
  6 │ const regexes: RegExp[] = [
  7 │     /[𝘈-𝘡][𝘡-𝘈]/,
-   ·        ──
+   ·     ─
  8 │     /[𝘈-𝘡][𝘡-𝘈]/u,
    ╰────
 
@@ -11826,7 +11826,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:8:19]
  7 │     /[𝘈-𝘡][𝘡-𝘈]/,
  8 │     /[𝘈-𝘡][𝘡-𝘈]/u,
-   ·             ──
+   ·     ─
  9 │     /[𝘈-𝘡][𝘡-𝘈]/v,
    ╰────
 
@@ -11834,7 +11834,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╭─[typescript/tests/cases/compiler/regularExpressionCharacterClassRangeOrder.ts:9:15]
   8 │     /[𝘈-𝘡][𝘡-𝘈]/u,
   9 │     /[𝘈-𝘡][𝘡-𝘈]/v,
-    ·            ───
+    ·     ─
  10 │ 
     ╰────
 

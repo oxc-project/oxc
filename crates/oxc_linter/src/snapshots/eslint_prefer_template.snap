@@ -214,7 +214,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
  1 │ foo + ' 8'
-   · ─────────
+   · ──────────
    ╰────
   help: Use template literals instead of string concatenation.
 
@@ -228,7 +228,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(prefer-template): Unexpected string concatenation.
    ╭─[prefer_template.tsx:1:1]
  1 │ foo + ' '
-   · ────────
+   · ─────────
    ╰────
   help: Use template literals instead of string concatenation.
 

@@ -21411,7 +21411,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[test262/test/language/line-terminators/invalid-comment-single-cr.js:18:6]
  17 │ // this text is not included in the single-line comment that precedes it
-    ·        ▲
+    ·         ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -21441,14 +21441,14 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:18:1]
  17 │ 
  18 │ //
-    · ─
+    · ──
     ╰────
 
   × Unexpected token
     ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:18:1]
  17 │ 
  18 │ //
-    · ───
+    · ────
     ╰────
 
   × Unterminated regular expression
@@ -21498,7 +21498,7 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
     ╭─[test262/test/language/line-terminators/invalid-string-cr.js:17:1]
  16 │ 
  17 │ ''
-    · ─
+    · ──
     ╰────
 
   × Unterminated string

@@ -2169,7 +2169,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/436/input.js:2:1]
  1 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unexpected token
@@ -2182,7 +2182,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/438/input.js:3:1]
  2 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unexpected token
@@ -2195,7 +2195,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/440/input.js:3:1]
  2 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unterminated regular expression
@@ -2228,7 +2228,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/444/input.js:3:3]
  2 │ */]
-   ·   ─
+   ·    ─
    ╰────
 
   × Unexpected token
@@ -11174,7 +11174,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0156/input.js:3:1]
  2 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unterminated regular expression
@@ -11207,7 +11207,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0160/input.js:3:3]
  2 │ */]
-   ·   ─
+   ·    ─
    ╰────
 
   × Unexpected token
