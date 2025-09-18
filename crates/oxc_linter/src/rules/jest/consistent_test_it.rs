@@ -206,7 +206,7 @@ impl Rule for ConsistentTestIt {
     fn run_once(&self, ctx: &LintContext) {
         let mut describe_nesting_hash: FxHashMap<ScopeId, i32> = FxHashMap::default();
         let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);
-        possible_jest_nodes.sort_by_key(|n| n.node.id());
+        possible_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in &possible_jest_nodes {
             self.run(&mut describe_nesting_hash, possible_jest_node, ctx);

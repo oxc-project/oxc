@@ -482,7 +482,7 @@ impl ConfigStoreBuilder {
         let new_rules = self
             .rules
             .iter()
-            .sorted_by_key(|(r, _)| (r.plugin_name(), r.name()))
+            .sorted_unstable_by_key(|(r, _)| (r.plugin_name(), r.name()))
             .map(|(r, severity)| ESLintRule {
                 plugin_name: r.plugin_name().to_string(),
                 rule_name: r.name().to_string(),

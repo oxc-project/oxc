@@ -121,7 +121,7 @@ source: crates/oxc_linter/src/tester.rs
     ╭─[max_nested_describe.tsx:7:37]
   6 │                                     describe('another suite', () => {
   7 │ ╭─▶                                     describe('another suite', () => {
-  8 │ │                                   
+  8 │ │   
   9 │ ╰─▶                                     })
  10 │                                     })
     ╰────
