@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/tsgolint/no-floating-promises/index.ts
 ---
-########## 
+##########
 file: fixtures/linter/tsgolint/no-floating-promises/index.ts
 ----------
 
