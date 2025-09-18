@@ -8,109 +8,39 @@ file: fixtures/linter/issue_9958/issue.ts
 code: "eslint(no-extra-boolean-cast)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast.html"
 message: "Redundant double negation\nhelp: Remove the double negation as it will already be coerced to a boolean"
-range: Range { start: Position { line: 3, character: 14 }, end: Position { line: 3, character: 17 } }
+range: Range { start: Position { line: 4, character: 14 }, end: Position { line: 4, character: 17 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
-related_information[0].location.range: Range { start: Position { line: 3, character: 14 }, end: Position { line: 3, character: 17 } }
+related_information[0].location.range: Range { start: Position { line: 4, character: 14 }, end: Position { line: 4, character: 17 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-extra-boolean-cast for this line",
-            ),
-            code: "  // oxlint-disable-next-line no-extra-boolean-cast\n",
-            range: Range {
-                start: Position {
-                    line: 3,
-                    character: 0,
-                },
-                end: Position {
-                    line: 3,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-extra-boolean-cast for this file",
-            ),
-            code: "// oxlint-disable no-extra-boolean-cast\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
+fixed: None
 
 
 code: "typescript-eslint(no-non-null-asserted-optional-chain)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-non-null-asserted-optional-chain.html"
 message: "Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.\nhelp: Remove the non-null assertion."
-range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
+range: Range { start: Position { line: 12, character: 18 }, end: Position { line: 12, character: 19 } }
 related_information[0].message: "non-null assertion made after optional chain"
 related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
-related_information[0].location.range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
+related_information[0].location.range: Range { start: Position { line: 12, character: 21 }, end: Position { line: 12, character: 22 } }
 related_information[1].message: "optional chain used"
 related_information[1].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
-related_information[1].location.range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
+related_information[1].location.range: Range { start: Position { line: 12, character: 18 }, end: Position { line: 12, character: 19 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple(
-    [
-        FixedContent {
-            message: Some(
-                "Disable no-non-null-asserted-optional-chain for this line",
-            ),
-            code: "  // oxlint-disable-next-line no-non-null-asserted-optional-chain\n",
-            range: Range {
-                start: Position {
-                    line: 11,
-                    character: 0,
-                },
-                end: Position {
-                    line: 11,
-                    character: 0,
-                },
-            },
-        },
-        FixedContent {
-            message: Some(
-                "Disable no-non-null-asserted-optional-chain for this file",
-            ),
-            code: "// oxlint-disable no-non-null-asserted-optional-chain\n",
-            range: Range {
-                start: Position {
-                    line: 0,
-                    character: 0,
-                },
-                end: Position {
-                    line: 0,
-                    character: 0,
-                },
-            },
-        },
-    ],
-)
+fixed: Single(FixedContent { message: Some("Delete this code."), code: "", range: Range { start: Position { line: 12, character: 21 }, end: Position { line: 12, character: 22 } } })
 
 
 code: "None"
 code_description.href: "None"
-message: "optional chain used"
-range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
+message: "non-null assertion made after optional chain"
+range: Range { start: Position { line: 12, character: 21 }, end: Position { line: 12, character: 22 } }
 related_information[0].message: "original diagnostic"
 related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
-related_information[0].location.range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
+related_information[0].location.range: Range { start: Position { line: 12, character: 18 }, end: Position { line: 12, character: 19 } }
 severity: Some(Hint)
 source: Some("oxc")
 tags: None
