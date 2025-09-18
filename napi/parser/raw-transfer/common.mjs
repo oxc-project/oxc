@@ -7,8 +7,6 @@ import {
 import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from '../generated/constants.mjs';
 import { rawTransferSupported } from './supported.mjs';
 
-export { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, prepareRaw, returnBufferToCache };
-
 // Throw an error if running on a platform which raw transfer doesn't support.
 //
 // Note: This module is lazy-loaded only when user calls `parseSync` or `parseAsync` with
@@ -34,7 +32,7 @@ if (!rawTransferSupported()) {
  * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
  * @returns {Object} - The return value of `convert`
  */
-function parseSyncRawImpl(filename, sourceText, options, convert) {
+export function parseSyncRawImpl(filename, sourceText, options, convert) {
   const { buffer, sourceByteLen } = prepareRaw(sourceText);
   parseSyncRawBinding(filename, buffer, sourceByteLen, options);
   return convert(buffer, sourceText, sourceByteLen);
@@ -93,7 +91,7 @@ const queue = [];
  * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
  * @returns {Object} - The return value of `convert`
  */
-async function parseAsyncRawImpl(filename, sourceText, options, convert) {
+export async function parseAsyncRawImpl(filename, sourceText, options, convert) {
   // Wait for a free CPU core if all CPUs are currently busy.
   //
   // Note: `availableCores` is NOT decremented if have to wait in the queue first,
@@ -180,7 +178,7 @@ const textEncoder = new TextEncoder();
  *   - `sourceByteLen`: Length of source text in UTF-8 bytes
  *     (which may not be equal to `sourceText.length` if source contains non-ASCII characters).
  */
-function prepareRaw(sourceText) {
+export function prepareRaw(sourceText) {
   // Cancel timeout for clearing buffers
   if (clearBuffersTimeout !== null) {
     clearTimeout(clearBuffersTimeout);
@@ -218,7 +216,7 @@ function prepareRaw(sourceText) {
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @returns {boolean} - `true` if AST is JS, `false` if TS
  */
-function isJsAst(buffer) {
+export function isJsAst(buffer) {
   return buffer[IS_TS_FLAG_POS] === 0;
 }
 
@@ -229,7 +227,7 @@ function isJsAst(buffer) {
  * @param {Uint8Array} buffer - Buffer
  * @returns {undefined}
  */
-function returnBufferToCache(buffer) {
+export function returnBufferToCache(buffer) {
   buffers.push(buffer);
 
   if (clearBuffersTimeout !== null) clearTimeout(clearBuffersTimeout);

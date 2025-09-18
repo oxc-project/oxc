@@ -105,6 +105,7 @@ export interface OxcParserOptions {
   allowReturnOutsideFunction: boolean
   preserveParens: boolean
   allowV8Intrinsics: boolean
+  semanticErrors: boolean
 }
 
 export interface OxcRunOptions {

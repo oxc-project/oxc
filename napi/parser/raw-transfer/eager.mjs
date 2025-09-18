@@ -56,7 +56,10 @@ function deserialize(buffer, sourceText, sourceByteLen) {
   let data;
   if (isJsAst(buffer)) {
     if (deserializeJS === null) deserializeJS = require('../generated/deserialize/js.mjs').deserialize;
-    data = deserializeJS(buffer, sourceText, sourceByteLen);
+
+    // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
+    // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.
+    data = deserializeJS(buffer, sourceText, sourceByteLen, true);
 
     // Add a line comment for hashbang
     const { hashbang } = data.program;
@@ -65,7 +68,11 @@ function deserialize(buffer, sourceText, sourceByteLen) {
     }
   } else {
     if (deserializeTS === null) deserializeTS = require('../generated/deserialize/ts.mjs').deserialize;
-    data = deserializeTS(buffer, sourceText, sourceByteLen);
+
+    // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
+    // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.
+    data = deserializeTS(buffer, sourceText, sourceByteLen, true);
+
     // Note: Do not add line comment for hashbang, to match `@typescript-eslint/parser`.
     // See https://github.com/oxc-project/oxc/blob/ea784f5f082e4c53c98afde9bf983afd0b95e44e/napi/parser/src/lib.rs#L106-L130
   }

@@ -17,7 +17,7 @@ async function runOxlintWithoutPlugins(cwd: string, args: string[] = []) {
 }
 
 async function runOxlint(cwd: string, args: string[] = []) {
-  return await runOxlintWithoutPlugins(cwd, ['--experimental-js-plugins', ...args]);
+  return await runOxlintWithoutPlugins(cwd, ['--js-plugins', ...args]);
 }
 
 function normalizeOutput(output: string): string {
@@ -72,6 +72,12 @@ describe('oxlint CLI', () => {
 
   it('should load a custom plugin', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/basic_custom_plugin');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should load a custom plugin with various import styles', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/load_paths');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });

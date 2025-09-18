@@ -116,13 +116,13 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
     #[rustfmt::skip]
     let prelude = format!("
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
 
-        export function deserialize(buffer, sourceTextInput, sourceByteLenInput) {{
+        export function deserialize(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
@@ -130,6 +130,7 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
             sourceText = sourceTextInput;
             sourceByteLen = sourceByteLenInput;
             sourceIsAscii = sourceText.length === sourceByteLen;
+            preserveParens = preserveParensInput;
 
             const data = deserializeRawTransferData(uint32[{data_pointer_pos_32}]);
 

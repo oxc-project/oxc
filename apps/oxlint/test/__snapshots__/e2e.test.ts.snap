@@ -395,6 +395,55 @@ Found 20 warnings and 20 errors.
 Finished in Xms on 20 files using X threads."
 `;
 
+exports[`oxlint CLI > should load a custom plugin with various import styles 1`] = `
+"
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x plugin1(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin2(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin3(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin4(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin5(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin6(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+Found 1 warning and 6 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
 exports[`oxlint CLI > should receive data via \`context\` 1`] = `
 "
   x context-plugin(log-context): id: context-plugin/log-context
@@ -447,7 +496,7 @@ exports[`oxlint CLI > should report an error if a a rule is not found within a c
 exports[`oxlint CLI > should report an error if a custom plugin in config but JS plugins are not enabled 1`] = `
 "Failed to parse configuration file.
 
-  x JS plugins are not supported without \`--experimental-js-plugins\` CLI option
+  x \`plugins\` config contains './test_plugin'. JS plugins are not supported without \`--js-plugins\` CLI option. Note: JS plugin support is experimental.
 "
 `;
 

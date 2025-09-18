@@ -101,7 +101,7 @@ for (const { filename, code } of fixtures) {
     const deserialize = isJsAst(buffer) ? deserializeJS : deserializeTS;
 
     benchRaw('parser_napi_raw_deser_only', () => {
-      deserialize(buffer, code, sourceByteLen);
+      deserialize(buffer, code, sourceByteLen, true);
     });
 
     // oxlint-disable-next-line no-unused-vars

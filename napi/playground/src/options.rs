@@ -40,6 +40,7 @@ pub struct OxcParserOptions {
     pub allow_return_outside_function: bool,
     pub preserve_parens: bool,
     pub allow_v8_intrinsics: bool,
+    pub semantic_errors: bool,
 }
 
 #[napi(object)]

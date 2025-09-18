@@ -91,7 +91,7 @@ impl DerefMut for OxcDiagnostic {
     }
 }
 
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct OxcCode {
     pub scope: Option<Cow<'static, str>>,
     pub number: Option<Cow<'static, str>>,

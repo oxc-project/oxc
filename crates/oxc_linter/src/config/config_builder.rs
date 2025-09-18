@@ -162,8 +162,11 @@ impl ConfigStoreBuilder {
         }
 
         if !external_plugins.is_empty() {
-            let external_linter =
-                external_linter.ok_or(ConfigBuilderError::NoExternalLinterConfigured)?;
+            let Some(external_linter) = external_linter else {
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let plugin_specifier = external_plugins.iter().next().unwrap().clone();
+                return Err(ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier });
+            };
 
             let resolver = Resolver::default();
 
@@ -573,7 +576,9 @@ pub enum ConfigBuilderError {
         error: String,
     },
     ExternalRuleLookupError(ExternalRuleLookupError),
-    NoExternalLinterConfigured,
+    NoExternalLinterConfigured {
+        plugin_specifier: String,
+    },
 }
 
 impl Display for ConfigBuilderError {
@@ -597,9 +602,10 @@ impl Display for ConfigBuilderError {
                 write!(f, "Failed to load JS plugin: {plugin_specifier}\n  {error}")?;
                 Ok(())
             }
-            ConfigBuilderError::NoExternalLinterConfigured => {
-                f.write_str(
-                    "JS plugins are not supported without `--experimental-js-plugins` CLI option",
+            ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier } => {
+                write!(
+                    f,
+                    "`plugins` config contains '{plugin_specifier}'. JS plugins are not supported without `--js-plugins` CLI option. Note: JS plugin support is experimental.",
                 )?;
                 Ok(())
             }
