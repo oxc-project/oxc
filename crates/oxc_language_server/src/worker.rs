@@ -18,7 +18,6 @@ use crate::{
     },
     linter::{
         error_with_position::{DiagnosticReport, PossibleFixContent},
-        options::LintOptions,
         server_linter::{ServerLinter, ServerLinterRun, normalize_path},
     },
 };
@@ -120,16 +119,6 @@ impl WorkspaceWorker {
         let server_linter = ServerLinter::new(&self.root_uri, &options.lint);
 
         *self.server_linter.write().await = Some(server_linter);
-    }
-
-    fn needs_linter_restart(old_options: &LintOptions, new_options: &LintOptions) -> bool {
-        old_options.config_path != new_options.config_path
-            || old_options.ts_config_path != new_options.ts_config_path
-            || old_options.use_nested_configs() != new_options.use_nested_configs()
-            || old_options.fix_kind() != new_options.fix_kind()
-            || old_options.unused_disable_directives != new_options.unused_disable_directives
-            // TODO: only the TsgoLinter needs to be dropped or created
-            || old_options.type_aware != new_options.type_aware
     }
 
     pub async fn lint_file(
@@ -308,7 +297,7 @@ impl WorkspaceWorker {
             *options_guard = changed_options.clone();
         }
 
-        if Self::needs_linter_restart(&current_option.lint, &changed_options.lint) {
+        if ServerLinter::needs_restart(&current_option.lint, &changed_options.lint) {
             let files = {
                 let server_linter_guard = self.server_linter.read().await;
                 let server_linter = server_linter_guard.as_ref();

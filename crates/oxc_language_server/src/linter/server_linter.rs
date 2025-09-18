@@ -365,6 +365,16 @@ impl ServerLinter {
 
         self.diagnostics.get_diagnostics(&uri.to_string())
     }
+
+    pub fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
+        old_options.config_path != new_options.config_path
+            || old_options.ts_config_path != new_options.ts_config_path
+            || old_options.use_nested_configs() != new_options.use_nested_configs()
+            || old_options.fix_kind() != new_options.fix_kind()
+            || old_options.unused_disable_directives != new_options.unused_disable_directives
+            // TODO: only the TsgoLinter needs to be dropped or created
+            || old_options.type_aware != new_options.type_aware
+    }
 }
 
 /// Normalize a path by removing `.` and resolving `..` components,
