@@ -31,7 +31,7 @@ related_information[1].location.range: Range { start: Position { line: 12, chara
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Delete this code."), code: "", range: Range { start: Position { line: 12, character: 21 }, end: Position { line: 12, character: 22 } } })
+fixed: None
 
 
 code: "None"
