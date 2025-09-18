@@ -491,7 +491,7 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
     #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        is_class_extends(self.span, self.parent)
+        is_class_extends(self.parent, self.span)
     }
 }
 
@@ -829,7 +829,7 @@ fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
         AstNodes::AssignmentExpression(assignment) => {
             assignment.left.span() == span
         }
-        _ => is_class_extends(span, parent),
+        _ => is_class_extends(parent, span),
     }
 }
 
