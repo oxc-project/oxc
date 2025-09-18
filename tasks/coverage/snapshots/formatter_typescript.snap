@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8787/8816 (99.67%)
+Positive Passed: 8788/8816 (99.68%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
@@ -39,8 +39,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/tryStatementInternalCom
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThisParameter.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/overrideInterfaceProperty.ts
-'readonly' type modifier is only permitted on array and tuple literal types.
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
 Classes may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototype
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
