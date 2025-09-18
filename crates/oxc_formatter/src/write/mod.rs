@@ -26,6 +26,7 @@ mod switch_statement;
 mod template;
 mod try_statement;
 mod type_parameters;
+mod union_type;
 mod utils;
 mod variable_declaration;
 
@@ -1206,26 +1207,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteralType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         ConditionalLike::TSConditionalType(self).fmt(f)
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let mut types = self.types().iter();
-        if self.needs_parentheses(f) {
-            write!(f, "(")?;
-        }
-        if let Some(item) = types.next() {
-            write!(f, item)?;
-
-            for item in types {
-                write!(f, [" | ", item])?;
-            }
-        }
-        if self.needs_parentheses(f) {
-            write!(f, ")")?;
-        }
-        Ok(())
     }
 }
 
