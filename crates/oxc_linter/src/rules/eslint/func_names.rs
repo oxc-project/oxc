@@ -270,7 +270,9 @@ fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) ->
             // Check if this reference is the callee of a call expression (direct recursive call)
             if let AstKind::CallExpression(call_expr) = parent.kind() {
                 // Only consider it recursive if the reference is the callee, not an argument
-                if call_expr.callee.span() == ctx.nodes().get_node(reference.node_id()).kind().span() {
+                if call_expr.callee.span()
+                    == ctx.nodes().get_node(reference.node_id()).kind().span()
+                {
                     return ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
                         if let AstKind::Function(f) = ancestor.kind() {
                             f.scope_id.get() == Some(func_scope_id)
