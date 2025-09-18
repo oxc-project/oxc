@@ -47,6 +47,8 @@
 //! [`Derive`]: crate::Derive
 //! [`Generator`]: crate::Generator
 
+use std::path::Path;
+
 use oxc_index::IndexVec;
 
 use crate::{
@@ -80,7 +82,13 @@ pub fn parse_files(file_paths: &[&str], codegen: &Codegen) -> Schema {
         .enumerate()
         .map(|(file_id, &file_path)| {
             let file_id = FileId::from_usize(file_id);
-            analyse_file(file_id, file_path, &mut skeletons, &mut meta_skeletons)
+            analyse_file(
+                file_id,
+                file_path,
+                &mut skeletons,
+                &mut meta_skeletons,
+                codegen.root_path(),
+            )
         })
         .collect::<IndexVec<_, _>>();
 
@@ -96,9 +104,10 @@ fn analyse_file(
     file_path: &str,
     skeletons: &mut FxIndexMap<String, Skeleton>,
     meta_skeletons: &mut FxIndexMap<String, Skeleton>,
+    root_path: &Path,
 ) -> File {
     log!("Load {file_path}... ");
-    load_file(file_id, file_path, skeletons, meta_skeletons);
+    load_file(file_id, file_path, skeletons, meta_skeletons, root_path);
     log_success!();
 
     File::new(file_path)
