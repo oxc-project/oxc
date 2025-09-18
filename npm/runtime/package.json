@@ -9,6 +9,7 @@
     "directory": "npm/runtime"
   },
   "homepage": "https://oxc.rs",
+  "type": "module",
   "exports": {
     "./helpers/OverloadYield": [
       {
@@ -1061,6 +1062,5 @@
   },
   "engines": {
     "node": ">=6.9.0"
-  },
-  "type": "commonjs"
+  }
 }
