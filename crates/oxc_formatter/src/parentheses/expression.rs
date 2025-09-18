@@ -931,7 +931,8 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {
             | AstNodes::TSSatisfiesExpression(_)
             | AstNodes::SpreadElement(_)
             | AstNodes::LogicalExpression(_)
-            | AstNodes::BinaryExpression(_),
+            | AstNodes::BinaryExpression(_)
+            | AstNodes::PrivateInExpression(_),
     ) {
         return true;
     }
