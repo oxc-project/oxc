@@ -129,7 +129,8 @@ impl Oxc {
             self.parse_source(&allocator, &source_text, source_type, parser_options);
 
         // Phase 2: Build semantic analysis
-        let semantic = self.build_semantic(&program, run_options, &control_flow_options);
+        let semantic =
+            self.build_semantic(&program, run_options, parser_options, &control_flow_options);
 
         // Phase 3: Run linter
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
@@ -237,6 +238,7 @@ impl Oxc {
         &mut self,
         program: &'a Program<'a>,
         run_options: &OxcRunOptions,
+        parser_options: &OxcParserOptions,
         control_flow_options: &OxcControlFlowOptions,
     ) -> oxc::semantic::Semantic<'a> {
         let mut semantic_builder = SemanticBuilder::new();
@@ -244,8 +246,10 @@ impl Oxc {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0);
         }
-        let semantic_ret =
-            semantic_builder.with_check_syntax_error(true).with_cfg(true).build(program);
+        let semantic_ret = semantic_builder
+            .with_check_syntax_error(parser_options.semantic_errors)
+            .with_cfg(true)
+            .build(program);
         self.diagnostics.extend(semantic_ret.errors);
 
         self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
