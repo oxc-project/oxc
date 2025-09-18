@@ -70,7 +70,6 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         self.state().group_id(debug_name)
     }
 
-
     /// Joins multiple [Format] together without any separator
     ///
     /// ## Examples
