@@ -267,17 +267,20 @@ fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) ->
     if let Some(binding) = ctx.scoping().find_binding(func_scope_id, func_name) {
         return ctx.semantic().symbol_references(binding).any(|reference| {
             let parent = ctx.nodes().parent_node(reference.node_id());
-            if matches!(parent.kind(), AstKind::CallExpression(_)) {
-                ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
-                    if let AstKind::Function(f) = ancestor.kind() {
-                        f.scope_id.get() == Some(func_scope_id)
-                    } else {
-                        false
-                    }
-                })
-            } else {
-                false
+            // Check if this reference is the callee of a call expression (direct recursive call)
+            if let AstKind::CallExpression(call_expr) = parent.kind() {
+                // Only consider it recursive if the reference is the callee, not an argument
+                if call_expr.callee.span() == ctx.nodes().get_node(reference.node_id()).kind().span() {
+                    return ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
+                        if let AstKind::Function(f) = ancestor.kind() {
+                            f.scope_id.get() == Some(func_scope_id)
+                        } else {
+                            false
+                        }
+                    });
+                }
             }
+            false
         });
     }
 

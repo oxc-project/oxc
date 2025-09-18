@@ -2,12 +2,9 @@
 source: apps/oxlint/src/tester.rs
 ---
 ########## 
-arguments: --type-aware --silent
+arguments: --type-aware --silent no-floating-promises
 working directory: fixtures/tsgolint
 ----------
-
-Found 0 warnings and 53 errors.
-Finished in <variable>ms on 42 files using 1 threads.
-----------
-CLI result: LintFoundErrors
+Error running tsgolint: "exit status: exit status: 1, error: no files specified in config"----------
+CLI result: TsGoLintError
 ----------
