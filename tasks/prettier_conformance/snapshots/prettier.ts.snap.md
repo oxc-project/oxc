@@ -1,4 +1,4 @@
-ts compatibility: 414/573 (72.25%)
+ts compatibility: 417/573 (72.77%)
 
 # Failed
 
@@ -17,9 +17,8 @@ ts compatibility: 414/573 (72.25%)
 | typescript/arrow/16067.ts | 💥💥 | 95.92% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/as.ts | 💥 | 89.06% |
-| typescript/as/assignment2.ts | 💥 | 94.12% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
-| typescript/assignment/issue-10846.ts | 💥 | 60.00% |
+| typescript/assignment/issue-10846.ts | 💥 | 57.14% |
 | typescript/assignment/issue-10848.tsx | 💥 | 52.12% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
 | typescript/cast/generic-cast.ts | 💥 | 39.24% |
@@ -91,18 +90,18 @@ ts compatibility: 414/573 (72.25%)
 | typescript/export/export.ts | 💥 | 85.71% |
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/function-type/type-annotation.ts | 💥 | 0.00% |
-| typescript/generic/arrow-return-type.ts | 💥 | 80.00% |
+| typescript/generic/arrow-return-type.ts | 💥 | 79.25% |
 | typescript/generic/issue-6899.ts | 💥 | 21.05% |
 | typescript/generic/object-method.ts | 💥 | 72.73% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/infer-extends/basic.ts | 💥 | 71.43% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
 | typescript/interface/ignore.ts | 💥💥 | 88.26% |
-| typescript/interface/long-type-parameters/long-type-parameters.ts | 💥💥 | 45.00% |
+| typescript/interface/long-type-parameters/long-type-parameters.ts | 💥💥 | 43.05% |
 | typescript/interface2/comments-declare.ts | 💥 | 66.67% |
 | typescript/interface2/comments.ts | 💥 | 78.87% |
 | typescript/interface2/break/break.ts | 💥💥💥 | 80.23% |
-| typescript/intersection/intersection-parens.ts | 💥💥 | 59.14% |
+| typescript/intersection/intersection-parens.ts | 💥💥 | 72.25% |
 | typescript/intersection/type-arguments.ts | 💥💥 | 46.67% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/key-remapping-in-mapped-types/key-remapping.ts | 💥 | 23.53% |
@@ -130,7 +129,6 @@ ts compatibility: 414/573 (72.25%)
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 80.00% |
-| typescript/satisfies-operators/assignment.ts | 💥💥 | 90.91% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 80.00% |
@@ -156,7 +154,6 @@ ts compatibility: 414/573 (72.25%)
 | typescript/typeparams/long-function-arg.ts | 💥 | 76.92% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 66.67% |
 | typescript/typeparams/trailing-comma/type-paramters.ts | 💥💥💥 | 28.57% |
-| typescript/union/comments.ts | 💥 | 84.21% |
 | typescript/union/inlining.ts | 💥 | 77.37% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/with-type-params.ts | 💥 | 37.50% |
