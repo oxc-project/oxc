@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- 91c88e2 allocator: Fix lint warning building WASM (#13897) (overlookmotel)
+
+
 
 
 ## [0.88.0] - 2025-09-15
