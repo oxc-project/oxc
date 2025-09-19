@@ -8,24 +8,24 @@ file: fixtures/linter/vue/debugger.vue
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 6, character: 4 }, end: Position { line: 6, character: 12 } }
+range: Range { start: Position { line: 5, character: 4 }, end: Position { line: 5, character: 12 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/vue/debugger.vue"
-related_information[0].location.range: Range { start: Position { line: 6, character: 4 }, end: Position { line: 6, character: 12 } }
+related_information[0].location.range: Range { start: Position { line: 5, character: 4 }, end: Position { line: 5, character: 12 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 6, character: 4 }, end: Position { line: 6, character: 12 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 5, character: 4 }, end: Position { line: 5, character: 12 } } })
 
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 11, character: 4 }, end: Position { line: 11, character: 13 } }
+range: Range { start: Position { line: 10, character: 4 }, end: Position { line: 10, character: 13 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/vue/debugger.vue"
-related_information[0].location.range: Range { start: Position { line: 11, character: 4 }, end: Position { line: 11, character: 13 } }
+related_information[0].location.range: Range { start: Position { line: 10, character: 4 }, end: Position { line: 10, character: 13 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 11, character: 4 }, end: Position { line: 11, character: 13 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 10, character: 4 }, end: Position { line: 10, character: 13 } } })
