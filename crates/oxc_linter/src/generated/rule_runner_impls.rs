@@ -1621,7 +1621,8 @@ impl RuleRunner for crate::rules::react::jsx_no_target_blank::JsxNoTargetBlank {
 }
 
 impl RuleRunner for crate::rules::react::jsx_no_undef::JsxNoUndef {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
 }
 
 impl RuleRunner for crate::rules::react::jsx_no_useless_fragment::JsxNoUselessFragment {
