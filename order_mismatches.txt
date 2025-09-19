@@ -1,0 +1,55 @@
+BindingPattern: Missing type in TS-ESLint AST: kind, optional, typeAnnotation
+
+CatchParameter: Missing type in TS-ESLint AST: pattern
+
+Elision: Missing type in TS-ESLint AST: 
+
+ExperimentalRestProperty: Missing type in Oxc AST: argument
+
+ExperimentalSpreadProperty: Missing type in Oxc AST: argument
+
+FormalParameter: Missing type in TS-ESLint AST: decorators, pattern
+
+FormalParameters: Missing type in TS-ESLint AST: kind, items
+
+Hashbang: Missing type in TS-ESLint AST: value
+
+ParenthesizedExpression: Missing type in TS-ESLint AST: expression
+
+RegExp: Missing type in TS-ESLint AST: pattern, flags
+
+RegExpPattern: Missing type in TS-ESLint AST: pattern
+
+TSAbstractKeyword: Missing type in Oxc AST: 
+
+TSAsyncKeyword: Missing type in Oxc AST: 
+
+TSDeclareKeyword: Missing type in Oxc AST: 
+
+TSExportKeyword: Missing type in Oxc AST: 
+
+TSJSDocNonNullableType: Missing type in TS-ESLint AST: typeAnnotation, postfix
+
+TSJSDocNullableType: Missing type in TS-ESLint AST: typeAnnotation, postfix
+
+TSJSDocUnknownType: Missing type in TS-ESLint AST: 
+
+TSParameterProperty: Missing type in Oxc AST: decorators, parameter
+
+TSParenthesizedType: Missing type in TS-ESLint AST: typeAnnotation
+
+TSPrivateKeyword: Missing type in Oxc AST: 
+
+TSProtectedKeyword: Missing type in Oxc AST: 
+
+TSPublicKeyword: Missing type in Oxc AST: 
+
+TSReadonlyKeyword: Missing type in Oxc AST: 
+
+TSStaticKeyword: Missing type in Oxc AST: 
+
+TemplateElementValue: Missing type in TS-ESLint AST: raw, cooked
+
+V8IntrinsicExpression: Missing type in TS-ESLint AST: name, arguments
+
+WithClause: Missing type in TS-ESLint AST: attributes
