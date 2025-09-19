@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-19
+
+### 🚜 Refactor
+
+- 873e231 language_server: Move `needs_linter_restart` to `ServerLinter` (#13834) (Sysix)
+
+
 ## [1.16.0] - 2025-09-16
 
 ### 🚜 Refactor

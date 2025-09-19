@@ -4,6 +4,68 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-19
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- c75ae8c linter/plugins: Add options to `Context` (#13810) (overlookmotel)
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- dd3843f linter: Set package version in `package.json` (#13890) (overlookmotel)
+- fac7624 linter/plugins: Improve error for no JS plugins (#13858) (overlookmotel)
+
+### 🚜 Refactor
+
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+- 6245c8c linter/plugins: Make `Context` properties getters (#13809) (overlookmotel)
+- a2342a6 linter/plugins: Import named in tests (#13807) (overlookmotel)
+
+### ⚡ Performance
+
+- a79af0a linter: Replace `for (... of ...)` loops (#13913) (overlookmotel)
+
+### 🧪 Testing
+
+- f51240e linter/plugins: Tests for different import styles (#13859) (overlookmotel)
+- 407c95e linter/plugins: Check `this` is undefined in visit functions (#13811) (overlookmotel)
+- f023a22 linter/plugins: Include stack trace in plugin loading errors (#13808) (overlookmotel)
+
+
+## [1.17.0] - 2025-09-19
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- c75ae8c linter/plugins: Add options to `Context` (#13810) (overlookmotel)
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- dd3843f linter: Set package version in `package.json` (#13890) (overlookmotel)
+- fac7624 linter/plugins: Improve error for no JS plugins (#13858) (overlookmotel)
+
+### 🚜 Refactor
+
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+- 6245c8c linter/plugins: Make `Context` properties getters (#13809) (overlookmotel)
+- a2342a6 linter/plugins: Import named in tests (#13807) (overlookmotel)
+
+### ⚡ Performance
+
+- a79af0a linter: Replace `for (... of ...)` loops (#13913) (overlookmotel)
+
+### 🧪 Testing
+
+- f51240e linter/plugins: Tests for different import styles (#13859) (overlookmotel)
+- 407c95e linter/plugins: Check `this` is undefined in visit functions (#13811) (overlookmotel)
+- f023a22 linter/plugins: Include stack trace in plugin loading errors (#13808) (overlookmotel)
+
+
 ## [1.16.0] - 2025-09-16
 
 ### 🐛 Bug Fixes

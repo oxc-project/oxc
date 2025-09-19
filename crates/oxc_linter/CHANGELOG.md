@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-19
+
+### 🚀 Features
+
+- 15eb326 linter: Add `vue/no-required-prop-with-default` rule (#13613) (yefan)
+- 5d3ba00 linter: Add `vue/require-typed-ref` rule (#13857) (yefan)
+- 8221a01 linter: Add `eslint/no-misleading-character-class` (#13365) (Sysix)
+
+### 🐛 Bug Fixes
+
+- fa866b3 linter: Sort optimized/unoptimized diagnostics before comparison (#13850) (camc314)
+- fac7624 linter/plugins: Improve error for no JS plugins (#13858) (overlookmotel)
+
+### 🚜 Refactor
+
+- e90bfe3 linter: Remove double reference in unicorn/error-message (#13916) (camc314)
+- 83791a0 linter: Remove double reference in vue/jsx-no-undef (#13915) (camc314)
+- ebd22de linter: Remove double reference in vue/require-typed-ref (#13914) (camc314)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+
+### ⚡ Performance
+
+- b53292d linter: Use unstable sort where possible (#13818) (sapphi-red)
+
+
 ## [1.16.0] - 2025-09-16
 
 ### 🚀 Features
