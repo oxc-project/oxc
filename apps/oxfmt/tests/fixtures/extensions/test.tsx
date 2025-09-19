@@ -1,1 +1,1 @@
-const Component: React.FC = () => <div>TSX</div>
+const Component: React.FC = () => <div>TSX</div>;

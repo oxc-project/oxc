@@ -1,1 +1,1 @@
-module.exports = { typed: "cts" as string }
+module.exports = { typed: "cts" as string };

@@ -1,1 +1,1 @@
-const standard = "pac"
+const standard = "pac";
