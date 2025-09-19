@@ -45,7 +45,7 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
-    format_args,
+    best_fitting, format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
         prelude::*,
@@ -1968,13 +1968,37 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "<")?;
-        // var r = < <T>(x: T) => T > ((x) => { return null; });
-        //          ^ make sure space is printed here.
-        if matches!(**self.type_annotation(), TSType::TSFunctionType(_)) {
-            write!(f, space())?;
+        let break_after_cast = !matches!(
+            self.expression,
+            Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+        );
+
+        let format_cast = format_with(|f| {
+            write!(f, ["<", group(&soft_block_indent(&self.type_annotation())), ">",])
+        });
+
+        if break_after_cast {
+            let format_cast = format_cast.memoized();
+            let format_expression = self.expression().memoized();
+
+            write!(
+                f,
+                [best_fitting![
+                    format_args!(format_cast, format_expression),
+                    format_args!(
+                        format_cast,
+                        group(&format_args!(
+                            text("("),
+                            block_indent(&format_expression),
+                            text(")")
+                        ))
+                    ),
+                    format_args!(format_cast, format_expression)
+                ]]
+            )
+        } else {
+            write!(f, [format_cast, self.expression()])
         }
-        write!(f, [self.type_annotation(), ">", self.expression()])
     }
 }
 
