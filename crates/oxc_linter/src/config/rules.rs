@@ -74,7 +74,7 @@ impl OxlintRules {
         for (name, rule_configs) in &lookup {
             let rules_map = rules_for_override
                 .iter()
-                .filter(|&(r, _)| (r.name() == *name))
+                .filter(|&(r, _)| r.name() == *name)
                 .map(|(r, _)| (r.plugin_name(), r))
                 .collect::<FxHashMap<_, _>>();
 

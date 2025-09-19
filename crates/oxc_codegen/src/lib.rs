@@ -249,13 +249,12 @@ impl<'a> Codegen<'a> {
         let bytes = s.as_bytes();
         let mut consumed = 0;
 
-        #[expect(clippy::unnecessary_safety_comment)]
         // Search range of bytes for `</script`, byte by byte.
         //
         // Bytes between `ptr` and `last_ptr` (inclusive) are searched for `<`.
         // If `<` is found, the following 7 bytes are checked to see if they're `/script`.
         //
-        // SAFETY:
+        // Requirements for the closure below:
         // * `ptr` and `last_ptr` must be within bounds of `bytes`.
         // * `last_ptr` must be greater or equal to `ptr`.
         // * `last_ptr` must be no later than 8 bytes before end of string.

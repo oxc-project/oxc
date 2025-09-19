@@ -123,7 +123,7 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
         remaining_len -= first_chunk_len;
     }
 
-    debug_assert!((ptr as usize) % CHUNK_ALIGNMENT == 0);
+    debug_assert!((ptr as usize).is_multiple_of(CHUNK_ALIGNMENT));
 
     // Process main body as aligned chunks of 32 bytes.
     //
@@ -141,7 +141,7 @@ pub fn build_translations(source_text: &str, translations: &mut Vec<Translation>
     let body_end_ptr = unsafe { ptr.add(body_len) };
 
     debug_assert!(body_end_ptr as usize <= start_ptr as usize + bytes.len());
-    debug_assert!((body_end_ptr as usize - ptr as usize) % CHUNK_SIZE == 0);
+    debug_assert!((body_end_ptr as usize - ptr as usize).is_multiple_of(CHUNK_SIZE));
 
     while ptr < body_end_ptr {
         // SAFETY: `ptr` was aligned to `CHUNK_ALIGNMENT` after processing 1st chunk.

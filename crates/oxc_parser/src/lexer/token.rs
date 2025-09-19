@@ -32,7 +32,7 @@ const BOOL_MASK: u128 = 0xFF; // 8 bits
 const _: () = {
     // Check flags fields are aligned on 8 and in bounds, so can be read via pointers
     const fn is_valid_shift(shift: usize) -> bool {
-        shift % 8 == 0 && shift < u128::BITS as usize
+        shift.is_multiple_of(8) && shift < u128::BITS as usize
     }
 
     assert!(is_valid_shift(IS_ON_NEW_LINE_SHIFT));

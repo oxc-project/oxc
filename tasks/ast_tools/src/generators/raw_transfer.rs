@@ -41,7 +41,7 @@ const ALLOCATOR_CHUNK_END_ALIGN: u32 = 16;
 /// Must be a multiple of [`ALLOCATOR_CHUNK_END_ALIGN`].
 /// 16 bytes less than 2 GiB, to allow 16 bytes for `malloc` metadata (like Bumpalo does).
 const BLOCK_SIZE: u32 = (1 << 31) - MALLOC_RESERVED_SIZE; // 2 GiB - 16 bytes
-const _: () = assert!(BLOCK_SIZE % ALLOCATOR_CHUNK_END_ALIGN == 0);
+const _: () = assert!(BLOCK_SIZE.is_multiple_of(ALLOCATOR_CHUNK_END_ALIGN));
 
 /// Alignment of block of memory used for raw transfer.
 const BLOCK_ALIGN: u64 = 1 << 32; // 4 GiB
