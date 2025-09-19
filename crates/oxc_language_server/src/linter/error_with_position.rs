@@ -52,11 +52,11 @@ pub fn message_to_lsp_diagnostic(
                     uri: uri.clone(),
                     range: lsp_types::Range {
                         start: lsp_types::Position {
-                            line: span.start().line + 1,
+                            line: span.start().line,
                             character: span.start().character,
                         },
                         end: lsp_types::Position {
-                            line: span.end().line + 1,
+                            line: span.end().line,
                             character: span.end().character,
                         },
                     },
@@ -145,11 +145,8 @@ fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedConte
         message: fix.message.as_ref().map(std::string::ToString::to_string),
         code: fix.content.to_string(),
         range: Range {
-            start: Position {
-                line: fix.span.start().line + 1,
-                character: fix.span.start().character,
-            },
-            end: Position { line: fix.span.end().line + 1, character: fix.span.end().character },
+            start: Position { line: fix.span.start().line, character: fix.span.start().character },
+            end: Position { line: fix.span.end().line, character: fix.span.end().character },
         },
     }
 }

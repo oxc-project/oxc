@@ -8,50 +8,50 @@ file: fixtures/linter/astro/debugger.astro
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 2, character: 0 }, end: Position { line: 2, character: 8 } }
+range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/astro/debugger.astro"
-related_information[0].location.range: Range { start: Position { line: 2, character: 0 }, end: Position { line: 2, character: 8 } }
+related_information[0].location.range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 2, character: 0 }, end: Position { line: 2, character: 8 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } } })
 
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 11, character: 2 }, end: Position { line: 11, character: 10 } }
+range: Range { start: Position { line: 10, character: 2 }, end: Position { line: 10, character: 10 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/astro/debugger.astro"
-related_information[0].location.range: Range { start: Position { line: 11, character: 2 }, end: Position { line: 11, character: 10 } }
+related_information[0].location.range: Range { start: Position { line: 10, character: 2 }, end: Position { line: 10, character: 10 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 11, character: 2 }, end: Position { line: 11, character: 10 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 10, character: 2 }, end: Position { line: 10, character: 10 } } })
 
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 15, character: 2 }, end: Position { line: 15, character: 10 } }
+range: Range { start: Position { line: 14, character: 2 }, end: Position { line: 14, character: 10 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/astro/debugger.astro"
-related_information[0].location.range: Range { start: Position { line: 15, character: 2 }, end: Position { line: 15, character: 10 } }
+related_information[0].location.range: Range { start: Position { line: 14, character: 2 }, end: Position { line: 14, character: 10 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 15, character: 2 }, end: Position { line: 15, character: 10 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 14, character: 2 }, end: Position { line: 14, character: 10 } } })
 
 
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 19, character: 2 }, end: Position { line: 19, character: 10 } }
+range: Range { start: Position { line: 18, character: 2 }, end: Position { line: 18, character: 10 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/astro/debugger.astro"
-related_information[0].location.range: Range { start: Position { line: 19, character: 2 }, end: Position { line: 19, character: 10 } }
+related_information[0].location.range: Range { start: Position { line: 18, character: 2 }, end: Position { line: 18, character: 10 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 19, character: 2 }, end: Position { line: 19, character: 10 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 18, character: 2 }, end: Position { line: 18, character: 10 } } })
