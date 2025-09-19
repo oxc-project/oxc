@@ -14,6 +14,7 @@ pub struct Capabilities {
     pub workspace_execute_command: bool,
     pub workspace_configuration: bool,
     pub dynamic_watchers: bool,
+    pub dynamic_formatting: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -39,6 +40,12 @@ impl From<ClientCapabilities> for Capabilities {
                 watched_files.dynamic_registration.is_some_and(|dynamic| dynamic)
             })
         });
+        // TODO: enable it when we support formatting
+        // let formatting = value.text_document.as_ref().is_some_and(|text_document| {
+        //     text_document.formatting.is_some_and(|formatting| {
+        //         formatting.dynamic_registration.is_some_and(|dynamic| dynamic)
+        //     })
+        // });
 
         Self {
             code_action_provider,
@@ -46,6 +53,7 @@ impl From<ClientCapabilities> for Capabilities {
             workspace_execute_command,
             workspace_configuration,
             dynamic_watchers,
+            dynamic_formatting: false,
         }
     }
 }

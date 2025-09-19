@@ -22,6 +22,7 @@ use tower_lsp_server::{
 mod capabilities;
 mod code_actions;
 mod commands;
+mod file_system;
 mod formatter;
 mod linter;
 mod options;
@@ -35,6 +36,8 @@ use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
 use linter::server_linter::ServerLinterRun;
 use options::{Options, WorkspaceOption};
 use worker::WorkspaceWorker;
+
+use crate::file_system::LSPFileSystem;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
@@ -51,6 +54,7 @@ struct Backend {
     // 2. `workspace/didChangeWorkspaceFolders` request
     workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
     capabilities: OnceCell<Capabilities>,
+    file_system: Arc<RwLock<LSPFileSystem>>,
 }
 
 impl LanguageServer for Backend {
@@ -203,6 +207,9 @@ impl LanguageServer for Backend {
 
     async fn shutdown(&self) -> Result<()> {
         self.clear_all_diagnostics().await;
+        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
+            self.file_system.write().await.clear();
+        }
         Ok(())
     }
 
@@ -444,6 +451,12 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
+
+        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
+            // saving the file means we can read again from the file system
+            self.file_system.write().await.remove(uri);
+        }
+
         if let Some(diagnostics) = worker.lint_file(uri, None, ServerLinterRun::OnSave).await {
             self.client
                 .publish_diagnostics(
@@ -464,6 +477,13 @@ impl LanguageServer for Backend {
             return;
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
+
+        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting)
+            && let Some(content) = &content
+        {
+            self.file_system.write().await.set(uri, content.to_string());
+        }
+
         if let Some(diagnostics) = worker.lint_file(uri, content, ServerLinterRun::OnType).await {
             self.client
                 .publish_diagnostics(
@@ -483,6 +503,11 @@ impl LanguageServer for Backend {
         };
 
         let content = params.text_document.text;
+
+        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
+            self.file_system.write().await.set(uri, content.to_string());
+        }
+
         if let Some(diagnostics) =
             worker.lint_file(uri, Some(content), ServerLinterRun::Always).await
         {
@@ -502,6 +527,9 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
+        if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
+            self.file_system.write().await.remove(uri);
+        }
         worker.remove_diagnostics(&params.text_document.uri).await;
     }
 
@@ -626,6 +654,7 @@ async fn main() {
         client,
         workspace_workers: Arc::new(RwLock::new(vec![])),
         capabilities: OnceCell::new(),
+        file_system: Arc::new(RwLock::new(LSPFileSystem::default())),
     })
     .finish();
 
