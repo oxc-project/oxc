@@ -61,12 +61,12 @@ impl<'a> ClassProperties<'a, '_> {
         body: &mut ClassBody<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Ignore TS class declarations
-        // TODO: Is this correct?
         let Ancestor::ClassBody(class) = ctx.parent() else { unreachable!() };
-        if *class.declare() {
-            return;
-        }
+
+        debug_assert!(
+            !class.declare(),
+            "`declare` classes have already been removed in TypeScript's enter_statements."
+        );
 
         // Get basic details about class
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
@@ -408,11 +408,10 @@ impl<'a> ClassProperties<'a, '_> {
         class: &mut Class<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Ignore TS class declarations
-        // TODO: Is this correct?
-        if class.declare {
-            return;
-        }
+        debug_assert!(
+            !class.declare,
+            "`declare` classes have already been removed in TypeScript's enter_statements."
+        );
 
         // Leave class expressions to `transform_class_expression_on_exit`
         let class_details = self.current_class();
@@ -566,14 +565,6 @@ impl<'a> ClassProperties<'a, '_> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ClassExpression(class) = expr else { unreachable!() };
-
-        // Ignore TS class declarations
-        // TODO: Is this correct?
-        if class.declare {
-            return;
-        }
-
         // Finish transform
         let class_details = self.current_class();
         if class_details.is_transform_required {
