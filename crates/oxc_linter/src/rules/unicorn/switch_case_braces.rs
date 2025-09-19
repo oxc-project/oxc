@@ -1,4 +1,3 @@
-use lazy_regex::Regex;
 use oxc_ast::{AstKind, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -104,9 +103,6 @@ impl Rule for SwitchCaseBraces {
             return;
         }
 
-        let switch_clause_regex =
-            Regex::new(r#"(?:case|default)\s*(?:`[^`]+`|'[^']+'|"[^"]+"|[^:]*):"#).unwrap();
-
         for case in &switch.cases {
             if case.consequent.is_empty() {
                 continue;
@@ -146,11 +142,13 @@ impl Rule for SwitchCaseBraces {
             };
 
             if self.always_braces && missing_braces {
-                let colon_end = u32::try_from(
-                    switch_clause_regex.find(ctx.source_range(case.span)).unwrap().end(),
+                let colon = u32::try_from(
+                    ctx.source_range(Span::new(case.span.start, case.consequent[0].span().start))
+                        .rfind(':')
+                        .unwrap(),
                 )
                 .unwrap();
-                let span = Span::sized(case.span.start, colon_end);
+                let span = Span::sized(case.span.start, colon + 1);
                 ctx.diagnostic_with_fix(
                     switch_case_braces_diagnostic_missing_braces(span),
                     |fixer| {
