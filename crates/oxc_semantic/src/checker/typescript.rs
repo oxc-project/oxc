@@ -77,32 +77,19 @@ fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn parameter_property_outside_constructor(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A parameter property is only allowed in a constructor implementation.")
-        .with_label(span)
-}
-
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
     }
 
-    let is_inside_constructor =
-        !params.kind.is_signature() && ctx.current_scope_flags().is_constructor();
     let mut has_optional = false;
 
     for param in &params.items {
         // function a(optional?: number, required: number) { }
-        if has_optional && !param.pattern.optional && !param.pattern.kind.is_assignment_pattern() {
-            ctx.error(required_parameter_after_optional_parameter(param.span));
-        }
         if param.pattern.optional {
             has_optional = true;
-        }
-
-        // function a(public x: number) { }
-        if !is_inside_constructor && param.has_modifier() {
-            ctx.error(parameter_property_outside_constructor(param.span));
+        } else if has_optional && !param.pattern.kind.is_assignment_pattern() {
+            ctx.error(required_parameter_after_optional_parameter(param.span));
         }
     }
 }
