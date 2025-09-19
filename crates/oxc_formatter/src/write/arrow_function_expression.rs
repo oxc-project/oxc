@@ -855,22 +855,15 @@ fn format_signature<'a, 'b>(
     cache_mode: FunctionBodyCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
-        let formatted_async_token =
-            format_with(|f| if arrow.r#async() { write!(f, ["async", space()]) } else { Ok(()) });
-
-        let formatted_parameters =
-            format_with(|f| write!(f, [arrow.type_parameters(), arrow.params()]));
-
-        let format_return_type = format_with(|f| write!(f, arrow.return_type()));
-
         let signatures = format_once(|f| {
             write!(
                 f,
                 [group(&format_args!(
                     maybe_space(!is_first_in_chain),
-                    formatted_async_token,
-                    group(&formatted_parameters),
-                    group(&format_return_type)
+                    arrow.r#async().then_some("async "),
+                    arrow.type_parameters(),
+                    arrow.params(),
+                    group(&arrow.return_type())
                 ))]
             )
         });
