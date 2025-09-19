@@ -8,10 +8,10 @@ file: fixtures/linter/svelte/debugger.svelte
 code: "eslint(no-unassigned-vars)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unassigned-vars.html"
 message: "'title' is always 'undefined' because it's never assigned.\nhelp: Variable declared without assignment. Either assign a value or remove the declaration."
-range: Range { start: Position { line: 4, character: 12 }, end: Position { line: 4, character: 17 } }
+range: Range { start: Position { line: 3, character: 12 }, end: Position { line: 3, character: 17 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/svelte/debugger.svelte"
-related_information[0].location.range: Range { start: Position { line: 4, character: 12 }, end: Position { line: 4, character: 17 } }
+related_information[0].location.range: Range { start: Position { line: 3, character: 12 }, end: Position { line: 3, character: 17 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
@@ -21,10 +21,10 @@ fixed: None
 code: "eslint(no-unassigned-vars)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unassigned-vars.html"
 message: "'person' is always 'undefined' because it's never assigned.\nhelp: Variable declared without assignment. Either assign a value or remove the declaration."
-range: Range { start: Position { line: 5, character: 12 }, end: Position { line: 5, character: 18 } }
+range: Range { start: Position { line: 4, character: 12 }, end: Position { line: 4, character: 18 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/svelte/debugger.svelte"
-related_information[0].location.range: Range { start: Position { line: 5, character: 12 }, end: Position { line: 5, character: 18 } }
+related_information[0].location.range: Range { start: Position { line: 4, character: 12 }, end: Position { line: 4, character: 18 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
@@ -34,11 +34,11 @@ fixed: None
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 2, character: 1 }, end: Position { line: 2, character: 10 } }
+range: Range { start: Position { line: 1, character: 1 }, end: Position { line: 1, character: 10 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/svelte/debugger.svelte"
-related_information[0].location.range: Range { start: Position { line: 2, character: 1 }, end: Position { line: 2, character: 10 } }
+related_information[0].location.range: Range { start: Position { line: 1, character: 1 }, end: Position { line: 1, character: 10 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 2, character: 1 }, end: Position { line: 2, character: 10 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 1, character: 1 }, end: Position { line: 1, character: 10 } } })
