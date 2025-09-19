@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.3.0] - 2025-09-19
+
+### 🚀 Features
+
+- 2cead8b formatter: Keep parser options consistent for all formatter usages (#13884) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- c96f7e9 formatter: Add parentheses for `await` and `yield` inside `PrivateInExpression` (#13863) (Noel Kim (김민혁))
+- eae4845 formatter: Add parentheses for mixed types (#13862) (Noel Kim (김민혁))
+- 57108c0 formatter: Keep computed name in enum (#13848) (Noel Kim (김민혁))
+- 5c3645b formatter: Handle decorators correctly for class expressions in export (#13845) (Dunqing)
+- 3cf1a41 formatter: Missing parenthesis for `TSAsExpression` (#13842) (Dunqing)
+- 25edd03 formatter: Missing parenthesis for `TSTypeAssertion` (#13841) (Dunqing)
+- 72144e9 formatter: Missing trailing semicolon in `TSSignature` (#13823) (Dunqing)
+- f643093 formatter: Missing parenthesis for expression of `decorator` (#13813) (Dunqing)
+- b43ad49 formatter: Add parentheses for `PrivateInExpression` in super class (#13806) (Noel Kim (김민혁))
+- 7879f85 formatter: Add parentheses inside `UpdateExpression` (#13825) (Noel Kim (김민혁))
+- 7371bad formatter: Add parentheses inside `TSIntersectionType` (#13821) (Noel Kim (김민혁))
+
+
 ## [0.2.0] - 2025-09-16
 
 ### 🚀 Features
