@@ -8,10 +8,10 @@ file: fixtures/linter/regexp_feature/index.ts
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
 message: "Unexpected control character\nhelp: '\\u0000' is a control character."
-range: Range { start: Position { line: 2, character: 13 }, end: Position { line: 2, character: 32 } }
+range: Range { start: Position { line: 1, character: 13 }, end: Position { line: 1, character: 32 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/regexp_feature/index.ts"
-related_information[0].location.range: Range { start: Position { line: 2, character: 13 }, end: Position { line: 2, character: 32 } }
+related_information[0].location.range: Range { start: Position { line: 1, character: 13 }, end: Position { line: 1, character: 32 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
@@ -21,11 +21,11 @@ fixed: None
 code: "eslint(no-useless-escape)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-useless-escape.html"
 message: "Unnecessary escape character '/'\nhelp: Replace `\\/` with `/`."
-range: Range { start: Position { line: 1, character: 16 }, end: Position { line: 1, character: 18 } }
+range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/regexp_feature/index.ts"
-related_information[0].location.range: Range { start: Position { line: 1, character: 16 }, end: Position { line: 1, character: 18 } }
+related_information[0].location.range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Replace `\\/` with `/`."), code: "/", range: Range { start: Position { line: 1, character: 16 }, end: Position { line: 1, character: 18 } } })
+fixed: Single(FixedContent { message: Some("Replace `\\/` with `/`."), code: "/", range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } } })
