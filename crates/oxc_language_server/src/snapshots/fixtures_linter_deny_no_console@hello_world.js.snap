@@ -8,10 +8,10 @@ file: fixtures/linter/deny_no_console/hello_world.js
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
 message: "Unexpected console statement.\nhelp: Delete this console statement."
-range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 11 } }
+range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 11 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/deny_no_console/hello_world.js"
-related_information[0].location.range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 11 } }
+related_information[0].location.range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 11 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
