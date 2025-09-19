@@ -5,7 +5,7 @@ import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
-import { parseAsync, parseSync } from '../index.mjs';
+import { parseAsync, parseSync } from '../src-js/index.mjs';
 
 import {
   ACORN_TEST262_DIR_PATH,

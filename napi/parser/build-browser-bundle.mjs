@@ -15,10 +15,10 @@ async function main() {
 
   // bundle wasm.mjs -> browser-bundle.mjs
   await esbuild.build({
-    entryPoints: ['./wasm.mjs'],
+    entryPoints: ['./src-js/wasm.mjs'],
     outfile: 'browser-bundle.mjs',
     alias: {
-      '@oxc-parser/binding-wasm32-wasi': './parser.wasi-browser.js',
+      '@oxc-parser/binding-wasm32-wasi': './src-js/parser.wasi-browser.js',
     },
     bundle: true,
     platform: 'browser',

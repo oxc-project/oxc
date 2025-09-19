@@ -1,6 +1,6 @@
-import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from '../generated/constants.mjs';
-import { RawTransferData } from '../generated/lazy/constructors.mjs';
-import { walkProgram } from '../generated/lazy/walk.mjs';
+import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from '../../generated/constants.mjs';
+import { RawTransferData } from '../../generated/lazy/constructors.mjs';
+import { walkProgram } from '../../generated/lazy/walk.mjs';
 import { parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.mjs';
 import { TOKEN } from './lazy-common.mjs';
 import { getVisitorsArr } from './visitor.mjs';

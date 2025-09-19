@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const filename = './bindings.mjs';
+const filename = './src-js/bindings.mjs';
 let data = fs.readFileSync(filename, 'utf-8');
 
 data = data.replace(

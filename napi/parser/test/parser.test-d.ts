@@ -1,7 +1,7 @@
 import { assertType, describe, it } from 'vitest';
 
-import type { Node, Statement } from '../index';
-import { parseSync } from '../index';
+import type { Node, Statement } from '../src-js/index.mjs';
+import { parseSync } from '../src-js/index.mjs';
 
 describe('parse', () => {
   const code = '/* comment */ foo';

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { parseSync } from './index.mjs';
+import { parseSync } from './src-js/index.mjs';
 
 // usage:
 // node napi/parser/example.mjs test.ts

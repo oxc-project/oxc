@@ -10,7 +10,7 @@ import { assertIs } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { TOKEN } from '../../dist/raw-transfer/lazy-common.mjs';
+import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.mjs';
 // @ts-expect-error we need to generate `.d.ts` file for this module.
 import { walkProgram } from '../../dist/generated/lazy/walk.mjs';
 

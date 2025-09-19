@@ -33,8 +33,8 @@ console.log('- Created package.json');
 console.log('Copying files from parser...');
 
 const parserFilePaths = [
-  'raw-transfer/lazy-common.mjs',
-  'raw-transfer/node-array.mjs',
+  'src-js/raw-transfer/lazy-common.mjs',
+  'src-js/raw-transfer/node-array.mjs',
   'generated/lazy/constructors.mjs',
   'generated/lazy/types.mjs',
   'generated/lazy/walk.mjs',

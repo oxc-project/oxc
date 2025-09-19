@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
 
-import { parseSync } from '../index.mjs';
+import { parseSync } from '../src-js/index.mjs';
 import {
   ACORN_TEST262_DIR_PATH,
   JSX_DIR_PATH,
