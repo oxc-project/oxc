@@ -1,4 +1,4 @@
-use std::{env, io::Write, path::PathBuf, time::Instant};
+use std::{env, io::Write, path::PathBuf, sync::mpsc, time::Instant};
 
 use ignore::overrides::OverrideBuilder;
 
@@ -63,25 +63,14 @@ impl FormatRunner {
             })
             .flatten();
 
+        // TODO: Support ignoring files
         let walker = Walk::new(&target_paths, override_builder);
-        let entries = walker.collect_entries();
 
-        let files_to_format = entries
-            .into_iter()
-            // TODO: Support .pretttierignore
-            // TODO: Support default ignores like node_modules, .git, etc.
-            // .filter(|entry| !config_store.should_ignore(Path::new(&entry.path)))
-            .collect::<Vec<_>>();
+        // Get the receiver for streaming entries
+        let rx_entry = walker.stream_entries();
 
-        // It may be empty after filtering ignored files
-        if files_to_format.is_empty() {
-            if misc_options.no_error_on_unmatched_pattern {
-                return CliRunResult::None;
-            }
-
-            print_and_flush_stdout(stdout, "Expected at least one target file\n");
-            return CliRunResult::NoFilesFound;
-        }
+        // Count files for stats
+        let (tx_count, rx_count) = mpsc::channel::<()>();
 
         let (mut diagnostic_service, tx_error) =
             DiagnosticService::new(Box::new(DefaultReporter::default()));
@@ -90,30 +79,18 @@ impl FormatRunner {
             print_and_flush_stdout(stdout, "Checking formatting...\n");
         }
 
-        let target_files_count = files_to_format.len();
         let output_options_clone = output_options.clone();
-
-        // Spawn a thread to run formatting service and wait diagnostics
+        // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let mut format_service = FormatService::new(cwd, &output_options_clone);
-            format_service.with_entries(files_to_format);
-            format_service.run(&tx_error);
+            let format_service = FormatService::new(cwd, output_options_clone);
+            format_service.run_streaming(rx_entry, &tx_error, tx_count);
         });
-        // NOTE: This is a blocking
+
+        // NOTE: This is blocking - waits for all diagnostics
         let res = diagnostic_service.run(stdout);
 
-        // Add a new line between diagnostics and summary
-        print_and_flush_stdout(stdout, "\n");
-
-        if 0 < res.errors_count() {
-            // Each error is already printed in reporter
-            print_and_flush_stdout(
-                stdout,
-                "Error occurred when checking code style in the above files.\n",
-            );
-            return CliRunResult::FormatFailed;
-        }
-
+        // Count the processed files
+        let target_files_count = rx_count.iter().count();
         let print_stats = |stdout| {
             print_and_flush_stdout(
                 stdout,
@@ -124,6 +101,30 @@ impl FormatRunner {
                 ),
             );
         };
+
+        // Add a new line between diagnostics and summary
+        print_and_flush_stdout(stdout, "\n");
+
+        // Check if no files were found
+        if target_files_count == 0 {
+            if misc_options.no_error_on_unmatched_pattern {
+                print_and_flush_stdout(stdout, "No files found matching the given patterns.\n");
+                print_stats(stdout);
+                return CliRunResult::None;
+            }
+
+            print_and_flush_stdout(stdout, "Expected at least one target file\n");
+            return CliRunResult::NoFilesFound;
+        }
+
+        if 0 < res.errors_count() {
+            // Each error is already printed in reporter
+            print_and_flush_stdout(
+                stdout,
+                "Error occurred when checking code style in the above files.\n",
+            );
+            return CliRunResult::FormatFailed;
+        }
 
         match (&output_options, res.warnings_count()) {
             // `--list-different` outputs nothing here, mismatched paths are already printed in reporter
