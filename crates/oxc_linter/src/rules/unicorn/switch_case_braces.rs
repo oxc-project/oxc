@@ -105,7 +105,7 @@ impl Rule for SwitchCaseBraces {
         }
 
         let switch_clause_regex =
-            Regex::new(r#"(case|default)\s*(`[^`]+`|'[^']+'|"[^"]+"|[^:]*):"#).unwrap();
+            Regex::new(r#"(?:case|default)\s*(?:`[^`]+`|'[^']+'|"[^"]+"|[^:]*):"#).unwrap();
 
         for case in &switch.cases {
             if case.consequent.is_empty() {
