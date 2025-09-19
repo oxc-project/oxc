@@ -96,9 +96,6 @@ impl Rule for SwitchCaseBraces {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let switch_clause_regex =
-            Regex::new(r#"(case|default)\s*(`.+`|'.+'|".+"|[^:]*):"#).unwrap();
-
         let AstKind::SwitchStatement(switch) = node.kind() else {
             return;
         };
@@ -106,6 +103,9 @@ impl Rule for SwitchCaseBraces {
         if switch.cases.is_empty() {
             return;
         }
+
+        let switch_clause_regex =
+            Regex::new(r#"(case|default)\s*(`[^`]+`|'[^']+'|"[^"]+"|[^:]*):"#).unwrap();
 
         for case in &switch.cases {
             if case.consequent.is_empty() {
