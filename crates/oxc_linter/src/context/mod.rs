@@ -125,7 +125,7 @@ impl<'a> LintContext<'a> {
 
     /// List of all disable directives in the file being linted.
     #[inline]
-    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
         self.parent.disable_directives()
     }
 
