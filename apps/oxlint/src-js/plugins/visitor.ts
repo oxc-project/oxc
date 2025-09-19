@@ -204,13 +204,16 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   }
 
   // Exit if is empty visitor
-  const keys = Object.keys(visitor);
-  if (keys.length === 0) return;
+  const keys = Object.keys(visitor),
+    keysLen = keys.length;
+  if (keysLen === 0) return;
 
   hasActiveVisitors = true;
 
   // Populate visitors array from provided object
-  for (let name of keys) {
+  for (let i = 0; i < keysLen; i++) {
+    let name = keys[i];
+
     const visitFn = visitor[name];
     if (typeof visitFn !== 'function') {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
@@ -295,14 +298,19 @@ export function finalizeCompiledVisitor() {
 
   // Merge visit functions for node types which have multiple visitors from different rules,
   // or enter+exit functions for leaf nodes
-  for (const typeId of mergedLeafVisitorTypeIds) {
+  for (let i = mergedLeafVisitorTypeIds.length - 1; i >= 0; i--) {
+    const typeId = mergedLeafVisitorTypeIds[i];
     compiledVisitor[typeId] = mergeVisitFns(compiledVisitor[typeId] as unknown as VisitFn[]);
   }
-  for (const typeId of mergedEnterVisitorTypeIds) {
+
+  for (let i = mergedEnterVisitorTypeIds.length - 1; i >= 0; i--) {
+    const typeId = mergedEnterVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
     enterExit.enter = mergeVisitFns(enterExit.enter as VisitFn[]);
   }
-  for (const typeId of mergedExitVisitorTypeIds) {
+
+  for (let i = mergedExitVisitorTypeIds.length - 1; i >= 0; i--) {
+    const typeId = mergedExitVisitorTypeIds[i];
     const enterExit = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
     enterExit.exit = mergeVisitFns(enterExit.exit as VisitFn[]);
   }

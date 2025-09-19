@@ -59,12 +59,14 @@ async function loadPluginImpl(path: string): Promise<string> {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
   const pluginName = plugin.meta.name;
   const offset = registeredRules.length;
-  const ruleNames = [];
+  const { rules } = plugin;
+  const ruleNames = Object.keys(rules);
+  const ruleNamesLen = ruleNames.length;
 
-  for (const [ruleName, rule] of Object.entries(plugin.rules)) {
-    ruleNames.push(ruleName);
+  for (let i = 0; i < ruleNamesLen; i++) {
+    const ruleName = ruleNames[i];
     registeredRules.push({
-      rule,
+      rule: rules[ruleName],
       context: new Context(`${pluginName}/${ruleName}`),
     });
   }
