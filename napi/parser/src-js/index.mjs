@@ -3,6 +3,7 @@ import { parseAsync as parseAsyncBinding, parseSync as parseSyncBinding } from '
 import { wrap } from './wrap.mjs';
 
 export { default as visitorKeys } from '../generated/visit/keys.mjs';
+export { Visitor } from './visit/index.mjs';
 
 export {
   ExportExportNameKind,
@@ -21,7 +22,7 @@ let parseSyncRaw = null,
   parseAsyncRaw,
   parseSyncLazy = null,
   parseAsyncLazy,
-  Visitor;
+  LazyVisitor;
 
 /**
  * Lazy-load code related to raw transfer.
@@ -39,7 +40,7 @@ function loadRawTransfer() {
  */
 function loadRawTransferLazy() {
   if (parseSyncLazy === null) {
-    ({ parseSyncLazy, parseAsyncLazy, Visitor } = require('./raw-transfer/lazy.mjs'));
+    ({ parseSyncLazy, parseAsyncLazy, Visitor: LazyVisitor } = require('./raw-transfer/lazy.mjs'));
   }
 }
 
@@ -103,5 +104,5 @@ export async function parseAsync(filename, sourceText, options) {
  */
 export function experimentalGetLazyVisitor() {
   loadRawTransferLazy();
-  return Visitor;
+  return LazyVisitor;
 }
