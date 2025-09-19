@@ -24,9 +24,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// With TypeScript it is easy to prevent usage of any by using noImplicitAny.
-    /// Unfortunately this rule is easily bypassed with Vue ref() function.
-    /// Calling ref() function without a generic parameter or an initial value leads to ref having Ref<any> type.
+    /// With TypeScript it is easy to prevent usage of `any` by using `noImplicitAny`.
+    /// Unfortunately this rule is easily bypassed with Vue `ref()` function.
+    /// Calling `ref()` function without a generic parameter or an initial value leads to ref having `Ref<any>` type.
     ///
     /// ### Examples
     ///
