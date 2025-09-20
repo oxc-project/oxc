@@ -1,6 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>Boshen/renovate", "helpers:pinGitHubActionDigestsToSemver"],
+  "extends": [
+    "github>Boshen/renovate",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "github>kachick/renovate-config-dprint#1.3.0"
+  ],
   "ignorePaths": ["crates/oxc_linter/fixtures/**"],
   "ignoreDeps": ["@types/vscode", "allocator-api2"],
   "packageRules": [
