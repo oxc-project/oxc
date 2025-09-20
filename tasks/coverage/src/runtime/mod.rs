@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::path::{Path, PathBuf};
 
 use serde_json::json;
@@ -125,9 +126,9 @@ impl Case for Test262RuntimeCase {
             || self.base.code().contains("$DONOTEVALUATE()")
     }
 
-    fn run(&mut self) {}
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {}
 
-    async fn run_async(&mut self) {
+    async fn run_async(&mut self, _allocator_pool: &AllocatorPool) {
         let code = self.get_code(false, false);
         let result = self.run_test_code("codegen", code).await;
 

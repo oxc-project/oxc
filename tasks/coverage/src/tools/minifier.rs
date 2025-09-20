@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -13,9 +14,10 @@ use crate::{
 };
 
 /// Idempotency test
-fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
+fn get_result(source_text: &str, source_type: SourceType, allocator_pool: &AllocatorPool) -> TestResult {
+    let allocator_guard = allocator_pool.get();
     Driver { compress: Some(CompressOptions::smallest()), codegen: true, ..Driver::default() }
-        .idempotency("Compress", source_text, source_type)
+        .idempotency("Compress", source_text, source_type, &allocator_guard)
 }
 
 pub struct MinifierTest262Case {
@@ -45,11 +47,11 @@ impl Case for MinifierTest262Case {
             || self.base.is_no_strict()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type);
+        let result = get_result(source_text, source_type, allocator_pool);
         self.base.set_result(result);
     }
 }
@@ -81,10 +83,10 @@ impl Case for MinifierBabelCase {
             || self.base.source_type().is_typescript()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
+        let result = get_result(source_text, source_type, allocator_pool);
         self.base.set_result(result);
     }
 }
@@ -119,11 +121,11 @@ impl Case for MinifierNodeCompatCase {
         || path == "ES2015/annex b›non-strict function semantics›hoisted block-level function declaration" // this is a pathological case in non-strict mode, terser and SWC fails as well, ignore it
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let source_type = NodeCompatCase::source_type();
         let keep_names = self.path().to_str().unwrap().contains("\"name\" property");
-        let result = test_minification_preserves_execution(source_text, source_type, keep_names);
+        let result = test_minification_preserves_execution(source_text, source_type, keep_names, allocator_pool);
         self.base.set_result(result);
     }
 }
@@ -132,12 +134,13 @@ fn test_minification_preserves_execution(
     code: &str,
     source_type: SourceType,
     keep_names: bool,
+    allocator_pool: &AllocatorPool,
 ) -> TestResult {
     let Ok(original_result) = execute_node_code(code) else {
         return TestResult::ParseError("Original code failed to execute".to_string(), false);
     };
 
-    let Ok(minified_code) = minify_code(code, source_type, keep_names) else {
+    let Ok(minified_code) = minify_code(code, source_type, keep_names, allocator_pool) else {
         return TestResult::ParseError("Failed to minify code".to_string(), false);
     };
 
@@ -164,6 +167,7 @@ fn minify_code(
     source_text: &str,
     source_type: SourceType,
     keep_names: bool,
+    allocator_pool: &AllocatorPool,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut driver = Driver {
         path: PathBuf::from("test.js"),
@@ -180,7 +184,8 @@ fn minify_code(
         ..Driver::default()
     };
 
-    driver.run(source_text, source_type);
+    let allocator_guard = allocator_pool.get();
+    driver.run(source_text, source_type, &allocator_guard);
 
     if !driver.errors().is_empty() {
         return Err("Compilation errors".into());

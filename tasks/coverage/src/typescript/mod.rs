@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 mod constants;
 mod meta;
 mod transpile_runner;
@@ -99,11 +100,11 @@ impl Case for TypeScriptCase {
         self.settings.always_strict
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let result = self
             .units
             .iter()
-            .map(|unit| self.parse(&unit.content, unit.source_type))
+            .map(|unit| self.parse(&unit.content, unit.source_type, allocator_pool))
             .find(Result::is_err)
             .unwrap_or(Ok(()));
         self.result = self.evaluate_result(result);

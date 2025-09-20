@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::path::{Path, PathBuf};
 
 use oxc::{
@@ -32,6 +33,7 @@ fn get_result(
     source_type: SourceType,
     source_path: &Path,
     options: Option<TransformOptions>,
+    allocator_pool: &AllocatorPool,
 ) -> TestResult {
     let mut driver = Driver {
         path: source_path.to_path_buf(),
@@ -40,7 +42,8 @@ fn get_result(
         ..Driver::default()
     };
 
-    driver.run(source_text, source_type);
+    let allocator_guard = allocator_pool.get();
+    driver.run(source_text, source_type, &allocator_guard);
     let errors = driver.errors();
     if errors.is_empty() {
         return TestResult::Passed;
@@ -75,11 +78,11 @@ impl Case for SemanticTest262Case {
         self.base.should_fail() || self.base.skip_test_case()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type, self.path(), None);
+        let result = get_result(source_text, source_type, self.path(), None, allocator_pool);
         self.base.set_result(result);
     }
 }
@@ -109,10 +112,10 @@ impl Case for SemanticBabelCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type, self.path(), None);
+        let result = get_result(source_text, source_type, self.path(), None, allocator_pool);
         self.base.set_result(result);
     }
 }
@@ -142,7 +145,7 @@ impl Case for SemanticTypeScriptCase {
         self.base.skip_test_case() || self.base.should_fail_with_any_error_codes()
     }
 
-    fn execute(&mut self, source_type: SourceType) -> TestResult {
+    fn execute(&mut self, source_type: SourceType, allocator_pool: &AllocatorPool) -> TestResult {
         let mut options = get_default_transformer_options();
         let mut source_type = source_type;
         // handle @jsx: react, `react` of behavior is match babel following options
@@ -150,14 +153,14 @@ impl Case for SemanticTypeScriptCase {
             source_type = source_type.with_module(true);
             options.jsx.runtime = JsxRuntime::Classic;
         }
-        get_result(self.base.code(), source_type, self.path(), Some(options))
+        get_result(self.base.code(), source_type, self.path(), Some(options), allocator_pool)
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let units = self.base.units.clone();
         for unit in units {
             self.base.code = unit.content.to_string();
-            let result = self.execute(unit.source_type);
+            let result = self.execute(unit.source_type, allocator_pool);
             if result != TestResult::Passed {
                 self.base.result = result;
                 return;
@@ -192,8 +195,8 @@ impl Case for SemanticMiscCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
-        let result = get_result(self.base.code(), self.base.source_type(), self.path(), None);
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
+        let result = get_result(self.base.code(), self.base.source_type(), self.path(), None, allocator_pool);
         self.base.set_result(result);
     }
 }

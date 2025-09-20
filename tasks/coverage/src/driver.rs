@@ -1,4 +1,4 @@
-use std::{ops::ControlFlow, path::PathBuf};
+use std::{ops::ControlFlow, path::PathBuf, path::Path};
 
 use rustc_hash::FxHashSet;
 
@@ -78,7 +78,7 @@ impl CompilerInterface for Driver {
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
         let ParserReturn { program, panicked, errors, .. } = parser_return;
         self.panicked = *panicked;
-        self.check_ast_nodes(program);
+        // Note: check_ast_nodes is not called here because we don't have the allocator in this trait method
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
         }
@@ -131,10 +131,11 @@ impl Driver {
         case: &'static str,
         source_text: &str,
         source_type: SourceType,
+        allocator: &Allocator,
     ) -> TestResult {
-        self.run(source_text, source_type);
+        self.run(source_text, source_type, allocator);
         let printed1 = self.printed.clone();
-        self.run(&printed1, source_type);
+        self.run(&printed1, source_type, allocator);
         let printed2 = self.printed.clone();
         if printed1 == printed2 {
             TestResult::Passed
@@ -143,9 +144,60 @@ impl Driver {
         }
     }
 
-    pub fn run(&mut self, source_text: &str, source_type: SourceType) {
+    pub fn run(&mut self, source_text: &str, source_type: SourceType, allocator: &Allocator) {
         let path = self.path.clone();
-        self.compile(source_text, source_type, &path);
+        self.compile_with_allocator(source_text, source_type, &path, allocator);
+    }
+
+    fn compile_with_allocator(&mut self, source_text: &str, source_type: SourceType, source_path: &Path, allocator: &Allocator) {
+        /* Parse */
+        let mut parser_return = self.parse(allocator, source_text, source_type);
+        // Call check_ast_nodes here since we have the allocator
+        self.check_ast_nodes(&parser_return.program, allocator);
+        if self.after_parse(&mut parser_return).is_break() {
+            return;
+        }
+        if !parser_return.errors.is_empty() {
+            self.handle_errors(parser_return.errors);
+        }
+        let mut program = parser_return.program;
+        /* Isolated Declarations */
+        if let Some(options) = self.isolated_declaration_options() {
+            self.isolated_declaration(options, allocator, &program, source_path);
+        }
+        /* Semantic */
+        let mut semantic_return = self.semantic(&program);
+        if !semantic_return.errors.is_empty() {
+            self.handle_errors(semantic_return.errors);
+            return;
+        }
+        if self.after_semantic(&mut semantic_return).is_break() {
+            return;
+        }
+        let _stats = semantic_return.semantic.stats();
+        let mut scoping = semantic_return.semantic.into_scoping();
+        /* Transform */
+        if let Some(options) = self.transform_options() {
+            let mut transformer_return =
+                self.transform(options, allocator, &mut program, source_path, scoping);
+            if !transformer_return.errors.is_empty() {
+                self.handle_errors(transformer_return.errors);
+                return;
+            }
+            if self.after_transform(&mut program, &mut transformer_return).is_break() {
+                return;
+            }
+            scoping = transformer_return.scoping;
+        }
+        /* Compress */
+        if let Some(options) = self.compress_options() {
+            self.compress(allocator, &mut program, options);
+        }
+        /* Codegen */
+        if let Some(options) = self.codegen_options() {
+            let ret = self.codegen(&program, source_path, Some(scoping), options);
+            self.after_codegen(ret);
+        }
     }
 
     fn check_comments(&mut self, comments: &[Comment]) -> bool {
@@ -160,20 +212,20 @@ impl Driver {
         false
     }
 
-    fn check_ast_nodes(&mut self, program: &Program<'_>) {
-        CheckASTNodes::new(self, program.source_text).check(program);
+    fn check_ast_nodes(&mut self, program: &Program<'_>, allocator: &Allocator) {
+        CheckASTNodes::new(self, program.source_text, allocator).check(program);
     }
 }
 
 struct CheckASTNodes<'a> {
     driver: &'a mut Driver,
     source_text: &'a str,
-    allocator: Allocator,
+    allocator: &'a Allocator,
 }
 
 impl<'a> CheckASTNodes<'a> {
-    fn new(driver: &'a mut Driver, source_text: &'a str) -> Self {
-        Self { driver, source_text, allocator: Allocator::default() }
+    fn new(driver: &'a mut Driver, source_text: &'a str, allocator: &'a Allocator) -> Self {
+        Self { driver, source_text, allocator }
     }
 
     fn check(&mut self, program: &Program<'a>) {
@@ -201,7 +253,7 @@ impl<'a> Visit<'a> for CheckASTNodes<'a> {
         };
         let printed1 = pattern.to_string();
         let flags = literal.regex.flags.to_inline_string();
-        match LiteralParser::new(&self.allocator, &printed1, Some(&flags), Options::default())
+        match LiteralParser::new(self.allocator, &printed1, Some(&flags), Options::default())
             .parse()
         {
             Ok(pattern2) => {

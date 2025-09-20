@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::path::{Path, PathBuf};
 
 use oxc::span::SourceType;
@@ -12,18 +13,21 @@ use crate::{
 };
 
 /// Idempotency test
-fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
+fn get_result(source_text: &str, source_type: SourceType, allocator_pool: &AllocatorPool) -> TestResult {
+    let allocator_guard = allocator_pool.get();
     let result = Driver { codegen: true, ..Driver::default() }.idempotency(
         "Normal",
         source_text,
         source_type,
+        &allocator_guard,
     );
     if result != TestResult::Passed {
         return result;
     }
 
+    let allocator_guard2 = allocator_pool.get();
     let result = Driver { codegen: true, remove_whitespace: true, ..Driver::default() }
-        .idempotency("Minify", source_text, source_type);
+        .idempotency("Minify", source_text, source_type, &allocator_guard2);
     if result != TestResult::Passed {
         return result;
     }
@@ -56,11 +60,11 @@ impl Case for CodegenTest262Case {
         self.base.should_fail() || self.base.skip_test_case()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
-        let result = get_result(source_text, source_type);
+        let result = get_result(source_text, source_type, allocator_pool);
         self.base.set_result(result);
     }
 }
@@ -90,10 +94,10 @@ impl Case for CodegenBabelCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
+        let result = get_result(source_text, source_type, allocator_pool);
         self.base.set_result(result);
     }
 }
@@ -123,10 +127,10 @@ impl Case for CodegenTypeScriptCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let units = self.base.units.clone();
         for unit in units {
-            let result = get_result(&unit.content, unit.source_type);
+            let result = get_result(&unit.content, unit.source_type, allocator_pool);
             if result != TestResult::Passed {
                 self.base.result = result;
                 return;
@@ -161,10 +165,10 @@ impl Case for CodegenMiscCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
+        let result = get_result(source_text, source_type, allocator_pool);
         self.base.set_result(result);
     }
 }

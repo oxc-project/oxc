@@ -14,6 +14,7 @@ use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
     span::SourceType,
 };
+use oxc_allocator::AllocatorPool;
 use oxc_tasks_common::{Snapshot, normalize_path};
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
@@ -45,25 +46,25 @@ pub struct CoverageReport<'a, T> {
 
 /// A Test Suite is responsible for reading code from a repository
 pub trait Suite<T: Case> {
-    fn run(&mut self, name: &str, args: &AppArgs) {
+    fn run(&mut self, name: &str, args: &AppArgs, allocator_pool: &AllocatorPool) {
         self.read_test_cases(name, args);
 
         if args.debug {
             self.get_test_cases_mut().iter_mut().for_each(|case| {
                 println!("{}", case.path().to_string_lossy());
-                case.run();
+                case.run(allocator_pool);
             });
         } else {
-            self.get_test_cases_mut().par_iter_mut().for_each(Case::run);
+            self.get_test_cases_mut().par_iter_mut().for_each(|case| case.run(allocator_pool));
         }
 
         self.run_coverage(name, args);
     }
 
-    fn run_async(&mut self, args: &AppArgs) {
+    fn run_async(&mut self, args: &AppArgs, allocator_pool: &AllocatorPool) {
         use futures::{StreamExt, stream};
         self.read_test_cases("runtime", args);
-        let cases = self.get_test_cases_mut().iter_mut().map(T::run_async);
+        let cases = self.get_test_cases_mut().iter_mut().map(|case| case.run_async(allocator_pool));
         Runtime::new().unwrap().block_on(stream::iter(cases).buffer_unordered(100).count());
         self.run_coverage("runtime", args);
         let _ = oxc_tasks_common::agent().delete("http://localhost:32055").call();
@@ -326,13 +327,14 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     /// Run a single test case, this is responsible for saving the test result
-    fn run(&mut self);
+    fn run(&mut self, _allocator_pool: &AllocatorPool);
 
     /// Async version of run
-    async fn run_async(&mut self) {}
+    async fn run_async(&mut self, _allocator_pool: &AllocatorPool) {}
 
-    fn parse(&self, code: &str, source_type: SourceType) -> Result<(), (String, bool)> {
+    fn parse(&self, code: &str, source_type: SourceType, allocator_pool: &AllocatorPool) -> Result<(), (String, bool)> {
         let path = self.path();
+        let allocator_guard = allocator_pool.get();
 
         let mut driver = Driver {
             path: path.to_path_buf(),
@@ -349,7 +351,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             Cow::Borrowed(code)
         };
 
-        driver.run(&source_text, source_type);
+        driver.run(&source_text, source_type, &allocator_guard);
         let errors = driver.errors();
         if errors.is_empty() {
             Ok(())
@@ -369,8 +371,8 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     /// Execute the parser once and get the test result
-    fn execute(&mut self, source_type: SourceType) -> TestResult {
-        let result = self.parse(self.code(), source_type);
+    fn execute(&mut self, source_type: SourceType, allocator_pool: &AllocatorPool) -> TestResult {
+        let result = self.parse(self.code(), source_type, allocator_pool);
         self.evaluate_result(result)
     }
 

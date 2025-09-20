@@ -1,4 +1,5 @@
-//! <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/testRunner/transpileRunner.ts>
+/// <https://github.com/microsoft/TypeScript/blob/v5.6.3/src/testRunner/transpileRunner.ts>
+use oxc_allocator::AllocatorPool;
 
 use std::path::{Path, PathBuf};
 
@@ -87,7 +88,7 @@ impl Case for TypeScriptTranspileCase {
         !self.base.settings.declaration
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         // if !self.settings.emit_declaration_only {
         // self.run_kind(TranspileKind::Module);
         // }
