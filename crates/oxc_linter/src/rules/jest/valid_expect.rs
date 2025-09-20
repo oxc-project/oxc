@@ -315,7 +315,7 @@ fn should_skip_parent_node(node: &AstNode, parent: &AstNode) -> bool {
             // Skip if this node is one of the new expression arguments
             new_expr.arguments.iter().any(|arg| arg.span() == node.span())
         }
-        _ => false, // Don't skip other node types
+        _ => false,
     }
 }
 
