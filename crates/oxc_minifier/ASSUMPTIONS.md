@@ -128,12 +128,12 @@ The minifier correctly handles `__proto__` as a special property name when inlin
 // Before optimization:
 function wrapper() {
   var __proto__ = [];
-  return { __proto__ }
+  return { __proto__ };
 }
 
 // After optimization:
 function wrapper() {
-  return { ['__proto__']: [] }
+  return { ['__proto__']: [] };
 }
 ```
 
@@ -155,7 +155,7 @@ The minifier optimizes `typeof`-guarded global variable access by removing unnec
 
 ```javascript
 // Before optimization:
-typeof x !== 'undefined' && x
+typeof x !== 'undefined' && x;
 
 // After optimization:
 // (removed entirely if x is known to be undefined)
