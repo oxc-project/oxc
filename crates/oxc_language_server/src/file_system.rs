@@ -16,7 +16,6 @@ impl LSPFileSystem {
         self.files.pin().insert(uri.clone(), content);
     }
 
-    #[expect(dead_code)] // used for the oxc_formatter in the future
     pub fn get(&self, uri: &Uri) -> Option<String> {
         self.files.pin().get(uri).cloned()
     }

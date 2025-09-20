@@ -113,12 +113,9 @@ impl Tester<'_> {
             .join(self.relative_root_dir);
         let uri = Uri::from_file_path(absolute_path).expect("could not convert current dir to uri");
         let worker = WorkspaceWorker::new(uri);
-        worker
-            .init_linter(&Options {
-                lint: self.options.clone().unwrap_or_default(),
-                ..Default::default()
-            })
-            .await;
+        let option =
+            &Options { lint: self.options.clone().unwrap_or_default(), ..Default::default() };
+        worker.start_worker(option).await;
 
         worker
     }

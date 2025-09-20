@@ -34,6 +34,7 @@ mod test {
             "options": {
                 "run": true,
                 "configPath": "./custom.json",
+                "fmt.experimental": true
             }
         }]);
 
@@ -46,5 +47,6 @@ mod test {
         assert_eq!(options.lint.run, Run::OnType); // fallback
         assert_eq!(options.lint.config_path, Some("./custom.json".into()));
         assert!(options.lint.flags.is_empty());
+        assert!(options.format.experimental);
     }
 }

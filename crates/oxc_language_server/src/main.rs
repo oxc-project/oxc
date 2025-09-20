@@ -14,8 +14,8 @@ use tower_lsp_server::{
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
-        ServerInfo, Unregistration, Uri, WorkspaceEdit,
+        DocumentFormattingParams, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, Registration, ServerInfo, TextEdit, Unregistration, Uri, WorkspaceEdit,
     },
 };
 
@@ -42,6 +42,10 @@ use crate::file_system::LSPFileSystem;
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
 const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
+
+// max range for LSP integer is 2^31 - 1
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseTypes
+const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
 
 struct Backend {
     client: Client,
@@ -110,19 +114,17 @@ impl LanguageServer for Backend {
         // we will init the linter after requesting for the workspace configuration.
         if !capabilities.workspace_configuration || options.is_some() {
             for worker in &workers {
-                worker
-                    .init_linter(
-                        &options
-                            .clone()
-                            .unwrap_or_default()
-                            .iter()
-                            .find(|workspace_option| {
-                                worker.is_responsible_for_uri(&workspace_option.workspace_uri)
-                            })
-                            .map(|workspace_options| workspace_options.options.clone())
-                            .unwrap_or_default(),
-                    )
-                    .await;
+                let option = &options
+                    .clone()
+                    .unwrap_or_default()
+                    .iter()
+                    .find(|workspace_option| {
+                        worker.is_responsible_for_uri(&workspace_option.workspace_uri)
+                    })
+                    .map(|workspace_options| workspace_options.options.clone())
+                    .unwrap_or_default();
+
+                worker.start_worker(option).await;
             }
         }
 
@@ -160,7 +162,7 @@ impl LanguageServer for Backend {
             ConcurrentHashMap::with_capacity_and_hasher(workers.len(), FxBuildHasher);
         let needed_configurations = needed_configurations.pin_owned();
         for worker in workers {
-            if worker.needs_init_linter().await {
+            if worker.needs_init_options().await {
                 needed_configurations.insert(worker.get_root_uri().clone(), worker);
             }
         }
@@ -172,23 +174,20 @@ impl LanguageServer for Backend {
                 // every worker should be initialized already in `initialize` request
                 vec![Some(Options::default()); needed_configurations.len()]
             };
+            let default_options = Options::default();
 
             for (index, worker) in needed_configurations.values().enumerate() {
-                worker
-                    .init_linter(
-                        configurations
-                            .get(index)
-                            .unwrap_or(&None)
-                            .as_ref()
-                            .unwrap_or(&Options::default()),
-                    )
-                    .await;
+                let configuration =
+                    configurations.get(index).unwrap_or(&None).as_ref().unwrap_or(&default_options);
+
+                worker.start_worker(configuration).await;
             }
         }
 
+        let mut registrations = vec![];
+
         // init all file watchers
         if capabilities.dynamic_watchers {
-            let mut registrations = vec![];
             for worker in workers {
                 registrations.push(Registration {
                     id: format!("watcher-{}", worker.get_root_uri().as_str()),
@@ -198,10 +197,32 @@ impl LanguageServer for Backend {
                     })),
                 });
             }
+        }
 
-            if let Err(err) = self.client.register_capability(registrations).await {
-                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+        if capabilities.dynamic_formatting {
+            // check if one workspace has formatting enabled
+            let mut started_worker = false;
+            for worker in workers {
+                if worker.has_active_formatter().await {
+                    started_worker = true;
+                    break;
+                }
             }
+
+            if started_worker {
+                registrations.push(Registration {
+                    id: "dynamic-formatting".to_string(),
+                    method: "textDocument/formatting".to_string(),
+                    register_options: None,
+                });
+            }
+        }
+
+        if registrations.is_empty() {
+            return;
+        }
+        if let Err(err) = self.client.register_capability(registrations).await {
+            warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
         }
     }
 
@@ -273,6 +294,8 @@ impl LanguageServer for Backend {
             return;
         };
 
+        let mut global_formatting_added = false;
+
         for option in resolved_options {
             let Some(worker) =
                 workers.iter().find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
@@ -280,7 +303,13 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let (diagnostics, watcher) = worker.did_change_configuration(&option.options).await;
+            let (diagnostics, watcher, formatter_activated) =
+                worker.did_change_configuration(&option.options).await;
+
+            if formatter_activated && self.capabilities.get().is_some_and(|c| c.dynamic_formatting)
+            {
+                global_formatting_added = true;
+            }
 
             if let Some(diagnostics) = diagnostics {
                 for (uri, reports) in &diagnostics.pin() {
@@ -291,7 +320,9 @@ impl LanguageServer for Backend {
                 }
             }
 
-            if let Some(watcher) = watcher {
+            if let Some(watcher) = watcher
+                && self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers)
+            {
                 // remove the old watcher
                 removing_registrations.push(Unregistration {
                     id: format!("watcher-{}", worker.get_root_uri().as_str()),
@@ -318,16 +349,24 @@ impl LanguageServer for Backend {
             self.publish_all_diagnostics(x).await;
         }
 
-        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
-            if !removing_registrations.is_empty() {
-                if let Err(err) = self.client.unregister_capability(removing_registrations).await {
-                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
-                }
+        // override the existing formatting registration
+        // do not remove the registration, because other workspaces might still need it
+        if global_formatting_added {
+            adding_registrations.push(Registration {
+                id: "dynamic-formatting".to_string(),
+                method: "textDocument/formatting".to_string(),
+                register_options: None,
+            });
+        }
+
+        if !removing_registrations.is_empty() {
+            if let Err(err) = self.client.unregister_capability(removing_registrations).await {
+                warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
             }
-            if !adding_registrations.is_empty() {
-                if let Err(err) = self.client.register_capability(adding_registrations).await {
-                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
-                }
+        }
+        if !adding_registrations.is_empty() {
+            if let Err(err) = self.client.register_capability(adding_registrations).await {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
             }
         }
     }
@@ -395,6 +434,8 @@ impl LanguageServer for Backend {
 
         self.publish_all_diagnostics(&cleared_diagnostics).await;
 
+        let default_options = Options::default();
+
         // client support `workspace/configuration` request
         if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
         {
@@ -408,7 +449,10 @@ impl LanguageServer for Backend {
                 let worker = WorkspaceWorker::new(folder.uri.clone());
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&None);
-                worker.init_linter(options.as_ref().unwrap_or(&Options::default())).await;
+                let options = options.as_ref().unwrap_or(&default_options);
+
+                worker.start_worker(options).await;
+
                 added_registrations.push(Registration {
                     id: format!("watcher-{}", worker.get_root_uri().as_str()),
                     method: "workspace/didChangeWatchedFiles".to_string(),
@@ -423,7 +467,7 @@ impl LanguageServer for Backend {
             for folder in params.event.added {
                 let worker = WorkspaceWorker::new(folder.uri);
                 // use default options
-                worker.init_linter(&Options::default()).await;
+                worker.start_worker(&default_options).await;
                 workers.push(worker);
             }
         }
@@ -589,6 +633,15 @@ impl LanguageServer for Backend {
         }
 
         Err(Error::invalid_request())
+    }
+
+    async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
+        let uri = &params.text_document.uri;
+        let workers = self.workspace_workers.read().await;
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+            return Ok(None);
+        };
+        Ok(worker.format_file(uri, self.file_system.read().await.get(uri)).await)
     }
 }
 
