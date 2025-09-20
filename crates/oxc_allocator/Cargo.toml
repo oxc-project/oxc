@@ -36,6 +36,9 @@ oxc_estree = { workspace = true, features = ["serialize"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
+[build-dependencies]
+rustversion = { workspace = true }
+
 [features]
 bitset = []
 fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros"]
