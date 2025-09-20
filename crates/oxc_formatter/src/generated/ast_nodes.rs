@@ -47,7 +47,6 @@ pub enum AstNodes<'a> {
     NewExpression(&'a AstNode<'a, NewExpression<'a>>),
     MetaProperty(&'a AstNode<'a, MetaProperty<'a>>),
     SpreadElement(&'a AstNode<'a, SpreadElement<'a>>),
-    Argument(&'a AstNode<'a, Argument<'a>>),
     UpdateExpression(&'a AstNode<'a, UpdateExpression<'a>>),
     UnaryExpression(&'a AstNode<'a, UnaryExpression<'a>>),
     BinaryExpression(&'a AstNode<'a, BinaryExpression<'a>>),
@@ -2354,7 +2353,6 @@ impl<'a> AstNodes<'a> {
             Self::NewExpression(n) => n.span(),
             Self::MetaProperty(n) => n.span(),
             Self::SpreadElement(n) => n.span(),
-            Self::Argument(n) => n.span(),
             Self::UpdateExpression(n) => n.span(),
             Self::UnaryExpression(n) => n.span(),
             Self::BinaryExpression(n) => n.span(),
@@ -2547,7 +2545,6 @@ impl<'a> AstNodes<'a> {
             Self::NewExpression(n) => n.parent,
             Self::MetaProperty(n) => n.parent,
             Self::SpreadElement(n) => n.parent,
-            Self::Argument(n) => n.parent,
             Self::UpdateExpression(n) => n.parent,
             Self::UnaryExpression(n) => n.parent,
             Self::BinaryExpression(n) => n.parent,
@@ -2740,7 +2737,6 @@ impl<'a> AstNodes<'a> {
             Self::NewExpression(n) => SiblingNode::from(n.inner),
             Self::MetaProperty(n) => SiblingNode::from(n.inner),
             Self::SpreadElement(n) => SiblingNode::from(n.inner),
-            Self::Argument(n) => n.parent.as_sibling_node(),
             Self::UpdateExpression(n) => SiblingNode::from(n.inner),
             Self::UnaryExpression(n) => SiblingNode::from(n.inner),
             Self::BinaryExpression(n) => SiblingNode::from(n.inner),
@@ -2933,7 +2929,6 @@ impl<'a> AstNodes<'a> {
             Self::NewExpression(_) => "NewExpression",
             Self::MetaProperty(_) => "MetaProperty",
             Self::SpreadElement(_) => "SpreadElement",
-            Self::Argument(_) => "Argument",
             Self::UpdateExpression(_) => "UpdateExpression",
             Self::UnaryExpression(_) => "UnaryExpression",
             Self::BinaryExpression(_) => "BinaryExpression",
@@ -4557,7 +4552,7 @@ impl<'a> GetSpan for AstNode<'a, SpreadElement<'a>> {
 impl<'a> AstNode<'a, Argument<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::Argument(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             Argument::SpreadElement(s) => AstNodes::SpreadElement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),

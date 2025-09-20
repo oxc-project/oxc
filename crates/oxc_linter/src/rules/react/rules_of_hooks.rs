@@ -384,11 +384,8 @@ fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNod
 /// Otherwise it would return `false`.
 fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
     let parent = nodes.parent_node(node_id);
-    if !matches!(parent.kind(), AstKind::Argument(_)) {
-        return false;
-    }
 
-    let AstKind::CallExpression(call) = nodes.parent_kind(parent.id()) else {
+    let AstKind::CallExpression(call) = parent.kind() else {
         return false;
     };
 

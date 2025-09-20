@@ -947,18 +947,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
         let can_hug = should_hug_function_parameters(self, parentheses_not_needed, f)
             && !has_any_decorated_parameter;
 
-        let layout = if !self.has_parameter() {
-            ParameterLayout::NoParameters
-        } else if can_hug || {
-            // `self.parent`: Function
-            // `self.parent.parent()`: Argument
-            // `self.parent.parent().parent()` CallExpression
-            if let AstNodes::CallExpression(call) = self.parent.parent().parent() {
+        // Check if parameters are in a test call
+        // parent chain is: FormalParameters -> Function -> CallExpression
+        let is_test_call = if let AstNodes::Function(func) = &self.parent {
+            if let AstNodes::CallExpression(call) = &func.parent {
                 is_test_call_expression(call)
             } else {
                 false
             }
-        } {
+        } else {
+            false
+        };
+
+        let layout = if !self.has_parameter() {
+            ParameterLayout::NoParameters
+        } else if can_hug || is_test_call {
             ParameterLayout::Hug
         } else {
             ParameterLayout::Default
