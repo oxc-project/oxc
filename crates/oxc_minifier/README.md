@@ -39,7 +39,7 @@ The printer is responsible for removing whitespace from the source text.
   - Examples that breaks this assumption: `{ toString() { console.log('sideeffect') } }`
 - Errors thrown when creating a String or an Array that exceeds the maximum length can disappear or moved
   - Examples that breaks this assumption: `try { new Array(Number(2n**53n)) } catch { console.log('log') }`
-- Invalid super class error does not happen
+- Extending a class does not have a side effect
   - Examples that breaks this assumption: `const v = []; class A extends v {}`
 
 ## Terser Tests

@@ -29,7 +29,7 @@ pub struct Driver {
     pub path: PathBuf,
     // options
     pub transform: Option<TransformOptions>,
-    pub compress: bool,
+    pub compress: Option<CompressOptions>,
     pub remove_whitespace: bool,
     pub codegen: bool,
     pub check_semantic: bool,
@@ -58,7 +58,7 @@ impl CompilerInterface for Driver {
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        self.compress.then(CompressOptions::smallest)
+        self.compress.clone()
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
