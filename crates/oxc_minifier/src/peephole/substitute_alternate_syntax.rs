@@ -530,6 +530,11 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        // In non-strict mode, a different value may be reassigned to the `arguments` variable
+        if !ctx.current_scope_flags().is_strict_mode() {
+            return;
+        }
+
         // FIXME: this function treats `arguments` not inside a function scope as if they are inside it
         //        we should check in a different way than `ctx.is_global_reference`
 
@@ -1517,12 +1522,16 @@ where
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 #[cfg(test)]
 mod test {
+    use oxc_span::SourceType;
     use oxc_syntax::es_target::ESTarget;
 
     use crate::{
         CompressOptions, CompressOptionsUnused,
         options::CompressOptionsKeepNames,
-        tester::{default_options, test, test_options, test_same, test_same_options},
+        tester::{
+            default_options, test, test_options, test_same, test_same_options,
+            test_same_options_source_type,
+        },
     };
 
     #[test]
@@ -2345,6 +2354,12 @@ mod test {
         );
         test_same(
             "for (var e = arguments.length, r = Array(e > 1 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a];",
+        );
+
+        test_same_options_source_type(
+            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
+            SourceType::cjs(),
+            &default_options(),
         );
     }
 

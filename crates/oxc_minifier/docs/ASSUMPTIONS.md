@@ -98,17 +98,13 @@ eval('var x = 1');
 new Function('return x');
 ```
 
-### `arguments` is always [the arguments object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments)
+### No access to a variable named `arguments` outside functions
 
-`arguments` variables are only accessed inside functions and not assigned with a different value. We intend to change this assumption to optional in the future.
+`arguments` variables are only accessed inside functions. We intend to change this assumption to optional in the future.
 
 ```javascript
 // The minifier assumes this never happens:
-console.log(arguments); // This is not the arguments object
-function f(a) {
-  arguments = 2; // This makes the arguments variable point not to point to the arguments object
-  return a;
-}
+console.log(arguments);
 ```
 
 ## Optional Assumptions
