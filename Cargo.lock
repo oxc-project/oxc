@@ -1890,6 +1890,7 @@ dependencies = [
  "futures",
  "lazy-regex",
  "oxc",
+ "oxc_allocator",
  "oxc_formatter",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",

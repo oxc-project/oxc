@@ -196,7 +196,13 @@ impl Case for SemanticMiscCase {
     }
 
     fn run(&mut self, allocator_pool: &AllocatorPool) {
-        let result = get_result(self.base.code(), self.base.source_type(), self.path(), None, allocator_pool);
+        let result = get_result(
+            self.base.code(),
+            self.base.source_type(),
+            self.path(),
+            None,
+            allocator_pool,
+        );
         self.base.set_result(result);
     }
 }

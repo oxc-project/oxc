@@ -1,9 +1,9 @@
-use oxc_allocator::AllocatorPool;
 use crate::{
     suite::{Case, Suite, TestResult},
     workspace_root,
 };
 use oxc::span::SourceType;
+use oxc_allocator::AllocatorPool;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::{

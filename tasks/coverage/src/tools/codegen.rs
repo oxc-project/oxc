@@ -13,7 +13,11 @@ use crate::{
 };
 
 /// Idempotency test
-fn get_result(source_text: &str, source_type: SourceType, allocator_pool: &AllocatorPool) -> TestResult {
+fn get_result(
+    source_text: &str,
+    source_type: SourceType,
+    allocator_pool: &AllocatorPool,
+) -> TestResult {
     let allocator_guard = allocator_pool.get();
     let result = Driver { codegen: true, ..Driver::default() }.idempotency(
         "Normal",

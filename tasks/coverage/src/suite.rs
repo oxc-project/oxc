@@ -332,7 +332,12 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     /// Async version of run
     async fn run_async(&mut self, _allocator_pool: &AllocatorPool) {}
 
-    fn parse(&self, code: &str, source_type: SourceType, allocator_pool: &AllocatorPool) -> Result<(), (String, bool)> {
+    fn parse(
+        &self,
+        code: &str,
+        source_type: SourceType,
+        allocator_pool: &AllocatorPool,
+    ) -> Result<(), (String, bool)> {
         let path = self.path();
         let allocator_guard = allocator_pool.get();
 

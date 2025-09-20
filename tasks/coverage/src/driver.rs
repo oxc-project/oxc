@@ -1,4 +1,4 @@
-use std::{ops::ControlFlow, path::PathBuf, path::Path};
+use std::{ops::ControlFlow, path::Path, path::PathBuf};
 
 use rustc_hash::FxHashSet;
 
@@ -149,7 +149,13 @@ impl Driver {
         self.compile_with_allocator(source_text, source_type, &path, allocator);
     }
 
-    fn compile_with_allocator(&mut self, source_text: &str, source_type: SourceType, source_path: &Path, allocator: &Allocator) {
+    fn compile_with_allocator(
+        &mut self,
+        source_text: &str,
+        source_type: SourceType,
+        source_path: &Path,
+        allocator: &Allocator,
+    ) {
         /* Parse */
         let mut parser_return = self.parse(allocator, source_text, source_type);
         // Call check_ast_nodes here since we have the allocator

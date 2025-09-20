@@ -37,7 +37,11 @@ fn get_result(
     // Second pass with only JavaScript syntax
     let transformed2 = {
         let allocator_guard2 = allocator_pool.get();
-        driver.run(&transformed1, SourceType::default().with_module(source_type.is_module()), &allocator_guard2);
+        driver.run(
+            &transformed1,
+            SourceType::default().with_module(source_type.is_module()),
+            &allocator_guard2,
+        );
         driver.printed.clone()
     };
     if transformed1 == transformed2 {
@@ -202,7 +206,13 @@ impl Case for TransformerMiscCase {
     }
 
     fn run(&mut self, allocator_pool: &AllocatorPool) {
-        let result = get_result(self.base.code(), self.base.source_type(), self.path(), None, allocator_pool);
+        let result = get_result(
+            self.base.code(),
+            self.base.source_type(),
+            self.path(),
+            None,
+            allocator_pool,
+        );
         self.base.set_result(result);
     }
 }

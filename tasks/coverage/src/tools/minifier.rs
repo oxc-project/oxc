@@ -14,7 +14,11 @@ use crate::{
 };
 
 /// Idempotency test
-fn get_result(source_text: &str, source_type: SourceType, allocator_pool: &AllocatorPool) -> TestResult {
+fn get_result(
+    source_text: &str,
+    source_type: SourceType,
+    allocator_pool: &AllocatorPool,
+) -> TestResult {
     let allocator_guard = allocator_pool.get();
     Driver { compress: Some(CompressOptions::smallest()), codegen: true, ..Driver::default() }
         .idempotency("Compress", source_text, source_type, &allocator_guard)
@@ -125,7 +129,12 @@ impl Case for MinifierNodeCompatCase {
         let source_text = self.base.code();
         let source_type = NodeCompatCase::source_type();
         let keep_names = self.path().to_str().unwrap().contains("\"name\" property");
-        let result = test_minification_preserves_execution(source_text, source_type, keep_names, allocator_pool);
+        let result = test_minification_preserves_execution(
+            source_text,
+            source_type,
+            keep_names,
+            allocator_pool,
+        );
         self.base.set_result(result);
     }
 }

@@ -88,28 +88,48 @@ impl AppArgs {
     pub fn run_semantic(&self, allocator_pool: &AllocatorPool) {
         Test262Suite::<SemanticTest262Case>::new().run("semantic_test262", self, allocator_pool);
         BabelSuite::<SemanticBabelCase>::new().run("semantic_babel", self, allocator_pool);
-        TypeScriptSuite::<SemanticTypeScriptCase>::new().run("semantic_typescript", self, allocator_pool);
+        TypeScriptSuite::<SemanticTypeScriptCase>::new().run(
+            "semantic_typescript",
+            self,
+            allocator_pool,
+        );
         MiscSuite::<SemanticMiscCase>::new().run("semantic_misc", self, allocator_pool);
     }
 
     pub fn run_codegen(&self, allocator_pool: &AllocatorPool) {
         Test262Suite::<CodegenTest262Case>::new().run("codegen_test262", self, allocator_pool);
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self, allocator_pool);
-        TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self, allocator_pool);
+        TypeScriptSuite::<CodegenTypeScriptCase>::new().run(
+            "codegen_typescript",
+            self,
+            allocator_pool,
+        );
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self, allocator_pool);
     }
 
     pub fn run_formatter(&self, allocator_pool: &AllocatorPool) {
         Test262Suite::<FormatterTest262Case>::new().run("formatter_test262", self, allocator_pool);
         BabelSuite::<FormatterBabelCase>::new().run("formatter_babel", self, allocator_pool);
-        TypeScriptSuite::<FormatterTypeScriptCase>::new().run("formatter_typescript", self, allocator_pool);
+        TypeScriptSuite::<FormatterTypeScriptCase>::new().run(
+            "formatter_typescript",
+            self,
+            allocator_pool,
+        );
         MiscSuite::<FormatterMiscCase>::new().run("formatter_misc", self, allocator_pool);
     }
 
     pub fn run_transformer(&self, allocator_pool: &AllocatorPool) {
-        Test262Suite::<TransformerTest262Case>::new().run("transformer_test262", self, allocator_pool);
+        Test262Suite::<TransformerTest262Case>::new().run(
+            "transformer_test262",
+            self,
+            allocator_pool,
+        );
         BabelSuite::<TransformerBabelCase>::new().run("transformer_babel", self, allocator_pool);
-        TypeScriptSuite::<TransformerTypeScriptCase>::new().run("transformer_typescript", self, allocator_pool);
+        TypeScriptSuite::<TransformerTypeScriptCase>::new().run(
+            "transformer_typescript",
+            self,
+            allocator_pool,
+        );
         MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self, allocator_pool);
     }
 
@@ -120,7 +140,11 @@ impl AppArgs {
     pub fn run_estree(&self, allocator_pool: &AllocatorPool) {
         Test262Suite::<EstreeTest262Case>::new().run("estree_test262", self, allocator_pool);
         AcornJsxSuite::<EstreeJsxCase>::new().run("estree_acorn_jsx", self, allocator_pool);
-        TypeScriptSuite::<EstreeTypescriptCase>::new().run("estree_typescript", self, allocator_pool);
+        TypeScriptSuite::<EstreeTypescriptCase>::new().run(
+            "estree_typescript",
+            self,
+            allocator_pool,
+        );
     }
 
     /// # Panics
@@ -138,7 +162,11 @@ impl AppArgs {
     pub fn run_minifier(&self, allocator_pool: &AllocatorPool) {
         Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self, allocator_pool);
         BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self, allocator_pool);
-        NodeCompatSuite::<MinifierNodeCompatCase>::new().run("minifier_node_compat", self, allocator_pool);
+        NodeCompatSuite::<MinifierNodeCompatCase>::new().run(
+            "minifier_node_compat",
+            self,
+            allocator_pool,
+        );
     }
 }
 
