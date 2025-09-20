@@ -152,6 +152,12 @@
           "scope": "resource",
           "default": {},
           "description": "Specific Oxlint flags to pass to the language server."
+        },
+        "oxc.fmt.experimental": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "Enable experimental formatting support. This feature is experimental and might not work as expected."
         }
       }
     },
