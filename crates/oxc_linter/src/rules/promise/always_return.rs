@@ -209,7 +209,7 @@ impl Rule for AlwaysReturn {
         if !is_inline_then_function_expression(node, ctx) {
             return;
         }
-        // want CallExpression (direct parent after AST changes)
+
         let parent = ctx.nodes().parent_node(node.id());
         if self.ignore_last_callback && is_last_callback(parent, ctx) {
             return;
@@ -248,7 +248,7 @@ fn is_first_argument(node: &AstNode, call_node: &AstNode) -> bool {
 }
 
 fn is_inline_then_function_expression(node: &AstNode, ctx: &LintContext) -> bool {
-    // After AST changes, the parent is directly the CallExpression
+    // in order to be a thenable, the parent must be a CallExpression
     let parent = ctx.nodes().parent_node(node.id());
 
     is_function_with_block_statement(node)
