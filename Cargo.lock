@@ -2115,6 +2115,7 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_codegen",
+ "oxc_compat",
  "oxc_ecmascript",
  "oxc_mangler",
  "oxc_parser",
@@ -2138,13 +2139,13 @@ dependencies = [
  "napi-derive",
  "oxc_allocator",
  "oxc_codegen",
+ "oxc_compat",
  "oxc_diagnostics",
  "oxc_minifier",
  "oxc_napi",
  "oxc_parser",
  "oxc_sourcemap",
  "oxc_span",
- "oxc_syntax",
 ]
 
 [[package]]

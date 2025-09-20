@@ -1,8 +1,8 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_compat::ESFeature;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan};
-use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
@@ -209,7 +209,7 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        if ctx.options().target < ESTarget::ES2020 {
+        if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators) {
             return;
         }
         let Expression::LogicalExpression(e) = expr else { return };

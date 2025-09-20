@@ -1,10 +1,8 @@
-use std::str::FromStr;
-
 use napi::Either;
 use napi_derive::napi;
 
+use oxc_compat::EngineTargets;
 use oxc_minifier::TreeShakeOptions;
-use oxc_syntax::es_target::ESTarget;
 
 #[napi(object)]
 pub struct CompressOptions {
@@ -12,16 +10,15 @@ pub struct CompressOptions {
     ///
     /// Set `esnext` to enable all target highering.
     ///
-    /// e.g.
+    /// Example:
     ///
-    /// * catch optional binding when >= es2019
-    /// * `??` operator >= es2020
+    /// * `'es2015'`
+    /// * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
     ///
     /// @default 'esnext'
-    #[napi(
-        ts_type = "'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'"
-    )]
-    pub target: Option<String>,
+    ///
+    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    pub target: Option<Either<String, Vec<String>>>,
 
     /// Pass true to discard calls to `console.*`.
     ///
@@ -48,12 +45,11 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
     fn try_from(o: &CompressOptions) -> Result<Self, Self::Error> {
         let default = oxc_minifier::CompressOptions::default();
         Ok(oxc_minifier::CompressOptions {
-            target: o
-                .target
-                .as_ref()
-                .map(|s| ESTarget::from_str(s))
-                .transpose()?
-                .unwrap_or(default.target),
+            target: match &o.target {
+                Some(Either::A(s)) => EngineTargets::from_target(s)?,
+                Some(Either::B(list)) => EngineTargets::from_target_list(list)?,
+                _ => default.target,
+            },
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
             // TODO

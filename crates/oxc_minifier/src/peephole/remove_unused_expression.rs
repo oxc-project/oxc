@@ -2,12 +2,12 @@ use std::iter;
 
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
+use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     ToPrimitive,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
-use oxc_syntax::es_target::ESTarget;
 
 use crate::{CompressOptionsUnused, ctx::Ctx};
 
@@ -80,7 +80,9 @@ impl<'a> PeepholeOptimizations {
         }
 
         // try optional chaining and nullish coalescing
-        if ctx.options().target >= ESTarget::ES2020 {
+        if ctx.supports_feature(ESFeature::ES2020OptionalChaining)
+            || ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator)
+        {
             let LogicalExpression {
                 span: logical_span,
                 left: logical_left,
@@ -93,22 +95,25 @@ impl<'a> PeepholeOptimizations {
                     // "a == null || a.b()" => "a?.b()"
                     (LogicalOperator::And, BinaryOperator::Inequality)
                     | (LogicalOperator::Or, BinaryOperator::Equality) => {
-                        let name_and_id = if let Expression::Identifier(id) = &binary_expr.left {
-                            (!ctx.is_global_reference(id) && binary_expr.right.is_null())
-                                .then_some((id.name, &mut binary_expr.left))
-                        } else if let Expression::Identifier(id) = &binary_expr.right {
-                            (!ctx.is_global_reference(id) && binary_expr.left.is_null())
-                                .then_some((id.name, &mut binary_expr.right))
-                        } else {
-                            None
-                        };
-                        if let Some((name, id)) = name_and_id {
-                            if Self::inject_optional_chaining_if_matched(
-                                &name,
-                                id,
-                                logical_right,
-                                ctx,
-                            ) {
+                        if ctx.supports_feature(ESFeature::ES2020OptionalChaining) {
+                            let name_and_id = if let Expression::Identifier(id) = &binary_expr.left
+                            {
+                                (!ctx.is_global_reference(id) && binary_expr.right.is_null())
+                                    .then_some((id.name, &mut binary_expr.left))
+                            } else if let Expression::Identifier(id) = &binary_expr.right {
+                                (!ctx.is_global_reference(id) && binary_expr.left.is_null())
+                                    .then_some((id.name, &mut binary_expr.right))
+                            } else {
+                                None
+                            };
+                            if let Some((name, id)) = name_and_id
+                                && Self::inject_optional_chaining_if_matched(
+                                    &name,
+                                    id,
+                                    logical_right,
+                                    ctx,
+                                )
+                            {
                                 *e = logical_right.take_in(ctx.ast);
                                 ctx.state.changed = true;
                                 return false;
@@ -121,17 +126,19 @@ impl<'a> PeepholeOptimizations {
                     // "a != null || (a = b)" => "a ??= b"
                     (LogicalOperator::And, BinaryOperator::Equality)
                     | (LogicalOperator::Or, BinaryOperator::Inequality) => {
-                        let new_left_hand_expr = if binary_expr.right.is_null() {
-                            Some(&mut binary_expr.left)
-                        } else if binary_expr.left.is_null() {
-                            Some(&mut binary_expr.right)
-                        } else {
-                            None
-                        };
-                        if let Some(new_left_hand_expr) = new_left_hand_expr {
-                            if let Expression::AssignmentExpression(assignment_expr) = logical_right
-                            {
-                                if assignment_expr.operator == AssignmentOperator::Assign
+                        if ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator) {
+                            let new_left_hand_expr = if binary_expr.right.is_null() {
+                                Some(&mut binary_expr.left)
+                            } else if binary_expr.left.is_null() {
+                                Some(&mut binary_expr.right)
+                            } else {
+                                None
+                            };
+                            if let Some(new_left_hand_expr) = new_left_hand_expr {
+                                if ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
+                                    && let Expression::AssignmentExpression(assignment_expr) =
+                                        logical_right
+                                    && assignment_expr.operator == AssignmentOperator::Assign
                                     && Self::has_no_side_effect_for_evaluation_same_target(
                                         &assignment_expr.left,
                                         new_left_hand_expr,
@@ -144,16 +151,16 @@ impl<'a> PeepholeOptimizations {
                                     ctx.state.changed = true;
                                     return false;
                                 }
-                            }
 
-                            *e = ctx.ast.expression_logical(
-                                *logical_span,
-                                new_left_hand_expr.take_in(ctx.ast),
-                                LogicalOperator::Coalesce,
-                                logical_right.take_in(ctx.ast),
-                            );
-                            ctx.state.changed = true;
-                            return false;
+                                *e = ctx.ast.expression_logical(
+                                    *logical_span,
+                                    new_left_hand_expr.take_in(ctx.ast),
+                                    LogicalOperator::Coalesce,
+                                    logical_right.take_in(ctx.ast),
+                                );
+                                ctx.state.changed = true;
+                                return false;
+                            }
                         }
                     }
                     _ => {}

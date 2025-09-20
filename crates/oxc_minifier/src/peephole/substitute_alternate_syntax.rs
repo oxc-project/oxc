@@ -2,13 +2,13 @@ use std::iter::repeat_with;
 
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
+use oxc_compat::ESFeature;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
 use oxc_syntax::{
-    es_target::ESTarget,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
@@ -1426,7 +1426,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &Ctx<'a, '_>) {
-        if ctx.options().target >= ESTarget::ES2019 {
+        if ctx.supports_feature(ESFeature::ES2019OptionalCatchBinding) {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
@@ -1526,14 +1526,13 @@ where
 #[cfg(test)]
 mod test {
     use oxc_span::SourceType;
-    use oxc_syntax::es_target::ESTarget;
 
     use crate::{
         CompressOptions, CompressOptionsUnused,
         options::CompressOptionsKeepNames,
         tester::{
             default_options, test, test_options, test_same, test_same_options,
-            test_same_options_source_type,
+            test_same_options_source_type, test_target_same,
         },
     };
 
@@ -2225,9 +2224,7 @@ mod test {
         // console.log(a);"#,
         // );
 
-        let target = ESTarget::ES2018;
-        let options = CompressOptions { target, ..CompressOptions::default() };
-        test_same_options("try { foo } catch(e) {}", &options);
+        test_target_same("try { foo } catch(e) {}", "chrome65");
     }
 
     #[test]

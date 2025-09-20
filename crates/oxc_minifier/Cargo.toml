@@ -25,6 +25,7 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_codegen = { workspace = true }
+oxc_compat = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }

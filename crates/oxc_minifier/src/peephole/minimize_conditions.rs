@@ -1,12 +1,12 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
-use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
@@ -175,10 +175,9 @@ impl<'a> PeepholeOptimizations {
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) {
-        if ctx.options().target < ESTarget::ES2020 {
-            return;
-        }
-        if !matches!(expr.operator, AssignmentOperator::Assign) {
+        if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
+            || !matches!(expr.operator, AssignmentOperator::Assign)
+        {
             return;
         }
 
@@ -263,11 +262,7 @@ impl<'a> PeepholeOptimizations {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
 #[cfg(test)]
 mod test {
-    use crate::{
-        CompressOptions,
-        tester::{test, test_options, test_same, test_same_options},
-    };
-    use oxc_syntax::es_target::ESTarget;
+    use crate::tester::{test, test_same, test_target, test_target_same};
 
     /** Check that removing blocks with 1 child works */
     #[test]
@@ -1406,9 +1401,7 @@ mod test {
         // foo() might have a side effect
         test_same("foo().a || (foo().a = 3)");
 
-        let target = ESTarget::ES2019;
-        let options = CompressOptions { target, ..CompressOptions::default() };
-        test_same_options("x || (x = 3)", &options);
+        test_target_same("x || (x = 3)", "chrome84");
 
         test("x || (a, x = 3)", "x ||= (a, 3)");
         test("x && (a, x = 3)", "x &&= (a, 3)");
@@ -1445,9 +1438,7 @@ mod test {
         // Example case: `let f = false; f = f || (() => {}); console.log(f.name)`
         test("var x; x = x || (() => 'a')", "var x; x ||= (() => 'a')");
 
-        let target = ESTarget::ES2019;
-        let options = CompressOptions { target, ..CompressOptions::default() };
-        test_options("var x; x = x || 1", "var x = x || 1", &options);
+        test_target("var x; x = x || 1", "var x = x || 1", "chrome84");
     }
 
     #[test]
