@@ -1,6 +1,7 @@
 {
   "name": "oxlint",
   "version": "1.16.0",
+  "main": "dist/index.js",
   "bin": "dist/cli.js",
   "type": "module",
   "scripts": {

@@ -16,13 +16,13 @@ interface Plugin {
 // Linter rule.
 // `Rule` can have either `create` method, or `createOnce` method.
 // If `createOnce` method is present, `create` is ignored.
-type Rule = CreateRule | CreateOnceRule;
+export type Rule = CreateRule | CreateOnceRule;
 
 interface CreateRule {
   create: (context: Context) => Visitor;
 }
 
-interface CreateOnceRule {
+export interface CreateOnceRule {
   create?: (context: Context) => Visitor;
   createOnce: (context: Context) => VisitorWithHooks;
 }
