@@ -41,6 +41,12 @@ import { Statement } from '@oxc-project/types';
 
 [oxc-walker](https://www.npmjs.com/package/oxc-walker) or [estree-walker](https://www.npmjs.com/package/estree-walker) can be used.
 
+This package exports visitor keys which can be used with any ESTree walker.
+
+```js
+import { visitorKeys } from 'oxc-parser';
+```
+
 ### Fast Mode
 
 By default, Oxc parser does not produce semantic errors where symbols and scopes are needed.
