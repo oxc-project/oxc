@@ -98,13 +98,13 @@ eval('var x = 1');
 new Function('return x');
 ```
 
-### No access to a variable named `arguments` outside functions
+### No side effects from accessing to a global variable named `arguments`
 
-`arguments` variables are only accessed inside functions. We intend to change this assumption to optional in the future.
+Accessing a global variable named `arguments` does not have a side effect. We intend to change this assumption to optional in the future.
 
 ```javascript
 // The minifier assumes this never happens:
-console.log(arguments);
+console.log(arguments); // ReferenceError: arguments is not defined
 ```
 
 ## Optional Assumptions
