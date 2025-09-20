@@ -6,9 +6,11 @@ These assumptions are validated using ECMAScript operations from [`oxc_ecmascrip
 
 ## Core Assumptions
 
-### 1. No Monkey-Patching Built-ins
+These assumptions are held regardless of the options.
 
-Built-in objects and their methods behave as specified in ECMAScript.
+### No Monkey-Patching Built-ins
+
+[Built-in objects and their methods and properties](https://tc39.es/ecma262/multipage/global-object.html#sec-global-object) behave as specified in ECMAScript.
 
 ```javascript
 // The minifier assumes this never happens:
@@ -18,9 +20,9 @@ Array.prototype.push = function() {
 Object.defineProperty(Number.prototype, 'toString', { value: () => 'hijacked!' });
 ```
 
-### 2. No `document.all` Usage
+### No `document.all` Usage
 
-The deprecated `document.all` with its special typeof behavior is not used.
+The deprecated [`document.all`](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-IsHTMLDDA-internal-slot) with its special typeof behavior is not used.
 
 ```javascript
 // The minifier assumes this never happens:
@@ -28,7 +30,7 @@ typeof document.all === 'undefined'; // true in browsers
 document.all && console.log('exists but falsy');
 ```
 
-### 3. No `with` Statement
+### No `with` Statement
 
 Code does not use `with` statements which create ambiguous scope.
 
@@ -39,43 +41,7 @@ with (obj) {
 }
 ```
 
-### 4. No Direct `eval` or `Function` Constructor
-
-Code doesn't dynamically evaluate strings as code.
-
-```javascript
-// The minifier assumes this never happens:
-eval('var x = 1');
-new Function('return x');
-```
-
-### 5. No Arguments Aliasing
-
-The `arguments` object is not aliased or modified in ways that affect parameters.
-
-```javascript
-// The minifier assumes this never happens:
-function f(a) {
-  arguments[0] = 2;
-  return a; // Would be affected by arguments modification
-}
-```
-
-### 6. Getters/Setters Are Pure
-
-Property getters and setters have no side effects.
-
-```javascript
-// The minifier assumes this never happens:
-const obj = {
-  get prop() {
-    console.log('side effect!');
-    return 1;
-  },
-};
-```
-
-### 7. Coercion Methods Are Pure
+### Coercion Methods Are Pure
 
 `.toString()`, `.valueOf()`, and `[Symbol.toPrimitive]()` have no side effects. The minifier uses `oxc_ecmascript` type conversion utilities that assume standard coercion behavior.
 
@@ -90,56 +56,7 @@ const obj = {
 String(obj); // Would trigger side effect
 ```
 
-### 8. No Reliance on Function.prototype.name
-
-Code doesn't depend on function names being preserved.
-
-```javascript
-// The minifier assumes this never happens:
-function myFunc() {}
-if (myFunc.name !== 'myFunc') throw Error();
-```
-
-### 9. No Reliance on Function.length
-
-Code doesn't depend on function arity.
-
-```javascript
-// The minifier assumes this never happens:
-function f(a, b, c) {}
-if (f.length !== 3) throw Error();
-```
-
-### 10. Regular Prototype Chains
-
-Objects have standard prototype chains without modifications.
-
-```javascript
-// The minifier assumes this never happens:
-Object.setPrototypeOf(obj, null);
-obj.__proto__ = weird_proto;
-```
-
-### 11. Special Handling of `__proto__` Property
-
-The minifier correctly handles `__proto__` as a special property name when inlining variables.
-
-```javascript
-// Before optimization:
-function wrapper() {
-  var __proto__ = [];
-  return { __proto__ };
-}
-
-// After optimization:
-function wrapper() {
-  return { ['__proto__']: [] };
-}
-```
-
-The minifier converts shorthand `__proto__` properties to computed form to preserve semantics.
-
-### 12. No TDZ Violation
+### No TDZ Violation
 
 Code doesn't violate Temporal Dead Zones.
 
@@ -149,21 +66,7 @@ console.log(x); // TDZ violation
 let x = 1;
 ```
 
-### 13. typeof-Guarded Global Access
-
-The minifier optimizes `typeof`-guarded global variable access by removing unnecessary checks.
-
-```javascript
-// Before optimization:
-typeof x !== 'undefined' && x;
-
-// After optimization:
-// (removed entirely if x is known to be undefined)
-```
-
-This assumes that `typeof`-guarded expressions are used defensively and can be safely removed when the variable is provably undefined.
-
-### 14. Errors from Array/String Maximum Length
+### No errors from Array/String Maximum Length
 
 Creating strings or arrays that exceed maximum length can be moved or removed.
 
@@ -176,9 +79,53 @@ try {
 }
 ```
 
+### No side effects from extending a class
+
+Extending a class does not have a side effect.
+
+```javascript
+const v = [];
+class A extends v {} // TypeError
+```
+
+### No Direct `eval` or `Function` Constructor
+
+Code doesn't dynamically evaluate strings as code. We intend to change this assumption to optional in the future.
+
+```javascript
+// The minifier assumes this never happens:
+eval('var x = 1');
+new Function('return x');
+```
+
+### `arguments` is always [the arguments object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/arguments)
+
+`arguments` variables are only accessed inside functions and not assigned with a different value. We intend to change this assumption to optional in the future.
+
+```javascript
+// The minifier assumes this never happens:
+console.log(arguments); // This is not the arguments object
+function f(a) {
+  arguments = 2; // This makes the arguments variable point not to point to the arguments object
+  return a;
+}
+```
+
+## Optional Assumptions
+
+### No Reliance on Function.prototype.name
+
+Code doesn't depend on function names being preserved. This assumption is held by default. This can be changed by settings `keepNames` option.
+
+```javascript
+// The minifier assumes this never happens:
+function myFunc() {}
+if (myFunc.name !== 'myFunc') throw Error();
+```
+
 ## Configuration
 
-These assumptions can be configured in the minifier options if your code requires different behavior.
+Optional assumptions can be configured in the minifier options if your code requires different behavior.
 
 ```rust
 pub struct CompressOptions {
