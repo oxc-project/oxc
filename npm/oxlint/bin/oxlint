@@ -1,19 +1,3 @@
 #!/usr/bin/env node
 
-// This script is run as CommonJS, so use dynamic import to load ESM module `dist/cli.js`.
-// Even if runtime supports require(ESM), can't use `require` here, because `dist/cli.js`
-// uses top-level `await`.
-//
-// `dist/cli.js` uses require(ESM) internally, but only on path where `--js-plugins`
-// CLI option is used. So we still support runtimes without require(ESM) for users who aren't
-// using experimental options.
-import("../dist/cli.js").catch(onError);
-
-function onError(err) {
-  console.error(err);
-  // Note: NodeJS recommends setting `process.exitCode` instead of calling `process.exit()`.
-  // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
-  // https://nodejs.org/api/process.html#processexitcode
-  // Process should exit immediately after this anyway, because event loop is empty.
-  process.exitCode = 1;
-}
+import "../dist/cli.js";

@@ -8,10 +8,10 @@ homepage.workspace = true
 include = ["/examples", "/src"]
 keywords.workspace = true
 license.workspace = true
+publish = true
 repository.workspace = true
 rust-version.workspace = true
 description.workspace = true
-publish = true
 
 [lints]
 workspace = true

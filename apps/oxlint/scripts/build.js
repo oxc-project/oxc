@@ -20,15 +20,6 @@ writeFileSync(bindingsPath, bindingsJs);
 console.log('Building with tsdown...');
 execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 
-// Add `package.json` to `dist` dir.
-// `npm/oxlint` package is CommonJS, so we need this file to tell Node.js that `dist` is ESM.
-console.log('Adding package.json to dist...');
-writeFileSync(
-  join(distDirPath, 'package.json'),
-  JSON.stringify({ type: 'module' }, null, 2) + '\n',
-);
-console.log('- Created package.json');
-
 // Copy files from `napi/parser` to `apps/oxlint/dist`
 console.log('Copying files from parser...');
 
