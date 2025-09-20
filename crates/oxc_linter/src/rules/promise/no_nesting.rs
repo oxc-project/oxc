@@ -70,17 +70,25 @@ declare_oxc_lint!(
 );
 
 fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
-    if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
-        || !matches!(ctx.nodes().parent_kind(node.id()), AstKind::Argument(_))
-    {
+    if !matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
         return false;
     }
 
-    ctx.nodes().ancestors(node.id()).nth(1).is_some_and(|node| {
-        node.kind().as_call_expression().is_some_and(|a| {
-            is_promise(a).is_some_and(|prop_name| prop_name == "then" || prop_name == "catch")
-        })
-    })
+    // Check if the parent is a CallExpression with then/catch
+    let parent = ctx.nodes().parent_node(node.id());
+    if let Some(call_expr) = parent.kind().as_call_expression() {
+        // Check if this function is one of the arguments
+        let is_argument = call_expr
+            .arguments
+            .iter()
+            .any(|arg| matches!(arg.as_expression(), Some(expr) if expr.span() == node.span()));
+
+        return is_argument
+            && is_promise(call_expr)
+                .is_some_and(|prop_name| prop_name == "then" || prop_name == "catch");
+    }
+
+    false
 }
 
 /// Gets the closest promise callback function of the nested promise.

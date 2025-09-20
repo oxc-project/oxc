@@ -82,11 +82,7 @@ impl Rule for PreferTopLevelAwait {
         }
 
         let parent = ctx.nodes().parent_node(node.id());
-        // TODO: remove this block once removing `AstKind::Argument` is complete
-        let grand_parent = {
-            let p = ctx.nodes().parent_node(parent.id());
-            if let AstKind::Argument(_) = p.kind() { ctx.nodes().parent_node(p.id()) } else { p }
-        };
+        let grand_parent = ctx.nodes().parent_node(parent.id());
 
         if let AstKind::StaticMemberExpression(member_expr) = parent.kind()
             && member_expr.object.span() == call_expr.span

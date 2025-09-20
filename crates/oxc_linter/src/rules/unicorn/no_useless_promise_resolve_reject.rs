@@ -208,9 +208,6 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
     let Some(parent) = outermost_paren_parent(function_node, ctx) else {
         return false;
     };
-    let Some(parent) = outermost_paren_parent(parent, ctx) else {
-        return false;
-    };
 
     let AstKind::CallExpression(call_expr) = parent.kind() else {
         return false;

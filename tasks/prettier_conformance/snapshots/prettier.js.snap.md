@@ -1,4 +1,4 @@
-js compatibility: 704/754 (93.37%)
+js compatibility: 700/749 (93.46%)
 
 # Failed
 
@@ -6,7 +6,8 @@ js compatibility: 704/754 (93.37%)
 | :-------- | :--------------: | :---------: |
 | js/arrows/comment.js | 💥💥 | 88.89% |
 | js/call/boolean/boolean.js | 💥 | 97.12% |
-| js/class-comment/superclass.js | 💥 | 95.65% |
+| js/class-comment/misc.js | 💥 | 72.73% |
+| js/class-comment/superclass.js | 💥 | 95.35% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
@@ -24,13 +25,12 @@ js compatibility: 704/754 (93.37%)
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
-| js/identifier/parentheses/let.js | 💥💥 | 82.27% |
+| js/identifier/parentheses/let.js | 💥💥 | 84.09% |
 | js/if/comment-between-condition-and-body.js | 💥 | 65.79% |
 | js/if/expr_and_same_line_comments.js | 💥 | 97.73% |
 | js/if/if_comments.js | 💥 | 76.00% |
 | js/if/trailing_comment.js | 💥 | 91.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/logical-assignment/inside-call/18171.js | 💥 | 90.20% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
@@ -50,7 +50,6 @@ js compatibility: 704/754 (93.37%)
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | js/test-declarations/test_declarations.js | 💥💥 | 95.88% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/ignore/spread.js | 💥 | 83.33% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

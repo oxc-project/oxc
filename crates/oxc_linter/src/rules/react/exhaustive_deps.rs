@@ -1188,6 +1188,7 @@ struct ExhaustiveDepsVisitor<'a, 'b> {
     decl_stack: Vec<&'a VariableDeclarator<'a>>,
     skip_reporting_dependency: bool,
     set_state_call: bool,
+    is_callee_of_call_expr: bool,
     found_dependencies: FxHashSet<Dependency<'a>>,
     refs_inside_cleanups: Vec<&'a StaticMemberExpression<'a>>,
 }
@@ -1200,6 +1201,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
             decl_stack: vec![],
             skip_reporting_dependency: false,
             set_state_call: false,
+            is_callee_of_call_expr: false,
             found_dependencies: FxHashSet::default(),
             refs_inside_cleanups: vec![],
         }
@@ -1308,6 +1310,22 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         self.stack.pop();
     }
 
+    fn visit_call_expression(&mut self, it: &CallExpression<'a>) {
+        self.stack.push(AstType::CallExpression);
+
+        // Mark that we're visiting a callee
+        self.is_callee_of_call_expr = true;
+        self.visit_expression(&it.callee);
+        self.is_callee_of_call_expr = false;
+
+        // Visit arguments normally
+        for arg in &it.arguments {
+            self.visit_argument(arg);
+        }
+
+        self.stack.pop();
+    }
+
     fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
         if it.property.name == "current" && is_inside_effect_cleanup(&self.stack) {
             // Safety: this is safe
@@ -1328,8 +1346,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             return;
         }
 
-        let is_parent_call_expr =
-            self.stack.last().is_some_and(|&ty| ty == AstType::CallExpression);
+        let is_parent_call_expr = self.is_callee_of_call_expr;
 
         match analyze_property_chain(&it.object, self.semantic) {
             Ok(source) => {
