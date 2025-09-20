@@ -84,6 +84,6 @@
         "fs": false
       }
     },
-    "dtsHeaderFile": "src-js/header.js"
+    "dtsHeaderFile": "src-js/header.d.ts"
   }
 }
