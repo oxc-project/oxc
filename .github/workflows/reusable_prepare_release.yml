@@ -50,6 +50,23 @@ jobs:
             echo EOF
           } >> $GITHUB_OUTPUT
 
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+        if: ${{ inputs.name == 'crates' || inputs.name == 'oxlint' }}
+
+      # Run NAPI-RS build, because NAPI-RS uses version from `package.json` in the bindings file,
+      # which is committed to the repo. The version has just been bumped in previous step.
+      # We don't use the compiled `.node` binary, so only do a development build, as it's faster.
+      - name: Rebuild NAPI packages bindings
+        if: ${{ inputs.name == 'crates' }}
+        run: |
+          pnpm --filter oxc-minify run build-dev
+          pnpm --filter oxc-parser run build-dev
+          pnpm --filter oxc-transform run build-dev
+
+      - name: Rebuild Oxlint NAPI bindings
+        if: ${{ inputs.name == 'oxlint' }}
+        run: pnpm --filter oxlint run build-dev
+
       # update `Cargo.lock`
       - run: cargo check
 
