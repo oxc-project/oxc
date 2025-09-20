@@ -41,7 +41,6 @@ fn expression_is_or_contains_call(expr: &Expression) -> bool {
         Expression::ComputedMemberExpression(m) => expression_is_or_contains_call(&m.object),
         Expression::StaticMemberExpression(m) => expression_is_or_contains_call(&m.object),
         Expression::PrivateFieldExpression(m) => expression_is_or_contains_call(&m.object),
-        // Fast path: all other expressions (identifiers, literals, etc.) never contain calls
         _ => false,
     }
 }
@@ -914,7 +913,6 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInstantiationExpression<'_>> {
 
 fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
     let parent = match binary_like.parent() {
-        // Fast path: these parent types always require parentheses
         AstNodes::TSAsExpression(_)
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::TSTypeAssertion(_)
