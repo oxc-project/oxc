@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::{
     fs,
     io::Write,
@@ -88,7 +89,7 @@ impl Case for EstreeTest262Case {
         matches!(fs::exists(&self.acorn_json_path), Ok(false))
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         // Parse
         let source_text = self.base.code();
         let is_module = self.base.is_module();
@@ -196,7 +197,7 @@ impl Case for EstreeJsxCase {
         self.path.parent().unwrap().file_name().unwrap() == "fail"
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         let source_text = &self.code;
         let source_type = SourceType::default().with_module(true).with_jsx(true);
         let allocator = Allocator::new();
@@ -334,7 +335,7 @@ impl Case for EstreeTypescriptCase {
         matches!(fs::exists(&self.estree_file_path), Ok(false))
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         let estree_file_content = fs::read_to_string(&self.estree_file_path).unwrap();
 
         let estree_units = estree_file_content

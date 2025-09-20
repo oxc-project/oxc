@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use cow_utils::CowUtils;
 use oxc::span::SourceType;
+use oxc_allocator::AllocatorPool;
 
 pub use self::meta::{MetaData, Phase, TestFlag};
 use crate::suite::{Case, Suite, TestResult};
@@ -138,23 +139,23 @@ impl Case for Test262Case {
     // To run in strict mode, the test contents must be modified prior to execution--
     // a "use strict" directive must be inserted as the initial character sequence of the file
     // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let flags = &self.meta.flags;
         let source_type = SourceType::cjs();
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
             self.always_strict = true;
-            self.execute(source_type)
+            self.execute(source_type, allocator_pool)
         } else if flags.contains(&TestFlag::Module) {
-            self.execute(source_type.with_module(true))
+            self.execute(source_type.with_module(true), allocator_pool)
         } else if flags.contains(&TestFlag::NoStrict) || flags.contains(&TestFlag::Raw) {
-            self.execute(source_type)
+            self.execute(source_type, allocator_pool)
         } else {
             self.always_strict = false;
-            let res = self.execute(source_type);
+            let res = self.execute(source_type, allocator_pool);
             if matches!(res, TestResult::Passed | TestResult::CorrectError(..)) {
                 self.always_strict = true;
-                self.execute(source_type)
+                self.execute(source_type, allocator_pool)
             } else {
                 res
             }

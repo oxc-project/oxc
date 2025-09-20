@@ -3,6 +3,7 @@ use crate::{
     workspace_root,
 };
 use oxc::span::SourceType;
+use oxc_allocator::AllocatorPool;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::{
@@ -147,8 +148,8 @@ try {{
         self.path.starts_with("ESNEXT/")
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_type = Self::source_type();
-        self.result = self.execute(source_type);
+        self.result = self.execute(source_type, allocator_pool);
     }
 }

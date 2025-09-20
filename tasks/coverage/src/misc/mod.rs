@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::path::{Path, PathBuf};
 
 use oxc::span::SourceType;
@@ -95,8 +96,8 @@ impl Case for MiscCase {
         self.should_fail
     }
 
-    fn run(&mut self) {
-        let result = self.execute(self.source_type);
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
+        let result = self.execute(self.source_type, allocator_pool);
         self.set_result(result);
     }
 }

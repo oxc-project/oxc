@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::path::{Path, PathBuf};
 
 use oxc::{span::SourceType, transformer::BabelOptions};
@@ -176,8 +177,8 @@ impl Case for BabelCase {
             || self.options.allow_undeclared_exports
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, allocator_pool: &AllocatorPool) {
         let source_type = self.source_type();
-        self.result = self.execute(source_type);
+        self.result = self.execute(source_type, allocator_pool);
     }
 }

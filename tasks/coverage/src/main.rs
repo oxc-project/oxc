@@ -1,5 +1,6 @@
 use std::num::NonZeroUsize;
 
+use oxc_allocator::AllocatorPool;
 use pico_args::Arguments;
 use rayon::ThreadPoolBuilder;
 
@@ -24,21 +25,24 @@ fn main() {
     };
     ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
 
+    // Initialize allocator pool with the same thread count
+    let allocator_pool = AllocatorPool::new(thread_count);
+
     let task = command.as_deref().unwrap_or("default");
     match task {
-        "parser" => args.run_parser(),
-        "semantic" => args.run_semantic(),
-        "codegen" => args.run_codegen(),
-        "formatter" => args.run_formatter(),
-        "transformer" => args.run_transformer(),
-        "transpiler" => args.run_transpiler(),
-        "minifier" => args.run_minifier(),
-        "runtime" => args.run_runtime(),
-        "estree" => args.run_estree(),
+        "parser" => args.run_parser(&allocator_pool),
+        "semantic" => args.run_semantic(&allocator_pool),
+        "codegen" => args.run_codegen(&allocator_pool),
+        "formatter" => args.run_formatter(&allocator_pool),
+        "transformer" => args.run_transformer(&allocator_pool),
+        "transpiler" => args.run_transpiler(&allocator_pool),
+        "minifier" => args.run_minifier(&allocator_pool),
+        "runtime" => args.run_runtime(&allocator_pool),
+        "estree" => args.run_estree(&allocator_pool),
         "all" => {
-            args.run_default();
-            args.run_runtime();
+            args.run_default(&allocator_pool);
+            args.run_runtime(&allocator_pool);
         }
-        _ => args.run_default(),
+        _ => args.run_default(&allocator_pool),
     }
 }

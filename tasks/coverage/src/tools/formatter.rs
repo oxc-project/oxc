@@ -1,3 +1,4 @@
+use oxc_allocator::AllocatorPool;
 use std::path::{Path, PathBuf};
 
 use oxc::{
@@ -77,7 +78,7 @@ impl Case for FormatterTest262Case {
         self.base.should_fail() || self.base.skip_test_case()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let source_type = SourceType::default().with_module(is_module);
@@ -111,7 +112,7 @@ impl Case for FormatterBabelCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
         let result = get_result(source_text, source_type);
@@ -144,7 +145,7 @@ impl Case for FormatterTypeScriptCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         let units = self.base.units.clone();
         for unit in units {
             self.base.code = unit.content.to_string();
@@ -183,7 +184,7 @@ impl Case for FormatterMiscCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self, _allocator_pool: &AllocatorPool) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
         let result = get_result(source_text, source_type);
