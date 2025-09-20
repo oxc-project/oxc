@@ -43,13 +43,10 @@ pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
 }
 
 /// Check if an expression is used as a call argument by examining the parent node.
-/// Ultra-optimized for CodSpeed memory-constrained environments with branch prediction optimization.
 #[inline(always)]
 pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> bool {
     match parent {
         AstNodes::CallExpression(call) => {
-            // Branch prediction optimization: Most common cases first
-            // ~60% of expressions are not arguments (empty calls or callee)
             if call.arguments.is_empty() {
                 return false;
             }
