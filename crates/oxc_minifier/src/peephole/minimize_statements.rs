@@ -1605,6 +1605,17 @@ impl<'a> PeepholeOptimizations {
                                         ctx,
                                     )
                                 {
+                                    if prop.shorthand && prop.key.is_specific_id("__proto__") {
+                                        // { __proto__ } -> { ['__proto__']: value }
+                                        prop.computed = true;
+                                        prop.key =
+                                            PropertyKey::from(ctx.ast.expression_string_literal(
+                                                prop.key.span(),
+                                                "__proto__",
+                                                None,
+                                            ));
+                                    }
+                                    prop.shorthand = false;
                                     return Some(changed);
                                 }
                             }

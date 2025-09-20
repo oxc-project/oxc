@@ -212,6 +212,15 @@ fn test_inline_single_use_variable() {
         "function wrapper() { var x = a; for (let a of x) console.log(a) }",
         "function wrapper() { var x = a; for (let a of x) console.log(a) }",
     );
+
+    test(
+        "function wrapper() { var __proto__ = []; return { __proto__: __proto__ } }",
+        "function wrapper() { return { __proto__: [] } }",
+    );
+    test(
+        "function wrapper() { var __proto__ = []; return { __proto__ } }",
+        "function wrapper() { return { ['__proto__']: [] } }",
+    );
 }
 
 #[test]

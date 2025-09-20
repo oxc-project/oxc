@@ -2,10 +2,8 @@ commit: ed0d6ba5
 
 minifier_node_compat Summary:
 AST Parsed     : 938/938 (100.00%)
-Positive Passed: 928/938 (98.93%)
+Positive Passed: 929/938 (99.04%)
 execution_result: tasks/coverage/ES2015/annex b›__proto__ in object literals›basic support
-
-execution_result: tasks/coverage/ES2015/annex b›__proto__ in object literals›not a shorthand property
 
 execution_result: tasks/coverage/ES2015/built-ins›Proxy›"getOwnPropertyDescriptor" handler invariants
 
