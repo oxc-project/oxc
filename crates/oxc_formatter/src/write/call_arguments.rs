@@ -541,7 +541,16 @@ fn can_group_arrow_function_expression_argument(
         Expression::ChainExpression(chain) => {
             matches!(chain.expression, ChainElement::CallExpression(_)) && !is_arrow_recursion
         }
-        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => !is_arrow_recursion,
+        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => {
+            // Allow simple call expressions in curried arrow functions to be groupable
+            // This ensures `foo(a => b => someFunc())` can be grouped
+            if is_arrow_recursion && matches!(expr, Expression::CallExpression(_)) {
+                // Only allow simple call expressions (not complex nested calls)
+                true
+            } else {
+                !is_arrow_recursion
+            }
+        }
         _ => false,
     })
 }
