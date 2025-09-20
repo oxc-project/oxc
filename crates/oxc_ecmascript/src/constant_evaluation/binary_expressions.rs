@@ -2,15 +2,12 @@ use num_traits::Zero;
 use oxc_ast::ast::*;
 
 use crate::{
-    ToInt32, ToUint32,
-    is_less_than::is_less_than,
-    to_numeric::ToNumeric,
-    to_primitive::ToPrimitive,
+    ToInt32, ToUint32, is_less_than::is_less_than, to_numeric::ToNumeric, to_primitive::ToPrimitive,
 };
 
-use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType};
-use super::value_type::DetermineValueType;
 use super::equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
+use super::value_type::DetermineValueType;
+use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType};
 
 impl<'a> ConstantEvaluation<'a> for BinaryExpression<'a> {
     fn evaluate_value_to(

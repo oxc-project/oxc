@@ -7,7 +7,9 @@ use oxc_ast::ast::*;
 
 use crate::{
     StringToNumber, ToInt32, ToNumber,
-    constant_evaluation::url_encoding::{decode_uri_chars, encode_uri_chars, is_uri_always_unescaped},
+    constant_evaluation::url_encoding::{
+        decode_uri_chars, encode_uri_chars, is_uri_always_unescaped,
+    },
 };
 
 use crate::constant_evaluation::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};
@@ -103,14 +105,11 @@ fn try_fold_decode_uri<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
     let string_value = expr.get_side_free_string_value(ctx)?;
-    let decoded = decode_uri_chars(
-        string_value,
-        |c| match c {
-            c if is_uri_always_unescaped(c) => false,
-            b';' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b',' | b'#' => false,
-            _ => true,
-        },
-    )?;
+    let decoded = decode_uri_chars(string_value, |c| match c {
+        c if is_uri_always_unescaped(c) => false,
+        b';' | b'/' | b'?' | b':' | b'@' | b'&' | b'=' | b'+' | b'$' | b',' | b'#' => false,
+        _ => true,
+    })?;
     Some(ConstantValue::String(decoded))
 }
 
@@ -127,10 +126,7 @@ fn try_fold_decode_uri_component<'a>(
     let arg = args.first()?;
     let expr = arg.as_expression()?;
     let string_value = expr.get_side_free_string_value(ctx)?;
-    let decoded = decode_uri_chars(
-        string_value,
-        |c| !is_uri_always_unescaped(c),
-    )?;
+    let decoded = decode_uri_chars(string_value, |c| !is_uri_always_unescaped(c))?;
     Some(ConstantValue::String(decoded))
 }
 

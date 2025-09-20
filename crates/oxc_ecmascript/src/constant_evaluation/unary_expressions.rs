@@ -4,8 +4,8 @@ use oxc_ast::ast::*;
 
 use crate::ToInt32;
 
-use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType};
 use super::value_type::DetermineValueType;
+use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType};
 
 impl<'a> ConstantEvaluation<'a> for UnaryExpression<'a> {
     fn evaluate_value_to(

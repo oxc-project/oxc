@@ -7,8 +7,7 @@ use oxc_syntax::number::ToJsString;
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
-    StringSubstring, ToInt32, ToJsString as ToJsStringTrait,
-    side_effects::MayHaveSideEffects,
+    StringSubstring, ToInt32, ToJsString as ToJsStringTrait, side_effects::MayHaveSideEffects,
 };
 
 use crate::constant_evaluation::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue};

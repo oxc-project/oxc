@@ -1,8 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    constant_evaluation::DetermineValueType, to_numeric::ToNumeric,
-    to_primitive::ToPrimitive,
+    constant_evaluation::DetermineValueType, to_numeric::ToNumeric, to_primitive::ToPrimitive,
 };
 
 use super::super::{MayHaveSideEffects, MayHaveSideEffectsContext};
@@ -216,8 +215,10 @@ pub fn is_side_effect_free_unbound_identifier_ref<'a>(
                                 if str_lit.value == "undefined" {
                                     // Match the operator with expected pattern
                                     return match bin_expr.operator {
-                                        BinaryOperator::StrictInequality | BinaryOperator::Inequality => expect_undefined,
-                                        BinaryOperator::StrictEquality | BinaryOperator::Equality => !expect_undefined,
+                                        BinaryOperator::StrictInequality
+                                        | BinaryOperator::Inequality => expect_undefined,
+                                        BinaryOperator::StrictEquality
+                                        | BinaryOperator::Equality => !expect_undefined,
                                         _ => false,
                                     };
                                 }

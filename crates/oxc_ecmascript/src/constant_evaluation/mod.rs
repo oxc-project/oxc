@@ -23,9 +23,7 @@ use std::borrow::Cow;
 
 use oxc_ast::ast::*;
 
-use crate::{
-    ToBigInt, ToBoolean, ToJsString as ToJsStringTrait, ToNumber,
-};
+use crate::{ToBigInt, ToBoolean, ToJsString as ToJsStringTrait, ToNumber};
 
 impl<'a> ConstantEvaluation<'a> for Expression<'a> {
     fn evaluate_value_to(

@@ -12,7 +12,6 @@ use oxc_ast::ast::*;
 use super::{MayHaveSideEffects, context::MayHaveSideEffectsContext};
 use binary_expressions::is_side_effect_free_unbound_identifier_ref;
 
-
 impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         match self {
@@ -67,7 +66,6 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
         }
     }
 }
-
 
 impl<'a> MayHaveSideEffects<'a> for AssignmentTarget<'a> {
     /// This only checks the `Evaluation of <AssignmentTarget>`.

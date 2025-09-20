@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 
-use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType};
 use super::call_expr;
+use super::{ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType};
 
 impl<'a> ConstantEvaluation<'a> for CallExpression<'a> {
     fn evaluate_value_to(

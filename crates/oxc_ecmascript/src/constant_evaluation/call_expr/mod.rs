@@ -37,12 +37,18 @@ pub fn try_fold_known_global_methods<'a>(
         "toLowerCase" | "toUpperCase" | "trim" | "trimStart" | "trimEnd" => {
             string_methods::try_fold_string_casing(arguments, name, object, ctx)
         }
-        "substring" | "slice" => string_methods::try_fold_string_substring_or_slice(arguments, object, ctx),
-        "indexOf" | "lastIndexOf" => string_methods::try_fold_string_index_of(arguments, name, object, ctx),
+        "substring" | "slice" => {
+            string_methods::try_fold_string_substring_or_slice(arguments, object, ctx)
+        }
+        "indexOf" | "lastIndexOf" => {
+            string_methods::try_fold_string_index_of(arguments, name, object, ctx)
+        }
         "charAt" => string_methods::try_fold_string_char_at(arguments, object, ctx),
         "charCodeAt" => string_methods::try_fold_string_char_code_at(arguments, object, ctx),
         "startsWith" => string_methods::try_fold_starts_with(arguments, object, ctx),
-        "replace" | "replaceAll" => string_methods::try_fold_string_replace(arguments, name, object, ctx),
+        "replace" | "replaceAll" => {
+            string_methods::try_fold_string_replace(arguments, name, object, ctx)
+        }
         "fromCharCode" => string_methods::try_fold_string_from_char_code(arguments, object, ctx),
         "toString" => string_methods::try_fold_to_string(arguments, object, ctx),
         "isFinite" | "isNaN" | "isInteger" | "isSafeInteger" => {
@@ -52,7 +58,9 @@ pub fn try_fold_known_global_methods<'a>(
         "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" | "clz32" => {
             math_functions::try_fold_math_unary(arguments, name, object, ctx)
         }
-        "imul" | "min" | "max" => math_functions::try_fold_math_variadic(arguments, name, object, ctx),
+        "imul" | "min" | "max" => {
+            math_functions::try_fold_math_variadic(arguments, name, object, ctx)
+        }
         _ => None,
     }
 }

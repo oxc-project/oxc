@@ -3,10 +3,7 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use oxc_ast::AstBuilder;
 
-use crate::{
-    ToBoolean, ToJsString, ToNumber,
-    side_effects::MayHaveSideEffectsContext,
-};
+use crate::{ToBoolean, ToJsString, ToNumber, side_effects::MayHaveSideEffectsContext};
 
 use super::{ConstantValue, ValueType};
 
