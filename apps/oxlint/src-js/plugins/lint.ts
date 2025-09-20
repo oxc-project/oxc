@@ -22,6 +22,8 @@ import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.mjs'
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { walkProgram } from '../../dist/generated/visit/walk.mjs';
 
+import type { AfterHook } from './types.ts';
+
 // Buffer with typed array views of itself stored as properties
 interface BufferWithArrays extends Uint8Array {
   uint32: Uint32Array;
@@ -37,6 +39,9 @@ const buffers: (BufferWithArrays | null)[] = [];
 
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
+
+// Array of `after` hooks to run after traversal. This array reused for every file.
+const afterHooks: AfterHook[] = [];
 
 // Run rules on a file.
 export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
@@ -69,13 +74,32 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
+
   for (let i = 0; i < ruleIds.length; i++) {
-    const ruleId = ruleIds[i];
-    const { rule, context } = registeredRules[ruleId];
+    const ruleId = ruleIds[i],
+      ruleAndContext = registeredRules[ruleId];
+    const { rule, context } = ruleAndContext;
     setupContextForFile(context, i, filePath);
-    const visitor = rule.create(context);
+
+    let { visitor } = ruleAndContext;
+    if (visitor === null) {
+      // Rule defined with `create` method
+      visitor = rule.create(context);
+    } else {
+      // Rule defined with `createOnce` method
+      const { beforeHook, afterHook } = ruleAndContext;
+      if (beforeHook !== null) {
+        // If `before` hook returns `false`, skip this rule
+        const shouldRun = beforeHook();
+        if (shouldRun === false) continue;
+      }
+      // Note: If `before` hook returned `false`, `after` hook is not called
+      if (afterHook !== null) afterHooks.push(afterHook);
+    }
+
     addVisitorToCompiled(visitor);
   }
+
   const needsVisit = finalizeCompiledVisitor();
 
   // Visit AST.
@@ -108,6 +132,15 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
 
     walkProgram(programPos, ast, compiledVisitor);
     */
+  }
+
+  // Run `after` hooks
+  if (afterHooks.length !== 0) {
+    for (const afterHook of afterHooks) {
+      afterHook();
+    }
+    // Reset array, ready for next file
+    afterHooks.length = 0;
   }
 
   // Send diagnostics back to Rust
