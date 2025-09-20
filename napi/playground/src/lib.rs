@@ -320,17 +320,24 @@ impl Oxc {
         program: &mut Program<'a>,
         options: &OxcOptions,
     ) -> Option<Scoping> {
-        if options.run.compress || options.run.mangle {
-            let compress = options.compress.map(|_| CompressOptions::smallest());
-            let mangle = options.mangle.map(|o| MangleOptions {
+        if !options.run.compress && !options.run.mangle {
+            return None;
+        }
+        let compress = if options.run.compress {
+            options.compress.map(|_| CompressOptions::smallest())
+        } else {
+            None
+        };
+        let mangle = if options.run.mangle {
+            options.mangle.map(|o| MangleOptions {
                 top_level: o.top_level,
                 keep_names: MangleOptionsKeepNames { function: o.keep_names, class: o.keep_names },
                 debug: false,
-            });
-            Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program).scoping
+            })
         } else {
             None
-        }
+        };
+        Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program).scoping
     }
 
     fn finalize_output<'a>(
