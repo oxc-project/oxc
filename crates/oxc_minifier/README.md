@@ -1,47 +1,60 @@
-# Minifier
+# Oxc Minifier
 
-A JavaScript minifier has three components:
+Next-generation JavaScript/TypeScript minifier achieving best-in-class compression.
 
-1. compressor
-2. mangler
-3. printer
+## Inspiration
 
-## Compressor
+- **Closure Compiler**: Advanced size optimizations
+- **Terser/UglifyJS**: Comprehensive battle-tested transforms
+- **esbuild**: Efficient algorithms and architecture
+- **SWC**: Modern Rust performance
 
-The compressor is responsible for rewriting statements and expressions for minimal text output.
-[Terser](https://github.com/terser/terser) is a good place to start for learning the fundamentals.
+## Key Features
 
-## Mangler
+- Maximum compression through exhaustive optimizations
+- 100% correctness with comprehensive testing
+- Fixed-point iteration for optimal size
+- Arena allocation for performance
 
-The mangler implementation is part of the `SymbolTable` residing in `oxc_semantic`.
-It is responsible for shortening variables. Its algorithm should be gzip friendly.
+## Current Performance
 
-The printer is also responsible for printing out the shortened variable names.
+See [`tasks/minsize`](../../tasks/minsize) for compression benchmarks.
 
-## Printer
+- Matching/beating esbuild on many libraries
+- Full test262, Babel, TypeScript conformance
 
-The printer is responsible for removing whitespace from the source text.
+## Usage
 
-### Assumptions
+```rust
+use oxc_minifier::{Minifier, MinifierOptions};
 
-- [Properties of the global object defined in the ECMAScript spec](https://tc39.es/ecma262/multipage/global-object.html#sec-global-object) behaves the same as in the spec
-  - Examples of properties: `Infinity`, `parseInt`, `Object`, `Promise.resolve`
-  - Examples that breaks this assumption: `globalThis.Object = class MyObject {}`
-- The code does not rely on the `name` property of `Function` or `Class`
-  - Examples that breaks this assumption: `function fn() {}; console.log(f.name === 'fn')`
-- [`document.all`](https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-IsHTMLDDA-internal-slot) is not used or behaves as a normal object
-  - Examples that breaks this assumption: `console.log(typeof document.all === 'undefined')`
-- TDZ violation does not happen
-  - Examples that breaks this assumption: `(() => { console.log(v); let v; })()`
-- `with` statement is not used
-  - Examples that breaks this assumption: `with (Math) { console.log(PI); }`
-- `.toString()`, `.valueOf()`, `[Symbol.toPrimitive]()` are side-effect free
-  - Examples that breaks this assumption: `{ toString() { console.log('sideeffect') } }`
-- Errors thrown when creating a String or an Array that exceeds the maximum length can disappear or moved
-  - Examples that breaks this assumption: `try { new Array(Number(2n**53n)) } catch { console.log('log') }`
-- Extending a class does not have a side effect
-  - Examples that breaks this assumption: `const v = []; class A extends v {}`
+let options = MinifierOptions::default();
+let minifier = Minifier::new(options);
+let result = minifier.minify(&mut program);
+```
 
-## Terser Tests
+## Testing Infrastructure
 
-The fixtures are copied from https://github.com/terser/terser/tree/v5.9.0/test/compress
+- `just minsize` - Track compression benchmarks
+- `cargo coverage` - Conformance tests (test262, Babel, TypeScript)
+- `tasks/e2e` - Real-world E2E testing
+
+## Development
+
+- `just test` - Run all tests
+- `cargo run -p oxc_minifier --example minifier` - Try the minifier
+
+## Key Dependencies
+
+- [`oxc_ecmascript`](../oxc_ecmascript) - ECMAScript operations and constant evaluation
+- [`oxc_semantic`](../oxc_semantic) - Scope and symbol analysis
+- [`oxc_mangler`](../oxc_mangler) - Variable renaming
+
+## Documentation
+
+- [Architecture](./docs/ARCHITECTURE.md) - Design and components
+- [Optimizations](./docs/OPTIMIZATIONS.md) - Complete optimization catalog
+- [Assumptions](./docs/ASSUMPTIONS.md) - Code assumptions for optimization
+- [Correctness](./docs/CORRECTNESS.md) - Testing and validation
+- [Roadmap](./docs/ROADMAP.md) - Development plan
+- [Claude Guide](./docs/CLAUDE.md) - AI assistant reference
