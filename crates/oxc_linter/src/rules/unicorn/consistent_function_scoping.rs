@@ -364,20 +364,41 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 }
 
 fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    // Walk up ancestors looking for React hook calls, but stop at function boundaries
-    let mut function_count = 0;
-    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
-        match ancestor.kind() {
-            AstKind::CallExpression(call_expr) if is_react_hook(&call_expr.callee) => return true,
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                function_count += 1;
-                if function_count > 1 {
-                    break;
-                }
-            }
-            _ => {}
+    // Check immediate parent first, then use scope-based lookup
+    // First check if the function is directly inside a React hook call
+    let parent = ctx.nodes().parent_node(node.id());
+    if let AstKind::CallExpression(call_expr) = parent.kind() {
+        if is_react_hook(&call_expr.callee) {
+            return true;
         }
     }
+
+    // If not directly inside, check if we're inside a function that's inside a React hook
+    let current_scope_id = match node.kind() {
+        AstKind::Function(func) => func.scope_id(),
+        AstKind::ArrowFunctionExpression(arrow) => arrow.scope_id(),
+        _ => return false,
+    };
+
+    let scoping = ctx.scoping();
+
+    // Check the parent scope's node (the function that contains us)
+    if let Some(parent_scope_id) = scoping.scope_parent_id(current_scope_id) {
+        let parent_scope_node_id = scoping.get_node_id(parent_scope_id);
+        let parent_scope_node = ctx.nodes().get_node(parent_scope_node_id);
+
+        // If the parent scope is a function, check if that function is inside a React hook
+        if matches!(
+            parent_scope_node.kind(),
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
+        ) {
+            let grandparent = ctx.nodes().parent_node(parent_scope_node_id);
+            if let AstKind::CallExpression(call_expr) = grandparent.kind() {
+                return is_react_hook(&call_expr.callee);
+            }
+        }
+    }
+
     false
 }
 
