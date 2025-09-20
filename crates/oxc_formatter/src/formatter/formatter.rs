@@ -2,7 +2,6 @@
 
 use oxc_allocator::{Address, Allocator};
 use oxc_ast::AstKind;
-use oxc_span::Span;
 
 use crate::options::FormatOptions;
 
