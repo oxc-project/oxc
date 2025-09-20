@@ -27,15 +27,12 @@ export default {
         };
       },
     },
-    "no-ident-references-named-foo": {
+    "no-identifiers-named-foo": {
       create(context) {
         return {
-          IdentifierReference(identifierReference) {
-            if (identifierReference.name == "foo") {
-              context.report({
-                message: "Unexpected Identifier Reference named foo",
-                node: identifierReference,
-              });
+          Identifier(ident) {
+            if (ident.name == "foo") {
+              context.report({ message: "Unexpected Identifier named foo", node: ident});
             }
           },
         };

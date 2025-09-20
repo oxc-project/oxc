@@ -1,7 +1,12 @@
+// Lazy implementation
+/*
 // Visitor object returned by a `Rule`'s `create` function.
 export interface Visitor {
   [key: string]: VisitFn;
 }
+*/
+
+export type { VisitorObject as Visitor } from '../../dist/generated/visit/visitor.d.ts';
 
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
