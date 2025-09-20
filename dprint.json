@@ -10,6 +10,7 @@
   "toml": {
   },
   "excludes": [
+    "tasks/coverage/node-compat-table",
     "tasks/coverage/misc",
     "**/tests/**",
     "**/fixtures/**",
