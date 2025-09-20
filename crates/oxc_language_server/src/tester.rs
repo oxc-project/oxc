@@ -6,11 +6,11 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    Options,
     linter::{
         options::{LintOptions, Run},
         server_linter::ServerLinterRun,
     },
+    options::Options,
     worker::WorkspaceWorker,
 };
 
