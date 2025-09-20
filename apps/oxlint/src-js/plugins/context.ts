@@ -73,23 +73,31 @@ export class Context {
 
   // Getter for full rule name, in form `<plugin>/<rule>`
   get id() {
-    return this.#internal.id;
+    const internal = this.#internal;
+    if (internal.filePath === '') throw new Error('Cannot access `context.id` in `createOnce`');
+    return internal.id;
   }
 
   // Getter for absolute path of file being linted.
   get filename() {
-    return this.#internal.filePath;
+    const { filePath } = this.#internal;
+    if (filePath === '') throw new Error('Cannot access `context.filename` in `createOnce`');
+    return filePath;
   }
 
   // Getter for absolute path of file being linted.
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename() {
-    return this.#internal.filePath;
+    const { filePath } = this.#internal;
+    if (filePath === '') throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
+    return filePath;
   }
 
   // Getter for options for file being linted.
   get options() {
-    return this.#internal.options;
+    const internal = this.#internal;
+    if (internal.filePath === '') throw new Error('Cannot access `context.options` in `createOnce`');
+    return internal.options;
   }
 
   /**
@@ -97,10 +105,12 @@ export class Context {
    * @param diagnostic - Diagnostic object
    */
   report(diagnostic: Diagnostic): void {
+    const internal = this.#internal;
+    if (internal.filePath === '') throw new Error('Cannot report errors in `createOnce`');
     diagnostics.push({
       message: diagnostic.message,
       loc: { start: diagnostic.node.start, end: diagnostic.node.end },
-      ruleIndex: this.#internal.ruleIndex,
+      ruleIndex: internal.ruleIndex,
     });
   }
 

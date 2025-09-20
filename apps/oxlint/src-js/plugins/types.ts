@@ -6,7 +6,21 @@ export interface Visitor {
 }
 */
 
-export type { VisitorObject as Visitor } from '../../dist/generated/visit/visitor.d.ts';
+import type { VisitorObject as Visitor } from '../../dist/generated/visit/visitor.d.ts';
+export type { Visitor };
+
+// Hook function that runs before traversal.
+// If returns `false`, traversal is skipped for the rule.
+export type BeforeHook = () => boolean | undefined;
+
+// Hook function that runs after traversal.
+export type AfterHook = () => void;
+
+// Visitor object returned by a `Rule`'s `createOnce` function.
+export interface VisitorWithHooks extends Visitor {
+  before?: BeforeHook;
+  after?: AfterHook;
+}
 
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
