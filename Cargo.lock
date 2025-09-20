@@ -1781,6 +1781,7 @@ dependencies = [
  "indexmap",
  "itertools",
  "lazy-regex",
+ "oxc_data_structures",
  "oxc_index",
  "phf",
  "phf_codegen",
