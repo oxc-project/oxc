@@ -4,7 +4,7 @@ pub use browserslist::Version;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use crate::options::{BrowserslistQuery, Engine, EngineTargets};
+use crate::{BrowserslistQuery, Engine, EngineTargets};
 
 /// <https://babel.dev/docs/babel-preset-env#targets>
 #[derive(Debug, Deserialize)]

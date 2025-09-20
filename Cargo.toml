@@ -110,6 +110,7 @@ oxc_ast_macros = { version = "0.90.0", path = "crates/oxc_ast_macros" }
 oxc_ast_visit = { version = "0.90.0", path = "crates/oxc_ast_visit" }
 oxc_cfg = { version = "0.90.0", path = "crates/oxc_cfg" }
 oxc_codegen = { version = "0.90.0", path = "crates/oxc_codegen" }
+oxc_compat = { version = "0.90.0", path = "crates/oxc_compat" }
 oxc_data_structures = { version = "0.90.0", path = "crates/oxc_data_structures" }
 oxc_diagnostics = { version = "0.90.0", path = "crates/oxc_diagnostics" }
 oxc_ecmascript = { version = "0.90.0", path = "crates/oxc_ecmascript" }

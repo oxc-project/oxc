@@ -4,14 +4,16 @@ use std::{
     str::FromStr,
 };
 
-use browserslist::Version;
+pub use browserslist::Version;
+use oxc_syntax::es_target::ESTarget;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
+use crate::browserslist_query::BrowserslistQuery;
+use crate::{babel_targets::BabelTargets, es_target::ESVersion};
+
 use super::{
-    BrowserslistQuery,
-    babel::BabelTargets,
-    engine::Engine,
+    Engine,
     es_features::{ESFeature, features},
 };
 
@@ -46,11 +48,15 @@ impl EngineTargets {
         BrowserslistQuery::Single(query.to_string()).exec()
     }
 
-    /// Returns true if all fields are [None].
+    /// Returns true if all fields are empty.
     pub fn is_any_target(&self) -> bool {
         self.0.is_empty()
     }
 
+    /// Check if the target engines support the given ES feature.
+    ///
+    /// Returns `true` if the feature is NOT supported (needs transformation),
+    /// `false` if the feature IS supported (can be used natively).
     pub fn has_feature(&self, feature: ESFeature) -> bool {
         let feature_engine_targets = &features()[&feature];
         for (engine, feature_version) in feature_engine_targets.iter() {
@@ -87,5 +93,43 @@ impl EngineTargets {
                 .or_insert(version);
         }
         engine_targets
+    }
+
+    /// # Errors
+    ///
+    /// * When the query failed to parse.
+    pub fn from_target(s: &str) -> Result<Self, String> {
+        if s.contains(',') {
+            Self::from_target_list(&s.split(',').collect::<Vec<_>>())
+        } else {
+            Self::from_target_list(&[s])
+        }
+    }
+
+    /// # Errors
+    ///
+    /// * When the query failed to parse.
+    pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
+        let mut es_target = None;
+        let mut engine_targets = EngineTargets::default();
+
+        for s in list {
+            let s = s.as_ref();
+            // Parse `esXXXX`.
+            if let Ok(target) = ESTarget::from_str(s) {
+                if let Some(target) = es_target {
+                    return Err(format!("'{target}' is already specified."));
+                }
+                es_target = Some(target);
+            } else {
+                // Parse `chromeXX`, `edgeXX` etc.
+                let (engine, version) = Engine::parse_name_and_version(s)?;
+                if engine_targets.insert(engine, version).is_some() {
+                    return Err(format!("'{s}' is already specified."));
+                }
+            }
+        }
+        engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
+        Ok(engine_targets)
     }
 }

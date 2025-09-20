@@ -18,6 +18,11 @@ fn cache() -> &'static RwLock<FxHashMap<BrowserslistQuery, EngineTargets>> {
 }
 
 impl BrowserslistQuery {
+    /// # Errors
+    /// When the query is invalid.
+    ///
+    /// # Panics
+    /// When the rwlock is poisoned.
     pub fn exec(&self) -> Result<EngineTargets, String> {
         if let Some(v) = cache().read().unwrap().get(self) {
             return Ok(v.clone());

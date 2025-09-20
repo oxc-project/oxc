@@ -1865,6 +1865,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_compat"
+version = "0.90.0"
+dependencies = [
+ "cow-utils",
+ "oxc-browserslist",
+ "oxc_syntax",
+ "rustc-hash",
+ "serde",
+]
+
+[[package]]
 name = "oxc_compat_data"
 version = "0.0.0"
 dependencies = [
@@ -2437,16 +2448,15 @@ version = "0.90.0"
 dependencies = [
  "base64",
  "compact_str",
- "cow-utils",
  "indexmap",
  "insta",
  "itoa",
  "memchr",
- "oxc-browserslist",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_codegen",
+ "oxc_compat",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
