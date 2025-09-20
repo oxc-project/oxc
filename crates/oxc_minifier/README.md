@@ -52,9 +52,9 @@ let result = minifier.minify(&mut program);
 
 ## Documentation
 
-- [Architecture](./docs/ARCHITECTURE.md) - Design and components
-- [Optimizations](./docs/OPTIMIZATIONS.md) - Complete optimization catalog
-- [Assumptions](./docs/ASSUMPTIONS.md) - Code assumptions for optimization
-- [Correctness](./docs/CORRECTNESS.md) - Testing and validation
-- [Roadmap](./docs/ROADMAP.md) - Development plan
-- [Claude Guide](./docs/CLAUDE.md) - AI assistant reference
+- [Architecture](./ARCHITECTURE.md) - Design and components
+- [Optimizations](./OPTIMIZATIONS.md) - Complete optimization catalog
+- [Assumptions](./ASSUMPTIONS.md) - Code assumptions for optimization
+- [Correctness](./CORRECTNESS.md) - Testing and validation
+- [Roadmap](./ROADMAP.md) - Development plan
+- [Claude Guide](./CLAUDE.md) - AI assistant reference
