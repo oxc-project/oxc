@@ -13,6 +13,7 @@
     "url": "git+https://github.com/oxc-project/oxc",
     "directory": "npm/oxlint"
   },
+  "main": "dist/index.js",
   "bin": {
     "oxlint": "bin/oxlint",
     "oxc_language_server": "bin/oxc_language_server"
