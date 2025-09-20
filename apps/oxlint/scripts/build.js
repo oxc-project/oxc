@@ -24,11 +24,18 @@ execSync('pnpm tsdown', { stdio: 'inherit', cwd: oxlintDirPath });
 console.log('Copying files from parser...');
 
 const parserFilePaths = [
+  // Lazy implementation
+  /*
   'src-js/raw-transfer/lazy-common.mjs',
   'src-js/raw-transfer/node-array.mjs',
   'generated/lazy/constructors.mjs',
   'generated/lazy/types.mjs',
   'generated/lazy/walk.mjs',
+  */
+  'generated/deserialize/ts.mjs',
+  'generated/visit/types.mjs',
+  'generated/visit/visitor.d.ts',
+  'generated/visit/walk.mjs',
 ];
 
 for (const parserFilePath of parserFilePaths) {
