@@ -1123,7 +1123,7 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_boolean_result0() {
-        test_same("var x = {}, y = x != null;");
+        test("var x = {}, y = x != null;", "var y = !0;");
     }
 
     #[test]
