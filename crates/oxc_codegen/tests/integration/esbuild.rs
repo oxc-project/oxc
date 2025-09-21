@@ -722,7 +722,17 @@ fn test_import() {
     test("import(/* before */ foo)", "import(\n\t/* before */\n\tfoo\n);\n");
     test("import(/* before */ 'foo')", "import(\n\t/* before */\n\t\"foo\"\n);\n");
     test("import(foo /* after */)", "import(\n\tfoo\n\t/* after */\n);\n");
-    test("import('foo' /* after */)", "import(\n\t\"foo\"\n\t/* after */\n);\n");
+    test("import('foo' /* after */)", "import(
+	\"foo\"
+	/* after */
+);
+");
+
+    // Test import.defer and import.source phases
+    test("import.defer(\"foo\");", "import.defer(\"foo\");
+");
+    test("import.source(\"bar\");", "import.source(\"bar\");
+");
 }
 
 #[test]
