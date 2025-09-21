@@ -277,12 +277,13 @@ describe.concurrent('`preserveParens` option', () => {
     });
 
     it.concurrent('TS', async () => {
-      const code = 'let x = (1 + 2);';
+      const code = 'let x = (1 + 2); type T = (string);';
 
       // @ts-ignore
       let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: false });
       expect(ret.errors.length).toBe(0);
       expect(ret.program.body[0].declarations[0].init.type).toBe('BinaryExpression');
+      expect(ret.program.body[1].typeAnnotation.type).toBe('TSStringKeyword');
     });
   });
 
@@ -297,12 +298,13 @@ describe.concurrent('`preserveParens` option', () => {
     });
 
     it.concurrent('TS', async () => {
-      const code = 'let x = (1 + 2);';
+      const code = 'let x = (1 + 2); type T = (string);';
 
       // @ts-ignore
       let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: true });
       expect(ret.errors.length).toBe(0);
       expect(ret.program.body[0].declarations[0].init.type).toBe('ParenthesizedExpression');
+      expect(ret.program.body[1].typeAnnotation.type).toBe('TSParenthesizedType');
     });
   });
 });

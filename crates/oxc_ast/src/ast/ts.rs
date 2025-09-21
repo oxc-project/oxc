@@ -403,6 +403,7 @@ pub struct TSIntersectionType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(via = TSParenthesizedTypeConverter)]
 pub struct TSParenthesizedType<'a> {
     pub span: Span,
     pub type_annotation: TSType<'a>,

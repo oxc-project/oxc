@@ -1371,12 +1371,16 @@ function deserializeTSIntersectionType(pos) {
 }
 
 function deserializeTSParenthesizedType(pos) {
-  return {
-    type: 'TSParenthesizedType',
-    typeAnnotation: deserializeTSType(pos + 8),
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
+  let node = deserializeTSType(pos + 8);
+  if (preserveParens) {
+    node = {
+      type: 'TSParenthesizedType',
+      typeAnnotation: node,
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+    };
+  }
+  return node;
 }
 
 function deserializeTSTypeOperator(pos) {
