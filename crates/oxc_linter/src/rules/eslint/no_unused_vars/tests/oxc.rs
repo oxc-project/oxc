@@ -1377,6 +1377,54 @@ fn test_jsx_non_ascii() {
         .test();
 }
 
+#[test]
+fn test_jsdoc() {
+    let pass = vec![
+        r"
+        import { Foo } from './foo';
+
+        /** @see Foo for some useful info*/
+        export function doFoo() {
+            return { a: 1 }; 
+        }
+        ",
+        r"
+        import { Foo } from './foo';
+
+        /** @see {@link Foo} foo */
+        export function doFoo() {
+            return { a: 1 }; 
+        }
+        ",
+        r"
+        import { Foo } from './foo';
+
+        /**
+         * @param foo this is a {@link Foo} thats useful
+         */
+        export function doFoo(foo: number) {
+            return { a: foo }; 
+        }
+        ",
+        r"
+        import { Foo, Bar } from './foo';
+
+        /**
+         * @param foo this is a {@link Foo} thats useful and {@link Bar} too
+         */
+        export function doFoo(foo: number) {
+            return { a: foo }; 
+        }
+        ",
+    ];
+
+    let fail = vec![];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
 // #[test]
 // fn test_template() {
 //     let pass = vec![];
