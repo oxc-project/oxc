@@ -107,6 +107,7 @@ fn compute_minimal_text_edit<'a>(
 #[cfg(test)]
 mod tests {
     use super::compute_minimal_text_edit;
+    use crate::formatter::{options::FormatOptions, tester::Tester};
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -187,5 +188,11 @@ mod tests {
 
         let (start, end, replacement) = compute_minimal_text_edit(&src, &formatted);
         assert_eq!((start, end, replacement), (0, 0, "b"));
+    }
+
+    #[test]
+    fn test_formatter() {
+        Tester::new("fixtures/formatter/basic", Some(FormatOptions { experimental: true }))
+            .format_and_snapshot_single_file("basic.ts");
     }
 }
