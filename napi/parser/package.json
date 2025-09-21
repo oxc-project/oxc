@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.90.0",
+  "version": "0.91.0",
   "type": "commonjs",
   "main": "src-js/index.mjs",
   "browser": "src-js/wasm.mjs",
