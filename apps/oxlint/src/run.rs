@@ -99,6 +99,7 @@ fn lint_impl(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> CliRunResu
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         #[expect(clippy::print_stderr)]
         {
+            let (_, _) = (load_plugin, lint_file);
             eprintln!(
                 "ERROR: JS plugins are only supported on 64-bit little-endian platforms at present"
             );
