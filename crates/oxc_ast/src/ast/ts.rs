@@ -1745,6 +1745,7 @@ pub struct JSDocNonNullableType<'a> {
     pub postfix: bool,
 }
 
+/// `type T = (?)`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
