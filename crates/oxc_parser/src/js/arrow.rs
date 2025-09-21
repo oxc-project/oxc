@@ -38,9 +38,12 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
+            let Expression::Identifier(ident) = &expr else {
+                return self.unexpected();
+            };
             return Some(self.parse_simple_arrow_function_expression(
                 span,
-                expr,
+                ident,
                 /* async */ true,
                 allow_return_type_in_arrow_function,
             ));
@@ -210,33 +213,21 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
         span: u32,
-        ident: Expression<'a>,
+        ident: &IdentifierReference<'a>,
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let has_await = self.ctx.has_await();
-        self.ctx = self.ctx.union_await_if(r#async);
-
-        let params = {
-            let ident = match ident {
-                Expression::Identifier(ident) => {
-                    self.ast.alloc_binding_identifier(ident.span, ident.name)
-                }
-                _ => return self.unexpected(),
-            };
-            let params_span = self.end_span(ident.span.start);
-            let ident = BindingPatternKind::BindingIdentifier(ident);
-            let pattern = self.ast.binding_pattern(ident, NONE, false);
-            let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
-            self.ast.alloc_formal_parameters(
-                params_span,
-                FormalParameterKind::ArrowFormalParameters,
-                self.ast.vec1(formal_parameter),
-                NONE,
-            )
-        };
-
-        self.ctx = self.ctx.and_await(has_await);
+        let binding_identifier = BindingPatternKind::BindingIdentifier(
+            self.ast.alloc_binding_identifier(ident.span, ident.name),
+        );
+        let pattern = self.ast.binding_pattern(binding_identifier, NONE, false);
+        let formal_parameter = self.ast.plain_formal_parameter(ident.span, pattern);
+        let params = self.ast.alloc_formal_parameters(
+            ident.span,
+            FormalParameterKind::ArrowFormalParameters,
+            self.ast.vec1(formal_parameter),
+            NONE,
+        );
 
         if self.cur_token().is_on_new_line() {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));

@@ -1273,10 +1273,12 @@ impl<'a> ParserImpl<'a> {
         let kind = self.cur_kind();
 
         // `x => {}`
-        if lhs.is_identifier_reference() && kind == Kind::Arrow {
+        if kind == Kind::Arrow
+            && let Expression::Identifier(ident) = &lhs
+        {
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 span,
-                lhs,
+                ident,
                 /* async */ false,
                 allow_return_type_in_arrow_function,
             );
