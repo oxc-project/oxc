@@ -336,19 +336,16 @@ fn find_promise_call_expression_node<'a, 'b>(
         parent = grandparent;
     }
 
-    if let AstKind::CallExpression(call_expr) = parent.kind() {
-        if let Some(member_expr) = call_expr.callee.as_member_expression() {
-            if let Expression::Identifier(ident) = member_expr.object() {
-                if matches!(ident.name.as_str(), "Promise")
-                    && !matches!(parent.kind(), AstKind::Program(_))
-                {
-                    if is_first_array_item {
-                        return Some(parent);
-                    }
-                    return None;
-                }
-            }
+    if let AstKind::CallExpression(call_expr) = parent.kind()
+        && let Some(member_expr) = call_expr.callee.as_member_expression()
+        && let Expression::Identifier(ident) = member_expr.object()
+        && matches!(ident.name.as_str(), "Promise")
+        && !matches!(parent.kind(), AstKind::Program(_))
+    {
+        if is_first_array_item {
+            return Some(parent);
         }
+        return None;
     }
 
     Some(default_node)

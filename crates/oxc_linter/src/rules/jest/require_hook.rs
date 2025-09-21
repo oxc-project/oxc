@@ -220,17 +220,16 @@ impl RequireHook {
     fn check<'a>(&self, node: &AstNode<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
             self.check_should_report_in_hook(node, &expr_stmt.expression, ctx);
-        } else if let Statement::VariableDeclaration(var_decl) = stmt {
-            if var_decl.kind != VariableDeclarationKind::Const
-                && var_decl.declarations.iter().any(|decl| {
-                    let Some(init_call) = &decl.init else {
-                        return false;
-                    };
-                    !init_call.is_null_or_undefined()
-                })
-            {
-                ctx.diagnostic(use_hook(var_decl.span));
-            }
+        } else if let Statement::VariableDeclaration(var_decl) = stmt
+            && var_decl.kind != VariableDeclarationKind::Const
+            && var_decl.declarations.iter().any(|decl| {
+                let Some(init_call) = &decl.init else {
+                    return false;
+                };
+                !init_call.is_null_or_undefined()
+            })
+        {
+            ctx.diagnostic(use_hook(var_decl.span));
         }
     }
 

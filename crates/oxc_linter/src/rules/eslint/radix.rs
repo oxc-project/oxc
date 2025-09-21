@@ -86,21 +86,19 @@ impl Rule for Radix {
             Expression::StaticMemberExpression(member_expr)
                 if member_expr.property.name == "parseInt" =>
             {
-                if let Expression::Identifier(ident) = member_expr.object.without_parentheses() {
-                    if Self::is_global_number_ident(ident, ctx) {
-                        Self::check_arguments(self, call_expr, ctx);
-                    }
+                if let Expression::Identifier(ident) = member_expr.object.without_parentheses()
+                    && Self::is_global_number_ident(ident, ctx)
+                {
+                    Self::check_arguments(self, call_expr, ctx);
                 }
             }
             Expression::ChainExpression(chain_expr) => {
-                if let Some(member_expr) = chain_expr.expression.as_member_expression() {
-                    if let Expression::Identifier(ident) = member_expr.object() {
-                        if member_expr.static_property_name() == Some("parseInt")
-                            && Self::is_global_number_ident(ident, ctx)
-                        {
-                            Self::check_arguments(self, call_expr, ctx);
-                        }
-                    }
+                if let Some(member_expr) = chain_expr.expression.as_member_expression()
+                    && let Expression::Identifier(ident) = member_expr.object()
+                    && member_expr.static_property_name() == Some("parseInt")
+                    && Self::is_global_number_ident(ident, ctx)
+                {
+                    Self::check_arguments(self, call_expr, ctx);
                 }
             }
             _ => {}

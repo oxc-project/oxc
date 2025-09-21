@@ -248,10 +248,10 @@ impl Rule for FuncNames {
 
             if is_invalid_function(config, func, parent_node) {
                 // For named functions, check if they're recursive (need their name for recursion)
-                if let Some(func_name) = func.name() {
-                    if is_recursive_function(func, func_name.as_str(), ctx) {
-                        return;
-                    }
+                if let Some(func_name) = func.name()
+                    && is_recursive_function(func, func_name.as_str(), ctx)
+                {
+                    return;
                 }
                 diagnostic_invalid_function(func, node, parent_node, ctx);
             }
@@ -342,10 +342,10 @@ fn has_object_assignment_target_name<'a>(
     function: &Function<'a>,
 ) -> bool {
     target.properties.iter().any(|property| {
-        if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) = property {
-            if let Some(Expression::FunctionExpression(func_expr)) = &identifier.init {
-                return get_function_identifier(func_expr) == get_function_identifier(function);
-            }
+        if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) = property
+            && let Some(Expression::FunctionExpression(func_expr)) = &identifier.init
+        {
+            return get_function_identifier(func_expr) == get_function_identifier(function);
         }
         false
     })
@@ -437,10 +437,8 @@ fn apply_rule_fix<'a>(
     replace_span: Span,
     function_name: Option<String>,
 ) -> RuleFix<'a> {
-    if is_safe_fix {
-        if let Some(name) = function_name {
-            return fixer.insert_text_after(&replace_span, format!(" {name}"));
-        }
+    if is_safe_fix && let Some(name) = function_name {
+        return fixer.insert_text_after(&replace_span, format!(" {name}"));
     }
 
     fixer.noop()

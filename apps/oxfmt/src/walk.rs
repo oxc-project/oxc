@@ -33,17 +33,16 @@ impl ignore::ParallelVisitor for WalkVisitor {
         match entry {
             Ok(entry) => {
                 // Skip if we can't get file type or if it's a directory
-                if let Some(file_type) = entry.file_type() {
-                    if !file_type.is_dir() {
-                        if let Some(source_type) = get_supported_source_type(entry.path()) {
-                            let walk_entry =
-                                WalkEntry { path: entry.path().as_os_str().into(), source_type };
-                            // Send each entry immediately through the channel
-                            // If send fails, the receiver has been dropped, so stop walking
-                            if self.sender.send(walk_entry).is_err() {
-                                return ignore::WalkState::Quit;
-                            }
-                        }
+                if let Some(file_type) = entry.file_type()
+                    && !file_type.is_dir()
+                    && let Some(source_type) = get_supported_source_type(entry.path())
+                {
+                    let walk_entry =
+                        WalkEntry { path: entry.path().as_os_str().into(), source_type };
+                    // Send each entry immediately through the channel
+                    // If send fails, the receiver has been dropped, so stop walking
+                    if self.sender.send(walk_entry).is_err() {
+                        return ignore::WalkState::Quit;
                     }
                 }
                 ignore::WalkState::Continue

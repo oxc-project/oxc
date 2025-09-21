@@ -87,10 +87,10 @@ impl StringLiteral<'_> {
         while let Some(c) = chars.next() {
             if c == '\\' && chars.next() == Some('u') {
                 let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16) {
-                    if (0xd800..=0xdfff).contains(&hex) {
-                        return false;
-                    }
+                if let Ok(hex) = u32::from_str_radix(hex, 16)
+                    && (0xd800..=0xdfff).contains(&hex)
+                {
+                    return false;
                 }
             }
         }

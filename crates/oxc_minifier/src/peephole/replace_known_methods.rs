@@ -208,10 +208,10 @@ impl<'a> PeepholeOptimizations {
         ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
-        if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent() {
-            if parent_member.property().name.as_str() == "concat" {
-                return None;
-            }
+        if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
+            && parent_member.property().name.as_str() == "concat"
+        {
+            return None;
         }
 
         let object = match callee {
@@ -395,20 +395,19 @@ impl<'a> PeepholeOptimizations {
                         return;
                     }
                     Expression::BigIntLiteral(b) => {
-                        if !b.is_negative() {
-                            if let Some(integer_index) =
+                        if !b.is_negative()
+                            && let Some(integer_index) =
                                 b.to_big_int(ctx).and_then(ToIntegerIndex::to_integer_index)
-                            {
-                                let span = member.span;
-                                if let Some(replacement) = Self::try_fold_integer_index_access(
-                                    &mut member.object,
-                                    integer_index,
-                                    span,
-                                    ctx,
-                                ) {
-                                    ctx.state.changed = true;
-                                    *node = replacement;
-                                }
+                        {
+                            let span = member.span;
+                            if let Some(replacement) = Self::try_fold_integer_index_access(
+                                &mut member.object,
+                                integer_index,
+                                span,
+                                ctx,
+                            ) {
+                                ctx.state.changed = true;
+                                *node = replacement;
                             }
                         }
                         return;

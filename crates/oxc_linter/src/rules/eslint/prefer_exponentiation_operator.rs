@@ -73,12 +73,11 @@ impl Rule for PreferExponentiationOperator {
                     return;
                 }
 
-                if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
-                    if GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
-                        && ctx.is_reference_to_global_variable(ident)
-                    {
-                        ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));
-                    }
+                if let Expression::Identifier(ident) = member_expr.object().without_parentheses()
+                    && GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
+                    && ctx.is_reference_to_global_variable(ident)
+                {
+                    ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));
                 }
             }
             _ => {}

@@ -254,16 +254,15 @@ fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext)
     }
 
     // Not safe to fix `<Eeee><>foo</></Eeee>` because `Eeee` might require its children be a ReactElement.
-    if let AstKind::JSXElement(el) = parent {
-        if !el
+    if let AstKind::JSXElement(el) = parent
+        && !el
             .opening_element
             .name
             .get_identifier_name()
             .is_some_and(|ident| ident.chars().all(char::is_lowercase))
-            && !is_jsx_fragment(&el.opening_element)
-        {
-            return false;
-        }
+        && !is_jsx_fragment(&el.opening_element)
+    {
+        return false;
     }
 
     true
@@ -305,10 +304,10 @@ fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
 }
 
 fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
-    if let AstKind::JSXElement(elem) = ctx.nodes().parent_kind(node.id()) {
-        if is_html_element(&elem.opening_element.name) {
-            return true;
-        }
+    if let AstKind::JSXElement(elem) = ctx.nodes().parent_kind(node.id())
+        && is_html_element(&elem.opening_element.name)
+    {
+        return true;
     }
 
     false

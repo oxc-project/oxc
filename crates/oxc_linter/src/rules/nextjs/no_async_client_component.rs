@@ -125,18 +125,17 @@ impl Rule for NoAsyncClientComponent {
                     continue;
                 };
 
-                if let AstKind::Function(func) = decl.kind() {
-                    if func.r#async
-                        && func
-                            .id
-                            .as_ref()
-                            // `func.id.name` MUST be > 0 chars
-                            .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
-                    {
-                        ctx.diagnostic(no_async_client_component_diagnostic(
-                            func.id.as_ref().unwrap().span,
-                        ));
-                    }
+                if let AstKind::Function(func) = decl.kind()
+                    && func.r#async
+                    && func
+                        .id
+                        .as_ref()
+                        // `func.id.name` MUST be > 0 chars
+                        .is_some_and(|v| v.name.chars().next().unwrap().is_uppercase())
+                {
+                    ctx.diagnostic(no_async_client_component_diagnostic(
+                        func.id.as_ref().unwrap().span,
+                    ));
                 }
 
                 let AstKind::VariableDeclarator(var_declarator) = decl.kind() else {
@@ -148,16 +147,12 @@ impl Rule for NoAsyncClientComponent {
                     continue;
                 };
                 // `binding_ident.name` MUST be > 0 chars
-                if binding_ident.name.chars().next().unwrap().is_uppercase() {
-                    if let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
+                if binding_ident.name.chars().next().unwrap().is_uppercase()
+                    && let Some(Expression::ArrowFunctionExpression(arrow_expr)) =
                         &var_declarator.init
-                    {
-                        if arrow_expr.r#async {
-                            ctx.diagnostic(no_async_client_component_diagnostic(
-                                binding_ident.span,
-                            ));
-                        }
-                    }
+                    && arrow_expr.r#async
+                {
+                    ctx.diagnostic(no_async_client_component_diagnostic(binding_ident.span));
                 }
             }
         }

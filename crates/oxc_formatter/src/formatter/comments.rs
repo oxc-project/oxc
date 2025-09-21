@@ -340,14 +340,14 @@ impl<'a> Comments<'a> {
 
                 break;
             } else if self.source_text.is_end_of_line_comment(comment) {
-                if let SiblingNode::IfStatement(if_stmt) = enclosing_node {
-                    if if_stmt.consequent.span() == preceding_span {
-                        // If comment is after the `else` keyword, it is not a trailing comment of consequent.
-                        if source_text[preceding_span.end as usize..comment.span.start as usize]
-                            .contains("else")
-                        {
-                            return &[];
-                        }
+                if let SiblingNode::IfStatement(if_stmt) = enclosing_node
+                    && if_stmt.consequent.span() == preceding_span
+                {
+                    // If comment is after the `else` keyword, it is not a trailing comment of consequent.
+                    if source_text[preceding_span.end as usize..comment.span.start as usize]
+                        .contains("else")
+                    {
+                        return &[];
                     }
                 }
 

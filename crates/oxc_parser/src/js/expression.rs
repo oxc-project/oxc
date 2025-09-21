@@ -790,17 +790,16 @@ impl<'a> ParserImpl<'a> {
                     continue;
                 }
 
-                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-                    if let Some(arguments) =
+                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft)
+                    && let Some(arguments) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
-                    {
-                        lhs = self.ast.expression_ts_instantiation(
-                            self.end_span(lhs_span),
-                            lhs,
-                            arguments,
-                        );
-                        continue;
-                    }
+                {
+                    lhs = self.ast.expression_ts_instantiation(
+                        self.end_span(lhs_span),
+                        lhs,
+                        arguments,
+                    );
+                    continue;
                 }
             }
 
@@ -935,10 +934,10 @@ impl<'a> ParserImpl<'a> {
 
             let mut type_arguments = None;
             if question_dot {
-                if self.is_ts {
-                    if let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression) {
-                        type_arguments = Some(args);
-                    }
+                if self.is_ts
+                    && let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression)
+                {
+                    type_arguments = Some(args);
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
                     lhs = self.parse_tagged_template(lhs_span, lhs, question_dot, type_arguments);
@@ -947,12 +946,10 @@ impl<'a> ParserImpl<'a> {
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !question_dot {
-                    if let Expression::TSInstantiationExpression(expr) = lhs {
-                        let expr = expr.unbox();
-                        type_arguments.replace(expr.type_arguments);
-                        lhs = expr.expression;
-                    }
+                if !question_dot && let Expression::TSInstantiationExpression(expr) = lhs {
+                    let expr = expr.unbox();
+                    type_arguments.replace(expr.type_arguments);
+                    lhs = expr.expression;
                 }
 
                 lhs = self.parse_call_arguments(lhs_span, lhs, question_dot, type_arguments.take());
@@ -1168,29 +1165,30 @@ impl<'a> ParserImpl<'a> {
                         if !rhs_parenthesized {
                             maybe_mixed_coalesce_expr = Some(rhs);
                         }
-                    } else if let Expression::LogicalExpression(lhs) = &lhs {
-                        if !lhs_parenthesized {
-                            maybe_mixed_coalesce_expr = Some(lhs);
-                        }
+                    } else if let Expression::LogicalExpression(lhs) = &lhs
+                        && !lhs_parenthesized
+                    {
+                        maybe_mixed_coalesce_expr = Some(lhs);
                     }
-                    if let Some(expr) = maybe_mixed_coalesce_expr {
-                        if matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                            self.error(diagnostics::mixed_coalesce(span));
-                        }
+                    if let Some(expr) = maybe_mixed_coalesce_expr
+                        && matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or)
+                    {
+                        self.error(diagnostics::mixed_coalesce(span));
                     }
                 }
                 self.ast.expression_logical(span, lhs, op, rhs)
             } else if kind.is_binary_operator() {
                 let span = self.end_span(lhs_span);
                 let op = map_binary_operator(kind);
-                if op == BinaryOperator::Exponential && !lhs_parenthesized {
-                    if let Some(key) = match lhs {
+                if op == BinaryOperator::Exponential
+                    && !lhs_parenthesized
+                    && let Some(key) = match lhs {
                         Expression::AwaitExpression(_) => Some("await"),
                         Expression::UnaryExpression(_) => Some("unary"),
                         _ => None,
-                    } {
-                        self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                     }
+                {
+                    self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                 }
                 self.ast.expression_binary(span, lhs, op, rhs)
             } else {
@@ -1247,10 +1245,10 @@ impl<'a> ParserImpl<'a> {
         if let Some(mut arrow_expr) = self
             .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if has_no_side_effects_comment {
-                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
-                    func.pure = true;
-                }
+            if has_no_side_effects_comment
+                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+            {
+                func.pure = true;
             }
             return arrow_expr;
         }
@@ -1258,10 +1256,10 @@ impl<'a> ParserImpl<'a> {
         if let Some(mut arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if has_no_side_effects_comment {
-                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
-                    func.pure = true;
-                }
+            if has_no_side_effects_comment
+                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+            {
+                func.pure = true;
             }
             return arrow_expr;
         }
@@ -1280,10 +1278,10 @@ impl<'a> ParserImpl<'a> {
                 /* async */ false,
                 allow_return_type_in_arrow_function,
             );
-            if has_no_side_effects_comment {
-                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
-                    func.pure = true;
-                }
+            if has_no_side_effects_comment
+                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+            {
+                func.pure = true;
             }
             return arrow_expr;
         }

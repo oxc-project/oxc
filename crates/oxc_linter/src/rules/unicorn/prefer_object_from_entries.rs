@@ -198,37 +198,31 @@ impl Rule for PreferObjectFromEntries {
         }
 
         // `() => ({...object, key})`
-        if let Expression::ObjectExpression(object_expr) = &stmt {
-            if object_expr.properties.len() == 2 {
-                if let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0] {
-                    if let Expression::Identifier(spread_ident) =
-                        spread.argument.get_inner_expression()
-                    {
-                        let Some(spread_symbol_id) =
-                            ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()
-                        else {
-                            return;
-                        };
+        if let Expression::ObjectExpression(object_expr) = &stmt
+            && object_expr.properties.len() == 2
+            && let ObjectPropertyKind::SpreadProperty(spread) = &object_expr.properties[0]
+            && let Expression::Identifier(spread_ident) = spread.argument.get_inner_expression()
+        {
+            let Some(spread_symbol_id) =
+                ctx.scoping().get_reference(spread_ident.reference_id()).symbol_id()
+            else {
+                return;
+            };
 
-                        if spread_symbol_id != accumulator_ident.symbol_id() {
-                            return;
-                        }
-                        let ObjectPropertyKind::ObjectProperty(object_prop) =
-                            &object_expr.properties[1]
-                        else {
-                            return;
-                        };
-
-                        if object_prop.kind != PropertyKind::Init || object_prop.method {
-                            return;
-                        }
-
-                        ctx.diagnostic(prefer_object_from_entries_diagnostic(
-                            call_expr_member_expr_property_span(call_expr),
-                        ));
-                    }
-                }
+            if spread_symbol_id != accumulator_ident.symbol_id() {
+                return;
             }
+            let ObjectPropertyKind::ObjectProperty(object_prop) = &object_expr.properties[1] else {
+                return;
+            };
+
+            if object_prop.kind != PropertyKind::Init || object_prop.method {
+                return;
+            }
+
+            ctx.diagnostic(prefer_object_from_entries_diagnostic(
+                call_expr_member_expr_property_span(call_expr),
+            ));
         }
     }
 

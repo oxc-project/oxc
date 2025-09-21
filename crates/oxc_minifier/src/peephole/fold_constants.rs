@@ -147,28 +147,24 @@ impl<'a> PeepholeOptimizations {
             let vec = ctx.ast.vec_from_array([left, right]);
             let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
             return Some(sequence_expr);
-        } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
-            if left_child.operator == logical_expr.operator {
-                let left_child_right_boolean = left_child.right.evaluate_value_to_boolean(ctx);
-                let left_child_op = left_child.operator;
-                if let Some(right_boolean) = left_child_right_boolean {
-                    if !left_child.right.may_have_side_effects(ctx) {
-                        // a || false || b => a || b
-                        // a && true && b => a && b
-                        if !right_boolean && left_child_op.is_or()
-                            || right_boolean && left_child_op.is_and()
-                        {
-                            let left = left_child.left.take_in(ctx.ast);
-                            let right = logical_expr.right.take_in(ctx.ast);
-                            let logic_expr = ctx.ast.expression_logical(
-                                logical_expr.span,
-                                left,
-                                left_child_op,
-                                right,
-                            );
-                            return Some(logic_expr);
-                        }
-                    }
+        } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left
+            && left_child.operator == logical_expr.operator
+        {
+            let left_child_right_boolean = left_child.right.evaluate_value_to_boolean(ctx);
+            let left_child_op = left_child.operator;
+            if let Some(right_boolean) = left_child_right_boolean
+                && !left_child.right.may_have_side_effects(ctx)
+            {
+                // a || false || b => a || b
+                // a && true && b => a && b
+                if !right_boolean && left_child_op.is_or()
+                    || right_boolean && left_child_op.is_and()
+                {
+                    let left = left_child.left.take_in(ctx.ast);
+                    let right = logical_expr.right.take_in(ctx.ast);
+                    let logic_expr =
+                        ctx.ast.expression_logical(logical_expr.span, left, left_child_op, right);
+                    return Some(logic_expr);
                 }
             }
         }
@@ -358,10 +354,10 @@ impl<'a> PeepholeOptimizations {
 
     // Simplified version of `tryFoldAdd` from closure compiler.
     fn try_fold_add(e: &mut BinaryExpression<'a>, ctx: &Ctx<'a, '_>) -> Option<Expression<'a>> {
-        if !e.may_have_side_effects(ctx) {
-            if let Some(v) = e.evaluate_value(ctx) {
-                return Some(ctx.value_to_expr(e.span, v));
-            }
+        if !e.may_have_side_effects(ctx)
+            && let Some(v) = e.evaluate_value(ctx)
+        {
+            return Some(ctx.value_to_expr(e.span, v));
         }
         debug_assert_eq!(e.operator, BinaryOperator::Addition);
 
@@ -370,25 +366,25 @@ impl<'a> PeepholeOptimizations {
         }
 
         // a + 'b' + 'c' -> a + 'bc'
-        if let Expression::BinaryExpression(left_binary_expr) = &mut e.left {
-            if left_binary_expr.right.value_type(ctx).is_string() {
-                if let (Some(left_str), Some(right_str)) = (
-                    left_binary_expr.right.get_side_free_string_value(ctx),
-                    e.right.get_side_free_string_value(ctx),
-                ) {
-                    let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
-                    let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
-                    let right = ctx.ast.expression_string_literal(span, value, None);
-                    let left = left_binary_expr.left.take_in(ctx.ast);
-                    return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
-                }
+        if let Expression::BinaryExpression(left_binary_expr) = &mut e.left
+            && left_binary_expr.right.value_type(ctx).is_string()
+        {
+            if let (Some(left_str), Some(right_str)) = (
+                left_binary_expr.right.get_side_free_string_value(ctx),
+                e.right.get_side_free_string_value(ctx),
+            ) {
+                let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
+                let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
+                let right = ctx.ast.expression_string_literal(span, value, None);
+                let left = left_binary_expr.left.take_in(ctx.ast);
+                return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
+            }
 
-                if let Some(new_right) =
-                    Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
-                {
-                    let left = left_binary_expr.left.take_in(ctx.ast);
-                    return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
-                }
+            if let Some(new_right) =
+                Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
+            {
+                let left = left_binary_expr.left.take_in(ctx.ast);
+                return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
             }
         }
 
@@ -560,66 +556,58 @@ impl<'a> PeepholeOptimizations {
     pub fn fold_binary_typeof_comparison(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::BinaryExpression(e) = expr else { return };
         // `typeof a == typeof a` -> `true`, `typeof a != typeof a` -> `false`
-        if e.operator.is_equality() {
-            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
+        if e.operator.is_equality()
+            && let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
                 (&e.left, &e.right)
-            {
-                if left.operator.is_typeof() && right.operator.is_typeof() {
-                    if let (
-                        Expression::Identifier(left_ident),
-                        Expression::Identifier(right_ident),
-                    ) = (&left.argument, &right.argument)
-                    {
-                        if left_ident.name == right_ident.name {
-                            let b = matches!(
-                                e.operator,
-                                BinaryOperator::StrictEquality | BinaryOperator::Equality
-                            );
-                            *expr = ctx.ast.expression_boolean_literal(e.span, b);
-                            ctx.state.changed = true;
-                            return;
-                        }
-                    }
-                }
-            }
+            && left.operator.is_typeof()
+            && right.operator.is_typeof()
+            && let (Expression::Identifier(left_ident), Expression::Identifier(right_ident)) =
+                (&left.argument, &right.argument)
+            && left_ident.name == right_ident.name
+        {
+            let b = matches!(e.operator, BinaryOperator::StrictEquality | BinaryOperator::Equality);
+            *expr = ctx.ast.expression_boolean_literal(e.span, b);
+            ctx.state.changed = true;
+            return;
         }
 
         // `typeof a === 'asd` -> `false``
         // `typeof a !== 'b'` -> `true``
-        if let Expression::UnaryExpression(left) = &e.left {
-            if left.operator.is_typeof() && e.operator.is_equality() {
-                let right_ty = e.right.value_type(ctx);
+        if let Expression::UnaryExpression(left) = &e.left
+            && left.operator.is_typeof()
+            && e.operator.is_equality()
+        {
+            let right_ty = e.right.value_type(ctx);
 
-                if !right_ty.is_undetermined() && right_ty != ValueType::String {
-                    *expr = ctx.ast.expression_boolean_literal(
-                        e.span,
-                        e.operator == BinaryOperator::Inequality
-                            || e.operator == BinaryOperator::StrictInequality,
-                    );
-                    ctx.state.changed = true;
-                    return;
-                }
-                if let Expression::StringLiteral(string_lit) = &e.right {
-                    if !matches!(
-                        string_lit.value.as_str(),
-                        "string"
-                            | "number"
-                            | "bigint"
-                            | "boolean"
-                            | "symbol"
-                            | "undefined"
-                            | "object"
-                            | "function"
-                            | "unknown" // IE
-                    ) {
-                        *expr = ctx.ast.expression_boolean_literal(
-                            e.span,
-                            e.operator == BinaryOperator::Inequality
-                                || e.operator == BinaryOperator::StrictInequality,
-                        );
-                        ctx.state.changed = true;
-                    }
-                }
+            if !right_ty.is_undetermined() && right_ty != ValueType::String {
+                *expr = ctx.ast.expression_boolean_literal(
+                    e.span,
+                    e.operator == BinaryOperator::Inequality
+                        || e.operator == BinaryOperator::StrictInequality,
+                );
+                ctx.state.changed = true;
+                return;
+            }
+            if let Expression::StringLiteral(string_lit) = &e.right
+                && !matches!(
+                    string_lit.value.as_str(),
+                    "string"
+                        | "number"
+                        | "bigint"
+                        | "boolean"
+                        | "symbol"
+                        | "undefined"
+                        | "object"
+                        | "function"
+                        | "unknown" // IE
+                )
+            {
+                *expr = ctx.ast.expression_boolean_literal(
+                    e.span,
+                    e.operator == BinaryOperator::Inequality
+                        || e.operator == BinaryOperator::StrictInequality,
+                );
+                ctx.state.changed = true;
             }
         }
     }

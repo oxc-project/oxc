@@ -109,10 +109,10 @@ impl Rule for PreferTodo {
 }
 
 fn filter_todo_case(expr: &CallExpression) -> bool {
-    if let Some(mem_expr) = expr.callee.as_member_expression() {
-        if let Some(name) = mem_expr.static_property_name() {
-            return name == "todo";
-        }
+    if let Some(mem_expr) = expr.callee.as_member_expression()
+        && let Some(name) = mem_expr.static_property_name()
+    {
+        return name == "todo";
     }
     false
 }

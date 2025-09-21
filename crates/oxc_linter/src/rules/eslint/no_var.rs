@@ -54,26 +54,26 @@ declare_oxc_lint!(
 
 impl Rule for NoVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::VariableDeclaration(dec) = node.kind() {
-            if dec.kind == VariableDeclarationKind::Var {
-                let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-                let span = Span::sized(dec.span.start, 3);
-                ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
-                    let parent_span = ctx.nodes().parent_kind(node.id()).span();
-                    if dec.declarations.iter().any(|decl| {
-                        decl.id.get_binding_identifiers().iter().any(|ident| {
-                            ctx.symbol_references(ident.symbol_id()).any(|id| {
-                                !parent_span
-                                    .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
-                            })
+        if let AstKind::VariableDeclaration(dec) = node.kind()
+            && dec.kind == VariableDeclarationKind::Var
+        {
+            let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
+            let span = Span::sized(dec.span.start, 3);
+            ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
+                let parent_span = ctx.nodes().parent_kind(node.id()).span();
+                if dec.declarations.iter().any(|decl| {
+                    decl.id.get_binding_identifiers().iter().any(|ident| {
+                        ctx.symbol_references(ident.symbol_id()).any(|id| {
+                            !parent_span
+                                .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
                         })
-                    }) {
-                        return fixer.noop();
-                    }
+                    })
+                }) {
+                    return fixer.noop();
+                }
 
-                    fixer.replace(span, if is_written_to { "let" } else { "const" })
-                });
-            }
+                fixer.replace(span, if is_written_to { "let" } else { "const" })
+            });
         }
     }
 }

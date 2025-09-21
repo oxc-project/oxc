@@ -90,12 +90,13 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                 self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
             }
             AstKind::VariableDeclarator(decl) => {
-                if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
-                    if id.symbol_id() == symbol_id {
-                        return decl.init.as_ref().is_some_and(|init| {
-                            self.is_expression_whose_name_needs_to_be_kept(init)
-                        });
-                    }
+                if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind
+                    && id.symbol_id() == symbol_id
+                {
+                    return decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
                 }
                 if let Some(assign_pattern) =
                     Self::find_assign_binding_pattern_kind_of_specific_symbol(

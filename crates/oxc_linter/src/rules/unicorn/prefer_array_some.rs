@@ -130,41 +130,38 @@ impl Rule for PreferArraySome {
                     BinaryOperator::GreaterEqualThan | BinaryOperator::LessThan
                 );
 
-                if with_negative_one {
-                    if let Expression::UnaryExpression(right_unary_expr) =
+                if with_negative_one
+                    && let Expression::UnaryExpression(right_unary_expr) =
                         &bin_expr.right.without_parentheses()
-                    {
-                        if matches!(right_unary_expr.operator, UnaryOperator::UnaryNegation)
-                            && right_unary_expr.argument.is_number_literal()
-                            && right_unary_expr.argument.is_number_value(1_f64)
-                        {
-                            let Expression::CallExpression(left_call_expr) =
-                                &bin_expr.left.without_parentheses()
-                            else {
-                                return;
-                            };
+                    && matches!(right_unary_expr.operator, UnaryOperator::UnaryNegation)
+                    && right_unary_expr.argument.is_number_literal()
+                    && right_unary_expr.argument.is_number_value(1_f64)
+                {
+                    let Expression::CallExpression(left_call_expr) =
+                        &bin_expr.left.without_parentheses()
+                    else {
+                        return;
+                    };
 
-                            let Some(argument) = left_call_expr.arguments.first() else {
-                                return;
-                            };
+                    let Some(argument) = left_call_expr.arguments.first() else {
+                        return;
+                    };
 
-                            if matches!(argument, Argument::SpreadElement(_)) {
-                                return;
-                            }
+                    if matches!(argument, Argument::SpreadElement(_)) {
+                        return;
+                    }
 
-                            if is_method_call(
-                                left_call_expr,
-                                None,
-                                Some(&["findIndex", "findLastIndex"]),
-                                None,
-                                Some(1),
-                            ) {
-                                // TODO: fixer
-                                ctx.diagnostic(negative_one_or_zero_filter(
-                                    call_expr_method_callee_info(left_call_expr).unwrap().0,
-                                ));
-                            }
-                        }
+                    if is_method_call(
+                        left_call_expr,
+                        None,
+                        Some(&["findIndex", "findLastIndex"]),
+                        None,
+                        Some(1),
+                    ) {
+                        // TODO: fixer
+                        ctx.diagnostic(negative_one_or_zero_filter(
+                            call_expr_method_callee_info(left_call_expr).unwrap().0,
+                        ));
                     }
                 }
 

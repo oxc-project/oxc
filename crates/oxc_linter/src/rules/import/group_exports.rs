@@ -107,10 +107,10 @@ impl Rule for GroupExports {
                         continue;
                     }
                     // e.g "module.exports.xxx = xxx";
-                    if let Some(obj_expr) = member_expr.object().as_member_expression() {
-                        if check_module_export(obj_expr) {
-                            commonjs_nodes.push(assignment_expr.span);
-                        }
+                    if let Some(obj_expr) = member_expr.object().as_member_expression()
+                        && check_module_export(obj_expr)
+                    {
+                        commonjs_nodes.push(assignment_expr.span);
                     }
                 }
                 _ => {}

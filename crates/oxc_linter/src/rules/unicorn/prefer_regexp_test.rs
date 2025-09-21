@@ -133,10 +133,11 @@ impl Rule for PreferRegexpTest {
                     return;
                 }
 
-                if let Some(expr) = call_expr.arguments[0].as_expression() {
-                    if expr.is_literal() && !matches!(expr, Expression::RegExpLiteral(_)) {
-                        return;
-                    }
+                if let Some(expr) = call_expr.arguments[0].as_expression()
+                    && expr.is_literal()
+                    && !matches!(expr, Expression::RegExpLiteral(_))
+                {
+                    return;
                 }
             }
             "exec" => {

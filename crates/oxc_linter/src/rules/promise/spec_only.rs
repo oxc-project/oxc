@@ -80,10 +80,10 @@ impl Rule for SpecOnly {
             return;
         }
 
-        if let Some(allowed_methods) = &self.allowed_methods {
-            if allowed_methods.contains(prop_name) {
-                return;
-            }
+        if let Some(allowed_methods) = &self.allowed_methods
+            && allowed_methods.contains(prop_name)
+        {
+            return;
         }
 
         ctx.diagnostic(spec_only(prop_name, member_expr.span()));

@@ -124,16 +124,16 @@ fn is_invalid_style_attribute<'a>(attribute: &JSXAttribute<'a>, ctx: &LintContex
         return false;
     };
 
-    if attr_ident.name == "style" {
-        if let Some(attr_value) = &attribute.value {
-            return match attr_value {
-                JSXAttributeValue::StringLiteral(_) => true,
-                JSXAttributeValue::ExpressionContainer(container) => {
-                    return is_invalid_expression(container.expression.as_expression(), ctx);
-                }
-                _ => false,
-            };
-        }
+    if attr_ident.name == "style"
+        && let Some(attr_value) = &attribute.value
+    {
+        return match attr_value {
+            JSXAttributeValue::StringLiteral(_) => true,
+            JSXAttributeValue::ExpressionContainer(container) => {
+                return is_invalid_expression(container.expression.as_expression(), ctx);
+            }
+            _ => false,
+        };
     }
 
     false
@@ -172,14 +172,14 @@ impl Rule for StylePropObject {
                 }
 
                 jsx_elem.opening_element.attributes.iter().for_each(|attribute| {
-                    if let JSXAttributeItem::Attribute(attribute) = attribute {
-                        if is_invalid_style_attribute(attribute, ctx) {
-                            let Some(value) = &attribute.value else {
-                                return;
-                            };
+                    if let JSXAttributeItem::Attribute(attribute) = attribute
+                        && is_invalid_style_attribute(attribute, ctx)
+                    {
+                        let Some(value) = &attribute.value else {
+                            return;
+                        };
 
-                            ctx.diagnostic(style_prop_object_diagnostic(value.span()));
-                        }
+                        ctx.diagnostic(style_prop_object_diagnostic(value.span()));
                     }
                 });
             }
@@ -215,14 +215,12 @@ impl Rule for StylePropObject {
                 };
 
                 for prop in &obj_expr.properties {
-                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-                        if let Some(prop_name) = obj_prop.key.static_name() {
-                            if prop_name == "style"
-                                && is_invalid_expression(Some(&obj_prop.value), ctx)
-                            {
-                                ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));
-                            }
-                        }
+                    if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
+                        && let Some(prop_name) = obj_prop.key.static_name()
+                        && prop_name == "style"
+                        && is_invalid_expression(Some(&obj_prop.value), ctx)
+                    {
+                        ctx.diagnostic(style_prop_object_diagnostic(obj_prop.value.span()));
                     }
                 }
             }

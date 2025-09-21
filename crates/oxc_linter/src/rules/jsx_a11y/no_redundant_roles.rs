@@ -66,17 +66,17 @@ impl Rule for NoRedundantRoles {
 
         let component = get_element_type(ctx, jsx_el);
 
-        if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role") {
-            if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
-                let roles = role_values.value.split_whitespace().collect::<Vec<_>>();
-                for role in &roles {
-                    let exceptions = DEFAULT_ROLE_EXCEPTIONS.get(&component);
-                    if exceptions.is_some_and(|set| set.contains(role)) {
-                        ctx.diagnostic_with_fix(
-                            no_redundant_roles_diagnostic(attr.span, &component, role),
-                            |fixer| fixer.delete_range(attr.span),
-                        );
-                    }
+        if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(jsx_el, "role")
+            && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
+        {
+            let roles = role_values.value.split_whitespace().collect::<Vec<_>>();
+            for role in &roles {
+                let exceptions = DEFAULT_ROLE_EXCEPTIONS.get(&component);
+                if exceptions.is_some_and(|set| set.contains(role)) {
+                    ctx.diagnostic_with_fix(
+                        no_redundant_roles_diagnostic(attr.span, &component, role),
+                        |fixer| fixer.delete_range(attr.span),
+                    );
                 }
             }
         }

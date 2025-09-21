@@ -183,10 +183,10 @@ impl<'a> IsolatedDeclarations<'a> {
     /// ```
     pub(crate) fn strip_export_keyword(&self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         stmts.iter_mut().for_each(|stmt| {
-            if let Statement::ExportNamedDeclaration(decl) = stmt {
-                if let Some(declaration) = &mut decl.declaration {
-                    *stmt = Statement::from(declaration.take_in(self.ast));
-                }
+            if let Statement::ExportNamedDeclaration(decl) = stmt
+                && let Some(declaration) = &mut decl.declaration
+            {
+                *stmt = Statement::from(declaration.take_in(self.ast));
             }
         });
     }

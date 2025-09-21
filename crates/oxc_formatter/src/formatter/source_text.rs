@@ -145,10 +145,10 @@ impl<'a> SourceText<'a> {
         let comments = comments.unprinted_comments();
 
         // Should skip the leading comments of the node.
-        if let Some(comment) = comments.first() {
-            if comment.span.end < start {
-                start = comment.span.start;
-            }
+        if let Some(comment) = comments.first()
+            && comment.span.end < start
+        {
+            start = comment.span.start;
         }
 
         // Count the newlines in the leading trivia of the next node

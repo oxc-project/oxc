@@ -188,10 +188,10 @@ impl<'a> LintContext<'a> {
         }
 
         for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env) {
-                if let Some(value) = env.get(var) {
-                    return Some(GlobalValue::from(*value));
-                }
+            if let Some(env) = GLOBALS.get(env)
+                && let Some(value) = env.get(var)
+            {
+                return Some(GlobalValue::from(*value));
             }
         }
 
@@ -209,10 +209,10 @@ impl<'a> LintContext<'a> {
             return true;
         }
         for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env) {
-                if env.contains_key(var) {
-                    return true;
-                }
+            if let Some(env) = GLOBALS.get(env)
+                && env.contains_key(var)
+            {
+                return true;
             }
         }
         false

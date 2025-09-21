@@ -171,12 +171,11 @@ impl NoSelfAssign {
                     let left = array_pattern.elements[i].as_ref();
                     let right = &array_expr.elements[i];
 
-                    if let Some(left) = left {
-                        if let Some(left_target) = left.as_assignment_target() {
-                            if let Some(expr) = right.as_expression() {
-                                self.each_self_assignment(left_target, expr, ctx);
-                            }
-                        }
+                    if let Some(left) = left
+                        && let Some(left_target) = left.as_assignment_target()
+                        && let Some(expr) = right.as_expression()
+                    {
+                        self.each_self_assignment(left_target, expr, ctx);
                     }
 
                     // After a spread element, those indices are unknown.
@@ -299,12 +298,11 @@ impl NoSelfAssign {
                 else {
                     return;
                 };
-                if key.static_name().is_some_and(|name| name == id1.binding.name) {
-                    if let Expression::Identifier(id2) = expr.without_parentheses() {
-                        if id1.binding.name == id2.name {
-                            ctx.diagnostic(no_self_assign_diagnostic(*span));
-                        }
-                    }
+                if key.static_name().is_some_and(|name| name == id1.binding.name)
+                    && let Expression::Identifier(id2) = expr.without_parentheses()
+                    && id1.binding.name == id2.name
+                {
+                    ctx.diagnostic(no_self_assign_diagnostic(*span));
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {

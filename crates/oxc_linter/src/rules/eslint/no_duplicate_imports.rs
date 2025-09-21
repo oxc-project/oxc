@@ -157,15 +157,15 @@ impl Rule for NoDuplicateImports {
             if previous_span != Some(span) {
                 previous_span = Some(span);
 
-                if let Some(existing) = import_map.get(source) {
-                    if can_merge_imports(&import_type, existing) {
-                        ctx.diagnostic(no_duplicate_imports_diagnostic(
-                            source,
-                            span,
-                            existing.first().unwrap().1,
-                        ));
-                        continue;
-                    }
+                if let Some(existing) = import_map.get(source)
+                    && can_merge_imports(&import_type, existing)
+                {
+                    ctx.diagnostic(no_duplicate_imports_diagnostic(
+                        source,
+                        span,
+                        existing.first().unwrap().1,
+                    ));
+                    continue;
                 }
             }
 
@@ -204,15 +204,15 @@ impl Rule for NoDuplicateImports {
                 let span = entry.span;
 
                 if entry.import_name.is_all_but_default() {
-                    if let Some(existing) = import_map.get(source) {
-                        if existing.iter().any(|(t, _, _)| matches!(t, ImportType::AllButDefault)) {
-                            ctx.diagnostic(no_duplicate_exports_diagnostic(
-                                source,
-                                span,
-                                existing.first().unwrap().1,
-                            ));
-                            continue;
-                        }
+                    if let Some(existing) = import_map.get(source)
+                        && existing.iter().any(|(t, _, _)| matches!(t, ImportType::AllButDefault))
+                    {
+                        ctx.diagnostic(no_duplicate_exports_diagnostic(
+                            source,
+                            span,
+                            existing.first().unwrap().1,
+                        ));
+                        continue;
                     }
                     if let Some(existing) = side_effect_import_map.get(source) {
                         ctx.diagnostic(no_duplicate_exports_diagnostic(
@@ -229,18 +229,17 @@ impl Rule for NoDuplicateImports {
                     ));
                     continue;
                 }
-                if let Some(existing) = import_map.get(source) {
-                    if existing
+                if let Some(existing) = import_map.get(source)
+                    && existing
                         .iter()
                         .any(|(t, _, _)| matches!(t, ImportType::Named | ImportType::SideEffect))
-                    {
-                        ctx.diagnostic(no_duplicate_exports_diagnostic(
-                            source,
-                            span,
-                            existing.first().unwrap().1,
-                        ));
-                        continue;
-                    }
+                {
+                    ctx.diagnostic(no_duplicate_exports_diagnostic(
+                        source,
+                        span,
+                        existing.first().unwrap().1,
+                    ));
+                    continue;
                 }
 
                 import_map.entry(source).or_default().push((
@@ -332,14 +331,13 @@ fn can_merge_imports(
                     }))
         }
         ImportType::Namespace => {
-            if has_named && has_default {
-                if let Some((_, named_span, _)) = named {
-                    if let Some((_, default_span, _)) = default {
-                        if named_span == default_span {
-                            return false;
-                        }
-                    }
-                }
+            if has_named
+                && has_default
+                && let Some((_, named_span, _)) = named
+                && let Some((_, default_span, _)) = default
+                && named_span == default_span
+            {
+                return false;
             }
 
             has_namespace || has_default

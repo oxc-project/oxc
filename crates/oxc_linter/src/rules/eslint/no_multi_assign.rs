@@ -134,13 +134,13 @@ impl Rule for NoMultiAssign {
         }
 
         // e.g. `let a; let b; a = b = 1;`
-        if !self.ignore_non_declaration {
-            if let AstKind::AssignmentExpression(parent_expr) = node.kind() {
-                let Expression::AssignmentExpression(expr) = &parent_expr.right else {
-                    return;
-                };
-                ctx.diagnostic(no_multi_assign_diagnostic(expr.span));
-            }
+        if !self.ignore_non_declaration
+            && let AstKind::AssignmentExpression(parent_expr) = node.kind()
+        {
+            let Expression::AssignmentExpression(expr) = &parent_expr.right else {
+                return;
+            };
+            ctx.diagnostic(no_multi_assign_diagnostic(expr.span));
         }
     }
 }

@@ -284,10 +284,12 @@ fn zwj_sequences(chars: &[&Character]) -> bool {
     for (index, &char) in chars.iter().enumerate() {
         let previous = if index > 0 { Some(chars[index - 1]) } else { None };
         let next = chars.get(index + 1).copied();
-        if let (Some(previous), Some(next)) = (previous, next) {
-            if char.value == 0x200D && previous.value != 0x200D && next.value != 0x200D {
-                return true;
-            }
+        if let (Some(previous), Some(next)) = (previous, next)
+            && char.value == 0x200D
+            && previous.value != 0x200D
+            && next.value != 0x200D
+        {
+            return true;
         }
     }
     false

@@ -109,10 +109,10 @@ fn unexpected_type_annotation(span: Span) -> OxcDiagnostic {
 
 pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
     for element in &pattern.elements {
-        if let Some(element) = element.as_ref() {
-            if let Some(type_annotation) = &element.type_annotation {
-                ctx.error(unexpected_type_annotation(type_annotation.span));
-            }
+        if let Some(element) = element.as_ref()
+            && let Some(type_annotation) = &element.type_annotation
+        {
+            ctx.error(unexpected_type_annotation(type_annotation.span));
         }
     }
 }
@@ -219,25 +219,22 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 
     if !class.r#declare && !ctx.in_declare_scope() {
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
-            if let Some(ClassElement::MethodDefinition(a)) = a {
-                if !a.r#type.is_abstract()
-                    && !a.optional
-                    && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-                    && b.is_none_or(|b| match b {
-                        ClassElement::StaticBlock(_)
-                        | ClassElement::PropertyDefinition(_)
-                        | ClassElement::AccessorProperty(_)
-                        | ClassElement::TSIndexSignature(_) => true,
-                        ClassElement::MethodDefinition(b) => {
-                            b.key.static_name() != a.key.static_name()
-                        }
-                    })
-                {
-                    if a.kind.is_constructor() {
-                        ctx.error(constructor_implementation_missing(a.key.span()));
-                    } else {
-                        ctx.error(function_implementation_missing(a.key.span()));
-                    }
+            if let Some(ClassElement::MethodDefinition(a)) = a
+                && !a.r#type.is_abstract()
+                && !a.optional
+                && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
+                && b.is_none_or(|b| match b {
+                    ClassElement::StaticBlock(_)
+                    | ClassElement::PropertyDefinition(_)
+                    | ClassElement::AccessorProperty(_)
+                    | ClassElement::TSIndexSignature(_) => true,
+                    ClassElement::MethodDefinition(b) => b.key.static_name() != a.key.static_name(),
+                })
+            {
+                if a.kind.is_constructor() {
+                    ctx.error(constructor_implementation_missing(a.key.span()));
+                } else {
+                    ctx.error(function_implementation_missing(a.key.span()));
                 }
             }
         }
@@ -423,12 +420,11 @@ pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &Semant
 }
 
 pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
-    if let Expression::FunctionExpression(func) = &prop.value {
-        if prop.kind.is_accessor()
-            && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
-        {
-            ctx.error(accessor_without_body(prop.key.span()));
-        }
+    if let Expression::FunctionExpression(func) = &prop.value
+        && prop.kind.is_accessor()
+        && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
+    {
+        ctx.error(accessor_without_body(prop.key.span()));
     }
 }
 

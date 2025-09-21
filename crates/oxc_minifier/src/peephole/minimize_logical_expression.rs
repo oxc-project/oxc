@@ -173,13 +173,13 @@ impl<'a> PeepholeOptimizations {
             return write_id_ref.name == read_id_ref.name;
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
-            if let MemberExpression::ComputedMemberExpression(e) = write_expr {
-                if !matches!(
+            if let MemberExpression::ComputedMemberExpression(e) = write_expr
+                && !matches!(
                     e.expression,
                     Expression::StringLiteral(_) | Expression::NumericLiteral(_)
-                ) {
-                    return false;
-                }
+                )
+            {
+                return false;
             }
             let has_same_object = match &write_expr.object() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
