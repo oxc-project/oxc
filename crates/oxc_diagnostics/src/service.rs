@@ -157,6 +157,7 @@ impl DiagnosticService {
         let mut errors_count: usize = 0;
 
         while let Ok((path, diagnostics)) = self.receiver.recv() {
+            let mut is_minified = false;
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
@@ -175,7 +176,7 @@ impl DiagnosticService {
                     }
                 }
 
-                if self.silent {
+                if self.silent || is_minified {
                     continue;
                 }
 
@@ -195,7 +196,8 @@ impl DiagnosticService {
                                 .or_else(Self::check_for_writer_error)
                                 .unwrap();
                         }
-                        break;
+                        is_minified = true;
+                        continue;
                     }
 
                     writer
