@@ -122,7 +122,11 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: s390x-unknown-linux-gnu
           tools: cross
-      - run: cross test --workspace --all-features --exclude website --target s390x-unknown-linux-gnu
+      - run: cross --version
+      # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
+      # https://github.com/cross-rs/cross/issues/1703
+      # Exclude NAPI crates because of linker errors.
+      - run: cross test --workspace --lib --bins --tests --all-features --exclude website --exclude oxc_minify_napi --exclude oxc_parser_napi --exclude oxc_playground_napi --exclude oxc_transform_napi --target s390x-unknown-linux-gnu
       # Run separately to avoid feature unification problems with `oxlint`
       - run: cross test -p website --target s390x-unknown-linux-gnu
 
