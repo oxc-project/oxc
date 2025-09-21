@@ -54,7 +54,7 @@ async function main() {
     pkg.files.push('browser-bundle.mjs');
     fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2));
 
-    // copy `browser-bundle.mjs` to `npm-dir/wasm32-wasi`
+    // copy `browser-bundle.mjs` to `<npmDir>/wasm32-wasi`
     fs.cpSync('browser-bundle.mjs', path.join(pkgDir, 'browser-bundle.mjs'));
   }
 }

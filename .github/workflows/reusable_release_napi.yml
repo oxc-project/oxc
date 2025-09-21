@@ -134,9 +134,10 @@ jobs:
         with:
           if-no-files-found: error
           name: bindings-${{ matrix.target }}
+          # `**/*.node` because in `napi/parser`, binaries are in `src-js` subdirectory
           path: |
-            napi/${{ inputs.name }}/*.node
-            napi/${{ inputs.name }}/*.wasm
+            napi/${{ inputs.name }}/**/*.node
+            napi/${{ inputs.name }}/**/*.wasm
 
   build-freebsd:
     needs: check
@@ -183,7 +184,8 @@ jobs:
         with:
           if-no-files-found: error
           name: bindings-freebsd
-          path: napi/${{ inputs.name }}/*.node
+          # `**/*.node` because in `napi/parser`, binary is in `src-js` subdirectory
+          path: napi/${{ inputs.name }}/**/*.node
 
   publish:
     name: Publish NAPI
@@ -207,11 +209,15 @@ jobs:
         with:
           path: artifacts
 
-      - run: mkdir -p release-dir
+      - run: mkdir -p ${npm_dir}
 
       - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
+      - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path}/src-js --npm-dir ${npm_dir}
+        if: ${{ inputs.name == 'parser' }}
+
       - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path} --npm-dir ${npm_dir}
+        if: ${{ inputs.name != 'parser' }}
 
       - run: pnpm -C ${package_path} build-browser-bundle --npmDir ../../${npm_dir}
         if: ${{ inputs.name == 'parser' }}
