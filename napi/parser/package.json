@@ -38,8 +38,25 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "files": [
-    "generated",
-    "src-js"
+    "generated/constants.mjs",
+    "generated/deserialize/js.mjs",
+    "generated/deserialize/ts.mjs",
+    "generated/lazy/constructors.mjs",
+    "generated/lazy/types.mjs",
+    "generated/lazy/walk.mjs",
+    "src-js/bindings.mjs",
+    "src-js/index.d.ts",
+    "src-js/index.mjs",
+    "src-js/wasm.mjs",
+    "src-js/webcontainer-fallback.js",
+    "src-js/wrap.mjs",
+    "src-js/raw-transfer/common.mjs",
+    "src-js/raw-transfer/eager.mjs",
+    "src-js/raw-transfer/lazy.mjs",
+    "src-js/raw-transfer/lazy-common.mjs",
+    "src-js/raw-transfer/node-array.mjs",
+    "src-js/raw-transfer/supported.mjs",
+    "src-js/raw-transfer/visitor.mjs"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
