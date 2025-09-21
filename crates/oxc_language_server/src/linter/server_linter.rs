@@ -562,9 +562,7 @@ mod test {
     #[test]
     fn test_cross_module_no_cycle_nested_config() {
         Tester::new("fixtures/linter/cross_module_nested_config", None)
-            .test_and_snapshot_single_file("dep-a.ts");
-        Tester::new("fixtures/linter/cross_module_nested_config", None)
-            .test_and_snapshot_single_file("folder/folder-dep-a.ts");
+            .test_and_snapshot_multiple_file(&["dep-a.ts", "folder/folder-dep-a.ts"]);
     }
 
     #[test]
@@ -603,8 +601,10 @@ mod test {
     #[test]
     fn test_root_ignore_patterns() {
         let tester = Tester::new("fixtures/linter/ignore_patterns", None);
-        tester.test_and_snapshot_single_file("ignored-file.ts");
-        tester.test_and_snapshot_single_file("another_config/not-ignored-file.ts");
+        tester.test_and_snapshot_multiple_file(&[
+            "ignored-file.ts",
+            "another_config/not-ignored-file.ts",
+        ]);
     }
 
     #[test]

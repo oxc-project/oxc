@@ -129,46 +129,68 @@ impl Tester<'_> {
         );
     }
 
-    #[expect(clippy::disallowed_methods)]
+    pub fn test_and_snapshot_multiple_file(&self, relative_file_paths: &[&str]) {
+        self.test_and_snapshot_multiple_file_with_run_type(
+            relative_file_paths,
+            self.options.as_ref().map_or(Run::default(), |o| o.run),
+        );
+    }
+
     pub fn test_and_snapshot_single_file_with_run_type(
         &self,
         relative_file_path: &str,
         run_type: Run,
     ) {
-        let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
-        let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
-            self.create_workspace_worker()
-                .await
-                .lint_file(
-                    &uri,
-                    None,
-                    match run_type {
-                        Run::OnSave => ServerLinterRun::OnSave,
-                        Run::OnType => ServerLinterRun::OnType,
-                    },
-                )
-                .await
-        });
-        let snapshot = if let Some(reports) = reports {
-            if reports.is_empty() {
-                "No diagnostic reports".to_string()
+        self.test_and_snapshot_multiple_file_with_run_type(&[relative_file_path], run_type);
+    }
+
+    #[expect(clippy::disallowed_methods)]
+    pub fn test_and_snapshot_multiple_file_with_run_type(
+        &self,
+        relative_file_paths: &[&str],
+        run_type: Run,
+    ) {
+        let mut snapshot_result = String::new();
+        for relative_file_path in relative_file_paths {
+            let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
+            let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
+                self.create_workspace_worker()
+                    .await
+                    .lint_file(
+                        &uri,
+                        None,
+                        match run_type {
+                            Run::OnSave => ServerLinterRun::OnSave,
+                            Run::OnType => ServerLinterRun::OnType,
+                        },
+                    )
+                    .await
+            });
+
+            let snapshot = if let Some(reports) = reports {
+                if reports.is_empty() {
+                    "No diagnostic reports".to_string()
+                } else {
+                    reports.iter().map(get_snapshot_from_report).collect::<Vec<_>>().join("\n")
+                }
             } else {
-                reports.iter().map(get_snapshot_from_report).collect::<Vec<_>>().join("\n")
-            }
-        } else {
-            "File is ignored".to_string()
-        };
+                "File is ignored".to_string()
+            };
+
+            let _ = write!(
+                snapshot_result,
+                "########## \nfile: {}/{relative_file_path}\n----------\n{snapshot}\n",
+                self.relative_root_dir
+            );
+        }
 
         let snapshot_name = self.relative_root_dir.replace('/', "_");
         let mut settings = insta::Settings::clone_current();
         settings.set_prepend_module_to_snapshot(false);
         settings.set_omit_expression(true);
-        if let Some(path) = uri.to_file_path() {
-            settings.set_input_file(path.as_ref());
-        }
-        settings.set_snapshot_suffix(relative_file_path.replace('/', "_"));
+        settings.set_snapshot_suffix(relative_file_paths.join("_").replace('\\', "/"));
         settings.bind(|| {
-            insta::assert_snapshot!(snapshot_name, snapshot);
+            insta::assert_snapshot!(snapshot_name, snapshot_result);
         });
     }
 }
