@@ -6,20 +6,36 @@ set shell := ["bash", "-cu"]
 _default:
   @just --list -u
 
+# ==================== ALIASES ====================
 alias r := ready
 alias c := conformance
 alias f := fix
-alias new-typescript-rule := new-ts-rule
 
-# Make sure you have cargo-binstall and pnpm installed.
-# You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
-# or install via `cargo install cargo-binstall`
-# Initialize the project by installing all the necessary tools.
+# ==================== SETUP & INITIALIZATION ====================
+
+# Initialize the project by installing all necessary tools
 init:
   # Rust related init
   cargo binstall watchexec-cli cargo-insta typos-cli cargo-shear dprint -y
   # Node.js related init
   pnpm install
+
+# Clone or update submodules
+submodules:
+  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262 baa48a416c9e9abd698a9010378eccf3d1f4ed1e
+  just clone-submodule tasks/coverage/babel https://github.com/babel/babel 41d96516130ff48f16eca9f387996c0272125f16
+  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript 261630d650c0c961860187bebc86e25c3707c05d
+  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier 7584432401a47a26943dd7a9ca9a8e032ead7285
+  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 090bba4ab63458850b294f55b17f2ca0ee982062
+  just clone-submodule tasks/coverage/node-compat-table https://github.com/williamkapke/node-compat-table ed0d6ba55790519d9ad3f6f776ca2cd303cc1e0b
+  just update-transformer-fixtures
+
+# Install git pre-commit hook to format files
+install-hook:
+  echo -e "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
+  chmod +x .git/hooks/pre-commit
+
+# ==================== CORE DEVELOPMENT ====================
 
 # When ready, run the same CI commands
 ready:
@@ -32,43 +48,6 @@ ready:
   just doc
   just ast
   git status
-
-# Clone or update submodules
-# Make sure to update `.github/actions/clone-submodules/action.yml` too
-submodules:
-  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262 baa48a416c9e9abd698a9010378eccf3d1f4ed1e
-  just clone-submodule tasks/coverage/babel https://github.com/babel/babel 41d96516130ff48f16eca9f387996c0272125f16
-  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript 261630d650c0c961860187bebc86e25c3707c05d
-  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier 7584432401a47a26943dd7a9ca9a8e032ead7285
-  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 090bba4ab63458850b294f55b17f2ca0ee982062
-  just clone-submodule tasks/coverage/node-compat-table https://github.com/williamkapke/node-compat-table ed0d6ba55790519d9ad3f6f776ca2cd303cc1e0b
-  just update-transformer-fixtures
-
-# Install git pre-commit to format files
-install-hook:
-  echo -e "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
-  chmod +x .git/hooks/pre-commit
-
-watch *args='':
-  watchexec --no-vcs-ignore {{args}}
-
-watch-check:
-  just watch "'cargo check; cargo clippy'"
-
-# Run the example in `parser`, `formatter`, `linter`
-example tool *args='':
-  cargo run -p oxc_{{tool}} --example {{tool}} -- {{args}}
-
-watch-example *args='':
-  just watch 'just example {{args}}'
-
-# Build oxlint in release build; Run with `./target/release/oxlint`.
-oxlint :
-  cargo oxlint
-
-# Watch oxlint
-watch-oxlint *args='':
-  just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
 
 # Run cargo check
 check:
@@ -96,14 +75,39 @@ doc:
 doc:
   $Env:RUSTDOCFLAGS='-D warnings'; cargo doc --no-deps --document-private-items
 
-# Fix all auto-fixable format and lint issues. Make sure your working tree is clean first.
+# Fix all auto-fixable format and lint issues
 fix:
   cargo clippy --fix --allow-staged --no-deps
   just fmt
   typos -w
   git status
 
-# Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`
+# ==================== DEVELOPMENT TOOLS ====================
+
+watch *args='':
+  watchexec --no-vcs-ignore {{args}}
+
+watch-check:
+  just watch "'cargo check; cargo clippy'"
+
+watch-example *args='':
+  just watch 'just example {{args}}'
+
+# Run examples in parser, formatter, linter
+example tool *args='':
+  cargo run -p oxc_{{tool}} --example {{tool}} -- {{args}}
+
+# Run the benchmarks
+benchmark:
+  cargo benchmark
+
+# Run benchmarks for a single component
+benchmark-one *args:
+  cargo benchmark --bench {{args}} --no-default-features --features {{args}}
+
+# ==================== TESTING & CONFORMANCE ====================
+
+# Run all conformance tests
 coverage:
   cargo coverage
   cargo run -p oxc_transform_conformance -- --exec
@@ -113,34 +117,63 @@ coverage:
 conformance *args='':
   cargo coverage -- {{args}}
 
-# Generate AST related boilerplate code.
-# Run this when AST definition is changed.
-ast:
-  cargo run -p oxc_ast_tools
-  just check
+# Test ESTree
+test-estree *args='':
+  cargo run -p oxc_coverage --profile coverage -- estree {{args}}
 
 # Get code coverage
 codecov:
   cargo codecov --html
 
-# Run the benchmarks. See `tasks/benchmark`
-benchmark:
-  cargo benchmark
+# ==================== AST & CODEGEN ====================
 
-# Run the benchmarks for a single component.
-# e.g. `just benchmark-one parser`.
-# See `tasks/benchmark`.
-benchmark-one *args:
-  cargo benchmark --bench {{args}} --no-default-features --features {{args}}
+# Generate AST related boilerplate code
+ast:
+  cargo run -p oxc_ast_tools
+  just check
 
-# Update memory allocation snapshots.
-allocs:
-  cargo allocs
+# ==================== PARSER ====================
 
-# Automatically DRY up Cargo.toml manifests in a workspace.
-autoinherit:
-  cargo binstall cargo-autoinherit
-  cargo autoinherit
+# Parser-specific commands will be added here as needed
+
+# ==================== LINTER ====================
+
+# Build oxlint in release build
+oxlint:
+  cargo oxlint
+
+watch-oxlint *args='':
+  just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
+
+# Create a new lint rule for any plugin
+new-rule name plugin='eslint':
+  cargo run -p rulegen {{name}} {{plugin}}
+
+# Legacy aliases for backward compatibility
+new-jest-rule name: (new-rule name "jest")
+new-ts-rule name: (new-rule name "typescript")
+new-unicorn-rule name: (new-rule name "unicorn")
+new-import-rule name: (new-rule name "import")
+new-react-rule name: (new-rule name "react")
+new-jsx-a11y-rule name: (new-rule name "jsx-a11y")
+new-oxc-rule name: (new-rule name "oxc")
+new-nextjs-rule name: (new-rule name "nextjs")
+new-jsdoc-rule name: (new-rule name "jsdoc")
+new-react-perf-rule name: (new-rule name "react-perf")
+new-n-rule name: (new-rule name "n")
+new-promise-rule name: (new-rule name "promise")
+new-vitest-rule name: (new-rule name "vitest")
+new-regexp-rule name: (new-rule name "regexp")
+new-vue-rule name: (new-rule name "vue")
+
+# Alias for backward compatibility
+alias new-typescript-rule := new-ts-rule
+
+# ==================== FORMATTER ====================
+
+# Formatter-specific commands will be added here as needed
+
+# ==================== TRANSFORMER ====================
 
 # Test Transform
 test-transform *args='':
@@ -151,68 +184,56 @@ update-transformer-fixtures:
   cd tasks/coverage/babel; git reset --hard HEAD; git clean -f -q
   node tasks/transform_conformance/update_fixtures.mjs
 
-# Test ESTree
-test-estree *args='':
-  cargo run -p oxc_coverage --profile coverage -- estree {{args}}
+# ==================== MINIFIER ====================
+
+# Update minifier size snapshots
+minsize:
+  cargo minsize
+  just allocs
+
+# Update memory allocation snapshots
+allocs:
+  cargo allocs
+
+# Generate minifier size comparison
+minifier-diff:
+  #!/usr/bin/env bash
+  cargo minsize --compress-only pr
+  git checkout main
+  cargo minsize --compress-only main
+  for file in antd bundle.min d3 echarts jquery lodash moment react.development three typescript victory vue
+  do
+      echo $file.js >> diff
+      diff target/minifier/main/$file.js target/minifier/pr/$file.js >> diff
+  done
+  git checkout -
+
+# ==================== PLAYGROUND ====================
 
 # Install wasm32-wasip1-threads for playground
 install-wasm:
   rustup target add wasm32-wasip1-threads
 
-watch-playground:
-  just watch 'pnpm --filter oxc-playground build-dev'
-
 build-playground:
   pnpm --filter oxc-playground build
 
-# Create a new lint rule by providing the ESLint name. See `tasks/rulegen`
-new-rule name:
-  cargo run -p rulegen {{name}}
+watch-playground:
+  just watch 'pnpm --filter oxc-playground build-dev'
 
-new-jest-rule name:
-  cargo run -p rulegen {{name}} jest
+# ==================== UTILITIES & ADVANCED ====================
 
-new-ts-rule name:
-  cargo run -p rulegen {{name}} typescript
+# Generate website documentation
+website path:
+  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
+  cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
+  cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
 
-new-unicorn-rule name:
-  cargo run -p rulegen {{name}} unicorn
+# Automatically DRY up Cargo.toml manifests in a workspace
+autoinherit:
+  cargo binstall cargo-autoinherit
+  cargo autoinherit
 
-new-import-rule name:
-  cargo run -p rulegen {{name}} import
-
-new-react-rule name:
-  cargo run -p rulegen {{name}} react
-
-new-jsx-a11y-rule name:
-  cargo run -p rulegen {{name}} jsx-a11y
-
-new-oxc-rule name:
-  cargo run -p rulegen {{name}} oxc
-
-new-nextjs-rule name:
-  cargo run -p rulegen {{name}} nextjs
-
-new-jsdoc-rule name:
-  cargo run -p rulegen {{name}} jsdoc
-
-new-react-perf-rule name:
-    cargo run -p rulegen {{name}} react-perf
-
-new-n-rule name:
-    cargo run -p rulegen {{name}} n
-
-new-promise-rule name:
-    cargo run -p rulegen {{name}} promise
-
-new-vitest-rule name:
-    cargo run -p rulegen {{name}} vitest
-
-new-regexp-rule name:
-    cargo run -p rulegen {{name}} regexp
-
-new-vue-rule name:
-    cargo run -p rulegen {{name}} vue
+# ==================== PLATFORM HELPERS ====================
 
 [unix]
 clone-submodule dir url sha:
@@ -225,24 +246,3 @@ clone-submodule dir url sha:
   if (-not (Test-Path {{dir}}/.git)) { git init {{dir}} }
   cd {{dir}} ; if ((git remote) -notcontains 'origin') { git remote add origin {{url}} } else { git remote set-url origin {{url}} }
   cd {{dir}} ; git fetch --depth=1 origin {{sha}} ; git reset --hard {{sha}} ; git clean -f -q
-
-website path:
-  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD)
-  cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
-  cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
-
-minsize:
-    cargo minsize
-    just allocs
-
-minifier-diff:
-  #!/usr/bin/env bash
-  cargo minsize --compress-only pr
-  git checkout main
-  cargo minsize --compress-only main
-  for file in antd bundle.min d3 echarts jquery lodash moment react.development three typescript victory vue
-  do
-      echo $file.js >> diff
-      diff target/minifier/main/$file.js target/minifier/pr/$file.js >> diff
-  done
-  git checkout -
