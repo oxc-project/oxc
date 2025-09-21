@@ -6,6 +6,11 @@ permissions: {}
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "**.rs"
+      - ".github/workflows/codecov.yml"
   push:
     branches:
       - main
