@@ -2002,6 +2002,7 @@ dependencies = [
 name = "oxc_language_server"
 version = "1.16.0"
 dependencies = [
+ "dashmap",
  "env_logger",
  "futures",
  "ignore",
@@ -2029,6 +2030,7 @@ dependencies = [
  "constcat",
  "convert_case",
  "cow-utils",
+ "dashmap",
  "fast-glob",
  "icu_segmenter",
  "ignore",
@@ -2547,6 +2549,7 @@ version = "1.16.0"
 dependencies = [
  "bpaf",
  "cow-utils",
+ "dashmap",
  "ignore",
  "insta",
  "lazy-regex",

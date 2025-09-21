@@ -42,6 +42,9 @@ mod generated {
     mod rule_runner_impls;
 }
 
+pub use crate::disable_directives::{
+    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+};
 pub use crate::{
     config::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
@@ -109,8 +112,7 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
-        self.options.report_unused_directive = report_config;
+    pub fn with_report_unused_directives(self, _report_config: Option<AllowWarnDeny>) -> Self {
         self
     }
 
@@ -138,7 +140,19 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message<'a>> {
+        self.run_with_disable_directives(path, context_sub_hosts, allocator).0
+    }
+
+    /// Same as `run` but also returns the disable directives for the file
+    pub fn run_with_disable_directives<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+    ) -> (Vec<Message<'a>>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+
+        let has_context = !context_sub_hosts.is_empty();
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
@@ -302,11 +316,7 @@ impl Linter {
 
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
-            if let Some(severity) = self.options.report_unused_directive
-                && severity.is_warn_deny()
-            {
-                ctx_host.report_unused_directives(severity.into());
-            }
+            // Report unused directives is now handled differently with type-aware linting
 
             // no next `<script>` block found, the complete file is finished linting
             if !ctx_host.next_sub_host() {
@@ -319,7 +329,10 @@ impl Linter {
             }
         }
 
-        ctx_host.take_diagnostics()
+        let disable_directives =
+            if has_context { Some(ctx_host.disable_directives().clone()) } else { None };
+
+        (ctx_host.take_diagnostics(), disable_directives)
     }
 
     fn run_external_rules<'a>(

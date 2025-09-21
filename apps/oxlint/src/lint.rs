@@ -311,9 +311,12 @@ impl LintRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
+        let linter_report_unused =
+            if self.options.type_aware { None } else { report_unused_directives };
+
         let linter = Linter::new(LintOptions::default(), config_store.clone(), external_linter)
             .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+            .with_report_unused_directives(linter_report_unused);
 
         let number_of_files = files_to_lint.len();
 
@@ -340,11 +343,13 @@ impl LintRunner {
 
         let cwd = options.cwd().to_path_buf();
 
-        // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
-        {
+        let disable_directives_map = std::sync::Arc::new(dashmap::DashMap::new());
+
+        let regular_lint_handle = {
             let tx_error = tx_error.clone();
             let files_to_lint = files_to_lint.clone();
-            rayon::spawn(move || {
+            let disable_directives_map_clone = disable_directives_map.clone();
+            std::thread::spawn(move || {
                 let has_external_linter = linter.has_external_linter();
 
                 let mut lint_service = LintService::new(linter, options);
@@ -371,20 +376,88 @@ impl LintRunner {
                     );
                 }
 
+                lint_service.set_disable_directives_map(disable_directives_map_clone);
                 lint_service.run(&tx_error);
-            });
-        }
+            })
+        };
 
         // Run type-aware linting through tsgolint
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         if self.options.type_aware {
-            if let Err(err) = TsGoLintState::try_new(&cwd, config_store).and_then(|state| {
-                state.with_silent(misc_options.silent).lint(&files_to_lint, tx_error)
-            }) {
+            regular_lint_handle.join().unwrap();
+            if let Err(err) =
+                TsGoLintState::try_new(&cwd, config_store, disable_directives_map.clone()).and_then(
+                    |state| state.with_silent(misc_options.silent).lint(&files_to_lint, tx_error),
+                )
+            {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;
             }
+
+            if let Some(severity) = report_unused_directives {
+                for entry in disable_directives_map.iter() {
+                    let (path, directives) = (entry.key(), entry.value());
+                    let unused = directives.collect_unused_disable_comments();
+                    if !unused.is_empty() {
+                        use oxc_linter::RuleCommentType;
+
+                        let mut diagnostics = Vec::new();
+                        let message_for_disable =
+                            "Unused eslint-disable directive (no problems were reported).";
+
+                        for unused_comment in unused {
+                            let span = unused_comment.span;
+                            match unused_comment.r#type {
+                                RuleCommentType::All => {
+                                    diagnostics.push(
+                                        OxcDiagnostic::warn(message_for_disable)
+                                            .with_label(span)
+                                            .with_severity(if severity == AllowWarnDeny::Deny {
+                                                oxc_diagnostics::Severity::Error
+                                            } else {
+                                                oxc_diagnostics::Severity::Warning
+                                            }),
+                                    );
+                                }
+                                RuleCommentType::Single(rules) => {
+                                    for rule in rules {
+                                        let rule_message = format!(
+                                            "Unused eslint-disable directive (no problems were reported from {}).",
+                                            rule.rule_name
+                                        );
+                                        diagnostics.push(
+                                            OxcDiagnostic::warn(rule_message)
+                                                .with_label(rule.name_span)
+                                                .with_severity(
+                                                    if severity == AllowWarnDeny::Deny {
+                                                        oxc_diagnostics::Severity::Error
+                                                    } else {
+                                                        oxc_diagnostics::Severity::Warning
+                                                    },
+                                                ),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+
+                        if !diagnostics.is_empty() {
+                            let source_text =
+                                std::fs::read_to_string(path.as_path()).unwrap_or_default();
+                            let wrapped = oxc_diagnostics::DiagnosticService::wrap_diagnostics(
+                                &cwd,
+                                path.clone(),
+                                &source_text,
+                                diagnostics,
+                            );
+                            tx_error.send((path.clone(), wrapped)).unwrap();
+                        }
+                    }
+                }
+            }
+            drop(tx_error);
         } else {
+            regular_lint_handle.join().unwrap();
             drop(tx_error);
         }
 
@@ -1307,5 +1380,25 @@ mod test {
         // tsgolint shouldn't run when no files need type aware linting
         let args = &["--type-aware", "test.svelte"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[cfg(not(target_endian = "big"))]
+    #[test]
+    fn test_tsgolint_unused_disable_directives() {
+        // Test that unused disable directives are reported with type-aware rules
+        let args = &["--type-aware", "--report-unused-disable-directives", "unused.ts"];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint_disable_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[cfg(not(target_endian = "big"))]
+    #[test]
+    fn test_tsgolint_disable_directives() {
+        // Test that disable directives work with type-aware rules
+        let args = &["--type-aware", "test.ts"];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint_disable_directives".into())
+            .test_and_snapshot(args);
     }
 }

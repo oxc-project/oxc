@@ -85,6 +85,15 @@ impl LintService {
         self.runtime.run(tx_error);
     }
 
+    pub fn set_disable_directives_map(
+        &mut self,
+        map: std::sync::Arc<
+            dashmap::DashMap<std::path::PathBuf, crate::disable_directives::DisableDirectives>,
+        >,
+    ) {
+        self.runtime.set_disable_directives_map(map);
+    }
+
     #[cfg(feature = "language_server")]
     pub fn run_source<'a>(
         &mut self,
