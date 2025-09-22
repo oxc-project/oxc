@@ -62,7 +62,7 @@ impl Rule for NoAbusiveEslintDisable {
                 }
                 RuleCommentType::Single(rules) => {
                     for rule in rules {
-                        if !is_valid_rule_name(rule.rule_name) {
+                        if !is_valid_rule_name(&rule.rule_name) {
                             ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
                         }
                     }

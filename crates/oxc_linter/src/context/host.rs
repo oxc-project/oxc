@@ -32,7 +32,7 @@ pub struct ContextSubHost<'a> {
     pub(super) module_record: Arc<ModuleRecord>,
     /// Information about specific rules that should be disabled or enabled, via comment directives like
     /// `eslint-disable` or `eslint-disable-next-line`.
-    pub(super) disable_directives: DisableDirectives<'a>,
+    pub(super) disable_directives: DisableDirectives,
     // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
     pub(super) framework_options: FrameworkOptions,
     /// The source text offset of the sub host
@@ -93,7 +93,7 @@ impl<'a> ContextSubHost<'a> {
     }
 
     /// Shared reference to the [`DisableDirectives`]
-    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
+    pub fn disable_directives(&self) -> &DisableDirectives {
         &self.disable_directives
     }
 }
@@ -202,7 +202,7 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Shared reference to the [`DisableDirectives`] of the current script block.
-    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
+    pub fn disable_directives(&self) -> &DisableDirectives {
         &self.current_sub_host().disable_directives
     }
 
@@ -309,7 +309,7 @@ impl<'a> ContextHost<'a> {
             "Unused eslint-enable directive (no matching eslint-disable directives were found).";
         for (rule_name, enable_comment_span) in self.disable_directives().unused_enable_comments() {
             unused_directive_diagnostics.push((
-                rule_name.map_or(Cow::Borrowed(message_for_enable), |name| {
+                rule_name.as_ref().map_or(Cow::Borrowed(message_for_enable), |name| {
                     Cow::Owned(format!(
                         "Unused eslint-enable directive (no matching eslint-disable directives were found for {name})."
                     ))
