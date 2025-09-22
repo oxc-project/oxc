@@ -717,6 +717,390 @@ describe('parse', () => {
       expect(ret.program.body[0].range).toBeUndefined();
     });
   });
+
+  describe('loc', () => {
+    it('should include loc when true', () => {
+      const ret = parseSync('test.js', 'let x = 1;', { loc: true });
+      expect(ret.program.body[0].start).toBe(0);
+      expect(ret.program.body[0].end).toBe(10);
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 }
+      });
+    });
+
+    it('should not include loc when false', () => {
+      const ret = parseSync('test.js', 'let x = 1;', { loc: false });
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toBeUndefined();
+    });
+
+    it('should not include loc by default', () => {
+      const ret = parseSync('test.js', 'let x = 1;');
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toBeUndefined();
+    });
+
+    it('should handle multiline code correctly', () => {
+      const code = `let x = 1;
+let y = 2;
+let z = 3;`;
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // First declaration: let x = 1;
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 }
+      });
+
+      // Second declaration: let y = 2;
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 }
+      });
+
+      // Third declaration: let z = 3;
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[2].loc).toEqual({
+        start: { line: 3, column: 0 },
+        end: { line: 3, column: 10 }
+      });
+    });
+
+    it('should handle nested nodes correctly', () => {
+      const code = 'function foo() {\n  return 42;\n}';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const functionDecl = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(functionDecl.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 3, column: 1 }
+      });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      const returnStmt = functionDecl.body.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(returnStmt.loc).toEqual({
+        start: { line: 2, column: 2 },
+        end: { line: 2, column: 11 }
+      });
+    });
+
+    it('should work with both range and loc options', () => {
+      const ret = parseSync('test.js', 'let x = 1;', { range: true, loc: true });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].range).toEqual([0, 10]);
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 }
+      });
+    });
+
+    it('should handle Unicode characters correctly', () => {
+      const code = 'let 🤨 = "hello";';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 17 }
+      });
+    });
+
+    it('should handle different line endings', () => {
+      // Test with \r\n line endings
+      const codeWindows = 'let x = 1;\r\nlet y = 2;';
+      const retWindows = parseSync('test.js', codeWindows, { loc: true });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(retWindows.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 }
+      });
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(retWindows.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 }
+      });
+
+      // Test with \r line endings (old Mac)
+      const codeMac = 'let x = 1;\rlet y = 2;';
+      const retMac = parseSync('test.js', codeMac, { loc: true });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(retMac.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 }
+      });
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(retMac.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 }
+      });
+    });
+
+    it('should handle expressions and identifiers correctly', () => {
+      const code = 'const result = foo + bar;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      const declarator = varDecl.declarations[0];
+
+      // Identifier 'result'
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.id.loc).toEqual({
+        start: { line: 1, column: 6 },
+        end: { line: 1, column: 12 }
+      });
+
+      // Binary expression 'foo + bar'
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 15 },
+        end: { line: 1, column: 24 }
+      });
+
+      // Left identifier 'foo'
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.init.left.loc).toEqual({
+        start: { line: 1, column: 15 },
+        end: { line: 1, column: 18 }
+      });
+
+      // Right identifier 'bar'
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.init.right.loc).toEqual({
+        start: { line: 1, column: 21 },
+        end: { line: 1, column: 24 }
+      });
+    });
+
+    it('should handle empty lines correctly', () => {
+      const code = 'let x = 1;\n\nlet y = 2;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 }
+      });
+
+      // Second statement should be on line 3 (skipping empty line 2)
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[1].loc).toEqual({
+        start: { line: 3, column: 0 },
+        end: { line: 3, column: 10 }
+      });
+    });
+
+    it('should handle comments with loc', () => {
+      const code = '/* comment */ let x = 1;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // Variable declaration should start after the comment
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 14 },
+        end: { line: 1, column: 24 }
+      });
+
+      // Comment should also have loc
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.comments[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 13 }
+      });
+    });
+
+    it('should handle TypeScript specific nodes with loc', () => {
+      const code = 'interface User {\n  name: string;\n  age: number;\n}';
+      const ret = parseSync('test.ts', code, { loc: true });
+
+      const interfaceDecl = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(interfaceDecl.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 4, column: 1 }
+      });
+    });
+
+    it('should handle complex expressions with correct column positions', () => {
+      const code = 'const obj = { foo: bar.baz().qux, hello: "world" };';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      const declarator = varDecl.declarations[0];
+
+      // Object expression
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 12 },
+        end: { line: 1, column: 51 }
+      });
+
+      // First property
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.init.properties[0].loc).toEqual({
+        start: { line: 1, column: 14 },
+        end: { line: 1, column: 33 }
+      });
+    });
+
+    it('should handle string literals with escapes', () => {
+      const code = 'const str = "hello\\nworld";';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      const declarator = varDecl.declarations[0];
+
+      // String literal
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 12 },
+        end: { line: 1, column: 26 }
+      });
+    });
+
+    it('should handle template literals across multiple lines', () => {
+      const code = 'const template = `line1\nline2\nline3`;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      const declarator = varDecl.declarations[0];
+
+      // Template literal spanning multiple lines
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 17 },
+        end: { line: 3, column: 6 }
+      });
+    });
+
+    it('should handle zero-length nodes correctly', () => {
+      const code = 'for (;;) {}';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const forStmt = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(forStmt.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 11 }
+      });
+    });
+
+    it('should handle arrow functions with different syntaxes', () => {
+      const code = `const fn1 = () => 42;
+const fn2 = (x) => {
+  return x * 2;
+};`;
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // First arrow function (single expression)
+      const firstDecl = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(firstDecl.declarations[0].init.loc).toEqual({
+        start: { line: 1, column: 12 },
+        end: { line: 1, column: 21 }
+      });
+
+      // Second arrow function (block body)
+      const secondDecl = ret.program.body[1];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(secondDecl.declarations[0].init.loc).toEqual({
+        start: { line: 2, column: 12 },
+        end: { line: 4, column: 1 }
+      });
+    });
+
+    it('should handle async functions correctly', () => {
+      const code = 'async function fetchData() {\n  return await fetch("/api");\n}';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const asyncFn = ret.program.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(asyncFn.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 3, column: 1 }
+      });
+
+      // Return statement with await expression
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      const returnStmt = asyncFn.body.body[0];
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(returnStmt.loc).toEqual({
+        start: { line: 2, column: 2 },
+        end: { line: 2, column: 26 }
+      });
+    });
+
+    it('should work with parseAsync as well', async () => {
+      const code = 'let x = 1;\nlet y = 2;';
+      const ret = await parseAsync('test.js', code, { loc: true });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 }
+      });
+
+      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
+      // @ts-ignore
+      expect(ret.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 }
+      });
+    });
+  });
 });
 
 describe('UTF-16 span', () => {
