@@ -26,20 +26,21 @@ impl Tester {
         Self { cwd }
     }
 
+    #[must_use]
+    pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
+        self.cwd.push(cwd);
+        self
+    }
+
     /// Runs a test without creating a snapshot (for write mode tests).
     ///
     /// # Panics
     /// Panics if command parsing fails.
-    fn test(args: &[&str]) {
+    fn test(&self, args: &[&str]) {
         let command = format_command().run_inner(args).unwrap();
         let mut output = Vec::new();
-        FormatRunner::new(command).run(&mut output);
+        FormatRunner::new(command).with_cwd(self.cwd.clone()).run(&mut output);
     }
-
-    // ///Runs a single test case and creates a snapshot.
-    // pub fn test_and_snapshot(&self, args: &[&str]) {
-    //     self.test_and_snapshot_multiple(&[args]);
-    // }
 
     /// Runs multiple test cases and creates snapshots.
     ///
@@ -60,7 +61,7 @@ impl Tester {
                 format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
             );
             output.extend_from_slice(b"----------\n");
-            let result = FormatRunner::new(options).run(&mut output);
+            let result = FormatRunner::new(options).with_cwd(self.cwd.clone()).run(&mut output);
 
             output.extend_from_slice(b"----------\n");
             output.extend_from_slice(format!("CLI result: {result:?}\n").as_bytes());
@@ -79,9 +80,14 @@ impl Tester {
         let output_string = regex.replace_all(output_string, "<variable>ms").into_owned();
 
         // do not output the current working directory, each machine has a different one
-        let cwd_string = current_cwd.to_str().unwrap();
-        let cwd_string = cwd_string.cow_replace('\\', "/").to_string(); // for windows
-        let output_string = output_string.cow_replace(&cwd_string, "<cwd>");
+        let current_cwd_string = current_cwd.to_str().unwrap();
+        let current_cwd_string = current_cwd_string.cow_replace('\\', "/").to_string(); // for windows
+        let output_string = output_string.cow_replace(&current_cwd_string, "<cwd>");
+
+        // Also replace the test cwd path
+        let test_cwd_string = self.cwd.to_str().unwrap();
+        let test_cwd_string = test_cwd_string.cow_replace('\\', "/").to_string(); // for windows
+        let output_string = output_string.cow_replace(&test_cwd_string, "<cwd>");
 
         let full_args_list =
             multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
@@ -105,8 +111,8 @@ impl Tester {
         // Write initial content to file
         fs::write(file, before).unwrap();
 
-        // Run formatter with --write flag
-        Self::test(&["-w", file]);
+        // Run formatter (default is write mode)
+        Self::new().test(&[file]);
 
         // Verify file was modified correctly
         #[expect(clippy::disallowed_methods)]
@@ -114,8 +120,8 @@ impl Tester {
         assert_eq!(new_content, after, "Formatted file content doesn't match expected");
 
         let modified_before = fs::metadata(file).unwrap().modified().unwrap();
-        // Run formatter again with --write flag
-        Self::test(&["-w", file]);
+        // Run formatter again (default is write mode)
+        Self::new().test(&[file]);
 
         let modified_after = fs::metadata(file).unwrap().modified().unwrap();
         assert_eq!(

@@ -556,11 +556,14 @@ impl Rule for ExhaustiveDeps {
                 }
             }
 
-            ctx.diagnostic(unnecessary_outer_scope_dependency_diagnostic(
-                hook_name,
-                &dependency.name,
-                dependency.span,
-            ));
+            ctx.diagnostic_with_fix(
+                unnecessary_outer_scope_dependency_diagnostic(
+                    hook_name,
+                    &dependency.name,
+                    dependency.span,
+                ),
+                |fixer| fix::remove_dependency(fixer, dependency, dependencies_node),
+            );
         }
 
         let undeclared_deps = found_dependencies.difference(&declared_dependencies).filter(|dep| {
@@ -628,9 +631,12 @@ impl Rule for ExhaustiveDeps {
             if dep.chain.is_empty() && is_symbol_declaration_referentially_unique(symbol_id, ctx) {
                 let name = ctx.scoping().symbol_name(symbol_id);
                 let decl_span = ctx.scoping().symbol_span(symbol_id);
-                ctx.diagnostic(dependency_changes_on_every_render_diagnostic(
-                    hook_name, dep.span, name, decl_span,
-                ));
+                ctx.diagnostic_with_dangerous_suggestion(
+                    dependency_changes_on_every_render_diagnostic(
+                        hook_name, dep.span, name, decl_span,
+                    ),
+                    |fixer| fix::remove_dependency(fixer, &dep, dependencies_node),
+                );
             }
         }
     }
@@ -1068,10 +1074,15 @@ fn is_stable_value<'a, 'b>(
                         ctx.scoping().get_reference(ident_reference_id).symbol_id().unwrap(),
                     )
                     .any(|reference| {
-                        matches!(
-                            ctx.nodes().parent_kind(reference.node_id()),
-                            AstKind::IdentifierReference(_) | AstKind::AssignmentExpression(_)
-                        )
+                        if let AstKind::AssignmentExpression(assignment_expression) =
+                            ctx.nodes().parent_kind(reference.node_id())
+                        {
+                            assignment_expression.left.span().contains_inclusive(
+                                ctx.nodes().get_node(reference.node_id()).span(),
+                            )
+                        } else {
+                            false
+                        }
                     })
             {
                 return true;
@@ -1464,10 +1475,16 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 mod fix {
     use super::Name;
     use oxc_allocator::{Allocator, CloneIn};
-    use oxc_ast::{AstBuilder, ast::ArrayExpression};
-    use oxc_span::{Atom, SPAN};
+    use oxc_ast::{
+        AstBuilder,
+        ast::{ArrayExpression, Expression},
+    };
+    use oxc_span::{Atom, GetSpan, SPAN};
 
-    use crate::fixer::{RuleFix, RuleFixer};
+    use crate::{
+        fixer::{RuleFix, RuleFixer},
+        rules::react::exhaustive_deps::Dependency,
+    };
 
     pub fn append_dependencies<'c, 'a: 'c>(
         fixer: RuleFixer<'c, 'a>,
@@ -1490,6 +1507,29 @@ mod fix {
         }
 
         codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        fixer.replace(deps.span, codegen.into_source_text())
+    }
+
+    pub fn remove_dependency<'c, 'a: 'c>(
+        fixer: RuleFixer<'c, 'a>,
+        dependency: &Dependency,
+        deps: &ArrayExpression<'a>,
+    ) -> RuleFix<'a> {
+        let mut codegen = fixer.codegen();
+
+        let alloc = Allocator::default();
+        let ast_builder = AstBuilder::new(&alloc);
+
+        let new_deps = deps
+            .elements
+            .iter()
+            .filter(|el| (*el).span() != dependency.span)
+            .map(|el| el.clone_in(&alloc));
+
+        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
+            deps.span,
+            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
+        )));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 }
@@ -2565,6 +2605,7 @@ fn test() {
         r"function MyComponent(props) { useEffect(() => { console.log((props.foo).bar) }, [props.foo!.bar]) }",
         r"function MyComponent(props) { const external = {}; const y = useMemo(() => { const z = foo<typeof external>(); return z; }, []) }",
         r#"function Test() { const [state, setState] = useState(); useEffect(() => { console.log("state", state); }); }"#,
+        "function Test() { const [foo, setFoo] = useState(true); _setFoo = setFoo; useEffect(() => { setFoo(false) }, []); }",
     ];
 
     let fail = vec![
@@ -4128,6 +4169,47 @@ fn test() {
         //     // None,
         //     // FixKind::DangerousSuggestion,
         // ),
+        // Test missing dependency fixes
+        (
+            "function MyComponent() { const local = someFunc(); useEffect(() => { console.log(local); }, []); }",
+            "function MyComponent() { const local = someFunc(); useEffect(() => { console.log(local); }, [local]); }",
+        ),
+        (
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo); }, []); }",
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo); }, [props.foo]); }",
+        ),
+        (
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo, props.bar); }, []); }",
+            "function MyComponent(props) { useEffect(() => { console.log(props.foo, props.bar); }, [props.foo, props.bar]); }",
+        ),
+        // Test adding to existing dependencies
+        (
+            "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo]); }",
+            "function MyComponent(props) { const local = someFunc(); useEffect(() => { console.log(props.foo, local); }, [props.foo, local]); }",
+        ),
+        // Test dependency array creation for hooks that require it
+        (
+            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }); }",
+            "function MyComponent() { const fn = useCallback(() => { alert('foo'); }, []); }",
+        ),
+        (
+            "function MyComponent() { const value = useMemo(() => { return 2*2; }); }",
+            "function MyComponent() { const value = useMemo(() => { return 2*2; }, []); }",
+        ),
+        // Test unnecessary dependency removal for non-effect hooks
+        (
+            "function MyComponent() { const local1 = {}; useCallback(() => {}, [local1]); }",
+            "function MyComponent() { const local1 = {}; useCallback(() => {}, []); }",
+        ),
+        // Test duplicate dependency removal
+        (
+            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local, local]); }",
+            "function MyComponent() { const local = {}; useEffect(() => { console.log(local); }, [local]); }",
+        ),
+        (
+            "const x = {}; function Comp() { useEffect(() => {}, [x]) }",
+            "const x = {}; function Comp() { useEffect(() => {}, []) }",
+        ),
     ];
 
     Tester::new(

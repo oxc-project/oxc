@@ -32,7 +32,7 @@ pub struct ContextSubHost<'a> {
     pub(super) module_record: Arc<ModuleRecord>,
     /// Information about specific rules that should be disabled or enabled, via comment directives like
     /// `eslint-disable` or `eslint-disable-next-line`.
-    pub(super) disable_directives: Rc<DisableDirectives<'a>>,
+    pub(super) disable_directives: DisableDirectives<'a>,
     // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
     pub(super) framework_options: FrameworkOptions,
     /// The source text offset of the sub host
@@ -75,7 +75,7 @@ impl<'a> ContextSubHost<'a> {
             semantic,
             module_record,
             source_text_offset,
-            disable_directives: Rc::new(disable_directives),
+            disable_directives,
             framework_options: frameworks_options,
         }
     }
@@ -93,7 +93,7 @@ impl<'a> ContextSubHost<'a> {
     }
 
     /// Shared reference to the [`DisableDirectives`]
-    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
         &self.disable_directives
     }
 }
@@ -202,7 +202,7 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Shared reference to the [`DisableDirectives`] of the current script block.
-    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
         &self.current_sub_host().disable_directives
     }
 
@@ -340,6 +340,16 @@ impl<'a> ContextHost<'a> {
         // this should never panic.
         let mut messages = self.diagnostics.borrow_mut();
         std::mem::take(&mut *messages)
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn get_diagnostics(&self, cb: impl FnOnce(&mut Vec<Message<'a>>)) {
+        cb(self.diagnostics.borrow_mut().as_mut());
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn diagnostic_count(&self) -> usize {
+        self.diagnostics.borrow().len()
     }
 
     /// Creates a new [`LintContext`] for a specific rule.

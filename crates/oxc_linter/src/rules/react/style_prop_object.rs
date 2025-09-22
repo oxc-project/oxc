@@ -153,7 +153,7 @@ impl Rule for StylePropObject {
             })
             .unwrap_or_default();
 
-        allow.sort();
+        allow.sort_unstable();
 
         Self(Box::new(StylePropObjectConfig { allow }))
     }

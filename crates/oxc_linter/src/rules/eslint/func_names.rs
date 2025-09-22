@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
-        FunctionType, PropertyKind,
+        FunctionType, ObjectAssignmentTarget, PropertyKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -13,7 +13,13 @@ use oxc_semantic::NodeId;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
-use crate::{AstNode, ast_util::get_function_name_with_kind, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::get_function_name_with_kind,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected named {function_name}."))
@@ -27,47 +33,32 @@ fn unnamed_diagnostic(inferred_name_or_description: &str, span: Span) -> OxcDiag
         .with_help("Consider giving this function expression a name.")
 }
 
+#[derive(Debug, Clone, Default)]
+struct FuncNamesConfig {
+    functions: FuncNamesConfigType,
+    generators: FuncNamesConfigType,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct FuncNames {
-    default_config: FuncNamesConfig,
-    generators_config: FuncNamesConfig,
+    config: FuncNamesConfig,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-enum FuncNamesConfig {
+enum FuncNamesConfigType {
     #[default]
     Always,
     AsNeeded,
     Never,
 }
 
-impl FuncNamesConfig {
-    fn is_invalid_function(self, func: &Function, parent_node: &AstNode<'_>) -> bool {
-        let func_name = func.name();
-
-        match self {
-            Self::Never => func_name.is_some() && func.r#type != FunctionType::FunctionDeclaration,
-            Self::AsNeeded => func_name.is_none() && !has_inferred_name(func, parent_node),
-            Self::Always => func_name.is_none() && !is_object_or_class_method(parent_node),
+impl From<&serde_json::Value> for FuncNamesConfigType {
+    fn from(raw: &serde_json::Value) -> Self {
+        match raw.as_str() {
+            Some("as-needed") => Self::AsNeeded,
+            Some("never") => Self::Never,
+            _ => Self::Always,
         }
-    }
-}
-
-impl TryFrom<&serde_json::Value> for FuncNamesConfig {
-    type Error = OxcDiagnostic;
-
-    fn try_from(raw: &serde_json::Value) -> Result<Self, Self::Error> {
-        raw.as_str().map_or_else(
-            || Err(OxcDiagnostic::warn("Expecting string for eslint/func-names configuration")),
-            |v| match v {
-                "always" => Ok(FuncNamesConfig::Always),
-                "as-needed" => Ok(FuncNamesConfig::AsNeeded),
-                "never" => Ok(FuncNamesConfig::Never),
-                _ => Err(OxcDiagnostic::warn(
-                    "Expecting always, as-needed or never for eslint/func-names configuration",
-                )),
-            },
-        )
     }
 }
 
@@ -80,70 +71,259 @@ declare_oxc_lint!(
     ///
     /// Leaving the name off a function will cause `<anonymous>` to appear in
     /// stack traces of errors thrown in it or any function called within it.
-    /// This makes it more difficult to find where an error is thrown.  If you
-    /// provide the optional name for a function expression then you will get
-    /// the name of the function expression in the stack trace.
+    /// This makes it more difficult to find where an error is thrown.
+    /// Providing an explicit name also improves readability and consistency.
     ///
-    /// ## Configuration
-    /// This rule has a string option:
-    /// - `"always"` requires a function expression to have a name under all
-    ///   circumstances.
-    /// - `"as-needed"` requires a function expression to have a name only when
-    ///    one will not be automatically inferred by the runtime.
-    /// - `"never"` requires a function expression to not have a name under any
-    ///    circumstances.
+    /// ### Options
+    ///
+    /// First option:
+    /// - Type: `string`
+    /// - Default: `"always"`
+    /// - Possible values:
+    ///   - `"always"` - requires all function expressions to have a name.
+    ///   - `"as-needed"` - requires a name only if one is not automatically inferred.
+    ///   - `"never"` - disallows names for function expressions.
+    ///
+    /// Second option:
+    /// - Type: `object`
+    /// - Properties:
+    ///   - `generators`: `("always" | "as-needed" | "never")` (default: falls back to first option)
+    ///     - `"always"` - require named generator function expressions.
+    ///     - `"as-needed"` - require a name only when not inferred.
+    ///     - `"never"` - disallow names for generator function expressions.
+    ///
+    /// Example configuration:
+    /// ```json
+    /// {
+    ///   "func-names": ["error", "as-needed", { "generators": "never" }]
+    /// }
+    /// ```
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// /* func-names: ["error", "always"] */
     ///
-    /// ```javascript
-    /// /*oxlint func-names: "error" */
-    ///
-    /// // default is "always" and there is an anonymous function
     /// Foo.prototype.bar = function() {};
-    ///
-    /// /*oxlint func-names: ["error", "always"] */
-    ///
-    /// // there is an anonymous function
-    /// Foo.prototype.bar = function() {};
-    ///
-    /// /*oxlint func-names: ["error", "as-needed"] */
-    ///
-    /// // there is an anonymous function
-    /// // where the name isn’t assigned automatically per the ECMAScript specs
-    /// Foo.prototype.bar = function() {};
-    ///
-    /// /*oxlint func-names: ["error", "never"] */
-    ///
-    /// // there is a named function
-    /// Foo.prototype.bar = function bar() {};
+    /// const cat = { meow: function() {} };
+    /// (function() { /* ... */ }());
+    /// export default function() {}
     /// ```
     ///
-    /// Examples of **correct* code for this rule:
-    ///
-    /// ```javascript
-    /// /*oxlint func-names: "error" */
-    ///
-    /// Foo.prototype.bar = function bar() {};
-    ///
-    /// /*oxlint func-names: ["error", "always"] */
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// /* func-names: ["error", "always"] */
     ///
     /// Foo.prototype.bar = function bar() {};
+    /// const cat = { meow() {} };
+    /// (function bar() { /* ... */ }());
+    /// export default function foo() {}
+    /// ```
     ///
-    /// /*oxlint func-names: ["error", "as-needed"] */
+    /// #### `as-needed`
     ///
-    /// var foo = function(){};
-    ///
-    /// /*oxlint func-names: ["error", "never"] */
+    /// Examples of **incorrect** code for this rule with the `"as-needed"` option:
+    /// ```js
+    /// /* func-names: ["error", "as-needed"] */
     ///
     /// Foo.prototype.bar = function() {};
+    /// (function() { /* ... */ }());
+    /// export default function() {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"as-needed"` option:
+    /// ```js
+    /// /* func-names: ["error", "as-needed"] */
+    ///
+    /// const bar = function() {};
+    /// const cat = { meow: function() {} };
+    /// class C { #bar = function() {}; baz = function() {}; }
+    /// quux ??= function() {};
+    /// (function bar() { /* ... */ }());
+    /// export default function foo() {}
+    /// ```
+    ///
+    /// #### `never`
+    ///
+    /// Examples of **incorrect** code for this rule with the `"never"` option:
+    /// ```js
+    /// /* func-names: ["error", "never"] */
+    ///
+    /// Foo.prototype.bar = function bar() {};
+    /// (function bar() { /* ... */ }());
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"never"` option:
+    /// ```js
+    /// /* func-names: ["error", "never"] */
+    ///
+    /// Foo.prototype.bar = function() {};
+    /// (function() { /* ... */ }());
+    /// ```
+    ///
+    /// #### `generators`
+    ///
+    /// Examples of **incorrect** code for this rule with the `"always", { "generators": "as-needed" }` options:
+    /// ```js
+    /// /* func-names: ["error", "always", { "generators": "as-needed" }] */
+    ///
+    /// (function*() { /* ... */ }());
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"always", { "generators": "as-needed" }` options:
+    /// ```js
+    /// /* func-names: ["error", "always", { "generators": "as-needed" }] */
+    ///
+    /// const foo = function*() {};
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the `"always", { "generators": "never" }` options:
+    /// ```js
+    /// /* func-names: ["error", "always", { "generators": "never" }] */
+    ///
+    /// const foo = bar(function *baz() {});
+    /// ```
+    /// Examples of **correct** code for this rule with the `"always", { "generators": "never" }` options:
+    /// ```js
+    /// /* func-names: ["error", "always", { "generators": "never" }] */
+    ///
+    /// const foo = bar(function *() {});
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the `"as-needed", { "generators": "never" }` options:
+    /// ```js
+    /// /* func-names: ["error", "as-needed", { "generators": "never" }] */
+    ///
+    /// const foo = bar(function *baz() {});
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"as-needed", { "generators": "never" }` options:
+    /// ```js
+    /// /* func-names: ["error", "as-needed", { "generators": "never" }] */
+    ///
+    /// const foo = bar(function *() {});
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the `"never", { "generators": "always" }` options:
+    /// ```js
+    /// /* func-names: ["error", "never", { "generators": "always" }] */
+    ///
+    /// const foo = bar(function *() {});
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"never", { "generators": "always" }` options:
+    /// ```js
+    /// /* func-names: ["error", "never", { "generators": "always" }] */
+    ///
+    /// const foo = bar(function *baz() {});
     /// ```
     FuncNames,
     eslint,
     style,
     conditional_fix_suggestion
 );
+
+impl Rule for FuncNames {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let Some(functions_config) = value.get(0) else {
+            return Self::default();
+        };
+        let generators_config =
+            value.get(1).and_then(|v| v.get("generators")).unwrap_or(functions_config);
+
+        Self {
+            config: FuncNamesConfig {
+                functions: FuncNamesConfigType::from(functions_config),
+                generators: FuncNamesConfigType::from(generators_config),
+            },
+        }
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::Function(func) = node.kind() {
+            let parent_node = ctx.nodes().parent_node(node.id());
+            let config =
+                if func.generator { self.config.generators } else { self.config.functions };
+
+            if is_invalid_function(config, func, parent_node) {
+                // For named functions, check if they're recursive (need their name for recursion)
+                if let Some(func_name) = func.name() {
+                    if is_recursive_function(func, func_name.as_str(), ctx) {
+                        return;
+                    }
+                }
+                diagnostic_invalid_function(func, node, parent_node, ctx);
+            }
+        }
+    }
+}
+
+fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) -> bool {
+    let Some(func_scope_id) = func.scope_id.get() else {
+        return false;
+    };
+
+    if let Some(binding) = ctx.scoping().find_binding(func_scope_id, func_name) {
+        return ctx.semantic().symbol_references(binding).any(|reference| {
+            let parent = ctx.nodes().parent_node(reference.node_id());
+            if matches!(parent.kind(), AstKind::CallExpression(_)) {
+                ctx.nodes().ancestors(reference.node_id()).any(|ancestor| {
+                    if let AstKind::Function(f) = ancestor.kind() {
+                        f.scope_id.get() == Some(func_scope_id)
+                    } else {
+                        false
+                    }
+                })
+            } else {
+                false
+            }
+        });
+    }
+
+    false
+}
+
+const INVALID_IDENTIFIER_NAMES: [&str; 9] =
+    ["arguments", "async", "await", "constructor", "default", "eval", "null", "undefined", "yield"];
+
+fn diagnostic_invalid_function(
+    func: &Function,
+    node: &AstNode,
+    parent_node: &AstNode,
+    ctx: &LintContext,
+) {
+    let func_name_complete = get_function_name_with_kind(node, parent_node);
+    let report_span = Span::new(func.span.start, func.params.span.start);
+
+    if let Some(id) = func.id.as_ref() {
+        ctx.diagnostic_with_suggestion(
+            named_diagnostic(&func_name_complete, report_span),
+            |fixer| fixer.delete(id),
+        );
+        return;
+    }
+
+    let replace_span = Span::new(
+        func.span.start,
+        func.type_parameters.as_ref().map_or_else(|| func.params.span.start, |tp| tp.span.start),
+    );
+
+    let function_name = guess_function_name(ctx, node.id()).map(Cow::into_owned);
+
+    let is_safe_fix =
+        function_name.as_ref().is_some_and(|name| can_safely_apply_fix(func, name, ctx));
+
+    let msg = unnamed_diagnostic(&func_name_complete, report_span);
+
+    ctx.diagnostic_with_fix(msg, |fixer| {
+        apply_rule_fix(&fixer, is_safe_fix, replace_span, function_name)
+    });
+}
+
+fn is_valid_identifier_name(name: &str) -> bool {
+    !INVALID_IDENTIFIER_NAMES.contains(&name) && is_identifier_name(name)
+}
 
 /// Determines whether the current FunctionExpression node is a get, set, or
 /// shorthand method in an object literal or a class.
@@ -155,6 +335,20 @@ fn is_object_or_class_method(parent_node: &AstNode) -> bool {
         }
         _ => false,
     }
+}
+
+fn has_object_assignment_target_name<'a>(
+    target: &ObjectAssignmentTarget<'a>,
+    function: &Function<'a>,
+) -> bool {
+    target.properties.iter().any(|property| {
+        if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) = property {
+            if let Some(Expression::FunctionExpression(func_expr)) = &identifier.init {
+                return get_function_identifier(func_expr) == get_function_identifier(function);
+            }
+        }
+        false
+    })
 }
 
 /// Determines whether the current FunctionExpression node has a name that would be
@@ -189,24 +383,7 @@ fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> 
             ident.init.as_ref().is_some_and(|expr| is_same_function(expr, function))
         }
         AstKind::ObjectAssignmentTarget(target) => {
-            for property in &target.properties {
-                let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) =
-                    property
-                else {
-                    continue;
-                };
-                let Expression::FunctionExpression(function_expression) =
-                    &identifier.init.as_ref().unwrap()
-                else {
-                    continue;
-                };
-                if get_function_identifier(function_expression) == get_function_identifier(function)
-                {
-                    return true;
-                }
-            }
-
-            false
+            has_object_assignment_target_name(target, function)
         }
         _ => false,
     }
@@ -225,158 +402,66 @@ fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     func.id.as_ref().map(|id| &id.span)
 }
 
-impl Rule for FuncNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(default_value) = value.get(0) else {
-            return Self::default();
-        };
+fn is_invalid_function(
+    config_type: FuncNamesConfigType,
+    func: &Function,
+    parent_node: &AstNode<'_>,
+) -> bool {
+    let func_name = func.name();
 
-        let default_config = FuncNamesConfig::try_from(default_value).unwrap();
-
-        let generators_value =
-            value.get(1).and_then(|v| v.get("generators")).unwrap_or(default_value);
-
-        let generators_config = FuncNamesConfig::try_from(generators_value).unwrap();
-
-        Self { default_config, generators_config }
-    }
-
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut invalid_funcs: Vec<(&Function, &AstNode, &AstNode)> = vec![];
-
-        for node in ctx.nodes() {
-            match node.kind() {
-                // check function if it invalid, do not report it because maybe later the function is calling itself
-                AstKind::Function(func) => {
-                    let parent_node = ctx.nodes().parent_node(node.id());
-                    let config =
-                        if func.generator { &self.generators_config } else { &self.default_config };
-
-                    if config.is_invalid_function(func, parent_node) {
-                        invalid_funcs.push((func, node, parent_node));
-                    }
-                }
-
-                // check if the calling function is inside of its own body
-                // when yes remove it from invalid_funcs because recursion are always named
-                AstKind::CallExpression(expression) => {
-                    if let Expression::Identifier(identifier) = &expression.callee {
-                        // check at first if the callee calls an invalid function
-                        if !invalid_funcs
-                            .iter()
-                            .filter_map(|(func, _, _)| func.name())
-                            .any(|func_name| func_name == identifier.name)
-                        {
-                            continue;
-                        }
-
-                        // a function which is calling itself inside is always valid
-                        let ast_span =
-                            ctx.nodes().ancestors(node.id()).find_map(|p| match p.kind() {
-                                AstKind::Function(func) => {
-                                    let func_name = func.name()?;
-
-                                    if func_name == identifier.name {
-                                        return Some(func.span);
-                                    }
-
-                                    None
-                                }
-                                _ => None,
-                            });
-
-                        // we found a recursive function, remove it from the invalid list
-                        if let Some(span) = ast_span {
-                            invalid_funcs.retain(|(func, _, _)| func.span != span);
-                        }
-                    }
-                }
-                _ => {}
-            }
+    match config_type {
+        FuncNamesConfigType::Never => {
+            func_name.is_some() && func.r#type != FunctionType::FunctionDeclaration
         }
-
-        for (func, node, parent_node) in invalid_funcs {
-            let func_name_complete = get_function_name_with_kind(node, parent_node);
-
-            let report_span = Span::new(func.span.start, func.params.span.start);
-            let replace_span = Span::new(
-                func.span.start,
-                func.type_parameters
-                    .as_ref()
-                    .map_or_else(|| func.params.span.start, |tp| tp.span.start),
-            );
-            if let Some(id) = func.id.as_ref() {
-                ctx.diagnostic_with_suggestion(
-                    named_diagnostic(&func_name_complete, report_span),
-                    |fixer| fixer.delete(id),
-                );
-            } else {
-                ctx.diagnostic_with_fix(
-                    unnamed_diagnostic(&func_name_complete, report_span),
-                    |fixer| {
-                        guess_function_name(ctx, node.id()).map_or_else(
-                            || fixer.noop(),
-                            |name| {
-                                // if this name shadows a variable in the outer scope **and** that name is referenced
-                                // inside the function body, it is unsafe to add a name to this function
-                                if ctx.scoping().find_binding(func.scope_id(), &name).is_some_and(
-                                    |shadowed_var| {
-                                        ctx.semantic().symbol_references(shadowed_var).any(
-                                            |reference| {
-                                                func.span.contains_inclusive(
-                                                    ctx.nodes()
-                                                        .get_node(reference.node_id())
-                                                        .kind()
-                                                        .span(),
-                                                )
-                                            },
-                                        )
-                                    },
-                                ) {
-                                    return fixer.noop();
-                                }
-
-                                fixer.insert_text_after(&replace_span, format!(" {name}"))
-                            },
-                        )
-                    },
-                );
-            }
+        FuncNamesConfigType::AsNeeded => {
+            func_name.is_none() && !has_inferred_name(func, parent_node)
+        }
+        FuncNamesConfigType::Always => {
+            func_name.is_none() && !is_object_or_class_method(parent_node)
         }
     }
+}
+
+/// Returns whether it's safe to insert a function name without breaking shadowing rules
+fn can_safely_apply_fix(func: &Function, name: &str, ctx: &LintContext) -> bool {
+    !ctx.scoping().find_binding(func.scope_id(), name).is_some_and(|shadowed_var| {
+        ctx.semantic().symbol_references(shadowed_var).any(|reference| {
+            func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())
+        })
+    })
+}
+
+fn apply_rule_fix<'a>(
+    fixer: &RuleFixer<'_, 'a>,
+    is_safe_fix: bool,
+    replace_span: Span,
+    function_name: Option<String>,
+) -> RuleFix<'a> {
+    if is_safe_fix {
+        if let Some(name) = function_name {
+            return fixer.insert_text_after(&replace_span, format!(" {name}"));
+        }
+    }
+
+    fixer.noop()
 }
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow<'a, str>> {
-    for parent_kind in ctx.nodes().ancestor_kinds(node_id) {
-        match parent_kind {
-            AstKind::ParenthesizedExpression(_)
-            | AstKind::TSAsExpression(_)
-            | AstKind::TSNonNullExpression(_)
-            | AstKind::TSSatisfiesExpression(_) => {}
-            AstKind::AssignmentExpression(assign) => {
-                return assign.left.get_identifier_name().map(Cow::Borrowed);
-            }
-            AstKind::VariableDeclarator(decl) => {
-                return decl.id.get_identifier_name().as_ref().map(Atom::as_str).map(Cow::Borrowed);
-            }
-            AstKind::ObjectProperty(prop) => {
-                return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
-            }
-            AstKind::PropertyDefinition(prop) => {
-                return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
-            }
-
-            _ => return None,
+    ctx.nodes().ancestor_kinds(node_id).find_map(|parent_kind| match parent_kind {
+        AstKind::AssignmentExpression(assign) => {
+            assign.left.get_identifier_name().map(Cow::Borrowed)
         }
-    }
-    None
-}
-
-const INVALID_NAMES: [&str; 9] =
-    ["arguments", "async", "await", "constructor", "default", "eval", "null", "undefined", "yield"];
-
-fn is_valid_identifier_name(name: &str) -> bool {
-    !INVALID_NAMES.contains(&name) && is_identifier_name(name)
+        AstKind::VariableDeclarator(decl) => {
+            decl.id.get_identifier_name().as_ref().map(Atom::as_str).map(Cow::Borrowed)
+        }
+        AstKind::ObjectProperty(prop) => {
+            prop.key.static_name().filter(|name| is_valid_identifier_name(name))
+        }
+        AstKind::PropertyDefinition(prop_def) => {
+            prop_def.key.static_name().filter(|name| is_valid_identifier_name(name))
+        }
+        _ => None,
+    })
 }
 
 #[test]
@@ -415,6 +500,30 @@ fn test() {
         ("function foo() {}", never.clone()),
         ("var a = function() {};", never.clone()),
         ("var a = function foo() { foo(); };", never.clone()),
+        (
+            "var factorial = function fact(n) { return n <= 1 ? 1 : n * fact(n - 1); };",
+            never.clone(),
+        ),
+        (
+            "const fibonacci = function fib(n) { if (n <= 1) return n; return fib(n - 1) + fib(n - 2); };",
+            never.clone(),
+        ),
+        // Multiple references, but only one is a call - still recursive
+        ("var a = function foo() { var x = foo; foo(); };", never.clone()),
+        // Direct recursive call in setTimeout - this is actually recursive
+        ("setTimeout(function ticker() { ticker(); }, 1000);", never.clone()),
+        // Mutual recursion doesn't count as self-recursion (would need different handling)
+        ("var a = function foo() { function bar() { foo(); } bar(); };", never.clone()),
+        // Critical test: function with multiple references where the recursive call is not the first reference
+        // This tests the fix for the control flow bug where early returns could miss later recursive calls
+        (
+            "var x = function foo() { var ref1 = foo.name; var ref2 = foo.length; foo(); };",
+            never.clone(),
+        ),
+        (
+            "var y = function bar() { if (false) { bar.toString(); } if (true) { bar(); } };",
+            never.clone(),
+        ),
         ("var foo = {bar: function() {}};", never.clone()),
         ("$('#foo').click(function() {});", never.clone()),
         ("Foo.prototype.bar = function() {};", never.clone()),
@@ -486,6 +595,11 @@ fn test() {
         ("var { a: [b] = function(){} } = foo;", as_needed.clone()), // { "ecmaVersion": 6 },
         ("function foo({ a } = function(){}) {};", as_needed.clone()), // { "ecmaVersion": 6 },
         ("var x = function foo() {};", never.clone()),
+        ("var x = function foo() { return foo.length; };", never.clone()),
+        ("var foo = 1; var x = function foo() { return foo + 1; };", never.clone()),
+        ("var x = function foo() { console.log('hello'); };", never.clone()),
+        ("var outer = function inner() { function nested() { nested(); } };", never.clone()),
+        ("setTimeout(function ticker() { setTimeout(ticker, 1000); }, 1000);", never.clone()),
         ("Foo.prototype.bar = function foo() {};", never.clone()),
         ("({foo: function foo() {}})", never.clone()),
         ("export default function() {}", always.clone()), // { "sourceType": "module", "ecmaVersion": 6 },

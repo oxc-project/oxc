@@ -1,17 +1,17 @@
 import { writeFile } from 'node:fs/promises';
 import { join as pathJoin } from 'node:path';
 import { bench, describe } from 'vitest';
-import { parseSyncRaw } from './bindings.mjs';
-import { parseAsync, parseSync } from './index.mjs';
+import { parseSyncRaw } from './src-js/bindings.mjs';
+import { parseAsync, parseSync } from './src-js/index.mjs';
 
 // Internals
 import { DATA_POINTER_POS_32, PROGRAM_OFFSET } from './generated/constants.mjs';
 import { deserialize as deserializeJS } from './generated/deserialize/js.mjs';
 import { deserialize as deserializeTS } from './generated/deserialize/ts.mjs';
 import { walkProgram } from './generated/lazy/walk.mjs';
-import { isJsAst, prepareRaw, returnBufferToCache } from './raw-transfer/common.mjs';
-import { TOKEN } from './raw-transfer/lazy-common.mjs';
-import { getVisitorsArr, Visitor } from './raw-transfer/visitor.mjs';
+import { isJsAst, prepareRaw, returnBufferToCache } from './src-js/raw-transfer/common.mjs';
+import { TOKEN } from './src-js/raw-transfer/lazy-common.mjs';
+import { getVisitorsArr, Visitor } from './src-js/raw-transfer/visitor.mjs';
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
@@ -101,7 +101,7 @@ for (const { filename, code } of fixtures) {
     const deserialize = isJsAst(buffer) ? deserializeJS : deserializeTS;
 
     benchRaw('parser_napi_raw_deser_only', () => {
-      deserialize(buffer, code, sourceByteLen);
+      deserialize(buffer, code, sourceByteLen, true);
     });
 
     // oxlint-disable-next-line no-unused-vars

@@ -9,7 +9,7 @@ use quote::quote;
 use rustc_hash::FxHashSet;
 
 use crate::{
-    ALLOCATOR_CRATE_PATH, Generator, NAPI_OXLINT_PACKAGE_PATH, NAPI_PARSER_PACKAGE_PATH,
+    ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
     codegen::{Codegen, DeriveId},
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
@@ -41,7 +41,7 @@ const ALLOCATOR_CHUNK_END_ALIGN: u32 = 16;
 /// Must be a multiple of [`ALLOCATOR_CHUNK_END_ALIGN`].
 /// 16 bytes less than 2 GiB, to allow 16 bytes for `malloc` metadata (like Bumpalo does).
 const BLOCK_SIZE: u32 = (1 << 31) - MALLOC_RESERVED_SIZE; // 2 GiB - 16 bytes
-const _: () = assert!(BLOCK_SIZE % ALLOCATOR_CHUNK_END_ALIGN == 0);
+const _: () = assert!(BLOCK_SIZE.is_multiple_of(ALLOCATOR_CHUNK_END_ALIGN));
 
 /// Alignment of block of memory used for raw transfer.
 const BLOCK_ALIGN: u64 = 1 << 32; // 4 GiB
@@ -77,7 +77,7 @@ impl Generator for RawTransferGenerator {
                 code: constants_js.clone(),
             },
             Output::Javascript {
-                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src-js/generated/constants.mjs"),
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/constants.mjs"),
                 code: constants_js,
             },
             Output::Rust {
@@ -85,7 +85,7 @@ impl Generator for RawTransferGenerator {
                 tokens: constants_rust.clone(),
             },
             Output::Rust {
-                path: format!("{NAPI_OXLINT_PACKAGE_PATH}/src/generated/raw_transfer_constants.rs"),
+                path: format!("{OXLINT_APP_PATH}/src/generated/raw_transfer_constants.rs"),
                 tokens: constants_rust.clone(),
             },
             Output::Rust {
@@ -116,13 +116,13 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
     #[rustfmt::skip]
     let prelude = format!("
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
 
-        export function deserialize(buffer, sourceTextInput, sourceByteLenInput) {{
+        export function deserialize(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
@@ -130,6 +130,7 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
             sourceText = sourceTextInput;
             sourceByteLen = sourceByteLenInput;
             sourceIsAscii = sourceText.length === sourceByteLen;
+            preserveParens = preserveParensInput;
 
             const data = deserializeRawTransferData(uint32[{data_pointer_pos_32}]);
 

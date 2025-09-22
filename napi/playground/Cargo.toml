@@ -27,6 +27,7 @@ oxc_formatter = { workspace = true }
 oxc_index = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_napi = { workspace = true }
+oxc_transformer_plugins = { workspace = true }
 
 napi = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }

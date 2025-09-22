@@ -43,10 +43,8 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
 
         while let Some(specifier) = specifiers_iter.peek() {
             match specifier.as_ref() {
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => {
-                    write!(f, [specifiers_iter.next().unwrap()])?;
-                }
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
+                | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
                     write!(f, [specifiers_iter.next().unwrap()])?;
                 }
                 ImportDeclarationSpecifier::ImportSpecifier(_) => {

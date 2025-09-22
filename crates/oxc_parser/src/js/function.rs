@@ -70,12 +70,11 @@ impl<'a> ParserImpl<'a> {
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
-            let mut allowed_modifiers = ModifierFlags::READONLY;
-            if func_kind == FunctionKind::Constructor {
-                allowed_modifiers = allowed_modifiers
-                    .union(ModifierFlags::ACCESSIBILITY)
-                    .union(ModifierFlags::OVERRIDE);
-            }
+            let allowed_modifiers = if func_kind == FunctionKind::Constructor {
+                ModifierFlags::ACCESSIBILITY | ModifierFlags::OVERRIDE | ModifierFlags::READONLY
+            } else {
+                ModifierFlags::empty()
+            };
             self.verify_modifiers(
                 &modifiers,
                 allowed_modifiers,

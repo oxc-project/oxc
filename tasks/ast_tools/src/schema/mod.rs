@@ -1,8 +1,12 @@
-use oxc_index::{IndexVec, define_index_type};
+use std::{iter::FusedIterator, slice};
+
 use rustc_hash::FxHashMap;
 // Have to import this even though don't use it, due to a bug in `define_index_type!` macro
 #[expect(unused_imports)]
 use serde::Serialize;
+
+use oxc_data_structures::slice_iter::SliceIter;
+use oxc_index::{IndexVec, define_index_type};
 
 mod defs;
 mod derives;
@@ -86,6 +90,12 @@ impl Schema {
     pub fn meta_by_name(&self, name: &str) -> &MetaType {
         let meta_id = self.meta_names[name];
         &self.metas[meta_id]
+    }
+
+    /// Get iterator over all structs and enums.
+    #[expect(dead_code)]
+    pub fn structs_and_enums(&self) -> StructsAndEnums<'_> {
+        StructsAndEnums::new(self)
     }
 }
 
@@ -222,3 +232,37 @@ impl Schema {
         self.types[type_id].as_pointer_mut().unwrap()
     }
 }
+
+/// Iterator over structs and enums.
+pub struct StructsAndEnums<'s> {
+    iter: slice::Iter<'s, TypeDef>,
+}
+
+impl<'s> StructsAndEnums<'s> {
+    fn new(schema: &'s Schema) -> Self {
+        Self { iter: schema.types.iter() }
+    }
+}
+
+impl<'s> Iterator for StructsAndEnums<'s> {
+    type Item = StructOrEnum<'s>;
+
+    fn next(&mut self) -> Option<StructOrEnum<'s>> {
+        if let Some(type_def) = self.iter.next() {
+            match type_def {
+                TypeDef::Struct(struct_def) => Some(StructOrEnum::Struct(struct_def)),
+                TypeDef::Enum(enum_def) => Some(StructOrEnum::Enum(enum_def)),
+                _ => {
+                    // Structs and enums are always first in `Schema::types`,
+                    // so if we encounter a different type, iteration is done.
+                    self.iter.advance_to_end();
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    }
+}
+
+impl FusedIterator for StructsAndEnums<'_> {}

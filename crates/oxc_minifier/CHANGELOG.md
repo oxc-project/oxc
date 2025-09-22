@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-21
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🚀 Features
+
+- b2b2037 minifier: Only apply `arguments` copy loop transformation in functions (#13952) (sapphi-red)
+- fa76365 minifier: Only apply `arguments` copy loop transformation in strict mode (#13951) (sapphi-red)
+- 638416e tasks/coverage: Add node compat table tests for minifier (#13925) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 5198a01 minifier: Handle __proto__ when inlining single-use variables (#13926) (sapphi-red)
+
+### 📚 Documentation
+
+- 4817021 minifier: Clarify assumptions (#13950) (sapphi-red)
+- f1862c4 minifier: Add comprehensive documentation for oxc_minifier (#13938) (Boshen)
+
+
+
+## [0.89.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- f0af9a4 minifier: Don't inline single use variables that are not literals to for statement initializers (#13769) (sapphi-red)
+
+### 🧪 Testing
+
+- fcc3663 minifier: Merge variable declarations into for statement initializers (#13770) (sapphi-red)
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- a49d7cf minifier: Remove `typeof` guarded global access expressions (#13751) (sapphi-red)
+- c364ad1 minifier: Support ForStatements for single use variable inlining (#13755) (sapphi-red)
+- c868796 minifier: Remove unused variable declarations in dead code (#13754) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 3d895cf minifier: Remove unused long array expressions (#13752) (sapphi-red)
+- f9fd65b minifier: Disallow merging assignments to let declarations when TDZ error would be introduced (#13635) (sapphi-red)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🚀 Features

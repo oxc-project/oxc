@@ -7,7 +7,7 @@ use crate::CompilerAssumptions;
 mod env;
 mod plugins;
 mod presets;
-pub use env::{BabelEnvOptions, BabelModule, BabelTargets};
+pub use env::{BabelEnvOptions, BabelModule};
 pub use plugins::BabelPlugins;
 pub use presets::BabelPresets;
 

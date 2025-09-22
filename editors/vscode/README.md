@@ -21,6 +21,25 @@ This is the linter for Oxc. The currently supported features are listed below.
   to automatically apply fixes when saving the file.
 - Support for multi root workspaces
 
+## Oxfmt
+
+This is the formatter for Oxc. The currently supported features are listed below.
+
+- Experimental formatting with `oxc.fmt.experimental`
+
+To enable it, use a VSCode `settings.json` like:
+
+```json
+{
+  "oxc.fmt.experimental": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode"
+  // Or enable it for specific files:
+  // "[javascript]": {
+  //   "editor.defaultFormatter": "oxc.oxc-vscode"
+  // },
+}
+```
+
 ## Configuration
 
 ### Window Configuration
@@ -46,6 +65,7 @@ Following configuration are supported via `settings.json` and can be changed for
 | `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny` | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.     |
 | `oxc.typeAware`               | `false`       | `false` \| `true`           | Enable type aware linting.                                                                                                                       |
 | `oxc.flags`                   | -             | `Record<string, string>`    | Custom flags passed to the language server.                                                                                                      |
+| `oxc.fmt.experimental`        | `false`       | `false` \| `true`           | Enable experimental formatting support. This feature is experimental and might not work as expected.                                             |
 
 #### Flags
 

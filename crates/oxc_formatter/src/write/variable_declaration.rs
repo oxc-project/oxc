@@ -31,6 +31,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             _ => true,
         };
 
+        if self.declare() {
+            write!(f, ["declare", space()])?;
+        }
+
         write!(
             f,
             group(&format_args!(
@@ -38,7 +42,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
                 space(),
                 self.declarations(),
                 MaybeOptionalSemicolon(semicolon)
-            ),)
+            ))
         )
     }
 }

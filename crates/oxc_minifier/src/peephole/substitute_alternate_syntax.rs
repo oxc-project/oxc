@@ -2,13 +2,13 @@ use std::iter::repeat_with;
 
 use oxc_allocator::{CloneIn, TakeIn, Vec};
 use oxc_ast::{NONE, ast::*};
+use oxc_compat::ESFeature;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
 use oxc_syntax::{
-    es_target::ESTarget,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
@@ -530,8 +530,10 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // FIXME: this function treats `arguments` not inside a function scope as if they are inside it
-        //        we should check in a different way than `ctx.is_global_reference`
+        // In non-strict mode, a different value may be reassigned to the `arguments` variable
+        if !ctx.current_scope_flags().is_strict_mode() {
+            return;
+        }
 
         // Parse statement: `r[a - offset] = arguments[a];`
         let body_assign_expr = {
@@ -653,6 +655,12 @@ impl<'a> PeepholeOptimizations {
         let ForStatementInit::VariableDeclaration(var_init) = init else { return };
         // Need at least two declarators: r, a (optional `e` may precede them)
         if var_init.declarations.len() < init_decl_len {
+            return;
+        }
+
+        // make sure `arguments` points to the arguments object
+        // this is checked after the structure checks above because this check is slower than the structure checks
+        if ctx.ancestor_scopes().all(|s| !ctx.scoping().scope_flags(s).is_function()) {
             return;
         }
 
@@ -1378,7 +1386,7 @@ impl<'a> PeepholeOptimizations {
         let concatenated_string = strings.collect::<std::vec::Vec<_>>().join(delimiter);
 
         // "str1,str2".split(',')
-        *expr = ctx.ast.expression_call(
+        *expr = ctx.ast.expression_call_with_pure(
             expr.span(),
             Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                 expr.span(),
@@ -1397,6 +1405,7 @@ impl<'a> PeepholeOptimizations {
                 None,
             ))),
             false,
+            true,
         );
         ctx.state.changed = true;
     }
@@ -1417,7 +1426,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &Ctx<'a, '_>) {
-        if ctx.options().target >= ESTarget::ES2019 {
+        if ctx.supports_feature(ESFeature::ES2019OptionalCatchBinding) {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
@@ -1516,12 +1525,15 @@ where
 /// Port from <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 #[cfg(test)]
 mod test {
-    use oxc_syntax::es_target::ESTarget;
+    use oxc_span::SourceType;
 
     use crate::{
-        CompressOptions,
+        CompressOptions, CompressOptionsUnused,
         options::CompressOptionsKeepNames,
-        tester::{default_options, test, test_same, test_same_options},
+        tester::{
+            default_options, test, test_options, test_same, test_same_options,
+            test_same_options_source_type, test_target_same,
+        },
     };
 
     #[test]
@@ -1786,7 +1798,7 @@ mod test {
         let test_with_longer_args =
             |source_text_partial: &str, expected_partial: &str, delimiter: &str| {
                 let expected = &format!(
-                    "var x='{expected_partial}{}'.split('{delimiter}')",
+                    "var x=/* @__PURE__ */'{expected_partial}{}'.split('{delimiter}')",
                     format!("{delimiter}1").repeat(REPEAT)
                 );
                 test(&format!("var x=[{source_text_partial}{additional_args}]"), expected);
@@ -1809,6 +1821,12 @@ mod test {
 
         // all possible delimiters used, leave it alone
         test_same_with_longer_args("'.', ',', '(', ')', ' '");
+
+        test_options(
+            &format!("var x=['1','2','3','4','5','6'{additional_args}]"),
+            "",
+            &CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() },
+        );
     }
 
     #[test]
@@ -2206,9 +2224,7 @@ mod test {
         // console.log(a);"#,
         // );
 
-        let target = ESTarget::ES2018;
-        let options = CompressOptions { target, ..CompressOptions::default() };
-        test_same_options("try { foo } catch(e) {}", &options);
+        test_target_same("try { foo } catch(e) {}", "chrome65");
     }
 
     #[test]
@@ -2255,89 +2271,108 @@ mod test {
     #[test]
     fn test_rewrite_arguments_copy_loop() {
         test(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments]; console.log(r) }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; } console.log(r) }",
+            "function _() { var r = [...arguments]; console.log(r) }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] } console.log(r) }",
+            "function _() { var r = [...arguments]; console.log(r) }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments]; console.log(r) }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments].slice(1); console.log(r) }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = Array(e > 2 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments].slice(2); console.log(r) }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments]; console.log(r) }",
+        );
+        test(
+            "function _() { for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments]; console.log(r) }",
+        );
+        test(
+            "function _() { for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments].slice(1); console.log(r) }",
+        );
+        test(
+            "function _() { for (var r = [], a = 2; a < arguments.length; a++) r[a - 2] = arguments[a]; console.log(r) }",
+            "function _() { var r = [...arguments].slice(2); console.log(r) }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; }",
+            "function _() {}",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a] }",
+            "function _() {}",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) console.log(r[a]); }",
+        );
+        test(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; console.log(r); } }",
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) (r[a] = arguments[a], console.log(r)) }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] += arguments[a]; }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a + 1] = arguments[a]; }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a - 0.5] = arguments[a]; }",
+        );
+        test(
+            "function _() { var arguments; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; }",
+            "function _() { for (var arguments, e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = foo[a]; }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; e--) r[a] = arguments[a]; }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; r++) r[a] = arguments[a]; }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < r; r++) r[a] = arguments[a]; }",
+        );
+        test(
+            "function _() { var arguments; for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; }",
+            "function _() { for (var arguments, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; }",
+        );
+        test_same(
+            "function _() { for (var e = arguments.length, r = Array(e > 1 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a]; }",
+        );
+
+        test_same_options_source_type(
+            "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
+            SourceType::cjs(),
+            &default_options(),
+        );
+
+        test_same(
             "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
-            "var r = [...arguments]; console.log(r)",
-        );
-        test(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; } console.log(r)",
-            "var r = [...arguments]; console.log(r)",
-        );
-        test(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a] } console.log(r)",
-            "var r = [...arguments]; console.log(r)",
-        );
-        test(
-            "for (var e = arguments.length, r = new Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
-            "var r = [...arguments]; console.log(r)",
-        );
-        test(
-            "for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]; console.log(r)",
-            "var r = [...arguments].slice(1); console.log(r)",
-        );
-        test(
-            "for (var e = arguments.length, r = Array(e > 2 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a]; console.log(r)",
-            "var r = [...arguments].slice(2); console.log(r)",
-        );
-        test(
-            "for (var e = arguments.length, r = [], a = 0; a < e; a++) r[a] = arguments[a]; console.log(r)",
-            "var r = [...arguments]; console.log(r)",
-        );
-        test(
-            "for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; console.log(r)",
-            "var r = [...arguments]; console.log(r)",
-        );
-        test(
-            "for (var r = [], a = 1; a < arguments.length; a++) r[a - 1] = arguments[a]; console.log(r)",
-            "var r = [...arguments].slice(1); console.log(r)",
-        );
-        test(
-            "for (var r = [], a = 2; a < arguments.length; a++) r[a - 2] = arguments[a]; console.log(r)",
-            "var r = [...arguments].slice(2); console.log(r)",
-        );
-        test(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
-            "",
-        );
-        test(
-            "for (var e = arguments.length, r = Array(e > 1 ? e - 1 : 0), a = 1; a < e; a++) r[a - 1] = arguments[a]",
-            "",
         );
         test_same(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) console.log(r[a]);",
+            "{ let _; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) }",
         );
         test(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) { r[a] = arguments[a]; console.log(r); }",
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) (r[a] = arguments[a], console.log(r))",
-        );
-        test_same(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] += arguments[a];",
-        );
-        test_same(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a + 1] = arguments[a];",
-        );
-        test_same(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a - 0.5] = arguments[a];",
-        );
-        test(
-            "var arguments; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
-            "for (var arguments, e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a];",
-        );
-        test_same("for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = foo[a];");
-        test_same(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; e--) r[a] = arguments[a];",
-        );
-        test_same(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < e; r++) r[a] = arguments[a];",
-        );
-        test_same(
-            "for (var e = arguments.length, r = Array(e), a = 0; a < r; r++) r[a] = arguments[a];",
-        );
-        test(
-            "var arguments; for (var r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a];",
-            "for (var arguments, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a];",
-        );
-        test_same(
-            "for (var e = arguments.length, r = Array(e > 1 ? e - 2 : 0), a = 2; a < e; a++) r[a - 2] = arguments[a];",
+            "function _() { { let _; for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r) } }",
+            "function _() { { let _; var r = [...arguments]; console.log(r) } }",
         );
     }
 

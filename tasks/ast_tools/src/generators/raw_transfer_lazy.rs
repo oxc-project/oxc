@@ -157,8 +157,8 @@ fn generate(
     let constructors = &state.constructors;
     #[rustfmt::skip]
     let constructors = format!("
-        import {{ TOKEN, constructorError }} from '../../raw-transfer/lazy-common.mjs';
-        import {{ NodeArray }} from '../../raw-transfer/node-array.mjs';
+        import {{ constructorError, TOKEN }} from '../../src-js/raw-transfer/lazy-common.mjs';
+        import {{ NodeArray }} from '../../src-js/raw-transfer/node-array.mjs';
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),

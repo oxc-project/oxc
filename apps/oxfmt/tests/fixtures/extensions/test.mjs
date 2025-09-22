@@ -1,1 +1,1 @@
-export const module = "mjs"
+export const module = "mjs";

@@ -17,6 +17,7 @@ use crate::{
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
+    frameworks::FrameworkOptions,
 };
 
 mod host;
@@ -124,7 +125,7 @@ impl<'a> LintContext<'a> {
 
     /// List of all disable directives in the file being linted.
     #[inline]
-    pub fn disable_directives(&self) -> &Rc<DisableDirectives<'a>> {
+    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
         self.parent.disable_directives()
     }
 
@@ -441,6 +442,12 @@ impl<'a> LintContext<'a> {
     /// Framework flags, indicating front-end frameworks that might be in use.
     pub fn frameworks(&self) -> FrameworkFlags {
         self.parent.frameworks
+    }
+
+    /// Returns the framework options for the current script block.
+    /// For Vue files, this can be `FrameworkOptions::VueSetup` if we're in a `<script setup>` block.
+    pub fn frameworks_options(&self) -> FrameworkOptions {
+        self.parent.frameworks_options()
     }
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {

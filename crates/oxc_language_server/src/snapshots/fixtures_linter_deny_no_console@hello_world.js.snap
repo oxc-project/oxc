@@ -1,7 +1,10 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-input_file: crates/oxc_language_server/fixtures/linter/deny_no_console/hello_world.js
 ---
+########## 
+file: fixtures/linter/deny_no_console/hello_world.js
+----------
+
 code: "eslint(no-console)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
 message: "Unexpected console statement.\nhelp: Delete this console statement."

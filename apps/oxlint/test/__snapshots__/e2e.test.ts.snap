@@ -1,0 +1,624 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
+"
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | // £
+   \`----
+  help: Remove the debugger statement
+
+  x utf16-plugin(no-debugger): Debugger at 0-9
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | // £
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:3:1]
+ 2 | // £
+ 3 | debugger;
+   : ^^^^^^^^^
+ 4 | // 🤨
+   \`----
+  help: Remove the debugger statement
+
+  x utf16-plugin(no-debugger): Debugger at 15-24
+   ,-[index.js:3:1]
+ 2 | // £
+ 3 | debugger;
+   : ^^^^^^^^^
+ 4 | // 🤨
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:6:3]
+ 5 | {
+ 6 |   debugger;
+   :   ^^^^^^^^^
+ 7 | }
+   \`----
+  help: Remove the debugger statement
+
+  x utf16-plugin(no-debugger): Debugger at 35-44
+   ,-[index.js:6:3]
+ 5 | {
+ 6 |   debugger;
+   :   ^^^^^^^^^
+ 7 | }
+   \`----
+
+Found 3 warnings and 3 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should lint a directory with errors with JS plugins enabled 1`] = `
+"
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+Found 0 warnings and 1 error.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should lint a directory with errors without JS plugins enabled 1`] = `
+"
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+Found 0 warnings and 1 error.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should lint a directory without errors with JS plugins enabled 1`] = `
+"Found 0 warnings and 0 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should lint a directory without errors without JS plugins enabled 1`] = `
+"Found 0 warnings and 0 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should load a custom plugin 1`] = `
+"
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+Found 1 warning and 1 error.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should load a custom plugin when configured in overrides 1`] = `
+"
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+Found 1 warning and 1 error.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should load a custom plugin with multiple files 1`] = `
+"
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/01.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/01.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/02.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/02.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/03.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/03.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/04.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/04.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/05.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/05.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/06.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/06.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/07.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/07.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/08.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/08.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/09.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/09.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/10.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/10.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/11.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/11.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/12.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/12.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/13.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/13.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/14.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/14.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/15.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/15.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/16.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/16.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/17.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/17.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/18.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/18.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/19.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/19.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[files/20.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[files/20.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+Found 20 warnings and 20 errors.
+Finished in Xms on 20 files using X threads."
+`;
+
+exports[`oxlint CLI > should load a custom plugin with various import styles 1`] = `
+"
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+  x plugin1(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin2(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin3(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin4(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin5(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  x plugin6(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+Found 1 warning and 6 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should receive data via \`context\` 1`] = `
+"
+  x context-plugin(log-context): id: context-plugin/log-context
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x context-plugin(log-context): filename: files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x context-plugin(log-context): physicalFilename: files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x context-plugin(log-context): id: context-plugin/log-context
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x context-plugin(log-context): filename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x context-plugin(log-context): physicalFilename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+Found 0 warnings and 6 errors.
+Finished in Xms on 2 files using X threads."
+`;
+
+exports[`oxlint CLI > should report an error if a a rule is not found within a custom plugin (via overrides) 1`] = `
+"Failed to build configuration.
+
+  x Rule 'missing' not found in plugin 'basic-custom-plugin'
+"
+`;
+
+exports[`oxlint CLI > should report an error if a custom plugin in config but JS plugins are not enabled 1`] = `
+"Failed to parse configuration file.
+
+  x \`plugins\` config contains './test_plugin'. JS plugins are not supported without \`--js-plugins\` CLI option. Note: JS plugin support is experimental.
+"
+`;
+
+exports[`oxlint CLI > should report an error if a custom plugin is missing 1`] = `
+"Failed to parse configuration file.
+
+  x Failed to load JS plugin: ./test_plugin
+  |   Cannot find module './test_plugin'
+"
+`;
+
+exports[`oxlint CLI > should report an error if a custom plugin throws an error during import 1`] = `
+"Failed to parse configuration file.
+
+  x Failed to load JS plugin: ./test_plugin
+  |   Error: whoops!
+  |     at <root>/apps/oxlint/test/fixtures/custom_plugin_import_error/test_plugin/index.js:1:7
+"
+`;
+
+exports[`oxlint CLI > should report an error if a rule is not found within a custom plugin 1`] = `
+"Failed to parse configuration file.
+
+  x Rule 'unknown-rule' not found in plugin 'basic-custom-plugin'
+"
+`;
+
+exports[`oxlint CLI > should report the correct severity when using a custom plugin 1`] = `
+"
+  ! basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   \`----
+  help: Remove the debugger statement
+
+Found 2 warnings and 0 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should respect disable directives for custom plugin rules 1`] = `
+"
+  x test-plugin(no-var): Use let or const instead of var
+   ,-[index.js:1:1]
+ 1 | var shouldError = 1;
+   : ^^^^^^^^^^^^^^^^^^^^
+ 2 | 
+   \`----
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+    ,-[index.js:10:1]
+  9 | // should trigger an error
+ 10 | debugger;
+    : ^^^^^^^^^
+ 11 | 
+    \`----
+  help: Remove the debugger statement
+
+  x test-plugin(no-var): Use let or const instead of var
+    ,-[index.js:16:1]
+ 15 | /* oxlint-disable-next-line test-plugin */ // \`test-plugin\` should be \`test-plugin/no-var\`
+ 16 | var incorrectlyDisabled = 4;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 17 | 
+    \`----
+
+  x test-plugin(no-var): Use let or const instead of var
+    ,-[index.js:19:1]
+ 18 | /* oxlint-disable-next-line no-var */ // \`no-var\` should be \`test-plugin/no-var\`
+ 19 | var anotherIncorrectlyDisabled = 4;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 20 | 
+    \`----
+
+  x test-plugin(no-var): Use let or const instead of var
+    ,-[index.js:22:1]
+ 21 | // This var should trigger an error again
+ 22 | var shouldErrorAgain = 3;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^
+    \`----
+
+Found 0 warnings and 5 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should work with multiple rules 1`] = `
+"
+  x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   \`----
+
+  x basic-custom-plugin(no-debugger-2): Unexpected Debugger Statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   \`----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   \`----
+  help: Remove the debugger statement
+
+  x basic-custom-plugin(no-ident-references-named-foo): Unexpected Identifier Reference named foo
+   ,-[index.js:3:1]
+ 2 | 
+ 3 | foo;
+   : ^^^
+   \`----
+
+Found 1 warning and 3 errors.
+Finished in Xms on 1 file using X threads."
+`;

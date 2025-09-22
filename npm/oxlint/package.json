@@ -1,7 +1,7 @@
 {
   "name": "oxlint",
-  "version": "1.15.0",
-  "type": "commonjs",
+  "version": "1.16.0",
+  "type": "module",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
@@ -21,12 +21,13 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "engines": {
-    "node": ">=8.*"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "files": [
     "bin/oxlint",
     "bin/oxc_language_server",
     "configuration_schema.json",
+    "dist",
     "README.md"
   ]
 }

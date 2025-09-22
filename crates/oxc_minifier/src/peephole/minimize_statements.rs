@@ -59,7 +59,9 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement()
+            && let Some(stmt) = Self::remove_unused_variable_declaration(stmt, ctx)
+        {
             stmts.push(stmt);
         }
 
@@ -382,8 +384,12 @@ impl<'a> PeepholeOptimizations {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
-            let changed =
-                Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx);
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                first_decl_init,
+                result,
+                ctx,
+                false,
+            );
             if changed {
                 ctx.state.changed = true;
             }
@@ -431,8 +437,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut expr_stmt.expression, result, ctx);
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut expr_stmt.expression,
+            result,
+            ctx,
+            false,
+        );
         if changed {
             ctx.state.changed = true;
         }
@@ -560,6 +570,7 @@ impl<'a> PeepholeOptimizations {
             &mut switch_stmt.discriminant,
             result,
             ctx,
+            false,
         );
         if changed {
             ctx.state.changed = true;
@@ -586,7 +597,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> ControlFlow<()> {
         let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx);
+            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
         if changed {
             ctx.state.changed = true;
         }
@@ -745,8 +756,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
-            let changed =
-                Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx);
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                ret_argument_expr,
+                result,
+                ctx,
+                false,
+            );
             if changed {
                 ctx.state.changed = true;
             }
@@ -797,8 +812,12 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut throw_stmt.argument, result, ctx);
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut throw_stmt.argument,
+            result,
+            ctx,
+            false,
+        );
         if changed {
             ctx.state.changed = true;
         }
@@ -822,6 +841,35 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(init) = &mut for_stmt.init {
+            match init {
+                ForStatementInit::VariableDeclaration(var_decl) => {
+                    if let Some(first_decl) = var_decl.declarations.first_mut()
+                        && let Some(first_decl_init) = first_decl.init.as_mut()
+                    {
+                        let is_block_scoped_decl = !first_decl.kind.is_var();
+                        let changed = Self::substitute_single_use_symbol_in_statement(
+                            first_decl_init,
+                            result,
+                            ctx,
+                            is_block_scoped_decl,
+                        );
+                        if changed {
+                            ctx.state.changed = true;
+                        }
+                    }
+                }
+                match_expression!(ForStatementInit) => {
+                    let init = init.to_expression_mut();
+                    let changed =
+                        Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
+                    if changed {
+                        ctx.state.changed = true;
+                    }
+                }
+            }
+        }
+
         if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain(|decl| {
@@ -888,6 +936,23 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        // Annex B.3.5 allows initializers in non-strict mode
+        // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
+        // That is evaluated before the right hand side is evaluated. So, in that case, skip the single use substitution.
+        if !matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if var_decl.has_init())
+        {
+            let is_block_scoped_decl = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                &mut for_in_stmt.right,
+                result,
+                ctx,
+                is_block_scoped_decl,
+            );
+            if changed {
+                ctx.state.changed = true;
+            }
+        }
+
         if ctx.options().sequences {
             match result.last_mut() {
                 // "a; for (var b in c) d" => "for (var b in a, c) d"
@@ -961,6 +1026,17 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut for_of_stmt.right,
+            result,
+            ctx,
+            is_block_scoped_decl,
+        );
+        if changed {
+            ctx.state.changed = true;
+        }
+
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
             if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left {
@@ -1050,6 +1126,7 @@ impl<'a> PeepholeOptimizations {
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
         ctx: &Ctx<'a, '_>,
+        non_scoped_literal_only: bool,
     ) -> bool {
         // TODO: we should skip this compression when direct eval exists
         //       because the code inside eval may reference the variable
@@ -1087,6 +1164,9 @@ impl<'a> PeepholeOptimizations {
                         || symbol_value.read_references_count > 1
                         || symbol_value.write_references_count > 0
                     {
+                        return true;
+                    }
+                    if non_scoped_literal_only && !prev_decl_init.is_literal_value(false, ctx) {
                         return true;
                     }
                     let replaced = Self::substitute_single_use_symbol_in_expression(
@@ -1525,6 +1605,17 @@ impl<'a> PeepholeOptimizations {
                                         ctx,
                                     )
                                 {
+                                    if prop.shorthand && prop.key.is_specific_id("__proto__") {
+                                        // { __proto__ } -> { ['__proto__']: value }
+                                        prop.computed = true;
+                                        prop.key =
+                                            PropertyKey::from(ctx.ast.expression_string_literal(
+                                                prop.key.span(),
+                                                "__proto__",
+                                                None,
+                                            ));
+                                    }
+                                    prop.shorthand = false;
                                     return Some(changed);
                                 }
                             }
@@ -1650,5 +1741,32 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::tester::test;
+
+    #[test]
+    fn test_for_variable_declaration() {
+        test(
+            "function _() { var x; for (var i = 0; i < 10; i++) console.log(i) }",
+            "function _() { for (var x, i = 0; i < 10; i++) console.log(i) }",
+        );
+        test(
+            "function _() { var x = 1; for (var i = 0; i < 10; i++) console.log(i) }",
+            "function _() { for (var x = 1, i = 0; i < 10; i++) console.log(i) }",
+        );
+        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
+        test(
+            "function _() { var x = function () { return console.log(j), 1 }; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+            "function _() { for (var x = function () { return console.log(j), 1 }, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+        );
+        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
+        test(
+            "function _() { var x = j; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+            "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+        );
     }
 }

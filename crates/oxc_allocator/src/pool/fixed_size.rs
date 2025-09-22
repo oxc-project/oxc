@@ -224,16 +224,16 @@ impl FixedSizeAllocator {
         // SAFETY: We allocated 4 GiB of memory, so adding `offset` to `alloc_ptr` is in bounds
         let chunk_ptr = unsafe { alloc_ptr.add(offset) };
 
-        debug_assert!(chunk_ptr.as_ptr() as usize % BLOCK_ALIGN == 0);
+        debug_assert!((chunk_ptr.as_ptr() as usize).is_multiple_of(BLOCK_ALIGN));
 
         const FIXED_METADATA_SIZE_ROUNDED: usize =
             size_of::<FixedSizeAllocatorMetadata>().next_multiple_of(Allocator::RAW_MIN_ALIGN);
         const FIXED_METADATA_OFFSET: usize = BLOCK_SIZE - FIXED_METADATA_SIZE_ROUNDED;
         const _: () =
-            assert!(FIXED_METADATA_OFFSET % align_of::<FixedSizeAllocatorMetadata>() == 0);
+            assert!(FIXED_METADATA_OFFSET.is_multiple_of(align_of::<FixedSizeAllocatorMetadata>()));
 
         const CHUNK_SIZE: usize = FIXED_METADATA_OFFSET - RAW_METADATA_SIZE;
-        const _: () = assert!(CHUNK_SIZE % Allocator::RAW_MIN_ALIGN == 0);
+        const _: () = assert!(CHUNK_SIZE.is_multiple_of(Allocator::RAW_MIN_ALIGN));
 
         // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
         // the allocation we just made.

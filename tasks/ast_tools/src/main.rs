@@ -257,7 +257,7 @@ const TYPESCRIPT_DEFINITIONS_PATH: &str = "npm/oxc-types/types.d.ts";
 const NAPI_PARSER_PACKAGE_PATH: &str = "napi/parser";
 
 /// Path to NAPI oxlint package
-const NAPI_OXLINT_PACKAGE_PATH: &str = "napi/oxlint";
+const OXLINT_APP_PATH: &str = "apps/oxlint";
 
 /// Path to write AST changes filter list to
 const AST_CHANGES_WATCH_LIST_PATH: &str = ".github/generated/ast_changes_watch_list.yml";
@@ -357,7 +357,7 @@ fn main() {
     // Write outputs to disk
     if !options.dry_run {
         for output in outputs {
-            output.write_to_file().unwrap();
+            output.write_to_file(codegen.root_path()).unwrap();
         }
     }
 }
@@ -428,7 +428,7 @@ fn generate_updated_proc_macro(codegen: &Codegen) -> RawOutput {
     // Load `oxc_ast_macros` crate's `lib.rs` file.
     // Substitute list of used attrs into `#[proc_macro_derive(Ast, attributes(...))]`.
     let path = format!("{AST_MACROS_CRATE_PATH}/src/lib.rs");
-    let code = fs::read_to_string(&path).unwrap();
+    let code = fs::read_to_string(codegen.root_path().join(&path)).unwrap();
     let (start, end) = code.split_once("#[proc_macro_derive(").unwrap();
     let (_, end) = end.split_once(")]").unwrap();
     assert!(end.starts_with("\npub fn ast_derive("));

@@ -22,6 +22,10 @@ impl RuleRunner for crate::rules::eslint::block_scoped_var::BlockScopedVar {
         Some(&AstTypesBitset::from_types(&[AstType::VariableDeclaration]));
 }
 
+impl RuleRunner for crate::rules::eslint::class_methods_use_this::ClassMethodsUseThis {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::eslint::curly::Curly {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
@@ -51,7 +55,8 @@ impl RuleRunner for crate::rules::eslint::for_direction::ForDirection {
 }
 
 impl RuleRunner for crate::rules::eslint::func_names::FuncNames {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Function]));
 }
 
 impl RuleRunner for crate::rules::eslint::func_style::FuncStyle {
@@ -337,6 +342,12 @@ impl RuleRunner for crate::rules::eslint::no_loss_of_precision::NoLossOfPrecisio
 }
 
 impl RuleRunner for crate::rules::eslint::no_magic_numbers::NoMagicNumbers {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
+impl RuleRunner
+    for crate::rules::eslint::no_misleading_character_class::NoMisleadingCharacterClass
+{
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
@@ -631,6 +642,11 @@ impl RuleRunner for crate::rules::eslint::prefer_spread::PreferSpread {
 impl RuleRunner for crate::rules::eslint::prefer_template::PreferTemplate {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
+}
+
+impl RuleRunner for crate::rules::eslint::preserve_caught_error::PreserveCaughtError {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TryStatement]));
 }
 
 impl RuleRunner for crate::rules::eslint::radix::Radix {
@@ -1605,7 +1621,8 @@ impl RuleRunner for crate::rules::react::jsx_no_target_blank::JsxNoTargetBlank {
 }
 
 impl RuleRunner for crate::rules::react::jsx_no_undef::JsxNoUndef {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
 }
 
 impl RuleRunner for crate::rules::react::jsx_no_useless_fragment::JsxNoUselessFragment {
@@ -2669,6 +2686,15 @@ impl RuleRunner for crate::rules::vue::define_props_declaration::DefinePropsDecl
 }
 
 impl RuleRunner for crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
+impl RuleRunner for crate::rules::vue::no_required_prop_with_default::NoRequiredPropWithDefault {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
+impl RuleRunner for crate::rules::vue::require_typed_ref::RequireTypedRef {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }

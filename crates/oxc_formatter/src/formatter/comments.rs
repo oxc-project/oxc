@@ -173,6 +173,27 @@ impl<'a> Comments<'a> {
         &self.unprinted_comments()[..index]
     }
 
+    /// Returns end-of-line comments that are after the given position (excluding printed ones).
+    pub fn end_of_line_comments_after(&self, mut pos: u32) -> &'a [Comment] {
+        let comments = self.unprinted_comments();
+        for (index, comment) in comments.iter().enumerate() {
+            if self
+                .source_text
+                .all_bytes_match(pos, comment.span.start, |b| matches!(b, b'\t' | b' ' | b')'))
+            {
+                if !self.source_text.is_own_line_comment(comment)
+                    && (comment.is_line() || self.source_text.is_end_of_line_comment(comment))
+                {
+                    return &comments[..=index];
+                }
+                pos = comment.span.end;
+            } else {
+                break;
+            }
+        }
+        &[]
+    }
+
     /// Returns comments that start after the given position (excluding printed ones).
     pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let comments = self.unprinted_comments();

@@ -130,6 +130,8 @@ impl Linter {
         self.external_linter.is_some()
     }
 
+    /// # Panics
+    /// Panics if running in debug mode and the number of diagnostics does not match when running with/without optimizations
     pub fn run<'a>(
         &self,
         path: &Path,
@@ -140,117 +142,163 @@ impl Linter {
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
+        #[cfg(debug_assertions)]
+        let mut current_diagnostic_index = 0;
+
         loop {
             let rules = rules
                 .iter()
                 .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
-                .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)));
+                .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
+                .collect::<Vec<_>>();
 
             let semantic = ctx_host.semantic();
 
             let should_run_on_jest_node =
                 ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-            // IMPORTANT: We have two branches here for performance reasons:
-            //
-            // 1) Branch where we iterate over each node, then each rule
-            // 2) Branch where we iterate over each rule, then each node
-            //
-            // When the number of nodes is relatively small, most of them can fit
-            // in the cache and we can save iterating over the rules multiple times.
-            // But for large files, the number of nodes can be so large that it
-            // starts to not fit into the cache and pushes out other data, like the rules.
-            // So we end up thrashing the cache with each rule iteration. In this case,
-            // it's better to put rules in the inner loop, as the rules data is smaller
-            // and is more likely to fit in the cache.
-            //
-            // The threshold here is chosen to balance between performance improvement
-            // from not iterating over rules multiple times, but also ensuring that we
-            // don't thrash the cache too much. Feel free to tweak based on benchmarking.
-            //
-            // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-            if semantic.nodes().len() > 200_000 {
-                // Collect rules into a Vec so that we can iterate over the rules multiple times
-                let rules = rules.collect::<Vec<_>>();
-
-                // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
-                // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
-                // compile-time since we know all of the rules and their AST node type information ahead of time.
+            let execute_rules = |with_ast_kind_filtering: bool| {
+                // IMPORTANT: We have two branches here for performance reasons:
                 //
-                // Use boxed array to help compiler see that indexing into it with an `AstType`
-                // cannot go out of bounds, and remove bounds checks.
-                let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
-                // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
-                // node types, but it at least guarantees we won't need to realloc.
-                let mut rules_any_ast_type = Vec::with_capacity(rules.len());
+                // 1) Branch where we iterate over each node, then each rule
+                // 2) Branch where we iterate over each rule, then each node
+                //
+                // When the number of nodes is relatively small, most of them can fit
+                // in the cache and we can save iterating over the rules multiple times.
+                // But for large files, the number of nodes can be so large that it
+                // starts to not fit into the cache and pushes out other data, like the rules.
+                // So we end up thrashing the cache with each rule iteration. In this case,
+                // it's better to put rules in the inner loop, as the rules data is smaller
+                // and is more likely to fit in the cache.
+                //
+                // The threshold here is chosen to balance between performance improvement
+                // from not iterating over rules multiple times, but also ensuring that we
+                // don't thrash the cache too much. Feel free to tweak based on benchmarking.
+                //
+                // See https://github.com/oxc-project/oxc/pull/6600 for more context.
+                if semantic.nodes().len() > 200_000 {
+                    // TODO: It seems like there is probably a more intelligent way to preallocate space here. This will
+                    // likely incur quite a few unnecessary reallocs currently. We theoretically could compute this at
+                    // compile-time since we know all of the rules and their AST node type information ahead of time.
+                    //
+                    // Use boxed array to help compiler see that indexing into it with an `AstType`
+                    // cannot go out of bounds, and remove bounds checks.
+                    let mut rules_by_ast_type = boxed_array![Vec::new(); AST_TYPE_MAX as usize + 1];
+                    // TODO: Compute needed capacity. This is a slight overestimate as not 100% of rules will need to run on all
+                    // node types, but it at least guarantees we won't need to realloc.
+                    let mut rules_any_ast_type = Vec::with_capacity(rules.len());
 
-                for (rule, ctx) in &rules {
-                    let rule = *rule;
-                    // Collect node type information for rules. In large files, benchmarking showed it was worth
-                    // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                    if let Some(ast_types) = rule.types_info() {
-                        for ty in ast_types {
-                            rules_by_ast_type[ty as usize].push((rule, ctx));
-                        }
-                    } else {
-                        rules_any_ast_type.push((rule, ctx));
-                    }
-
-                    rule.run_once(ctx);
-                }
-
-                for symbol in semantic.scoping().symbol_ids() {
                     for (rule, ctx) in &rules {
-                        rule.run_on_symbol(symbol, ctx);
-                    }
-                }
-
-                // Run rules on nodes
-                for node in semantic.nodes() {
-                    for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
-                        rule.run(node, ctx);
-                    }
-                    for (rule, ctx) in &rules_any_ast_type {
-                        rule.run(node, ctx);
-                    }
-                }
-
-                if should_run_on_jest_node {
-                    for jest_node in iter_possible_jest_call_node(semantic) {
-                        for (rule, ctx) in &rules {
-                            rule.run_on_jest_node(&jest_node, ctx);
+                        let rule = *rule;
+                        // Collect node type information for rules. In large files, benchmarking showed it was worth
+                        // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
+                        if with_ast_kind_filtering && let Some(ast_types) = rule.types_info() {
+                            for ty in ast_types {
+                                rules_by_ast_type[ty as usize].push((rule, ctx));
+                            }
+                        } else {
+                            rules_any_ast_type.push((rule, ctx));
                         }
+
+                        rule.run_once(ctx);
                     }
-                }
-            } else {
-                for (rule, ref ctx) in rules {
-                    rule.run_once(ctx);
 
                     for symbol in semantic.scoping().symbol_ids() {
-                        rule.run_on_symbol(symbol, ctx);
+                        for (rule, ctx) in &rules {
+                            rule.run_on_symbol(symbol, ctx);
+                        }
                     }
 
-                    // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
-                    // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                    if let Some(ast_types) = rule.types_info() {
-                        for node in semantic.nodes() {
-                            if ast_types.has(node.kind().ty()) {
-                                rule.run(node, ctx);
-                            }
+                    // Run rules on nodes
+                    for node in semantic.nodes() {
+                        for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
+                            rule.run(node, ctx);
                         }
-                    } else {
-                        for node in semantic.nodes() {
+                        for (rule, ctx) in &rules_any_ast_type {
                             rule.run(node, ctx);
                         }
                     }
 
                     if should_run_on_jest_node {
                         for jest_node in iter_possible_jest_call_node(semantic) {
-                            rule.run_on_jest_node(&jest_node, ctx);
+                            for (rule, ctx) in &rules {
+                                rule.run_on_jest_node(&jest_node, ctx);
+                            }
+                        }
+                    }
+                } else {
+                    for (rule, ctx) in &rules {
+                        rule.run_once(ctx);
+
+                        for symbol in semantic.scoping().symbol_ids() {
+                            rule.run_on_symbol(symbol, ctx);
+                        }
+
+                        // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
+                        // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
+                        if with_ast_kind_filtering && let Some(ast_types) = rule.types_info() {
+                            for node in semantic.nodes() {
+                                if ast_types.has(node.kind().ty()) {
+                                    rule.run(node, ctx);
+                                }
+                            }
+                        } else {
+                            for node in semantic.nodes() {
+                                rule.run(node, ctx);
+                            }
+                        }
+
+                        if should_run_on_jest_node {
+                            for jest_node in iter_possible_jest_call_node(semantic) {
+                                rule.run_on_jest_node(&jest_node, ctx);
+                            }
                         }
                     }
                 }
+            };
+
+            execute_rules(true);
+
+            #[cfg(debug_assertions)]
+            {
+                let diagnostics_after_optimized = ctx_host.diagnostic_count();
+                execute_rules(false);
+                let diagnostics_after_unoptimized = ctx_host.diagnostic_count();
+                ctx_host.get_diagnostics(|diagnostics| {
+                    let optimized_diagnostics = &diagnostics[current_diagnostic_index..diagnostics_after_optimized];
+                    let unoptimized_diagnostics = &diagnostics[diagnostics_after_optimized..diagnostics_after_unoptimized];
+
+                    // Check that we have the same number of diagnostics
+                    assert_eq!(
+                        optimized_diagnostics.len(),
+                        unoptimized_diagnostics.len(),
+                        "Running with and without optimizations produced different diagnostic counts: {} vs {}",
+                        optimized_diagnostics.len(),
+                        unoptimized_diagnostics.len()
+                    );
+
+
+                    let mut sorted_optimized = optimized_diagnostics.to_vec();
+                    let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
+                    let sort = |m: &Message| { (m.error.labels.as_ref().and_then(|l| l.first()).map(|l| (l.offset(), l.len())), m.error.code.clone()) };
+                    sorted_optimized.sort_unstable_by_key(sort);
+                    sorted_unoptimized.sort_unstable_by_key(sort);
+
+                    for (opt_diag, unopt_diag) in sorted_optimized.iter().zip(sorted_unoptimized.iter()){
+                        assert_eq!(
+                            opt_diag,
+                            unopt_diag,
+                            "Diagnostic differs between optimized and unoptimized runs",
+                        );
+                    }
+
+                    diagnostics.truncate(current_diagnostic_index + optimized_diagnostics.len());
+                });
             }
+
+            // Drop `rules` to release its `Rc` clones of `ctx_host`, ensuring `run_external_rules`
+            // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
+            drop(rules);
 
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
@@ -263,6 +311,11 @@ impl Linter {
             // no next `<script>` block found, the complete file is finished linting
             if !ctx_host.next_sub_host() {
                 break;
+            }
+
+            #[cfg(debug_assertions)]
+            {
+                current_diagnostic_index = ctx_host.diagnostic_count();
             }
         }
 

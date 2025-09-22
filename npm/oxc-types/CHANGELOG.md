@@ -5,6 +5,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- 89e9f5f npm/oxc-types: Convert to ES modules (#13875) (Boshen)
+
+
+
+
+
 
 
 

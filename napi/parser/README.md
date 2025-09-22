@@ -93,15 +93,15 @@ export interface EcmaScriptModule {
 ## API
 
 ```javascript
-import oxc from 'oxc-parser';
+import { parseSync } from 'oxc-parser';
 
 const code = 'const url: String = /* 🤨 */ import.meta.url;';
 
 // File extension is used to determine which dialect to parse source as.
 const filename = 'test.tsx';
 
-const result = oxc.parseSync(filename, code);
-// or `await oxc.parseAsync(filename, code)`
+const result = parseSync(filename, code);
+// or `await parseAsync(filename, code)`
 
 // An array of errors, if any.
 console.log(result.errors);

@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- d1a0d04 compat: Extract compatibility data to oxc_compat crate (#13932) (sapphi-red)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- 5ec9209 transformer/class-properties: Don't transform properties that have `declare` modifier (#13766) (Dunqing)
+- 7d0b8a1 transformer/typescript: Panic occurs when `declare` property and `definite` property that has initializer (#13785) (Dunqing)
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- bb2bcf0 transformer: Improve legacy decorator handling and fix constructor parameter decorators (#13632) (Dunqing)
+
+### 🚜 Refactor
+
+- 08cbd39 transformer, estree: Clarify code using `is_exhausted` stack methods (#13674) (overlookmotel)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🚀 Features

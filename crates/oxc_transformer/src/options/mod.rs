@@ -21,22 +21,14 @@ use crate::{
 };
 
 pub mod babel;
-mod browserslist_query;
-mod engine;
-mod engine_targets;
 mod env;
-mod es_features;
-mod es_target;
 mod module;
 
 use babel::BabelOptions;
-pub use browserslist_query::BrowserslistQuery;
-pub use engine::Engine;
-pub use engine_targets::EngineTargets;
 pub use env::EnvOptions;
-pub use es_features::ESFeature;
-pub use es_target::ESTarget;
 pub use module::Module;
+pub use oxc_compat::{Engine, EngineTargets};
+pub use oxc_syntax::es_target::ESTarget;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]
@@ -136,7 +128,7 @@ impl TransformOptions {
 
 impl From<ESTarget> for TransformOptions {
     fn from(target: ESTarget) -> Self {
-        use crate::options::es_target::ESVersion;
+        use oxc_compat::ESVersion;
         let mut engine_targets = EngineTargets::default();
         engine_targets.insert(Engine::Es, target.version());
         let env = EnvOptions::from(engine_targets);

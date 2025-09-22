@@ -74,7 +74,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
       - name: Build JS
         working-directory: editors/vscode
@@ -83,12 +83,12 @@ jobs:
           pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@57511bcdf8cdb0eab6448cb7fa632952d9f25742 # v2.59.1
+        uses: taiki-e/install-action@0e09747a63ae497bf945b3dcaf38fef0050d0109 # v2.62.0
         with:
           tool: cross
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@98c8021b550208e191a6a3145459bfc9fb29c4c0 # v2.8.0
+        uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
         with:
           shared-key: release-${{ matrix.target }}
 
@@ -121,9 +121,9 @@ jobs:
       - name: Upload VSCode extension artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
+          if-no-files-found: error
           name: packages-${{ matrix.code-target }}
           path: ./oxc_language_server-${{ matrix.code-target }}.vsix
-          if-no-files-found: error
 
   publish:
     name: Publish VSCode
@@ -141,7 +141,7 @@ jobs:
           merge-multiple: true
           path: editors/vscode
 
-      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
       - name: Publish to Microsoft Marketplace
         working-directory: editors/vscode

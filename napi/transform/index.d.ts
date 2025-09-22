@@ -437,6 +437,22 @@ export interface StyledComponentsOptions {
 export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
 
 /**
+ * Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
+ *
+ * Note: This function can be slower than `transform` due to the overhead of spawning a thread.
+ *
+ * @param filename The name of the file being transformed. If this is a
+ * relative path, consider setting the {@link TransformOptions#cwd} option.
+ * @param sourceText the source code itself
+ * @param options The options for the transformation. See {@link
+ * TransformOptions} for more information.
+ *
+ * @returns a promise that resolves to an object containing the transformed code,
+ * source maps, and any errors that occurred during parsing or transformation.
+ */
+export declare function transformAsync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResult>
+
+/**
  * Options for transforming a JavaScript or TypeScript file.
  *
  * @see {@link transform}

@@ -1,0 +1,23 @@
+commit: ed0d6ba5
+
+minifier_node_compat Summary:
+AST Parsed     : 938/938 (100.00%)
+Positive Passed: 929/938 (99.04%)
+execution_result: tasks/coverage/ES2015/annex b›__proto__ in object literals›basic support
+
+execution_result: tasks/coverage/ES2015/built-ins›Proxy›"getOwnPropertyDescriptor" handler invariants
+
+execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›HasBinding
+
+execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›RegExp constructor
+
+execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›String.raw
+
+execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'ownKeys' calls›TestIntegrityLevel
+
+Expect to Parse: tasks/coverage/ES2018/features›RegExp Unicode Property Escapes›Unicode 17.0
+Failed to minify code
+execution_result: tasks/coverage/ES2018/misc›Proxy "ownKeys" handler, duplicate keys for non-extensible targets
+
+execution_result: tasks/coverage/ES2022/features›Object.hasOwn›ToObject called before ToPropertyKey
+

@@ -343,16 +343,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         def: &mut PropertyDefinition<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        assert!(
-            !(def.declare && def.value.is_some()),
-            "Fields with the 'declare' modifier cannot be initialized here, but only in the constructor"
-        );
-
-        assert!(
-            !(def.definite && def.value.is_some()),
-            "Definitely assigned fields cannot be initialized here, but only in the constructor"
-        );
-
         def.accessibility = None;
         def.definite = false;
         def.r#override = false;

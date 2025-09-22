@@ -2056,6 +2056,7 @@ impl GenExpr for ImportExpression<'_> {
             p.add_source_mapping(self.span);
             p.print_str("import");
             if let Some(phase) = self.phase {
+                p.print_ascii_byte(b'.');
                 p.print_str(phase.as_str());
             }
             p.print_ascii_byte(b'(');

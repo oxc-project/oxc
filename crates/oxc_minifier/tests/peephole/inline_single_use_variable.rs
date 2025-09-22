@@ -154,6 +154,73 @@ fn test_inline_single_use_variable() {
         "function wrapper() { let x = function () { console.log() }; foo(x) }",
         "function wrapper() { foo(function() { console.log() }) }",
     );
+
+    test(
+        "function wrapper() { var x = 1; for (var i = x; i < 10; i++) console.log(i) }",
+        "function wrapper() { for (var i = 1; i < 10; i++) console.log(i) }",
+    );
+    test(
+        "function wrapper() { var x = 1; for (let i = x; i < 10; i++) console.log(i) }",
+        "function wrapper() { for (let i = 1; i < 10; i++) console.log(i) }",
+    );
+    test(
+        "function wrapper() { var x = function () { return console.log(i), 1 }; for (let i = x(); i < 10; i++) console.log(i) }",
+        "function wrapper() { var x = function () { return console.log(i), 1 }; for (let i = x(); i < 10; i++) console.log(i) }",
+    );
+    // this is fine because `let j` inside the block cannot be referenced from `var i = j`
+    test(
+        "function wrapper() { var x = j; for (var i = x; i < 10; i++) { let j; console.log(i) } }",
+        "function wrapper() { for (var i = j; i < 10; i++) { let j; console.log(i) } }",
+    );
+    test(
+        "function wrapper() { var i, x = 1; for (i = x; i < 10; i++) console.log(i) }",
+        "function wrapper() { var i; for (i = 1; i < 10; i++) console.log(i) }",
+    );
+    test(
+        "function wrapper() { var x = i; for (var i = x; i < 10; i++) console.log(i) }",
+        "function wrapper() { for (var i = i; i < 10; i++) console.log(i) }",
+    );
+    test(
+        "function wrapper() { var x = i; for (let i = x; i < 10; i++) console.log(i) }",
+        "function wrapper() { var x = i; for (let i = x; i < 10; i++) console.log(i) }",
+    );
+    test(
+        "function wrapper() { var x = {}; for (var a in x) console.log(a) }",
+        "function wrapper() { for (var a in {}) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = a; for (var a in x) console.log(a) }",
+        "function wrapper() { for (var a in a) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = a; for (let a in x) console.log(a) }",
+        "function wrapper() { var x = a; for (let a in x) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = {}; for (var a = 0 in x) console.log(a) }",
+        "function wrapper() { var x = {}; for (var a = 0 in x) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = []; for (var a of x) console.log(a) }",
+        "function wrapper() { for (var a of []) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = a; for (var a of x) console.log(a) }",
+        "function wrapper() { for (var a of a) console.log(a) }",
+    );
+    test(
+        "function wrapper() { var x = a; for (let a of x) console.log(a) }",
+        "function wrapper() { var x = a; for (let a of x) console.log(a) }",
+    );
+
+    test(
+        "function wrapper() { var __proto__ = []; return { __proto__: __proto__ } }",
+        "function wrapper() { return { __proto__: [] } }",
+    );
+    test(
+        "function wrapper() { var __proto__ = []; return { __proto__ } }",
+        "function wrapper() { return { ['__proto__']: [] } }",
+    );
 }
 
 #[test]
