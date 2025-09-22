@@ -98,14 +98,12 @@ fn is_regexp_callee<'a>(callee: &'a Expression<'a>, ctx: &'a LintContext<'_>) ->
         return true;
     }
     // Check for globalThis.RegExp (StaticMemberExpression)
-    if let Expression::StaticMemberExpression(member) = callee {
-        if let Expression::Identifier(obj) = &member.object {
-            if obj.is_global_reference_name("globalThis", ctx.semantic().scoping())
-                && member.property.name == "RegExp"
-            {
-                return true;
-            }
-        }
+    if let Expression::StaticMemberExpression(member) = callee
+        && let Expression::Identifier(obj) = &member.object
+        && obj.is_global_reference_name("globalThis", ctx.semantic().scoping())
+        && member.property.name == "RegExp"
+    {
+        return true;
     }
     false
 }

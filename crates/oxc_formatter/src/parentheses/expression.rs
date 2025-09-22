@@ -267,15 +267,15 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, NewExpression<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, UpdateExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let parent = self.parent;
-        if self.prefix() {
-            if let AstNodes::UnaryExpression(unary) = parent {
-                let parent_operator = unary.operator();
-                let operator = self.operator();
-                return (parent_operator == UnaryOperator::UnaryPlus
-                    && operator == UpdateOperator::Increment)
-                    || (parent_operator == UnaryOperator::UnaryNegation
-                        && operator == UpdateOperator::Decrement);
-            }
+        if self.prefix()
+            && let AstNodes::UnaryExpression(unary) = parent
+        {
+            let parent_operator = unary.operator();
+            let operator = self.operator();
+            return (parent_operator == UnaryOperator::UnaryPlus
+                && operator == UpdateOperator::Increment)
+                || (parent_operator == UnaryOperator::UnaryNegation
+                    && operator == UpdateOperator::Decrement);
         }
         unary_like_expression_needs_parens(UnaryLike::UpdateExpression(self))
     }

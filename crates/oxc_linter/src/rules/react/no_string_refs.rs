@@ -93,16 +93,16 @@ fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> 
     let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
         return false;
     };
-    if attr_ident.name == "ref" {
-        if let Some(attr_value) = &attr.value {
-            return match attr_value {
-                JSXAttributeValue::ExpressionContainer(expr_container) => {
-                    contains_string_literal(expr_container, no_template_literals)
-                }
-                JSXAttributeValue::StringLiteral(_) => true,
-                _ => false,
-            };
-        }
+    if attr_ident.name == "ref"
+        && let Some(attr_value) = &attr.value
+    {
+        return match attr_value {
+            JSXAttributeValue::ExpressionContainer(expr_container) => {
+                contains_string_literal(expr_container, no_template_literals)
+            }
+            JSXAttributeValue::StringLiteral(_) => true,
+            _ => false,
+        };
     }
 
     false

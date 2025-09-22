@@ -81,17 +81,17 @@ impl Rule for NoAutofocus {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut no_focus = Self::default();
 
-        if let Some(arr) = value.as_array() {
-            if arr.iter().any(|v| {
-                if let serde_json::Value::Object(obj) = v {
-                    if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
-                        return *val;
-                    }
+        if let Some(arr) = value.as_array()
+            && arr.iter().any(|v| {
+                if let serde_json::Value::Object(obj) = v
+                    && let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM")
+                {
+                    return *val;
                 }
                 false
-            }) {
-                no_focus.set_option(true);
-            }
+            })
+        {
+            no_focus.set_option(true);
         }
 
         no_focus
@@ -108,12 +108,12 @@ impl Rule for NoAutofocus {
         let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
         if self.ignore_non_dom {
-            if HTML_TAG.contains(element_type.as_ref()) {
-                if let JSXAttributeItem::Attribute(attr) = autofocus {
-                    ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
-                        fixer.delete(&attr.span)
-                    });
-                }
+            if HTML_TAG.contains(element_type.as_ref())
+                && let JSXAttributeItem::Attribute(attr) = autofocus
+            {
+                ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+                    fixer.delete(&attr.span)
+                });
             }
             return;
         }

@@ -815,10 +815,10 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
     /// Not sure what safety invariants of this method are! TODO
     pub unsafe fn dealloc_buffer(&mut self) {
         let elem_size = mem::size_of::<T>();
-        if elem_size != 0 {
-            if let Some(layout) = self.current_layout() {
-                self.alloc.dealloc(self.ptr.cast(), layout);
-            }
+        if elem_size != 0
+            && let Some(layout) = self.current_layout()
+        {
+            self.alloc.dealloc(self.ptr.cast(), layout);
         }
     }
 }

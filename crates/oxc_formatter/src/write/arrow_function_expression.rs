@@ -297,32 +297,28 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut should_break = false;
 
         loop {
-            if current.expression() {
-                if let Some(AstNodes::ExpressionStatement(expr_stmt)) =
+            if current.expression()
+                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                {
-                    if let AstNodes::ArrowFunctionExpression(next) =
-                        &expr_stmt.expression().as_ast_nodes()
-                    {
-                        if matches!(
-                            options.call_arg_layout,
-                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                        ) {
-                            should_break = should_break || Self::should_break_chain(current);
+                && let AstNodes::ArrowFunctionExpression(next) =
+                    &expr_stmt.expression().as_ast_nodes()
+                && matches!(
+                    options.call_arg_layout,
+                    None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+                )
+            {
+                should_break = should_break || Self::should_break_chain(current);
 
-                            should_break = should_break || Self::should_break_chain(next);
+                should_break = should_break || Self::should_break_chain(next);
 
-                            if head.is_none() {
-                                head = Some(current);
-                            } else {
-                                middle.push(current);
-                            }
-
-                            current = next;
-                            continue;
-                        }
-                    }
+                if head.is_none() {
+                    head = Some(current);
+                } else {
+                    middle.push(current);
                 }
+
+                current = next;
+                continue;
             }
             break match head {
                 None => ArrowFunctionLayout::Single(current),
@@ -930,12 +926,11 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
 
 impl<'a> FormatMaybeCachedFunctionBody<'a, '_> {
     fn format(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.expression {
-            if let AstNodes::ExpressionStatement(s) =
+        if self.expression
+            && let AstNodes::ExpressionStatement(s) =
                 &self.body.statements().first().unwrap().as_ast_nodes()
-            {
-                return s.expression().fmt(f);
-            }
+        {
+            return s.expression().fmt(f);
         }
         self.body.fmt(f)
     }

@@ -362,10 +362,10 @@ impl Extensions {
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
     if let Some((_, extension)) =
         module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
+        && !extension.is_empty()
+        && !extension.starts_with('/')
     {
-        if !extension.is_empty() && !extension.starts_with('/') {
-            return Some(CompactStr::from(extension));
-        }
+        return Some(CompactStr::from(extension));
     }
 
     None

@@ -389,12 +389,11 @@ impl<'a> StyledComponents<'a, '_> {
         // TODO: Support adding pure annotation to `TaggedTemplateExpression`.
         // Note: As of now, no bundle can handle pure tagged template expressions.
         // <https://github.com/rollup/rollup/issues/4035>
-        if let Some(Expression::CallExpression(call)) = &mut declarator.init {
-            if matches!(&call.callee, Expression::Identifier(ident) if self.is_pure_helper(ident, ctx))
-                || self.is_styled(&call.callee, ctx)
-            {
-                call.pure = true;
-            }
+        if let Some(Expression::CallExpression(call)) = &mut declarator.init
+            && (matches!(&call.callee, Expression::Identifier(ident) if self.is_pure_helper(ident, ctx))
+                || self.is_styled(&call.callee, ctx))
+        {
+            call.pure = true;
         }
     }
 
@@ -432,19 +431,17 @@ impl<'a> StyledComponents<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         if let Some(call) = Self::get_with_config(expr) {
-            if let Expression::StaticMemberExpression(member) = &call.callee {
-                if self.is_styled(&member.object, ctx) {
-                    if let Some(Argument::ObjectExpression(object)) = call.arguments.first_mut() {
-                        if !object.properties.iter().any(|prop| {
-                            matches!(prop, ObjectPropertyKind::ObjectProperty(property)
-                                if matches!(&property.key, PropertyKey::StaticIdentifier(ident)
-                                if matches!(ident.name.as_str(), "displayName" | "componentId"))
-                            )
-                        }) {
-                            self.add_properties(&mut object.properties, ctx);
-                        }
-                    }
-                }
+            if let Expression::StaticMemberExpression(member) = &call.callee
+                && self.is_styled(&member.object, ctx)
+                && let Some(Argument::ObjectExpression(object)) = call.arguments.first_mut()
+                && !object.properties.iter().any(|prop| {
+                    matches!(prop, ObjectPropertyKind::ObjectProperty(property)
+                        if matches!(&property.key, PropertyKey::StaticIdentifier(ident)
+                        if matches!(ident.name.as_str(), "displayName" | "componentId"))
+                    )
+                })
+            {
+                self.add_properties(&mut object.properties, ctx);
             }
         } else if self.is_styled(expr, ctx) {
             let mut properties = ctx.ast.vec_with_capacity(
@@ -508,10 +505,10 @@ impl<'a> StyledComponents<'a, '_> {
         loop {
             match current {
                 Expression::CallExpression(call) => {
-                    if let Expression::StaticMemberExpression(member) = &call.callee {
-                        if member.property.name == "withConfig" {
-                            return Some(call);
-                        }
+                    if let Expression::StaticMemberExpression(member) = &call.callee
+                        && member.property.name == "withConfig"
+                    {
+                        return Some(call);
                     }
                     current = &mut call.callee;
                 }

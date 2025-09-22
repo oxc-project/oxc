@@ -201,11 +201,12 @@ impl Rule for RequireYields {
                 while !matches!(current_node.kind(), AstKind::Program(_)) {
                     let parent_node = ctx.nodes().parent_node(current_node.id());
                     // If syntax is valid, `yield` should be inside a generator function
-                    if let AstKind::Function(func) = parent_node.kind() {
-                        if func.generator && (func.is_expression() || func.is_declaration()) {
-                            generator_func_node = Some((func, parent_node));
-                            break;
-                        }
+                    if let AstKind::Function(func) = parent_node.kind()
+                        && func.generator
+                        && (func.is_expression() || func.is_declaration())
+                    {
+                        generator_func_node = Some((func, parent_node));
+                        break;
                     }
                     current_node = parent_node;
                 }

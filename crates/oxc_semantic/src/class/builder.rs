@@ -59,19 +59,19 @@ impl<'a> ClassTableBuilder<'a> {
         let is_private = property.key.is_private_identifier();
         let name = property.key.name();
 
-        if let Some(name) = name {
-            if let Some(class_id) = self.current_class_id {
-                self.classes.add_element(
-                    class_id,
-                    Element::new(
-                        name,
-                        property.key.span(),
-                        property.r#static,
-                        is_private,
-                        ElementKind::Accessor,
-                    ),
-                );
-            }
+        if let Some(name) = name
+            && let Some(class_id) = self.current_class_id
+        {
+            self.classes.add_element(
+                class_id,
+                Element::new(
+                    name,
+                    property.key.span(),
+                    property.r#static,
+                    is_private,
+                    ElementKind::Accessor,
+                ),
+            );
         }
     }
 
@@ -79,19 +79,19 @@ impl<'a> ClassTableBuilder<'a> {
         let is_private = property.key.is_private_identifier();
         let name = property.key.name();
 
-        if let Some(name) = name {
-            if let Some(class_id) = self.current_class_id {
-                self.classes.add_element(
-                    class_id,
-                    Element::new(
-                        name,
-                        property.key.span(),
-                        property.r#static,
-                        is_private,
-                        ElementKind::Property,
-                    ),
-                );
-            }
+        if let Some(name) = name
+            && let Some(class_id) = self.current_class_id
+        {
+            self.classes.add_element(
+                class_id,
+                Element::new(
+                    name,
+                    property.key.span(),
+                    property.r#static,
+                    is_private,
+                    ElementKind::Property,
+                ),
+            );
         }
     }
 
@@ -103,21 +103,20 @@ impl<'a> ClassTableBuilder<'a> {
     ) {
         let parent_kind = nodes.parent_kind(current_node_id);
 
-        if matches!(parent_kind, AstKind::PrivateInExpression(_))
-            || parent_kind.is_member_expression_kind()
+        if (matches!(parent_kind, AstKind::PrivateInExpression(_))
+            || parent_kind.is_member_expression_kind())
+            && let Some(class_id) = self.current_class_id
         {
-            if let Some(class_id) = self.current_class_id {
-                let element_ids =
-                    self.classes.get_element_ids(class_id, &ident.name, /* is_private */ true);
+            let element_ids =
+                self.classes.get_element_ids(class_id, &ident.name, /* is_private */ true);
 
-                let reference = PrivateIdentifierReference::new(
-                    current_node_id,
-                    ident.name,
-                    ident.span,
-                    element_ids,
-                );
-                self.classes.add_private_identifier_reference(class_id, reference);
-            }
+            let reference = PrivateIdentifierReference::new(
+                current_node_id,
+                ident.name,
+                ident.span,
+                element_ids,
+            );
+            self.classes.add_private_identifier_reference(class_id, reference);
         }
     }
 
@@ -128,27 +127,27 @@ impl<'a> ClassTableBuilder<'a> {
         let is_private = method.key.is_private_identifier();
         let name = method.key.name();
 
-        if let Some(name) = name {
-            if let Some(class_id) = self.current_class_id {
-                self.classes.add_element(
-                    class_id,
-                    Element::new(
-                        name,
-                        method.key.span(),
-                        method.r#static,
-                        is_private,
-                        match method.kind {
-                            MethodDefinitionKind::Method => ElementKind::Method,
-                            MethodDefinitionKind::Get => ElementKind::Method | ElementKind::Getter,
-                            MethodDefinitionKind::Set => ElementKind::Method | ElementKind::Setter,
-                            MethodDefinitionKind::Constructor => {
-                                // Skip constructor
-                                unreachable!()
-                            }
-                        },
-                    ),
-                );
-            }
+        if let Some(name) = name
+            && let Some(class_id) = self.current_class_id
+        {
+            self.classes.add_element(
+                class_id,
+                Element::new(
+                    name,
+                    method.key.span(),
+                    method.r#static,
+                    is_private,
+                    match method.kind {
+                        MethodDefinitionKind::Method => ElementKind::Method,
+                        MethodDefinitionKind::Get => ElementKind::Method | ElementKind::Getter,
+                        MethodDefinitionKind::Set => ElementKind::Method | ElementKind::Setter,
+                        MethodDefinitionKind::Constructor => {
+                            // Skip constructor
+                            unreachable!()
+                        }
+                    },
+                ),
+            );
         }
     }
 

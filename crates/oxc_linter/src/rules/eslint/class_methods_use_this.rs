@@ -203,12 +203,12 @@ impl Rule for ClassMethodsUseThis {
             _ => None,
         };
         let Some((function_body, name)) = function_pair else { return };
-        if let Some(name_str) = name.name() {
-            if config.except_methods.iter().any(|method| {
+        if let Some(name_str) = name.name()
+            && config.except_methods.iter().any(|method| {
                 method.name == name_str && method.private == name.is_private_identifier()
-            }) {
-                return;
-            }
+            })
+        {
+            return;
         }
         let mut finder = ThisFinder::new();
         finder.visit_function_body(function_body);

@@ -64,10 +64,10 @@ impl Rule for NoNegationInEqualityCheck {
                 return;
             }
 
-            if let Expression::UnaryExpression(left_nested_unary_expr) = &left_unary_expr.argument {
-                if left_nested_unary_expr.operator == UnaryOperator::LogicalNot {
-                    return;
-                }
+            if let Expression::UnaryExpression(left_nested_unary_expr) = &left_unary_expr.argument
+                && left_nested_unary_expr.operator == UnaryOperator::LogicalNot
+            {
+                return;
             }
 
             if !binary_expr.operator.is_equality() {

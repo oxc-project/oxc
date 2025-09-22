@@ -154,13 +154,13 @@ impl Rule for NoDuplicates {
 }
 
 fn check_duplicates(ctx: &LintContext, requested_modules: Option<&Vec<&RequestedModule>>) {
-    if let Some(requested_modules) = requested_modules {
-        if requested_modules.len() > 1 {
-            let mut labels = requested_modules.iter().map(|m| m.span);
-            let first = labels.next().unwrap(); // we know there is at least one
-            let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
-            ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
-        }
+    if let Some(requested_modules) = requested_modules
+        && requested_modules.len() > 1
+    {
+        let mut labels = requested_modules.iter().map(|m| m.span);
+        let first = labels.next().unwrap(); // we know there is at least one
+        let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
+        ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
     }
 }
 

@@ -227,21 +227,22 @@ impl Parser {
 
         // 0 DecimalDigit
         if self.eat('0') {
-            if let Some(ch) = self.peek() {
-                if ch.is_ascii_digit() {
-                    self.advance();
-                    return Ok(Some(ch as u32));
-                }
+            if let Some(ch) = self.peek()
+                && ch.is_ascii_digit()
+            {
+                self.advance();
+                return Ok(Some(ch as u32));
             }
             self.rewind(checkpoint);
         }
 
         // DecimalDigit but not 0
-        if let Some(ch) = self.peek() {
-            if ch.is_ascii_digit() && ch != '0' {
-                self.advance();
-                return Ok(Some(ch as u32));
-            }
+        if let Some(ch) = self.peek()
+            && ch.is_ascii_digit()
+            && ch != '0'
+        {
+            self.advance();
+            return Ok(Some(ch as u32));
         }
 
         // x [lookahead ∉ HexDigit] or x HexDigit [lookahead ∉ HexDigit]
@@ -303,11 +304,11 @@ impl Parser {
             if hex_count == 0 || hex_count < 4 {
                 return Ok(Some('u' as u32));
             }
-            if let Some(ch) = self.peek() {
-                if ch.is_ascii_hexdigit() {
-                    self.rewind(checkpoint);
-                    return Ok(None);
-                }
+            if let Some(ch) = self.peek()
+                && ch.is_ascii_hexdigit()
+            {
+                self.rewind(checkpoint);
+                return Ok(None);
             }
             self.rewind(checkpoint);
             return Ok(None);
@@ -398,10 +399,10 @@ impl Parser {
     fn parse_line_continuation(&mut self) -> Option<u32> {
         let checkpoint = self.checkpoint();
 
-        if self.eat('\\') {
-            if let Some(terminator) = self.parse_line_terminator_sequence() {
-                return Some(terminator);
-            }
+        if self.eat('\\')
+            && let Some(terminator) = self.parse_line_terminator_sequence()
+        {
+            return Some(terminator);
         }
 
         self.rewind(checkpoint);

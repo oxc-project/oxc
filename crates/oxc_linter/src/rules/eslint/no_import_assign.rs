@@ -67,11 +67,10 @@ impl Rule for NoImportAssign {
                         let parent_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let is_unary_expression_with_delete_operator = |kind| matches!(kind, AstKind::UnaryExpression(expr) if expr.operator == UnaryOperator::Delete);
                         let parent_parent_kind = parent_parent_node.kind();
-                        if matches!(parent_parent_kind, AstKind::IdentifierReference(_))
+                        if (matches!(parent_parent_kind, AstKind::IdentifierReference(_))
                             || is_unary_expression_with_delete_operator(parent_parent_kind)
-                            || matches!(parent_parent_kind, AstKind::ChainExpression(_) if is_unary_expression_with_delete_operator(ctx.nodes().parent_kind(parent_parent_node.id())))
-                        {
-                            if let Some((span, _)) = match expr {
+                            || matches!(parent_parent_kind, AstKind::ChainExpression(_) if is_unary_expression_with_delete_operator(ctx.nodes().parent_kind(parent_parent_node.id()))))
+                            && let Some((span, _)) = match expr {
                                 AstKind::StaticMemberExpression(expr) => {
                                     Some(expr.static_property_info())
                                 }
@@ -79,12 +78,10 @@ impl Rule for NoImportAssign {
                                     expr.static_property_info()
                                 }
                                 _ => return,
-                            } {
-                                if span != ctx.semantic().reference_span(reference) {
-                                    return ctx
-                                        .diagnostic(no_import_assign_diagnostic(expr.span()));
-                                }
                             }
+                            && span != ctx.semantic().reference_span(reference)
+                        {
+                            return ctx.diagnostic(no_import_assign_diagnostic(expr.span()));
                         }
                         // Check for assignment to namespace property
                         match expr {
@@ -190,10 +187,10 @@ fn check_namespace_member_assignment(
     let Expression::Identifier(obj_ident) = member_expr else { return };
 
     let ref_node = ctx.nodes().get_node(reference.node_id());
-    if let AstKind::IdentifierReference(ref_ident) = ref_node.kind() {
-        if obj_ident.span == ref_ident.span {
-            ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
-        }
+    if let AstKind::IdentifierReference(ref_ident) = ref_node.kind()
+        && obj_ident.span == ref_ident.span
+    {
+        ctx.diagnostic(no_import_assign_diagnostic(parent_node.span()));
     }
 }
 

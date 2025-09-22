@@ -104,13 +104,12 @@ impl<'a> JsxSelf<'a, '_> {
     fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &TraverseCtx<'a>) {
         // Check if `__self` attribute already exists
         for item in &elem.attributes {
-            if let JSXAttributeItem::Attribute(attribute) = item {
-                if let JSXAttributeName::Identifier(ident) = &attribute.name {
-                    if ident.name == SELF {
-                        self.report_error(ident.span);
-                        return;
-                    }
-                }
+            if let JSXAttributeItem::Attribute(attribute) = item
+                && let JSXAttributeName::Identifier(ident) = &attribute.name
+                && ident.name == SELF
+            {
+                self.report_error(ident.span);
+                return;
             }
         }
 

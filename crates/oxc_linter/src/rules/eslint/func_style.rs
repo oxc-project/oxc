@@ -191,10 +191,10 @@ declare_oxc_lint!(
 );
 
 fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    if let Some(export_decl_ancestor) = nth_outermost_paren_parent(node, ctx, 2) {
-        if let AstKind::ExportNamedDeclaration(_) = export_decl_ancestor.kind() {
-            return true;
-        }
+    if let Some(export_decl_ancestor) = nth_outermost_paren_parent(node, ctx, 2)
+        && let AstKind::ExportNamedDeclaration(_) = export_decl_ancestor.kind()
+    {
+        return true;
     }
     false
 }

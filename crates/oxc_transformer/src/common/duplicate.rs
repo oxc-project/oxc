@@ -91,16 +91,15 @@ impl<'a> TransformCtx<'a> {
             Expression::Identifier(ident) => {
                 let reference_id = ident.reference_id();
                 let reference = ctx.scoping().get_reference(reference_id);
-                if let Some(symbol_id) = reference.symbol_id() {
-                    if !mutated_symbol_needs_temp_var || !ctx.scoping().symbol_is_mutated(symbol_id)
-                    {
-                        // Reading bound identifier cannot have side effects, so no need for temp var
-                        let binding = BoundIdentifier::new(ident.name, symbol_id);
-                        let references = create_array(|| {
-                            binding.create_spanned_read_expression(ident.span, ctx)
-                        });
-                        return (expr, references);
-                    }
+                if let Some(symbol_id) = reference.symbol_id()
+                    && (!mutated_symbol_needs_temp_var
+                        || !ctx.scoping().symbol_is_mutated(symbol_id))
+                {
+                    // Reading bound identifier cannot have side effects, so no need for temp var
+                    let binding = BoundIdentifier::new(ident.name, symbol_id);
+                    let references =
+                        create_array(|| binding.create_spanned_read_expression(ident.span, ctx));
+                    return (expr, references);
                 }
 
                 // Previously `x += 1` (`x` read + write), but moving to `_x = x` (`x` read only)

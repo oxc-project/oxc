@@ -342,15 +342,15 @@ impl LanguageServer for Backend {
             });
         }
 
-        if !removing_registrations.is_empty() {
-            if let Err(err) = self.client.unregister_capability(removing_registrations).await {
-                warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
-            }
+        if !removing_registrations.is_empty()
+            && let Err(err) = self.client.unregister_capability(removing_registrations).await
+        {
+            warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
         }
-        if !adding_registrations.is_empty() {
-            if let Err(err) = self.client.register_capability(adding_registrations).await {
-                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
-            }
+        if !adding_registrations.is_empty()
+            && let Err(err) = self.client.register_capability(adding_registrations).await
+        {
+            warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
         }
     }
 
@@ -457,16 +457,16 @@ impl LanguageServer for Backend {
 
         // tell client to stop / start watching for files
         if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
-            if !added_registrations.is_empty() {
-                if let Err(err) = self.client.register_capability(added_registrations).await {
-                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
-                }
+            if !added_registrations.is_empty()
+                && let Err(err) = self.client.register_capability(added_registrations).await
+            {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
             }
 
-            if !removed_registrations.is_empty() {
-                if let Err(err) = self.client.unregister_capability(removed_registrations).await {
-                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
-                }
+            if !removed_registrations.is_empty()
+                && let Err(err) = self.client.unregister_capability(removed_registrations).await
+            {
+                warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
             }
         }
     }

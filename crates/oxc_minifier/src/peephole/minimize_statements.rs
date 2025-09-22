@@ -98,10 +98,10 @@ impl<'a> PeepholeOptimizations {
                     let prev_stmt = &stmts[prev_index];
                     match prev_stmt {
                         Statement::ExpressionStatement(_) => {
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last() {
-                                if last_return.argument.is_none() {
-                                    break 'return_loop;
-                                }
+                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
+                                && last_return.argument.is_none()
+                            {
+                                break 'return_loop;
                             }
                             ctx.state.changed = true;
                             // "a(); return b;" => "return a(), b;"
@@ -157,11 +157,11 @@ impl<'a> PeepholeOptimizations {
                                 .unwrap_or_else(|| ctx.ast.void_0(right_span));
 
                             // "if (!a) return b; return c;" => "return a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
-                                if unary_expr.operator.is_not() {
-                                    prev_if.test = unary_expr.argument.take_in(ctx.ast);
-                                    std::mem::swap(&mut left, &mut right);
-                                }
+                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
+                                && unary_expr.operator.is_not()
+                            {
+                                prev_if.test = unary_expr.argument.take_in(ctx.ast);
+                                std::mem::swap(&mut left, &mut right);
                             }
 
                             let argument = if let Expression::SequenceExpression(sequence_expr) =
@@ -247,11 +247,11 @@ impl<'a> PeepholeOptimizations {
                             let mut right = last_throw.unbox().argument;
 
                             // "if (!a) throw b; throw c;" => "throw a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
-                                if unary_expr.operator.is_not() {
-                                    prev_if.test = unary_expr.argument.take_in(ctx.ast);
-                                    std::mem::swap(&mut left, &mut right);
-                                }
+                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
+                                && unary_expr.operator.is_not()
+                            {
+                                prev_if.test = unary_expr.argument.take_in(ctx.ast);
+                                std::mem::swap(&mut left, &mut right);
                             }
 
                             let argument = if let Expression::SequenceExpression(sequence_expr) =
@@ -403,26 +403,26 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last() {
-            if var_decl.kind == prev_var_decl.kind {
-                ctx.state.changed = true;
-            }
+        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last()
+            && var_decl.kind == prev_var_decl.kind
+        {
+            ctx.state.changed = true;
         }
         let VariableDeclaration { span, kind, declarations, declare } = var_decl.unbox();
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, ctx) {
                 ctx.state.changed = true;
-                if let Some(init) = decl.init.take() {
-                    if init.may_have_side_effects(ctx) {
-                        result.push(ctx.ast.statement_expression(init.span(), init));
-                    }
+                if let Some(init) = decl.init.take()
+                    && init.may_have_side_effects(ctx)
+                {
+                    result.push(ctx.ast.statement_expression(init.span(), init));
                 }
             } else {
-                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
-                    if kind == prev_var_decl.kind {
-                        prev_var_decl.declarations.push(decl);
-                        continue;
-                    }
+                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
+                    && kind == prev_var_decl.kind
+                {
+                    prev_var_decl.declarations.push(decl);
+                    continue;
                 }
                 let decls = ctx.ast.vec1(decl);
                 let new_decl = ctx.ast.alloc_variable_declaration(span, kind, decls, declare);
@@ -447,14 +447,14 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut expr_stmt.expression;
-                expr_stmt.expression = Self::join_sequence(a, b, ctx);
-                result.pop();
-                ctx.state.changed = true;
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut expr_stmt.expression;
+            expr_stmt.expression = Self::join_sequence(a, b, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         // "var a; a = b();" => "var a = b();"
         match &mut expr_stmt.expression {
@@ -576,14 +576,14 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut switch_stmt.discriminant;
-                switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
-                result.pop();
-                ctx.state.changed = true;
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut switch_stmt.discriminant;
+            switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         result.push(Statement::SwitchStatement(switch_stmt));
     }
@@ -614,48 +614,42 @@ impl<'a> PeepholeOptimizations {
 
             if if_stmt.consequent.is_jump_statement() {
                 // Absorb a previous if statement
-                if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut() {
-                    if prev_if_stmt.alternate.is_none()
-                        && Self::jump_stmts_look_the_same(
-                            &prev_if_stmt.consequent,
-                            &if_stmt.consequent,
-                        )
-                    {
-                        // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
-                        // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
-                        // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
-                        // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                        if_stmt.test = Self::join_with_left_associative_op(
-                            if_stmt.test.span(),
-                            LogicalOperator::Or,
-                            prev_if_stmt.test.take_in(ctx.ast),
-                            if_stmt.test.take_in(ctx.ast),
-                            ctx,
-                        );
-                        result.pop();
-                        ctx.state.changed = true;
-                    }
+                if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
+                    && prev_if_stmt.alternate.is_none()
+                    && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
+                {
+                    // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
+                    // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
+                    // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
+                    // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
+                    if_stmt.test = Self::join_with_left_associative_op(
+                        if_stmt.test.span(),
+                        LogicalOperator::Or,
+                        prev_if_stmt.test.take_in(ctx.ast),
+                        if_stmt.test.take_in(ctx.ast),
+                        ctx,
+                    );
+                    result.pop();
+                    ctx.state.changed = true;
                 }
 
                 let mut optimize_implicit_jump = false;
                 // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
                 // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                if ctx.ancestors().nth(1).is_some_and(Ancestor::is_for_statement) {
-                    if let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent {
-                        if continue_stmt.label.is_none() {
-                            optimize_implicit_jump = true;
-                        }
-                    }
+                if ctx.ancestors().nth(1).is_some_and(Ancestor::is_for_statement)
+                    && let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent
+                    && continue_stmt.label.is_none()
+                {
+                    optimize_implicit_jump = true;
                 }
 
                 // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
                 // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
-                if ctx.parent().is_function_body() {
-                    if let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent {
-                        if return_stmt.argument.is_none() {
-                            optimize_implicit_jump = true;
-                        }
-                    }
+                if ctx.parent().is_function_body()
+                    && let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent
+                    && return_stmt.argument.is_none()
+                {
+                    optimize_implicit_jump = true;
                 }
                 if optimize_implicit_jump {
                     // Don't do this transformation if the branch condition could
@@ -672,10 +666,10 @@ impl<'a> PeepholeOptimizations {
                     //   if (a(() => b)) { let b; }
                     //
                     let mut can_move_branch_condition_outside_scope = true;
-                    if let Some(alternate) = &if_stmt.alternate {
-                        if Self::statement_cares_about_scope(alternate) {
-                            can_move_branch_condition_outside_scope = false;
-                        }
+                    if let Some(alternate) = &if_stmt.alternate
+                        && Self::statement_cares_about_scope(alternate)
+                    {
+                        can_move_branch_condition_outside_scope = false;
                     }
                     if let Some(stmts) = stmts.get(i + 1..) {
                         for stmt in stmts {
@@ -724,18 +718,17 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                     result.push(Statement::IfStatement(if_stmt));
                     loop {
-                        if let Some(Statement::IfStatement(if_stmt)) = result.last_mut() {
-                            if if_stmt.consequent.is_jump_statement() {
-                                if let Some(stmt) = if_stmt.alternate.take() {
-                                    if let Statement::BlockStatement(block_stmt) = stmt {
-                                        Self::handle_block(result, block_stmt, ctx);
-                                    } else {
-                                        result.push(stmt);
-                                        ctx.state.changed = true;
-                                    }
-                                    continue;
-                                }
+                        if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                            && if_stmt.consequent.is_jump_statement()
+                            && let Some(stmt) = if_stmt.alternate.take()
+                        {
+                            if let Statement::BlockStatement(block_stmt) = stmt {
+                                Self::handle_block(result, block_stmt, ctx);
+                            } else {
+                                result.push(stmt);
+                                ctx.state.changed = true;
                             }
+                            continue;
                         }
                         break;
                     }
@@ -791,15 +784,14 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                if let Some(argument) = &mut ret_stmt.argument {
-                    let a = &mut prev_expr_stmt.expression;
-                    *argument = Self::join_sequence(a, argument, ctx);
-                    result.pop();
-                    ctx.state.changed = true;
-                }
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+            && let Some(argument) = &mut ret_stmt.argument
+        {
+            let a = &mut prev_expr_stmt.expression;
+            *argument = Self::join_sequence(a, argument, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         result.push(Statement::ReturnStatement(ret_stmt));
         *is_control_flow_dead = true;
@@ -822,14 +814,14 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut throw_stmt.argument;
-                throw_stmt.argument = Self::join_sequence(a, b, ctx);
-                result.pop();
-                ctx.state.changed = true;
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut throw_stmt.argument;
+            throw_stmt.argument = Self::join_sequence(a, b, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         result.push(Statement::ThrowStatement(throw_stmt));
         *is_control_flow_dead = true;
@@ -904,16 +896,15 @@ impl<'a> PeepholeOptimizations {
                 }
                 Some(Statement::VariableDeclaration(prev_var_decl)) => {
                     if let Some(init) = &mut for_stmt.init {
-                        if prev_var_decl.kind.is_var() {
-                            if let ForStatementInit::VariableDeclaration(var_decl) = init {
-                                if var_decl.kind.is_var() {
-                                    var_decl
-                                        .declarations
-                                        .splice(0..0, prev_var_decl.declarations.drain(..));
-                                    result.pop();
-                                    ctx.state.changed = true;
-                                }
-                            }
+                        if prev_var_decl.kind.is_var()
+                            && let ForStatementInit::VariableDeclaration(var_decl) = init
+                            && var_decl.kind.is_var()
+                        {
+                            var_decl
+                                .declarations
+                                .splice(0..0, prev_var_decl.declarations.drain(..));
+                            result.pop();
+                            ctx.state.changed = true;
                         }
                     } else if prev_var_decl.kind.is_var() {
                         let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
@@ -997,21 +988,17 @@ impl<'a> PeepholeOptimizations {
                                 None
                             }
                         };
-                        if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
-                            if let BindingPatternKind::BindingIdentifier(decl_id) =
+                        if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
+                            && let BindingPatternKind::BindingIdentifier(decl_id) =
                                 &prev_var_decl_item.id.kind
-                            {
-                                if id.name == decl_id.name {
-                                    let Some(Statement::VariableDeclaration(prev_var_decl)) =
-                                        result.pop()
-                                    else {
-                                        unreachable!()
-                                    };
-                                    for_in_stmt.left =
-                                        ForStatementLeft::VariableDeclaration(prev_var_decl);
-                                    ctx.state.changed = true;
-                                }
-                            }
+                            && id.name == decl_id.name
+                        {
+                            let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
+                            else {
+                                unreachable!()
+                            };
+                            for_in_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
+                            ctx.state.changed = true;
                         }
                     }
                 }
@@ -1038,32 +1025,28 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "var a; for (a of b) c" => "for (var a of b) c"
-        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
-            if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left {
-                let prev_var_decl_no_init_item = {
-                    if prev_var_decl.kind.is_var()
-                        && prev_var_decl.declarations.len() == 1
-                        && prev_var_decl.declarations[0].init.is_none()
-                    {
-                        Some(&prev_var_decl.declarations[0])
-                    } else {
-                        None
-                    }
-                };
-                if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
-                    if let BindingPatternKind::BindingIdentifier(decl_id) =
-                        &prev_var_decl_item.id.kind
-                    {
-                        if id.name == decl_id.name {
-                            let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
-                            else {
-                                unreachable!()
-                            };
-                            for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
-                            ctx.state.changed = true;
-                        }
-                    }
+        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
+            && let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left
+        {
+            let prev_var_decl_no_init_item = {
+                if prev_var_decl.kind.is_var()
+                    && prev_var_decl.declarations.len() == 1
+                    && prev_var_decl.declarations[0].init.is_none()
+                {
+                    Some(&prev_var_decl.declarations[0])
+                } else {
+                    None
                 }
+            };
+            if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
+                && let BindingPatternKind::BindingIdentifier(decl_id) = &prev_var_decl_item.id.kind
+                && id.name == decl_id.name
+            {
+                let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop() else {
+                    unreachable!()
+                };
+                for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
+                ctx.state.changed = true;
             }
         }
         result.push(Statement::ForOfStatement(for_of_stmt));

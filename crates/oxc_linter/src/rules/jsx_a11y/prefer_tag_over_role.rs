@@ -56,12 +56,12 @@ impl PreferTagOverRole {
         jsx_name: &str,
         ctx: &LintContext<'a>,
     ) {
-        if let JSXAttributeItem::Attribute(attr) = role_prop {
-            if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
-                let roles = role_values.value.split_whitespace();
-                for role in roles {
-                    Self::check_role(role, role_to_tag, jsx_name, attr.span, ctx);
-                }
+        if let JSXAttributeItem::Attribute(attr) = role_prop
+            && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
+        {
+            let roles = role_values.value.split_whitespace();
+            for role in roles {
+                Self::check_role(role, role_to_tag, jsx_name, attr.span, ctx);
             }
         }
     }
@@ -73,10 +73,10 @@ impl PreferTagOverRole {
         span: Span,
         ctx: &LintContext,
     ) {
-        if let Some(tag) = role_to_tag.get(role) {
-            if jsx_name != *tag {
-                ctx.diagnostic(prefer_tag_over_role_diagnostic(span, tag, role));
-            }
+        if let Some(tag) = role_to_tag.get(role)
+            && jsx_name != *tag
+        {
+            ctx.diagnostic(prefer_tag_over_role_diagnostic(span, tag, role));
         }
     }
 }

@@ -236,17 +236,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         if !matches!(expr, Expression::CallExpression(_)) {
             // Try to get binding from parent VariableDeclarator
-            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
-                if let Some(ident) = declarator.id().get_binding_identifier() {
-                    let id_binding = BoundIdentifier::from_binding_ident(ident);
-                    self.handle_function_in_variable_declarator(
-                        &id_binding,
-                        &binding,
-                        arguments,
-                        ctx,
-                    );
-                    return;
-                }
+            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent()
+                && let Some(ident) = declarator.id().get_binding_identifier()
+            {
+                let id_binding = BoundIdentifier::from_binding_ident(ident);
+                self.handle_function_in_variable_declarator(&id_binding, &binding, arguments, ctx);
+                return;
             }
         }
 
@@ -952,24 +947,21 @@ impl<'a> Visit<'a> for UsedInJSXBindingsCollector<'a, '_> {
             _ => false,
         };
 
-        if is_jsx_call {
-            if let Some(Argument::Identifier(ident)) = it.arguments.first() {
-                if let Some(symbol_id) =
-                    self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-                {
-                    self.bindings.insert(symbol_id);
-                }
-            }
+        if is_jsx_call
+            && let Some(Argument::Identifier(ident)) = it.arguments.first()
+            && let Some(symbol_id) =
+                self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
+        {
+            self.bindings.insert(symbol_id);
         }
     }
 
     fn visit_jsx_opening_element(&mut self, it: &JSXOpeningElement<'_>) {
-        if let Some(ident) = it.name.get_identifier() {
-            if let Some(symbol_id) =
+        if let Some(ident) = it.name.get_identifier()
+            && let Some(symbol_id) =
                 self.ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-            {
-                self.bindings.insert(symbol_id);
-            }
+        {
+            self.bindings.insert(symbol_id);
         }
     }
 

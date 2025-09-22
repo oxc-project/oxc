@@ -412,13 +412,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 }
             }
             Expression::MetaProperty(meta_property) => {
-                if let Some(replacement) = &self.config.0.import_meta {
-                    if meta_property.meta.name == "import" && meta_property.property.name == "meta"
-                    {
-                        let value = self.parse_value(replacement);
-                        *expr = value;
-                        return true;
-                    }
+                if let Some(replacement) = &self.config.0.import_meta
+                    && meta_property.meta.name == "import"
+                    && meta_property.property.name == "meta"
+                {
+                    let value = self.parse_value(replacement);
+                    *expr = value;
+                    return true;
                 }
             }
             _ => {}

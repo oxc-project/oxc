@@ -109,10 +109,10 @@ impl Rule for ButtonHasType {
                             .properties
                             .iter()
                             .find_map(|prop| {
-                                if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                                    if prop.key.is_specific_static_name("type") {
-                                        return Some(prop);
-                                    }
+                                if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                                    && prop.key.is_specific_static_name("type")
+                                {
+                                    return Some(prop);
                                 }
 
                                 None

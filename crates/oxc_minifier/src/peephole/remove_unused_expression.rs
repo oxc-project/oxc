@@ -573,31 +573,33 @@ impl<'a> PeepholeOptimizations {
                 return true;
             }
 
-            if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee {
-                if !f.r#async && f.params.parameters_count() == 0 && f.body.statements.len() == 1 {
-                    if f.expression {
-                        // Replace "(() => foo())()" with "foo()"
-                        let expr = f.get_expression_mut().unwrap();
-                        *e = expr.take_in(ctx.ast);
+            if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
+                && !f.r#async
+                && f.params.parameters_count() == 0
+                && f.body.statements.len() == 1
+            {
+                if f.expression {
+                    // Replace "(() => foo())()" with "foo()"
+                    let expr = f.get_expression_mut().unwrap();
+                    *e = expr.take_in(ctx.ast);
+                    return Self::remove_unused_expression(e, ctx);
+                }
+                match &mut f.body.statements[0] {
+                    Statement::ExpressionStatement(expr_stmt) => {
+                        // Replace "(() => { foo() })" with "foo()"
+                        *e = expr_stmt.expression.take_in(ctx.ast);
                         return Self::remove_unused_expression(e, ctx);
                     }
-                    match &mut f.body.statements[0] {
-                        Statement::ExpressionStatement(expr_stmt) => {
-                            // Replace "(() => { foo() })" with "foo()"
-                            *e = expr_stmt.expression.take_in(ctx.ast);
+                    Statement::ReturnStatement(ret_stmt) => {
+                        if let Some(argument) = &mut ret_stmt.argument {
+                            // Replace "(() => { return foo() })" with "foo()"
+                            *e = argument.take_in(ctx.ast);
                             return Self::remove_unused_expression(e, ctx);
                         }
-                        Statement::ReturnStatement(ret_stmt) => {
-                            if let Some(argument) = &mut ret_stmt.argument {
-                                // Replace "(() => { return foo() })" with "foo()"
-                                *e = argument.take_in(ctx.ast);
-                                return Self::remove_unused_expression(e, ctx);
-                            }
-                            // Replace "(() => { return })" with ""
-                            return true;
-                        }
-                        _ => {}
+                        // Replace "(() => { return })" with ""
+                        return true;
                     }
+                    _ => {}
                 }
             }
         }
@@ -707,40 +709,38 @@ impl<'a> PeepholeOptimizations {
         // Otherwise extract the expressions.
         let mut exprs = ctx.ast.vec();
 
-        if let Some(e) = &mut c.super_class {
-            if e.may_have_side_effects(ctx) {
-                exprs.push(c.super_class.take().unwrap());
-            }
+        if let Some(e) = &mut c.super_class
+            && e.may_have_side_effects(ctx)
+        {
+            exprs.push(c.super_class.take().unwrap());
         }
 
         for e in &mut c.body.body {
             // Save computed key.
-            if e.computed() {
-                if let Some(key) = match e {
+            if e.computed()
+                && let Some(key) = match e {
                     ClassElement::TSIndexSignature(_) | ClassElement::StaticBlock(_) => None,
                     ClassElement::MethodDefinition(def) => Some(&mut def.key),
                     ClassElement::PropertyDefinition(def) => Some(&mut def.key),
                     ClassElement::AccessorProperty(def) => Some(&mut def.key),
-                } {
-                    if let Some(expr) = key.as_expression_mut() {
-                        if expr.may_have_side_effects(ctx) {
-                            exprs.push(expr.take_in(ctx.ast));
-                        }
-                    }
                 }
+                && let Some(expr) = key.as_expression_mut()
+                && expr.may_have_side_effects(ctx)
+            {
+                exprs.push(expr.take_in(ctx.ast));
             }
             // Save static initializer.
-            if e.r#static() {
-                if let Some(init) = match e {
+            if e.r#static()
+                && let Some(init) = match e {
                     ClassElement::TSIndexSignature(_)
                     | ClassElement::StaticBlock(_)
                     | ClassElement::MethodDefinition(_) => None,
                     ClassElement::PropertyDefinition(def) => def.value.take(),
                     ClassElement::AccessorProperty(def) => def.value.take(),
-                } {
-                    // Already checked side effects above.
-                    exprs.push(init);
                 }
+            {
+                // Already checked side effects above.
+                exprs.push(init);
             }
         }
 

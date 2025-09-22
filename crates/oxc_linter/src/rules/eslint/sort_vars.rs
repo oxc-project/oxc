@@ -75,12 +75,11 @@ impl Rule for SortVars {
             .iter()
             .filter(|decl| matches!(decl.id.kind, BindingPatternKind::BindingIdentifier(_)))
         {
-            if let Some(previous) = previous {
-                if self.get_sortable_name(previous).cmp(&self.get_sortable_name(current))
+            if let Some(previous) = previous
+                && self.get_sortable_name(previous).cmp(&self.get_sortable_name(current))
                     == Ordering::Greater
-                {
-                    ctx.diagnostic(sort_vars_diagnostic(current.span));
-                }
+            {
+                ctx.diagnostic(sort_vars_diagnostic(current.span));
             }
 
             previous = Some(current);

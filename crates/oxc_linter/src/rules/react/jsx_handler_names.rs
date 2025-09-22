@@ -223,12 +223,12 @@ impl Rule for JsxHandlerNames {
             {
                 check_local_variables = v;
             }
-            if let Some(names) = options.get("ignoreComponentNames") {
-                if let Some(arr) = names.as_array() {
-                    for name in arr {
-                        if let Some(s) = name.as_str() {
-                            ignore_component_names.push(CompactStr::from(s));
-                        }
+            if let Some(names) = options.get("ignoreComponentNames")
+                && let Some(arr) = names.as_array()
+            {
+                for name in arr {
+                    if let Some(s) = name.as_str() {
+                        ignore_component_names.push(CompactStr::from(s));
                     }
                 }
             }

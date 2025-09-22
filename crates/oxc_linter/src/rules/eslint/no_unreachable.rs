@@ -78,8 +78,8 @@ impl Rule for NoUnreachable {
                 let unreachable = cfg.basic_block(node).is_unreachable();
                 unreachables[node.index()] = unreachable;
 
-                if !unreachable {
-                    if let Some(it) = cfg.is_infinite_loop_start(node, |instruction| {
+                if !unreachable
+                    && let Some(it) = cfg.is_infinite_loop_start(node, |instruction| {
                         use oxc_cfg::EvalConstConditionResult::{Eval, Fail, NotFound};
                         match instruction {
                             Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
@@ -90,9 +90,9 @@ impl Rule for NoUnreachable {
                             }
                             _ => NotFound,
                         }
-                    }) {
-                        infinite_loops.push(it);
-                    }
+                    })
+                {
+                    infinite_loops.push(it);
                 }
             }
             Control::Continue

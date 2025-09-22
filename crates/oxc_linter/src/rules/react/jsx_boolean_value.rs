@@ -133,28 +133,28 @@ impl Rule for JsxBooleanValue {
                     }
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                    if let Some(expr) = container.expression.as_expression() {
-                        if let Expression::BooleanLiteral(expr) = expr.without_parentheses() {
-                            if expr.value && self.is_never(ident.name.as_str()) {
-                                let span = Span::new(ident.span.end, jsx_attr.span.end);
-                                ctx.diagnostic_with_fix(
-                                    boolean_value_diagnostic(&ident.name, span),
-                                    |fixer| fixer.delete_range(span),
-                                );
-                            }
+                    if let Some(expr) = container.expression.as_expression()
+                        && let Expression::BooleanLiteral(expr) = expr.without_parentheses()
+                    {
+                        if expr.value && self.is_never(ident.name.as_str()) {
+                            let span = Span::new(ident.span.end, jsx_attr.span.end);
+                            ctx.diagnostic_with_fix(
+                                boolean_value_diagnostic(&ident.name, span),
+                                |fixer| fixer.delete_range(span),
+                            );
+                        }
 
-                            if !expr.value
-                                && self.is_never(ident.name.as_str())
-                                && self.assume_undefined_is_false
-                            {
-                                ctx.diagnostic_with_fix(
-                                    boolean_value_undefined_false_diagnostic(
-                                        &ident.name,
-                                        jsx_attr.span,
-                                    ),
-                                    |fixer| fixer.delete(&jsx_attr.span),
-                                );
-                            }
+                        if !expr.value
+                            && self.is_never(ident.name.as_str())
+                            && self.assume_undefined_is_false
+                        {
+                            ctx.diagnostic_with_fix(
+                                boolean_value_undefined_false_diagnostic(
+                                    &ident.name,
+                                    jsx_attr.span,
+                                ),
+                                |fixer| fixer.delete(&jsx_attr.span),
+                            );
                         }
                     }
                 }

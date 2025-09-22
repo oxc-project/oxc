@@ -87,10 +87,10 @@ impl NoRegexSpaces {
     }
 
     fn find_expr_to_report(args: &Vec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
-        if let Some(expr) = args.get(1).and_then(Argument::as_expression) {
-            if !expr.is_string_literal() {
-                return None; // skip on indeterminate flag, e.g. RegExp('a  b', flags)
-            }
+        if let Some(expr) = args.get(1).and_then(Argument::as_expression)
+            && !expr.is_string_literal()
+        {
+            return None; // skip on indeterminate flag, e.g. RegExp('a  b', flags)
         }
 
         let Some(Argument::StringLiteral(pattern)) = args.first() else {

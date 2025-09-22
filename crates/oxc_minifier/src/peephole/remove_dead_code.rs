@@ -125,19 +125,18 @@ impl<'a> PeepholeOptimizations {
 
     pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::ForStatement(for_stmt) = stmt else { return };
-        if let Some(init) = &mut for_stmt.init {
-            if let Some(init) = init.as_expression_mut() {
-                if Self::remove_unused_expression(init, ctx) {
-                    for_stmt.init = None;
-                    ctx.state.changed = true;
-                }
-            }
+        if let Some(init) = &mut for_stmt.init
+            && let Some(init) = init.as_expression_mut()
+            && Self::remove_unused_expression(init, ctx)
+        {
+            for_stmt.init = None;
+            ctx.state.changed = true;
         }
-        if let Some(update) = &mut for_stmt.update {
-            if Self::remove_unused_expression(update, ctx) {
-                for_stmt.update = None;
-                ctx.state.changed = true;
-            }
+        if let Some(update) = &mut for_stmt.update
+            && Self::remove_unused_expression(update, ctx)
+        {
+            for_stmt.update = None;
+            ctx.state.changed = true;
         }
 
         let test_boolean =
@@ -222,10 +221,10 @@ impl<'a> PeepholeOptimizations {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
-        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
-            if *body.expression() {
-                return;
-            }
+        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1)
+            && *body.expression()
+        {
+            return;
         }
 
         if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
@@ -236,22 +235,23 @@ impl<'a> PeepholeOptimizations {
 
     pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::TryStatement(s) = stmt else { return };
-        if let Some(handler) = &s.handler {
-            if s.block.body.is_empty() {
-                let mut var = KeepVar::new(ctx.ast);
-                var.visit_block_statement(&handler.body);
-                let Some(handler) = &mut s.handler else { return };
-                handler.body.body.clear();
-                if let Some(var_decl) = var.get_variable_declaration_statement() {
-                    handler.body.body.push(var_decl);
-                }
+        if let Some(handler) = &s.handler
+            && s.block.body.is_empty()
+        {
+            let mut var = KeepVar::new(ctx.ast);
+            var.visit_block_statement(&handler.body);
+            let Some(handler) = &mut s.handler else { return };
+            handler.body.body.clear();
+            if let Some(var_decl) = var.get_variable_declaration_statement() {
+                handler.body.body.push(var_decl);
             }
         }
 
-        if let Some(finalizer) = &s.finalizer {
-            if finalizer.body.is_empty() && s.handler.is_some() {
-                s.finalizer = None;
-            }
+        if let Some(finalizer) = &s.finalizer
+            && finalizer.body.is_empty()
+            && s.handler.is_some()
+        {
+            s.finalizer = None;
         }
 
         if s.block.body.is_empty()
@@ -425,22 +425,21 @@ impl<'a> PeepholeOptimizations {
         let Expression::CallExpression(e) = expr else { return };
         if let Expression::Identifier(ident) = &e.callee {
             let reference_id = ident.reference_id();
-            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
-                if matches!(
+            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                && matches!(
                     ctx.state.pure_functions.get(&symbol_id),
                     Some(Some(ConstantValue::Undefined))
-                ) {
-                    let mut exprs =
-                        Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
-                    if exprs.is_empty() {
-                        *expr = ctx.ast.void_0(e.span);
-                        ctx.state.changed = true;
-                        return;
-                    }
-                    exprs.push(ctx.ast.void_0(e.span));
-                    *expr = ctx.ast.expression_sequence(e.span, exprs);
+                )
+            {
+                let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
+                if exprs.is_empty() {
+                    *expr = ctx.ast.void_0(e.span);
                     ctx.state.changed = true;
+                    return;
                 }
+                exprs.push(ctx.ast.void_0(e.span));
+                *expr = ctx.ast.expression_sequence(e.span, exprs);
+                ctx.state.changed = true;
             }
         }
     }

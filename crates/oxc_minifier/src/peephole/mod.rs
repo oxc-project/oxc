@@ -94,10 +94,10 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             _ => {
-                if let Some(a) = check_a(pair.1) {
-                    if let Some(b) = check_b(pair.0) {
-                        return Some((a, b));
-                    }
+                if let Some(a) = check_a(pair.1)
+                    && let Some(b) = check_b(pair.0)
+                {
+                    return Some((a, b));
                 }
             }
         }
@@ -142,11 +142,11 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             Statement::IfStatement(s) => {
                 Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
                 Self::try_fold_if(stmt, ctx);
-                if let Statement::IfStatement(if_stmt) = stmt {
-                    if let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx) {
-                        *stmt = folded_stmt;
-                        ctx.state.changed = true;
-                    }
+                if let Statement::IfStatement(if_stmt) = stmt
+                    && let Some(folded_stmt) = Self::try_minimize_if(if_stmt, ctx)
+                {
+                    *stmt = folded_stmt;
+                    ctx.state.changed = true;
                 }
             }
             Statement::WhileStatement(s) => {
