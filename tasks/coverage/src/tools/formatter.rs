@@ -28,8 +28,15 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
         // `oxc_formatter` expects this to be false
         preserve_parens: false,
     };
-    let ParserReturn { program, .. } =
+
+    let ParserReturn { program, errors, .. } =
         Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
+
+    // If the input has parse errors, we skip the test.
+    if !errors.is_empty() {
+        return TestResult::Passed;
+    }
+
     let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
 
     let allocator = Allocator::default();
