@@ -7,6 +7,7 @@ import type { VisitorObject } from '../generated/visit/visitor.d.ts';
 export * from '@oxc-project/types';
 
 export { VisitorObject };
+export type { SourceLocation } from '@oxc-project/types';
 
 export class Visitor {
   constructor(visitor: VisitorObject);
@@ -17,6 +18,7 @@ export interface Comment {
   value: string
   start: number
   end: number
+  loc?: SourceLocation
 }
 
 export interface ErrorLabel {
