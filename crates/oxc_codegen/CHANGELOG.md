@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-22
+
+### 🐛 Bug Fixes
+
+- 8f3f460 codegen: Add missing dot when printing import.defer and import.source (#13975) (Boshen)
+
+### ⚡ Performance
+
+- ed8ff7d codegen: Unroll loop in `SourcemapBuilder::update_generated_line_and_column` (#13903) (翠)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
 
 
 
