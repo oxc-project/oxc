@@ -42,7 +42,7 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
         run: |
-          cargo publish --workspace
+          cargo release-oxc publish --release crates
           echo "TAG=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Tag and Push
