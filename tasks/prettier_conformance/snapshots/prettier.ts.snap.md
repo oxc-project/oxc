@@ -1,4 +1,4 @@
-ts compatibility: 404/573 (70.51%)
+ts compatibility: 406/573 (70.86%)
 
 # Failed
 
@@ -19,7 +19,6 @@ ts compatibility: 404/573 (70.51%)
 | typescript/as/as.ts | 💥 | 85.04% |
 | typescript/as/assignment2.ts | 💥 | 94.12% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
-| typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
 | typescript/assignment/issue-10846.ts | 💥 | 63.16% |
 | typescript/assignment/issue-10848.tsx | 💥 | 52.12% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
@@ -141,7 +140,6 @@ ts compatibility: 404/573 (70.51%)
 | typescript/satisfies-operators/assignment.ts | 💥💥 | 90.91% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
-| typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 42.86% |
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 80.00% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 66.67% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |

@@ -1,6 +1,7 @@
 mod array_element_list;
 mod array_expression;
 mod arrow_function_expression;
+mod as_or_satisfies_expression;
 mod assignment_pattern_property_list;
 mod binary_like_expression;
 mod binding_property_list;
@@ -2001,18 +2002,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                 "}",
             ]
         )
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression(), " as ", self.type_annotation()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression(), " satisfies ", self.type_annotation()])
     }
 }
 
