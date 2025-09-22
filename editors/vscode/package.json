@@ -214,7 +214,7 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^10.0.0",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.35",
+    "rolldown": "1.0.0-beta.38",
     "tinyglobby": "^0.2.15",
     "typescript": "catalog:"
   },
