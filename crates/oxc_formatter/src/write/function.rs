@@ -49,6 +49,7 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
         if self.r#async() {
             write!(f, ["async", space()])?;
         }
+
         write!(
             f,
             [

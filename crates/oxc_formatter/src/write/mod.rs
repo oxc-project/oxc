@@ -78,7 +78,7 @@ use self::{
     object_pattern_like::ObjectPatternLike,
     parameter_list::{ParameterLayout, ParameterList},
     semicolon::{ClassPropertySemicolon, OptionalSemicolon},
-    type_parameters::{FormatTsTypeParameters, FormatTsTypeParametersOptions},
+    type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
     utils::{
         array::{TrailingSeparatorMode, write_array_node},
         statement_body::FormatStatementBody,
@@ -1377,44 +1377,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSQualifiedName<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "<")?;
-        for (i, param) in self.params().iter().enumerate() {
-            if i != 0 {
-                write!(f, [",", space()])?;
-            }
-            write!(f, param)?;
-        }
-        write!(f, ">")
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.r#const() {
-            write!(f, ["const", space()])?;
-        }
-        if self.r#in() {
-            write!(f, ["in", space()])?;
-        }
-        if self.out() {
-            write!(f, ["out", space()])?;
-        }
-        write!(f, self.name())?;
-        if let Some(constraint) = &self.constraint() {
-            write!(f, [space(), "extends", space(), constraint])?;
-        }
-        if let Some(default) = &self.default() {
-            write!(f, [space(), "=", space(), default])?;
-        }
-        Ok(())
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["<", self.params(), ">"])
+        FormatTSTypeParameters::new(self, FormatTSTypeParametersOptions::default()).fmt(f)
     }
 }
 
@@ -1463,9 +1428,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
             if let Some(type_parameters) = type_parameters {
                 write!(
                     f,
-                    FormatTsTypeParameters::new(
+                    FormatTSTypeParameters::new(
                         type_parameters,
-                        FormatTsTypeParametersOptions {
+                        FormatTSTypeParametersOptions {
                             group_id: type_parameter_group,
                             is_type_or_interface_decl: true
                         }
