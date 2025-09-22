@@ -444,6 +444,56 @@ Found 1 warning and 6 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
+exports[`oxlint CLI > should receive ESTree-compatible AST 1`] = `
+"
+  x estree-check(check): Visited nodes:
+  | * Program
+  | * VariableDeclaration: let
+  | * VariableDeclarator: (init: ObjectExpression)
+  | * Identifier: a
+  | * ObjectExpression
+  | * Identifier: x
+  | * Identifier: y
+  | * VariableDeclaration:exit: let
+  | * VariableDeclaration: const
+  | * VariableDeclarator: (init: BinaryExpression)
+  | * Identifier: b
+  | * BinaryExpression: * (right: BinaryExpression)
+  | * Identifier: x
+  | * BinaryExpression: + (right: Literal)
+  | * Literal: str
+  | * Literal: 123
+  | * VariableDeclaration:exit: const
+  | * TSTypeAliasDeclaration: (typeAnnotation: TSStringKeyword)
+  | * Identifier: T
+  | * TSStringKeyword
+  | * TSTypeAliasDeclaration:exit: (typeAnnotation: TSStringKeyword)
+  | * TSTypeAliasDeclaration: (typeAnnotation: TSUnionType)
+  | * Identifier: U
+  | * TSUnionType: (types: TSStringKeyword, TSNumberKeyword)
+  | * TSStringKeyword
+  | * TSNumberKeyword
+  | * TSUnionType:exit: (types: TSStringKeyword, TSNumberKeyword)
+  | * TSTypeAliasDeclaration:exit: (typeAnnotation: TSUnionType)
+  | * Program:exit
+    ,-[index.ts:2:1]
+  1 |     // All \`Identifier\`s
+  2 | ,-> let a = { x: y };
+  3 | |   
+  4 | |   // No \`ParenthesizedExpression\`s in AST
+  5 | |   const b = (x * ((('str' + ((123))))));
+  6 | |   
+  7 | |   // TS syntax
+  8 | |   type T = string;
+  9 | |   
+ 10 | |   // No \`TSParenthesizedType\`s in AST
+ 11 | \`-> type U = (((((string)) | ((number)))));
+    \`----
+
+Found 0 warnings and 1 error.
+Finished in Xms on 1 file using X threads."
+`;
+
 exports[`oxlint CLI > should receive data via \`context\` 1`] = `
 "
   x context-plugin(log-context): id: context-plugin/log-context
@@ -612,7 +662,7 @@ exports[`oxlint CLI > should work with multiple rules 1`] = `
    \`----
   help: Remove the debugger statement
 
-  x basic-custom-plugin(no-ident-references-named-foo): Unexpected Identifier Reference named foo
+  x basic-custom-plugin(no-identifiers-named-foo): Unexpected Identifier named foo
    ,-[index.js:3:1]
  2 | 
  3 | foo;

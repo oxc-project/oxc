@@ -136,6 +136,12 @@ describe('oxlint CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should receive ESTree-compatible AST', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/estree');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should receive data via `context`', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/context_properties');
     expect(exitCode).toBe(1);

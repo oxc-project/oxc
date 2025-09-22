@@ -72,9 +72,15 @@
 // for objects created by user code in visitors. If ephemeral user-created objects all fit in new space,
 // it will avoid full GC runs, which should greatly improve performance.
 
+// Lazy implementation
+/*
+// TODO(camc314): we need to generate `.d.ts` file for this module.
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/generated/lazy/types.mjs';
+*/
+
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/generated/lazy/types.mjs';
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/generated/visit/types.mjs';
 import { assertIs } from './utils.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
@@ -214,7 +220,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   for (let i = 0; i < keysLen; i++) {
     let name = keys[i];
 
-    const visitFn = visitor[name];
+    const visitFn = (visitor as { [key: string]: VisitFn })[name];
     if (typeof visitFn !== 'function') {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }

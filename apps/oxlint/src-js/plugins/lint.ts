@@ -9,10 +9,18 @@ import { registeredRules } from './load.js';
 import { assertIs } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
+// Lazy implementation
+/*
 // @ts-expect-error we need to generate `.d.ts` file for this module.
 import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.mjs';
 // @ts-expect-error we need to generate `.d.ts` file for this module.
 import { walkProgram } from '../../dist/generated/lazy/walk.mjs';
+*/
+
+// @ts-expect-error we need to generate `.d.ts` file for this module
+import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.mjs';
+// @ts-expect-error we need to generate `.d.ts` file for this module
+import { walkProgram } from '../../dist/generated/visit/walk.mjs';
 
 // Buffer with typed array views of itself stored as properties
 interface BufferWithArrays extends Uint8Array {
@@ -80,6 +88,14 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
       sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
 
     const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+
+    // `preserveParens` argument is `false`, to match ESLint.
+    // ESLint does not include `ParenthesizedExpression` nodes in its AST.
+    const program = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);
+    walkProgram(program, compiledVisitor);
+
+    // Lazy implementation
+    /*
     const sourceIsAscii = sourceText.length === sourceByteLen;
     const ast = {
       buffer,
@@ -91,6 +107,7 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
     };
 
     walkProgram(programPos, ast, compiledVisitor);
+    */
   }
 
   // Send diagnostics back to Rust
