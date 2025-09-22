@@ -170,7 +170,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
     #[rustfmt::skip]
     let mut visitor_keys = string!("
-        export default {
+        export default Object.freeze({
             // Leaf nodes
     ");
 
@@ -299,7 +299,7 @@ fn generate(codegen: &Codegen) -> Codes {
         {walk_fns}
     ");
 
-    visitor_keys.push_str("};");
+    visitor_keys.push_str("});");
 
     let nodes_count = nodes.len();
     let leaf_nodes_count = leaf_nodes_count.unwrap();

@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/estree_visit.rs`.
 
-export default {
+export default Object.freeze({
   // Leaf nodes
   DebuggerStatement: [],
   EmptyStatement: [],
@@ -169,4 +169,4 @@ export default {
   TSTypeQuery: ['exprName', 'typeArguments'],
   TSTypeReference: ['typeName', 'typeArguments'],
   TSUnionType: ['types'],
-};
+});
