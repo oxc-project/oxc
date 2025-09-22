@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use napi::Either;
 use napi_derive::napi;
 
@@ -46,8 +48,8 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
         let default = oxc_minifier::CompressOptions::default();
         Ok(oxc_minifier::CompressOptions {
             target: match &o.target {
-                Some(Either::A(s)) => EngineTargets::from_target(s)?,
-                Some(Either::B(list)) => EngineTargets::from_target_list(list)?,
+                Some(Either::A(s)) => Arc::new(EngineTargets::from_target(s)?),
+                Some(Either::B(list)) => Arc::new(EngineTargets::from_target_list(list)?),
                 _ => default.target,
             },
             drop_console: o.drop_console.unwrap_or(default.drop_console),

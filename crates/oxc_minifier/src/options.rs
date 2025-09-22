@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use oxc_compat::EngineTargets;
 
 pub use oxc_ecmascript::side_effects::PropertyReadSideEffects;
@@ -10,7 +12,7 @@ pub struct CompressOptions {
     /// and whether transformations can be applied.
     ///
     /// Default: empty (supports all features)
-    pub target: EngineTargets,
+    pub target: Arc<EngineTargets>,
 
     /// Remove `debugger;` statements.
     ///
@@ -57,7 +59,7 @@ impl Default for CompressOptions {
 impl CompressOptions {
     pub fn smallest() -> Self {
         Self {
-            target: EngineTargets::default(),
+            target: Arc::new(EngineTargets::default()),
             keep_names: CompressOptionsKeepNames::all_false(),
             drop_debugger: true,
             drop_console: false,
@@ -71,7 +73,7 @@ impl CompressOptions {
 
     pub fn safest() -> Self {
         Self {
-            target: EngineTargets::default(),
+            target: Arc::new(EngineTargets::default()),
             keep_names: CompressOptionsKeepNames::all_true(),
             drop_debugger: false,
             drop_console: false,
@@ -85,7 +87,7 @@ impl CompressOptions {
 
     pub fn dce() -> Self {
         Self {
-            target: EngineTargets::default(),
+            target: Arc::new(EngineTargets::default()),
             keep_names: CompressOptionsKeepNames::all_true(),
             drop_debugger: false,
             drop_console: false,

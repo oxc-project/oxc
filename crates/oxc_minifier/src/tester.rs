@@ -1,4 +1,6 @@
 #![expect(clippy::allow_attributes)]
+use std::sync::Arc;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_compat::EngineTargets;
@@ -15,8 +17,8 @@ pub fn default_options() -> CompressOptions {
     }
 }
 
-pub fn get_targets(target_list: &str) -> EngineTargets {
-    EngineTargets::from_target(target_list).unwrap()
+pub fn get_targets(target_list: &str) -> Arc<EngineTargets> {
+    Arc::new(EngineTargets::from_target(target_list).unwrap())
 }
 
 #[allow(dead_code)]
