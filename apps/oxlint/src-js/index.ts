@@ -1,10 +1,15 @@
 import type { Context } from './plugins/context.ts';
-import type { Rule } from './plugins/load.ts';
+import type { Plugin, Rule } from './plugins/load.ts';
 
 const { defineProperty, getPrototypeOf, setPrototypeOf } = Object;
 
 const dummyOptions: unknown[] = [],
   dummyReport = () => {};
+
+// Define a plugin.
+export function definePlugin(plugin: Plugin): Plugin {
+  return plugin;
+}
 
 // Define a rule.
 // If rule has `createOnce` method, add an ESLint-compatible `create` method which delegates to `createOnce`.

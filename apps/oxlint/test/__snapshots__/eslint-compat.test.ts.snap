@@ -1,8 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ESLint compatibility > \`defineRule\` should work 1`] = `
+exports[`ESLint compatibility > \`defineRule\` + \`definePlugin\` should work 1`] = `
 "
-<root>/apps/oxlint/test/fixtures/defineRule/files/1.js
+<root>/apps/oxlint/test/fixtures/define/files/1.js
   0:1  error  create body:
 this === rule: true                       testPlugin/create
   0:1  error  before hook:
@@ -22,7 +22,7 @@ filename: files/1.js               testPlugin/create
 identNum: 2
 filename: files/1.js   testPlugin/create-once
 
-<root>/apps/oxlint/test/fixtures/defineRule/files/2.js
+<root>/apps/oxlint/test/fixtures/define/files/2.js
   0:1  error  create body:
 this === rule: true                       testPlugin/create
   0:1  error  before hook:

@@ -4,7 +4,7 @@ import { getErrorMessage } from './utils.js';
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
 
 // Linter plugin, comprising multiple rules
-interface Plugin {
+export interface Plugin {
   meta: {
     name: string;
   };
