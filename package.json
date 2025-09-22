@@ -19,7 +19,7 @@
   },
   "pnpm": {
     "overrides": {
-      "tsdown": "0.15.1",
+      "tsdown": "0.15.2",
       "@rolldown/pluginutils": "1.0.0-beta.38"
     }
   }
