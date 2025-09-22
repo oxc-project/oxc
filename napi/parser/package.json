@@ -44,6 +44,7 @@
     "generated/lazy/constructors.mjs",
     "generated/lazy/types.mjs",
     "generated/lazy/walk.mjs",
+    "generated/visit/keys.mjs",
     "src-js/bindings.mjs",
     "src-js/index.d.ts",
     "src-js/index.mjs",
@@ -68,6 +69,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
     "@napi-rs/wasm-runtime": "catalog:",
+    "@typescript-eslint/visitor-keys": "^8.44.0",
     "@vitest/browser": "3.2.4",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",

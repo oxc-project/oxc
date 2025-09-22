@@ -1,7 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
-import { parseAsync, parseSync } from '../src-js/index.mjs';
+import { parseAsync, parseSync, visitorKeys } from '../src-js/index.mjs';
 import type {
   ExpressionStatement,
   ParserOptions,
@@ -872,6 +872,14 @@ describe('error', () => {
       'severity': 'Error',
     });
   });
+});
+
+it('visitor keys', () => {
+  expect(visitorKeys.Literal).toEqual([]);
+  expect(visitorKeys.VariableDeclaration).toEqual(['declarations']);
+  expect(visitorKeys.ObjectPattern).toEqual(['decorators', 'properties', 'typeAnnotation']);
+  expect(visitorKeys.ParenthesizedExpression).toEqual(['expression']);
+  expect(visitorKeys.V8IntrinsicExpression).toEqual(['name', 'arguments']);
 });
 
 describe('worker', () => {

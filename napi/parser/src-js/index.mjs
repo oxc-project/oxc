@@ -2,6 +2,8 @@ import { createRequire } from 'node:module';
 import { parseAsync as parseAsyncBinding, parseSync as parseSyncBinding } from './bindings.mjs';
 import { wrap } from './wrap.mjs';
 
+export { default as visitorKeys } from '../generated/visit/keys.mjs';
+
 export {
   ExportExportNameKind,
   ExportImportNameKind,

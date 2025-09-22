@@ -357,6 +357,9 @@ jobs:
           cache-key: ast_changes
           save-cache: ${{ github.ref_name == 'main' }}
 
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+        if: steps.filter.outputs.src == 'true'
+
       - name: Restore dprint plugin cache
         if: steps.filter.outputs.src == 'true'
         uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
