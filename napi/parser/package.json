@@ -45,6 +45,9 @@
     "generated/lazy/types.mjs",
     "generated/lazy/walk.mjs",
     "generated/visit/keys.mjs",
+    "generated/visit/types.mjs",
+    "generated/visit/visitor.d.ts",
+    "generated/visit/walk.mjs",
     "src-js/bindings.mjs",
     "src-js/index.d.ts",
     "src-js/index.mjs",
@@ -57,7 +60,9 @@
     "src-js/raw-transfer/lazy-common.mjs",
     "src-js/raw-transfer/node-array.mjs",
     "src-js/raw-transfer/supported.mjs",
-    "src-js/raw-transfer/visitor.mjs"
+    "src-js/raw-transfer/visitor.mjs",
+    "src-js/visit/index.mjs",
+    "src-js/visit/visitor.mjs"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -102,6 +107,6 @@
         "fs": false
       }
     },
-    "dtsHeaderFile": "src-js/header.js"
+    "dtsHeaderFile": "src-js/header.d.ts"
   }
 }

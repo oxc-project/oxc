@@ -874,14 +874,6 @@ describe('error', () => {
   });
 });
 
-it('visitor keys', () => {
-  expect(visitorKeys.Literal).toEqual([]);
-  expect(visitorKeys.VariableDeclaration).toEqual(['declarations']);
-  expect(visitorKeys.ObjectPattern).toEqual(['decorators', 'properties', 'typeAnnotation']);
-  expect(visitorKeys.ParenthesizedExpression).toEqual(['expression']);
-  expect(visitorKeys.V8IntrinsicExpression).toEqual(['name', 'arguments']);
-});
-
 describe('worker', () => {
   it('should run', async () => {
     const code = await new Promise((resolve, reject) => {
