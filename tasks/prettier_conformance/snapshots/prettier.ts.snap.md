@@ -1,4 +1,4 @@
-ts compatibility: 417/573 (72.77%)
+ts compatibility: 419/573 (73.12%)
 
 # Failed
 
@@ -21,7 +21,7 @@ ts compatibility: 417/573 (72.77%)
 | typescript/assignment/issue-10846.ts | 💥 | 57.14% |
 | typescript/assignment/issue-10848.tsx | 💥 | 52.12% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
-| typescript/cast/generic-cast.ts | 💥 | 39.24% |
+| typescript/cast/generic-cast.ts | 💥 | 81.48% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
@@ -42,7 +42,6 @@ ts compatibility: 417/573 (72.77%)
 | typescript/comments/type_literals.ts | 💥 | 68.97% |
 | typescript/comments/union.ts | 💥 | 75.00% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 75.00% |
-| typescript/compiler/castTest.ts | 💥 | 96.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 91.89% |
@@ -147,7 +146,6 @@ ts compatibility: 417/573 (72.77%)
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
-| typescript/typeparams/class-method.ts | 💥 | 96.61% |
 | typescript/typeparams/const.ts | 💥 | 86.15% |
 | typescript/typeparams/line-breaking-after-extends-2.ts | 💥 | 20.00% |
 | typescript/typeparams/line-breaking-after-extends.ts | 💥 | 17.14% |
