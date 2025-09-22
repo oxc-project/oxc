@@ -371,8 +371,186 @@ describe("parse", () => {
       });
     });
 
-    it("lossy replacement character", () => {
-      const ret = parseSync("test.js", "`�\\u{FFFD}${x}�\\u{FFFD}`;");
+    describe('`ImportDeclaration`', () => {
+      describe('import defer', () => {
+        it('ESTree', () => {
+          const ret = parseSync('test.js', 'import defer * as ns from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 30,
+            specifiers: [
+              {
+                type: 'ImportNamespaceSpecifier',
+                start: 13,
+                end: 20,
+                local: { type: 'Identifier', start: 18, end: 20, name: 'ns' },
+              },
+            ],
+            source: { type: 'Literal', start: 26, end: 29, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'defer',
+          });
+        });
+
+        it('TS-ESTree', () => {
+          const ret = parseSync('test.ts', 'import defer * as ns from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 30,
+            specifiers: [
+              {
+                type: 'ImportNamespaceSpecifier',
+                start: 13,
+                end: 20,
+                local: {
+                  type: 'Identifier',
+                  start: 18,
+                  end: 20,
+                  decorators: [],
+                  name: 'ns',
+                  optional: false,
+                  typeAnnotation: null,
+                },
+              },
+            ],
+            source: { type: 'Literal', start: 26, end: 29, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'defer',
+            importKind: 'value',
+          });
+        });
+      });
+
+      describe('import source', () => {
+        it('ESTree', () => {
+          const ret = parseSync('test.js', 'import source src from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 27,
+            specifiers: [
+              {
+                type: 'ImportDefaultSpecifier',
+                start: 14,
+                end: 17,
+                local: { type: 'Identifier', start: 14, end: 17, name: 'src' },
+              },
+            ],
+            source: { type: 'Literal', start: 23, end: 26, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'source',
+          });
+        });
+
+        it('TS-ESTree', () => {
+          const ret = parseSync('test.ts', 'import source src from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 27,
+            specifiers: [
+              {
+                type: 'ImportDefaultSpecifier',
+                start: 14,
+                end: 17,
+                local: {
+                  type: 'Identifier',
+                  start: 14,
+                  end: 17,
+                  decorators: [],
+                  name: 'src',
+                  optional: false,
+                  typeAnnotation: null,
+                },
+              },
+            ],
+            source: { type: 'Literal', start: 23, end: 26, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'source',
+            importKind: 'value',
+          });
+        });
+      });
+
+      describe('`ImportExpression`', () => {
+        describe('import.defer()', () => {
+          it('ESTree', () => {
+            const ret = parseSync('test.js', 'import.defer("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 17,
+              source: { type: 'Literal', start: 13, end: 16, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'defer',
+            });
+          });
+
+          // This does *not* align with TS-ESLint.
+          // See https://github.com/oxc-project/oxc/pull/11193.
+          it('TS-ESTree', () => {
+            const ret = parseSync('test.ts', 'import.defer("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 17,
+              source: { type: 'Literal', start: 13, end: 16, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'defer',
+            });
+          });
+        });
+
+        describe('import.source()', () => {
+          it('ESTree', () => {
+            const ret = parseSync('test.js', 'import.source("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 18,
+              source: { type: 'Literal', start: 14, end: 17, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'source',
+            });
+          });
+
+          // This does *not* align with TS-ESLint.
+          // See https://github.com/oxc-project/oxc/pull/11193.
+          it('TS-ESTree', () => {
+            const ret = parseSync('test.ts', 'import.source("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 18,
+              source: { type: 'Literal', start: 14, end: 17, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'source',
+            });
+          });
+        });
+      });
+    });
+
+    it('lossy replacement character', () => {
+      const ret = parseSync('test.js', '`�\\u{FFFD}${x}�\\u{FFFD}`;');
       expect(ret.errors.length).toBe(0);
       expect(ret.program.body.length).toBe(1);
       expect(ret.program.body[0]).toEqual({
@@ -721,13 +899,13 @@ describe("parse", () => {
       expect(ret.program.body[0].range).toEqual([0, 3]);
     });
 
-    it("should not include range when false", () => {
-      const ret = parseSync("test.js", "(x)", { range: false });
+    it('should not include range when false', () => {
+      const ret = parseSync('test.js', '(x)', { range: false });
       expect(ret.program.body[0].range).toBeUndefined();
     });
 
-    it("should not include range by default", () => {
-      const ret = parseSync("test.js", "(x)");
+    it('should not include range by default', () => {
+      const ret = parseSync('test.js', '(x)');
       expect(ret.program.body[0].range).toBeUndefined();
     });
   });
@@ -737,8 +915,6 @@ describe("parse", () => {
       const ret = parseSync('test.js', 'let x = 1;', { loc: true });
       expect(ret.program.body[0].start).toBe(0);
       expect(ret.program.body[0].end).toBe(10);
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 10 }
@@ -747,15 +923,11 @@ describe("parse", () => {
 
     it('should not include loc when false', () => {
       const ret = parseSync('test.js', 'let x = 1;', { loc: false });
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toBeUndefined();
     });
 
     it('should not include loc by default', () => {
       const ret = parseSync('test.js', 'let x = 1;');
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toBeUndefined();
     });
 
@@ -766,24 +938,18 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       // First declaration: let x = 1;
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 10 }
       });
 
       // Second declaration: let y = 2;
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
         end: { line: 2, column: 10 }
       });
 
       // Third declaration: let z = 3;
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[2].loc).toEqual({
         start: { line: 3, column: 0 },
         end: { line: 3, column: 10 }
@@ -795,18 +961,12 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       const functionDecl = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(functionDecl.loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 3, column: 1 }
       });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       const returnStmt = functionDecl.body.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(returnStmt.loc).toEqual({
         start: { line: 2, column: 2 },
         end: { line: 2, column: 11 }
@@ -816,11 +976,7 @@ let z = 3;`;
     it('should work with both range and loc options', () => {
       const ret = parseSync('test.js', 'let x = 1;', { range: true, loc: true });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].range).toEqual([0, 10]);
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 10 }
@@ -831,8 +987,6 @@ let z = 3;`;
       const code = 'let 🤨 = "hello";';
       const ret = parseSync('test.js', code, { loc: true });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 17 }
@@ -844,14 +998,10 @@ let z = 3;`;
       const codeWindows = 'let x = 1;\r\nlet y = 2;';
       const retWindows = parseSync('test.js', codeWindows, { loc: true });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(retWindows.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 10 }
       });
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(retWindows.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
         end: { line: 2, column: 10 }
@@ -861,14 +1011,10 @@ let z = 3;`;
       const codeMac = 'let x = 1;\rlet y = 2;';
       const retMac = parseSync('test.js', codeMac, { loc: true });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(retMac.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 10 }
       });
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(retMac.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
         end: { line: 2, column: 10 }
@@ -880,37 +1026,27 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       const varDecl = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       const declarator = varDecl.declarations[0];
 
       // Identifier 'result'
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.id.loc).toEqual({
         start: { line: 1, column: 6 },
         end: { line: 1, column: 12 }
       });
 
       // Binary expression 'foo + bar'
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 15 },
         end: { line: 1, column: 24 }
       });
 
       // Left identifier 'foo'
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.init.left.loc).toEqual({
         start: { line: 1, column: 15 },
         end: { line: 1, column: 18 }
       });
 
       // Right identifier 'bar'
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.init.right.loc).toEqual({
         start: { line: 1, column: 21 },
         end: { line: 1, column: 24 }
@@ -921,16 +1057,12 @@ let z = 3;`;
       const code = 'let x = 1;\n\nlet y = 2;';
       const ret = parseSync('test.js', code, { loc: true });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 10 }
       });
 
       // Second statement should be on line 3 (skipping empty line 2)
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[1].loc).toEqual({
         start: { line: 3, column: 0 },
         end: { line: 3, column: 10 }
@@ -942,16 +1074,12 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       // Variable declaration should start after the comment
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 14 },
         end: { line: 1, column: 24 }
       });
 
       // Comment should also have loc
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.comments[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 13 }
@@ -963,8 +1091,6 @@ let z = 3;`;
       const ret = parseSync('test.ts', code, { loc: true });
 
       const interfaceDecl = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(interfaceDecl.loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 4, column: 1 }
@@ -976,21 +1102,15 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       const varDecl = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       const declarator = varDecl.declarations[0];
 
       // Object expression
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 12 },
         end: { line: 1, column: 51 }
       });
 
       // First property
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.init.properties[0].loc).toEqual({
         start: { line: 1, column: 14 },
         end: { line: 1, column: 33 }
@@ -1002,13 +1122,9 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       const varDecl = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       const declarator = varDecl.declarations[0];
 
       // String literal
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 12 },
         end: { line: 1, column: 26 }
@@ -1020,13 +1136,9 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       const varDecl = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       const declarator = varDecl.declarations[0];
 
       // Template literal spanning multiple lines
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 17 },
         end: { line: 3, column: 6 }
@@ -1038,8 +1150,6 @@ let z = 3;`;
       const ret = parseSync('test.js', code, { loc: true });
 
       const forStmt = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(forStmt.loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 11 }
@@ -1055,8 +1165,6 @@ const fn2 = (x) => {
 
       // First arrow function (single expression)
       const firstDecl = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(firstDecl.declarations[0].init.loc).toEqual({
         start: { line: 1, column: 12 },
         end: { line: 1, column: 21 }
@@ -1064,8 +1172,6 @@ const fn2 = (x) => {
 
       // Second arrow function (block body)
       const secondDecl = ret.program.body[1];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(secondDecl.declarations[0].init.loc).toEqual({
         start: { line: 2, column: 12 },
         end: { line: 4, column: 1 }
@@ -1077,19 +1183,13 @@ const fn2 = (x) => {
       const ret = parseSync('test.js', code, { loc: true });
 
       const asyncFn = ret.program.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(asyncFn.loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 3, column: 1 }
       });
 
       // Return statement with await expression
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       const returnStmt = asyncFn.body.body[0];
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(returnStmt.loc).toEqual({
         start: { line: 2, column: 2 },
         end: { line: 2, column: 26 }
@@ -1100,15 +1200,11 @@ const fn2 = (x) => {
       const code = 'let x = 1;\nlet y = 2;';
       const ret = await parseAsync('test.js', code, { loc: true });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
         end: { line: 1, column: 10 }
       });
 
-      // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
-      // @ts-ignore
       expect(ret.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
         end: { line: 2, column: 10 }
