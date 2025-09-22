@@ -1,0 +1,9 @@
+{
+    "plugins": ["./test_plugin"],
+    "categories": {"correctness": "off"},
+    "rules": {
+        "define-rule-plugin/create": "error",
+        "define-rule-plugin/create-once": "error"
+    },
+    "ignorePatterns": ["test_plugin/**", "eslint.config.js"]
+}

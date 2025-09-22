@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src-js/cli.ts', 'src-js/plugins/index.ts'],
+  entry: ['src-js/index.ts', 'src-js/cli.ts', 'src-js/plugins/index.ts'],
   format: ['esm'],
   platform: 'node',
   target: 'node20',
