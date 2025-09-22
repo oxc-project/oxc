@@ -9,6 +9,10 @@
     "directory": "npm/runtime"
   },
   "homepage": "https://oxc.rs",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "type": "module",
   "exports": {
     "./helpers/OverloadYield": [
       {
@@ -1058,9 +1062,5 @@
     "./regenerator": "./regenerator/index.js",
     "./regenerator/*.js": "./regenerator/*.js",
     "./regenerator/": "./regenerator/"
-  },
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
-  "type": "commonjs"
+  }
 }
