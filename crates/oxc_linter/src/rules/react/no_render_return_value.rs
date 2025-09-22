@@ -57,35 +57,28 @@ impl Rule for NoRenderReturnValue {
         let Expression::Identifier(ident) = member_expr.object() else {
             return;
         };
-        if ident.name == "ReactDOM" {
-            if let Some((property_span, property_name)) = member_expr.static_property_info() {
-                if property_name == "render" {
-                    let parent_node = ctx.nodes().parent_node(node.id());
-                    if matches!(
-                        parent_node.kind(),
-                        AstKind::VariableDeclarator(_)
-                            | AstKind::ObjectProperty(_)
-                            | AstKind::ReturnStatement(_)
-                            | AstKind::AssignmentExpression(_)
-                    ) {
-                        ctx.diagnostic(no_render_return_value_diagnostic(
-                            ident.span.merge(property_span),
-                        ));
-                    }
+        if ident.name == "ReactDOM"
+            && let Some((property_span, property_name)) = member_expr.static_property_info()
+            && property_name == "render"
+        {
+            let parent_node = ctx.nodes().parent_node(node.id());
+            if matches!(
+                parent_node.kind(),
+                AstKind::VariableDeclarator(_)
+                    | AstKind::ObjectProperty(_)
+                    | AstKind::ReturnStatement(_)
+                    | AstKind::AssignmentExpression(_)
+            ) {
+                ctx.diagnostic(no_render_return_value_diagnostic(ident.span.merge(property_span)));
+            }
 
-                    let scope_id = parent_node.scope_id();
-                    if ctx.scoping().scope_flags(scope_id).is_arrow() {
-                        if let AstKind::ArrowFunctionExpression(e) =
-                            ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))
-                        {
-                            if e.expression {
-                                ctx.diagnostic(no_render_return_value_diagnostic(
-                                    ident.span.merge(property_span),
-                                ));
-                            }
-                        }
-                    }
-                }
+            let scope_id = parent_node.scope_id();
+            if ctx.scoping().scope_flags(scope_id).is_arrow()
+                && let AstKind::ArrowFunctionExpression(e) =
+                    ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))
+                && e.expression
+            {
+                ctx.diagnostic(no_render_return_value_diagnostic(ident.span.merge(property_span)));
             }
         }
     }

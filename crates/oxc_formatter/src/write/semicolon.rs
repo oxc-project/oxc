@@ -73,6 +73,7 @@ impl<'a, 'b> ClassPropertySemicolon<'a, 'b> {
             ClassElement::AccessorProperty(def) => {
                 def.computed && !(def.accessibility.is_some() || def.r#static || def.r#override)
             }
+            ClassElement::TSIndexSignature(_) => true,
             _ => false,
         }
     }
@@ -82,9 +83,7 @@ impl<'a> Format<'a> for ClassPropertySemicolon<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if matches!(
             self.element.as_ref(),
-            ClassElement::StaticBlock(_)
-                | ClassElement::MethodDefinition(_)
-                | ClassElement::TSIndexSignature(_)
+            ClassElement::StaticBlock(_) | ClassElement::MethodDefinition(_)
         ) {
             return Ok(());
         }

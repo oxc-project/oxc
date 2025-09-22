@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.16.0] - 2025-09-16
+
+### 🐛 Bug Fixes
+
+- 3af1e5d linter/no-unsafe-declaration-merging: Always mark first span as primary (#13830) (camc314)
+- 12baf5e linter/exhaustive-deps: Respect primary span when identifying disable directive location (#13781) (camc314)
+- 09428f6 linter/plugins: Remove outdated comment (#13691) (overlookmotel)
+- a294721 linter/plugins: Exit early if JS plugins enabled on unsupported platforms (#13689) (overlookmotel)
+- 68a2280 linter/plugins: More graceful exit for `--experimental-js-plugins` CLI option (#13688) (overlookmotel)
+
+### 🚜 Refactor
+
+- 7346099 linter: Move `oxlint` application code into separate module (#13745) (overlookmotel)
+- 6dd4107 linter: Remove `#[cfg(test)]` attributes from `tester` module (#13714) (overlookmotel)
+- c40c6ef linter/plugins: Directory for JS plugins-related code (#13701) (overlookmotel)
+- 1fd993f napi/oxlint: Rename `napi/oxlint2` to `napi/oxlint` (#13682) (overlookmotel)
+
+### 🎨 Styling
+
+- 99a7638 linter: Add comments + re-organise imports (#13715) (overlookmotel)
+
+### 🧪 Testing
+
+- fb2d087 linter: Set CWD for tests (#13722) (overlookmotel)
+
+
 ## [1.15.0] - 2025-09-11
 
 ### 💥 BREAKING CHANGES

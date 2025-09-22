@@ -27,7 +27,7 @@ use crate::{
 
 use super::{
     FormatWrite,
-    type_parameters::{FormatTsTypeParameters, FormatTsTypeParametersOptions},
+    type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
@@ -259,10 +259,12 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
         // Decorators are handled differently depending on the parent context
         // When the class is exported, the export statement handles decorator formatting
         // to ensure proper placement relative to the export keyword
-        if !matches!(
-            self.parent,
-            AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
-        ) {
+        if self.is_expression()
+            || !matches!(
+                self.parent,
+                AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
+            )
+        {
             write!(f, decorators)?;
         }
 
@@ -312,9 +314,9 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
             if let Some(type_parameters) = &type_parameters {
                 write!(
                     f,
-                    FormatTsTypeParameters::new(
+                    FormatTSTypeParameters::new(
                         type_parameters,
-                        FormatTsTypeParametersOptions {
+                        FormatTSTypeParametersOptions {
                             group_id: type_parameters_id,
                             is_type_or_interface_decl: false
                         }

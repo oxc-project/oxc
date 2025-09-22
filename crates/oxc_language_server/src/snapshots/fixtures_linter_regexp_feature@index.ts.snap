@@ -1,7 +1,10 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-input_file: crates/oxc_language_server/fixtures/linter/regexp_feature/index.ts
 ---
+########## 
+file: fixtures/linter/regexp_feature/index.ts
+----------
+
 code: "eslint(no-control-regex)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html"
 message: "Unexpected control character\nhelp: '\\u0000' is a control character."

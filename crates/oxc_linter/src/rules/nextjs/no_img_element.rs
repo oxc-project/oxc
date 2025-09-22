@@ -83,14 +83,12 @@ impl Rule for NoImgElement {
             return;
         };
 
-        if let AstKind::JSXElement(maybe_picture_jsx_elem) = grandparent {
-            if let JSXElementName::Identifier(jsx_opening_element_name) =
+        if let AstKind::JSXElement(maybe_picture_jsx_elem) = grandparent
+            && let JSXElementName::Identifier(jsx_opening_element_name) =
                 &maybe_picture_jsx_elem.opening_element.name
-            {
-                if jsx_opening_element_name.name.as_str() == "picture" {
-                    return;
-                }
-            }
+            && jsx_opening_element_name.name.as_str() == "picture"
+        {
+            return;
         }
 
         let src_span: Option<Span> = jsx_opening_element

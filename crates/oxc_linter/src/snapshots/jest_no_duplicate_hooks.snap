@@ -204,7 +204,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     beforeEach(() => {});
  4 │                     beforeEach(() => {});
    ·                     ────────────────────
- 5 │                     
+ 5 │ 
    ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.
 
@@ -213,6 +213,6 @@ source: crates/oxc_linter/src/tester.rs
  10 │                         beforeEach(() => {});
  11 │                         beforeEach(() => {});
     ·                         ────────────────────
- 12 │                     
+ 12 │ 
     ╰────
   help: Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.

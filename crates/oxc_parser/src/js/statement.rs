@@ -53,17 +53,17 @@ impl<'a> ParserImpl<'a> {
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
             // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/v7.26.2/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
             if expecting_directives {
-                if let Statement::ExpressionStatement(expr) = &stmt {
-                    if let Expression::StringLiteral(string) = &expr.expression {
-                        // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                        if expr.span.start == string.span.start {
-                            let src = &self.source_text
-                                [string.span.start as usize + 1..string.span.end as usize - 1];
-                            let directive =
-                                self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
-                            directives.push(directive);
-                            continue;
-                        }
+                if let Statement::ExpressionStatement(expr) = &stmt
+                    && let Expression::StringLiteral(string) = &expr.expression
+                {
+                    // span start will mismatch if they are parenthesized when `preserve_parens = false`
+                    if expr.span.start == string.span.start {
+                        let src = &self.source_text
+                            [string.span.start as usize + 1..string.span.end as usize - 1];
+                        let directive =
+                            self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
+                        directives.push(directive);
+                        continue;
                     }
                 }
                 expecting_directives = false;

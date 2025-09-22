@@ -1,7 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
-import { HelperMode, transform } from '../index';
+import { HelperMode, transform, transformAsync } from '../index';
 
 describe('simple', () => {
   const code = 'export class A<T> {}';
@@ -42,6 +42,45 @@ describe('simple', () => {
       sourcesContent: ['export class A<T> {}'],
       version: 3,
     });
+  });
+});
+
+describe('transformAsync', () => {
+  const code = 'export class A<T> {}';
+
+  it('should work asynchronously', async () => {
+    const ret = await transformAsync('test.ts', code, { sourcemap: true });
+    expect(ret).toMatchObject({
+      code: 'export class A {}\n',
+      errors: [],
+      helpersUsed: {},
+      map: {
+        names: [],
+        sources: ['test.ts'],
+        sourcesContent: ['export class A<T> {}'],
+        version: 3,
+      },
+    });
+  });
+
+  it('should produce the same result as sync transform', async () => {
+    const sourceCode = `
+      const add = (a, b) => a + b;
+      console.log(add(1, 2));
+    `;
+
+    const syncResult = transform('test.js', sourceCode, { target: 'es2015' });
+    const asyncResult = await transformAsync('test.js', sourceCode, { target: 'es2015' });
+
+    expect(asyncResult.code).toEqual(syncResult.code);
+    expect(asyncResult.errors).toEqual(syncResult.errors);
+    expect(asyncResult.helpersUsed).toEqual(syncResult.helpersUsed);
+  });
+
+  it('should handle errors properly', async () => {
+    const invalidCode = 'export class { invalid syntax';
+    const ret = await transformAsync('test.ts', invalidCode);
+    expect(ret.errors.length).toBeGreaterThan(0);
   });
 });
 

@@ -69,37 +69,33 @@ impl Rule for PreferGlobalThis {
             return;
         }
 
-        if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id()) {
-            if let Expression::Identifier(ident) = &e.object {
-                if ident.name == "self"
-                    && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
-                {
-                    return;
-                }
+        if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id())
+            && let Expression::Identifier(ident) = &e.object
+        {
+            if ident.name == "self" && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
+            {
+                return;
+            }
 
-                if ident.name == "window"
-                    && WINDOW_SPECIFIC_APIS.contains(&e.property.name.as_str())
-                {
-                    if matches!(
-                        e.property.name.as_str(),
-                        "addEventListener" | "removeEventListener" | "dispatchEvent"
-                    ) {
-                        if let Some(AstKind::CallExpression(call_expr)) =
-                            ctx.nodes().ancestor_kinds(node.id()).nth(1)
+            if ident.name == "window" && WINDOW_SPECIFIC_APIS.contains(&e.property.name.as_str()) {
+                if matches!(
+                    e.property.name.as_str(),
+                    "addEventListener" | "removeEventListener" | "dispatchEvent"
+                ) {
+                    if let Some(AstKind::CallExpression(call_expr)) =
+                        ctx.nodes().ancestor_kinds(node.id()).nth(1)
+                    {
+                        if let Some(Expression::StringLiteral(lit)) =
+                            call_expr.arguments.first().and_then(|arg| arg.as_expression())
+                            && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
                         {
-                            if let Some(Expression::StringLiteral(lit)) =
-                                call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                            {
-                                if WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str()) {
-                                    return;
-                                }
-                            }
-                        } else {
                             return;
                         }
                     } else {
                         return;
                     }
+                } else {
+                    return;
                 }
             }
         }

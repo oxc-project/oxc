@@ -27,6 +27,7 @@ These options can be passed with [initialize](#initialize), [workspace/didChange
 | `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"` | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
 | `typeAware`               | `true` \| `false`              | `false`    | Enables type-aware linting                                                                                                                             |
 | `flags`                   | `Map<string, string>`          | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config`                                                   |
+| `fmt.experimental`        | `true` \| `false`              | `false`    | Enables experimental formatting with `oxc_formatter`                                                                                                   |
 
 ## Supported LSP Specifications from Server
 
@@ -45,7 +46,8 @@ The client can pass the workspace options like following:
       "tsConfigPath": null,
       "unusedDisableDirectives": "allow",
       "typeAware": false,
-      "flags": {}
+      "flags": {},
+      "fmt.experimental": false
     }
   }]
 }
@@ -81,7 +83,8 @@ The client can pass the workspace options like following:
       "tsConfigPath": null,
       "unusedDisableDirectives": "allow",
       "typeAware": false,
-      "flags": {}
+      "flags": {},
+      "fmt.experimental": false
     }
   }]
 }
@@ -142,6 +145,10 @@ Returns a list of [CodeAction](https://microsoft.github.io/language-server-proto
 
 Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
 
+#### [textDocument/formatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting)
+
+Returns a list of [TextEdit](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit)
+
 ## Optional LSP Specifications from Client
 
 ### Client
@@ -170,6 +177,7 @@ The client can return a response like:
   "tsConfigPath": null,
   "unusedDisableDirectives": "allow",
   "typeAware": false,
-  "flags": {}
+  "flags": {},
+  "fmt.experimental": false
 }]
 ```

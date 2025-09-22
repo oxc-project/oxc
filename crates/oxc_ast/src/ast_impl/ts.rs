@@ -94,10 +94,10 @@ impl<'a> TSTypeName<'a> {
 
     /// Returns `true` if this is a reference to `const`.
     pub fn is_const(&self) -> bool {
-        if let TSTypeName::IdentifierReference(ident) = self {
-            if ident.name == "const" {
-                return true;
-            }
+        if let TSTypeName::IdentifierReference(ident) = self
+            && ident.name == "const"
+        {
+            return true;
         }
         false
     }

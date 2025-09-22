@@ -137,19 +137,18 @@ impl Rule for NoObjCalls {
                 // handle new Math(), Math(), etc
                 if let Some(top_level_reference) =
                     resolve_global_binding(ident, node.scope_id(), ctx)
+                    && is_global_obj(top_level_reference)
                 {
-                    if is_global_obj(top_level_reference) {
-                        ctx.diagnostic(no_obj_calls_diagnostic(ident.name.as_str(), span));
-                    }
+                    ctx.diagnostic(no_obj_calls_diagnostic(ident.name.as_str(), span));
                 }
             }
 
             match_member_expression!(Expression) => {
                 // handle new globalThis.Math(), globalThis.Math(), etc
-                if let Some(global_member) = global_this_member(callee.to_member_expression()) {
-                    if is_global_obj(global_member) {
-                        ctx.diagnostic(no_obj_calls_diagnostic(global_member, span));
-                    }
+                if let Some(global_member) = global_this_member(callee.to_member_expression())
+                    && is_global_obj(global_member)
+                {
+                    ctx.diagnostic(no_obj_calls_diagnostic(global_member, span));
                 }
             }
             _ => {

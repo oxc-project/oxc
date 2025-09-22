@@ -63,13 +63,13 @@ impl Rule for TabindexNoPositive {
 fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
     match attr {
         JSXAttributeItem::Attribute(attr) => attr.value.as_ref().map_or((), |value| {
-            if let Ok(parsed_value) = parse_jsx_value(value) {
-                if parsed_value > 0.0 {
-                    ctx.diagnostic_with_dangerous_suggestion(
-                        tabindex_no_positive_diagnostic(attr.span),
-                        |fixer| fixer.replace(value.span(), r#""0""#),
-                    );
-                }
+            if let Ok(parsed_value) = parse_jsx_value(value)
+                && parsed_value > 0.0
+            {
+                ctx.diagnostic_with_dangerous_suggestion(
+                    tabindex_no_positive_diagnostic(attr.span),
+                    |fixer| fixer.replace(value.span(), r#""0""#),
+                );
             }
         }),
         JSXAttributeItem::SpreadAttribute(_) => {}

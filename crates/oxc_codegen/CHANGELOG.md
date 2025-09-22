@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-22
+
+### 🐛 Bug Fixes
+
+- 8f3f460 codegen: Add missing dot when printing import.defer and import.source (#13975) (Boshen)
+
+### ⚡ Performance
+
+- ed8ff7d codegen: Unroll loop in `SourcemapBuilder::update_generated_line_and_column` (#13903) (翠)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- bf50a02 codegen: Avoid backticks for object property keys in destructuring assignments (#13631) (copilot-swe-agent)
+
+### ⚡ Performance
+
+- d4608f1 codegen: Reduce memory usage in `SourcemapBuilder` (#13679) (overlookmotel)
+- 4ded22b codegen: Reduce allocations in `SourcemapBuilder` (#13677) (overlookmotel)
+- b35bf30 codegen: Optimize sourcemap builder to reduce allocations (#13670) (Boshen)
+- 641b252 codegen: Reduce branches when printing `ObjectProperty` and `BindingProperty` (#13659) (overlookmotel)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🐛 Bug Fixes

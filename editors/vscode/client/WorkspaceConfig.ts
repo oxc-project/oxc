@@ -61,6 +61,14 @@ export interface WorkspaceConfigInterface {
    * @default {}
    */
   flags: Record<string, string>;
+
+  /**
+   * Enable formatting experiment
+   * `oxc.fmt.experimental`
+   *
+   * @default false
+   */
+  ['fmt.experimental']: boolean;
 }
 
 export class WorkspaceConfig {
@@ -70,6 +78,7 @@ export class WorkspaceConfig {
   private _unusedDisableDirectives: UnusedDisableDirectives = 'allow';
   private _typeAware: boolean = false;
   private _flags: Record<string, string> = {};
+  private _formattingExperimental: boolean = false;
 
   constructor(private readonly workspace: WorkspaceFolder) {
     this.refresh();
@@ -91,6 +100,7 @@ export class WorkspaceConfig {
       'allow';
     this._typeAware = this.configuration.get<boolean>('typeAware') ?? false;
     this._flags = flags;
+    this._formattingExperimental = this.configuration.get<boolean>('fmt.experimental') ?? false;
   }
 
   public effectsConfigChange(event: ConfigurationChangeEvent): boolean {
@@ -110,6 +120,9 @@ export class WorkspaceConfig {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.flags`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.experimental`, this.workspace)) {
       return true;
     }
     return false;
@@ -173,6 +186,15 @@ export class WorkspaceConfig {
     return this.configuration.update('flags', value, ConfigurationTarget.WorkspaceFolder);
   }
 
+  get formattingExperimental(): boolean {
+    return this._formattingExperimental;
+  }
+
+  updateFormattingExperimental(value: boolean): PromiseLike<void> {
+    this._formattingExperimental = value;
+    return this.configuration.update('fmt.experimental', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
   public toLanguageServerConfig(): WorkspaceConfigInterface {
     return {
       run: this.runTrigger,
@@ -181,6 +203,7 @@ export class WorkspaceConfig {
       unusedDisableDirectives: this.unusedDisableDirectives,
       typeAware: this.typeAware,
       flags: this.flags,
+      ['fmt.experimental']: this.formattingExperimental,
     };
   }
 }

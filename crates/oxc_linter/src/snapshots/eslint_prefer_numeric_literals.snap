@@ -64,7 +64,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
  1 │ parseInt('1️⃣3️⃣3️⃣7️⃣', 16);
-   · ────────────────────
+   · ────────────────────────
    ╰────
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
@@ -88,7 +88,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
  1 │ Number.parseInt('1️⃣3️⃣3️⃣7️⃣', 16);
-   · ───────────────────────────
+   · ───────────────────────────────
    ╰────
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().

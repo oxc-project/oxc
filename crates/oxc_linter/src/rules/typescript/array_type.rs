@@ -260,18 +260,17 @@ fn check(
         );
     }
 
-    if let TSType::TSTypeOperatorType(ts_operator_type) = &type_annotation {
-        if matches!(&ts_operator_type.operator, TSTypeOperatorOperator::Readonly) {
-            if let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation {
-                check_and_report_error_generic(
-                    readonly_config,
-                    ts_operator_type.span,
-                    &array_type.element_type,
-                    ctx,
-                    true,
-                );
-            }
-        }
+    if let TSType::TSTypeOperatorType(ts_operator_type) = &type_annotation
+        && matches!(&ts_operator_type.operator, TSTypeOperatorOperator::Readonly)
+        && let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation
+    {
+        check_and_report_error_generic(
+            readonly_config,
+            ts_operator_type.span,
+            &array_type.element_type,
+            ctx,
+            true,
+        );
     }
 
     if let TSType::TSTypeReference(ts_type_reference) = &type_annotation {
@@ -348,49 +347,41 @@ fn check_and_report_error_reference(
             || ident_ref_type_name.name.as_str() == "Array"
         {
             check_and_report_error_array(default_config, readonly_config, ts_type_reference, ctx);
-        } else if ident_ref_type_name.name.as_str() == "Promise" {
-            if let Some(type_params) = &ts_type_reference.type_arguments {
-                if type_params.params.len() == 1 {
-                    if let Some(type_param) = type_params.params.first() {
-                        if let TSType::TSArrayType(array_type) = &type_param {
-                            check_and_report_error_generic(
-                                default_config,
-                                array_type.span,
-                                &array_type.element_type,
-                                ctx,
-                                false,
-                            );
-                        }
+        } else if ident_ref_type_name.name.as_str() == "Promise"
+            && let Some(type_params) = &ts_type_reference.type_arguments
+            && type_params.params.len() == 1
+            && let Some(type_param) = type_params.params.first()
+        {
+            if let TSType::TSArrayType(array_type) = &type_param {
+                check_and_report_error_generic(
+                    default_config,
+                    array_type.span,
+                    &array_type.element_type,
+                    ctx,
+                    false,
+                );
+            }
 
-                        if let TSType::TSTypeOperatorType(ts_operator_type) = &type_param {
-                            if matches!(
-                                &ts_operator_type.operator,
-                                TSTypeOperatorOperator::Readonly
-                            ) {
-                                if let TSType::TSArrayType(array_type) =
-                                    &ts_operator_type.type_annotation
-                                {
-                                    check_and_report_error_generic(
-                                        readonly_config,
-                                        ts_operator_type.span,
-                                        &array_type.element_type,
-                                        ctx,
-                                        true,
-                                    );
-                                }
-                            }
-                        }
+            if let TSType::TSTypeOperatorType(ts_operator_type) = &type_param
+                && matches!(&ts_operator_type.operator, TSTypeOperatorOperator::Readonly)
+                && let TSType::TSArrayType(array_type) = &ts_operator_type.type_annotation
+            {
+                check_and_report_error_generic(
+                    readonly_config,
+                    ts_operator_type.span,
+                    &array_type.element_type,
+                    ctx,
+                    true,
+                );
+            }
 
-                        if let TSType::TSTypeReference(ts_type_reference) = &type_param {
-                            check_and_report_error_reference(
-                                default_config,
-                                readonly_config,
-                                ts_type_reference,
-                                ctx,
-                            );
-                        }
-                    }
-                }
+            if let TSType::TSTypeReference(ts_type_reference) = &type_param {
+                check_and_report_error_reference(
+                    default_config,
+                    readonly_config,
+                    ts_type_reference,
+                    ctx,
+                );
             }
         }
     }

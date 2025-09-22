@@ -2,17 +2,16 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/rust
 {
   "name": "Rust",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/rust:latest",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
-    // add `just` for running scripts
-    "ghcr.io/guiyomh/features/just:0": {
+    "ghcr.io/devcontainers/features/sshd:1": {},
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {
       "version": "latest"
     },
-    // add `cargo-binstall` for installing other tools.
-    "ghcr.io/lee-orr/rusty-dev-containers/cargo-binstall:0": {
-      "version": "latest"
-    }
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
   // Configure tool-specific properties.
   "customizations": {
@@ -27,15 +26,16 @@
       ]
     }
   },
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "npm_config_store_dir": "/home/vscode/.local/share/pnpm"
+  },
 
-  // Use 'mounts' to make the cargo cache persistent in a Docker Volume.
-  // "mounts": [
-  // 	{
-  // 		"source": "devcontainer-cargo-cache-${devcontainerId}",
-  // 		"target": "/usr/local/cargo",
-  // 		"type": "volume"
-  // 	}
-  // ]
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,readonly",
+    "source=target,target=${containerWorkspaceFolder}/target,type=volume"
+  ],
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
@@ -44,7 +44,5 @@
   // "forwardPorts": [],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "just init"
-  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-  // "remoteUser": "root"
+  "postCreateCommand": "/bin/bash .devcontainer/postCreateCommand.sh"
 }

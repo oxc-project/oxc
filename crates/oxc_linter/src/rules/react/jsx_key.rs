@@ -200,18 +200,16 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::CallExpression(v) => {
                 let callee = &v.callee.without_parentheses();
 
-                if let Some(member_expr) = callee.as_member_expression() {
-                    if let Some((span, ident)) = member_expr.static_property_info() {
-                        if TARGET_METHODS.contains(&ident)
-                            && argument.is_some_and(|argument: &Argument<'_>| {
-                                v.arguments
-                                    .get(if ident == "from" { 1 } else { 0 })
-                                    .is_some_and(|arg| arg.span() == argument.span())
-                            })
-                        {
-                            return Some(InsideArrayOrIterator::Iterator(span));
-                        }
-                    }
+                if let Some(member_expr) = callee.as_member_expression()
+                    && let Some((span, ident)) = member_expr.static_property_info()
+                    && TARGET_METHODS.contains(&ident)
+                    && argument.is_some_and(|argument: &Argument<'_>| {
+                        v.arguments
+                            .get(if ident == "from" { 1 } else { 0 })
+                            .is_some_and(|arg| arg.span() == argument.span())
+                    })
+                {
+                    return Some(InsideArrayOrIterator::Iterator(span));
                 }
 
                 return None;
@@ -275,10 +273,10 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
         }
     }
 
-    if let (Some((key_idx, key_span)), Some(spread_idx)) = (key_idx_span, spread_idx) {
-        if key_idx > spread_idx {
-            ctx.diagnostic(key_prop_must_be_placed_before_spread(key_span));
-        }
+    if let (Some((key_idx, key_span)), Some(spread_idx)) = (key_idx_span, spread_idx)
+        && key_idx > spread_idx
+    {
+        ctx.diagnostic(key_prop_must_be_placed_before_spread(key_span));
     }
 }
 

@@ -73,28 +73,17 @@ impl Rule for NoTypos {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ExportNamedDeclaration(en_decl) = node.kind() {
-            if let Some(decl) = &en_decl.declaration {
-                match decl {
-                    Declaration::VariableDeclaration(decl) => {
-                        for decl in &decl.declarations {
-                            let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
-                                continue;
-                            };
-                            let Some(potential_typo) = get_potential_typo(&id.name) else {
-                                continue;
-                            };
-                            ctx.diagnostic(no_typos_diagnostic(
-                                id.name.as_str(),
-                                potential_typo,
-                                id.span,
-                            ));
-                        }
-                    }
-                    Declaration::FunctionDeclaration(decl) => {
-                        let Some(id) = &decl.id else { return };
+        if let AstKind::ExportNamedDeclaration(en_decl) = node.kind()
+            && let Some(decl) = &en_decl.declaration
+        {
+            match decl {
+                Declaration::VariableDeclaration(decl) => {
+                    for decl in &decl.declarations {
+                        let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
+                            continue;
+                        };
                         let Some(potential_typo) = get_potential_typo(&id.name) else {
-                            return;
+                            continue;
                         };
                         ctx.diagnostic(no_typos_diagnostic(
                             id.name.as_str(),
@@ -102,8 +91,15 @@ impl Rule for NoTypos {
                             id.span,
                         ));
                     }
-                    _ => {}
                 }
+                Declaration::FunctionDeclaration(decl) => {
+                    let Some(id) = &decl.id else { return };
+                    let Some(potential_typo) = get_potential_typo(&id.name) else {
+                        return;
+                    };
+                    ctx.diagnostic(no_typos_diagnostic(id.name.as_str(), potential_typo, id.span));
+                }
+                _ => {}
             }
         }
     }

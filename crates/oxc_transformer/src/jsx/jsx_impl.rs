@@ -1189,10 +1189,10 @@ impl<'a> JsxImpl<'a, '_> {
         element: Option<&JSXClosingElement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let Some(element) = &element {
-            if let Some(ident) = element.name.get_identifier() {
-                ctx.delete_reference_for_identifier(ident);
-            }
+        if let Some(element) = &element
+            && let Some(ident) = element.name.get_identifier()
+        {
+            ctx.delete_reference_for_identifier(ident);
         }
     }
 }

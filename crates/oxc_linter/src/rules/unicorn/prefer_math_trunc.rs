@@ -63,10 +63,9 @@ impl Rule for PreferMathTrunc {
 
                 if let Expression::UnaryExpression(inner_inner_unary_expr) =
                     &inner_unary_expr.argument
+                    && matches!(inner_inner_unary_expr.operator, UnaryOperator::BitwiseNot)
                 {
-                    if matches!(inner_inner_unary_expr.operator, UnaryOperator::BitwiseNot) {
-                        return;
-                    }
+                    return;
                 }
 
                 UnaryOperator::BitwiseNot.as_str()

@@ -29,7 +29,7 @@ fn main() {
         "parser" => args.run_parser(),
         "semantic" => args.run_semantic(),
         "codegen" => args.run_codegen(),
-        // "formatter" => args.run_formatter(),
+        "formatter" => args.run_formatter(),
         "transformer" => args.run_transformer(),
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),

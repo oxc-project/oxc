@@ -50,14 +50,13 @@ fn unescape_backslash(input: &str, quote: char) -> String {
     let mut chars = input.chars().peekable();
 
     while let Some(c) = chars.next() {
-        if c == '\\' {
-            if let Some(next) = chars.peek() {
-                if *next == '\\' || *next == quote {
-                    result.push(*next);
-                    chars.next();
-                    continue;
-                }
-            }
+        if c == '\\'
+            && let Some(next) = chars.peek()
+            && (*next == '\\' || *next == quote)
+        {
+            result.push(*next);
+            chars.next();
+            continue;
         }
 
         result.push(c);
@@ -83,10 +82,10 @@ impl Rule for PreferStringRaw {
                 }
             }
             AstKind::ExportNamedDeclaration(decl) => {
-                if let Some(source) = &decl.source {
-                    if string_literal.span == source.span {
-                        return;
-                    }
+                if let Some(source) = &decl.source
+                    && string_literal.span == source.span
+                {
+                    return;
                 }
             }
             AstKind::ExportAllDeclaration(decl) => {

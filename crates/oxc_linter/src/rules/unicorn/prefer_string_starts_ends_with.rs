@@ -163,26 +163,26 @@ fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
     }
     let pattern_terms = alternatives.first().map(|it| &it.body)?;
 
-    if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.first() {
-        if boundary_assert.kind == BoundaryAssertionKind::Start {
-            return pattern_terms
-                .iter()
-                .skip(1)
-                .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
-                .collect::<Option<Vec<_>>>()
-                .map(ErrorKind::StartsWith);
-        }
+    if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.first()
+        && boundary_assert.kind == BoundaryAssertionKind::Start
+    {
+        return pattern_terms
+            .iter()
+            .skip(1)
+            .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
+            .collect::<Option<Vec<_>>>()
+            .map(ErrorKind::StartsWith);
     }
 
-    if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.last() {
-        if boundary_assert.kind == BoundaryAssertionKind::End {
-            return pattern_terms
-                .iter()
-                .take(pattern_terms.len() - 1)
-                .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
-                .collect::<Option<Vec<_>>>()
-                .map(ErrorKind::EndsWith);
-        }
+    if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.last()
+        && boundary_assert.kind == BoundaryAssertionKind::End
+    {
+        return pattern_terms
+            .iter()
+            .take(pattern_terms.len() - 1)
+            .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
+            .collect::<Option<Vec<_>>>()
+            .map(ErrorKind::EndsWith);
     }
 
     None

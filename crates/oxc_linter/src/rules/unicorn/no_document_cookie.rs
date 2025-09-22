@@ -121,10 +121,10 @@ fn is_document_cookie_reference<'a, 'b>(
                 return false;
             }
 
-            if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
-                if !GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str()) {
-                    return false;
-                }
+            if let Expression::Identifier(ident) = member_expr.object().without_parentheses()
+                && !GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
+            {
+                return false;
             }
             true
         }

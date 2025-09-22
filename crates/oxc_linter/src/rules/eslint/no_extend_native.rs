@@ -144,10 +144,10 @@ fn get_define_property_call<'a>(
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
     for parent in ctx.nodes().ancestors(node.id()) {
-        if let AstKind::CallExpression(call_expr) = parent.kind() {
-            if is_define_property_call(call_expr) {
-                return Some(parent);
-            }
+        if let AstKind::CallExpression(call_expr) = parent.kind()
+            && is_define_property_call(call_expr)
+        {
+            return Some(parent);
         }
     }
     None

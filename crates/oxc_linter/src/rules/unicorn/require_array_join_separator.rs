@@ -99,25 +99,24 @@ impl Rule for RequireArrayJoinSeparator {
         }
 
         // `[].join.call(foo)` and `Array.prototype.join.call(foo)`
-        if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
-            if is_method_call(call_expr, None, Some(&["call"]), Some(1), Some(1))
-                && !member_expr.optional()
-                && !call_expr.optional
-                && !call_expr.arguments.iter().any(Argument::is_spread)
-                && is_array_prototype_property(member_expr_obj, "join")
-            {
-                ctx.diagnostic_with_fix(
-                    require_array_join_separator_diagnostic(Span::new(
-                        member_expr.span().end,
-                        call_expr.span.end,
-                    )),
-                    |fixer| {
-                        // after the end of the first argument, insert `","`
-                        let first_arg = call_expr.arguments.first().unwrap();
-                        fixer.insert_text_after_range(Span::empty(first_arg.span().end), r#", ",""#)
-                    },
-                );
-            }
+        if let Some(member_expr_obj) = member_expr.object().as_member_expression()
+            && is_method_call(call_expr, None, Some(&["call"]), Some(1), Some(1))
+            && !member_expr.optional()
+            && !call_expr.optional
+            && !call_expr.arguments.iter().any(Argument::is_spread)
+            && is_array_prototype_property(member_expr_obj, "join")
+        {
+            ctx.diagnostic_with_fix(
+                require_array_join_separator_diagnostic(Span::new(
+                    member_expr.span().end,
+                    call_expr.span.end,
+                )),
+                |fixer| {
+                    // after the end of the first argument, insert `","`
+                    let first_arg = call_expr.arguments.first().unwrap();
+                    fixer.insert_text_after_range(Span::empty(first_arg.span().end), r#", ",""#)
+                },
+            );
         }
     }
 }

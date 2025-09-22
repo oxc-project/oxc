@@ -393,10 +393,10 @@ fn get_next_char_offset(span: Span, ctx: &LintContext) -> Option<u32> {
     let src = ctx.source_text();
     let start = span.end as usize;
 
-    if let Some(tail) = src.get(start..) {
-        if tail.starts_with("\r\n") || tail.starts_with("\n\r") {
-            return Some(span.end + 2);
-        }
+    if let Some(tail) = src.get(start..)
+        && (tail.starts_with("\r\n") || tail.starts_with("\n\r"))
+    {
+        return Some(span.end + 2);
     }
 
     src[start..].chars().next().map(|c| span.end + c.len_utf8() as u32)

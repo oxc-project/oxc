@@ -53,15 +53,15 @@ impl Rule for NoAriaHiddenOnFocusable {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        if let Some(aria_hidden_prop) = has_jsx_prop_ignore_case(jsx_el, "aria-hidden") {
-            if is_aria_hidden_true(aria_hidden_prop) && is_focusable(ctx, jsx_el) {
-                if let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop {
-                    ctx.diagnostic_with_fix(
-                        no_aria_hidden_on_focusable_diagnostic(boxed_attr.span),
-                        |fixer| fixer.delete(&boxed_attr.span),
-                    );
-                }
-            }
+        if let Some(aria_hidden_prop) = has_jsx_prop_ignore_case(jsx_el, "aria-hidden")
+            && is_aria_hidden_true(aria_hidden_prop)
+            && is_focusable(ctx, jsx_el)
+            && let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop
+        {
+            ctx.diagnostic_with_fix(
+                no_aria_hidden_on_focusable_diagnostic(boxed_attr.span),
+                |fixer| fixer.delete(&boxed_attr.span),
+            );
         }
     }
 }
@@ -97,10 +97,10 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
 fn is_focusable<'a>(ctx: &LintContext<'a>, element: &JSXOpeningElement<'a>) -> bool {
     let tag_name = get_element_type(ctx, element);
 
-    if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(element, "tabIndex") {
-        if let Some(attr_value) = &attr.value {
-            return parse_jsx_value(attr_value).is_ok_and(|num| num >= 0.0);
-        }
+    if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(element, "tabIndex")
+        && let Some(attr_value) = &attr.value
+    {
+        return parse_jsx_value(attr_value).is_ok_and(|num| num >= 0.0);
     }
 
     match tag_name.as_ref() {

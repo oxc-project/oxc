@@ -202,7 +202,7 @@ fn alphanumeric_sort(arr: &mut [String]) {
 }
 
 fn natural_sort(arr: &mut [String]) {
-    arr.sort_by(|a, b| {
+    arr.sort_unstable_by(|a, b| {
         let mut a_chars = a.chars();
         let mut b_chars = b.chars();
 

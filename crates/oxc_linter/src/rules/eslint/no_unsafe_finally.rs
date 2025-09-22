@@ -81,26 +81,24 @@ impl Rule for NoUnsafeFinally {
 
             let parent_kind = nodes.parent_kind(node_id);
 
-            if let AstKind::LabeledStatement(labeled_stmt) = parent_kind {
-                if label_name == Some(&labeled_stmt.label.name) {
-                    label_inside = true;
-                }
+            if let AstKind::LabeledStatement(labeled_stmt) = parent_kind
+                && label_name == Some(&labeled_stmt.label.name)
+            {
+                label_inside = true;
             }
 
             // Finally Block
             let parent_parent_kind = nodes.parent_kind(node_id);
-            if let AstKind::TryStatement(try_stmt) = parent_parent_kind {
-                if let Some(try_block_stmt) = &try_stmt.finalizer {
-                    if let AstKind::BlockStatement(block_stmt) = ast_kind {
-                        if try_block_stmt.span == block_stmt.span {
-                            if label_name.is_some() && label_inside {
-                                break;
-                            }
-                            ctx.diagnostic(no_unsafe_finally_diagnostic(node.kind().span()));
-                            return;
-                        }
-                    }
+            if let AstKind::TryStatement(try_stmt) = parent_parent_kind
+                && let Some(try_block_stmt) = &try_stmt.finalizer
+                && let AstKind::BlockStatement(block_stmt) = ast_kind
+                && try_block_stmt.span == block_stmt.span
+            {
+                if label_name.is_some() && label_inside {
+                    break;
                 }
+                ctx.diagnostic(no_unsafe_finally_diagnostic(node.kind().span()));
+                return;
             }
         }
     }

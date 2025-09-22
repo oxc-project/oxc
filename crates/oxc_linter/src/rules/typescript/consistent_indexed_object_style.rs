@@ -137,23 +137,21 @@ impl Rule for ConsistentIndexedObjectStyle {
                         },
                         TSType::TSUnionType(uni) => {
                             for t in &uni.types {
-                                if let TSType::TSTypeReference(tref) = t {
-                                    if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
-                                        let AstKind::TSTypeAliasDeclaration(dec) =
-                                            ctx.nodes().parent_kind(node.id())
-                                        else {
-                                            return;
-                                        };
+                                if let TSType::TSTypeReference(tref) = t
+                                    && let TSTypeName::IdentifierReference(ide) = &tref.type_name
+                                {
+                                    let AstKind::TSTypeAliasDeclaration(dec) =
+                                        ctx.nodes().parent_kind(node.id())
+                                    else {
+                                        return;
+                                    };
 
-                                        if dec.id.name != ide.name {
-                                            ctx.diagnostic(
-                                                consistent_indexed_object_style_diagnostic(
-                                                    "record",
-                                                    "index signature",
-                                                    sig.span,
-                                                ),
-                                            );
-                                        }
+                                    if dec.id.name != ide.name {
+                                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                            "record",
+                                            "index signature",
+                                            sig.span,
+                                        ));
                                     }
                                 }
                             }
@@ -203,23 +201,21 @@ impl Rule for ConsistentIndexedObjectStyle {
                         },
                         TSType::TSUnionType(uni) => {
                             for t in &uni.types {
-                                if let TSType::TSTypeReference(tref) = t {
-                                    if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
-                                        let AstKind::TSTypeAliasDeclaration(dec) =
-                                            ctx.nodes().parent_kind(node.id())
-                                        else {
-                                            return;
-                                        };
+                                if let TSType::TSTypeReference(tref) = t
+                                    && let TSTypeName::IdentifierReference(ide) = &tref.type_name
+                                {
+                                    let AstKind::TSTypeAliasDeclaration(dec) =
+                                        ctx.nodes().parent_kind(node.id())
+                                    else {
+                                        return;
+                                    };
 
-                                        if dec.id.name != ide.name {
-                                            ctx.diagnostic(
-                                                consistent_indexed_object_style_diagnostic(
-                                                    "record",
-                                                    "index signature",
-                                                    sig.span,
-                                                ),
-                                            );
-                                        }
+                                    if dec.id.name != ide.name {
+                                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                            "record",
+                                            "index signature",
+                                            sig.span,
+                                        ));
                                     }
                                 }
                             }
@@ -235,41 +231,41 @@ impl Rule for ConsistentIndexedObjectStyle {
                 }
                 _ => {}
             }
-        } else if let AstKind::TSTypeReference(tref) = node.kind() {
-            if let TSTypeName::IdentifierReference(ide) = &tref.type_name {
-                if ide.name != "Record" {
-                    return;
-                }
+        } else if let AstKind::TSTypeReference(tref) = node.kind()
+            && let TSTypeName::IdentifierReference(ide) = &tref.type_name
+        {
+            if ide.name != "Record" {
+                return;
+            }
 
-                let Some(params) = &tref.type_arguments else { return };
-                if params.params.len() != 2 {
-                    return;
-                }
+            let Some(params) = &tref.type_arguments else { return };
+            if params.params.len() != 2 {
+                return;
+            }
 
-                if let Some(TSType::TSStringKeyword(first)) =
-                    &tref.type_arguments.as_ref().and_then(|params| params.params.first())
-                {
-                    ctx.diagnostic_with_fix(
-                        consistent_indexed_object_style_diagnostic(
-                            "index signature",
-                            "record",
-                            tref.span,
-                        ),
-                        |fixer| {
-                            let key = fixer.source_range(first.span);
-                            let params_span = Span::new(first.span.end + 1, tref.span.end - 1);
-                            let params = fixer.source_range(params_span).trim();
-                            let content = format!("{{ [key: {key}]: {params} }}");
-                            fixer.replace(tref.span, content)
-                        },
-                    );
-                } else {
-                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+            if let Some(TSType::TSStringKeyword(first)) =
+                &tref.type_arguments.as_ref().and_then(|params| params.params.first())
+            {
+                ctx.diagnostic_with_fix(
+                    consistent_indexed_object_style_diagnostic(
                         "index signature",
                         "record",
                         tref.span,
-                    ));
-                }
+                    ),
+                    |fixer| {
+                        let key = fixer.source_range(first.span);
+                        let params_span = Span::new(first.span.end + 1, tref.span.end - 1);
+                        let params = fixer.source_range(params_span).trim();
+                        let content = format!("{{ [key: {key}]: {params} }}");
+                        fixer.replace(tref.span, content)
+                    },
+                );
+            } else {
+                ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                    "index signature",
+                    "record",
+                    tref.span,
+                ));
             }
         }
     }

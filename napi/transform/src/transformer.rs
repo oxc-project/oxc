@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use napi::Either;
+use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
@@ -900,6 +900,74 @@ pub fn transform(
         helpers_used: compiler.helpers_used,
         errors: OxcError::from_diagnostics(&filename, &source_text, compiler.errors),
     }
+}
+
+pub struct TransformTask {
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+}
+
+#[napi]
+impl Task for TransformTask {
+    type JsValue = TransformResult;
+    type Output = TransformResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        let source_path = Path::new(&self.filename);
+
+        let source_type = get_source_type(
+            &self.filename,
+            self.options.as_ref().and_then(|options| options.lang.as_deref()),
+            self.options.as_ref().and_then(|options| options.source_type.as_deref()),
+        );
+
+        let mut compiler = match Compiler::new(self.options.take()) {
+            Ok(compiler) => compiler,
+            Err(errors) => {
+                return Ok(TransformResult {
+                    errors: OxcError::from_diagnostics(&self.filename, &self.source_text, errors),
+                    ..Default::default()
+                });
+            }
+        };
+
+        compiler.compile(&self.source_text, source_type, source_path);
+
+        Ok(TransformResult {
+            code: compiler.printed,
+            map: compiler.printed_sourcemap,
+            declaration: compiler.declaration,
+            declaration_map: compiler.declaration_map,
+            helpers_used: compiler.helpers_used,
+            errors: OxcError::from_diagnostics(&self.filename, &self.source_text, compiler.errors),
+        })
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
+///
+/// Note: This function can be slower than `transform` due to the overhead of spawning a thread.
+///
+/// @param filename The name of the file being transformed. If this is a
+/// relative path, consider setting the {@link TransformOptions#cwd} option.
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// TransformOptions} for more information.
+///
+/// @returns a promise that resolves to an object containing the transformed code,
+/// source maps, and any errors that occurred during parsing or transformation.
+#[napi]
+pub fn transform_async(
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+) -> AsyncTask<TransformTask> {
+    AsyncTask::new(TransformTask { filename, source_text, options })
 }
 
 #[derive(Default)]

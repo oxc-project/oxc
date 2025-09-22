@@ -4,6 +4,170 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-22
+
+### 🐛 Bug Fixes
+
+- 0185984 napi/parser: Raw transfer `preserveParens` option apply to `TSParenthesizedType` (#13964) (overlookmotel)
+- bd2fa90 napi/parser: Move `browser.js` file (#13918) (overlookmotel)
+- 5ff91bc napi/parser: Fix example (#13887) (overlookmotel)
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 🚜 Refactor
+
+- 48062d0 napi/parser: Itemize files in `package.json` (#13978) (overlookmotel)
+- 329b7e7 napi/parser: Move scripts to `scripts` directory (#13900) (overlookmotel)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 2cef8ec napi/parser: Remove outdated comment (#13886) (overlookmotel)
+
+### 📚 Documentation
+
+- 7a50ad9 napi/parser, napi/transform: Correct README examples (#13934) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-22
+
+### 🐛 Bug Fixes
+
+- 0185984 napi/parser: Raw transfer `preserveParens` option apply to `TSParenthesizedType` (#13964) (overlookmotel)
+- bd2fa90 napi/parser: Move `browser.js` file (#13918) (overlookmotel)
+- 5ff91bc napi/parser: Fix example (#13887) (overlookmotel)
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 🚜 Refactor
+
+- 48062d0 napi/parser: Itemize files in `package.json` (#13978) (overlookmotel)
+- 329b7e7 napi/parser: Move scripts to `scripts` directory (#13900) (overlookmotel)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 2cef8ec napi/parser: Remove outdated comment (#13886) (overlookmotel)
+
+### 📚 Documentation
+
+- 7a50ad9 napi/parser, napi/transform: Correct README examples (#13934) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🐛 Bug Fixes
+
+- bd2fa90 napi/parser: Move `browser.js` file (#13918) (overlookmotel)
+- 5ff91bc napi/parser: Fix example (#13887) (overlookmotel)
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 🚜 Refactor
+
+- 329b7e7 napi/parser: Move scripts to `scripts` directory (#13900) (overlookmotel)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 2cef8ec napi/parser: Remove outdated comment (#13886) (overlookmotel)
+
+### 📚 Documentation
+
+- 7a50ad9 napi/parser, napi/transform: Correct README examples (#13934) (overlookmotel)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🐛 Bug Fixes
+
+- bd2fa90 napi/parser: Move `browser.js` file (#13918) (overlookmotel)
+- 5ff91bc napi/parser: Fix example (#13887) (overlookmotel)
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 🚜 Refactor
+
+- 329b7e7 napi/parser: Move scripts to `scripts` directory (#13900) (overlookmotel)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 2cef8ec napi/parser: Remove outdated comment (#13886) (overlookmotel)
+
+### 📚 Documentation
+
+- 7a50ad9 napi/parser, napi/transform: Correct README examples (#13934) (overlookmotel)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- 24a21b3 napi/parser: `preserveParens` option for raw transfer (#13855) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 9796ec1 napi: Fix binding files (Boshen)
+
+### 🚜 Refactor
+
+- 42b1000 napi/parser: Export functions directly (#13854) (overlookmotel)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🚀 Features
+
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- 24a21b3 napi/parser: `preserveParens` option for raw transfer (#13855) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 9796ec1 napi: Fix binding files (Boshen)
+
+### 🚜 Refactor
+
+- 42b1000 napi/parser: Export functions directly (#13854) (overlookmotel)
+
+
+## [0.89.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- 341791e parser: Invalid `main` entrypoint in `package.json` (#13767) (Ari Perkkiö)
+
+
+## [0.89.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- 341791e parser: Invalid `main` entrypoint in `package.json` (#13767) (Ari Perkkiö)
+
+
+## [0.88.0] - 2025-09-15
+
+### 💥 BREAKING CHANGES
+
+- 4577b71 napi/parser: [**BREAKING**] Change `oxc-parser` to ESM (#13432) (Boshen)
+
+### 🐛 Bug Fixes
+
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+
+
+## [0.88.0] - 2025-09-15
+
+### 💥 BREAKING CHANGES
+
+- 4577b71 napi/parser: [**BREAKING**] Change `oxc-parser` to ESM (#13432) (Boshen)
+
+### 🐛 Bug Fixes
+
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+
+
 
 
 

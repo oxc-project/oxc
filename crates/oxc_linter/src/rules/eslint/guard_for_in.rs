@@ -82,15 +82,11 @@ impl Rule for GuardForIn {
                         if let Statement::ContinueStatement(_) = &i.consequent {
                             return;
                         }
-                        if let Statement::BlockStatement(consequent_block) = &i.consequent {
-                            if consequent_block.body.len() == 1
-                                && matches!(
-                                    &consequent_block.body[0],
-                                    Statement::ContinueStatement(_)
-                                )
-                            {
-                                return;
-                            }
+                        if let Statement::BlockStatement(consequent_block) = &i.consequent
+                            && consequent_block.body.len() == 1
+                            && matches!(&consequent_block.body[0], Statement::ContinueStatement(_))
+                        {
+                            return;
                         }
                     }
                 }

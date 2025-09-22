@@ -21,7 +21,8 @@ bpaf = { workspace = true, features = ["docgen"] }
 handlebars = { workspace = true }
 itertools = { workspace = true }
 oxc_linter = { workspace = true, features = ["ruledocs"] }
-oxlint = { path = "../../apps/oxlint" }
+# Disable default features to avoid `napi-rs` dependency, which causes linker errors
+oxlint = { path = "../../apps/oxlint", default-features = false }
 pico-args = { workspace = true }
 project-root = { workspace = true }
 schemars = { workspace = true }

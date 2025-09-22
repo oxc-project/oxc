@@ -177,10 +177,10 @@ impl Rule for PreferNumberProperties {
                 };
 
                 if matches!(ident_name, "isNaN" | "isFinite" | "parseFloat" | "parseInt") {
-                    if let Expression::Identifier(ident) = &call_expr.callee {
-                        if !ctx.is_reference_to_global_variable(ident) {
-                            return;
-                        }
+                    if let Expression::Identifier(ident) = &call_expr.callee
+                        && !ctx.is_reference_to_global_variable(ident)
+                    {
+                        return;
                     }
 
                     let fixer = |fixer: RuleFixer<'_, 'a>| match &call_expr.callee {

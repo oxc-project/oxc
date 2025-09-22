@@ -186,15 +186,15 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
         match self.operator {
             BinaryishOperator::Logical(LogicalOperator::Coalesce) => {
-                if let Expression::LogicalExpression(logical_expr) = e.left() {
-                    if matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                        self.left_precedence = Precedence::Prefix;
-                    }
+                if let Expression::LogicalExpression(logical_expr) = e.left()
+                    && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
+                {
+                    self.left_precedence = Precedence::Prefix;
                 }
-                if let Expression::LogicalExpression(logical_expr) = e.right() {
-                    if matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                        self.right_precedence = Precedence::Prefix;
-                    }
+                if let Expression::LogicalExpression(logical_expr) = e.right()
+                    && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
+                {
+                    self.right_precedence = Precedence::Prefix;
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {

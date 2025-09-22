@@ -1,1 +1,1 @@
-const standard = "js"
+const standard = "js";

@@ -296,14 +296,14 @@ impl<'a> Lexer<'a> {
 
         // The second code unit of a surrogate pair is always in the range from 0xDC00 to 0xDFFF,
         // and is called a low surrogate or a trail surrogate.
-        if let Some(low) = self.hex_4_digits() {
-            if (MIN_LOW..=MAX_LOW).contains(&low) {
-                let code_point = pair_to_code_point(high, low);
-                // SAFETY: `high` and `low` have been checked to be in ranges which always yield a `code_point`
-                // which is a valid `char`
-                let ch = unsafe { char::from_u32_unchecked(code_point) };
-                return Some(UnicodeEscape::SurrogatePair(ch));
-            }
+        if let Some(low) = self.hex_4_digits()
+            && (MIN_LOW..=MAX_LOW).contains(&low)
+        {
+            let code_point = pair_to_code_point(high, low);
+            // SAFETY: `high` and `low` have been checked to be in ranges which always yield a `code_point`
+            // which is a valid `char`
+            let ch = unsafe { char::from_u32_unchecked(code_point) };
+            return Some(UnicodeEscape::SurrogatePair(ch));
         }
 
         // Not a valid surrogate pair.

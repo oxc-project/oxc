@@ -479,10 +479,10 @@ impl ExplicitFunctionReturnType {
         if !self.allow_higher_order_functions {
             return false;
         }
-        if let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind() {
-            if let Some(func_body_expr) = arrow_func_expr.get_expression() {
-                return is_function(func_body_expr);
-            }
+        if let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind()
+            && let Some(func_body_expr) = arrow_func_expr.get_expression()
+        {
+            return is_function(func_body_expr);
         }
         all_return_statements_are_functions(node)
     }
@@ -626,14 +626,14 @@ fn is_function(expr: &Expression) -> bool {
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else { return false };
 
-    if let AstKind::ObjectProperty(prop) = parent.kind() {
-        if let Expression::ArrowFunctionExpression(func) = &prop.value {
-            if func.body.statements.is_empty() {
-                return false;
-            }
-            if func.return_type.is_some() {
-                return true;
-            }
+    if let AstKind::ObjectProperty(prop) = parent.kind()
+        && let Expression::ArrowFunctionExpression(func) = &prop.value
+    {
+        if func.body.statements.is_empty() {
+            return false;
+        }
+        if func.return_type.is_some() {
+            return true;
         }
     }
 

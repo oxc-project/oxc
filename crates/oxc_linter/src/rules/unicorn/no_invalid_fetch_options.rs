@@ -129,29 +129,29 @@ fn is_invalid_fetch_options<'a>(
                     // for the enum value being referenced.
                     let reference = symbols.get_reference(reference_id);
 
-                    if let Some(symbol_id) = reference.symbol_id() {
-                        if ctx.scoping().symbol_flags(symbol_id).is_enum() {
-                            let decl = ctx.semantic().symbol_declaration(symbol_id);
-                            let enum_member_res: Option<CompactStr> = match decl.kind() {
-                                AstKind::TSEnumDeclaration(enum_decl) => {
-                                    let member_string_lit: Option<CompactStr> =
-                                        enum_decl.body.members.iter().find_map(|m| {
-                                            if let Some(Expression::StringLiteral(str_lit)) =
-                                                &m.initializer
-                                            {
-                                                Some(str_lit.value.to_compact_str())
-                                            } else {
-                                                None
-                                            }
-                                        });
-                                    member_string_lit
-                                }
-                                _ => None,
-                            };
-
-                            if let Some(value_ident) = enum_member_res {
-                                method_name = value_ident.into();
+                    if let Some(symbol_id) = reference.symbol_id()
+                        && ctx.scoping().symbol_flags(symbol_id).is_enum()
+                    {
+                        let decl = ctx.semantic().symbol_declaration(symbol_id);
+                        let enum_member_res: Option<CompactStr> = match decl.kind() {
+                            AstKind::TSEnumDeclaration(enum_decl) => {
+                                let member_string_lit: Option<CompactStr> =
+                                    enum_decl.body.members.iter().find_map(|m| {
+                                        if let Some(Expression::StringLiteral(str_lit)) =
+                                            &m.initializer
+                                        {
+                                            Some(str_lit.value.to_compact_str())
+                                        } else {
+                                            None
+                                        }
+                                    });
+                                member_string_lit
                             }
+                            _ => None,
+                        };
+
+                        if let Some(value_ident) = enum_member_res {
+                            method_name = value_ident.into();
                         }
                     }
                 }

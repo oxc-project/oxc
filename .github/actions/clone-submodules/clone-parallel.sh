@@ -12,6 +12,7 @@ BABEL=${2:-true}
 TYPESCRIPT=${3:-true}
 PRETTIER=${4:-true}
 ACORN_TEST262=${5:-true}
+NODE_COMPAT_TABLE=${6:-true}
 
 # Array to store background process PIDs
 declare -a PIDS=()
@@ -55,6 +56,7 @@ clone_repo "$BABEL" "babel/babel" "tasks/coverage/babel" "41d96516130ff48f16eca9
 clone_repo "$TYPESCRIPT" "microsoft/TypeScript" "tasks/coverage/typescript" "261630d650c0c961860187bebc86e25c3707c05d" "typescript"
 clone_repo "$PRETTIER" "prettier/prettier" "tasks/prettier_conformance/prettier" "7584432401a47a26943dd7a9ca9a8e032ead7285" "prettier"
 clone_repo "$ACORN_TEST262" "oxc-project/acorn-test262" "tasks/coverage/acorn-test262" "090bba4ab63458850b294f55b17f2ca0ee982062" "acorn-test262"
+clone_repo "$NODE_COMPAT_TABLE" "williamkapke/node-compat-table" "tasks/coverage/node-compat-table" "ed0d6ba55790519d9ad3f6f776ca2cd303cc1e0b" "node-compat-table"
 
 # Wait for all background processes to complete
 echo "Waiting for all clone operations to complete..."

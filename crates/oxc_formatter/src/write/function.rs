@@ -17,7 +17,9 @@ use crate::{
     },
     generated::ast_nodes::AstNode,
     write,
-    write::arrow_function_expression::FormatMaybeCachedFunctionBody,
+    write::{
+        arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
+    },
 };
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -42,9 +44,14 @@ impl<'a> Deref for FormatFunction<'a, '_> {
 
 impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.r#async() {
-            write!(f, ["async", space()]);
+        if self.declare() {
+            write!(f, ["declare", space()])?;
         }
+
+        if self.r#async() {
+            write!(f, ["async", space()])?;
+        }
+
         write!(
             f,
             [
@@ -125,6 +132,10 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
                     }
                 ]
             )?;
+        }
+
+        if self.is_ts_declare_function() {
+            write!(f, [OptionalSemicolon])?;
         }
 
         Ok(())

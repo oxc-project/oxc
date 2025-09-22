@@ -23,15 +23,14 @@ fn is_snapshot_method(property_name: &str) -> bool {
 
 #[inline]
 fn is_test_or_describe_node(member_expr: &MemberExpression) -> bool {
-    if let Some(id) = member_expr.object().get_identifier_reference() {
-        if matches!(
+    if let Some(id) = member_expr.object().get_identifier_reference()
+        && matches!(
             JestFnKind::from(id.name.as_str()),
             JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
-        ) {
-            if let Some(property_name) = member_expr.static_property_name() {
-                return property_name == "concurrent";
-            }
-        }
+        )
+        && let Some(property_name) = member_expr.static_property_name()
+    {
+        return property_name == "concurrent";
     }
     false
 }

@@ -186,16 +186,13 @@ impl Rule for PreferObjectSpread {
                         rule_fixes.push(fixer.delete_range(delete_span_of_left));
                         rule_fixes.push(fixer.delete_range(delete_span_of_right));
 
-                        if obj_expr.properties.is_empty()
+                        if (obj_expr.properties.is_empty()
                             || ctx.source_range(get_last_char_span(expression, 1, ctx).unwrap())
-                                == ","
+                                == ",")
+                            && let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
+                            && ctx.source_range(maybe_arg_comma_span) == ","
                         {
-                            if let Some(maybe_arg_comma_span) = get_char_span_after(expression, ctx)
-                            {
-                                if ctx.source_range(maybe_arg_comma_span) == "," {
-                                    rule_fixes.push(fixer.delete_range(maybe_arg_comma_span));
-                                }
-                            }
+                            rule_fixes.push(fixer.delete_range(maybe_arg_comma_span));
                         }
                     } else {
                         let span = expression.span();

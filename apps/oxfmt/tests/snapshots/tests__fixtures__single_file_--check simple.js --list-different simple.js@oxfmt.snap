@@ -1,0 +1,25 @@
+---
+source: apps/oxfmt/tests/tester.rs
+---
+########## 
+arguments: --check simple.js
+working directory: tests/fixtures/single_file
+----------
+Checking formatting...
+simple.js (<variable>ms)
+
+Format issues found in above 1 files. Run without `--check` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
+
+########## 
+arguments: --list-different simple.js
+working directory: tests/fixtures/single_file
+----------
+simple.js
+
+----------
+CLI result: FormatMismatch
+----------

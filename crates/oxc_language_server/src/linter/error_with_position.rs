@@ -7,9 +7,7 @@ use tower_lsp_server::lsp_types::{
 
 use oxc_diagnostics::Severity;
 
-// max range for LSP integer is 2^31 - 1
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseTypes
-const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
+use crate::LSP_MAX_INT;
 
 #[derive(Debug, Clone)]
 pub struct DiagnosticReport {

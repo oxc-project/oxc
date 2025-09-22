@@ -226,7 +226,7 @@ fn calculate_layout_for_struct(
             // to fill in the gap between `span` and the `u128` field.
             let offset = layout.size;
             assert!(
-                offset % field_layout.align == 0,
+                offset.is_multiple_of(field_layout.align),
                 "Incorrect alignment for struct fields in `{struct_name}`"
             );
 

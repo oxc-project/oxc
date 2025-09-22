@@ -458,14 +458,14 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         // Check if this is an enum type reference - if so, return the primitive type directly
         if let TSTypeName::IdentifierReference(ident) = name {
             let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
-            if let Some(symbol_id) = symbol_id {
-                if let Some(enum_type) = self.enum_types.get(&symbol_id) {
-                    return match enum_type {
-                        EnumType::String => Self::global_string(ctx),
-                        EnumType::Number => Self::global_number(ctx),
-                        EnumType::Object => Self::global_object(ctx),
-                    };
-                }
+            if let Some(symbol_id) = symbol_id
+                && let Some(enum_type) = self.enum_types.get(&symbol_id)
+            {
+                return match enum_type {
+                    EnumType::String => Self::global_string(ctx),
+                    EnumType::Number => Self::global_number(ctx),
+                    EnumType::Object => Self::global_object(ctx),
+                };
             }
         }
 

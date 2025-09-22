@@ -234,6 +234,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:3]
  1 │ Object.prototype.hasOwnProperty.call(C,x);
-   · ─────────────────────────────────────────
+   ·  ─────────────────────────────────────────
    ╰────
   help: Replace `Object.prototype.hasOwnProperty.call` with ` Object.hasOwn`.

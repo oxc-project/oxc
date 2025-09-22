@@ -150,27 +150,27 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ typescript-eslint(consistent-type-definitions): Use an `interface` instead of a `type`
    ╭─[consistent_type_definitions.tsx:1:10]
  1 │ declaretype S={}
-   ·        ────
+   ·         ────
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions): Use an `type` instead of a `interface`
    ╭─[consistent_type_definitions.tsx:1:10]
  1 │ declareinterface S {}
-   ·        ─────────
+   ·         ─────────
    ╰────
   help: Use an `type` instead of a `interface`
 
   ⚠ typescript-eslint(consistent-type-definitions): Use an `interface` instead of a `type`
    ╭─[consistent_type_definitions.tsx:1:17]
  1 │ export declaretype S={}
-   ·               ────
+   ·                ────
    ╰────
   help: Use an `interface` instead of a `type`
 
   ⚠ typescript-eslint(consistent-type-definitions): Use an `type` instead of a `interface`
    ╭─[consistent_type_definitions.tsx:1:17]
  1 │ export declareinterface S {}
-   ·               ─────────
+   ·                ─────────
    ╰────
   help: Use an `type` instead of a `interface`

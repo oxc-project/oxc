@@ -8625,8 +8625,8 @@ rebuilt        : SymbolId(0): [ReferenceId(12), ReferenceId(13)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImportOnDeclare.ts
 Symbol reference IDs mismatch for "Observable":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6)]
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataForMethodWithNoReturnTypeAnnotation01.ts
 Bindings mismatch:
@@ -12989,27 +12989,21 @@ after transform: ["DecoratorContext", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
-Symbol reference IDs mismatch for "_Symbol$toStringTag":
-after transform: SymbolId(26): [ReferenceId(73), ReferenceId(74)]
-rebuilt        : SymbolId(3): [ReferenceId(6)]
-Symbol reference IDs mismatch for "_Symbol$iterator":
-after transform: SymbolId(29): [ReferenceId(82), ReferenceId(83)]
-rebuilt        : SymbolId(4): [ReferenceId(18)]
 Unresolved references mismatch:
 after transform: ["FinalizationRegistry", "Generator", "Iterable", "Object", "Set", "Symbol", "WeakMap", "WeakRef", "undefined"]
 rebuilt        : ["FinalizationRegistry", "Object", "Set", "Symbol", "WeakMap", "WeakRef", "undefined"]
 Unresolved reference IDs mismatch for "WeakRef":
 after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(11), ReferenceId(15), ReferenceId(33)]
-rebuilt        : [ReferenceId(30)]
+rebuilt        : [ReferenceId(26)]
 Unresolved reference IDs mismatch for "Set":
 after transform: [ReferenceId(1), ReferenceId(14)]
-rebuilt        : [ReferenceId(12)]
+rebuilt        : [ReferenceId(10)]
 Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(8), ReferenceId(55), ReferenceId(69), ReferenceId(72)]
-rebuilt        : [ReferenceId(85), ReferenceId(88)]
+rebuilt        : [ReferenceId(81), ReferenceId(84)]
 Unresolved reference IDs mismatch for "WeakMap":
-after transform: [ReferenceId(5), ReferenceId(9), ReferenceId(114), ReferenceId(115), ReferenceId(116)]
-rebuilt        : [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(9)]
+after transform: [ReferenceId(5), ReferenceId(9), ReferenceId(108), ReferenceId(109), ReferenceId(110)]
+rebuilt        : [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(7)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -18909,17 +18903,14 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/iterableTReturnTNext.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["MyMap", "_Symbol$iterator", "_Symbol$toStringTag", "_defineProperty", "_source", "_wrapAsyncGenerator", "doubles", "map", "r1", "r2", "r3", "set", "source"]
-rebuilt        : ScopeId(0): ["MyMap", "_Symbol$iterator", "_Symbol$toStringTag", "_defineProperty", "_source", "_wrapAsyncGenerator", "doubles", "r1", "r2", "r3", "source"]
+after transform: ScopeId(0): ["MyMap", "_source", "_wrapAsyncGenerator", "doubles", "map", "r1", "r2", "r3", "set", "source"]
+rebuilt        : ScopeId(0): ["MyMap", "_source", "_wrapAsyncGenerator", "doubles", "r1", "r2", "r3", "source"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(15), ScopeId(16)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 Scope children mismatch:
 after transform: ScopeId(6): [ScopeId(7)]
-rebuilt        : ScopeId(8): []
-Symbol reference IDs mismatch for "_Symbol$toStringTag":
-after transform: SymbolId(20): [ReferenceId(29), ReferenceId(30)]
-rebuilt        : SymbolId(2): [ReferenceId(19)]
+rebuilt        : ScopeId(7): []
 Reference symbol mismatch for "map":
 after transform: SymbolId(0) "map"
 rebuilt        : <None>
@@ -18934,7 +18925,7 @@ after transform: ["Error", "Map", "MapIterator", "Set", "Symbol", "arguments", "
 rebuilt        : ["Error", "Symbol", "arguments", "map", "require", "set", "undefined"]
 Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(10), ReferenceId(17)]
-rebuilt        : [ReferenceId(14)]
+rebuilt        : [ReferenceId(15)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jqueryInference.ts
 Bindings mismatch:
@@ -19965,13 +19956,13 @@ rebuilt        : []
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedInstantiationAssignment.ts
 Symbol reference IDs mismatch for "GenericObject":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 Symbol reference IDs mismatch for "GenericObjectWithoutSetter":
 after transform: SymbolId(4): [ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(4): [ReferenceId(4)]
+rebuilt        : SymbolId(3): [ReferenceId(2)]
 Symbol reference IDs mismatch for "NormalObject":
 after transform: SymbolId(7): [ReferenceId(8), ReferenceId(9)]
-rebuilt        : SymbolId(6): [ReferenceId(6)]
+rebuilt        : SymbolId(5): [ReferenceId(4)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedInterfaceFromMultipleFiles1.ts
 Scope children mismatch:
@@ -36542,11 +36533,17 @@ rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorInAmbientContext.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "_defineProperty", "b", "decorator"]
-rebuilt        : ScopeId(0): ["Foo", "_decorate", "_decorateMetadata", "_defineProperty", "b"]
+after transform: ScopeId(0): ["Foo", "_b", "_decorate", "_decorateMetadata", "b", "decorator"]
+rebuilt        : ScopeId(0): ["Foo", "_b", "_decorate", "_decorateMetadata", "b"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch for "_b":
+after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12)]
+rebuilt        : SymbolId(2): [ReferenceId(13)]
+Symbol reference IDs mismatch for "b":
+after transform: SymbolId(3): [ReferenceId(3)]
+rebuilt        : SymbolId(3): []
 Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>

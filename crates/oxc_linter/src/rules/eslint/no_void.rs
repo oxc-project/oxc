@@ -71,10 +71,11 @@ impl Rule for NoVoid {
             return;
         };
 
-        if let Some(node) = outermost_paren_parent(node, ctx) {
-            if self.allow_as_statement && matches!(node.kind(), AstKind::ExpressionStatement(_)) {
-                return;
-            }
+        if let Some(node) = outermost_paren_parent(node, ctx)
+            && self.allow_as_statement
+            && matches!(node.kind(), AstKind::ExpressionStatement(_))
+        {
+            return;
         }
 
         if unary_expr.operator == UnaryOperator::Void {

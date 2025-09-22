@@ -72,10 +72,10 @@ impl Rule for Lang {
         has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(lang_diagnostic(jsx_el.name.span())),
             |lang_prop| {
-                if !is_valid_lang_prop(lang_prop) {
-                    if let JSXAttributeItem::Attribute(attr) = lang_prop {
-                        ctx.diagnostic(lang_diagnostic(attr.span));
-                    }
+                if !is_valid_lang_prop(lang_prop)
+                    && let JSXAttributeItem::Attribute(attr) = lang_prop
+                {
+                    ctx.diagnostic(lang_diagnostic(attr.span));
                 }
             },
         );

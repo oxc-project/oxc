@@ -56,7 +56,7 @@ declare_oxc_lint!(
 
 impl Rule for ErrorMessage {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (callee, span, args) = match &node.kind() {
+        let (callee, span, args) = match node.kind() {
             AstKind::NewExpression(NewExpression {
                 callee: Expression::Identifier(id),
                 span,

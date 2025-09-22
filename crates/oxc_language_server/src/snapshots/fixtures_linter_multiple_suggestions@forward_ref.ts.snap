@@ -1,7 +1,10 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-input_file: crates/oxc_language_server/fixtures/linter/multiple_suggestions/forward_ref.ts
 ---
+########## 
+file: fixtures/linter/multiple_suggestions/forward_ref.ts
+----------
+
 code: "eslint-plugin-react(forward-ref-uses-ref)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/react/forward-ref-uses-ref.html"
 message: "Components wrapped with `forwardRef` must have a `ref` parameter\nhelp: Add a `ref` parameter, or remove `forwardRef`"

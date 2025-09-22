@@ -89,16 +89,15 @@ impl Rule for PreferModernDomApis {
             .all(|argument| matches!(argument.as_expression(), Some(expr) if !expr.is_undefined()))
             && matches!(member_expr.object, Expression::Identifier(_))
             && !call_expr.optional
+            && let Some(preferred_method) = DISALLOWED_METHODS.get(method)
         {
-            if let Some(preferred_method) = DISALLOWED_METHODS.get(method) {
-                ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
-                    preferred_method,
-                    method,
-                    member_expr.property.span,
-                ));
+            ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
+                preferred_method,
+                method,
+                member_expr.property.span,
+            ));
 
-                return;
-            }
+            return;
         }
 
         if is_method_call(
@@ -107,16 +106,15 @@ impl Rule for PreferModernDomApis {
             Some(&["insertAdjacentText", "insertAdjacentElement"]),
             Some(2),
             Some(2),
-        ) {
-            if let Argument::StringLiteral(lit) = &call_expr.arguments[0] {
-                for (position, replacer) in &POSITION_REPLACERS {
-                    if lit.value == position {
-                        ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
-                            replacer,
-                            method,
-                            member_expr.property.span,
-                        ));
-                    }
+        ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
+        {
+            for (position, replacer) in &POSITION_REPLACERS {
+                if lit.value == position {
+                    ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
+                        replacer,
+                        method,
+                        member_expr.property.span,
+                    ));
                 }
             }
         }

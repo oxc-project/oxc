@@ -793,21 +793,6 @@ mod test {
         tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintDiagnostic},
     };
 
-    /// Implements `PartialEq` for `PossibleFixes` to enable equality assertions in tests.
-    /// In production a `PossibleFix` can not be equal.
-    impl PartialEq for PossibleFixes<'_> {
-        fn eq(&self, other: &Self) -> bool {
-            match (self, other) {
-                (Self::None, Self::None) => true,
-                (Self::Single(fix1), Self::Single(fix2)) => fix1 == fix2,
-                (Self::Multiple(fixes1), Self::Multiple(fixes2)) => {
-                    fixes1.iter().zip(fixes2.iter()).all(|(f1, f2)| f1 == f2)
-                }
-                _ => false,
-            }
-        }
-    }
-
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {
         let diagnostic = TsGoLintDiagnostic {

@@ -437,14 +437,14 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\u{85}'
    ╭─[no_useless_escape.tsx:1:40]
  1 │ var stringLiteralWithNextLine = "line 1\line 2";
-   ·                                        ─
+   ·                                        ──
    ╰────
   help: Replace `\` with ``.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\u{85}'
    ╭─[no_useless_escape.tsx:1:40]
  1 │ var stringLiteralWithNextLine = `line 1\line 2`;
-   ·                                        ─
+   ·                                        ──
    ╰────
   help: Replace `\` with ``.
 

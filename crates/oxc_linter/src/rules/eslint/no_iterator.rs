@@ -64,14 +64,14 @@ impl Rule for NoIterator {
         let Some(member_expression) = node.kind().as_member_expression_kind() else {
             return;
         };
-        if let Some(static_property_name) = member_expression.static_property_name() {
-            if static_property_name == "__iterator__" {
-                let mem_span = member_expression.span();
-                let obj_span = member_expression.object().span();
-                ctx.diagnostic_with_suggestion(no_iterator_diagnostic(mem_span), |fixer| {
-                    fixer.replace(Span::new(obj_span.end, mem_span.end), "[Symbol.iterator]")
-                });
-            }
+        if let Some(static_property_name) = member_expression.static_property_name()
+            && static_property_name == "__iterator__"
+        {
+            let mem_span = member_expression.span();
+            let obj_span = member_expression.object().span();
+            ctx.diagnostic_with_suggestion(no_iterator_diagnostic(mem_span), |fixer| {
+                fixer.replace(Span::new(obj_span.end, mem_span.end), "[Symbol.iterator]")
+            });
         }
     }
 }

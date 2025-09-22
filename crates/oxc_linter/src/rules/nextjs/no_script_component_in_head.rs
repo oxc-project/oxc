@@ -101,16 +101,14 @@ impl Rule for NoScriptComponentInHead {
             };
 
             for child in &jsx_element.children {
-                if let JSXChild::Element(child_element) = child {
-                    if let JSXElementName::IdentifierReference(child_element_name) =
+                if let JSXChild::Element(child_element) = child
+                    && let JSXElementName::IdentifierReference(child_element_name) =
                         &child_element.opening_element.name
-                    {
-                        if child_element_name.name.as_str() == "Script" {
-                            ctx.diagnostic(no_script_component_in_head_diagnostic(
-                                jsx_opening_element.name.span(),
-                            ));
-                        }
-                    }
+                    && child_element_name.name.as_str() == "Script"
+                {
+                    ctx.diagnostic(no_script_component_in_head_diagnostic(
+                        jsx_opening_element.name.span(),
+                    ));
                 }
             }
         }

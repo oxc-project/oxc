@@ -44,12 +44,11 @@ impl<'a> IsolatedDeclarations<'a> {
         });
 
         for (requires_inference, param, return_type) in method_annotations.into_values() {
-            if requires_inference {
-                if let (Some(Some(annotation)), Some(option))
+            if requires_inference
+                && let (Some(Some(annotation)), Some(option))
                 | (Some(option), Some(Some(annotation))) = (param, return_type)
-                {
-                    option.replace(annotation.clone_in(self.ast.allocator));
-                }
+            {
+                option.replace(annotation.clone_in(self.ast.allocator));
             }
         }
     }

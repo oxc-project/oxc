@@ -82,10 +82,10 @@ impl Rule for NoThenable {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
                 expr.properties.iter().for_each(|prop| {
-                    if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                        if let Some(span) = contains_then(&prop.key, ctx) {
-                            ctx.diagnostic(object(span));
-                        }
+                    if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                        && let Some(span) = contains_then(&prop.key, ctx)
+                    {
+                        ctx.diagnostic(object(span));
                     }
                 });
             }
@@ -109,17 +109,17 @@ impl Rule for NoThenable {
                             }
                         }
                         Declaration::FunctionDeclaration(decl) => {
-                            if let Some(bind) = decl.id.as_ref() {
-                                if bind.name == "then" {
-                                    ctx.diagnostic(export(bind.span));
-                                }
+                            if let Some(bind) = decl.id.as_ref()
+                                && bind.name == "then"
+                            {
+                                ctx.diagnostic(export(bind.span));
                             }
                         }
                         Declaration::ClassDeclaration(decl) => {
-                            if let Some(bind) = decl.id.as_ref() {
-                                if bind.name == "then" {
-                                    ctx.diagnostic(export(bind.span));
-                                }
+                            if let Some(bind) = decl.id.as_ref()
+                                && bind.name == "then"
+                            {
+                                ctx.diagnostic(export(bind.span));
                             }
                         }
                         _ => {}
@@ -169,10 +169,10 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 _ => false,
             }
     } {
-    } else if let Some(inner) = expr.arguments[1].as_expression() {
-        if let Some(span) = check_expression(inner, ctx) {
-            ctx.diagnostic(object(span));
-        }
+    } else if let Some(inner) = expr.arguments[1].as_expression()
+        && let Some(span) = check_expression(inner, ctx)
+    {
+        ctx.diagnostic(object(span));
     }
 
     // `Object.fromEntries([['then', …]])`
@@ -194,16 +194,13 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
     } else if let Argument::ArrayExpression(outer) = &expr.arguments[0] {
         for inner in &outer.elements {
             // inner item is array
-            if let ArrayExpressionElement::ArrayExpression(inner) = inner {
-                if !inner.elements.is_empty()
-                    && !matches!(inner.elements[0], ArrayExpressionElement::SpreadElement(_))
-                {
-                    if let Some(expr) = inner.elements[0].as_expression() {
-                        if let Some(span) = check_expression(expr, ctx) {
-                            ctx.diagnostic(object(span));
-                        }
-                    }
-                }
+            if let ArrayExpressionElement::ArrayExpression(inner) = inner
+                && !inner.elements.is_empty()
+                && !matches!(inner.elements[0], ArrayExpressionElement::SpreadElement(_))
+                && let Some(expr) = inner.elements[0].as_expression()
+                && let Some(span) = check_expression(expr, ctx)
+            {
+                ctx.diagnostic(object(span));
             }
         }
     }

@@ -315,21 +315,21 @@ fn check_deep_namespace_for_object_pattern(
             continue;
         };
 
-        if let BindingPatternKind::ObjectPattern(pattern) = &property.value.kind {
-            if let Some(module_source) = get_module_request_name(&name, module) {
-                let mut next_namespaces = namespaces.to_owned();
-                next_namespaces.push(name.to_string());
+        if let BindingPatternKind::ObjectPattern(pattern) = &property.value.kind
+            && let Some(module_source) = get_module_request_name(&name, module)
+        {
+            let mut next_namespaces = namespaces.to_owned();
+            next_namespaces.push(name.to_string());
 
-                let loaded_modules = module.loaded_modules.read().unwrap();
-                check_deep_namespace_for_object_pattern(
-                    pattern,
-                    source,
-                    next_namespaces.as_slice(),
-                    loaded_modules.get(module_source.as_str()).unwrap(),
-                    ctx,
-                );
-                continue;
-            }
+            let loaded_modules = module.loaded_modules.read().unwrap();
+            check_deep_namespace_for_object_pattern(
+                pattern,
+                source,
+                next_namespaces.as_slice(),
+                loaded_modules.get(module_source.as_str()).unwrap(),
+                ctx,
+            );
+            continue;
         }
 
         check_binding_exported(

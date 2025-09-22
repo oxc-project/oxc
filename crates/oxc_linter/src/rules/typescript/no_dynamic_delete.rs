@@ -55,12 +55,11 @@ impl Rule for NoDynamicDelete {
             return;
         }
 
-        if let Expression::UnaryExpression(unary_expr) = &inner_expression {
-            if unary_expr.operator == UnaryOperator::UnaryNegation
-                && unary_expr.argument.is_number_literal()
-            {
-                return;
-            }
+        if let Expression::UnaryExpression(unary_expr) = &inner_expression
+            && unary_expr.operator == UnaryOperator::UnaryNegation
+            && unary_expr.argument.is_number_literal()
+        {
+            return;
         }
         ctx.diagnostic(no_dynamic_delete_diagnostic(expr.span));
     }

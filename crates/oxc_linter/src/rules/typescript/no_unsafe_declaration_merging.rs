@@ -13,7 +13,7 @@ use crate::{
 fn no_unsafe_declaration_merging_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe declaration merging between classes and interfaces.")
         .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.")
-        .with_labels([span, span1])
+        .with_labels(if span < span1 { [span, span1]} else { [span1, span] })
 }
 
 #[derive(Debug, Default, Clone)]
@@ -63,10 +63,10 @@ impl Rule for NoUnsafeDeclarationMerging {
             }
             AstKind::TSInterfaceDeclaration(decl) => {
                 for symbol_id in ctx.scoping().get_bindings(node.scope_id()).values() {
-                    if let AstKind::Class(scope_class) = get_symbol_kind(*symbol_id, ctx) {
-                        if let Some(scope_class_ident) = scope_class.id.as_ref() {
-                            check_and_diagnostic(&decl.id, scope_class_ident, ctx);
-                        }
+                    if let AstKind::Class(scope_class) = get_symbol_kind(*symbol_id, ctx)
+                        && let Some(scope_class_ident) = scope_class.id.as_ref()
+                    {
+                        check_and_diagnostic(&decl.id, scope_class_ident, ctx);
                     }
                 }
             }

@@ -65,15 +65,15 @@ impl<'a> ClassProperties<'a, '_> {
         // `static { foo }` -> `foo`
         // TODO(improve-on-babel): If block has no statements, could remove it entirely.
         let stmts = &mut block.body;
-        if stmts.len() == 1 {
-            if let Statement::ExpressionStatement(stmt) = stmts.first_mut().unwrap() {
-                return self.convert_static_block_with_single_expression_to_expression(
-                    &mut stmt.expression,
-                    scope_id,
-                    make_sloppy_mode,
-                    ctx,
-                );
-            }
+        if stmts.len() == 1
+            && let Statement::ExpressionStatement(stmt) = stmts.first_mut().unwrap()
+        {
+            return self.convert_static_block_with_single_expression_to_expression(
+                &mut stmt.expression,
+                scope_id,
+                make_sloppy_mode,
+                ctx,
+            );
         }
 
         // Wrap statements in an IIFE.

@@ -38,3 +38,5 @@ The Oxidation Compiler is creating a suite of high-performance tools for JavaScr
 ## Oxfmt
 
 This is the formatter for oxc.
+
+The current version does not work; DO NOT USE.

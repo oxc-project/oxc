@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- f8feed1 data_structures: Add `advance_to_end` method to `SliceIter` trait (#13947) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- f8feed1 data_structures: Add `advance_to_end` method to `SliceIter` trait (#13947) (overlookmotel)
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 💥 BREAKING CHANGES
+
+- e433633 data_structures: [**BREAKING**] Make `NonEmptyStack::is_empty` a compile-time error (#13673) (overlookmotel)
+
+### 🚀 Features
+
+- 1a58e99 data_structures: Add `is_exhausted` method to `NonEmptyStack` and `SparseStack` (#13672) (overlookmotel)
+- 2db32eb data_structures: Add `boxed_slice!` and `boxed_array!` macros (#13596) (overlookmotel)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🐛 Bug Fixes

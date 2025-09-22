@@ -166,19 +166,18 @@ fn get_accessible_text<'a, 'b>(
     jsx_el: &'b JSXElement<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<Cow<'b, str>> {
-    if let Some(aria_label) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "aria-label") {
-        if let Some(label_text) = get_string_literal_prop_value(aria_label) {
-            return Some(Cow::Borrowed(label_text));
-        }
+    if let Some(aria_label) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "aria-label")
+        && let Some(label_text) = get_string_literal_prop_value(aria_label)
+    {
+        return Some(Cow::Borrowed(label_text));
     }
 
     let name = get_element_type(ctx, &jsx_el.opening_element);
-    if name == "img" {
-        if let Some(alt_text) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "alt") {
-            if let Some(text) = get_string_literal_prop_value(alt_text) {
-                return Some(Cow::Borrowed(text));
-            }
-        }
+    if name == "img"
+        && let Some(alt_text) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "alt")
+        && let Some(text) = get_string_literal_prop_value(alt_text)
+    {
+        return Some(Cow::Borrowed(text));
     }
 
     if is_hidden_from_screen_reader(ctx, &jsx_el.opening_element) {

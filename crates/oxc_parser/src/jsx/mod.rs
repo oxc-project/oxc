@@ -149,19 +149,21 @@ impl<'a> ParserImpl<'a> {
             return JSXElementName::dummy(self.ast.allocator);
         }
 
-        // References begin with a capital letter, `_` or `$` e.g. `<Foo>`, `<_foo>`, `<$foo>`.
+        // Determine if this JSX element name is a reference (component) or an intrinsic element.
+        // References (components) are:
+        // - ASCII names that start with uppercase letter, `_` or `$`: `<Foo>`, `<_foo>`, `<$foo>`
+        // - All non-ASCII names (e.g., Unicode identifiers like `<테스트>`)
+        // - Names without hyphens (hyphenated names like `<my-element>` are custom elements)
         // https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react
-        // The identifier has already been checked to be valid, so when first char is ASCII, it can only
-        // be `a-z`, `A-Z`, `_` or `$`. But compiler doesn't know that, so we can help it create faster
-        // code by taking that invariant into account.
-        // `b < b'a'` matches `A-Z`, `_` and `$`.
-        // Use a fast path for common case of ASCII characters, to avoid the more expensive
-        // `char::is_uppercase` in most cases.
+        //
+        // The identifier has already been validated by the parser, so for ASCII characters
+        // we know it can only be `a-z`, `A-Z`, `_` or `$`.
+        // Use a fast path for ASCII to avoid expensive Unicode operations in the common case.
         let name = identifier.name.as_str();
         let is_reference = match name.as_bytes()[0] {
-            b if b.is_ascii() => b < b'a',
-            _ => name.chars().next().unwrap().is_uppercase(),
-        };
+            b if b.is_ascii() => !b.is_ascii_lowercase(), // Matches A-Z, _, $
+            _ => true, // Non-ASCII characters are always treated as references
+        } && !name.contains('-'); // Exclude hyphenated custom elements
 
         if is_reference {
             let identifier = self.ast.alloc_identifier_reference(identifier.span, identifier.name);

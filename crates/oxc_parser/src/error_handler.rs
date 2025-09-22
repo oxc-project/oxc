@@ -18,11 +18,11 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
-        if matches!(self.cur_kind(), Kind::Eof | Kind::Undetermined) {
-            if let Some(error) = self.lexer.errors.pop() {
-                self.set_fatal_error(error);
-                return;
-            }
+        if matches!(self.cur_kind(), Kind::Eof | Kind::Undetermined)
+            && let Some(error) = self.lexer.errors.pop()
+        {
+            self.set_fatal_error(error);
+            return;
         }
         let error = diagnostics::unexpected_token(self.cur_token().span());
         self.set_fatal_error(error);

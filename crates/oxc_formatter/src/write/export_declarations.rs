@@ -33,6 +33,7 @@ fn format_export_keyword_with_class_decorators<'a>(
 
     if let AstNodes::Class(class) = declaration
         && !class.decorators.is_empty()
+        && !class.is_expression()
     {
         // `@decorator export class Cls {}`
         // decorators are placed before the export keyword

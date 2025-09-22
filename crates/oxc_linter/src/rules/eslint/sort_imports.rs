@@ -240,10 +240,9 @@ impl SortImports {
                 // ```
                 if let Some((current_name, previous_name)) =
                     current_local_member_name.zip(previous_local_member_name)
+                    && current_name < previous_name
                 {
-                    if current_name < previous_name {
-                        ctx.diagnostic(sort_imports_alphabetically_diagnostic(current.span));
-                    }
+                    ctx.diagnostic(sort_imports_alphabetically_diagnostic(current.span));
                 }
             }
             std::cmp::Ordering::Greater => {}

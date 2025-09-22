@@ -172,18 +172,18 @@ impl Rule for PreferHooksInOrder {
                 continue;
             };
 
-            if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order {
-                if hook_order < *previous_hook_order {
-                    let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
-                        continue;
-                    };
-
-                    ctx.diagnostic(reorder_hooks(
-                        (hook_name, call_expr.span),
-                        (previous_hook_name, *previous_hook_span),
-                    ));
+            if let Some((previous_hook_order, previous_hook_span)) = previous_hook_order
+                && hook_order < *previous_hook_order
+            {
+                let Some(previous_hook_name) = get_hook_name(*previous_hook_order) else {
                     continue;
-                }
+                };
+
+                ctx.diagnostic(reorder_hooks(
+                    (hook_name, call_expr.span),
+                    (previous_hook_name, *previous_hook_span),
+                ));
+                continue;
             }
             previous_hook_orders.insert(node.scope_id(), (hook_order, call_expr.span));
         }

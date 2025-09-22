@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
+import { validateSafeBinaryPath } from './PathValidator';
 import { IDisposable } from './types';
 import { VSCodeConfig } from './VSCodeConfig';
 import { WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
@@ -66,6 +67,11 @@ export class ConfigService implements IDisposable {
       return;
     }
 
+    // validates the given path is safe to use
+    if (validateSafeBinaryPath(bin) === false) {
+      return;
+    }
+
     if (!path.isAbsolute(bin)) {
       // if the path is not absolute, resolve it to the first workspace folder
       let cwd = this.workspaceConfigs.keys().next().value;
@@ -73,6 +79,10 @@ export class ConfigService implements IDisposable {
         return;
       }
       bin = path.normalize(path.join(cwd, bin));
+      // strip the leading slash on Windows
+      if (process.platform === 'win32' && bin.startsWith('\\')) {
+        bin = bin.slice(1);
+      }
     }
 
     return bin;

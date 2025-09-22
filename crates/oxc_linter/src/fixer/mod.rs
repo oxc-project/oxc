@@ -218,7 +218,7 @@ pub struct FixResult<'a> {
     pub messages: Vec<Message<'a>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes<'a>,
@@ -242,20 +242,14 @@ impl<'new> CloneIn<'new> for Message<'_> {
 impl<'a> Message<'a> {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes<'a>) -> Self {
-        let (start, end) = if let Some(labels) = &error.labels {
-            let start = labels
-                .iter()
-                .min_by_key(|span| span.offset())
-                .map_or(0, |span| span.offset() as u32);
-            let end = labels
-                .iter()
-                .max_by_key(|span| span.offset() + span.len())
-                .map_or(0, |span| (span.offset() + span.len()) as u32);
-            (start, end)
-        } else {
-            (0, 0)
-        };
-        Self { error, span: Span::new(start, end), fixes, fixed: false }
+        let span = error
+            .labels
+            .as_ref()
+            .and_then(|labels| labels.iter().find(|span| span.primary()).or_else(|| labels.first()))
+            .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
+            .unwrap_or_default();
+
+        Self { error, span, fixes, fixed: false }
     }
 
     /// move the offset of all spans to the right

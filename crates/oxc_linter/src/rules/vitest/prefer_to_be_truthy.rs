@@ -37,32 +37,32 @@ pub fn prefer_to_be_simply_bool<'a>(
         return;
     };
 
-    if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression() {
-        if arg.value == value {
-            let span = Span::new(matcher.span.start, call_expr.span.end);
+    if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression()
+        && arg.value == value
+    {
+        let span = Span::new(matcher.span.start, call_expr.span.end);
 
-            let is_cmp_mem_expr = match matcher.parent {
-                Some(Expression::ComputedMemberExpression(_)) => true,
-                Some(
-                    Expression::StaticMemberExpression(_) | Expression::PrivateFieldExpression(_),
-                ) => false,
-                _ => return,
-            };
+        let is_cmp_mem_expr = match matcher.parent {
+            Some(Expression::ComputedMemberExpression(_)) => true,
+            Some(Expression::StaticMemberExpression(_) | Expression::PrivateFieldExpression(_)) => {
+                false
+            }
+            _ => return,
+        };
 
-            let call_name = if value { "toBeTruthy" } else { "toBeFalsy" };
+        let call_name = if value { "toBeTruthy" } else { "toBeFalsy" };
 
-            ctx.diagnostic_with_fix(
-                OxcDiagnostic::warn(format!("Use `{call_name}` instead.")).with_label(span),
-                |fixer| {
-                    let new_matcher = if is_cmp_mem_expr {
-                        format!("[\"{call_name}\"]()")
-                    } else {
-                        format!("{call_name}()")
-                    };
-                    fixer.replace(span, new_matcher)
-                },
-            );
-        }
+        ctx.diagnostic_with_fix(
+            OxcDiagnostic::warn(format!("Use `{call_name}` instead.")).with_label(span),
+            |fixer| {
+                let new_matcher = if is_cmp_mem_expr {
+                    format!("[\"{call_name}\"]()")
+                } else {
+                    format!("{call_name}()")
+                };
+                fixer.replace(span, new_matcher)
+            },
+        );
     }
 }
 

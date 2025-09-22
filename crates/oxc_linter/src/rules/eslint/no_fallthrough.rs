@@ -307,10 +307,10 @@ impl Rule for NoFallthrough {
         while let Some((case, _)) = iter.next() {
             let Some((next_case, next_cfg_id)) = iter.peek() else { continue };
             if !fallthroughs.contains(next_cfg_id) {
-                if self.0.report_unused_fallthrough_comment {
-                    if let Some(span) = self.maybe_allow_fallthrough_trivia(ctx, case, next_case) {
-                        ctx.diagnostic(no_unused_fallthrough_diagnostic(span));
-                    }
+                if self.0.report_unused_fallthrough_comment
+                    && let Some(span) = self.maybe_allow_fallthrough_trivia(ctx, case, next_case)
+                {
+                    ctx.diagnostic(no_unused_fallthrough_diagnostic(span));
                 }
                 continue;
             }

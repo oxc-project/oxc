@@ -21,13 +21,16 @@ const PATHS_ERROR_MESSAGE: &str = "PATH must not contain \"..\"";
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options, version(VERSION))]
 pub struct FormatCommand {
-    #[bpaf(external, fallback(OutputOptions::Default))]
+    #[bpaf(external, fallback(OutputOptions::DefaultWrite))]
     pub output_options: OutputOptions,
 
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 
-    /// Single file, single path or list of paths
+    /// Single file, single path or list of paths.
+    /// If not provided, current working directory is used.
+    // `bpaf(fallback)` seems to have issues with `many` or `positional`,
+    // so we implement the fallback behavior in code instead.
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
 }
@@ -35,18 +38,15 @@ pub struct FormatCommand {
 /// Output Options
 #[derive(Debug, Clone, Bpaf)]
 pub enum OutputOptions {
-    /// Default - when no output option is specified, behaves like `--check`
+    /// Default - when no output option is specified, behaves like `--write`
     #[bpaf(hide)]
-    Default,
+    DefaultWrite,
     /// Check mode - check if files are formatted
-    #[bpaf(long, short)]
+    #[bpaf(long)]
     Check,
     /// List mode - list files that would be changed
-    #[bpaf(long, short)]
+    #[bpaf(long)]
     ListDifferent,
-    /// Write mode - write formatted code back
-    #[bpaf(long, short)]
-    Write,
 }
 
 /// Miscellaneous

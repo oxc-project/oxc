@@ -292,14 +292,12 @@ impl<'a> AssignmentLike<'a, '_> {
 
         if let Some(Expression::CallExpression(call_expression)) =
             &right_expression.map(AsRef::as_ref)
-        {
-            if call_expression
+            && call_expression
                 .callee
                 .get_identifier_reference()
                 .is_some_and(|ident| ident.name == "require")
-            {
-                return AssignmentLikeLayout::NeverBreakAfterOperator;
-            }
+        {
+            return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
         if self.should_break_left_hand_side() {

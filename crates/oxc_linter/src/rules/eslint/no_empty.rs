@@ -70,18 +70,15 @@ impl Rule for NoEmpty {
                     return;
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
-                    if let AstKind::TryStatement(try_stmt) = parent {
-                        if let Some(try_block_stmt) = &try_stmt.finalizer {
-                            if try_block_stmt.span == block.span {
-                                return if let Some(finally_kw_start) =
-                                    find_finally_start(ctx, block)
-                                {
-                                    fixer.delete_range(Span::new(finally_kw_start, block.span.end))
-                                } else {
-                                    fixer.noop()
-                                };
-                            }
-                        }
+                    if let AstKind::TryStatement(try_stmt) = parent
+                        && let Some(try_block_stmt) = &try_stmt.finalizer
+                        && try_block_stmt.span == block.span
+                    {
+                        return if let Some(finally_kw_start) = find_finally_start(ctx, block) {
+                            fixer.delete_range(Span::new(finally_kw_start, block.span.end))
+                        } else {
+                            fixer.noop()
+                        };
                     }
                     if matches!(parent, AstKind::CatchClause(_)) {
                         return fixer.noop();
@@ -108,19 +105,19 @@ fn find_finally_start(ctx: &LintContext, finally_clause: &BlockStatement) -> Opt
     let src_chars: Vec<char> = src.chars().collect();
 
     while start > 0 {
-        if let Some(&ch) = src_chars.get(start) {
-            if !ch.is_whitespace() {
-                if ch == 'y'
-                    && "finally".chars().rev().skip(1).all(|c| {
-                        start -= 1;
-                        src_chars.get(start) == Some(&c)
-                    })
-                {
-                    #[expect(clippy::cast_possible_truncation)]
-                    return Some(start as u32);
-                }
-                return None;
+        if let Some(&ch) = src_chars.get(start)
+            && !ch.is_whitespace()
+        {
+            if ch == 'y'
+                && "finally".chars().rev().skip(1).all(|c| {
+                    start -= 1;
+                    src_chars.get(start) == Some(&c)
+                })
+            {
+                #[expect(clippy::cast_possible_truncation)]
+                return Some(start as u32);
             }
+            return None;
         }
         start = start.saturating_sub(1);
     }

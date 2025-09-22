@@ -1,1 +1,1 @@
-const Component = () => <div>JSX</div>
+const Component = () => <div>JSX</div>;

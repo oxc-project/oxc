@@ -56,14 +56,13 @@ impl Rule for PreferLogicalOperatorOverTernary {
         }
 
         // `!bar ? foo : bar;`
-        if let Expression::UnaryExpression(unary_expression) = &conditional_expression.test {
-            if unary_expression.operator == UnaryOperator::LogicalNot
-                && is_same_node(&unary_expression.argument, &conditional_expression.alternate, ctx)
-            {
-                ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
-                    conditional_expression.span,
-                ));
-            }
+        if let Expression::UnaryExpression(unary_expression) = &conditional_expression.test
+            && unary_expression.operator == UnaryOperator::LogicalNot
+            && is_same_node(&unary_expression.argument, &conditional_expression.alternate, ctx)
+        {
+            ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
+                conditional_expression.span,
+            ));
         }
     }
 }

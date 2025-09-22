@@ -27,7 +27,7 @@ impl LintIgnoreMatcher {
         };
 
         // Sort nested configs deepest-to-shallowest for correct precedence
-        nested.sort_by(|a, b| {
+        nested.sort_unstable_by(|a, b| {
             let a_len = a.1.components().count();
             let b_len = b.1.components().count();
             b_len.cmp(&a_len)

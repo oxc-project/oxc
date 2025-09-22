@@ -34,11 +34,11 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
         // `let x = 1, y = 2, z = 3;` -> `let x = 1, y = 2, z = 3;`
         //             ^^^^^                       ^^^^^^^
-        if own_position > 0 {
-            if let Some(left_neighbor) = list.get(own_position - 1) {
-                delete_range.start = left_neighbor.span().end;
-                has_left = true;
-            }
+        if own_position > 0
+            && let Some(left_neighbor) = list.get(own_position - 1)
+        {
+            delete_range.start = left_neighbor.span().end;
+            has_left = true;
         }
 
         // both left and right neighbors are present, so we need to

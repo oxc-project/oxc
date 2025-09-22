@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.87.0",
+  "version": "0.91.0",
   "type": "module",
   "main": "index.js",
   "browser": "browser.js",
@@ -12,7 +12,7 @@
     "test": "tsc && vitest run --dir ./test"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "description": "Oxc Transformer Node API",
   "keywords": [

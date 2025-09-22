@@ -121,6 +121,41 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the name on this function expression.
 
   ⚠ eslint(func-names): Unexpected named function `foo`.
+   ╭─[func_names.tsx:1:9]
+ 1 │ var x = function foo() { return foo.length; };
+   ·         ────────────
+   ╰────
+  help: Remove the name on this function expression.
+
+  ⚠ eslint(func-names): Unexpected named function `foo`.
+   ╭─[func_names.tsx:1:22]
+ 1 │ var foo = 1; var x = function foo() { return foo + 1; };
+   ·                      ────────────
+   ╰────
+  help: Remove the name on this function expression.
+
+  ⚠ eslint(func-names): Unexpected named function `foo`.
+   ╭─[func_names.tsx:1:9]
+ 1 │ var x = function foo() { console.log('hello'); };
+   ·         ────────────
+   ╰────
+  help: Remove the name on this function expression.
+
+  ⚠ eslint(func-names): Unexpected named function `inner`.
+   ╭─[func_names.tsx:1:13]
+ 1 │ var outer = function inner() { function nested() { nested(); } };
+   ·             ──────────────
+   ╰────
+  help: Remove the name on this function expression.
+
+  ⚠ eslint(func-names): Unexpected named function `ticker`.
+   ╭─[func_names.tsx:1:12]
+ 1 │ setTimeout(function ticker() { setTimeout(ticker, 1000); }, 1000);
+   ·            ───────────────
+   ╰────
+  help: Remove the name on this function expression.
+
+  ⚠ eslint(func-names): Unexpected named function `foo`.
    ╭─[func_names.tsx:1:21]
  1 │ Foo.prototype.bar = function foo() {};
    ·                     ────────────

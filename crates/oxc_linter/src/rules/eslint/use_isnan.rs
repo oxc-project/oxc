@@ -125,10 +125,10 @@ impl Rule for UseIsnan {
                 // Match target array prototype methods whose only argument is
                 // NaN
                 let Some(method) = is_target_callee(&call.callee) else { return };
-                if let Some(expr) = call.arguments[0].as_expression() {
-                    if is_nan_identifier(expr) {
-                        ctx.diagnostic(index_of_na_n(method, expr.span()));
-                    }
+                if let Some(expr) = call.arguments[0].as_expression()
+                    && is_nan_identifier(expr)
+                {
+                    ctx.diagnostic(index_of_na_n(method, expr.span()));
                 }
             }
             _ => (),

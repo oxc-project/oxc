@@ -97,10 +97,10 @@ impl Rule for HeadingHasContent {
             return;
         }
 
-        if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id()) {
-            if object_has_accessible_child(ctx, parent) {
-                return;
-            }
+        if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id())
+            && object_has_accessible_child(ctx, parent)
+        {
+            return;
         }
 
         if is_hidden_from_screen_reader(ctx, jsx_el) {

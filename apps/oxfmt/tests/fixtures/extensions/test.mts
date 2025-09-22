@@ -1,1 +1,1 @@
-export const typedModule: string = "mts"
+export const typedModule: string = "mts";

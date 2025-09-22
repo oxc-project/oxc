@@ -279,7 +279,7 @@ impl<'a> Deref for RuleFix<'a> {
 /// A completed, normalized fix ready to be applied to the source code.
 ///
 /// Used internally by this module. Lint rules should use [`RuleFix`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
@@ -334,7 +334,7 @@ impl<'a> Fix<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PossibleFixes<'a> {
     None,
     Single(Fix<'a>),
@@ -548,9 +548,14 @@ impl<'a> CompositeFix<'a> {
         let end = fixes[fixes.len() - 1].span.end;
         let mut last_pos = start;
         let mut output = String::new();
+        let mut merged_fix_message = None;
 
         for fix in fixes {
-            let Fix { content, span, .. } = fix;
+            let Fix { content, span, message } = fix;
+            if let Some(message) = message {
+                merged_fix_message.get_or_insert(message);
+            }
+
             // negative range or overlapping ranges is invalid
             if span.start > span.end {
                 debug_assert!(false, "Negative range is invalid: {span:?}");
@@ -583,19 +588,18 @@ impl<'a> CompositeFix<'a> {
 
         output.push_str(after);
         output.shrink_to_fit();
-        Fix::new(output, Span::new(start, end))
+
+        let mut fix = Fix::new(output, Span::new(start, end));
+        if let Some(message) = merged_fix_message {
+            fix = fix.with_message(message);
+        }
+        fix
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-
-    impl PartialEq for Fix<'_> {
-        fn eq(&self, other: &Self) -> bool {
-            self.span == other.span && self.content == other.content
-        }
-    }
 
     impl Clone for CompositeFix<'_> {
         fn clone(&self) -> Self {

@@ -1,0 +1,19 @@
+{
+    "plugins": [
+      "./plugins/test_plugin1.js",
+      "./plugins/test_plugin2.cjs",
+      "./plugins/test_plugin3.mjs",
+      "./plugins/test_plugin4",
+      "test_plugin5",
+      "test_plugin6"
+    ],
+    "rules": {
+        "plugin1/no-debugger": "error",
+        "plugin2/no-debugger": "error",
+        "plugin3/no-debugger": "error",
+        "plugin4/no-debugger": "error",
+        "plugin5/no-debugger": "error",
+        "plugin6/no-debugger": "error"
+    },
+    "ignorePatterns": ["plugins/**", "node_modules/**"]
+}

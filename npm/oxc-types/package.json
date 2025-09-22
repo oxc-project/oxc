@@ -1,8 +1,8 @@
 {
   "name": "@oxc-project/types",
-  "version": "0.87.0",
+  "version": "0.91.0",
   "description": "Types for Oxc AST nodes",
-  "type": "commonjs",
+  "type": "module",
   "keywords": [
     "AST",
     "Parser"

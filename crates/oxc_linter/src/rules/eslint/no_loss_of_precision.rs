@@ -298,10 +298,10 @@ fn round_to_precision(digits: &mut String, precision: usize) -> bool {
         let to_round = digits.split_off(precision);
         let mut digit =
             digits.pop().expect("already checked that length is bigger than precision") as u8;
-        if let Some(first) = to_round.chars().next() {
-            if first > '4' {
-                digit += 1;
-            }
+        if let Some(first) = to_round.chars().next()
+            && first > '4'
+        {
+            digit += 1;
         }
 
         if digit as char == ':' {

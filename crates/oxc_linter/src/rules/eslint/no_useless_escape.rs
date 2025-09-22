@@ -222,21 +222,21 @@ fn check_character(
                         return None;
                     }
                 }
-                if let Some(prev_prev_char) = source_text.chars().nth(span.start as usize - 1) {
-                    if prev_prev_char == escape_char {
-                        if escape_char != '^' {
-                            return None;
-                        }
+                if let Some(prev_prev_char) = source_text.chars().nth(span.start as usize - 1)
+                    && prev_prev_char == escape_char
+                {
+                    if escape_char != '^' {
+                        return None;
+                    }
 
-                        // Escaping caret is unnecessary if the previous character is a `negate` caret(`^`).
-                        if !class.negative {
-                            return None;
-                        }
+                    // Escaping caret is unnecessary if the previous character is a `negate` caret(`^`).
+                    if !class.negative {
+                        return None;
+                    }
 
-                        let caret_index = class.span.start + 1;
-                        if caret_index < span.start - 1 {
-                            return None;
-                        }
+                    let caret_index = class.span.start + 1;
+                    if caret_index < span.start - 1 {
+                        return None;
                     }
                 }
             }
@@ -278,16 +278,15 @@ fn check_string(string: &str) -> Vec<usize> {
         // The offset comes from a utf8 checked string
 
         let s = unsafe { std::str::from_utf8_unchecked(&bytes[offset..]) };
-        if let Some(c) = s.chars().nth(1) {
-            if !(c == quote_char
+        if let Some(c) = s.chars().nth(1)
+            && !(c == quote_char
                 || (offset > 0 && prev_offset == Some(offset - 1))
                 || c.is_ascii_digit()
                 || VALID_STRING_ESCAPES.contains(c))
-            {
-                // +1 for skipping the first string quote `"`
-                // +1 for skipping the escape char `\\`
-                offsets.push(offset + 2);
-            }
+        {
+            // +1 for skipping the first string quote `"`
+            // +1 for skipping the escape char `\\`
+            offsets.push(offset + 2);
         }
         prev_offset.replace(offset);
     }

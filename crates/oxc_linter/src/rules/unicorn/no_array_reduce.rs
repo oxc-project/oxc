@@ -88,17 +88,16 @@ impl Rule for NoArrayReduce {
             ctx.diagnostic(no_array_reduce_diagnostic(span));
         }
 
-        if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
-            if is_method_call(call_expr, None, Some(&["call", "apply"]), None, None)
-                && !member_expr.optional()
-                && !member_expr.is_computed()
-                && !call_expr.optional
-                && !member_expr_obj.is_computed()
-                && (is_prototype_property(member_expr_obj, "reduce", Some("Array"))
-                    || is_prototype_property(member_expr_obj, "reduceRight", Some("Array")))
-            {
-                ctx.diagnostic(no_array_reduce_diagnostic(span));
-            }
+        if let Some(member_expr_obj) = member_expr.object().as_member_expression()
+            && is_method_call(call_expr, None, Some(&["call", "apply"]), None, None)
+            && !member_expr.optional()
+            && !member_expr.is_computed()
+            && !call_expr.optional
+            && !member_expr_obj.is_computed()
+            && (is_prototype_property(member_expr_obj, "reduce", Some("Array"))
+                || is_prototype_property(member_expr_obj, "reduceRight", Some("Array")))
+        {
+            ctx.diagnostic(no_array_reduce_diagnostic(span));
         }
     }
 }

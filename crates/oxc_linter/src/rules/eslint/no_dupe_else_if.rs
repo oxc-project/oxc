@@ -122,10 +122,10 @@ impl Rule for NoDupeElseIf {
 
         let mut conditions_to_check = vec![&if_stmt.test];
 
-        if let Expression::LogicalExpression(expr) = &if_stmt.test {
-            if expr.operator == LogicalOperator::And {
-                conditions_to_check.extend(split_by_and(&if_stmt.test));
-            }
+        if let Expression::LogicalExpression(expr) = &if_stmt.test
+            && expr.operator == LogicalOperator::And
+        {
+            conditions_to_check.extend(split_by_and(&if_stmt.test));
         }
 
         let mut list_to_check: Vec<Vec<Vec<_>>> = conditions_to_check

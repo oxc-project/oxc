@@ -184,15 +184,12 @@ fn find_latest_assignment<'a>(
         }
 
         // The node is before the variable declaration, skip it
-        if node.span().start > start_index {
-            if let AstKind::AssignmentExpression(assign_expr) = node.kind() {
-                if let AssignmentTarget::AssignmentTargetIdentifier(assigned_id) = &assign_expr.left
-                {
-                    if assigned_id.name == identifier_name {
-                        result = Some(&assign_expr.right);
-                    }
-                }
-            }
+        if node.span().start > start_index
+            && let AstKind::AssignmentExpression(assign_expr) = node.kind()
+            && let AssignmentTarget::AssignmentTargetIdentifier(assigned_id) = &assign_expr.left
+            && assigned_id.name == identifier_name
+        {
+            result = Some(&assign_expr.right);
         }
     }
     result

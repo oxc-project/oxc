@@ -73,10 +73,10 @@ impl<'a> ParserImpl<'a> {
             Self::parse_array_binding_element,
             diagnostics::binding_rest_element_last,
         );
-        if let Some(rest) = &rest {
-            if let Some(ty) = &rest.argument.type_annotation {
-                self.error(diagnostics::rest_element_property_name(ty.span));
-            }
+        if let Some(rest) = &rest
+            && let Some(ty) = &rest.argument.type_annotation
+        {
+            self.error(diagnostics::rest_element_property_name(ty.span));
         }
         self.expect(Kind::RBrack);
         self.ast.binding_pattern_kind_array_pattern(

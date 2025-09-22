@@ -75,13 +75,13 @@ impl Rule for RequireReturnsDescription {
                 let (type_part, comment_part) = tag.type_comment();
 
                 // If returns type is marked as nothing, skip
-                if let Some(type_part) = type_part {
-                    if matches!(
+                if let Some(type_part) = type_part
+                    && matches!(
                         type_part.parsed(),
                         "void" | "undefined" | "Promise<void>" | "Promise<undefined>"
-                    ) {
-                        continue;
-                    }
+                    )
+                {
+                    continue;
                 }
 
                 // If description exists, skip

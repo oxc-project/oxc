@@ -302,17 +302,17 @@ impl ConstComparisons {
 fn comparison_to_const<'a, 'b>(
     expr: &'b Expression<'a>,
 ) -> Option<(CmpOp, &'b Expression<'a>, &'b NumericLiteral<'a>, Span)> {
-    if let Expression::BinaryExpression(bin_expr) = expr {
-        if let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator) {
-            match (&bin_expr.left.get_inner_expression(), &bin_expr.right.get_inner_expression()) {
-                (Expression::NumericLiteral(lit), _) => {
-                    return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
-                }
-                (_, Expression::NumericLiteral(lit)) => {
-                    return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
-                }
-                _ => {}
+    if let Expression::BinaryExpression(bin_expr) = expr
+        && let Ok(cmp_op) = CmpOp::try_from(bin_expr.operator)
+    {
+        match (&bin_expr.left.get_inner_expression(), &bin_expr.right.get_inner_expression()) {
+            (Expression::NumericLiteral(lit), _) => {
+                return Some((cmp_op.reverse(), &bin_expr.right, lit, bin_expr.span));
             }
+            (_, Expression::NumericLiteral(lit)) => {
+                return Some((cmp_op, &bin_expr.left, lit, bin_expr.span));
+            }
+            _ => {}
         }
     }
 

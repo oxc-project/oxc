@@ -5,11 +5,17 @@ use crate::{CompressOptionsUnused, ctx::Ctx};
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    fn can_remove_unused_declarators(ctx: &Ctx<'a, '_>) -> bool {
+        ctx.state.options.unused != CompressOptionsUnused::Keep
+            && !Self::keep_top_level_var_in_script_mode(ctx)
+            && !ctx.scoping().root_scope_flags().contains_direct_eval()
+    }
+
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
         ctx: &Ctx<'a, '_>,
     ) -> bool {
-        if ctx.state.options.unused == CompressOptionsUnused::Keep {
+        if !Self::can_remove_unused_declarators(ctx) {
             return false;
         }
         if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
@@ -17,18 +23,26 @@ impl<'a> PeepholeOptimizations {
             if decl.kind.is_using() {
                 return false;
             }
-            if Self::keep_top_level_var_in_script_mode(ctx) {
-                return false;
-            }
-            // It is unsafe to remove if direct eval is involved.
-            if ctx.scoping().root_scope_flags().contains_direct_eval() {
-                return false;
-            }
             if let Some(symbol_id) = ident.symbol_id.get() {
                 return ctx.scoping().symbol_is_unused(symbol_id);
             }
         }
         false
+    }
+
+    pub fn remove_unused_variable_declaration(
+        mut stmt: Statement<'a>,
+        ctx: &Ctx<'a, '_>,
+    ) -> Option<Statement<'a>> {
+        let Statement::VariableDeclaration(var_decl) = &mut stmt else { return Some(stmt) };
+        if !Self::can_remove_unused_declarators(ctx) {
+            return Some(stmt);
+        }
+        var_decl.declarations.retain(|decl| !Self::should_remove_unused_declarator(decl, ctx));
+        if var_decl.declarations.is_empty() {
+            return None;
+        }
+        Some(stmt)
     }
 
     pub fn remove_unused_function_declaration(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {

@@ -150,24 +150,23 @@ impl ConsistentGenericConstructors {
         }
 
         if matches!(self.0.option, PreferGenericType::TypeAnnotation) {
-            if type_annotation.is_none() {
-                if let Some(type_arguments) = &new_expression.type_arguments {
-                    ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_annotation(
-                        type_arguments.span,
-                    ));
-                }
+            if type_annotation.is_none()
+                && let Some(type_arguments) = &new_expression.type_arguments
+            {
+                ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_annotation(
+                    type_arguments.span,
+                ));
             }
             return;
         }
 
-        if let Some(type_arguments) = &type_annotation {
-            if has_type_parameters(&type_arguments.type_annotation)
-                && new_expression.type_arguments.is_none()
-            {
-                ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_constructor(
-                    type_arguments.span,
-                ));
-            }
+        if let Some(type_arguments) = &type_annotation
+            && has_type_parameters(&type_arguments.type_annotation)
+            && new_expression.type_arguments.is_none()
+        {
+            ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_constructor(
+                type_arguments.span,
+            ));
         }
     }
 }

@@ -18,13 +18,13 @@ impl<'a> PeepholeOptimizations {
         match expr {
             // "!!a" => "a"
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
-                if let Expression::UnaryExpression(u2) = &mut u1.argument {
-                    if u2.operator.is_not() {
-                        let mut e = u2.argument.take_in(ctx.ast);
-                        Self::minimize_expression_in_boolean_context(&mut e, ctx);
-                        *expr = e;
-                        ctx.state.changed = true;
-                    }
+                if let Expression::UnaryExpression(u2) = &mut u1.argument
+                    && u2.operator.is_not()
+                {
+                    let mut e = u2.argument.take_in(ctx.ast);
+                    Self::minimize_expression_in_boolean_context(&mut e, ctx);
+                    *expr = e;
+                    ctx.state.changed = true;
                 }
             }
             Expression::BinaryExpression(e)

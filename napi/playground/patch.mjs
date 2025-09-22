@@ -5,7 +5,7 @@ let data = fs.readFileSync(filename, 'utf-8');
 data = data.replace(
   `export const Oxc = __napiModule.exports.Oxc`,
   `
-import { jsonParseAst } from "../parser/wrap.mjs"
+import { jsonParseAst } from "../parser/src-js/wrap.mjs"
 
 export function Oxc() {
   const oxc = new __napiModule.exports.Oxc();

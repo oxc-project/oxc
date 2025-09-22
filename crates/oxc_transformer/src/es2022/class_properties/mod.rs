@@ -404,7 +404,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a, '_> {
         prop: &mut PropertyDefinition<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        if prop.r#static {
+        // Ignore `declare` properties as they don't have any runtime effect,
+        // and will be removed in the TypeScript transform later
+        if prop.r#static && !prop.declare {
             self.flag_entering_static_property_or_block();
         }
     }
@@ -414,7 +416,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a, '_> {
         prop: &mut PropertyDefinition<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        if prop.r#static {
+        // Ignore `declare` properties as they don't have any runtime effect,
+        // and will be removed in the TypeScript transform later
+        if prop.r#static && !prop.declare {
             self.flag_exiting_static_property_or_block();
         }
     }

@@ -207,16 +207,15 @@ impl<'a> ClassProperties<'a, '_> {
         object: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(SymbolId, ReferenceId)> {
-        if is_declaration {
-            if let Some(class_symbol_id) = class_symbol_id {
-                if let Expression::Identifier(ident) = object {
-                    let reference_id = ident.reference_id();
-                    if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
-                        if symbol_id == class_symbol_id {
-                            return Some((class_symbol_id, reference_id));
-                        }
-                    }
-                }
+        if is_declaration
+            && let Some(class_symbol_id) = class_symbol_id
+            && let Expression::Identifier(ident) = object
+        {
+            let reference_id = ident.reference_id();
+            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                && symbol_id == class_symbol_id
+            {
+                return Some((class_symbol_id, reference_id));
             }
         }
 

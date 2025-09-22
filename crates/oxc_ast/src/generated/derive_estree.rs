@@ -773,11 +773,7 @@ impl ESTree for ChainElement<'_> {
 
 impl ESTree for ParenthesizedExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
-        state.serialize_field("expression", &self.expression);
-        state.serialize_span(self.span);
-        state.end();
+        crate::serialize::js::ParenthesizedExpressionConverter(self).serialize(serializer)
     }
 }
 
@@ -2350,11 +2346,7 @@ impl ESTree for TSIntersectionType<'_> {
 
 impl ESTree for TSParenthesizedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
-        state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_span(self.span);
-        state.end();
+        crate::serialize::ts::TSParenthesizedTypeConverter(self).serialize(serializer)
     }
 }
 

@@ -56,16 +56,16 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyStaticBlock {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::StaticBlock(static_block) = node.kind() {
-            if static_block.body.is_empty() {
-                if ctx.has_comments_between(static_block.span) {
-                    return;
-                }
-                ctx.diagnostic_with_suggestion(
-                    no_empty_static_block_diagnostic(static_block.span),
-                    |fixer| fixer.delete(&static_block.span),
-                );
+        if let AstKind::StaticBlock(static_block) = node.kind()
+            && static_block.body.is_empty()
+        {
+            if ctx.has_comments_between(static_block.span) {
+                return;
             }
+            ctx.diagnostic_with_suggestion(
+                no_empty_static_block_diagnostic(static_block.span),
+                |fixer| fixer.delete(&static_block.span),
+            );
         }
     }
 }

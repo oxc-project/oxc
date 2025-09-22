@@ -177,10 +177,10 @@ impl Rule for JsxNoTargetBlank {
                                     has_href_value = true;
                                     is_href_valid = check_href(val, &self.enforce_dynamic_links);
                                 }
-                            } else if attribute_name == "rel" {
-                                if let Some(val) = attribute.value.as_ref() {
-                                    rel_valid_tuple = check_rel(val, self.allow_referrer);
-                                }
+                            } else if attribute_name == "rel"
+                                && let Some(val) = attribute.value.as_ref()
+                            {
+                                rel_valid_tuple = check_rel(val, self.allow_referrer);
                             }
                         }
                     }

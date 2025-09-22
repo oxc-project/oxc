@@ -110,11 +110,10 @@ impl Rule for NoBarrelFile {
 
             if let Some(remote_module) =
                 module_record.loaded_modules.read().unwrap().get(module_request.name())
+                && let Some(count) = count_loaded_modules(remote_module)
             {
-                if let Some(count) = count_loaded_modules(remote_module) {
-                    total += count;
-                    labels.push(module_request.span.label(format!("{count} modules")));
-                }
+                total += count;
+                labels.push(module_request.span.label(format!("{count} modules")));
             }
         }
 

@@ -1,1 +1,1 @@
-const typed: string = "ts"
+const typed: string = "ts";

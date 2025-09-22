@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.16.0] - 2025-09-16
+
+### 🚀 Features
+
+- 97c8d06 linter: Add `preserve-caught-error` rule (#13748) (孔辉)
+- 8c19b18 linter/exhaustive-deps: Implement fixer for dep in global scope (#13783) (camc314)
+- 06bce8f linter/exhaustive-deps: Implement fixer for missing dep (#13782) (camc314)
+- a8675f4 linter: Add eslint/class-methods-use-this rule (#12977) (Peter Cardenas)
+- db33196 parser: Adds typescript rule for empty argument list (#13730) (Karan Kiri)
+- 2751193 linter: Add `eslint/no-useless-computed-key` rule (#13428) (yefan)
+- 9a205d1 regex-parser: Parse simple `TemplateLiterals` (#13265) (Sysix)
+
+### 🐛 Bug Fixes
+
+- a2c91cd linter: Drop `rules` to allow mutable access to `ctx_host` in `run_external_rules` (#13832) (camc314)
+- 3af1e5d linter/no-unsafe-declaration-merging: Always mark first span as primary (#13830) (camc314)
+- 1c43c7c linter: Keep message when merging composite fixes (#13827) (camc314)
+- 26af302 linter/exhaustive-deps: Check stable value is on lhs of assignment expr (#13815) (camc314)
+- 4bc12d0 linter/exhaustive-deps: Remove impossible comparison with parent kind (#13814) (camc314)
+- 12baf5e linter/exhaustive-deps: Respect primary span when identifying disable directive location (#13781) (camc314)
+- fa7400a linter/no-undef: False positive with `arguments` in functions (#13763) (camc314)
+- 56da114 linter/react/jsx-handler-names: Do not detect the function name within the inline-function's body block (#13456) (Takuji Shimokawa)
+- b2bc5b4 linter/react-perf/jsx-no-new-object-as-prop: Skip as/satisfies exprs (#13718) (camc314)
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- 395d40d linter: Derive inmpls for `PartialEq`, `Eq` over manual ones (#13828) (camc314)
+- 8e4cd8f linter/func-names: Use `run_once` over looping over all nodes (#13798) (camc314)
+- 7f4e2fe eslint/func-names: Clean up implementation and improve documentation (#13601) (Antoine Zanardi)
+- a0022c1 linter/plugins: Improve error messages for JS plugins (#13699) (overlookmotel)
+
+### ⚡ Performance
+
+- 90c8286 linter: Detect node types from `let..else` statements (#13690) (camchenry)
+- 08c05df semantic: Make CFG construction a compile-time feature (#13678) (Boshen)
+
+### 🧪 Testing
+
+- 18a1145 linter: Add debug assertions for skipping rules (#13724) (camc314)
+- cb080de linter/no-unused-vars: Add test for non ASCII chars in JSX components (#13820) (camc314)
+- b6eba27 linter/no-undef: Add more test cases for `arguments` (#13764) (camc314)
+
+
 ## [1.15.0] - 2025-09-11
 
 ### 🚀 Features

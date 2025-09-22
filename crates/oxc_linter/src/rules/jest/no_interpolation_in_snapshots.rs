@@ -87,10 +87,10 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     // Check all since the optional 'propertyMatchers' argument might be present
     // `.toMatchInlineSnapshot(propertyMatchers?, inlineSnapshot)`
     for arg in jest_fn_call.args {
-        if let Argument::TemplateLiteral(template_lit) = arg {
-            if !template_lit.expressions.is_empty() {
-                ctx.diagnostic(no_interpolation_in_snapshots_diagnostic(template_lit.span));
-            }
+        if let Argument::TemplateLiteral(template_lit) = arg
+            && !template_lit.expressions.is_empty()
+        {
+            ctx.diagnostic(no_interpolation_in_snapshots_diagnostic(template_lit.span));
         }
     }
 }

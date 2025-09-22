@@ -2,7 +2,6 @@ use std::path::Path;
 
 use nonmax::NonMaxU32;
 
-use oxc_data_structures::slice_iter::SliceIter;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
@@ -247,56 +246,78 @@ impl<'a> SourcemapBuilder<'a> {
 
     #[expect(clippy::cast_possible_truncation)]
     fn update_generated_line_and_column(&mut self, output: &[u8]) {
-        let remaining = &output[self.last_generated_update..];
+        const BATCH_SIZE: usize = 32;
+
+        let start_index = self.last_generated_update;
 
         // Find last line break
-        let mut line_start_ptr = remaining.as_ptr();
+        let mut line_start_index = start_index;
+        let mut idx = line_start_index;
         let mut last_line_is_ascii = true;
-        let mut iter = remaining.iter();
-        while let Some(&b) = iter.next() {
-            match b {
-                b'\n' => {}
-                b'\r' => {
-                    // Handle Windows-specific "\r\n" newlines
-                    if iter.peek() == Some(&b'\n') {
-                        iter.next();
+
+        macro_rules! handle_byte {
+            ($byte:ident) => {
+                match $byte {
+                    b'\n' => {}
+                    b'\r' => {
+                        // Handle Windows-specific "\r\n" newlines
+                        if output.get(idx + 1) == Some(&b'\n') {
+                            idx += 1;
+                        }
                     }
-                }
-                _ if b.is_ascii() => {
-                    continue;
-                }
-                LS_OR_PS_FIRST_BYTE => {
-                    let next_byte = *iter.next().unwrap();
-                    let next_next_byte = *iter.next().unwrap();
-                    if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
+                    _ if $byte.is_ascii() => {
+                        idx += 1;
+                        continue;
+                    }
+                    LS_OR_PS_FIRST_BYTE => {
+                        let next_byte = output[idx + 1];
+                        let next_next_byte = output[idx + 2];
+                        if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES)
+                        {
+                            last_line_is_ascii = false;
+                            idx += 1;
+                            continue;
+                        }
+                    }
+                    _ => {
+                        // Unicode char
                         last_line_is_ascii = false;
+                        idx += 1;
                         continue;
                     }
                 }
-                _ => {
-                    // Unicode char
-                    last_line_is_ascii = false;
-                    continue;
-                }
-            }
 
-            // Line break found.
-            // `iter` is now positioned after line break.
-            line_start_ptr = iter.ptr();
-            self.generated_line += 1;
-            self.generated_column = 0;
-            last_line_is_ascii = true;
+                // Line break found.
+                // `iter` is now positioned after line break.
+                line_start_index = idx + 1;
+                self.generated_line += 1;
+                self.generated_column = 0;
+                last_line_is_ascii = true;
+                idx += 1;
+            };
+        }
+
+        while let (end, overflow) = idx.overflowing_add(BATCH_SIZE)
+            && !overflow
+            && end < output.len()
+        {
+            while idx < end {
+                let b = output[idx];
+                handle_byte!(b);
+            }
+        }
+        while idx < output.len() {
+            let b = output[idx];
+            handle_byte!(b);
         }
 
         // Calculate column
         self.generated_column += if last_line_is_ascii {
-            // `iter` is now exhausted, so `iter.ptr()` is pointer to end of `output`
-            (iter.ptr() as usize - line_start_ptr as usize) as u32
+            (output.len() - line_start_index) as u32
         } else {
-            let line_byte_offset = line_start_ptr as usize - remaining.as_ptr() as usize;
             // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this
             // function unsafe and caller guarantees `output` contains a valid UTF-8 string
-            let last_line = std::str::from_utf8(&remaining[line_byte_offset..]).unwrap();
+            let last_line = std::str::from_utf8(&output[line_start_index..]).unwrap();
             // Mozilla's "source-map" library counts columns using UTF-16 code units
             last_line.encode_utf16().count() as u32
         };

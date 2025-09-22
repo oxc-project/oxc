@@ -17,10 +17,10 @@ pub fn find_url_query_value<'url>(url: &'url str, key: &str) -> Option<&'url str
     // Now parse the query string in pairs of `key=value`, we don't need
     // to be too strict about this as we're not trying to be spec-compliant.
     for pair in url.split('&') {
-        if let Some((k, v)) = pair.split_once('=') {
-            if k == key {
-                return Some(v);
-            }
+        if let Some((k, v)) = pair.split_once('=')
+            && k == key
+        {
+            return Some(v);
         }
     }
     None

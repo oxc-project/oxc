@@ -1069,6 +1069,7 @@ pub enum ChainElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(via = ParenthesizedExpressionConverter)]
 pub struct ParenthesizedExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,

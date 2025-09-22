@@ -165,7 +165,8 @@ impl<'a> ParserImpl<'a> {
             return self.parse_function_expression(span, r#async);
         }
 
-        match self.cur_kind() {
+        let kind = self.cur_kind();
+        match kind {
             Kind::Ident => self.parse_identifier_expression(), // fast path, keywords are checked at the end
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
@@ -255,7 +256,8 @@ impl<'a> ParserImpl<'a> {
     /// [Literal Expression](https://tc39.es/ecma262/#prod-Literal)
     /// parses string | true | false | null | number
     pub(crate) fn parse_literal_expression(&mut self) -> Expression<'a> {
-        match self.cur_kind() {
+        let kind = self.cur_kind();
+        match kind {
             Kind::Str => {
                 let lit = self.parse_literal_string();
                 Expression::StringLiteral(self.alloc(lit))
@@ -301,10 +303,11 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_literal_number(&mut self) -> NumericLiteral<'a> {
         let token = self.cur_token();
         let span = token.span();
+        let kind = token.kind();
         let src = self.cur_src();
-        let value = match token.kind() {
+        let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                parse_int(src, token.kind(), token.has_separator())
+                parse_int(src, kind, token.has_separator())
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src, token.has_separator())
@@ -315,7 +318,7 @@ impl<'a> ParserImpl<'a> {
             self.set_fatal_error(diagnostics::invalid_number(err, span));
             0.0 // Dummy value
         });
-        let base = match token.kind() {
+        let base = match kind {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
@@ -335,18 +338,19 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
-        let base = match self.cur_kind() {
+        let token = self.cur_token();
+        let kind = token.kind();
+        let base = match kind {
             Kind::Decimal => BigintBase::Decimal,
             Kind::Binary => BigintBase::Binary,
             Kind::Octal => BigintBase::Octal,
             Kind::Hex => BigintBase::Hex,
             _ => return self.unexpected(),
         };
-        let token = self.cur_token();
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, token.kind(), token.has_separator(), self.ast.allocator);
+        let value = parse_big_int(src, kind, token.has_separator(), self.ast.allocator);
 
         self.bump_any();
         self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
@@ -786,17 +790,16 @@ impl<'a> ParserImpl<'a> {
                     continue;
                 }
 
-                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-                    if let Some(arguments) =
+                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft)
+                    && let Some(arguments) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
-                    {
-                        lhs = self.ast.expression_ts_instantiation(
-                            self.end_span(lhs_span),
-                            lhs,
-                            arguments,
-                        );
-                        continue;
-                    }
+                {
+                    lhs = self.ast.expression_ts_instantiation(
+                        self.end_span(lhs_span),
+                        lhs,
+                        arguments,
+                    );
+                    continue;
                 }
             }
 
@@ -931,10 +934,10 @@ impl<'a> ParserImpl<'a> {
 
             let mut type_arguments = None;
             if question_dot {
-                if self.is_ts {
-                    if let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression) {
-                        type_arguments = Some(args);
-                    }
+                if self.is_ts
+                    && let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression)
+                {
+                    type_arguments = Some(args);
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
                     lhs = self.parse_tagged_template(lhs_span, lhs, question_dot, type_arguments);
@@ -943,12 +946,10 @@ impl<'a> ParserImpl<'a> {
             }
 
             if type_arguments.is_some() || self.at(Kind::LParen) {
-                if !question_dot {
-                    if let Expression::TSInstantiationExpression(expr) = lhs {
-                        let expr = expr.unbox();
-                        type_arguments.replace(expr.type_arguments);
-                        lhs = expr.expression;
-                    }
+                if !question_dot && let Expression::TSInstantiationExpression(expr) = lhs {
+                    let expr = expr.unbox();
+                    type_arguments.replace(expr.type_arguments);
+                    lhs = expr.expression;
                 }
 
                 lhs = self.parse_call_arguments(lhs_span, lhs, question_dot, type_arguments.take());
@@ -1017,8 +1018,9 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let lhs = self.parse_lhs_expression_or_higher();
         // ++ -- postfix update expressions
-        if self.cur_kind().is_update_operator() && !self.cur_token().is_on_new_line() {
-            let operator = map_update_operator(self.cur_kind());
+        let post_kind = self.cur_kind();
+        if post_kind.is_update_operator() && !self.cur_token().is_on_new_line() {
+            let operator = map_update_operator(post_kind);
             self.bump_any();
             let lhs = SimpleAssignmentTarget::cover(lhs, self);
             return self.ast.expression_update(self.end_span(span), operator, false, lhs);
@@ -1163,29 +1165,30 @@ impl<'a> ParserImpl<'a> {
                         if !rhs_parenthesized {
                             maybe_mixed_coalesce_expr = Some(rhs);
                         }
-                    } else if let Expression::LogicalExpression(lhs) = &lhs {
-                        if !lhs_parenthesized {
-                            maybe_mixed_coalesce_expr = Some(lhs);
-                        }
+                    } else if let Expression::LogicalExpression(lhs) = &lhs
+                        && !lhs_parenthesized
+                    {
+                        maybe_mixed_coalesce_expr = Some(lhs);
                     }
-                    if let Some(expr) = maybe_mixed_coalesce_expr {
-                        if matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                            self.error(diagnostics::mixed_coalesce(span));
-                        }
+                    if let Some(expr) = maybe_mixed_coalesce_expr
+                        && matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or)
+                    {
+                        self.error(diagnostics::mixed_coalesce(span));
                     }
                 }
                 self.ast.expression_logical(span, lhs, op, rhs)
             } else if kind.is_binary_operator() {
                 let span = self.end_span(lhs_span);
                 let op = map_binary_operator(kind);
-                if op == BinaryOperator::Exponential && !lhs_parenthesized {
-                    if let Some(key) = match lhs {
+                if op == BinaryOperator::Exponential
+                    && !lhs_parenthesized
+                    && let Some(key) = match lhs {
                         Expression::AwaitExpression(_) => Some("await"),
                         Expression::UnaryExpression(_) => Some("unary"),
                         _ => None,
-                    } {
-                        self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                     }
+                {
+                    self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                 }
                 self.ast.expression_binary(span, lhs, op, rhs)
             } else {
@@ -1242,10 +1245,10 @@ impl<'a> ParserImpl<'a> {
         if let Some(mut arrow_expr) = self
             .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if has_no_side_effects_comment {
-                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
-                    func.pure = true;
-                }
+            if has_no_side_effects_comment
+                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+            {
+                func.pure = true;
             }
             return arrow_expr;
         }
@@ -1253,10 +1256,10 @@ impl<'a> ParserImpl<'a> {
         if let Some(mut arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
         {
-            if has_no_side_effects_comment {
-                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
-                    func.pure = true;
-                }
+            if has_no_side_effects_comment
+                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+            {
+                func.pure = true;
             }
             return arrow_expr;
         }
@@ -1268,17 +1271,19 @@ impl<'a> ParserImpl<'a> {
         let kind = self.cur_kind();
 
         // `x => {}`
-        if lhs.is_identifier_reference() && kind == Kind::Arrow {
+        if kind == Kind::Arrow
+            && let Expression::Identifier(ident) = &lhs
+        {
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 span,
-                lhs,
+                ident,
                 /* async */ false,
                 allow_return_type_in_arrow_function,
             );
-            if has_no_side_effects_comment {
-                if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
-                    func.pure = true;
-                }
+            if has_no_side_effects_comment
+                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+            {
+                func.pure = true;
             }
             return arrow_expr;
         }

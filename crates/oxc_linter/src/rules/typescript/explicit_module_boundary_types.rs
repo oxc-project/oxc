@@ -578,10 +578,10 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             return;
         }
 
-        if let ClassElement::PropertyDefinition(prop) = &el {
-            if prop.type_annotation.is_some() {
-                return;
-            }
+        if let ClassElement::PropertyDefinition(prop) = &el
+            && prop.type_annotation.is_some()
+        {
+            return;
         }
         if self.rule.is_some_allowed_name(el.static_name()) {
             return;

@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.3.0] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- 55775ce oxfmt: Fix up the half-finished lines (#13840) (leaysgur)
+
+### ⚡ Performance
+
+- 59db021 oxfmt: Walk and format at the same time (#13838) (leaysgur)
+
+
+## [0.2.0] - 2025-09-16
+
+### 💥 BREAKING CHANGES
+
+- d90bebc oxfmt: [**BREAKING**] Change default behavior more `cargo fmt` like (#13794) (leaysgur)
+
+### 🧪 Testing
+
+- afa2297 oxfmt: Fix failing tests on Windows (#13801) (leaysgur)
+- 5fbffcf oxfmt: Enable changing `cwd` during tests (#13797) (leaysgur)
+
+
 ## [0.1.0] - 2025-09-12
 
 ### 🚀 Features

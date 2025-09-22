@@ -122,13 +122,12 @@ impl<'a> JsxSource<'a, '_> {
 
         // Check if `__source` attribute already exists
         for item in &elem.attributes {
-            if let JSXAttributeItem::Attribute(attribute) = item {
-                if let JSXAttributeName::Identifier(ident) = &attribute.name {
-                    if ident.name == SOURCE {
-                        self.report_error(ident.span);
-                        return;
-                    }
-                }
+            if let JSXAttributeItem::Attribute(attribute) = item
+                && let JSXAttributeName::Identifier(ident) = &attribute.name
+                && ident.name == SOURCE
+            {
+                self.report_error(ident.span);
+                return;
             }
         }
 

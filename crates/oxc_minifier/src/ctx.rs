@@ -16,6 +16,7 @@ use oxc_syntax::{
 use oxc_traverse::Ancestor;
 
 use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
+use oxc_compat::ESFeature;
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
@@ -104,6 +105,13 @@ impl<'a> Ctx<'a, '_> {
 
     pub fn options(&self) -> &CompressOptions {
         &self.0.state.options
+    }
+
+    /// Check if the target engines supports a feature.
+    ///
+    /// Returns `true` if the feature is supported.
+    pub fn supports_feature(&self, feature: ESFeature) -> bool {
+        !self.options().target.has_feature(feature)
     }
 
     pub fn source_type(&self) -> SourceType {

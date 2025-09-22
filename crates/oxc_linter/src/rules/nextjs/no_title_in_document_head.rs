@@ -99,16 +99,14 @@ impl Rule for NoTitleInDocumentHead {
             };
 
             for child in &jsx_element.children {
-                if let JSXChild::Element(child_element) = child {
-                    if let JSXElementName::Identifier(child_element_name) =
+                if let JSXChild::Element(child_element) = child
+                    && let JSXElementName::Identifier(child_element_name) =
                         &child_element.opening_element.name
-                    {
-                        if child_element_name.name.as_str() == "title" {
-                            ctx.diagnostic(no_title_in_document_head_diagnostic(
-                                jsx_opening_element.name.span(),
-                            ));
-                        }
-                    }
+                    && child_element_name.name.as_str() == "title"
+                {
+                    ctx.diagnostic(no_title_in_document_head_diagnostic(
+                        jsx_opening_element.name.span(),
+                    ));
                 }
             }
         }

@@ -55,12 +55,11 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        if check_binding {
-            if let Some(name) = decl.id.get_identifier_name() {
-                if !self.scope.has_value_reference(&name) {
-                    return None;
-                }
-            }
+        if check_binding
+            && let Some(name) = decl.id.get_identifier_name()
+            && !self.scope.has_value_reference(&name)
+        {
+            return None;
         }
 
         let mut binding_type = None;

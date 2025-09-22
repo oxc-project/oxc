@@ -83,14 +83,13 @@ impl Rule for NoDupeKeys {
             let Some(name) = prop.key.static_name() else {
                 return;
             };
-            if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span())) {
-                if prev_kind == PropertyKind::Init
+            if let Some((prev_kind, prev_span)) = map.insert(name, (prop.kind, prop.key.span()))
+                && (prev_kind == PropertyKind::Init
                     || prop.kind == PropertyKind::Init
-                    || prev_kind == prop.kind
-                {
-                    let name = prop_key_name(&prop.key, ctx);
-                    ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), name));
-                }
+                    || prev_kind == prop.kind)
+            {
+                let name = prop_key_name(&prop.key, ctx);
+                ctx.diagnostic(no_dupe_keys_diagnostic(prev_span, prop.key.span(), name));
             }
         }
     }

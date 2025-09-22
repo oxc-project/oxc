@@ -1,7 +1,7 @@
 {
   "name": "oxfmt",
-  "version": "0.1.0",
-  "type": "commonjs",
+  "version": "0.3.0",
+  "type": "module",
   "description": "Formatter for the JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
@@ -20,7 +20,7 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "engines": {
-    "node": ">=8.*"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "files": [
     "bin/oxfmt",

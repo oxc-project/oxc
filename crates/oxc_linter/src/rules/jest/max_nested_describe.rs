@@ -135,7 +135,7 @@ impl Rule for MaxNestedDescribe {
     fn run_once(&self, ctx: &LintContext) {
         let mut describes_hooks_depth: Vec<ScopeId> = vec![];
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_by_key(|n| n.node.id());
+        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in &possibles_jest_nodes {
             self.run(possible_jest_node, &mut describes_hooks_depth, ctx);
@@ -421,7 +421,7 @@ fn test() {
                     describe('another suite', () => {
                         describe('another suite', () => {
                             describe('another suite', () => {
-                            
+
                             })
                         })
                     })
@@ -440,7 +440,7 @@ fn test() {
                             describe('another suite', () => {
                                 describe('another suite', () => {
                                     describe('another suite', () => {
-                                
+
                                     })
                                 })
                             })

@@ -682,7 +682,9 @@ impl Runtime {
 
         use oxc_data_structures::rope::Rope;
 
-        use crate::lsp::message_to_message_with_position;
+        use crate::lsp::{
+            message_to_message_with_position, oxc_diagnostic_to_message_with_position,
+        };
 
         // Wrap allocator in `MessageCloner` so can clone `Message`s into it
         let message_cloner = MessageCloner::new(allocator);
@@ -715,10 +717,15 @@ impl Runtime {
                                 }
                                 Err(diagnostics) => {
                                     if !diagnostics.is_empty() {
-                                        messages
-                                            .lock()
-                                            .unwrap()
-                                            .extend(diagnostics.into_iter().map(Into::into));
+                                        messages.lock().unwrap().extend(
+                                            diagnostics.into_iter().map(|diagnostic| {
+                                                oxc_diagnostic_to_message_with_position(
+                                                    &diagnostic,
+                                                    source_text,
+                                                    rope,
+                                                )
+                                            }),
+                                        );
                                     }
                                     None
                                 }
@@ -745,8 +752,7 @@ impl Runtime {
             });
         });
 
-        // ToDo: oxc_diagnostic::Error is not compatible with MessageWithPosition
-        // send use OxcDiagnostic or even better the MessageWithPosition struct
+        // The receiving messages should be only file system reads or source type errors
         // while let Ok(diagnostics) = receiver.recv() {
         //     if let Some(diagnostics) = diagnostics {
         //         messages.lock().unwrap().extend(

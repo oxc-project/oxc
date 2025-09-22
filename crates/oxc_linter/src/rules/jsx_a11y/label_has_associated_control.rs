@@ -135,28 +135,24 @@ impl Rule for LabelHasAssociatedControl {
 
         if let Some(label_components) =
             options.get("labelComponents").and_then(serde_json::Value::as_array)
-        {
-            if let Some(mut components) = label_components
+            && let Some(mut components) = label_components
                 .iter()
                 .map(serde_json::Value::as_str)
                 .map(|component| component.map(CompactStr::from))
                 .collect::<Option<Vec<CompactStr>>>()
-            {
-                config.label_components.append(&mut components);
-            }
+        {
+            config.label_components.append(&mut components);
         }
 
         if let Some(label_attributes) =
             options.get("labelAttributes").and_then(serde_json::Value::as_array)
-        {
-            if let Some(mut attributes) = label_attributes
+            && let Some(mut attributes) = label_attributes
                 .iter()
                 .map(serde_json::Value::as_str)
                 .map(|attribute| attribute.map(CompactStr::from))
                 .collect::<Option<Vec<CompactStr>>>()
-            {
-                config.label_attributes.append(&mut attributes);
-            }
+        {
+            config.label_attributes.append(&mut attributes);
         }
 
         if let Some(control_components) =

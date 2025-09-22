@@ -89,33 +89,33 @@ impl<'a> PeepholeOptimizations {
             // "yes" is not missing (and is not an expression)
             if let Some(alternate) = &mut if_stmt.alternate {
                 // "yes" is not missing (and is not an expression) and "no" is not missing
-                if let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test {
-                    if unary_expr.operator.is_not() {
-                        // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
-                        if_stmt.test = unary_expr.argument.take_in(ctx.ast);
-                        std::mem::swap(&mut if_stmt.consequent, alternate);
-                        Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
-                        ctx.state.changed = true;
-                    }
+                if let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
+                    && unary_expr.operator.is_not()
+                {
+                    // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
+                    if_stmt.test = unary_expr.argument.take_in(ctx.ast);
+                    std::mem::swap(&mut if_stmt.consequent, alternate);
+                    Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
+                    ctx.state.changed = true;
                 }
                 // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
             } else {
                 // "no" is missing
-                if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent {
-                    if if2_stmt.alternate.is_none() {
-                        // "if (a) if (b) return c;" => "if (a && b) return c;"
-                        let a = if_stmt.test.take_in(ctx.ast);
-                        let b = if2_stmt.test.take_in(ctx.ast);
-                        if_stmt.test = Self::join_with_left_associative_op(
-                            if_stmt.test.span(),
-                            LogicalOperator::And,
-                            a,
-                            b,
-                            ctx,
-                        );
-                        if_stmt.consequent = if2_stmt.consequent.take_in(ctx.ast);
-                        ctx.state.changed = true;
-                    }
+                if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent
+                    && if2_stmt.alternate.is_none()
+                {
+                    // "if (a) if (b) return c;" => "if (a && b) return c;"
+                    let a = if_stmt.test.take_in(ctx.ast);
+                    let b = if2_stmt.test.take_in(ctx.ast);
+                    if_stmt.test = Self::join_with_left_associative_op(
+                        if_stmt.test.span(),
+                        LogicalOperator::And,
+                        a,
+                        b,
+                        ctx,
+                    );
+                    if_stmt.consequent = if2_stmt.consequent.take_in(ctx.ast);
+                    ctx.state.changed = true;
                 }
             }
         }
@@ -125,18 +125,18 @@ impl<'a> PeepholeOptimizations {
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut Ctx<'a, '_>) {
-        if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
-            if if2.consequent.is_jump_statement() && if2.alternate.is_some() {
-                let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                if_stmt.consequent = Statement::BlockStatement(ctx.ast.alloc(
-                    ctx.ast.block_statement_with_scope_id(
-                        if_stmt.consequent.span(),
-                        ctx.ast.vec1(if_stmt.consequent.take_in(ctx.ast)),
-                        scope_id,
-                    ),
-                ));
-                ctx.state.changed = true;
-            }
+        if let Statement::IfStatement(if2) = &mut if_stmt.consequent
+            && if2.consequent.is_jump_statement()
+            && if2.alternate.is_some()
+        {
+            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+            if_stmt.consequent =
+                Statement::BlockStatement(ctx.ast.alloc(ctx.ast.block_statement_with_scope_id(
+                    if_stmt.consequent.span(),
+                    ctx.ast.vec1(if_stmt.consequent.take_in(ctx.ast)),
+                    scope_id,
+                )));
+            ctx.state.changed = true;
         }
     }
 

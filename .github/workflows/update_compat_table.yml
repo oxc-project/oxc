@@ -22,10 +22,11 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
         with:
           cache-key: warm
+          tools: just,dprint,cargo-shear@1.3.0
           components: rustfmt
 
       - name: Get latest compat-table SHA
@@ -79,7 +80,7 @@ jobs:
           pnpm run init
           pnpm run build
           cargo run -p oxc_compat_data
-          cargo fmt
+          just fmt
 
       - name: Check for changes
         if: steps.check-update.outputs.update_needed == 'true'

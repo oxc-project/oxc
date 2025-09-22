@@ -14,10 +14,10 @@ pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
             '}' => {
                 brace_count -= 1;
 
-                if brace_count == 0 {
-                    if let Some(start) = start {
-                        return Some((start, idx + 1));
-                    }
+                if brace_count == 0
+                    && let Some(start) = start
+                {
+                    return Some((start, idx + 1));
                 }
             }
             _ => {}
@@ -60,10 +60,10 @@ pub fn find_type_name_range(s: &str) -> Option<(usize, usize)> {
     }
 
     // Everything is a token
-    if let Some(start) = start {
-        if bracket == 0 {
-            return Some((start, s.len()));
-        }
+    if let Some(start) = start
+        && bracket == 0
+    {
+        return Some((start, s.len()));
     }
 
     None

@@ -1,3 +1,8 @@
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
+
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -13,6 +18,8 @@ pub type GeneratorId = usize;
 /// [`Schema`] is the source of truth on types, and which generators and derives act upon.
 /// [`Codegen`] is the engine which runs the generators and derives.
 pub struct Codegen {
+    /// Path to root of repo.
+    root_path: PathBuf,
     /// Mapping from derive name to `DeriveId`
     derive_name_to_id: FxHashMap<&'static str, DeriveId>,
     /// Mapping from attribute name to ID of derive/generator which uses the attr,
@@ -23,6 +30,13 @@ pub struct Codegen {
 impl Codegen {
     /// Create new [`Codegen`].
     pub fn new() -> Self {
+        // Get path to root of repo.
+        // Use `CARGO_MANIFEST_DIR` instead of `env::current_dir` because want to be able to run this from any directory.
+        // `CARGO_MANIFEST_DIR` is the path to `tasks/ast_tools`, so pop 2 path segments to get root of repo.
+        let mut root_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+        root_path.pop();
+        root_path.pop();
+
         let mut derive_name_to_id = FxHashMap::default();
 
         let mut attr_processors = FxHashMap::default();
@@ -58,7 +72,12 @@ impl Codegen {
             }
         }
 
-        Self { derive_name_to_id, attr_processors }
+        Self { root_path, derive_name_to_id, attr_processors }
+    }
+
+    /// Get path to root of repo.
+    pub fn root_path(&self) -> &Path {
+        &self.root_path
     }
 
     /// Get a [`Derive`] by its name.

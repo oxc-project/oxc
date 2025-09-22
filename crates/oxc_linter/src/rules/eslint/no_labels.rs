@@ -141,14 +141,11 @@ impl Rule for NoLabels {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::LabeledStatement(labeled_stmt) = node.kind() {
-            if !self.is_allowed(&labeled_stmt.body) {
-                let label_span = labeled_stmt.label.span;
-                ctx.diagnostic(no_labels_diagnostic(
-                    "Labeled statement is not allowed",
-                    label_span,
-                ));
-            }
+        if let AstKind::LabeledStatement(labeled_stmt) = node.kind()
+            && !self.is_allowed(&labeled_stmt.body)
+        {
+            let label_span = labeled_stmt.label.span;
+            ctx.diagnostic(no_labels_diagnostic("Labeled statement is not allowed", label_span));
         }
 
         if let AstKind::BreakStatement(break_stmt) = node.kind() {
@@ -192,10 +189,10 @@ impl NoLabels {
         ctx: &LintContext<'a>,
     ) -> bool {
         for ancestor_kind in ctx.nodes().ancestor_kinds(stmt_node_id) {
-            if let AstKind::LabeledStatement(labeled_stmt) = ancestor_kind {
-                if label.name == labeled_stmt.label.name {
-                    return self.is_allowed(&labeled_stmt.body);
-                }
+            if let AstKind::LabeledStatement(labeled_stmt) = ancestor_kind
+                && label.name == labeled_stmt.label.name
+            {
+                return self.is_allowed(&labeled_stmt.body);
             }
         }
         false

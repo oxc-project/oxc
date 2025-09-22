@@ -49,14 +49,46 @@ impl IfElseKindDetector {
         }
     }
 
-    /// Extracts AstKind variants from an `if let` condition like `if let AstKind::Xxx(..) = node.kind()`.
+    /// Extracts AstKind variants from an `if let` condition like `if let AstKind::Xxx(..) = node.kind()`
+    /// or `if let AstKind::Xxx(..) = node.kind() && other_condition`.
     fn extract_variants_from_if_let_condition(&mut self, cond: &Expr) -> CollectionResult {
-        let Expr::Let(let_expr) = cond else { return CollectionResult::Incomplete };
-        // RHS must be `node.kind()`
-        if is_node_kind_call(&let_expr.expr) {
-            self.extract_variants_from_pat(&let_expr.pat)
-        } else {
-            CollectionResult::Incomplete
+        match cond {
+            // Simple `if let` pattern
+            Expr::Let(let_expr) => {
+                // RHS must be `node.kind()`
+                if is_node_kind_call(&let_expr.expr) {
+                    self.extract_variants_from_pat(&let_expr.pat)
+                } else {
+                    CollectionResult::Incomplete
+                }
+            }
+            // `if let ... && ...` pattern (from MSRV 1.88.0)
+            // The entire condition might be a chain of binary && operations
+            Expr::Binary(binary) if matches!(binary.op, syn::BinOp::And(_)) => {
+                // Try to find the let expression in the leftmost part of the chain
+                self.extract_from_binary_and_chain(binary)
+            }
+            _ => CollectionResult::Incomplete,
+        }
+    }
+
+    /// Recursively extract from a binary && chain to find the let expression
+    fn extract_from_binary_and_chain(&mut self, binary: &syn::ExprBinary) -> CollectionResult {
+        // Check if the left side is another binary expression (nested &&)
+        match &*binary.left {
+            Expr::Binary(left_binary) if matches!(left_binary.op, syn::BinOp::And(_)) => {
+                // Recursively check the left side
+                self.extract_from_binary_and_chain(left_binary)
+            }
+            Expr::Let(let_expr) => {
+                // Found the let expression
+                if is_node_kind_call(&let_expr.expr) {
+                    self.extract_variants_from_pat(&let_expr.pat)
+                } else {
+                    CollectionResult::Incomplete
+                }
+            }
+            _ => CollectionResult::Incomplete,
         }
     }
 

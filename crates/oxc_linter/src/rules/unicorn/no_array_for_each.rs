@@ -77,10 +77,10 @@ impl Rule for NoArrayForEach {
                     }
                 }
                 match_member_expression!(Expression) => {
-                    if let Some(name) = object.to_member_expression().static_property_name() {
-                        if IGNORED_OBJECTS.contains(&name) {
-                            return;
-                        }
+                    if let Some(name) = object.to_member_expression().static_property_name()
+                        && IGNORED_OBJECTS.contains(&name)
+                    {
+                        return;
                     }
                 }
                 _ => {}

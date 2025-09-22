@@ -207,10 +207,10 @@ impl<'a> AstNodes<'a> {
     /// Get the [`Program`] that's also the root of the AST.
     #[inline]
     pub fn program(&self) -> &'a Program<'a> {
-        if let Some(node) = self.nodes.first() {
-            if let AstKind::Program(program) = node.kind {
-                return program;
-            }
+        if let Some(node) = self.nodes.first()
+            && let AstKind::Program(program) = node.kind
+        {
+            return program;
         }
 
         unreachable!();

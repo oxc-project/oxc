@@ -128,12 +128,12 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        if function.expression {
-            if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
-                return self.infer_type_from_expression(&stmt.expression).map(|type_annotation| {
-                    self.ast.alloc_ts_type_annotation(SPAN, type_annotation)
-                });
-            }
+        if function.expression
+            && let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first()
+        {
+            return self
+                .infer_type_from_expression(&stmt.expression)
+                .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation));
         }
 
         FunctionReturnType::infer(self, &function.body)

@@ -1,6 +1,7 @@
 #![expect(clippy::allow_attributes)]
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_compat::EngineTargets;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -14,10 +15,20 @@ pub fn default_options() -> CompressOptions {
     }
 }
 
+pub fn get_targets(target_list: &str) -> EngineTargets {
+    EngineTargets::from_target(target_list).unwrap()
+}
+
 #[allow(dead_code)]
 #[track_caller]
 pub fn test_same(source_text: &str) {
     test(source_text, source_text);
+}
+
+#[allow(dead_code)]
+#[track_caller]
+pub fn test_target_same(source_text: &str, target: &str) {
+    test_target(source_text, source_text, target);
 }
 
 #[allow(dead_code)]
@@ -39,6 +50,13 @@ pub fn test_same_options_source_type(
 #[track_caller]
 pub fn test(source_text: &str, expected: &str) {
     test_options(source_text, expected, &default_options());
+}
+
+#[allow(dead_code)]
+#[track_caller]
+pub fn test_target(source_text: &str, expected: &str, target: &str) {
+    let options = CompressOptions { target: get_targets(target), ..default_options() };
+    test_options(source_text, expected, &options);
 }
 
 #[track_caller]

@@ -1361,6 +1361,22 @@ import Layout from '../layouts/Layout.astro';
         .test();
 }
 
+#[test]
+fn test_jsx_non_ascii() {
+    // Test that non-ASCII component names (e.g., Korean characters) are correctly recognized
+    // as references in JSX, ensuring they don't trigger false positives for unused variables.
+    // Non-ASCII identifiers are always treated as component references in JSX.
+    let pass = vec![
+        ("const 테스트 = () => <div>Hello</div>; <테스트 />;"),
+        ("const $foo = () => <div>Hello</div>; <$foo />;"),
+        ("const _foo = () => <div>Hello</div>; <_foo />;"),
+    ];
+    let fail = vec![("const foo = () => <div>Hello</div>; <foo />;")];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
 // #[test]
 // fn test_template() {
 //     let pass = vec![];

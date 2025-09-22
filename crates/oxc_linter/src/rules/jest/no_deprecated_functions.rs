@@ -133,13 +133,13 @@ impl Rule for NoDeprecatedFunctions {
         // Todo: read from configuration
         let jest_version_num: usize = self.jest.version.parse().unwrap_or(29);
 
-        if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name) {
-            if jest_version_num >= *base_version {
-                ctx.diagnostic_with_fix(
-                    deprecated_function(&node_name, replacement, mem_expr.span()),
-                    |fixer| fixer.replace(mem_expr.span(), *replacement),
-                );
-            }
+        if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name)
+            && jest_version_num >= *base_version
+        {
+            ctx.diagnostic_with_fix(
+                deprecated_function(&node_name, replacement, mem_expr.span()),
+                |fixer| fixer.replace(mem_expr.span(), *replacement),
+            );
         }
     }
 }

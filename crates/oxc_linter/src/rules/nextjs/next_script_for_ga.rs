@@ -100,13 +100,12 @@ impl Rule for NextScriptForGa {
         // Check if the Alternative async tag is being used to add GA.
         // https://developers.google.com/analytics/devguides/collection/analyticsjs#alternative_async_tag
         // https://developers.google.com/analytics/devguides/collection/gtagjs
-        if let Some(src_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "src") {
-            if let Some(src_prop_value) = get_string_literal_prop_value(src_prop) {
-                if SUPPORTED_SRCS.iter().any(|s| src_prop_value.contains(s)) {
-                    ctx.diagnostic(next_script_for_ga_diagnostic(jsx_opening_element_name.span));
-                    return;
-                }
-            }
+        if let Some(src_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "src")
+            && let Some(src_prop_value) = get_string_literal_prop_value(src_prop)
+            && SUPPORTED_SRCS.iter().any(|s| src_prop_value.contains(s))
+        {
+            ctx.diagnostic(next_script_for_ga_diagnostic(jsx_opening_element_name.span));
+            return;
         }
 
         // Check if inline script is being used to add GA.

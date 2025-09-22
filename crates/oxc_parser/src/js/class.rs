@@ -68,10 +68,10 @@ impl<'a> ParserImpl<'a> {
 
         // Move span start to decorator position if this is a class expression.
         let mut start_span = start_span;
-        if r#type == ClassType::ClassExpression {
-            if let Some(d) = decorators.first() {
-                start_span = d.span.start;
-            }
+        if r#type == ClassType::ClassExpression
+            && let Some(d) = decorators.first()
+        {
+            start_span = d.span.start;
         }
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
@@ -84,12 +84,12 @@ impl<'a> ParserImpl<'a> {
         let (extends, implements) = self.parse_heritage_clause();
         let mut super_class = None;
         let mut super_type_parameters = None;
-        if let Some(mut extends) = extends {
-            if !extends.is_empty() {
-                let first_extends = extends.remove(0);
-                super_class = Some(first_extends.0);
-                super_type_parameters = first_extends.1;
-            }
+        if let Some(mut extends) = extends
+            && !extends.is_empty()
+        {
+            let first_extends = extends.remove(0);
+            super_class = Some(first_extends.0);
+            super_type_parameters = first_extends.1;
         }
         let body = self.parse_class_body();
 
@@ -202,11 +202,12 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_class_element(&mut self) -> ClassElement<'a> {
         let elem = self.parse_class_element_impl();
-        if let ClassElement::MethodDefinition(def) = &elem {
-            if def.value.body.is_none() && !def.decorators.is_empty() {
-                for decorator in &def.decorators {
-                    self.error(diagnostics::decorator_on_overload(decorator.span));
-                }
+        if let ClassElement::MethodDefinition(def) = &elem
+            && def.value.body.is_none()
+            && !def.decorators.is_empty()
+        {
+            for decorator in &def.decorators {
+                self.error(diagnostics::decorator_on_overload(decorator.span));
             }
         }
         elem
@@ -267,11 +268,9 @@ impl<'a> ParserImpl<'a> {
 
         if matches!(self.cur_kind(), Kind::Constructor | Kind::Str)
             && !modifiers.contains(ModifierKind::Static)
+            && let Some(name) = self.parse_constructor_name()
         {
-            if let Some(name) = self.parse_constructor_name() {
-                return self
-                    .parse_constructor_declaration(span, r#type, name, &modifiers, decorators);
-            }
+            return self.parse_constructor_declaration(span, r#type, name, &modifiers, decorators);
         }
 
         if self.is_index_signature() {
@@ -515,10 +514,8 @@ impl<'a> ParserImpl<'a> {
 
         let definite = self.eat(Kind::Bang);
 
-        if definite {
-            if let Some(optional_span) = optional_span {
-                self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
-            }
+        if definite && let Some(optional_span) = optional_span {
+            self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
         }
 
         if modifiers.contains(ModifierKind::Accessor) {
@@ -606,14 +603,12 @@ impl<'a> ParserImpl<'a> {
             PropertyDefinitionType::PropertyDefinition
         };
         let r#static = modifiers.contains(ModifierKind::Static);
-        if !computed {
-            if let Some((name, span)) = name.prop_name() {
-                if name == "constructor" {
-                    self.error(diagnostics::field_constructor(span));
-                }
-                if r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::static_prototype(span));
-                }
+        if !computed && let Some((name, span)) = name.prop_name() {
+            if name == "constructor" {
+                self.error(diagnostics::field_constructor(span));
+            }
+            if r#static && name == "prototype" && !self.ctx.has_ambient() {
+                self.error(diagnostics::static_prototype(span));
             }
         }
         self.ast.class_element_property_definition(
@@ -659,23 +654,23 @@ impl<'a> ParserImpl<'a> {
             MethodDefinitionKind::Set => self.check_setter(function),
             _ => {}
         }
-        if !method.computed {
-            if let Some((name, span)) = method.key.prop_name() {
-                if method.r#static && name == "prototype" && !self.ctx.has_ambient() {
-                    self.error(diagnostics::static_prototype(span));
+        if !method.computed
+            && let Some((name, span)) = method.key.prop_name()
+        {
+            if method.r#static && name == "prototype" && !self.ctx.has_ambient() {
+                self.error(diagnostics::static_prototype(span));
+            }
+            if !method.r#static && name == "constructor" {
+                if method.kind == MethodDefinitionKind::Get
+                    || method.kind == MethodDefinitionKind::Set
+                {
+                    self.error(diagnostics::constructor_getter_setter(span));
                 }
-                if !method.r#static && name == "constructor" {
-                    if method.kind == MethodDefinitionKind::Get
-                        || method.kind == MethodDefinitionKind::Set
-                    {
-                        self.error(diagnostics::constructor_getter_setter(span));
-                    }
-                    if method.value.r#async {
-                        self.error(diagnostics::constructor_async(span));
-                    }
-                    if method.value.generator {
-                        self.error(diagnostics::constructor_generator(span));
-                    }
+                if method.value.r#async {
+                    self.error(diagnostics::constructor_async(span));
+                }
+                if method.value.generator {
+                    self.error(diagnostics::constructor_generator(span));
                 }
             }
         }

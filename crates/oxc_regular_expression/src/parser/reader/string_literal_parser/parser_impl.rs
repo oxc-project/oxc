@@ -315,10 +315,10 @@ impl Parser {
         let checkpoint = self.checkpoint();
 
         if self.eat('x') {
-            if let Some(first) = self.consume_hex_digit() {
-                if let Some(second) = self.consume_hex_digit() {
-                    return Some(first * 16 + second);
-                }
+            if let Some(first) = self.consume_hex_digit()
+                && let Some(second) = self.consume_hex_digit()
+            {
+                return Some(first * 16 + second);
             }
 
             self.rewind(checkpoint);
@@ -343,14 +343,12 @@ impl Parser {
         }
 
         if self.eat('u') {
-            if self.eat('{') {
-                if let Some(hex_digits) =
+            if self.eat('{')
+                && let Some(hex_digits) =
                     self.consume_hex_digits(offset_start)?.filter(|&cp| cp <= 0x10_ffff)
-                {
-                    if self.eat('}') {
-                        return Ok(Some(hex_digits));
-                    }
-                }
+                && self.eat('}')
+            {
+                return Ok(Some(hex_digits));
             }
             self.rewind(chckpoint);
         }

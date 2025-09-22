@@ -401,3 +401,38 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
         Concat2(&fn_type.this_param, fn_type.params.as_ref()).serialize(serializer);
     }
 }
+
+/// Converter for [`TSParenthesizedType`].
+///
+/// In raw transfer, do not produce a `TSParenthesizedType` node in AST if `preserveParens` is false.
+///
+/// Not useful in `oxc-parser`, as can use parser option `preserve_parens`.
+/// Required for `oxlint` plugins where we run parser with `preserve_parens` set to `true`,
+/// to preserve them on Rust side, but need to remove them on JS side.
+///
+/// ESTree implementation is unchanged from the auto-generated version.
+#[ast_meta]
+#[estree(raw_deser = "
+    let node = DESER[TSType](POS_OFFSET.type_annotation);
+    if (preserveParens) {
+        node = {
+            type: 'TSParenthesizedType',
+            typeAnnotation: node,
+            start: DESER[u32]( POS_OFFSET.span.start ),
+            end: DESER[u32]( POS_OFFSET.span.end ),
+        };
+    }
+    node
+")]
+pub struct TSParenthesizedTypeConverter<'a, 'b>(pub &'b TSParenthesizedType<'a>);
+
+impl ESTree for TSParenthesizedTypeConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let paren_type = self.0;
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
+        state.serialize_field("typeAnnotation", &paren_type.type_annotation);
+        state.serialize_span(paren_type.span);
+        state.end();
+    }
+}

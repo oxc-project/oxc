@@ -78,10 +78,9 @@ impl Rule for NoInferrableTypes {
             AstKind::VariableDeclarator(variable_decl) => {
                 if let (Some(init), Some(type_annotation)) =
                     (&variable_decl.init, &variable_decl.id.type_annotation)
+                    && is_inferrable_type(type_annotation, init)
                 {
-                    if is_inferrable_type(type_annotation, init) {
-                        ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
-                    }
+                    ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
                 }
             }
             AstKind::Function(function) => {
@@ -103,10 +102,9 @@ impl Rule for NoInferrableTypes {
                 }
                 if let (Some(init), Some(type_annotation)) =
                     (&property_definition.value, &property_definition.type_annotation)
+                    && is_inferrable_type(type_annotation, init)
                 {
-                    if is_inferrable_type(type_annotation, init) {
-                        ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
-                    }
+                    ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
                 }
             }
             _ => {}
@@ -126,12 +124,10 @@ impl NoInferrableTypes {
 
         for param in params {
             if let BindingPatternKind::AssignmentPattern(param_assignment_pat) = &param.pattern.kind
+                && let Some(type_annotation) = &param_assignment_pat.left.type_annotation
+                && is_inferrable_type(type_annotation, &param_assignment_pat.right)
             {
-                if let Some(type_annotation) = &param_assignment_pat.left.type_annotation {
-                    if is_inferrable_type(type_annotation, &param_assignment_pat.right) {
-                        ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
-                    }
-                }
+                ctx.diagnostic(no_inferrable_types_diagnostic(type_annotation.span()));
             }
         }
     }
@@ -162,10 +158,10 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
             }
         }
         TSType::TSTypeReference(type_reference) => {
-            if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name {
-                if ident.name == "RegExp" {
-                    return is_init_regexp(init);
-                }
+            if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name
+                && ident.name == "RegExp"
+            {
+                return is_init_regexp(init);
             }
 
             false
@@ -182,10 +178,10 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
 }
 
 fn is_chain_call_expression_with_name(init: &Expression, name: &str) -> bool {
-    if let Expression::ChainExpression(chain_expr) = init {
-        if let ChainElement::CallExpression(call_expr) = &chain_expr.expression {
-            return call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == name);
-        }
+    if let Expression::ChainExpression(chain_expr) = init
+        && let ChainElement::CallExpression(call_expr) = &chain_expr.expression
+    {
+        return call_expr.callee.get_identifier_reference().is_some_and(|id| id.name == name);
     }
     false
 }

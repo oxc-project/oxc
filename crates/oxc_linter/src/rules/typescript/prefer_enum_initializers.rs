@@ -64,14 +64,14 @@ impl Rule for PreferEnumInitializers {
         };
 
         for (index, member) in enum_body.members.iter().enumerate() {
-            if member.initializer.is_none() {
-                if let TSEnumMemberName::Identifier(i) = &member.id {
-                    ctx.diagnostic(prefer_enum_initializers_diagnostic(
-                        i.name.as_str(),
-                        index + 1,
-                        member.span,
-                    ));
-                }
+            if member.initializer.is_none()
+                && let TSEnumMemberName::Identifier(i) = &member.id
+            {
+                ctx.diagnostic(prefer_enum_initializers_diagnostic(
+                    i.name.as_str(),
+                    index + 1,
+                    member.span,
+                ));
             }
         }
     }

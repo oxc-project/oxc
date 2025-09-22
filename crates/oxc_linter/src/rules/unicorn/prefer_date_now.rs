@@ -64,38 +64,32 @@ impl Rule for PreferDateNow {
                 // `new Date().{getTime,valueOf}()`
                 if let Some(member_expr) =
                     call_expr.callee.get_inner_expression().as_member_expression()
+                    && call_expr.arguments.is_empty()
+                    && !member_expr.is_computed()
+                    && matches!(member_expr.static_property_name(), Some("getTime" | "valueOf"))
+                    && is_new_date(member_expr.object().get_inner_expression())
                 {
-                    if call_expr.arguments.is_empty()
-                        && !member_expr.is_computed()
-                        && matches!(member_expr.static_property_name(), Some("getTime" | "valueOf"))
-                        && is_new_date(member_expr.object().get_inner_expression())
-                    {
-                        ctx.diagnostic_with_fix(
-                            prefer_date_now_over_methods(
-                                call_expr.span,
-                                member_expr.static_property_name().unwrap(),
-                            ),
-                            |fixer| fixer.replace(call_expr.span, "Date.now()"),
-                        );
-                    }
+                    ctx.diagnostic_with_fix(
+                        prefer_date_now_over_methods(
+                            call_expr.span,
+                            member_expr.static_property_name().unwrap(),
+                        ),
+                        |fixer| fixer.replace(call_expr.span, "Date.now()"),
+                    );
                 }
 
                 // `{Number,BigInt}(new Date())`
-                if let Expression::Identifier(ident) = &call_expr.callee {
-                    if matches!(ident.name.as_str(), "Number" | "BigInt")
-                        && call_expr.arguments.len() == 1
-                    {
-                        if let Some(expr) =
-                            call_expr.arguments.first().and_then(Argument::as_expression)
-                        {
-                            if is_new_date(expr.get_inner_expression()) {
-                                ctx.diagnostic_with_fix(
-                                    prefer_date_now_over_number_date_object(call_expr.span),
-                                    |fixer| fixer.replace(call_expr.span, "Date.now()"),
-                                );
-                            }
-                        }
-                    }
+                if let Expression::Identifier(ident) = &call_expr.callee
+                    && matches!(ident.name.as_str(), "Number" | "BigInt")
+                    && call_expr.arguments.len() == 1
+                    && let Some(expr) =
+                        call_expr.arguments.first().and_then(Argument::as_expression)
+                    && is_new_date(expr.get_inner_expression())
+                {
+                    ctx.diagnostic_with_fix(
+                        prefer_date_now_over_number_date_object(call_expr.span),
+                        |fixer| fixer.replace(call_expr.span, "Date.now()"),
+                    );
                 }
             }
             AstKind::UnaryExpression(unary_expr) => {

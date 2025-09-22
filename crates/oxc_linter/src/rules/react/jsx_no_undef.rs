@@ -66,18 +66,18 @@ fn get_member_ident<'a>(
 
 impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(elem) = &node.kind() {
-            if let Some(ident) = get_resolvable_ident(&elem.name) {
-                let reference = ctx.scoping().get_reference(ident.reference_id());
-                if reference.symbol_id().is_some() {
-                    return;
-                }
-                let name = ident.name.as_str();
-                if ctx.globals().is_enabled(name) {
-                    return;
-                }
-                ctx.diagnostic(jsx_no_undef_diagnostic(name, ident.span));
+        let AstKind::JSXOpeningElement(elem) = node.kind() else { return };
+
+        if let Some(ident) = get_resolvable_ident(&elem.name) {
+            let reference = ctx.scoping().get_reference(ident.reference_id());
+            if reference.symbol_id().is_some() {
+                return;
             }
+            let name = ident.name.as_str();
+            if ctx.globals().is_enabled(name) {
+                return;
+            }
+            ctx.diagnostic(jsx_no_undef_diagnostic(name, ident.span));
         }
     }
 

@@ -55,6 +55,7 @@ impl AllocatorPool {
 
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         {
+            let _thread_count = thread_count; // Avoid unused vars lint warning
             panic!("Fixed size allocators are only supported on 64-bit little-endian platforms");
         }
     }

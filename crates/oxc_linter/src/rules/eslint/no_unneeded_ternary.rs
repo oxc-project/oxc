@@ -151,25 +151,25 @@ impl Rule for NoUnneededTernary {
         } else if let (Some(test), Some(cons)) = (
             (&expr.test.get_inner_expression().get_identifier_reference()),
             (&expr.consequent.get_inner_expression().get_identifier_reference()),
-        ) {
-            if !self.default_assignment && test.name == cons.name {
-                ctx.diagnostic_with_dangerous_fix(
-                    no_unneeded_ternary_conditional_expression_diagnostic(expr.span),
-                    |fixer| {
-                        // x ? x : 1 => x || 1
-                        // x ? x : y ? 1 : 2 => x || (y ? 1 : 2)
-                        let prefix = ctx.source_range(expr.test.span());
-                        let alternate_str = ctx.source_range(expr.alternate.span());
-                        let suffix = if expr.alternate.is_primary_expression() {
-                            alternate_str.to_string()
-                        } else {
-                            format!("({alternate_str})")
-                        };
-                        let replacement = format!("{prefix} || {suffix}");
-                        fixer.replace(expr.span, replacement)
-                    },
-                );
-            }
+        ) && !self.default_assignment
+            && test.name == cons.name
+        {
+            ctx.diagnostic_with_dangerous_fix(
+                no_unneeded_ternary_conditional_expression_diagnostic(expr.span),
+                |fixer| {
+                    // x ? x : 1 => x || 1
+                    // x ? x : y ? 1 : 2 => x || (y ? 1 : 2)
+                    let prefix = ctx.source_range(expr.test.span());
+                    let alternate_str = ctx.source_range(expr.alternate.span());
+                    let suffix = if expr.alternate.is_primary_expression() {
+                        alternate_str.to_string()
+                    } else {
+                        format!("({alternate_str})")
+                    };
+                    let replacement = format!("{prefix} || {suffix}");
+                    fixer.replace(expr.span, replacement)
+                },
+            );
         }
     }
 }

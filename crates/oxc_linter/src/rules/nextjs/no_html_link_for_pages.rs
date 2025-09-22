@@ -95,12 +95,11 @@ impl Rule for NoHtmlLinkForPages {
 
         // Find the href attribute
         let href_attr = jsx_opening_element.attributes.iter().find_map(|attr| {
-            if let JSXAttributeItem::Attribute(attr) = attr {
-                if let JSXAttributeName::Identifier(name) = &attr.name {
-                    if name.name == "href" {
-                        return Some(attr);
-                    }
-                }
+            if let JSXAttributeItem::Attribute(attr) = attr
+                && let JSXAttributeName::Identifier(name) = &attr.name
+                && name.name == "href"
+            {
+                return Some(attr);
             }
             None
         });

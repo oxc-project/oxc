@@ -232,10 +232,10 @@ fn check_arrow_cb_arg<'a>(
             check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
         }
 
-        if let Statement::ReturnStatement(r) = only_stmt {
-            if let Some(Expression::CallExpression(returned_call_expr)) = &r.argument {
-                check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
-            }
+        if let Statement::ReturnStatement(r) = only_stmt
+            && let Some(Expression::CallExpression(returned_call_expr)) = &r.argument
+        {
+            check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
         }
 
         let Statement::ExpressionStatement(expr_stmt) = only_stmt else {

@@ -12,7 +12,7 @@ A-cfg:
 
 A-cli:
   - changed-files:
-      - any-glob-to-any-file: ["apps/oxlint/**"]
+      - any-glob-to-any-file: ["apps/oxlint/**", "apps/oxfmt/**"]
 
 A-editor:
   - changed-files:
@@ -20,23 +20,23 @@ A-editor:
 
 A-formatter:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_formatter/**", "tasks/prettier_conformance/**"]
+      - any-glob-to-any-file: ["crates/oxc_formatter/**", "tasks/prettier_conformance/**", "apps/oxfmt/**"]
 
 A-transformer:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_transformer/**", "tasks/transform_conformance/**"]
+      - any-glob-to-any-file: ["crates/oxc_transformer/**", "tasks/transform_conformance/**", "napi/transform/**"]
 
 A-linter:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_linter/**"]
+      - any-glob-to-any-file: ["crates/oxc_linter/**", "apps/oxlint/**"]
 
 A-minifier:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_minifier/**"]
+      - any-glob-to-any-file: ["crates/oxc_minifier/**", "napi/minify/**"]
 
 A-parser:
   - changed-files:
-      - any-glob-to-any-file: ["crates/oxc_parser/**"]
+      - any-glob-to-any-file: ["crates/oxc_parser/**", "napi/parser/**"]
 
 A-codegen:
   - changed-files:

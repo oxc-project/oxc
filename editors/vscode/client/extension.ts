@@ -139,7 +139,7 @@ export async function activate(context: ExtensionContext) {
 
   async function findBinary(): Promise<string> {
     let bin = configService.getUserServerBinPath();
-    if (bin) {
+    if (workspace.isTrusted && bin) {
       try {
         await fsPromises.access(bin);
         return bin;

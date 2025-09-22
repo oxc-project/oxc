@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 186/313
+Passed: 188/316
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -39,7 +39,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# babel-plugin-transform-class-properties (23/29)
+# babel-plugin-transform-class-properties (24/31)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -52,6 +52,11 @@ x Output mismatch
 * static-super-tagged-template/input.js
 x Output mismatch
 
+* typescript/declare-computed-keys/input.ts
+Symbol reference IDs mismatch for "KEY1":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+rebuilt        : SymbolId(1): []
+
 * typescript/optional-call/input.ts
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]
@@ -63,7 +68,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (5/27)
+# babel-plugin-transform-typescript (6/28)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]

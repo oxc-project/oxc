@@ -67,6 +67,17 @@ impl Rule for NoUndef {
                     continue;
                 }
 
+                // Skip reporting error for 'arguments' if it's in a function scope
+                if name == "arguments"
+                    && ctx
+                        .scoping()
+                        .scope_ancestors(ctx.nodes().get_node(reference.node_id()).scope_id())
+                        .map(|id| ctx.scoping().scope_flags(id))
+                        .any(|scope_flags| scope_flags.is_function() && !scope_flags.is_arrow())
+                {
+                    continue;
+                }
+
                 let node = ctx.nodes().get_node(reference.node_id());
                 if !self.type_of && has_typeof_operator(node, ctx) {
                     continue;
@@ -168,6 +179,14 @@ fn test() {
         ("class C { static { a; function a() {} } }", None, None),
         ("String;Array;Boolean;", None, None),
         ("[Float16Array, Iterator]", None, None), // es2025
+        // arguments should not be reported in regular functions
+        ("function test() { return arguments; }", None, None),
+        ("var fn = function() { return arguments[0]; };", None, None),
+        ("const obj = { method() { return arguments.length; } };", None, None),
+        // arguments in nested block scope within function should not be reported
+        ("function correct(a) { { return arguments; } }", None, None),
+        ("function test() { if (true) { return arguments[0]; } }", None, None),
+        ("function test() { for (let i = 0; i < 1; i++) { return arguments; } }", None, None),
         // ("AsyncDisposableStack; DisposableStack; SuppressedError", None, None), / es2026
         ("function resolve<T>(path: string): T { return { path } as T; }", None, None),
         ("let xyz: NodeListOf<HTMLElement>", None, None),
@@ -210,6 +229,10 @@ fn test() {
         ("toString()", None, None),
         ("hasOwnProperty()", None, None),
         ("export class Foo{ bar: notDefined; }; const t = r + 1;", None, None),
+        // arguments should be reported in arrow functions (they don't have their own arguments)
+        ("const arrow = () => arguments;", None, None),
+        // arguments outside functions should be reported
+        ("var a = arguments;", None, None),
     ];
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test_and_snapshot();

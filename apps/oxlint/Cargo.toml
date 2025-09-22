@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.15.0"
+version = "1.16.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -16,14 +16,8 @@ description.workspace = true
 workspace = true
 
 [lib]
-crate-type = ["lib"]
+crate-type = ["cdylib", "lib"]
 path = "src/lib.rs"
-doctest = false
-
-[[bin]]
-name = "oxlint"
-path = "src/main.rs"
-test = false
 doctest = false
 
 [dependencies]
@@ -36,13 +30,15 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
-napi = { workspace = true }
+napi = { workspace = true, features = ["async"], optional = true }
+napi-derive = { workspace = true, optional = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 tempfile = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
@@ -54,11 +50,15 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
 
+[build-dependencies]
+napi-build = { workspace = true }
+
 [dev-dependencies]
 insta = { workspace = true }
 lazy-regex = { workspace = true }
 
 [features]
-default = []
+default = ["napi"]
+napi = ["dep:napi", "dep:napi-derive"]
 allocator = ["dep:mimalloc-safe"]
 force_test_reporter = ["oxc_linter/force_test_reporter"]

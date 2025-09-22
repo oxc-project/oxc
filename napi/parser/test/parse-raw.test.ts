@@ -5,7 +5,7 @@ import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
-import { parseAsync, parseSync } from '../index.mjs';
+import { parseAsync, parseSync } from '../src-js/index.mjs';
 
 import {
   ACORN_TEST262_DIR_PATH,
@@ -263,4 +263,48 @@ it.concurrent('checks semantic', async () => {
   // @ts-ignore
   ret = parseSync('test.js', code, { experimentalRawTransfer: true, showSemanticErrors: true });
   expect(ret.errors.length).toBe(1);
+});
+
+describe.concurrent('`preserveParens` option', () => {
+  describe.concurrent('should not include parens when false', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = (1 + 2);';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: false });
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body[0].declarations[0].init.type).toBe('BinaryExpression');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = (1 + 2); type T = (string);';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: false });
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body[0].declarations[0].init.type).toBe('BinaryExpression');
+      expect(ret.program.body[1].typeAnnotation.type).toBe('TSStringKeyword');
+    });
+  });
+
+  describe.concurrent('should include parens when true', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = (1 + 2);';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: true });
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body[0].declarations[0].init.type).toBe('ParenthesizedExpression');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = (1 + 2); type T = (string);';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: true });
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.body[0].declarations[0].init.type).toBe('ParenthesizedExpression');
+      expect(ret.program.body[1].typeAnnotation.type).toBe('TSParenthesizedType');
+    });
+  });
 });

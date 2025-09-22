@@ -162,40 +162,39 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     };
 
     // `array.reduce((a, b) => a.concat(b), [])`
-    if let Expression::CallExpression(concat_call_expr) = &expr_stmt.expression {
-        if is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
-            if let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0] {
-                if first_argument_ident.name != second_parameter {
-                    return;
-                }
-
-                let Expression::Identifier(second_argument_ident) =
-                    concat_call_expr.callee.get_member_expr().unwrap().object()
-                else {
-                    return;
-                };
-
-                if second_argument_ident.name != first_parameter {
-                    return;
-                }
-
-                ctx.diagnostic_with_fix(prefer_array_flat_diagnostic(call_expr.span), |fixer| {
-                    let target_fix_span = call_expr
-                        .callee
-                        .as_member_expression()
-                        .and_then(MemberExpression::static_property_info)
-                        .map(|v| Span::new(v.0.start, call_expr.span.end));
-
-                    debug_assert!(target_fix_span.is_some());
-
-                    if let Some(span) = target_fix_span {
-                        fixer.replace(span, "flat()")
-                    } else {
-                        fixer.noop()
-                    }
-                });
-            }
+    if let Expression::CallExpression(concat_call_expr) = &expr_stmt.expression
+        && is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1))
+        && let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0]
+    {
+        if first_argument_ident.name != second_parameter {
+            return;
         }
+
+        let Expression::Identifier(second_argument_ident) =
+            concat_call_expr.callee.get_member_expr().unwrap().object()
+        else {
+            return;
+        };
+
+        if second_argument_ident.name != first_parameter {
+            return;
+        }
+
+        ctx.diagnostic_with_fix(prefer_array_flat_diagnostic(call_expr.span), |fixer| {
+            let target_fix_span = call_expr
+                .callee
+                .as_member_expression()
+                .and_then(MemberExpression::static_property_info)
+                .map(|v| Span::new(v.0.start, call_expr.span.end));
+
+            debug_assert!(target_fix_span.is_some());
+
+            if let Some(span) = target_fix_span {
+                fixer.replace(span, "flat()")
+            } else {
+                fixer.noop()
+            }
+        });
     }
 
     // `array.reduce((a, b) => [...a, ...b], [])`
@@ -273,15 +272,12 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
 
         if (is_call_call || is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2)))
             && is_prototype_property(member_expr_obj, "concat", Some("Array"))
+            && let Some(first_argument) = call_expr.arguments[0].as_expression()
+            && is_empty_array_expression(first_argument)
+            && (is_call_call
+                || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))
         {
-            if let Some(first_argument) = call_expr.arguments[0].as_expression() {
-                if is_empty_array_expression(first_argument)
-                    && (is_call_call
-                        || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))
-                {
-                    ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
-                }
-            }
+            ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
         }
     }
 }

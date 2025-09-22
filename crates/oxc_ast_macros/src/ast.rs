@@ -64,10 +64,10 @@ fn modify_struct(item: &mut ItemStruct, args: TokenStream) -> TokenStream {
 /// Mutates `item` in place, re-ordering its fields.
 fn reorder_struct_fields(item: &mut ItemStruct, args: TokenStream) -> Result<(), &'static str> {
     // Skip foreign types
-    if let Some(TokenTree::Ident(ident)) = args.into_iter().next() {
-        if ident == "foreign" {
-            return Ok(());
-        }
+    if let Some(TokenTree::Ident(ident)) = args.into_iter().next()
+        && ident == "foreign"
+    {
+        return Ok(());
     }
 
     // Get struct data

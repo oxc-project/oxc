@@ -250,10 +250,10 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0] {
-                    if !template_literal.expressions.is_empty() {
-                        return;
-                    }
+                if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0]
+                    && !template_literal.expressions.is_empty()
+                {
+                    return;
                 }
 
                 if self.allow_require {

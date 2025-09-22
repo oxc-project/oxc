@@ -47,17 +47,17 @@ declare_oxc_lint!(
 
 impl Rule for NoProcessExit {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(expr) = node.kind() {
-            if is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None) {
-                if has_hashbang(ctx)
-                    || is_inside_process_event_handler(ctx, node)
-                    || is_worker_threads_imported(ctx)
-                {
-                    return;
-                }
-
-                ctx.diagnostic(no_process_exit_diagnostic(expr.span));
+        if let AstKind::CallExpression(expr) = node.kind()
+            && is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None)
+        {
+            if has_hashbang(ctx)
+                || is_inside_process_event_handler(ctx, node)
+                || is_worker_threads_imported(ctx)
+            {
+                return;
             }
+
+            ctx.diagnostic(no_process_exit_diagnostic(expr.span));
         }
     }
 }
@@ -68,10 +68,10 @@ fn has_hashbang(ctx: &LintContext) -> bool {
 
 fn is_inside_process_event_handler(ctx: &LintContext, node: &AstNode) -> bool {
     for parent in ctx.nodes().ancestors(node.id()) {
-        if let AstKind::CallExpression(expr) = parent.kind() {
-            if is_method_call(expr, Some(&["process"]), Some(&["on", "once"]), Some(1), None) {
-                return true;
-            }
+        if let AstKind::CallExpression(expr) = parent.kind()
+            && is_method_call(expr, Some(&["process"]), Some(&["on", "once"]), Some(1), None)
+        {
+            return true;
         }
     }
 

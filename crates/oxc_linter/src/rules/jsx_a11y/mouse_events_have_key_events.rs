@@ -117,10 +117,10 @@ impl Rule for MouseEventsHaveKeyEvents {
 
                 match has_jsx_prop(jsx_opening_el, "onFocus").and_then(get_prop_value) {
                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if let Some(expr) = container.expression.as_expression() {
-                            if expr.is_undefined() {
-                                ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
-                            }
+                        if let Some(expr) = container.expression.as_expression()
+                            && expr.is_undefined()
+                        {
+                            ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
                         }
                     }
                     None => {

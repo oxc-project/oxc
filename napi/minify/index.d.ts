@@ -15,14 +15,16 @@ export interface CompressOptions {
    *
    * Set `esnext` to enable all target highering.
    *
-   * e.g.
+   * Example:
    *
-   * * catch optional binding when >= es2019
-   * * `??` operator >= es2020
+   * * `'es2015'`
+   * * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
    *
    * @default 'esnext'
+   *
+   * @see [esbuild#target](https://esbuild.github.io/api/#target)
    */
-  target?: 'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'
+  target?: string | Array<string>
   /**
    * Pass true to discard calls to `console.*`.
    *

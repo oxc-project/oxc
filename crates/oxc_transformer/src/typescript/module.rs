@@ -43,12 +43,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Declaration::TSImportEqualsDeclaration(import_equals) = decl {
-            if import_equals.import_kind.is_value() {
-                if let Some(new_decl) = self.transform_ts_import_equals(import_equals, ctx) {
-                    *decl = new_decl;
-                }
-            }
+        if let Declaration::TSImportEqualsDeclaration(import_equals) = decl
+            && import_equals.import_kind.is_value()
+            && let Some(new_decl) = self.transform_ts_import_equals(import_equals, ctx)
+        {
+            *decl = new_decl;
         }
     }
 }

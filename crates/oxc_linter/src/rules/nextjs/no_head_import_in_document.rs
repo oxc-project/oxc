@@ -100,17 +100,15 @@ impl Rule for NoHeadImportInDocument {
             if file_name.starts_with("_document.") {
                 return true;
             // check `_document/index.*` case
-            } else if file_name.starts_with("index") {
-                if let Some(file_name) = full_file_path
+            } else if file_name.starts_with("index")
+                && let Some(file_name) = full_file_path
                     .parent()
                     .as_ref()
                     .and_then(|p| p.file_name())
                     .and_then(|file_name| file_name.to_str())
-                {
-                    if file_name.starts_with("_document") {
-                        return true;
-                    }
-                }
+                && file_name.starts_with("_document")
+            {
+                return true;
             }
         }
 

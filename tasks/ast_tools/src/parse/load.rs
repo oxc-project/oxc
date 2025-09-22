@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::Path};
 
 use indexmap::map::Entry;
 use syn::{
@@ -31,8 +31,9 @@ pub fn load_file(
     file_path: &str,
     skeletons: &mut FxIndexMap<String, Skeleton>,
     meta_skeletons: &mut FxIndexMap<String, Skeleton>,
+    root_path: &Path,
 ) {
-    let content = fs::read_to_string(file_path).unwrap();
+    let content = fs::read_to_string(root_path.join(file_path)).unwrap();
 
     let file = parse_file(content.as_str()).unwrap();
 

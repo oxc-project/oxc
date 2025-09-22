@@ -20,20 +20,35 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let options = FormatOptions::default();
 
     let allocator = Allocator::default();
-    let parse_options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+    let parse_options = ParseOptions {
+        parse_regular_expression: false,
+        // Enable all syntax features
+        allow_v8_intrinsics: true,
+        allow_return_outside_function: true,
+        // `oxc_formatter` expects this to be false
+        preserve_parens: false,
+    };
     let ParserReturn { program, .. } =
         Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
     let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
 
     let allocator = Allocator::default();
-    let ParserReturn { program, .. } =
+    let ParserReturn { program, errors, .. } =
         Parser::new(&allocator, &source_text1, source_type).with_options(parse_options).parse();
+
+    if !errors.is_empty() {
+        return TestResult::ParseError(
+            errors.iter().map(std::string::ToString::to_string).collect(),
+            false,
+        );
+    }
+
     let source_text2 = Formatter::new(&allocator, options).build(&program);
 
     if source_text1 == source_text2 {
         TestResult::Passed
     } else {
-        TestResult::ParseError(String::new(), false)
+        TestResult::Mismatch("Mismatch", source_text1, source_text2)
     }
 }
 

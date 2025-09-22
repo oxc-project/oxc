@@ -156,19 +156,19 @@ impl Rule for CatchErrorName {
             self.check_binding_identifier(ctx, &catch_param.pattern.kind);
         }
 
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(member_expr) = call_expr.callee.as_member_expression() {
-                if member_expr.static_property_name() == Some("catch") {
-                    if let Some(arg) = call_expr.arguments.first() {
-                        self.check_function_arguments(arg, ctx);
-                    }
-                }
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && let Some(member_expr) = call_expr.callee.as_member_expression()
+        {
+            if member_expr.static_property_name() == Some("catch")
+                && let Some(arg) = call_expr.arguments.first()
+            {
+                self.check_function_arguments(arg, ctx);
+            }
 
-                if member_expr.static_property_name() == Some("then") {
-                    if let Some(arg) = call_expr.arguments.get(1) {
-                        self.check_function_arguments(arg, ctx);
-                    }
-                }
+            if member_expr.static_property_name() == Some("then")
+                && let Some(arg) = call_expr.arguments.get(1)
+            {
+                self.check_function_arguments(arg, ctx);
             }
         }
     }

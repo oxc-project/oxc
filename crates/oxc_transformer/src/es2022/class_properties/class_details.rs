@@ -129,10 +129,10 @@ impl<'a> ClassesStack<'a> {
         // We skip the first, because this is a `NonEmptyStack` with dummy first entry.
         // TODO: Check there are tests for bindings in enclosing classes.
         for class in self.stack[1..].iter_mut().rev() {
-            if let Some(private_props) = &mut class.private_props {
-                if let Some(prop) = private_props.get(&ident.name) {
-                    return ret_fn(prop, &mut class.bindings, class.is_declaration);
-                }
+            if let Some(private_props) = &mut class.private_props
+                && let Some(prop) = private_props.get(&ident.name)
+            {
+                return ret_fn(prop, &mut class.bindings, class.is_declaration);
             }
         }
         unreachable!();

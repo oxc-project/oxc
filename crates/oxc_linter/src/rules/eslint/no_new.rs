@@ -57,10 +57,10 @@ impl Rule for NoNew {
 
         if matches!(node.kind(), AstKind::ExpressionStatement(_)) {
             ancestors.next(); // skip `FunctionBody`
-            if let Some(node) = ancestors.next() {
-                if matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression) {
-                    return;
-                }
+            if let Some(node) = ancestors.next()
+                && matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression)
+            {
+                return;
             }
             let span = Span::new(expr.span.start, expr.callee.span().end);
             ctx.diagnostic(no_new_diagnostic(span));

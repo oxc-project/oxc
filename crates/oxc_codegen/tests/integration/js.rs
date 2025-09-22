@@ -392,6 +392,14 @@ fn vite_special_comments() {
     );
 }
 
+#[test]
+fn import_phase() {
+    test_minify("import.defer('foo')", "import.defer(`foo`);");
+    test_minify("import.source('foo')", "import.source(`foo`);");
+    test("import.defer('foo')", "import.defer(\"foo\");\n");
+    test("import.source('foo')", "import.source(\"foo\");\n");
+}
+
 // <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md#semantics>
 #[test]
 fn pure_comment() {

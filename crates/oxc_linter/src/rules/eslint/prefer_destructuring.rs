@@ -183,12 +183,10 @@ impl Rule for PreferDestructuring {
                                 ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                             }
                             if let Expression::StringLiteral(string_literal) = &comp_expr.expression
-                            {
-                                if get_target_name(&assign_expr.left)
+                                && get_target_name(&assign_expr.left)
                                     .is_some_and(|v| v == string_literal.value)
-                                {
-                                    ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
-                                }
+                            {
+                                ctx.diagnostic(prefer_object_destructuring(assign_expr.span));
                             }
                         }
                     }

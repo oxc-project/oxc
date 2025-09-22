@@ -116,10 +116,10 @@ impl Rule for ImplementsOnClasses {
             }
         }
 
-        if let Some(span) = implements_found {
-            if !class_or_ctor_found {
-                ctx.diagnostic(implements_on_classes_diagnostic(span));
-            }
+        if let Some(span) = implements_found
+            && !class_or_ctor_found
+        {
+            ctx.diagnostic(implements_on_classes_diagnostic(span));
         }
     }
 }

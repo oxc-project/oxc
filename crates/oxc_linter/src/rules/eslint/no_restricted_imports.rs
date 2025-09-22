@@ -1039,10 +1039,8 @@ impl NoRestrictedImports {
                     GlobResult::None => {}
                 }
             }
-            if !whitelist_found {
-                if let Some(err) = err {
-                    ctx.diagnostic(err);
-                }
+            if !whitelist_found && let Some(err) = err {
+                ctx.diagnostic(err);
             }
         }
     }

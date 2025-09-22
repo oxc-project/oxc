@@ -57,192 +57,158 @@ declare_oxc_lint!(
 impl Rule for PreferArrayFind {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Zero index access
-        if let AstKind::ComputedMemberExpression(computed_member_expr) = node.kind() {
-            if computed_member_expr.expression.is_number_0() {
-                if let Expression::CallExpression(call_expr) =
-                    computed_member_expr.object.get_inner_expression()
-                {
-                    if is_filter_call(call_expr) && !is_left_hand_side(node, ctx) {
-                        ctx.diagnostic(prefer_array_find_diagnostic(
-                            call_expr_member_expr_property_span(call_expr),
-                        ));
-                    }
-                }
-            }
+        if let AstKind::ComputedMemberExpression(computed_member_expr) = node.kind()
+            && computed_member_expr.expression.is_number_0()
+            && let Expression::CallExpression(call_expr) =
+                computed_member_expr.object.get_inner_expression()
+            && is_filter_call(call_expr)
+            && !is_left_hand_side(node, ctx)
+        {
+            ctx.diagnostic(prefer_array_find_diagnostic(call_expr_member_expr_property_span(
+                call_expr,
+            )));
         }
 
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if is_method_call(call_expr, None, Some(&["shift"]), Some(0), Some(0)) {
-                if let Some(Expression::CallExpression(filter_call_expr)) = call_expr
-                    .callee
-                    .get_inner_expression()
-                    .as_member_expression()
-                    .map(|expression| expression.object().get_inner_expression())
-                {
-                    if is_filter_call(filter_call_expr) {
-                        ctx.diagnostic(prefer_array_find_diagnostic(
-                            call_expr_member_expr_property_span(filter_call_expr),
-                        ));
-                    }
-                }
-            }
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && is_method_call(call_expr, None, Some(&["shift"]), Some(0), Some(0))
+            && let Some(Expression::CallExpression(filter_call_expr)) = call_expr
+                .callee
+                .get_inner_expression()
+                .as_member_expression()
+                .map(|expression| expression.object().get_inner_expression())
+            && is_filter_call(filter_call_expr)
+        {
+            ctx.diagnostic(prefer_array_find_diagnostic(call_expr_member_expr_property_span(
+                filter_call_expr,
+            )));
         }
 
         // `const [foo] = array.filter()`
-        if let AstKind::VariableDeclarator(var_decl) = node.kind() {
-            if let BindingPatternKind::ArrayPattern(array_pat) = &var_decl.id.kind {
-                if array_pat.elements.len() == 1 && array_pat.elements[0].is_some() {
-                    if let Some(Expression::CallExpression(array_filter)) = &var_decl.init {
-                        if is_filter_call(array_filter) {
-                            ctx.diagnostic(prefer_array_find_diagnostic(
-                                call_expr_member_expr_property_span(array_filter),
-                            ));
-                        }
-                    }
-                }
-            }
+        if let AstKind::VariableDeclarator(var_decl) = node.kind()
+            && let BindingPatternKind::ArrayPattern(array_pat) = &var_decl.id.kind
+            && array_pat.elements.len() == 1
+            && array_pat.elements[0].is_some()
+            && let Some(Expression::CallExpression(array_filter)) = &var_decl.init
+            && is_filter_call(array_filter)
+        {
+            ctx.diagnostic(prefer_array_find_diagnostic(call_expr_member_expr_property_span(
+                array_filter,
+            )));
         }
 
         // `[foo] = array.filter()`
-        if let AstKind::AssignmentExpression(assignment_expr) = node.kind() {
-            if let AssignmentTarget::ArrayAssignmentTarget(array_assignment_target) =
+        if let AstKind::AssignmentExpression(assignment_expr) = node.kind()
+            && let AssignmentTarget::ArrayAssignmentTarget(array_assignment_target) =
                 &assignment_expr.left
-            {
-                if array_assignment_target.elements.len() == 1
-                    && array_assignment_target.elements[0].is_some()
-                {
-                    if let Expression::CallExpression(array_filter) = &assignment_expr.right {
-                        if is_filter_call(array_filter) {
-                            ctx.diagnostic(prefer_array_find_diagnostic(
-                                call_expr_member_expr_property_span(array_filter),
-                            ));
-                        }
-                    }
-                }
-            }
+            && array_assignment_target.elements.len() == 1
+            && array_assignment_target.elements[0].is_some()
+            && let Expression::CallExpression(array_filter) = &assignment_expr.right
+            && is_filter_call(array_filter)
+        {
+            ctx.diagnostic(prefer_array_find_diagnostic(call_expr_member_expr_property_span(
+                array_filter,
+            )));
         }
 
         // `const foo = array.filter(); foo[0]; [bar] = foo`
-        if let AstKind::VariableDeclarator(var_decl) = node.kind() {
-            if let Some(Expression::CallExpression(call_expr)) = &var_decl.init {
-                if is_filter_call(call_expr)
-                    && !matches!(
-                        ctx.nodes().ancestor_kinds(node.id()).nth(1),
-                        Some(
-                            AstKind::ExportDefaultDeclaration(_)
-                                | AstKind::ExportNamedDeclaration(_)
-                        )
-                    )
-                {
-                    if let Some(ident) = var_decl.id.kind.get_binding_identifier() {
-                        let mut zero_index_nodes = Vec::new();
-                        let mut destructuring_nodes = Vec::new();
+        if let AstKind::VariableDeclarator(var_decl) = node.kind()
+            && let Some(Expression::CallExpression(call_expr)) = &var_decl.init
+            && is_filter_call(call_expr)
+            && !matches!(
+                ctx.nodes().ancestor_kinds(node.id()).nth(1),
+                Some(AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_))
+            )
+            && let Some(ident) = var_decl.id.kind.get_binding_identifier()
+        {
+            let mut zero_index_nodes = Vec::new();
+            let mut destructuring_nodes = Vec::new();
 
-                        let mut is_used_elsewhere = false;
+            let mut is_used_elsewhere = false;
 
-                        for reference in ctx.symbol_references(ident.symbol_id()) {
-                            match ctx.nodes().parent_kind(reference.node_id()) {
-                                AstKind::ComputedMemberExpression(c)
-                                    if c.expression.is_number_0() =>
-                                {
-                                    zero_index_nodes.push(reference);
-                                }
-                                AstKind::VariableDeclarator(var_declarator) => {
-                                    if let BindingPatternKind::ArrayPattern(array_pat) =
-                                        &var_declarator.id.kind
-                                    {
-                                        if array_pat.elements.len() == 1
-                                            && array_pat.elements[0].is_some()
-                                        {
-                                            destructuring_nodes.push(reference);
-                                        }
-                                    }
-                                }
-                                AstKind::AssignmentExpression(assignment_expr) => {
-                                    // Check for array destructuring: [foo] = items
-                                    if let AssignmentTarget::ArrayAssignmentTarget(target) =
-                                        &assignment_expr.left
-                                    {
-                                        if target.elements.len() == 1
-                                            && target.elements[0].is_some()
-                                        {
-                                            destructuring_nodes.push(reference);
-                                        }
-                                    } else if let Some(
-                                        SimpleAssignmentTarget::AssignmentTargetIdentifier(ident),
-                                    ) = assignment_expr.left.as_simple_assignment_target()
-                                    {
-                                        // Check for simple reassignment: items = something
-                                        if ident.span
-                                            == ctx.nodes().get_node(reference.node_id()).span()
-                                        {
-                                            is_used_elsewhere = true; // Variable is being reassigned
-                                        }
-                                    }
-                                }
-                                _ => is_used_elsewhere = true,
-                            }
-                        }
-
-                        if !is_used_elsewhere
-                            && (!zero_index_nodes.is_empty() || !destructuring_nodes.is_empty())
+            for reference in ctx.symbol_references(ident.symbol_id()) {
+                match ctx.nodes().parent_kind(reference.node_id()) {
+                    AstKind::ComputedMemberExpression(c) if c.expression.is_number_0() => {
+                        zero_index_nodes.push(reference);
+                    }
+                    AstKind::VariableDeclarator(var_declarator) => {
+                        if let BindingPatternKind::ArrayPattern(array_pat) = &var_declarator.id.kind
+                            && array_pat.elements.len() == 1
+                            && array_pat.elements[0].is_some()
                         {
-                            ctx.diagnostic(prefer_array_find_diagnostic(
-                                call_expr_member_expr_property_span(call_expr),
-                            ));
+                            destructuring_nodes.push(reference);
                         }
                     }
+                    AstKind::AssignmentExpression(assignment_expr) => {
+                        // Check for array destructuring: [foo] = items
+                        if let AssignmentTarget::ArrayAssignmentTarget(target) =
+                            &assignment_expr.left
+                        {
+                            if target.elements.len() == 1 && target.elements[0].is_some() {
+                                destructuring_nodes.push(reference);
+                            }
+                        } else if let Some(SimpleAssignmentTarget::AssignmentTargetIdentifier(
+                            ident,
+                        )) = assignment_expr.left.as_simple_assignment_target()
+                        {
+                            // Check for simple reassignment: items = something
+                            if ident.span == ctx.nodes().get_node(reference.node_id()).span() {
+                                is_used_elsewhere = true; // Variable is being reassigned
+                            }
+                        }
+                    }
+                    _ => is_used_elsewhere = true,
                 }
+            }
+
+            if !is_used_elsewhere
+                && (!zero_index_nodes.is_empty() || !destructuring_nodes.is_empty())
+            {
+                ctx.diagnostic(prefer_array_find_diagnostic(call_expr_member_expr_property_span(
+                    call_expr,
+                )));
             }
         }
 
         // `array.filter().at(0)`
         // `array.filter().at(-1)`
-        if let AstKind::CallExpression(at_call_expr) = node.kind() {
-            if is_method_call(at_call_expr, None, Some(&["at"]), Some(1), Some(1))
-                && at_call_expr.arguments.first().is_some_and(|arg| {
-                    arg.as_expression().is_some_and(|x| match x {
-                        Expression::NumericLiteral(_) if x.is_number_value(0.0) => true,
-                        Expression::UnaryExpression(u)
-                            if u.operator == UnaryOperator::UnaryNegation =>
-                        {
-                            u.argument.is_number_value(1.0)
-                        }
-                        _ => false,
-                    })
-                })
-            {
-                if let Some(Expression::CallExpression(filter_call_expr)) = at_call_expr
-                    .callee
-                    .get_inner_expression()
-                    .as_member_expression()
-                    .map(|expression| expression.object().get_inner_expression())
-                {
-                    if is_filter_call(filter_call_expr) {
-                        ctx.diagnostic(prefer_array_find_diagnostic(
-                            call_expr_member_expr_property_span(filter_call_expr),
-                        ));
+        if let AstKind::CallExpression(at_call_expr) = node.kind()
+            && is_method_call(at_call_expr, None, Some(&["at"]), Some(1), Some(1))
+            && at_call_expr.arguments.first().is_some_and(|arg| {
+                arg.as_expression().is_some_and(|x| match x {
+                    Expression::NumericLiteral(_) if x.is_number_value(0.0) => true,
+                    Expression::UnaryExpression(u)
+                        if u.operator == UnaryOperator::UnaryNegation =>
+                    {
+                        u.argument.is_number_value(1.0)
                     }
-                }
-            }
+                    _ => false,
+                })
+            })
+            && let Some(Expression::CallExpression(filter_call_expr)) = at_call_expr
+                .callee
+                .get_inner_expression()
+                .as_member_expression()
+                .map(|expression| expression.object().get_inner_expression())
+            && is_filter_call(filter_call_expr)
+        {
+            ctx.diagnostic(prefer_array_find_diagnostic(call_expr_member_expr_property_span(
+                filter_call_expr,
+            )));
         }
 
         // `array.filter().pop()`
-        if let AstKind::CallExpression(pop_call_expr) = node.kind() {
-            if is_method_call(pop_call_expr, None, Some(&["pop"]), Some(0), Some(0)) {
-                if let Some(Expression::CallExpression(filter_call_expr)) = pop_call_expr
-                    .callee
-                    .get_inner_expression()
-                    .as_member_expression()
-                    .map(|expression| expression.object().get_inner_expression())
-                {
-                    if is_filter_call(filter_call_expr) {
-                        ctx.diagnostic(prefer_array_find_diagnostic(
-                            call_expr_member_expr_property_span(filter_call_expr),
-                        ));
-                    }
-                }
-            }
+        if let AstKind::CallExpression(pop_call_expr) = node.kind()
+            && is_method_call(pop_call_expr, None, Some(&["pop"]), Some(0), Some(0))
+            && let Some(Expression::CallExpression(filter_call_expr)) = pop_call_expr
+                .callee
+                .get_inner_expression()
+                .as_member_expression()
+                .map(|expression| expression.object().get_inner_expression())
+            && is_filter_call(filter_call_expr)
+        {
+            ctx.diagnostic(prefer_array_find_diagnostic(call_expr_member_expr_property_span(
+                filter_call_expr,
+            )));
         }
     }
 }

@@ -34,9 +34,12 @@ fn main() -> Result<(), String> {
     // Parse the source code
     let ret = Parser::new(&allocator, &source_text, source_type)
         .with_options(ParseOptions {
-            preserve_parens: false,
+            parse_regular_expression: false,
+            // Enable all syntax features
             allow_v8_intrinsics: true,
-            ..ParseOptions::default()
+            allow_return_outside_function: true,
+            // `oxc_formatter` expects this to be false
+            preserve_parens: false,
         })
         .parse();
 
