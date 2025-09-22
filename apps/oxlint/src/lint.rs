@@ -311,26 +311,7 @@ impl LintRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        // Run type-aware linting through tsgolint
-        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        if self.options.type_aware {
-            let state = match TsGoLintState::try_new(options.cwd(), config_store.clone()) {
-                Ok(state) => state,
-                Err(err) => {
-                    print_and_flush_stdout(stdout, &err);
-                    return CliRunResult::TsGoLintError;
-                }
-            };
-
-            if let Err(err) =
-                state.with_silent(misc_options.silent).lint(&files_to_lint, tx_error.clone())
-            {
-                print_and_flush_stdout(stdout, &err);
-                return CliRunResult::TsGoLintError;
-            }
-        }
-
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
+        let linter = Linter::new(LintOptions::default(), config_store.clone(), external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 
@@ -357,35 +338,55 @@ impl LintRunner {
 
         let number_of_rules = linter.number_of_rules(self.options.type_aware);
 
+        let cwd = options.cwd().to_path_buf();
+
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
-        rayon::spawn(move || {
-            let has_external_linter = linter.has_external_linter();
+        {
+            let tx_error = tx_error.clone();
+            let files_to_lint = files_to_lint.clone();
+            rayon::spawn(move || {
+                let has_external_linter = linter.has_external_linter();
 
-            let mut lint_service = LintService::new(linter, options);
-            lint_service.with_paths(files_to_lint);
+                let mut lint_service = LintService::new(linter, options);
+                lint_service.with_paths(files_to_lint);
 
-            // Use `RawTransferFileSystem` if `ExternalLinter` exists.
-            // This reads the source text into start of allocator, instead of the end.
-            if has_external_linter {
-                #[cfg(all(
-                    feature = "napi",
-                    target_pointer_width = "64",
-                    target_endian = "little"
-                ))]
-                lint_service.with_file_system(Box::new(crate::js_plugins::RawTransferFileSystem));
+                // Use `RawTransferFileSystem` if `ExternalLinter` exists.
+                // This reads the source text into start of allocator, instead of the end.
+                if has_external_linter {
+                    #[cfg(all(
+                        feature = "napi",
+                        target_pointer_width = "64",
+                        target_endian = "little"
+                    ))]
+                    lint_service
+                        .with_file_system(Box::new(crate::js_plugins::RawTransferFileSystem));
 
-                #[cfg(not(all(
-                    feature = "napi",
-                    target_pointer_width = "64",
-                    target_endian = "little"
-                )))]
-                unreachable!(
-                    "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
-                );
+                    #[cfg(not(all(
+                        feature = "napi",
+                        target_pointer_width = "64",
+                        target_endian = "little"
+                    )))]
+                    unreachable!(
+                        "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
+                    );
+                }
+
+                lint_service.run(&tx_error);
+            });
+        }
+
+        // Run type-aware linting through tsgolint
+        // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
+        if self.options.type_aware {
+            if let Err(err) = TsGoLintState::try_new(&cwd, config_store).and_then(|state| {
+                state.with_silent(misc_options.silent).lint(&files_to_lint, tx_error)
+            }) {
+                print_and_flush_stdout(stdout, &err);
+                return CliRunResult::TsGoLintError;
             }
-
-            lint_service.run(&tx_error);
-        });
+        } else {
+            drop(tx_error);
+        }
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
