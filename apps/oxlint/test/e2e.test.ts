@@ -148,6 +148,12 @@ describe('oxlint CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should support `createOnce`', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/createOnce');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should have UTF-16 spans in AST', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/utf16_offsets');
     expect(exitCode).toBe(1);

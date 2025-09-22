@@ -638,6 +638,168 @@ Found 0 warnings and 5 errors.
 Finished in Xms on 1 file using X threads."
 `;
 
+exports[`oxlint CLI > should support \`createOnce\` 1`] = `
+"
+  x create-once-plugin(always-run): createOnce: filename: Cannot access \`context.filename\` in \`createOnce\`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): before hook: filename: files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): after hook: filename: files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: id: Cannot access \`context.id\` in \`createOnce\`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): before hook: id: create-once-plugin/always-run
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): after hook: id: create-once-plugin/always-run
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: options: Cannot access \`context.options\` in \`createOnce\`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: physicalFilename: Cannot access \`context.physicalFilename\` in \`createOnce\`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: report: Cannot report errors in \`createOnce\`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: this === rule: true
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(skip-run): before hook: filename: files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(skip-run): before hook: id: create-once-plugin/skip-run
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): ident visit fn "x": filename: files/1.js
+   ,-[files/1.js:1:5]
+ 1 | let x;
+   :     ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: filename: Cannot access \`context.filename\` in \`createOnce\`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): before hook: filename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): after hook: filename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: id: Cannot access \`context.id\` in \`createOnce\`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): before hook: id: create-once-plugin/always-run
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): after hook: id: create-once-plugin/always-run
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: options: Cannot access \`context.options\` in \`createOnce\`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: physicalFilename: Cannot access \`context.physicalFilename\` in \`createOnce\`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: report: Cannot report errors in \`createOnce\`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): createOnce: this === rule: true
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(skip-run): before hook: filename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(skip-run): before hook: id: create-once-plugin/skip-run
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   \`----
+
+  x create-once-plugin(always-run): ident visit fn "y": filename: files/2.js
+   ,-[files/2.js:1:5]
+ 1 | let y;
+   :     ^
+   \`----
+
+Found 0 warnings and 26 errors.
+Finished in Xms on 2 files using X threads."
+`;
+
 exports[`oxlint CLI > should work with multiple rules 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement

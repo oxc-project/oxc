@@ -1,7 +1,7 @@
 import { Context } from './context.js';
 import { getErrorMessage } from './utils.js';
 
-import type { Visitor } from './types.ts';
+import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
 
 // Linter plugin, comprising multiple rules
 interface Plugin {
@@ -13,9 +13,38 @@ interface Plugin {
   };
 }
 
-// Linter rule
-interface Rule {
+// Linter rule.
+// `Rule` can have either `create` method, or `createOnce` method.
+// If `createOnce` method is present, `create` is ignored.
+type Rule = CreateRule | CreateOnceRule;
+
+interface CreateRule {
   create: (context: Context) => Visitor;
+}
+
+interface CreateOnceRule {
+  create?: (context: Context) => Visitor;
+  createOnce: (context: Context) => VisitorWithHooks;
+}
+
+// Linter rule and context object.
+// If `rule` has a `createOnce` method, the visitor it returns is stored in `visitor`.
+type RuleAndContext = CreateRuleAndContext | CreateOnceRuleAndContext;
+
+interface CreateRuleAndContext {
+  rule: CreateRule;
+  context: Context;
+  visitor: null;
+  beforeHook: null;
+  afterHook: null;
+}
+
+interface CreateOnceRuleAndContext {
+  rule: CreateOnceRule;
+  context: Context;
+  visitor: Visitor;
+  beforeHook: BeforeHook | null;
+  afterHook: AfterHook | null;
 }
 
 // Absolute paths of plugins which have been loaded
@@ -23,10 +52,7 @@ const registeredPluginPaths = new Set<string>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
-export const registeredRules: {
-  rule: Rule;
-  context: Context;
-}[] = [];
+export const registeredRules: RuleAndContext[] = [];
 
 /**
  * Load a plugin.
@@ -64,11 +90,21 @@ async function loadPluginImpl(path: string): Promise<string> {
   const ruleNamesLen = ruleNames.length;
 
   for (let i = 0; i < ruleNamesLen; i++) {
-    const ruleName = ruleNames[i];
-    registeredRules.push({
-      rule: rules[ruleName],
-      context: new Context(`${pluginName}/${ruleName}`),
-    });
+    const ruleName = ruleNames[i],
+      rule = rules[ruleName];
+
+    const context = new Context(`${pluginName}/${ruleName}`);
+
+    let ruleAndContext;
+    if ('createOnce' in rule) {
+      // TODO: Compile visitor object to array here, instead of repeating compilation on each file
+      const { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context);
+      ruleAndContext = { rule, context, visitor, beforeHook: beforeHook || null, afterHook: afterHook || null };
+    } else {
+      ruleAndContext = { rule, context, visitor: null, beforeHook: null, afterHook: null };
+    }
+
+    registeredRules.push(ruleAndContext);
   }
 
   return JSON.stringify({ Success: { name: pluginName, offset, ruleNames } });
