@@ -3,6 +3,7 @@
 use crate::{
     if_else_detector::IfElseKindDetector,
     let_else_detector::LetElseDetector,
+    match_detector::MatchDetector,
     node_type_set::NodeTypeSet,
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
     utils::{find_impl_function, find_rule_impl_block},
@@ -17,6 +18,7 @@ use syn::File;
 
 mod if_else_detector;
 mod let_else_detector;
+mod match_detector;
 mod node_type_set;
 mod rules;
 mod utils;
@@ -89,6 +91,13 @@ fn detect_top_level_node_types(file: &File, rule: &RuleEntry) -> Option<NodeType
     let run_func = find_impl_function(rule_impl, "run")?;
 
     let node_types = LetElseDetector::from_run_func(run_func);
+    if let Some(node_types) = node_types
+        && !node_types.is_empty()
+    {
+        return Some(node_types);
+    }
+
+    let node_types = MatchDetector::from_run_func(run_func);
     if let Some(node_types) = node_types
         && !node_types.is_empty()
     {
