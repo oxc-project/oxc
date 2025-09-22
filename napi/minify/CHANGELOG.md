@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-22
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
 ## [0.91.0] - 2025-09-21
 
 ### 💥 BREAKING CHANGES
