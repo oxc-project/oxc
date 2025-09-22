@@ -17,7 +17,9 @@ use crate::{
     },
     generated::ast_nodes::AstNode,
     write,
-    write::arrow_function_expression::FormatMaybeCachedFunctionBody,
+    write::{
+        arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
+    },
 };
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -130,6 +132,10 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
                     }
                 ]
             )?;
+        }
+
+        if self.is_ts_declare_function() {
+            write!(f, [OptionalSemicolon])?;
         }
 
         Ok(())
