@@ -1,5 +1,5 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display},
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -33,6 +33,23 @@ impl Deref for EngineTargets {
 impl DerefMut for EngineTargets {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl Display for EngineTargets {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (idx, (engine, version)) in self.iter().enumerate() {
+            if idx > 0 {
+                f.write_str(",")?;
+            }
+            f.write_str(&engine.to_string())?;
+            if *engine == Engine::Es {
+                f.write_str(&version.0.to_string())?;
+            } else {
+                f.write_str(&version.to_string())?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -132,4 +149,16 @@ impl EngineTargets {
         engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
         Ok(engine_targets)
     }
+}
+
+#[test]
+fn test_displayed_value_is_parsable() {
+    let target = EngineTargets::new(FxHashMap::from_iter([
+        (Engine::Chrome, Version(139, 0, 0)),
+        (Engine::Deno, Version(2, 5, 1)),
+        (Engine::Es, Version(2024, 0, 0)),
+    ]));
+    let s = target.to_string();
+    let parsed = EngineTargets::from_target(&s).unwrap();
+    assert_eq!(target.0, parsed.0);
 }
