@@ -16,5 +16,11 @@
     "oxlint": "^1.12.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "pnpm": {
+    "overrides": {
+      "tsdown": "0.15.1",
+      "@rolldown/pluginutils": "1.0.0-beta.38"
+    }
   }
 }
