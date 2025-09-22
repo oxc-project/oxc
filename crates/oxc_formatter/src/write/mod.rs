@@ -13,6 +13,7 @@ mod export_declarations;
 mod function;
 mod import_declaration;
 mod import_expression;
+mod intersection_type;
 mod jsx;
 mod member_expression;
 mod object_like;
@@ -1207,27 +1208,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteralType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         ConditionalLike::TSConditionalType(self).fmt(f)
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let mut types = self.types().iter();
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            write!(f, "(")?;
-        }
-        if let Some(item) = types.next() {
-            write!(f, item)?;
-
-            for item in types {
-                write!(f, [" & ", item])?;
-            }
-        }
-        if needs_parentheses {
-            write!(f, ")")?;
-        }
-        Ok(())
     }
 }
 
