@@ -19,12 +19,17 @@ verifyDepsBeforeRun: install
 # To reduce the risk of installing compromised packages.
 minimumReleaseAge: 1440 # 1 day
 minimumReleaseAgeExclude:
-  - oxfmt
-  - oxlint
-  - oxlint-tsgolint
-  - rolldown
-  - rolldown-vite
-  - tsdown
-  - vite
-  - vitepress
-  - vitest
+  - '@oxfmt/*'
+  - '@oxlint-tsgolint/*'
+  - '@oxlint/*'
+  - '@rolldown/*'
+  - 'oxfmt'
+  - 'oxlint'
+  - 'oxlint-tsgolint'
+  - 'rolldown'
+  - 'rolldown-plugin-dts'
+  - 'rolldown-vite'
+  - 'tsdown'
+  - 'vite'
+  - 'vitepress'
+  - 'vitest'
