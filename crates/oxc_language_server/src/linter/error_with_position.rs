@@ -7,8 +7,6 @@ use tower_lsp_server::lsp_types::{
 
 use oxc_diagnostics::Severity;
 
-use crate::LSP_MAX_INT;
-
 #[derive(Debug, Clone)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
@@ -71,14 +69,17 @@ fn message_with_position_to_lsp_diagnostic(
     });
 
     let range = related_information.as_ref().map_or(
+        // Use a zero range as fallback when no span information is available
+        // This is valid and commonly used for diagnostics without specific location
         Range {
-            start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-            end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
+            start: Position { line: 0, character: 0 },
+            end: Position { line: 0, character: 0 },
         },
         |infos: &Vec<DiagnosticRelatedInformation>| {
+            // Find the first (smallest) range from the related information
             let mut ret_range = Range {
-                start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-                end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
+                start: Position { line: u32::MAX, character: u32::MAX },
+                end: Position { line: u32::MAX, character: u32::MAX },
             };
             for info in infos {
                 if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {

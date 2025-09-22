@@ -19,10 +19,6 @@ type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
 const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
 
-// max range for LSP integer is 2^31 - 1
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseTypes
-const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
-
 #[tokio::main]
 async fn main() {
     env_logger::init();
