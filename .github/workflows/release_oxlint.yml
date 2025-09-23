@@ -48,42 +48,42 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             code-target: win32-x64
-            build-oxlint: pnpm run build-napi-release --target x86_64-pc-windows-msvc
+            build-oxlint-args: ""
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
             code-target: win32-arm64
-            build-oxlint: pnpm run build-napi-release --target aarch64-pc-windows-msvc
+            build-oxlint-args: ""
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             code-target: linux-x64-gnu
-            build-oxlint: pnpm run build-napi-release --target x86_64-unknown-linux-gnu --use-napi-cross
+            build-oxlint-args: --use-napi-cross
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             code-target: linux-arm64-gnu
-            build-oxlint: pnpm run build-napi-release --target aarch64-unknown-linux-gnu --use-napi-cross
+            build-oxlint-args: --use-napi-cross
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             code-target: linux-x64-musl
-            build-oxlint: pnpm run build-napi-release --target x86_64-unknown-linux-musl -x
+            build-oxlint-args: -x
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             code-target: linux-arm64-musl
-            build-oxlint: pnpm run build-napi-release --target aarch64-unknown-linux-musl -x
+            build-oxlint-args: -x
 
           - os: macos-latest
             target: x86_64-apple-darwin
             code-target: darwin-x64
-            build-oxlint: pnpm run build-napi-release --target x86_64-apple-darwin
+            build-oxlint-args: ""
 
           - os: macos-latest
             target: aarch64-apple-darwin
             code-target: darwin-arm64
-            build-oxlint: pnpm run build-napi-release --target aarch64-apple-darwin
+            build-oxlint-args: ""
 
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
@@ -117,7 +117,7 @@ jobs:
 
       - name: Build oxlint
         working-directory: apps/oxlint
-        run: ${{ matrix.build-oxlint }}
+        run: pnpm run build-napi-release --target ${{ matrix.target }} ${{ matrix.build-oxlint-args }}
         shell: bash
         env:
           TARGET_CC: clang # for mimalloc
