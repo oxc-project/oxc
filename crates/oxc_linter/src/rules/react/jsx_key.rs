@@ -203,9 +203,9 @@ fn is_in_array_or_iter<'a, 'b>(
             AstKind::CallExpression(v) => {
                 let callee = &v.callee.without_parentheses();
 
-                if let Some(member_expr) = callee.as_member_expression() {
-                    if let Some((span, ident)) = member_expr.static_property_info() {
-                        if TARGET_METHODS.contains(&ident) {
+                if let Some(member_expr) = callee.as_member_expression()
+                    && let Some((span, ident)) = member_expr.static_property_info()
+                        && TARGET_METHODS.contains(&ident) {
                             // Early exit if no arguments to check
                             if v.arguments.is_empty() {
                                 return None;
@@ -217,8 +217,6 @@ fn is_in_array_or_iter<'a, 'b>(
                                 return Some(InsideArrayOrIterator::Iterator(span));
                             }
                         }
-                    }
-                }
 
                 return None;
             }
