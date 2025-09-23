@@ -4,11 +4,11 @@ export default [
   {
     files: ["files/*.js"],
     plugins: {
-      testPlugin,
+      "define-rule-plugin": testPlugin,
     },
     rules: {
-      "testPlugin/create": "error",
-      "testPlugin/create-once": "error",
+      "define-rule-plugin/create": "error",
+      "define-rule-plugin/create-once": "error",
     },
   },
 ];
