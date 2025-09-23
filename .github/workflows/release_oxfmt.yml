@@ -177,7 +177,7 @@ jobs:
 
       - name: Generate npm packages
         run: |
-          node npm/oxfmt/scripts/generate-packages.mjs
+          node npm/oxfmt/scripts/generate-packages.js
           cat npm/oxfmt/package.json
           for package in npm/oxfmt*; do cat $package/package.json ; echo ; done
 
