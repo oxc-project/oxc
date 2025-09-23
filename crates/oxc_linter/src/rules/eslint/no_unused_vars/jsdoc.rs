@@ -211,14 +211,14 @@ mod tests {
     #[test]
     fn test_link_iter_no_links() {
         let comment = "This has no links at all";
-        let links: Vec<&str> = LinkIter::new(comment);
+        let links = LinkIter::new(comment);
         assert_eq!(links.count(), 0);
     }
 
     #[test]
     fn test_link_iter_empty() {
         let comment = "";
-        let links: Vec<&str> = LinkIter::new(comment);
+        let links = LinkIter::new(comment);
         assert_eq!(links.count(), 0);
     }
 
