@@ -217,8 +217,8 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
                 if let Some(call_expr_args_span) = arguments.first().map(|first| {
                     let last = arguments.last().unwrap();
                     Span::new(first.span().start, last.span().end)
-                }) {
-                    if call_expr_args_span.contains_inclusive(array_expr.span) {
+                })
+                    && call_expr_args_span.contains_inclusive(array_expr.span) {
                         ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
                             let replacer = if let Some(first) = array_expr.elements.first() {
                                 let mut span = first.span();
@@ -235,7 +235,6 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
                         });
                         return true;
                     }
-                }
                 false
             }
             _ => false,
