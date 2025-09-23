@@ -1058,16 +1058,13 @@ fn is_identifier_a_dependency_impl<'a>(
         .any(|parent| parent == declaration.scope_id())
     {
         // Component prop exception: allow parameters from component function scope
-        if matches!(declaration.kind(), AstKind::FormalParameter(_)) {
-            if let Some(component_function_scope) =
+        if matches!(declaration.kind(), AstKind::FormalParameter(_))
+            && let Some(component_function_scope) =
                 scopes.scope_ancestors(component_scope_id).next()
-            {
-                if declaration.scope_id() == component_function_scope {
+                && declaration.scope_id() == component_function_scope {
                     // This is a component prop - should be a dependency
                     return true;
                 }
-            }
-        }
         return false;
     }
 
@@ -1371,11 +1368,10 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
             }
             ChainElement::CallExpression(call) => {
                 // For call expressions, check the callee for nested chain patterns
-                if let Expression::StaticMemberExpression(callee_member) = &call.callee {
-                    if let Expression::ChainExpression(callee_chain) = &callee_member.object {
+                if let Expression::StaticMemberExpression(callee_member) = &call.callee
+                    && let Expression::ChainExpression(callee_chain) = &callee_member.object {
                         self.collect_current_access_from_chain(callee_chain);
                     }
-                }
             }
             _ => {}
         }
@@ -1488,12 +1484,11 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 self.visit_expression(&member_expr.object);
             }
         } else if let Expression::ChainExpression(chain_expr) = &call_expr.callee {
-            if let ChainElement::StaticMemberExpression(chain_member) = &chain_expr.expression {
-                if let Expression::ChainExpression(inner_chain) = &chain_member.object {
-                    if let ChainElement::StaticMemberExpression(inner_member) =
+            if let ChainElement::StaticMemberExpression(chain_member) = &chain_expr.expression
+                && let Expression::ChainExpression(inner_chain) = &chain_member.object
+                    && let ChainElement::StaticMemberExpression(inner_member) =
                         &inner_chain.expression
-                    {
-                        if inner_member.property.name == "current"
+                        && inner_member.property.name == "current"
                             && is_inside_effect_cleanup(&self.stack)
                         {
                             // SAFETY: Transmuting lifetime to match visitor lifetime requirements
@@ -1505,9 +1500,6 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                             };
                             self.refs_inside_cleanups.push(inner_member_ref);
                         }
-                    }
-                }
-            }
             self.visit_expression(&call_expr.callee);
         } else {
             self.visit_expression(&call_expr.callee);
@@ -1691,8 +1683,8 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 let immediate_parent =
                     self.semantic.scoping().scope_ancestors(self.component_scope_id).next();
 
-                if let Some(parent_scope) = immediate_parent {
-                    if declaration_scope_id != parent_scope {
+                if let Some(parent_scope) = immediate_parent
+                    && declaration_scope_id != parent_scope {
                         let is_from_wrapper = self
                             .semantic
                             .scoping()
@@ -1704,7 +1696,6 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                             return;
                         }
                     }
-                }
             }
         }
 
