@@ -1385,7 +1385,7 @@ fn test_jsdoc() {
 
         /** @see Foo for some useful info*/
         export function doFoo() {
-            return { a: 1 }; 
+            return { a: 1 };
         }
         ",
         r"
@@ -1393,7 +1393,7 @@ fn test_jsdoc() {
 
         /** @see {@link Foo} foo */
         export function doFoo() {
-            return { a: 1 }; 
+            return { a: 1 };
         }
         ",
         r"
@@ -1403,7 +1403,7 @@ fn test_jsdoc() {
          * @param foo this is a {@link Foo} thats useful
          */
         export function doFoo(foo: number) {
-            return { a: foo }; 
+            return { a: foo };
         }
         ",
         r"
@@ -1413,12 +1413,48 @@ fn test_jsdoc() {
          * @param foo this is a {@link Foo} thats useful and {@link Bar} too
          */
         export function doFoo(foo: number) {
-            return { a: foo }; 
+            return { a: foo };
         }
         ",
+        // member expressions
+        r"
+        import { Foo } from './foo';
+
+        /**
+         * @param foo this is a {@link Foo.bar} thats useful
+         */
+        export function doFoo(foo: number) {
+            return { a: foo };
+        }
+        ",
+        r"
+        import { Foo } from './foo';
+
+        /**
+         * @param foo this is a {@link Foo['bar']} thats useful
+         */
+        export function doFoo(foo: number) {
+            return { a: foo };
+        }
+        ",
+        r"
+        import { Foo } from './foo'
+        /** @type {Foo}
+        export const foo;
+        "
     ];
 
-    let fail = vec![];
+    let fail = vec![
+        r"
+        import { foo } from './foo'
+        import { Bar } from './bar'
+
+        /**
+         * @see {@link Bar.foo}
+         */
+        export function a() { }
+        "
+    ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()

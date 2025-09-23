@@ -47,9 +47,18 @@ impl<'c, 'a> JSDocCollector<'c, 'a> {
     }
 
     fn try_push(&mut self, symbol: &'a str) {
-        if is_identifier_name(symbol) {
-            self.push(symbol);
+        if !is_identifier_name(symbol) {
+            return
         }
+        self.push(symbol);
+        
+    }
+
+    fn try_push_owned(&mut self, symbol: &str) {
+        if !is_identifier_name(symbol) {
+            return;
+        }
+        self.symbols.push(Cow::Owned(symbol.to_owned()));
     }
 
     pub(super) fn get_symbols_referenced_in_jsdoc(mut self) -> Vec<Cow<'a, str>> {
@@ -87,9 +96,7 @@ impl<'c, 'a> JSDocCollector<'c, 'a> {
 
             let comment = comment.parsed();
             for linked in LinkIter::new(&comment) {
-                if is_identifier_name(linked) {
-                    self.symbols.push(Cow::Owned(linked.to_owned()));
-                }
+                self.try_push_owned(linked);
             }
         } else {
             if let Some(ty) = tag.r#type() {
@@ -98,9 +105,7 @@ impl<'c, 'a> JSDocCollector<'c, 'a> {
             }
             let comment = tag.comment().parsed();
             for linked in LinkIter::new(&comment) {
-                if is_identifier_name(linked) {
-                    self.symbols.push(Cow::Owned(linked.to_owned()));
-                }
+                self.try_push_owned(linked);
             }
         }
     }
@@ -126,6 +131,7 @@ impl<'a> Iterator for LinkIter<'a> {
         let link_pos = self.comment[self.pos..].find("@link")?;
 
         let actual_pos = self.pos + link_pos;
+        // SAFETY: won't panic b/c we know slicing `@link` won't hit a utf-8 char boundary
         let comment = &self.comment[(actual_pos + "@link".len())..].trim();
 
         // Find next whitespace
@@ -176,13 +182,27 @@ mod tests {
     fn test_link_iter_no_links() {
         let comment = "This has no links at all";
         let links: Vec<&str> = LinkIter::new(comment).collect();
-        assert_eq!(links, Vec::<&str>::new());
+        assert_eq!(links.len(), 0);
     }
 
     #[test]
     fn test_link_iter_empty() {
         let comment = "";
         let links: Vec<&str> = LinkIter::new(comment).collect();
-        assert_eq!(links, Vec::<&str>::new());
+        assert_eq!(links.len(), 0);
+    }
+
+    #[test]
+    fn test_utf8_boundary() {
+        let comment = "This is a {@link 日本語} reference";
+        let links: Vec<&str> = LinkIter::new(comment).collect();
+        assert_eq!(links, vec!["日本語"]);
+    }
+
+    #[test]
+    fn test_broken_tags() {
+        let comment = "This is a {@link reference";
+        let links: Vec<&str> = LinkIter::new(comment).collect();
+        assert_eq!(links, vec!["reference"]); // maybe this is too flexible?
     }
 }
