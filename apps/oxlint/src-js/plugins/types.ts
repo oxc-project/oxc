@@ -6,7 +6,7 @@ export interface Visitor {
 }
 */
 
-import type { VisitorObject as Visitor } from '../../dist/generated/visit/visitor.d.mts';
+import type { VisitorObject as Visitor } from '../../dist/generated/visit/visitor.d.ts';
 export type { Visitor };
 
 // Hook function that runs before traversal.

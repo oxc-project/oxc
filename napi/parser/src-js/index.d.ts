@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { Program } from '@oxc-project/types';
-import type { VisitorObject } from '../generated/visit/visitor.d.mts';
+import type { VisitorObject } from '../generated/visit/visitor.d.ts';
 
 export * from '@oxc-project/types';
 

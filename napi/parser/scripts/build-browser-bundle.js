@@ -13,10 +13,10 @@ async function main() {
     },
   });
 
-  // bundle wasm.mjs -> browser-bundle.mjs
+  // bundle wasm.js -> browser-bundle.js
   await esbuild.build({
-    entryPoints: ['./src-js/wasm.mjs'],
-    outfile: 'browser-bundle.mjs',
+    entryPoints: ['./src-js/wasm.js'],
+    outfile: 'browser-bundle.js',
     alias: {
       '@oxc-parser/binding-wasm32-wasi': './src-js/parser.wasi-browser.js',
     },
@@ -48,14 +48,14 @@ async function main() {
   if (args.values.npmDir) {
     const pkgDir = path.resolve(args.values.npmDir, 'wasm32-wasi');
 
-    // add `browser-bundle.mjs` to `package.json:files`
+    // add `browser-bundle.js` to `package.json:files`
     const pkgFile = path.join(pkgDir, 'package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
-    pkg.files.push('browser-bundle.mjs');
+    pkg.files.push('browser-bundle.js');
     fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2));
 
-    // copy `browser-bundle.mjs` to `<npmDir>/wasm32-wasi`
-    fs.cpSync('browser-bundle.mjs', path.join(pkgDir, 'browser-bundle.mjs'));
+    // copy `browser-bundle.js` to `<npmDir>/wasm32-wasi`
+    fs.cpSync('browser-bundle.js', path.join(pkgDir, 'browser-bundle.js'));
   }
 }
 

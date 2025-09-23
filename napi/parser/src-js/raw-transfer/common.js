@@ -1,11 +1,11 @@
 import os from 'node:os';
-import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from '../../generated/constants.mjs';
+import { BUFFER_ALIGN, BUFFER_SIZE, IS_TS_FLAG_POS } from '../../generated/constants.js';
 import {
   getBufferOffset,
   parseAsyncRaw as parseAsyncRawBinding,
   parseSyncRaw as parseSyncRawBinding,
-} from '../bindings.mjs';
-import { rawTransferSupported } from './supported.mjs';
+} from '../bindings.js';
+import { rawTransferSupported } from './supported.js';
 
 // Throw an error if running on a platform which raw transfer doesn't support.
 //

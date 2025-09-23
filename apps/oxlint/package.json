@@ -1,9 +1,9 @@
 {
   "name": "oxlint",
   "version": "1.16.0",
+  "type": "module",
   "main": "dist/index.js",
   "bin": "dist/cli.js",
-  "type": "module",
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && pnpm run build-js",

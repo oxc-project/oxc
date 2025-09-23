@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { parseSync } from './src-js/index.mjs';
+import { parseSync } from './src-js/index.js';
 
 // usage:
-// node napi/parser/example.mjs test.ts
+// node napi/parser/example.js test.ts
 
 process.chdir(path.join(import.meta.dirname, '../..'));
 

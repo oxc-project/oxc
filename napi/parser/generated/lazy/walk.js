@@ -181,7 +181,7 @@ import {
   WhileStatement,
   WithStatement,
   YieldExpression,
-} from './constructors.mjs';
+} from './constructors.js';
 
 export { walkProgram };
 

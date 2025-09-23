@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
 
-import { parseSync } from '../src-js/index.mjs';
+import { parseSync } from '../src-js/index.js';
 import {
   ACORN_TEST262_DIR_PATH,
   JSX_DIR_PATH,
@@ -19,8 +19,8 @@ import {
   TEST_TYPE_TS,
   TS_DIR_PATH,
   TS_ESTREE_DIR_PATH,
-} from './parse-raw-common.mjs';
-import { makeUnitsFromTest } from './typescript-make-units-from-test.mjs';
+} from './parse-raw-common.js';
+import { makeUnitsFromTest } from './typescript-make-units-from-test.js';
 
 // Run test case and return whether it passes.
 // This is the entry point when run as a worker.

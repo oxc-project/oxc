@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseSync, Visitor, visitorKeys, type VisitorObject } from '../src-js/index.mjs';
+import { parseSync, Visitor, visitorKeys, type VisitorObject } from '../src-js/index.js';
 
 describe('visit', () => {
   it('empty visitor', () => {

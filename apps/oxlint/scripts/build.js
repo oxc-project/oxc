@@ -26,16 +26,16 @@ console.log('Copying files from parser...');
 const parserFilePaths = [
   // Lazy implementation
   /*
-  'src-js/raw-transfer/lazy-common.mjs',
-  'src-js/raw-transfer/node-array.mjs',
-  'generated/lazy/constructors.mjs',
-  'generated/lazy/types.mjs',
-  'generated/lazy/walk.mjs',
+  'src-js/raw-transfer/lazy-common.js',
+  'src-js/raw-transfer/node-array.js',
+  'generated/lazy/constructors.js',
+  'generated/lazy/types.js',
+  'generated/lazy/walk.js',
   */
-  'generated/deserialize/ts.mjs',
-  'generated/visit/types.mjs',
-  'generated/visit/visitor.d.mts',
-  'generated/visit/walk.mjs',
+  'generated/deserialize/ts.js',
+  'generated/visit/types.js',
+  'generated/visit/visitor.d.ts',
+  'generated/visit/walk.js',
 ];
 
 for (const parserFilePath of parserFilePaths) {

@@ -2,20 +2,20 @@
   "name": "oxc-parser",
   "version": "0.91.0",
   "type": "module",
-  "main": "src-js/index.mjs",
-  "browser": "src-js/wasm.mjs",
+  "main": "src-js/index.js",
+  "browser": "src-js/wasm.js",
   "scripts": {
-    "build-dev": "napi build --esm --platform --js bindings.mjs --dts index.d.mts --output-dir src-js",
+    "build-dev": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
     "build-test": "pnpm run build-dev --profile coverage",
     "build": "pnpm run build-dev --features allocator --release",
-    "postbuild-dev": "node scripts/patch.mjs",
+    "postbuild-dev": "node scripts/patch.js",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
-    "build-browser-bundle": "node scripts/build-browser-bundle.mjs",
+    "build-browser-bundle": "node scripts/build-browser-bundle.js",
     "test": "tsc && pnpm run test-node run",
     "test-node": "vitest --dir ./test",
-    "test-browser": "vitest -c vitest.config.browser.mts",
-    "bench": "vitest bench --run ./bench.bench.mjs"
+    "test-browser": "vitest -c vitest.config.browser.ts",
+    "bench": "vitest bench --run ./bench.bench.js"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -38,31 +38,31 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "files": [
-    "generated/constants.mjs",
-    "generated/deserialize/js.mjs",
-    "generated/deserialize/ts.mjs",
-    "generated/lazy/constructors.mjs",
-    "generated/lazy/types.mjs",
-    "generated/lazy/walk.mjs",
-    "generated/visit/keys.mjs",
-    "generated/visit/types.mjs",
-    "generated/visit/visitor.d.mts",
-    "generated/visit/walk.mjs",
-    "src-js/bindings.mjs",
-    "src-js/index.d.mts",
-    "src-js/index.mjs",
-    "src-js/wasm.mjs",
+    "generated/constants.js",
+    "generated/deserialize/js.js",
+    "generated/deserialize/ts.js",
+    "generated/lazy/constructors.js",
+    "generated/lazy/types.js",
+    "generated/lazy/walk.js",
+    "generated/visit/keys.js",
+    "generated/visit/types.js",
+    "generated/visit/visitor.d.ts",
+    "generated/visit/walk.js",
+    "src-js/bindings.js",
+    "src-js/index.d.ts",
+    "src-js/index.js",
+    "src-js/wasm.js",
     "src-js/webcontainer-fallback.cjs",
-    "src-js/wrap.mjs",
-    "src-js/raw-transfer/common.mjs",
-    "src-js/raw-transfer/eager.mjs",
-    "src-js/raw-transfer/lazy.mjs",
-    "src-js/raw-transfer/lazy-common.mjs",
-    "src-js/raw-transfer/node-array.mjs",
-    "src-js/raw-transfer/supported.mjs",
-    "src-js/raw-transfer/visitor.mjs",
-    "src-js/visit/index.mjs",
-    "src-js/visit/visitor.mjs"
+    "src-js/wrap.js",
+    "src-js/raw-transfer/common.js",
+    "src-js/raw-transfer/eager.js",
+    "src-js/raw-transfer/lazy.js",
+    "src-js/raw-transfer/lazy-common.js",
+    "src-js/raw-transfer/node-array.js",
+    "src-js/raw-transfer/supported.js",
+    "src-js/raw-transfer/visitor.js",
+    "src-js/visit/index.js",
+    "src-js/visit/visitor.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -107,6 +107,6 @@
         "fs": false
       }
     },
-    "dtsHeaderFile": "src-js/header.d.mts"
+    "dtsHeaderFile": "src-js/header.d.ts"
   }
 }

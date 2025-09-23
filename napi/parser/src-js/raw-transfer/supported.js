@@ -1,4 +1,4 @@
-import { rawTransferSupported as rawTransferSupportedBinding } from '../bindings.mjs';
+import { rawTransferSupported as rawTransferSupportedBinding } from '../bindings.js';
 
 let rawTransferIsSupported = null;
 

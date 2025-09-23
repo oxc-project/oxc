@@ -1,8 +1,8 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer_lazy.rs`.
 
-import { constructorError, TOKEN } from '../../src-js/raw-transfer/lazy-common.mjs';
-import { NodeArray } from '../../src-js/raw-transfer/node-array.mjs';
+import { constructorError, TOKEN } from '../../src-js/raw-transfer/lazy-common.js';
+import { NodeArray } from '../../src-js/raw-transfer/node-array.js';
 
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),

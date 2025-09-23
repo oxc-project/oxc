@@ -212,7 +212,7 @@ jobs:
 
       - name: Generate npm packages
         run: |
-          node npm/oxlint/scripts/generate-packages.mjs
+          node npm/oxlint/scripts/generate-packages.js
           cat npm/oxlint/package.json
           for package in npm/oxlint*; do cat $package/package.json ; echo ; done
 

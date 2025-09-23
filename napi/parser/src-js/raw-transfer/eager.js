@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.mjs';
+import { isJsAst, parseAsyncRawImpl, parseSyncRawImpl, returnBufferToCache } from './common.js';
 
 const require = createRequire(import.meta.url);
 
@@ -55,7 +55,7 @@ function deserialize(buffer, sourceText, sourceByteLen) {
   // Lazy load deserializer, and deserialize buffer to JS objects
   let data;
   if (isJsAst(buffer)) {
-    if (deserializeJS === null) deserializeJS = require('../../generated/deserialize/js.mjs').deserialize;
+    if (deserializeJS === null) deserializeJS = require('../../generated/deserialize/js.js').deserialize;
 
     // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
     // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.
@@ -67,7 +67,7 @@ function deserialize(buffer, sourceText, sourceByteLen) {
       data.comments.unshift({ type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end });
     }
   } else {
-    if (deserializeTS === null) deserializeTS = require('../../generated/deserialize/ts.mjs').deserialize;
+    if (deserializeTS === null) deserializeTS = require('../../generated/deserialize/ts.js').deserialize;
 
     // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
     // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.

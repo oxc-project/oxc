@@ -40,19 +40,19 @@ impl Generator for ESTreeVisitGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/walk.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/walk.js"),
                 code: walk,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.js"),
                 code: visitor_keys,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/types.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/types.js"),
                 code: type_ids_map,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.mts"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
                 code: visitor_type,
             },
         ]
@@ -80,8 +80,8 @@ struct NodeKeys {
 /// * `Map` from node type name to node type ID.
 /// * Visitor type definition.
 fn generate(codegen: &Codegen) -> Codes {
-    // Run `napi/parser/scripts/visitor-keys.mjs` to get visitor keys from TS-ESLint
-    let script_path = codegen.root_path().join("napi/parser/scripts/visitor-keys.mjs");
+    // Run `napi/parser/scripts/visitor-keys.js` to get visitor keys from TS-ESLint
+    let script_path = codegen.root_path().join("napi/parser/scripts/visitor-keys.js");
 
     let output = Command::new("node")
         .arg(script_path)
