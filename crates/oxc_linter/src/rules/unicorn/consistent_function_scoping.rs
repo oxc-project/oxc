@@ -354,18 +354,16 @@ impl<'a> Visit<'a> for ReferencesFinder {
 fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     if let Some(parent_node) = outermost_paren_parent(node, ctx)
         && let Some(parent_node) = outermost_paren_parent(parent_node, ctx)
-            && matches!(
-                parent_node.kind(),
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-            )
-                && let Some(call_node) = outermost_paren_parent(parent_node, ctx)
-                    && let AstKind::CallExpression(call) = call_node.kind() {
-                        // Check if the function is the callee (true IIFE)
-                        // Handle both direct calls and parenthesized calls
-                        let callee = &call.callee.without_parentheses();
-                        return callee.span().start <= parent_node.span().start
-                            && parent_node.span().end <= callee.span().end;
-                    }
+        && matches!(parent_node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        && let Some(call_node) = outermost_paren_parent(parent_node, ctx)
+        && let AstKind::CallExpression(call) = call_node.kind()
+    {
+        // Check if the function is the callee (true IIFE)
+        // Handle both direct calls and parenthesized calls
+        let callee = &call.callee.without_parentheses();
+        return callee.span().start <= parent_node.span().start
+            && parent_node.span().end <= callee.span().end;
+    }
 
     false
 }
@@ -375,9 +373,10 @@ fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     // First check if the function is directly inside a React hook call
     let parent = ctx.nodes().parent_node(node.id());
     if let AstKind::CallExpression(call_expr) = parent.kind()
-        && is_react_hook(&call_expr.callee) {
-            return true;
-        }
+        && is_react_hook(&call_expr.callee)
+    {
+        return true;
+    }
 
     // If not directly inside, check if we're inside a function that's inside a React hook
     let current_scope_id = match node.kind() {
