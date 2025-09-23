@@ -5,7 +5,7 @@ import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
-import { parseAsync, parseSync } from '../src-js/index.mjs';
+import { parseAsync, parseSync, type TSTypeAliasDeclaration, type VariableDeclaration } from '../src-js/index.mjs';
 
 import {
   ACORN_TEST262_DIR_PATH,
@@ -273,7 +273,8 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: false });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('BinaryExpression');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
     });
 
     it.concurrent('TS', async () => {
@@ -282,8 +283,10 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: false });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('BinaryExpression');
-      expect(ret.program.body[1].typeAnnotation.type).toBe('TSStringKeyword');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSStringKeyword');
     });
   });
 
@@ -294,7 +297,8 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: true });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('ParenthesizedExpression');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
     });
 
     it.concurrent('TS', async () => {
@@ -303,8 +307,10 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: true });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('ParenthesizedExpression');
-      expect(ret.program.body[1].typeAnnotation.type).toBe('TSParenthesizedType');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSParenthesizedType');
     });
   });
 });
