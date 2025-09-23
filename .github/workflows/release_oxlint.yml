@@ -117,7 +117,7 @@ jobs:
 
       - name: Build oxlint
         working-directory: apps/oxlint
-        run: ${{ matrix.build-oxlint }} --features allocator
+        run: ${{ matrix.build-oxlint }}
         shell: bash
         env:
           TARGET_CC: clang # for mimalloc
