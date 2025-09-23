@@ -52,7 +52,7 @@ impl Generator for ESTreeVisitGenerator {
                 code: type_ids_map,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.mts"),
                 code: visitor_type,
             },
         ]

@@ -74,7 +74,7 @@ src:
   - 'napi/parser/generated/lazy/walk.mjs'
   - 'napi/parser/generated/visit/keys.mjs'
   - 'napi/parser/generated/visit/types.mjs'
-  - 'napi/parser/generated/visit/visitor.d.ts'
+  - 'napi/parser/generated/visit/visitor.d.mts'
   - 'napi/parser/generated/visit/walk.mjs'
   - 'napi/parser/src/generated/assert_layouts.rs'
   - 'napi/parser/src/generated/derive_estree.rs'
