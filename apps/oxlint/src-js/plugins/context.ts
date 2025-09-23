@@ -35,6 +35,23 @@ export let setupContextForFile: (
   filePath: string,
 ) => void;
 
+/**
+ * Get internal data from `Context`.
+ *
+ * Throws an `Error` if `Context` has not been set up for a file (in body of `createOnce`).
+ *
+ * We have to define this function within class body, as it's not possible to access private property
+ * `#internal` from outside the class.
+ * We don't use a normal class method, because we don't want to expose this to user.
+ * We don't use a private class method, because private property/method accesses are somewhat expensive.
+ *
+ * @param context - `Context` object
+ * @param actionDescription - Description of the action being attempted. Used in error message if context is not set up.
+ * @returns `InternalContext` object
+ * @throws {Error} If context has not been set up
+ */
+let getInternal: (context: Context, actionDescription: string) => InternalContext;
+
 // Internal data within `Context` that don't want to expose to plugins.
 // Stored as `#internal` property of `Context`.
 interface InternalContext {
@@ -66,38 +83,30 @@ export class Context {
     this.#internal = {
       id: fullRuleName,
       filePath: '',
-      ruleIndex: 0,
+      ruleIndex: -1,
       options: [],
     };
   }
 
   // Getter for full rule name, in form `<plugin>/<rule>`
   get id() {
-    const internal = this.#internal;
-    if (internal.filePath === '') throw new Error('Cannot access `context.id` in `createOnce`');
-    return internal.id;
+    return getInternal(this, 'access `context.id`').id;
   }
 
   // Getter for absolute path of file being linted.
   get filename() {
-    const { filePath } = this.#internal;
-    if (filePath === '') throw new Error('Cannot access `context.filename` in `createOnce`');
-    return filePath;
+    return getInternal(this, 'access `context.filename`').filePath;
   }
 
   // Getter for absolute path of file being linted.
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename() {
-    const { filePath } = this.#internal;
-    if (filePath === '') throw new Error('Cannot access `context.physicalFilename` in `createOnce`');
-    return filePath;
+    return getInternal(this, 'access `context.physicalFilename`').filePath;
   }
 
   // Getter for options for file being linted.
   get options() {
-    const internal = this.#internal;
-    if (internal.filePath === '') throw new Error('Cannot access `context.options` in `createOnce`');
-    return internal.options;
+    return getInternal(this, 'access `context.options`').options;
   }
 
   /**
@@ -105,12 +114,11 @@ export class Context {
    * @param diagnostic - Diagnostic object
    */
   report(diagnostic: Diagnostic): void {
-    const internal = this.#internal;
-    if (internal.filePath === '') throw new Error('Cannot report errors in `createOnce`');
+    const { ruleIndex } = getInternal(this, 'report errors');
     diagnostics.push({
       message: diagnostic.message,
       loc: { start: diagnostic.node.start, end: diagnostic.node.end },
-      ruleIndex: internal.ruleIndex,
+      ruleIndex,
     });
   }
 
@@ -120,6 +128,12 @@ export class Context {
       const internal = context.#internal;
       internal.ruleIndex = ruleIndex;
       internal.filePath = filePath;
+    };
+
+    getInternal = (context, actionDescription) => {
+      const internal = context.#internal;
+      if (internal.ruleIndex === -1) throw new Error(`Cannot ${actionDescription} in \`createOnce\``);
+      return internal;
     };
   }
 }
