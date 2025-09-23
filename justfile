@@ -140,10 +140,10 @@ ast:
 
 # Build oxlint in release build
 oxlint:
-  cargo oxlint
+  pnpm -C apps/oxlint run build
 
 watch-oxlint *args='':
-  just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
+  just watch 'node apps/oxlint/dist/cli.js --disable-nested-config {{args}}'
 
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
