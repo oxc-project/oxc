@@ -248,8 +248,8 @@ impl Rule for RequireReturns {
 /// - None: Not a `Promise` but some other expression
 fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option<bool> {
     // `return new Promise(...)`
-    if let Expression::NewExpression(new_expr) = expr {
-        if new_expr.callee.is_specific_id("Promise") {
+    if let Expression::NewExpression(new_expr) = expr
+        && new_expr.callee.is_specific_id("Promise") {
             return new_expr
                 .arguments
                 // Get `new Promise(HERE, ...)`
@@ -281,17 +281,14 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                         // Check if `resolve` is called with value
                         if let AstKind::CallExpression(call_expr) =
                             ctx.nodes().parent_kind(resolve_ref.node_id())
-                        {
-                            if !call_expr.arguments.is_empty() {
+                            && !call_expr.arguments.is_empty() {
                                 return Some(true);
                             }
-                        }
                     }
                     None
                 })
                 .or(Some(false));
         }
-    }
 
     // Tests do not cover `return Promise.xxx()`, but should be...?
 
