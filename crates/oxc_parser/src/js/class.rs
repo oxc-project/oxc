@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::PropName;
-use oxc_span::{Span, GetSpan};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserImpl, StatementContext, diagnostics,
