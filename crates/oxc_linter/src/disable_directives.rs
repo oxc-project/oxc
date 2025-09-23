@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::sync::Mutex;
 
 use itertools::Itertools;
 use oxc_ast::Comment;
@@ -109,7 +109,7 @@ pub struct DisableRuleComment {
     pub r#type: RuleCommentType,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct DisableDirectives {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule>,
@@ -118,12 +118,35 @@ pub struct DisableDirectives {
     /// Spans of unused enable directives
     unused_enable_comments: Box<[(Option<String>, Span)]>,
     /// Spans of used enable directives, to filter out unused
-    used_disable_comments: RefCell<Vec<DisabledRule>>,
+    used_disable_comments: Mutex<Vec<DisabledRule>>,
+}
+
+impl Clone for DisableDirectives {
+    fn clone(&self) -> Self {
+        Self {
+            intervals: self.intervals.clone(),
+            disable_rule_comments: self.disable_rule_comments.clone(),
+            unused_enable_comments: self.unused_enable_comments.clone(),
+            used_disable_comments: Mutex::new(
+                self.used_disable_comments
+                    .lock()
+                    .expect("used_disable_comments mutex poisoned in clone")
+                    .clone(),
+            ),
+        }
+    }
 }
 
 impl DisableDirectives {
+    /// Mark a disable directive as used
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
     fn mark_disable_directive_used(&self, disable_directive: DisabledRule) {
-        self.used_disable_comments.borrow_mut().push(disable_directive);
+        self.used_disable_comments
+            .lock()
+            .expect("used_disable_comments mutex poisoned in mark_disable_directive_used")
+            .push(disable_directive);
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
@@ -185,8 +208,15 @@ impl DisableDirectives {
         &self.unused_enable_comments
     }
 
+    /// Collect unused disable comments
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
     pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
-        let used = self.used_disable_comments.borrow();
+        let used = self
+            .used_disable_comments
+            .lock()
+            .expect("used_disable_comments mutex poisoned in collect_unused_disable_comments");
 
         self.intervals
             .iter()
@@ -275,7 +305,7 @@ impl DisableDirectivesBuilder {
             intervals: self.intervals,
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
-            used_disable_comments: RefCell::new(Vec::new()),
+            used_disable_comments: Mutex::new(Vec::new()),
         }
     }
 

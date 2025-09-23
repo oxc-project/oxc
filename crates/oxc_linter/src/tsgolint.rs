@@ -3,7 +3,7 @@ use std::{
     ffi::OsStr,
     io::{ErrorKind, Read, Write},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use rustc_hash::FxHashMap;
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
-use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
+use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
 #[cfg(feature = "language_server")]
 use crate::{
@@ -32,24 +32,46 @@ pub struct TsGoLintState {
     /// If `oxlint` will output the diagnostics or not.
     /// When `silent` is true, we do not need to access the file system for nice diagnostics messages.
     silent: bool,
+    /// Disable directives collected from regular linting
+    disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
 }
 
 impl TsGoLintState {
-    pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
+    pub fn new(
+        cwd: &Path,
+        config_store: ConfigStore,
+        disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+    ) -> Self {
         let executable_path =
             try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint"));
 
-        TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false }
+        TsGoLintState {
+            config_store,
+            executable_path,
+            cwd: cwd.to_path_buf(),
+            silent: false,
+            disable_directives_map,
+        }
     }
 
     /// Try to create a new TsGoLintState, returning an error if the executable cannot be found.
     ///
     /// # Errors
     /// Returns an error if the tsgolint executable cannot be found.
-    pub fn try_new(cwd: &Path, config_store: ConfigStore) -> Result<Self, String> {
+    pub fn try_new(
+        cwd: &Path,
+        config_store: ConfigStore,
+        disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+    ) -> Result<Self, String> {
         let executable_path = try_find_tsgolint_executable(cwd)?;
 
-        Ok(TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false })
+        Ok(TsGoLintState {
+            config_store,
+            executable_path,
+            cwd: cwd.to_path_buf(),
+            silent: false,
+            disable_directives_map,
+        })
     }
 
     /// Set to `true` to skip file system reads.
@@ -133,6 +155,10 @@ impl TsGoLintState {
             let cwd_clone = self.cwd.clone();
 
             let stdout_handler = std::thread::spawn(move || -> Result<(), String> {
+                let disable_directives_map = self
+                    .disable_directives_map
+                    .lock()
+                    .expect("disable_directives_map mutex poisoned");
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
                 let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
@@ -162,6 +188,35 @@ impl TsGoLintState {
                                 // If the severity is not found, we should not report the diagnostic
                                 continue;
                             };
+
+                            let span = Span::new(
+                                tsgolint_diagnostic.range.pos,
+                                tsgolint_diagnostic.range.end,
+                            );
+
+                            let should_skip = {
+                                disable_directives_map.get(&path).is_some_and(|directives| {
+                                    directives.contains(&tsgolint_diagnostic.rule, span)
+                                        || directives.contains(
+                                            &format!(
+                                                "typescript-eslint/{}",
+                                                tsgolint_diagnostic.rule
+                                            ),
+                                            span,
+                                        )
+                                        || directives.contains(
+                                            &format!(
+                                                "@typescript-eslint/{}",
+                                                tsgolint_diagnostic.rule
+                                            ),
+                                            span,
+                                        )
+                                })
+                            };
+
+                            if should_skip {
+                                continue;
+                            }
 
                             let oxc_diagnostic: OxcDiagnostic =
                                 OxcDiagnostic::from(tsgolint_diagnostic);
