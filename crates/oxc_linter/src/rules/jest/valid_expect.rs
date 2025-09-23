@@ -295,9 +295,10 @@ fn should_skip_parent_node(node: &AstNode, parent: &AstNode) -> bool {
             // Don't skip arguments to Promise methods - they're semantically important for await detection
             if let Some(member_expr) = call.callee.as_member_expression()
                 && let Expression::Identifier(ident) = member_expr.object()
-                    && ident.name == "Promise" {
-                        return false; // Never skip Promise method arguments
-                    }
+                && ident.name == "Promise"
+            {
+                return false; // Never skip Promise method arguments
+            }
 
             // For other call expressions, skip if this node is one of the arguments
             call.arguments.iter().any(|arg| arg.span() == node.span())
