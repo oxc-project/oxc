@@ -10,10 +10,7 @@ use crate::{
         Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
         buffer::RemoveSoftLinesBuffer,
         prelude::*,
-        trivia::{
-            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
-            FormatTrailingComments, format_trailing_comments,
-        },
+        trivia::{FormatLeadingComments, format_trailing_comments},
     },
     options::FormatTrailingCommas,
     utils::{assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide},
@@ -99,7 +96,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                                 arrow,
                                 self.options.call_arg_layout.is_some(),
                                 true,
-                                self.options.cache_mode
+                                self.options.cache_mode,
                             ),
                             space(),
                             "=>"
@@ -162,19 +159,25 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     };
                 }
 
-                let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
+                #[expect(clippy::match_same_arms)]
+                let body_has_soft_line_break = arrow_expression.is_none_or(|expression| {
+                    match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
-                            !f.comments().has_leading_own_line_comment(body.span().start)
+                            // TODO: It seems no difference whether check there is a leading comment or not.
+                            // !f.comments().has_leading_own_line_comment(body.span().start)
+                            true
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
                         _ => {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
                         }
-                    });
+                    }
+                });
 
+                let body_is_condition_type =
+                    matches!(arrow_expression, Some(Expression::ConditionalExpression(_)));
                 if body_has_soft_line_break {
                     write!(f, [formatted_signature, space(), format_body])
                 } else {
@@ -185,13 +188,11 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         Some(GroupedCallArgumentLayout::GroupedLastArgument)
                     );
 
-                    let should_add_soft_line = is_last_call_arg
+                    let should_add_soft_line = (is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        || (matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(container)
-                            if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
-
-                    let body_is_condition_type =
-                        matches!(arrow_expression, Some(Expression::ConditionalExpression(_)));
+                        || matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(_)));
+                    // TODO: it seems no difference whether check there is a comment or not.
+                    //&& !f.context().comments().has_comments(node.syntax());
 
                     if body_is_condition_type {
                         write!(
@@ -286,28 +287,52 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut should_break = false;
 
         loop {
-            if current.expression()
-                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
+            if current.expression() {
+                if let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                && let AstNodes::ArrowFunctionExpression(next) =
-                    &expr_stmt.expression().as_ast_nodes()
-                && matches!(
-                    options.call_arg_layout,
-                    None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                )
-            {
-                should_break = should_break || Self::should_break_chain(current);
+                {
+                    if let AstNodes::ArrowFunctionExpression(next) =
+                        &expr_stmt.expression().as_ast_nodes()
+                    {
+                        if matches!(
+                            options.call_arg_layout,
+                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+                                | Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                        ) {
+                            // For grouped first arguments, be less aggressive about breaking chains
+                            // to maintain compact formatting
+                            let should_break_current = if matches!(
+                                options.call_arg_layout,
+                                Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                            ) {
+                                Self::should_break_chain_conservative(current)
+                            } else {
+                                Self::should_break_chain(current)
+                            };
 
-                should_break = should_break || Self::should_break_chain(next);
+                            let should_break_next = if matches!(
+                                options.call_arg_layout,
+                                Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                            ) {
+                                Self::should_break_chain_conservative(next)
+                            } else {
+                                Self::should_break_chain(next)
+                            };
 
-                if head.is_none() {
-                    head = Some(current);
-                } else {
-                    middle.push(current);
+                            should_break = should_break || should_break_current;
+                            should_break = should_break || should_break_next;
+
+                            if head.is_none() {
+                                head = Some(current);
+                            } else {
+                                middle.push(current);
+                            }
+
+                            current = next;
+                            continue;
+                        }
+                    }
                 }
-
-                current = next;
-                continue;
             }
             break match head {
                 None => ArrowFunctionLayout::Single(current),
@@ -349,6 +374,42 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let has_parameters = !parameters.items.is_empty();
         let has_type_and_parameters = arrow.return_type.is_some() && has_parameters;
         has_type_and_parameters || has_rest_object_or_array_parameter(parameters)
+    }
+
+    /// Conservative version of should_break_chain for grouped first arguments.
+    /// Only breaks for truly complex cases that would be unreadable if kept inline.
+    /// Allows simple default parameters to maintain compact formatting.
+    fn should_break_chain_conservative(arrow: &ArrowFunctionExpression<'a>) -> bool {
+        if arrow.type_parameters.is_some() {
+            return true;
+        }
+
+        let parameters = &arrow.params;
+
+        // For grouped first arguments, only break on truly complex patterns
+        // Allow simple default parameters (AssignmentPattern) to keep compact formatting
+        if has_rest_object_or_array_parameter(parameters) {
+            return true;
+        }
+
+        // Check for complex patterns beyond simple default parameters
+        let has_complex_patterns = parameters.items.iter().any(|param| {
+            match &param.pattern.kind {
+                // Simple identifiers and assignment patterns (defaults) are OK
+                BindingPatternKind::BindingIdentifier(_)
+                | BindingPatternKind::AssignmentPattern(_) => false,
+                // Object and array destructuring are complex
+                BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => true,
+            }
+        });
+
+        if has_complex_patterns {
+            return true;
+        }
+
+        // Only break if there are both parameters and return type
+        let has_parameters = !parameters.items.is_empty();
+        arrow.return_type.is_some() && has_parameters
     }
 }
 
@@ -426,6 +487,10 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
 
+        // Check if this arrow function is a call argument (even if not grouped)
+        let is_call_argument = is_grouped_call_arg_layout
+            || crate::utils::is_expression_used_as_call_argument(self.head.span, &head_parent);
+
         // If this chain is the callee in a parent call expression, then we
         // want it to break onto a new line to clearly show that the arrow
         // chain is distinct and the _result_ is what's being called.
@@ -468,11 +533,13 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // If the arrow chain will break onto multiple lines, either because
         // it's a callee or because the body is printed on its own line, then
         // the signatures should be expanded first.
-        let break_signatures = (is_callee && body_on_separate_line)
-            || matches!(
-                self.options.assignment_layout,
-                Some(AssignmentLikeLayout::ChainTailArrowFunction)
-            );
+        // However, for call arguments (grouped or not), keep signatures on one line
+        let break_signatures = !is_call_argument
+            && ((is_callee && body_on_separate_line)
+                || matches!(
+                    self.options.assignment_layout,
+                    Some(AssignmentLikeLayout::ChainTailArrowFunction)
+                ));
 
         // Arrow chains as callees or as the right side of an assignment
         // indent the entire signature chain a single level and do _not_
@@ -505,46 +572,34 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
-                        let format_leading_comments = format_once(|f| {
-                            if should_format_comments {
-                                // A grouped layout implies that the arrow chain is trying to be rendered
-                                // in a condensed, single-line format (at least the signatures, not
-                                // necessarily the body). In that case, we _need_ to prevent the leading
-                                // comments from inserting line breaks. But if it's _not_ a grouped layout,
-                                // then we want to _force_ the line break so that the leading comments
-                                // don't inadvertently end up on the previous line after the fat arrow.
-                                if is_grouped_call_arg_layout {
-                                    write!(f, [space(), format_leading_comments(arrow.span())])
-                                } else {
-                                    write!(
-                                        f,
-                                        [
-                                            soft_line_break_or_space(),
-                                            format_leading_comments(arrow.span())
-                                        ]
-                                    )
-                                }
+                        if should_format_comments {
+                            // A grouped layout implies that the arrow chain is trying to be rendered
+                            // in a condensed, single-line format (at least the signatures, not
+                            // necessarily the body). In that case, we _need_ to prevent the leading
+                            // comments from inserting line breaks. But if it's _not_ a grouped layout,
+                            // then we want to _force_ the line break so that the leading comments
+                            // don't inadvertently end up on the previous line after the fat arrow.
+                            if is_grouped_call_arg_layout {
+                                write!(f, [space(), format_leading_comments(arrow.span())])?;
                             } else {
-                                Ok(())
+                                write!(
+                                    f,
+                                    [
+                                        soft_line_break_or_space(),
+                                        format_leading_comments(arrow.span())
+                                    ]
+                                )?;
                             }
-                        });
+                        }
 
-                        let start = arrow.span().start;
                         write!(
                             f,
-                            [
-                                FormatContentWithCacheMode::new(
-                                    Span::new(start, start),
-                                    format_leading_comments,
-                                    self.options.cache_mode,
-                                ),
-                                format_signature(
-                                    arrow,
-                                    is_grouped_call_arg_layout,
-                                    is_first,
-                                    self.options.cache_mode
-                                )
-                            ]
+                            [format_signature(
+                                arrow,
+                                is_grouped_call_arg_layout,
+                                is_first,
+                                self.options.cache_mode,
+                            )]
                         )
                     });
 
@@ -574,7 +629,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 Ok(())
             });
 
-            group(&join_signatures).should_expand(*expand_signatures).fmt(f)
+            write!(f, [group(&join_signatures).should_expand(*expand_signatures)])
         });
 
         let format_tail_body_inner = format_with(|f| {
@@ -622,6 +677,14 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     write!(f, [format_tail_body])?;
                 }
             }
+
+            // Format the trailing comments of all arrow function EXCEPT the first one because
+            // the comments of the head get formatted as part of the `FormatJsArrowFunctionExpression` call.
+            // TODO: It seems unneeded in the current oxc implementation?
+            // for arrow in self.arrows().skip(1) {
+            //     write!(f, format_trailing_comments(arrow.span().end))?;
+            // }
+
             Ok(())
         });
 
@@ -630,6 +693,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             let should_add_soft_line = matches!(head_parent, AstNodes::JSXExpressionContainer(_));
 
             if body_on_separate_line {
+                // Use normal indent for arrow chains to match Prettier
                 write!(
                     f,
                     [
@@ -663,7 +727,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             write!(f, [space(), "=>"])?;
 
-            if is_grouped_call_arg_layout {
+            if is_call_argument {
                 write!(f, [group(&format_tail_body)])?;
             } else {
                 write!(f, [indent_if_group_breaks(&format_tail_body, group_id)])?;
@@ -743,6 +807,8 @@ fn format_signature<'a, 'b>(
         let format_head = FormatContentWithCacheMode::new(arrow.params.span, content, cache_mode);
 
         if is_first_or_last_call_argument {
+            // For grouped arguments, use the strict no-break policy for signatures
+            // This ensures parameters stay on one line to match Prettier behavior
             let mut buffer = RemoveSoftLinesBuffer::new(f);
             let mut recording = buffer.start_recording();
 
@@ -765,12 +831,12 @@ fn format_signature<'a, 'b>(
             )?;
         }
 
-        // Print comments before the fat arrow (`=>`)
-        let comments_before_fat_arrow =
-            f.context().comments().comments_before_character(arrow.params.span().end, b'=');
-        let content =
-            format_once(|f| FormatTrailingComments::Comments(comments_before_fat_arrow).fmt(f));
-        write!(f, [FormatContentWithCacheMode::new(arrow.span, content, cache_mode)])
+        // TODO: for case `a = (x: any): x is string /* comment */ => {}`
+        // if f.comments().has_dangling_comments(arrow.span()) {
+        //     write!(f, [space(), format_dangling_comments(arrow.span())])?;
+        // }
+
+        Ok(())
     })
 }
 

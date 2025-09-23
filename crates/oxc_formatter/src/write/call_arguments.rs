@@ -830,11 +830,22 @@ fn write_grouped_arguments<'a>(
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
-    let variants = if grouped_breaks {
+    // Exception: For arrow chains in GroupedFirstArgument, include most_flat for proper indentation
+    let should_include_flat_variant = !grouped_breaks
+        || {
+            // Special case for arrow chains as grouped first argument
+            group_layout.is_grouped_first() &&
+        node.first().and_then(|arg| arg.as_expression()).map_or(false, |expr| {
+            matches!(expr, Expression::ArrowFunctionExpression(arrow) if arrow.expression &&
+                arrow.get_expression().map_or(false, |body| matches!(body, Expression::ArrowFunctionExpression(_))))
+        })
+        };
+
+    let variants = if should_include_flat_variant {
+        vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
+    } else {
         write!(f, [expand_parent()])?;
         vec![middle_variant, most_expanded.into_boxed_slice()]
-    } else {
-        vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:
