@@ -20,7 +20,7 @@ export function wrap(result) {
   };
 }
 
-// Used by `napi/playground/patch.mjs`.
+// Used by `napi/playground/scripts/patch.js`.
 //
 // Set `value` field of `Literal`s which are `BigInt`s or `RegExp`s.
 //

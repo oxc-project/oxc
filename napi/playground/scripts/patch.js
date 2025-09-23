@@ -1,7 +1,9 @@
 import fs from 'node:fs';
+import { join as pathJoin } from 'node:path';
 
-const filename = './playground.wasi-browser.js';
-let data = fs.readFileSync(filename, 'utf-8');
+const path = pathJoin(import.meta.dirname, '../playground.wasi-browser.js');
+
+let data = fs.readFileSync(path, 'utf-8');
 data = data.replace(
   `export const Oxc = __napiModule.exports.Oxc`,
   `
@@ -24,4 +26,4 @@ export function Oxc() {
 }
 `,
 );
-fs.writeFileSync(filename, data);
+fs.writeFileSync(path, data);

@@ -1,7 +1,9 @@
 import fs from 'node:fs';
+import { join as pathJoin } from 'node:path';
 
-const filename = './index.js';
-let data = fs.readFileSync(filename, 'utf-8');
+const path = pathJoin(import.meta.dirname, '../index.js');
+
+let data = fs.readFileSync(path, 'utf-8');
 data = data.replace(
   '\nif (!nativeBinding) {',
   (s) =>
@@ -15,4 +17,4 @@ if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
 }
 ` + s,
 );
-fs.writeFileSync(filename, data);
+fs.writeFileSync(path, data);
