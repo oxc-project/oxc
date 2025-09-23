@@ -28,6 +28,7 @@
     "napi/{parser,transform,minify,playground}/**/wasi-worker.mjs",
     "napi/{parser,transform,minify,playground}/**/browser.js",
     "napi/parser/src-js/bindings.mjs",
+    "napi/parser/src-js/index.d.mts",
     "npm/*/package.json",
     "npm/oxlint/configuration_schema.json",
     "npm/oxc-wasm/**",

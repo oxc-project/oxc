@@ -34,7 +34,7 @@ const parserFilePaths = [
   */
   'generated/deserialize/ts.mjs',
   'generated/visit/types.mjs',
-  'generated/visit/visitor.d.ts',
+  'generated/visit/visitor.d.mts',
   'generated/visit/walk.mjs',
 ];
 
