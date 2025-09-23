@@ -8,24 +8,22 @@ import { parseSync } from './src-js/index.mjs';
 
 process.chdir(path.join(import.meta.dirname, '../..'));
 
-function main() {
-  const args = parseArgs({
-    args: process.argv.slice(2),
-    allowPositionals: true,
-    options: {
-      lang: {
-        type: 'string',
-      },
-      astType: {
-        type: 'string',
-      },
+const args = parseArgs({
+  args: process.argv.slice(2),
+  allowPositionals: true,
+  options: {
+    lang: {
+      type: 'string',
     },
-  });
-  const file = args.positionals[0] ?? 'test.js';
-  const code = fs.readFileSync(file, 'utf-8');
-  const result = parseSync(file, code, args.values);
-  // oxlint-disable-next-line typescript-eslint/no-misused-spread
-  console.dir({ ...result }, { depth: Infinity });
-}
+    astType: {
+      type: 'string',
+    },
+  },
+});
 
-main();
+const file = args.positionals[0] ?? 'test.js';
+
+const code = fs.readFileSync(file, 'utf-8');
+const result = parseSync(file, code, args.values);
+// oxlint-disable-next-line typescript-eslint/no-misused-spread
+console.dir({ ...result }, { depth: Infinity });
