@@ -305,15 +305,15 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
 
         // Object expressions don't need parentheses when used as the expression of a cast
         // that is itself used as an argument
-        if let AstNodes::TSAsExpression(as_expr) = parent {
-            if is_expression_used_as_call_argument(as_expr.span, as_expr.parent) {
-                return false;
-            }
+        if let AstNodes::TSAsExpression(as_expr) = parent
+            && is_expression_used_as_call_argument(as_expr.span, as_expr.parent)
+        {
+            return false;
         }
-        if let AstNodes::TSSatisfiesExpression(satisfies_expr) = parent {
-            if is_expression_used_as_call_argument(satisfies_expr.span, satisfies_expr.parent) {
-                return false;
-            }
+        if let AstNodes::TSSatisfiesExpression(satisfies_expr) = parent
+            && is_expression_used_as_call_argument(satisfies_expr.span, satisfies_expr.parent)
+        {
+            return false;
         }
 
         is_class_extends(parent, span)
@@ -421,12 +421,12 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, NewExpression<'a>> {
         let parent = self.parent;
 
         // New expressions with call expressions as callees need parentheses when being called
-        if let AstNodes::CallExpression(call) = parent {
-            if call.callee.span() == span {
-                // Only need parens if the new expression's callee is a call expression
-                if let Expression::CallExpression(_) = self.callee {
-                    return true;
-                }
+        if let AstNodes::CallExpression(call) = parent
+            && call.callee.span() == span
+        {
+            // Only need parens if the new expression's callee is a call expression
+            if let Expression::CallExpression(_) = self.callee {
+                return true;
             }
         }
 
