@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 90/90 (100.00%)
+Negative Passed: 91/91 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -2849,6 +2849,22 @@ Negative Passed: 90/90 (100.00%)
    ╭─[misc/fail/oxc-13617-4.ts:1:15]
  1 │ const foo: Foo<> = 1
    ·               ──
+   ╰────
+
+  × Classes may not have a field named 'constructor'
+   ╭─[misc/fail/oxc-14014.ts:2:12]
+ 1 │ class Bar {
+ 2 │   accessor 'constructor'
+   ·            ─────────────
+ 3 │ }
+   ╰────
+
+  × Classes may not have a field named 'constructor'
+   ╭─[misc/fail/oxc-14014.ts:5:12]
+ 4 │ abstract class Baz {
+ 5 │   accessor 'constructor'
+   ·            ─────────────
+ 6 │ }
    ╰────
 
   × Unexpected token
