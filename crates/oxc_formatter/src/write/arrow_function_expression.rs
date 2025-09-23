@@ -287,51 +287,50 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut should_break = false;
 
         loop {
-            if current.expression() {
-                if let Some(AstNodes::ExpressionStatement(expr_stmt)) =
+            if current.expression()
+                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                {
-                    if let AstNodes::ArrowFunctionExpression(next) =
-                        &expr_stmt.expression().as_ast_nodes()
-                    {
-                        if matches!(
-                            options.call_arg_layout,
-                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument | GroupedCallArgumentLayout::GroupedFirstArgument)
-                        ) {
-                            // For grouped first arguments, be less aggressive about breaking chains
-                            // to maintain compact formatting
-                            let should_break_current = if matches!(
-                                options.call_arg_layout,
-                                Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-                            ) {
-                                Self::should_break_chain_conservative(current)
-                            } else {
-                                Self::should_break_chain(current)
-                            };
+                && let AstNodes::ArrowFunctionExpression(next) =
+                    &expr_stmt.expression().as_ast_nodes()
+                && matches!(
+                    options.call_arg_layout,
+                    None | Some(
+                        GroupedCallArgumentLayout::GroupedLastArgument
+                            | GroupedCallArgumentLayout::GroupedFirstArgument
+                    )
+                )
+            {
+                // For grouped first arguments, be less aggressive about breaking chains
+                // to maintain compact formatting
+                let should_break_current = if matches!(
+                    options.call_arg_layout,
+                    Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                ) {
+                    Self::should_break_chain_conservative(current)
+                } else {
+                    Self::should_break_chain(current)
+                };
 
-                            let should_break_next = if matches!(
-                                options.call_arg_layout,
-                                Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-                            ) {
-                                Self::should_break_chain_conservative(next)
-                            } else {
-                                Self::should_break_chain(next)
-                            };
+                let should_break_next = if matches!(
+                    options.call_arg_layout,
+                    Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                ) {
+                    Self::should_break_chain_conservative(next)
+                } else {
+                    Self::should_break_chain(next)
+                };
 
-                            should_break = should_break || should_break_current;
-                            should_break = should_break || should_break_next;
+                should_break = should_break || should_break_current;
+                should_break = should_break || should_break_next;
 
-                            if head.is_none() {
-                                head = Some(current);
-                            } else {
-                                middle.push(current);
-                            }
-
-                            current = next;
-                            continue;
-                        }
-                    }
+                if head.is_none() {
+                    head = Some(current);
+                } else {
+                    middle.push(current);
                 }
+
+                current = next;
+                continue;
             }
             break match head {
                 None => ArrowFunctionLayout::Single(current),
@@ -488,7 +487,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
         // Check if this arrow function is a call argument (even if not grouped)
         let is_call_argument = is_grouped_call_arg_layout
-            || crate::utils::is_expression_used_as_call_argument(self.head.span, &head_parent);
+            || crate::utils::is_expression_used_as_call_argument(self.head.span, head_parent);
 
         // If this chain is the callee in a parent call expression, then we
         // want it to break onto a new line to clearly show that the arrow
