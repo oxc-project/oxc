@@ -48,10 +48,9 @@ impl<'c, 'a> JSDocCollector<'c, 'a> {
 
     fn try_push(&mut self, symbol: &'a str) {
         if !is_identifier_name(symbol) {
-            return
+            return;
         }
         self.push(symbol);
-        
     }
 
     fn try_push_owned(&mut self, symbol: &str) {
@@ -127,19 +126,52 @@ impl<'a> Iterator for LinkIter<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Find the next @link occurrence
-        let link_pos = self.comment[self.pos..].find("@link")?;
+        const LINK: &str = "@link";
 
-        let actual_pos = self.pos + link_pos;
-        // SAFETY: won't panic b/c we know slicing `@link` won't hit a utf-8 char boundary
-        let comment = &self.comment[(actual_pos + "@link".len())..].trim();
+        // find the next @link occurrence
+        let link_pos = self.comment[self.pos..].find(LINK)?;
+        let mut pos = self.pos + link_pos + LINK.len();
 
-        // Find next whitespace
-        let end = comment.find(' ').unwrap_or(comment.len());
+        // skip past leading whitespace
+        for c in self.comment.chars().skip(pos) {
+            if !c.is_whitespace() {
+                break;
+            }
+            pos += 1;
+        }
+
+        // NOTE: won't panic b/c we know slicing `@link` won't hit a utf-8 char boundary
+        let comment = &self.comment[pos..];
+
+        let mut end = 0;
+        for c in comment.chars() {
+            match c {
+                // start of MemberExpression
+                '.' | '['
+                // end of tag
+                | '}'
+                => break,
+                // end of identifier
+                c if c.is_whitespace() => break,
+                _ => end += 1,
+            }
+        }
+
+        // `end` needs to be justified to existing comment space (instead of
+        // w.r.t current pos)
+        self.pos += end;
         if end == 0 {
-            // Move past this @link and try again
-            self.pos = actual_pos + "@link".len();
+            // likely end of search. If so, searching for the next "@link" will yield None
             return self.next();
+        }
+
+        // make sure end is just before terminators checked for in above iteration
+        #[cfg(debug_assertions)]
+        {
+            let end_char = comment.chars().skip(end - 1).next();
+            for terminal in &['.', '[', '}', ' '] {
+                assert_ne!(end_char, Some(*terminal))
+            }
         }
 
         let mut link_text = &comment[..end];
@@ -149,14 +181,11 @@ impl<'a> Iterator for LinkIter<'a> {
 
         let link_text = link_text.trim();
         if link_text.is_empty() {
-            // Move past this @link and try again
-            self.pos = actual_pos + "@link".len();
-            return self.next();
+            // move past this @link and try again
+            self.next()
+        } else {
+            Some(link_text)
         }
-
-        // Move past this @link for next iteration
-        self.pos = actual_pos + "@link".len();
-        Some(link_text)
     }
 }
 

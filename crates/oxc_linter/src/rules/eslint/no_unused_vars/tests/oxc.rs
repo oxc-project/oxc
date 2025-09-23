@@ -1439,9 +1439,9 @@ fn test_jsdoc() {
         ",
         r"
         import { Foo } from './foo'
-        /** @type {Foo}
-        export const foo;
-        "
+        /** @type {Foo} */
+        export let foo;
+        ",
     ];
 
     let fail = vec![
@@ -1453,7 +1453,7 @@ fn test_jsdoc() {
          * @see {@link Bar.foo}
          */
         export function a() { }
-        "
+        ",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
