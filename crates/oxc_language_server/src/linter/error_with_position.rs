@@ -7,8 +7,6 @@ use tower_lsp_server::lsp_types::{
 
 use oxc_diagnostics::Severity;
 
-use crate::LSP_MAX_INT;
-
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
@@ -72,17 +70,11 @@ fn message_with_position_to_lsp_diagnostic(
     });
 
     let range = related_information.as_ref().map_or(
-        Range {
-            start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-            end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-        },
+        Range::default(),
         |infos: &Vec<DiagnosticRelatedInformation>| {
-            let mut ret_range = Range {
-                start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-                end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-            };
+            let mut ret_range = Range::default();
             for info in infos {
-                if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {
+                if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Less {
                     ret_range = info.location.range;
                 }
             }
