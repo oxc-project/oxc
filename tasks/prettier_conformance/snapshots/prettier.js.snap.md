@@ -1,13 +1,13 @@
-js compatibility: 569/699 (81.40%)
+js compatibility: 583/698 (83.52%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/call.js | 💥💥 | 98.71% |
+| js/arrows/call.js | 💥💥 | 98.96% |
 | js/arrows/chain-as-arg.js | 💥💥 | 43.59% |
 | js/arrows/comment.js | 💥💥 | 83.72% |
-| js/arrows/curried.js | 💥💥 | 80.59% |
+| js/arrows/curried.js | 💥💥 | 81.67% |
 | js/arrows/currying-2.js | 💥💥 | 59.08% |
 | js/arrows/currying-3.js | 💥💥 | 90.90% |
 | js/arrows/currying-4.js | 💥💥 | 78.15% |
@@ -38,25 +38,16 @@ js compatibility: 569/699 (81.40%)
 | js/comments/issues.js | 💥💥 | 95.59% |
 | js/comments/return-statement.js | 💥💥 | 98.85% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
+| js/comments-closure-typecast/closure-compiler-type-cast.js | 💥 | 93.55% |
 | js/comments-closure-typecast/comment-in-the-middle.js | 💥 | 90.91% |
-| js/comments-closure-typecast/comment-placement.js | 💥 | 61.54% |
-| js/comments-closure-typecast/extra-spaces-and-asterisks.js | 💥 | 0.00% |
-| js/comments-closure-typecast/iife.js | 💥 | 27.27% |
-| js/comments-closure-typecast/issue-4124.js | 💥 | 47.37% |
-| js/comments-closure-typecast/issue-8045.js | 💥 | 75.86% |
-| js/comments-closure-typecast/issue-9358.js | 💥 | 16.00% |
-| js/comments-closure-typecast/member.js | 💥 | 0.00% |
-| js/comments-closure-typecast/nested.js | 💥 | 23.53% |
 | js/comments-closure-typecast/non-casts.js | 💥 | 88.89% |
-| js/comments-closure-typecast/object-with-comment.js | 💥 | 38.10% |
-| js/comments-closure-typecast/satisfies.js | 💥 | 33.33% |
-| js/comments-closure-typecast/superclass.js | 💥 | 0.00% |
-| js/comments-closure-typecast/ways-to-specify-type.js | 💥 | 15.38% |
 | js/conditional/comments.js | 💥💥 | 72.88% |
 | js/conditional/new-expression.js | 💥💥 | 66.67% |
 | js/conditional/new-ternary-examples.js | 💥💥 | 68.81% |
 | js/conditional/new-ternary-spec.js | 💥💥 | 73.31% |
 | js/conditional/postfix-ternary-regressions.js | 💥💥 | 69.48% |
+| js/decorators/member-expression.js | 💥 | 92.42% |
+| js/decorators/parens.js | 💥 | 75.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 91.89% |
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
@@ -69,8 +60,6 @@ js compatibility: 569/699 (81.40%)
 | js/identifier/parentheses/let.js | 💥💥 | 72.73% |
 | js/if/else.js | 💥 | 89.47% |
 | js/if/issue-15168.js | 💥 | 88.89% |
-| js/import-assertions/keyword-detect.js | 💥 | 71.43% |
-| js/import-attributes/keyword-detect.js | 💥 | 71.43% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/last-argument-expansion/edge_case.js | 💥 | 94.12% |
 | js/last-argument-expansion/function-body-in-mode-break.js | 💥 | 86.67% |
@@ -115,7 +104,6 @@ js compatibility: 569/699 (81.40%)
 | js/test-declarations/angular_waitForAsync.js | 💥💥 | 75.86% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
 | js/test-declarations/jest-each.js | 💥💥 | 94.29% |
-| js/test-declarations/test_declarations.js | 💥💥 | 93.88% |
 | js/throw_statement/binaryish.js | 💥 | 91.30% |
 | js/throw_statement/comment.js | 💥 | 91.30% |
 | js/top-level-await/in-expression.js | 💥 | 0.00% |
