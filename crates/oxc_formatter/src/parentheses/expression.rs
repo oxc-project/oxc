@@ -128,28 +128,40 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                // Check if this identifier is in a member expression context first
-                match self.parent {
-                    AstNodes::ComputedMemberExpression(member) => {
-                        // If 'let' is the object of a computed member expression, don't add parentheses
-                        return member.object.span() == self.span();
+                // Check if 'let' is used as the object of a computed member expression
+                if let AstNodes::ComputedMemberExpression(member) = self.parent {
+                    if member.object.span() == self.span() {
+                        // Check various contexts where 'let' needs or doesn't need parentheses
+                        let mut parent = member.parent;
+
+                        // Walk up to find the context
+                        loop {
+                            match parent {
+                                // In call arguments, don't add extra parentheses
+                                AstNodes::CallExpression(_) | AstNodes::NewExpression(_) => {
+                                    return false;
+                                }
+                                // In for-statement contexts, need parentheses
+                                AstNodes::ForStatement(_)
+                                | AstNodes::ForInStatement(_)
+                                | AstNodes::ForOfStatement(_) => {
+                                    return true;
+                                }
+                                // At the start of a statement, need parentheses
+                                AstNodes::ExpressionStatement(_) | AstNodes::Program(_) => {
+                                    return is_first_in_statement(
+                                        member.span(),
+                                        member.parent,
+                                        FirstInStatementMode::ExpressionStatementOrArrow,
+                                    );
+                                }
+                                _ => parent = parent.parent(),
+                            }
+                        }
                     }
-                    AstNodes::StaticMemberExpression(member) => {
-                        // If 'let' is the object of a static member expression, don't add parentheses
-                        return member.object.span() == self.span();
-                    }
-                    AstNodes::AssignmentExpression(assignment) => {
-                        // If 'let' is the left side of an assignment, don't add parentheses
-                        return assignment.left.span() == self.span();
-                    }
-                    AstNodes::VariableDeclarator(declarator) => {
-                        // If 'let' is the binding in a variable declarator, don't add parentheses
-                        return declarator.id.span() == self.span();
-                    }
-                    _ => {}
                 }
 
-                // Check the for-of context
+                // Check for-statement contexts where 'let' needs parentheses
                 let mut parent = self.parent;
                 loop {
                     match parent {
@@ -160,7 +172,16 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                         AstNodes::TSSatisfiesExpression(expr) => {
                             return expr.expression.span() == self.span();
                         }
-                        _ => {}
+                        AstNodes::ForInStatement(stmt) => {
+                            return stmt.left.span().contains_inclusive(self.span);
+                        }
+                        AstNodes::ForStatement(stmt) => {
+                            return stmt
+                                .init
+                                .as_ref()
+                                .is_some_and(|init| init.span().contains_inclusive(self.span));
+                        }
+                        _ => parent = parent.parent(),
                     }
                 }
             }
@@ -593,16 +614,20 @@ impl NeedsParentheses<'_> for AstNode<'_, Function<'_>> {
         }
 
         let parent = self.parent;
-        matches!(
-            parent,
-            AstNodes::CallExpression(_)
-                | AstNodes::NewExpression(_)
-                | AstNodes::TaggedTemplateExpression(_)
-        ) || is_first_in_statement(
-            self.span,
-            parent,
-            FirstInStatementMode::ExpressionOrExportDefault,
-        )
+
+        // Function expressions in call/new arguments don't need parentheses
+        // unless they are the callee
+        if let AstNodes::CallExpression(call) = parent {
+            // Only add parentheses if this function is the callee, not an argument
+            return call.callee.span() == self.span;
+        }
+
+        matches!(parent, AstNodes::NewExpression(_) | AstNodes::TaggedTemplateExpression(_))
+            || is_first_in_statement(
+                self.span,
+                parent,
+                FirstInStatementMode::ExpressionOrExportDefault,
+            )
     }
 }
 
@@ -708,6 +733,12 @@ impl NeedsParentheses<'_> for AstNode<'_, AwaitExpression<'_>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let span = self.span();
+
+        // Chain expressions don't need parentheses when used as call arguments
+        if is_expression_used_as_call_argument(span, &self.parent) {
+            return false;
+        }
+
         match self.parent {
             AstNodes::NewExpression(_) => true,
             AstNodes::CallExpression(call) => !call.optional,
