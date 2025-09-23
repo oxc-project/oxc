@@ -1,4 +1,4 @@
-ts compatibility: 446/573 (77.84%)
+ts compatibility: 448/573 (78.18%)
 
 # Failed
 
@@ -29,8 +29,8 @@ ts compatibility: 446/573 (77.84%)
 | typescript/cast/generic-cast.ts | 💥 | 96.32% |
 | typescript/cast/hug-args.ts | 💥 | 47.06% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
-| typescript/chain-expression/call-expression.ts | 💥 | 64.06% |
-| typescript/chain-expression/member-expression.ts | 💥 | 59.70% |
+| typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
+| typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/chain-expression/test2.ts | 💥 | 56.25% |
 | typescript/class/constructor.ts | 💥 | 96.15% |
@@ -86,7 +86,6 @@ ts compatibility: 446/573 (77.84%)
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/key-remapping-in-mapped-types/key-remapping.ts | 💥 | 55.56% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
-| typescript/last-argument-expansion/forward-ref.tsx | 💥 | 77.78% |
 | typescript/mapped-type/intersection.ts | 💥 | 0.00% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 60.00% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 40.00% |
@@ -124,7 +123,6 @@ ts compatibility: 446/573 (77.84%)
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
-| typescript/typeparams/class-method.ts | 💥 | 87.57% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 73.68% |
 | typescript/union/inlining.ts | 💥 | 79.70% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
