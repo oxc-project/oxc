@@ -1047,7 +1047,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            if init_name == "useRef" {
+            if (init_name == "useRef" || init_name == "useEffectEvent") {
                 return true;
             }
 
@@ -2606,6 +2606,19 @@ fn test() {
         r"function MyComponent(props) { const external = {}; const y = useMemo(() => { const z = foo<typeof external>(); return z; }, []) }",
         r#"function Test() { const [state, setState] = useState(); useEffect(() => { console.log("state", state); }); }"#,
         "function Test() { const [foo, setFoo] = useState(true); _setFoo = setFoo; useEffect(() => { setFoo(false) }, []); }",
+        r"function ChatRoom({ roomId, theme }) {
+            const onConnected = useEffectEvent(() => {
+                showNotification('Connected!', theme);
+            });
+            useEffect(() => {
+                const connection = createConnection(serverUrl, roomId);
+                connection.on('connected', () => {
+                  onConnected();
+                });
+                connection.connect();
+                return () => connection.disconnect();
+              }, [roomId]);
+        }",
     ];
 
     let fail = vec![
@@ -4063,6 +4076,18 @@ fn test() {
           log();
         }, []);
         }"#,
+        r"function Page({ url }) {
+          const { items } = useContext(ShoppingCartContext);
+          const numberOfItems = items.length;
+        
+          const onVisit = useEffectEvent(visitedUrl => {
+            logVisit(visitedUrl, numberOfItems);
+          });
+        
+          useEffect(() => {
+            onVisit(url);
+          }, [url, onVisit]);
+        }",
     ];
 
     let pass_additional_hooks = vec![(
