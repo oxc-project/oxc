@@ -2851,13 +2851,20 @@ Negative Passed: 91/91 (100.00%)
    ·               ──
    ╰────
 
-  × Expected `(` but found `}`
-   ╭─[misc/fail/oxc-14014.ts:3:1]
- 2 │   accessor constructor
+  × Classes may not have a field named 'constructor'
+   ╭─[misc/fail/oxc-14014.ts:2:12]
+ 1 │ class Bar {
+ 2 │   accessor 'constructor'
+   ·            ─────────────
  3 │ }
-   · ┬
-   · ╰── `(` expected
- 4 │ class Bar {
+   ╰────
+
+  × Classes may not have a field named 'constructor'
+   ╭─[misc/fail/oxc-14014.ts:5:12]
+ 4 │ abstract class Baz {
+ 5 │   accessor 'constructor'
+   ·            ─────────────
+ 6 │ }
    ╰────
 
   × Unexpected token

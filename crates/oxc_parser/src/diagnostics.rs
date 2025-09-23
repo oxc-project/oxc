@@ -308,7 +308,7 @@ pub fn optional_accessor_property(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn constructor_accessor(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Constructor can't have accessor modifier").with_label(span)
+    OxcDiagnostic::error("Classes may not have a field named 'constructor'").with_label(span)
 }
 
 #[cold]

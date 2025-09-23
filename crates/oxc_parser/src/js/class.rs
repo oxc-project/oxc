@@ -525,7 +525,8 @@ impl<'a> ParserImpl<'a> {
             if let Some(optional_span) = optional_span {
                 self.error(diagnostics::optional_accessor_property(optional_span));
             }
-            if name.is_specific_id("constructor") {
+            // `accessor ['constructor']` is legal but `accessor 'constructor'` is not.
+            if name.is_specific_string_literal("constructor") && !computed {
                 self.error(diagnostics::constructor_accessor(name.span()));
             }
             return self.parse_class_accessor_property(

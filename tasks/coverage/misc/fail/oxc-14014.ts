@@ -1,6 +1,3 @@
-class Foo {
-  accessor constructor
-}
 class Bar {
   accessor 'constructor'
 }
