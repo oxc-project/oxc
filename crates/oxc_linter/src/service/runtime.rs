@@ -365,7 +365,7 @@ impl Runtime {
         &'a mut self,
         scope: &Scope<'a>,
         check_syntax_errors: bool,
-        tx_error: &'a DiagnosticSender,
+        tx_error: Option<&'a DiagnosticSender>,
         on_module_to_lint: impl Fn(&'a Self, ModuleToLint) + Send + Sync + Clone + 'a,
     ) {
         if self.resolver.is_none() {
@@ -590,7 +590,7 @@ impl Runtime {
 
     pub(super) fn run(&mut self, tx_error: &DiagnosticSender) {
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, tx_error, |me, mut module_to_lint| {
+            self.resolve_modules(scope, true, Some(tx_error), |me, mut module_to_lint| {
                 module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
                     // If there are fixes, we will accumulate all of them and write to the file at the end.
                     // This means we do not write multiple times to the same file if there are multiple sources
@@ -690,9 +690,8 @@ impl Runtime {
         let message_cloner = MessageCloner::new(allocator);
 
         let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
-        let (sender, _receiver) = mpsc::channel();
         rayon::scope(|scope| {
-            self.resolve_modules(scope, true, &sender, |me, mut module_to_lint| {
+            self.resolve_modules(scope, true, None, |me, mut module_to_lint| {
                 module_to_lint.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                         assert_eq!(
@@ -752,17 +751,6 @@ impl Runtime {
             });
         });
 
-        // The receiving messages should be only file system reads or source type errors
-        // while let Ok(diagnostics) = receiver.recv() {
-        //     if let Some(diagnostics) = diagnostics {
-        //         messages.lock().unwrap().extend(
-        //             diagnostics.1
-        //                 .into_iter()
-        //                 .map(|report| MessageWithPosition::from(report))
-        //         );
-        //     }
-        // }
-
         messages.into_inner().unwrap()
     }
 
@@ -780,7 +768,7 @@ impl Runtime {
 
         let messages = Mutex::new(Vec::<Message<'a>>::new());
         rayon::scope(|scope| {
-            self.resolve_modules(scope, check_syntax_errors, tx_error, |me, mut module| {
+            self.resolve_modules(scope, check_syntax_errors, Some(tx_error), |me, mut module| {
                 module.content.with_dependent_mut(
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
@@ -836,7 +824,7 @@ impl Runtime {
         &self,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
-        tx_error: &DiagnosticSender,
+        tx_error: Option<&DiagnosticSender>,
     ) -> ModuleProcessOutput<'_> {
         let processed_module =
             self.process_path_to_module(path, check_syntax_errors, tx_error).unwrap_or_default();
@@ -847,7 +835,7 @@ impl Runtime {
         &self,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
-        tx_error: &DiagnosticSender,
+        tx_error: Option<&DiagnosticSender>,
     ) -> Option<ProcessedModule<'_>> {
         let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
@@ -875,7 +863,9 @@ impl Runtime {
                 let (source_type, source_text) = match stt {
                     Ok(v) => v,
                     Err(e) => {
-                        tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
+                        if let Some(tx_error) = tx_error {
+                            tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
+                        }
                         return Err(());
                     }
                 };
@@ -904,7 +894,9 @@ impl Runtime {
             let (source_type, source_text) = match stt {
                 Ok(v) => v,
                 Err(e) => {
-                    tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
+                    if let Some(tx_error) = tx_error {
+                        tx_error.send((Path::new(path).to_path_buf(), vec![e])).unwrap();
+                    }
                     return None;
                 }
             };
