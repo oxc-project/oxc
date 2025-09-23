@@ -100,6 +100,64 @@ const createOnceRule = defineRule({
   },
 });
 
+// These 3 rules test that `createOnce` without `before` and `after` hooks works correctly.
+
+const createOnceBeforeOnlyRule = defineRule({
+  createOnce(context) {
+    return {
+      before() {
+        context.report({
+          message: 'before hook:\n'
+            + `filename: ${relativePath(context.filename)}`,
+          node: SPAN,
+        });
+      },
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}":\n`
+            + `filename: ${relativePath(context.filename)}`,
+          node: { ...SPAN, ...node },
+        });
+      },
+    };
+  },
+});
+
+const createOnceAfterOnlyRule = defineRule({
+  createOnce(context) {
+    return {
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}":\n`
+            + `filename: ${relativePath(context.filename)}`,
+          node: { ...SPAN, ...node },
+        });
+      },
+      after() {
+        context.report({
+          message: 'after hook:\n'
+            + `filename: ${relativePath(context.filename)}`,
+          node: SPAN,
+        });
+      },
+    };
+  },
+});
+
+const createOnceNoHooksRule = defineRule({
+  createOnce(context) {
+    return {
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}":\n`
+            + `filename: ${relativePath(context.filename)}`,
+          node: { ...SPAN, ...node },
+        });
+      },
+    };
+  },
+});
+
 export default definePlugin({
   meta: {
     name: "define-rule-plugin",
@@ -107,5 +165,8 @@ export default definePlugin({
   rules: {
     create: createRule,
     "create-once": createOnceRule,
+    "create-once-before-only": createOnceBeforeOnlyRule,
+    "create-once-after-only": createOnceAfterOnlyRule,
+    "create-once-no-hooks": createOnceNoHooksRule,
   },
 });

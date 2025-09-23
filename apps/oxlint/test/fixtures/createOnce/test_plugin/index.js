@@ -64,6 +64,53 @@ const skipRunRule = {
   },
 };
 
+const beforeOnlyRule = {
+  createOnce(context) {
+    return {
+      before() {
+        context.report({ message: `before hook: id: ${context.id}`, node: SPAN });
+        context.report({ message: `before hook: filename: ${relativePath(context.filename)}`, node: SPAN });
+      },
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}": filename: ${relativePath(context.filename)}`,
+          node,
+        });
+      },
+    };
+  },
+};
+
+const afterOnlyRule = {
+  createOnce(context) {
+    return {
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}": filename: ${relativePath(context.filename)}`,
+          node,
+        });
+      },
+      after() {
+        context.report({ message: `after hook: id: ${context.id}`, node: SPAN });
+        context.report({ message: `after hook: filename: ${relativePath(context.filename)}`, node: SPAN });
+      },
+    };
+  },
+};
+
+const noHooksRule = {
+  createOnce(context) {
+    return {
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}": filename: ${relativePath(context.filename)}`,
+          node,
+        });
+      },
+    };
+  },
+};
+
 export default {
   meta: {
     name: "create-once-plugin",
@@ -71,6 +118,9 @@ export default {
   rules: {
     "always-run": alwaysRunRule,
     "skip-run": skipRunRule,
+    "before-only": beforeOnlyRule,
+    "after-only": afterOnlyRule,
+    "no-hooks": noHooksRule,
   },
 };
 

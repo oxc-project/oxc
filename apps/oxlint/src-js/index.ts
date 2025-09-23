@@ -27,10 +27,18 @@ export function defineRule(rule: Rule): Rule {
     report: { value: dummyReport, enumerable: true, configurable: true },
   });
 
-  const { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context as Context);
+  let { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context as Context);
+
+  if (beforeHook === void 0) {
+    beforeHook = null;
+  } else if (beforeHook !== null && typeof beforeHook !== 'function') {
+    throw new Error('`before` property of visitor must be a function if defined');
+  }
 
   // Add `after` hook to `Program:exit` visit fn
-  if (afterHook !== null) {
+  if (afterHook != null) {
+    if (typeof afterHook !== 'function') throw new Error('`after` property of visitor must be a function if defined');
+
     const programExit = visitor['Program:exit'];
     visitor['Program:exit'] = programExit
       ? (node) => {

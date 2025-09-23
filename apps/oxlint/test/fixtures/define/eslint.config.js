@@ -9,6 +9,9 @@ export default [
     rules: {
       "define-rule-plugin/create": "error",
       "define-rule-plugin/create-once": "error",
+      "define-rule-plugin/create-once-before-only": "error",
+      "define-rule-plugin/create-once-after-only": "error",
+      "define-rule-plugin/create-once-no-hooks": "error",
     },
   },
 ];
