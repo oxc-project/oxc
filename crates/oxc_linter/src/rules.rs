@@ -630,6 +630,7 @@ pub(crate) mod node {
 pub(crate) mod vue {
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
+    pub mod max_props;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
     pub mod require_typed_ref;
@@ -1218,6 +1219,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::require_local_test_context_for_concurrent_snapshots,
     vue::define_emits_declaration,
     vue::define_props_declaration,
+    vue::max_props,
     vue::no_multiple_slot_args,
     vue::no_required_prop_with_default,
     vue::require_typed_ref,

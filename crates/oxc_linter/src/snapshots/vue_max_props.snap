@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(max-props): Should be an imperative statement about what is wrong
+   ╭─[max_props.tsx:3:10]
+ 2 │                   <script setup lang="ts">
+ 3 │                   defineProps<{ prop1: string, prop2: string, prop3: string }>();
+   ·                   ──────────────────────────────────────────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Should be a command-like statement that tells the user how to fix the issue
