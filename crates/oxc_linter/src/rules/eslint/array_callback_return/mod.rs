@@ -202,9 +202,10 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                     // Check that current node is parent's second argument
                     if call.arguments.len() == 2
                         && let Some(call_arg) = call.arguments[1].as_expression()
-                            && call_arg.span() == current_node.kind().span() {
-                                return Some("from");
-                            }
+                        && call_arg.span() == current_node.kind().span()
+                    {
+                        return Some("from");
+                    }
                 }
 
                 // "methods",
@@ -217,9 +218,9 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                         && call_arg
                             .as_expression()
                             .is_some_and(|arg| arg.span() == current_node.kind().span())
-                        {
-                            return Some(array_method);
-                        }
+                {
+                    return Some(array_method);
+                }
 
                 return None;
             }

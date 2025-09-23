@@ -146,12 +146,13 @@ fn get_define_property_call<'a>(
     for parent in ctx.nodes().ancestors(node.id()) {
         if let AstKind::CallExpression(call_expr) = parent.kind()
             && is_define_property_call(call_expr)
-                && let Some(first_arg) = call_expr.arguments.first() {
-                    let arg_span = first_arg.span();
-                    if arg_span.contains_inclusive(node.span()) {
-                        return Some(parent);
-                    }
-                }
+            && let Some(first_arg) = call_expr.arguments.first()
+        {
+            let arg_span = first_arg.span();
+            if arg_span.contains_inclusive(node.span()) {
+                return Some(parent);
+            }
+        }
     }
     None
 }
