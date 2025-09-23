@@ -29,11 +29,6 @@ pub enum PluginLoadResult {
 pub struct LintFileResult {
     pub rule_index: u32,
     pub message: String,
-    pub loc: Loc,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Loc {
     pub start: u32,
     pub end: u32,
 }

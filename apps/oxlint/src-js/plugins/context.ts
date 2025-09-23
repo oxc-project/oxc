@@ -11,7 +11,8 @@ interface Diagnostic {
 // Diagnostic in form sent to Rust
 interface DiagnosticReport {
   message: string;
-  loc: { start: number; end: number };
+  start: number;
+  end: number;
   ruleIndex: number;
 }
 
@@ -115,9 +116,12 @@ export class Context {
    */
   report(diagnostic: Diagnostic): void {
     const { ruleIndex } = getInternal(this, 'report errors');
+    // TODO: Validate `diagnostic`
+    const { node } = diagnostic;
     diagnostics.push({
       message: diagnostic.message,
-      loc: { start: diagnostic.node.start, end: diagnostic.node.end },
+      start: node.start,
+      end: node.end,
       ruleIndex,
     });
   }

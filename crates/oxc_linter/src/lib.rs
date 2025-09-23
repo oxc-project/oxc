@@ -408,7 +408,7 @@ impl Linter {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
                     // Convert UTF-16 offsets back to UTF-8
-                    let mut span = Span::new(diagnostic.loc.start, diagnostic.loc.end);
+                    let mut span = Span::new(diagnostic.start, diagnostic.end);
                     span_converter.convert_span_back(&mut span);
 
                     let (external_rule_id, severity) =
