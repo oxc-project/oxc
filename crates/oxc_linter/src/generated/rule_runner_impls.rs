@@ -1692,6 +1692,10 @@ impl RuleRunner for crate::rules::react::no_unknown_property::NoUnknownProperty 
         Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
 }
 
+impl RuleRunner for crate::rules::react::only_export_components::OnlyExportComponents {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::react::prefer_es6_class::PreferEs6Class {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
