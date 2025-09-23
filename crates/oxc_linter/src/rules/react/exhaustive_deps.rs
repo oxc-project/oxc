@@ -1061,10 +1061,11 @@ fn is_identifier_a_dependency_impl<'a>(
         if matches!(declaration.kind(), AstKind::FormalParameter(_))
             && let Some(component_function_scope) =
                 scopes.scope_ancestors(component_scope_id).next()
-                && declaration.scope_id() == component_function_scope {
-                    // This is a component prop - should be a dependency
-                    return true;
-                }
+            && declaration.scope_id() == component_function_scope
+        {
+            // This is a component prop - should be a dependency
+            return true;
+        }
         return false;
     }
 
@@ -1369,9 +1370,10 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
             ChainElement::CallExpression(call) => {
                 // For call expressions, check the callee for nested chain patterns
                 if let Expression::StaticMemberExpression(callee_member) = &call.callee
-                    && let Expression::ChainExpression(callee_chain) = &callee_member.object {
-                        self.collect_current_access_from_chain(callee_chain);
-                    }
+                    && let Expression::ChainExpression(callee_chain) = &callee_member.object
+                {
+                    self.collect_current_access_from_chain(callee_chain);
+                }
             }
             _ => {}
         }
@@ -1486,20 +1488,18 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         } else if let Expression::ChainExpression(chain_expr) = &call_expr.callee {
             if let ChainElement::StaticMemberExpression(chain_member) = &chain_expr.expression
                 && let Expression::ChainExpression(inner_chain) = &chain_member.object
-                    && let ChainElement::StaticMemberExpression(inner_member) =
-                        &inner_chain.expression
-                        && inner_member.property.name == "current"
-                            && is_inside_effect_cleanup(&self.stack)
-                        {
-                            // SAFETY: Transmuting lifetime to match visitor lifetime requirements
-                            let inner_member_ref = unsafe {
-                                std::mem::transmute::<
-                                    &StaticMemberExpression<'_>,
-                                    &'a StaticMemberExpression<'a>,
-                                >(inner_member)
-                            };
-                            self.refs_inside_cleanups.push(inner_member_ref);
-                        }
+                && let ChainElement::StaticMemberExpression(inner_member) = &inner_chain.expression
+                && inner_member.property.name == "current"
+                && is_inside_effect_cleanup(&self.stack)
+            {
+                // SAFETY: Transmuting lifetime to match visitor lifetime requirements
+                let inner_member_ref = unsafe {
+                    std::mem::transmute::<&StaticMemberExpression<'_>, &'a StaticMemberExpression<'a>>(
+                        inner_member,
+                    )
+                };
+                self.refs_inside_cleanups.push(inner_member_ref);
+            }
             self.visit_expression(&call_expr.callee);
         } else {
             self.visit_expression(&call_expr.callee);
@@ -1684,18 +1684,19 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                     self.semantic.scoping().scope_ancestors(self.component_scope_id).next();
 
                 if let Some(parent_scope) = immediate_parent
-                    && declaration_scope_id != parent_scope {
-                        let is_from_wrapper = self
-                            .semantic
-                            .scoping()
-                            .scope_ancestors(self.component_scope_id)
-                            .skip(2)
-                            .any(|ancestor| ancestor == declaration_scope_id);
+                    && declaration_scope_id != parent_scope
+                {
+                    let is_from_wrapper = self
+                        .semantic
+                        .scoping()
+                        .scope_ancestors(self.component_scope_id)
+                        .skip(2)
+                        .any(|ancestor| ancestor == declaration_scope_id);
 
-                        if is_from_wrapper {
-                            return;
-                        }
+                    if is_from_wrapper {
+                        return;
                     }
+                }
             }
         }
 

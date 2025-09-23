@@ -249,46 +249,48 @@ impl Rule for RequireReturns {
 fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option<bool> {
     // `return new Promise(...)`
     if let Expression::NewExpression(new_expr) = expr
-        && new_expr.callee.is_specific_id("Promise") {
-            return new_expr
-                .arguments
-                // Get `new Promise(HERE, ...)`
-                .first()
-                // Expect `new Promise(() => {})` or `new Promise(function() {})`
-                .and_then(|arg| match arg.as_expression() {
-                    Some(Expression::FunctionExpression(func)) => func.params.items.first(),
-                    Some(Expression::ArrowFunctionExpression(arrow_func)) => {
-                        arrow_func.params.items.first()
+        && new_expr.callee.is_specific_id("Promise")
+    {
+        return new_expr
+            .arguments
+            // Get `new Promise(HERE, ...)`
+            .first()
+            // Expect `new Promise(() => {})` or `new Promise(function() {})`
+            .and_then(|arg| match arg.as_expression() {
+                Some(Expression::FunctionExpression(func)) => func.params.items.first(),
+                Some(Expression::ArrowFunctionExpression(arrow_func)) => {
+                    arrow_func.params.items.first()
+                }
+                _ => None,
+            })
+            // Retrieve symbol_id of resolver, `new Promise((HERE, ...) => {})`
+            .and_then(|first_param| match &first_param.pattern.kind {
+                BindingPatternKind::BindingIdentifier(ident) => Some(ident),
+                _ => None,
+            })
+            .and_then(|ident| {
+                // Find all usages of promise resolver
+                // It may not be accurate if there are multiple `resolve()` in a resolver like:
+                // ```js
+                // new Promise((resolve) => {
+                //   if (x) return resolve();
+                //   resolve(x)
+                // })
+                // ```
+                // IMO: This is a fault of the original rule design...
+                for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
+                    // Check if `resolve` is called with value
+                    if let AstKind::CallExpression(call_expr) =
+                        ctx.nodes().parent_kind(resolve_ref.node_id())
+                        && !call_expr.arguments.is_empty()
+                    {
+                        return Some(true);
                     }
-                    _ => None,
-                })
-                // Retrieve symbol_id of resolver, `new Promise((HERE, ...) => {})`
-                .and_then(|first_param| match &first_param.pattern.kind {
-                    BindingPatternKind::BindingIdentifier(ident) => Some(ident),
-                    _ => None,
-                })
-                .and_then(|ident| {
-                    // Find all usages of promise resolver
-                    // It may not be accurate if there are multiple `resolve()` in a resolver like:
-                    // ```js
-                    // new Promise((resolve) => {
-                    //   if (x) return resolve();
-                    //   resolve(x)
-                    // })
-                    // ```
-                    // IMO: This is a fault of the original rule design...
-                    for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
-                        // Check if `resolve` is called with value
-                        if let AstKind::CallExpression(call_expr) =
-                            ctx.nodes().parent_kind(resolve_ref.node_id())
-                            && !call_expr.arguments.is_empty() {
-                                return Some(true);
-                            }
-                    }
-                    None
-                })
-                .or(Some(false));
-        }
+                }
+                None
+            })
+            .or(Some(false));
+    }
 
     // Tests do not cover `return Promise.xxx()`, but should be...?
 
