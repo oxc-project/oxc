@@ -35,7 +35,7 @@
     "index.d.ts",
     "index.js",
     "browser.js",
-    "webcontainer-fallback.js"
+    "webcontainer-fallback.cjs"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

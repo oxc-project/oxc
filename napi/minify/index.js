@@ -542,7 +542,7 @@ if (!nativeBinding || process.env.NAPI_RS_FORCE_WASI) {
 
 if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
   try {
-    nativeBinding = require('./webcontainer-fallback.js');
+    nativeBinding = require('./webcontainer-fallback.cjs');
   } catch (err) {
     loadErrors.push(err)
   }
