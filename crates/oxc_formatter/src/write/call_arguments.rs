@@ -783,9 +783,9 @@ fn write_grouped_arguments<'a>(
         || {
             // Special case for arrow chains as grouped first argument
             group_layout.is_grouped_first() &&
-        node.first().and_then(|arg| arg.as_expression()).map_or(false, |expr| {
+        node.first().and_then(|arg| arg.as_expression()).is_some_and(|expr| {
             matches!(expr, Expression::ArrowFunctionExpression(arrow) if arrow.expression &&
-                arrow.get_expression().map_or(false, |body| matches!(body, Expression::ArrowFunctionExpression(_))))
+                arrow.get_expression().is_some_and(|body| matches!(body, Expression::ArrowFunctionExpression(_))))
         })
         };
 
