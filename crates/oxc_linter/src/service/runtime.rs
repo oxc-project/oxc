@@ -8,6 +8,7 @@ use std::{
     sync::{Arc, mpsc},
 };
 
+use dashmap::DashMap;
 use indexmap::IndexSet;
 use rayon::iter::ParallelDrainRange;
 use rayon::{Scope, iter::IntoParallelRefIterator, prelude::ParallelIterator};
@@ -30,6 +31,7 @@ use crate::fixer::{Message, PossibleFixes};
 use crate::{
     Fixer, Linter,
     context::ContextSubHost,
+    disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_arena_str,
@@ -59,6 +61,8 @@ pub struct Runtime {
     /// To make sure all `ModuleRecord` gets dropped after `Runtime` is dropped,
     /// `modules_by_path` must own `ModuleRecord` with `Arc`, all other references must use `Weak<ModuleRecord>`.
     modules_by_path: ModulesByPath,
+    /// Collected disable directives from linted files
+    disable_directives_map: Arc<DashMap<PathBuf, DisableDirectives>>,
 }
 
 /// Output of `Runtime::process_path`
@@ -302,6 +306,7 @@ impl Runtime {
                 .hasher(BuildHasherDefault::default())
                 .resize_mode(papaya::ResizeMode::Blocking)
                 .build(),
+            disable_directives_map: Arc::new(DashMap::new()),
         }
     }
 
@@ -317,6 +322,10 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         self.paths = paths.into_iter().collect();
         self
+    }
+
+    pub fn set_disable_directives_map(&mut self, map: Arc<DashMap<PathBuf, DisableDirectives>>) {
+        self.disable_directives_map = map;
     }
 
     fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
@@ -644,7 +653,16 @@ impl Runtime {
                         return;
                     }
 
-                    let mut messages = me.linter.run(path, context_sub_hosts, allocator_guard);
+                    let (mut messages, disable_directives) = me.linter.run_with_disable_directives(
+                        path,
+                        context_sub_hosts,
+                        allocator_guard,
+                    );
+
+                    // Store the disable directives for this file
+                    if let Some(disable_directives) = disable_directives {
+                        me.disable_directives_map.insert(path.to_path_buf(), disable_directives);
+                    }
 
                     if me.linter.options().fix.is_some() {
                         let fix_result = Fixer::new(dep.source_text, messages).fix();
