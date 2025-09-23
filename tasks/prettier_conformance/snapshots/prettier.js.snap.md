@@ -1,4 +1,4 @@
-js compatibility: 583/698 (83.52%)
+js compatibility: 606/698 (86.82%)
 
 # Failed
 
@@ -18,18 +18,11 @@ js compatibility: 583/698 (83.52%)
 | js/binary-expressions/comment.js | 💥 | 97.06% |
 | js/binary-expressions/short-right.js | 💥 | 87.50% |
 | js/binary-expressions/test.js | 💥 | 96.55% |
-| js/call/first-argument-expansion/expression-2nd-arg.js | 💥 | 57.89% |
-| js/call/first-argument-expansion/issue-13237.js | 💥 | 78.95% |
+| js/call/first-argument-expansion/expression-2nd-arg.js | 💥 | 84.21% |
 | js/call/first-argument-expansion/issue-2456.js | 💥 | 81.82% |
 | js/call/first-argument-expansion/issue-4401.js | 💥 | 87.50% |
-| js/call/first-argument-expansion/issue-5172.js | 💥 | 65.22% |
-| js/call/first-argument-expansion/jsx.js | 💥 | 71.43% |
-| js/call/first-argument-expansion/test.js | 💥 | 84.47% |
-| js/chain-expression/call-expression.js | 💥 | 90.48% |
-| js/chain-expression/issue-15785-1.js | 💥 | 84.62% |
-| js/chain-expression/issue-15912.js | 💥 | 0.00% |
-| js/chain-expression/issue-15916.js | 💥 | 80.00% |
-| js/chain-expression/member-expression.js | 💥 | 95.83% |
+| js/call/first-argument-expansion/issue-5172.js | 💥 | 82.61% |
+| js/call/first-argument-expansion/test.js | 💥 | 95.03% |
 | js/comments/15661.js | 💥💥 | 55.81% |
 | js/comments/binary-expressions-parens.js | 💥💥 | 77.78% |
 | js/comments/call_comment.js | 💥💥 | 55.00% |
@@ -52,43 +45,30 @@ js compatibility: 583/698 (83.52%)
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/function/issue-10277.js | 💥 | 30.77% |
-| js/function-first-param/function_expression.js | 💥 | 93.33% |
 | js/functional-composition/pipe-function-calls.js | 💥 | 87.80% |
 | js/functional-composition/ramda_compose.js | 💥 | 97.87% |
-| js/identifier/for-of/let.js | 💥 | 76.92% |
-| js/identifier/parentheses/const.js | 💥💥 | 0.00% |
-| js/identifier/parentheses/let.js | 💥💥 | 72.73% |
+| js/identifier/for-of/let.js | 💥 | 84.62% |
+| js/identifier/parentheses/let.js | 💥💥 | 97.73% |
 | js/if/else.js | 💥 | 89.47% |
 | js/if/issue-15168.js | 💥 | 88.89% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/last-argument-expansion/edge_case.js | 💥 | 94.12% |
-| js/last-argument-expansion/function-body-in-mode-break.js | 💥 | 86.67% |
-| js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 66.67% |
-| js/last-argument-expansion/function-expression.js | 💥 | 80.00% |
-| js/last-argument-expansion/overflow.js | 💥 | 97.56% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/method-chain/13018.js | 💥 | 12.50% |
 | js/method-chain/conditional.js | 💥 | 92.86% |
 | js/method-chain/issue-4125.js | 💥 | 98.80% |
-| js/method-chain/multiple-members.js | 💥 | 76.00% |
 | js/method-chain/simple-args.js | 💥 | 66.67% |
 | js/method-chain/print-width-120/constructor.js | 💥 | 71.43% |
 | js/new-expression/call.js | 💥 | 75.00% |
 | js/new-expression/new_expression.js | 💥 | 88.89% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/optional-chaining/chaining.js | 💥 | 95.40% |
-| js/performance/nested.js | 💥 | 3.45% |
-| js/preserve-line/argument-list.js | 💥 | 96.05% |
-| js/preserve-line/parameter-list.js | 💥 | 98.21% |
+| js/preserve-line/argument-list.js | 💥 | 97.18% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/require/require.js | 💥 | 88.31% |
-| js/require-amd/named-amd-module.js | 💥 | 33.33% |
-| js/require-amd/require.js | 💥 | 90.70% |
 | js/return/binaryish.js | 💥 | 91.30% |
-| js/return/comment.js | 💥 | 95.12% |
 | js/strings/template-literals.js | 💥💥 | 85.16% |
 | js/ternaries/binary.js | 💥💥💥💥✨✨✨✨ | 18.42% |
 | js/ternaries/func-call.js | 💥💥💥💥💥💥💥💥 | 63.89% |
@@ -105,11 +85,8 @@ js compatibility: 583/698 (83.52%)
 | js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
 | js/test-declarations/jest-each.js | 💥💥 | 94.29% |
 | js/throw_statement/binaryish.js | 💥 | 91.30% |
-| js/throw_statement/comment.js | 💥 | 91.30% |
 | js/top-level-await/in-expression.js | 💥 | 0.00% |
-| js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 90.70% |
 | js/update-expression/update_expression.js | 💥 | 75.00% |
-| js/variable_declarator/multiple.js | 💥 | 92.00% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/fragment/fragment.js | 💥 | 98.61% |
