@@ -110,7 +110,8 @@ impl<'c, 'a> JSDocCollector<'c, 'a> {
     }
 }
 
-/// Iterator that finds all `@link` JSDoc tags in a comment
+/// Iterator that finds all `@link` JSDoc tags in a comment and extracts the leftmost
+/// identifier from them.
 pub struct LinkIter<'a> {
     comment: &'a str,
     pos: usize,
@@ -130,18 +131,18 @@ impl<'a> Iterator for LinkIter<'a> {
 
         // find the next @link occurrence
         let link_pos = self.comment[self.pos..].find(LINK)?;
-        let mut pos = self.pos + link_pos + LINK.len();
+        self.pos += link_pos + LINK.len();
 
         // skip past leading whitespace
-        for c in self.comment.chars().skip(pos) {
+        for c in self.comment.chars().skip(self.pos) {
             if !c.is_whitespace() {
                 break;
             }
-            pos += 1;
+            self.pos += c.len_utf8();
         }
 
         // NOTE: won't panic b/c we know slicing `@link` won't hit a utf-8 char boundary
-        let comment = &self.comment[pos..];
+        let comment = &self.comment[self.pos..];
 
         let mut end = 0;
         for c in comment.chars() {
@@ -152,8 +153,8 @@ impl<'a> Iterator for LinkIter<'a> {
                 | '}'
                 => break,
                 // end of identifier
-                c if c.is_whitespace() => break,
-                _ => end += 1,
+                _ if c.is_whitespace() => break,
+                _ => end += c.len_utf8(),
             }
         }
 
@@ -168,9 +169,9 @@ impl<'a> Iterator for LinkIter<'a> {
         // make sure end is just before terminators checked for in above iteration
         #[cfg(debug_assertions)]
         {
-            let end_char = comment.chars().skip(end - 1).next();
+            let end_char = comment.chars().nth(end - 1);
             for terminal in &['.', '[', '}', ' '] {
-                assert_ne!(end_char, Some(*terminal))
+                assert_ne!(end_char, Some(*terminal));
             }
         }
 
@@ -210,15 +211,15 @@ mod tests {
     #[test]
     fn test_link_iter_no_links() {
         let comment = "This has no links at all";
-        let links: Vec<&str> = LinkIter::new(comment).collect();
-        assert_eq!(links.len(), 0);
+        let links: Vec<&str> = LinkIter::new(comment);
+        assert_eq!(links.count(), 0);
     }
 
     #[test]
     fn test_link_iter_empty() {
         let comment = "";
-        let links: Vec<&str> = LinkIter::new(comment).collect();
-        assert_eq!(links.len(), 0);
+        let links: Vec<&str> = LinkIter::new(comment);
+        assert_eq!(links.count(), 0);
     }
 
     #[test]
@@ -233,5 +234,12 @@ mod tests {
         let comment = "This is a {@link reference";
         let links: Vec<&str> = LinkIter::new(comment).collect();
         assert_eq!(links, vec!["reference"]); // maybe this is too flexible?
+    }
+
+    #[test]
+    fn test_member_expr() {
+        let comment = "foo {@link Bar.baz} thing {@link Bang['boom']} more";
+        let links: Vec<&str> = LinkIter::new(comment).collect();
+        assert_eq!(links, vec!["Bar", "Bang"]);
     }
 }
