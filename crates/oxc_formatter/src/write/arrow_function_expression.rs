@@ -296,8 +296,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                     {
                         if matches!(
                             options.call_arg_layout,
-                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                                | Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument | GroupedCallArgumentLayout::GroupedFirstArgument)
                         ) {
                             // For grouped first arguments, be less aggressive about breaking chains
                             // to maintain compact formatting
