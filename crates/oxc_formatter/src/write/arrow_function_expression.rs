@@ -96,7 +96,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                                 arrow,
                                 self.options.call_arg_layout.is_some(),
                                 true,
-                                self.options.cache_mode
+                                self.options.cache_mode,
                             ),
                             space(),
                             "=>"
@@ -299,28 +299,52 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut should_break = false;
 
         loop {
-            if current.expression()
-                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
+            if current.expression() {
+                if let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                && let AstNodes::ArrowFunctionExpression(next) =
-                    &expr_stmt.expression().as_ast_nodes()
-                && matches!(
-                    options.call_arg_layout,
-                    None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                )
-            {
-                should_break = should_break || Self::should_break_chain(current);
+                {
+                    if let AstNodes::ArrowFunctionExpression(next) =
+                        &expr_stmt.expression().as_ast_nodes()
+                    {
+                        if matches!(
+                            options.call_arg_layout,
+                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+                                | Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                        ) {
+                            // For grouped first arguments, be less aggressive about breaking chains
+                            // to maintain compact formatting
+                            let should_break_current = if matches!(
+                                options.call_arg_layout,
+                                Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                            ) {
+                                Self::should_break_chain_conservative(current)
+                            } else {
+                                Self::should_break_chain(current)
+                            };
 
-                should_break = should_break || Self::should_break_chain(next);
+                            let should_break_next = if matches!(
+                                options.call_arg_layout,
+                                Some(GroupedCallArgumentLayout::GroupedFirstArgument)
+                            ) {
+                                Self::should_break_chain_conservative(next)
+                            } else {
+                                Self::should_break_chain(next)
+                            };
 
-                if head.is_none() {
-                    head = Some(current);
-                } else {
-                    middle.push(current);
+                            should_break = should_break || should_break_current;
+                            should_break = should_break || should_break_next;
+
+                            if head.is_none() {
+                                head = Some(current);
+                            } else {
+                                middle.push(current);
+                            }
+
+                            current = next;
+                            continue;
+                        }
+                    }
                 }
-
-                current = next;
-                continue;
             }
             break match head {
                 None => ArrowFunctionLayout::Single(current),
@@ -362,6 +386,42 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let has_parameters = !parameters.items.is_empty();
         let has_type_and_parameters = arrow.return_type.is_some() && has_parameters;
         has_type_and_parameters || has_rest_object_or_array_parameter(parameters)
+    }
+
+    /// Conservative version of should_break_chain for grouped first arguments.
+    /// Only breaks for truly complex cases that would be unreadable if kept inline.
+    /// Allows simple default parameters to maintain compact formatting.
+    fn should_break_chain_conservative(arrow: &ArrowFunctionExpression<'a>) -> bool {
+        if arrow.type_parameters.is_some() {
+            return true;
+        }
+
+        let parameters = &arrow.params;
+
+        // For grouped first arguments, only break on truly complex patterns
+        // Allow simple default parameters (AssignmentPattern) to keep compact formatting
+        if has_rest_object_or_array_parameter(parameters) {
+            return true;
+        }
+
+        // Check for complex patterns beyond simple default parameters
+        let has_complex_patterns = parameters.items.iter().any(|param| {
+            match &param.pattern.kind {
+                // Simple identifiers and assignment patterns (defaults) are OK
+                BindingPatternKind::BindingIdentifier(_)
+                | BindingPatternKind::AssignmentPattern(_) => false,
+                // Object and array destructuring are complex
+                BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => true,
+            }
+        });
+
+        if has_complex_patterns {
+            return true;
+        }
+
+        // Only break if there are both parameters and return type
+        let has_parameters = !parameters.items.is_empty();
+        arrow.return_type.is_some() && has_parameters
     }
 }
 
@@ -434,6 +494,10 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
 
+        // Check if this arrow function is a call argument (even if not grouped)
+        let is_call_argument = is_grouped_call_arg_layout
+            || crate::utils::is_expression_used_as_call_argument(self.head.span, &head_parent);
+
         // If this chain is the callee in a parent call expression, then we
         // want it to break onto a new line to clearly show that the arrow
         // chain is distinct and the _result_ is what's being called.
@@ -476,11 +540,13 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // If the arrow chain will break onto multiple lines, either because
         // it's a callee or because the body is printed on its own line, then
         // the signatures should be expanded first.
-        let break_signatures = (is_callee && body_on_separate_line)
-            || matches!(
-                self.options.assignment_layout,
-                Some(AssignmentLikeLayout::ChainTailArrowFunction)
-            );
+        // However, for call arguments (grouped or not), keep signatures on one line
+        let break_signatures = !is_call_argument
+            && ((is_callee && body_on_separate_line)
+                || matches!(
+                    self.options.assignment_layout,
+                    Some(AssignmentLikeLayout::ChainTailArrowFunction)
+                ));
 
         // Arrow chains as callees or as the right side of an assignment
         // indent the entire signature chain a single level and do _not_
@@ -539,7 +605,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                                 arrow,
                                 is_grouped_call_arg_layout,
                                 is_first,
-                                self.options.cache_mode
+                                self.options.cache_mode,
                             )]
                         )
                     });
@@ -634,6 +700,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             let should_add_soft_line = matches!(head_parent, AstNodes::JSXExpressionContainer(_));
 
             if body_on_separate_line {
+                // Use normal indent for arrow chains to match Prettier
                 write!(
                     f,
                     [
@@ -667,7 +734,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             write!(f, [space(), "=>"])?;
 
-            if is_grouped_call_arg_layout {
+            if is_call_argument {
                 write!(f, [group(&format_tail_body)])?;
             } else {
                 write!(f, [indent_if_group_breaks(&format_tail_body, group_id)])?;
@@ -876,6 +943,8 @@ fn format_signature<'a, 'b>(
         let format_head = FormatContentWithCacheMode::new(arrow.params.span, content, cache_mode);
 
         if is_first_or_last_call_argument {
+            // For grouped arguments, use the strict no-break policy for signatures
+            // This ensures parameters stay on one line to match Prettier behavior
             let mut buffer = RemoveSoftLinesBuffer::new(f);
             let mut recording = buffer.start_recording();
 
