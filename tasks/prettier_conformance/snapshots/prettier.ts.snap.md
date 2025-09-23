@@ -1,4 +1,4 @@
-ts compatibility: 467/573 (81.50%)
+ts compatibility: 468/573 (81.68%)
 
 # Failed
 
@@ -83,7 +83,6 @@ ts compatibility: 467/573 (81.50%)
 | typescript/non-null/parens.ts | 💥 | 96.00% |
 | typescript/nosemi/index-signature.ts | 💥 | 75.00% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
-| typescript/optional-type/complex.ts | 💥 | 0.00% |
 | typescript/optional-variance/basic.ts | 💥 | 98.36% |
 | typescript/optional-variance/with-jsx.tsx | 💥 | 98.36% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |

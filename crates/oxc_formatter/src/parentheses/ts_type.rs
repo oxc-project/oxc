@@ -34,7 +34,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSFunctionType<'a>> {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
-            AstNodes::TSUnionType(_) | AstNodes::TSIntersectionType(_) => true,
+            AstNodes::TSUnionType(_)
+            | AstNodes::TSIntersectionType(_)
+            | AstNodes::TSOptionalType(_) => true,
             _ => false,
         }
     }
@@ -52,7 +54,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConstructorType<'a>> {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
-            AstNodes::TSUnionType(_) | AstNodes::TSIntersectionType(_) => true,
+            AstNodes::TSUnionType(_)
+            | AstNodes::TSIntersectionType(_)
+            | AstNodes::TSOptionalType(_) => true,
             _ => false,
         }
     }
@@ -73,7 +77,10 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSUnionType<'a>> {
 /// Returns `true` if a TS primary type needs parentheses
 fn operator_type_or_higher_needs_parens(span: Span, parent: &AstNodes) -> bool {
     match parent {
-        AstNodes::TSArrayType(_) | AstNodes::TSTypeOperator(_) | AstNodes::TSRestType(_) => true,
+        AstNodes::TSArrayType(_)
+        | AstNodes::TSTypeOperator(_)
+        | AstNodes::TSRestType(_)
+        | AstNodes::TSOptionalType(_) => true,
         AstNodes::TSIndexedAccessType(indexed) => indexed.object_type.span() == span,
         _ => false,
     }
@@ -85,6 +92,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSIntersectionType<'a>> {
             self.parent,
             AstNodes::TSArrayType(_)
                 | AstNodes::TSTypeOperator(_)
+                | AstNodes::TSOptionalType(_)
                 | AstNodes::TSIndexedAccessType(_)
         )
     }
@@ -96,7 +104,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
-            AstNodes::TSUnionType(_) | AstNodes::TSIntersectionType(_) => true,
+            AstNodes::TSUnionType(_)
+            | AstNodes::TSIntersectionType(_)
+            | AstNodes::TSOptionalType(_) => true,
             _ => false,
         }
     }
@@ -109,6 +119,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeOperator<'a>> {
             AstNodes::TSArrayType(_)
                 | AstNodes::TSTypeOperator(_)
                 | AstNodes::TSIndexedAccessType(_)
+                | AstNodes::TSOptionalType(_)
         )
     }
 }
