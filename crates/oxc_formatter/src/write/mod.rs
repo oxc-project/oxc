@@ -1,6 +1,7 @@
 mod array_element_list;
 mod array_expression;
 mod arrow_function_expression;
+mod as_or_satisfies_expression;
 mod assignment_pattern_property_list;
 mod binary_like_expression;
 mod binding_property_list;
@@ -12,6 +13,7 @@ mod export_declarations;
 mod function;
 mod import_declaration;
 mod import_expression;
+mod intersection_type;
 mod jsx;
 mod member_expression;
 mod object_like;
@@ -25,6 +27,7 @@ mod switch_statement;
 mod template;
 mod try_statement;
 mod type_parameters;
+mod union_type;
 mod utils;
 mod variable_declaration;
 
@@ -42,7 +45,7 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
-    format_args,
+    best_fitting, format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
         prelude::*,
@@ -75,7 +78,7 @@ use self::{
     object_pattern_like::ObjectPatternLike,
     parameter_list::{ParameterLayout, ParameterList},
     semicolon::{ClassPropertySemicolon, OptionalSemicolon},
-    type_parameters::{FormatTsTypeParameters, FormatTsTypeParametersOptions},
+    type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
     utils::{
         array::{TrailingSeparatorMode, write_array_node},
         statement_body::FormatStatementBody,
@@ -1208,47 +1211,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let mut types = self.types().iter();
-        if self.needs_parentheses(f) {
-            write!(f, "(")?;
-        }
-        if let Some(item) = types.next() {
-            write!(f, item)?;
-
-            for item in types {
-                write!(f, [" | ", item])?;
-            }
-        }
-        if self.needs_parentheses(f) {
-            write!(f, ")")?;
-        }
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let mut types = self.types().iter();
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            write!(f, "(")?;
-        }
-        if let Some(item) = types.next() {
-            write!(f, item)?;
-
-            for item in types {
-                write!(f, [" & ", item])?;
-            }
-        }
-        if needs_parentheses {
-            write!(f, ")")?;
-        }
-        Ok(())
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["(", self.type_annotation(), ")"])
@@ -1415,44 +1377,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSQualifiedName<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "<")?;
-        for (i, param) in self.params().iter().enumerate() {
-            if i != 0 {
-                write!(f, [",", space()])?;
-            }
-            write!(f, param)?;
-        }
-        write!(f, ">")
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.r#const() {
-            write!(f, ["const", space()])?;
-        }
-        if self.r#in() {
-            write!(f, ["in", space()])?;
-        }
-        if self.out() {
-            write!(f, ["out", space()])?;
-        }
-        write!(f, self.name())?;
-        if let Some(constraint) = &self.constraint() {
-            write!(f, [space(), "extends", space(), constraint])?;
-        }
-        if let Some(default) = &self.default() {
-            write!(f, [space(), "=", space(), default])?;
-        }
-        Ok(())
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["<", self.params(), ">"])
+        FormatTSTypeParameters::new(self, FormatTSTypeParametersOptions::default()).fmt(f)
     }
 }
 
@@ -1501,9 +1428,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
             if let Some(type_parameters) = type_parameters {
                 write!(
                     f,
-                    FormatTsTypeParameters::new(
+                    FormatTSTypeParameters::new(
                         type_parameters,
-                        FormatTsTypeParametersOptions {
+                        FormatTSTypeParametersOptions {
                             group_id: type_parameter_group,
                             is_type_or_interface_decl: true
                         }
@@ -2004,27 +1931,39 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression(), " as ", self.type_annotation()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression(), " satisfies ", self.type_annotation()])
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "<")?;
-        // var r = < <T>(x: T) => T > ((x) => { return null; });
-        //          ^ make sure space is printed here.
-        if matches!(**self.type_annotation(), TSType::TSFunctionType(_)) {
-            write!(f, space())?;
+        let break_after_cast = !matches!(
+            self.expression,
+            Expression::ArrayExpression(_) | Expression::ObjectExpression(_)
+        );
+
+        let format_cast = format_with(|f| {
+            write!(f, ["<", group(&soft_block_indent(&self.type_annotation())), ">",])
+        });
+
+        if break_after_cast {
+            let format_cast = format_cast.memoized();
+            let format_expression = self.expression().memoized();
+
+            write!(
+                f,
+                [best_fitting![
+                    format_args!(format_cast, format_expression),
+                    format_args!(
+                        format_cast,
+                        group(&format_args!(
+                            text("("),
+                            block_indent(&format_expression),
+                            text(")")
+                        ))
+                    ),
+                    format_args!(format_cast, format_expression)
+                ]]
+            )
+        } else {
+            write!(f, [format_cast, self.expression()])
         }
-        write!(f, [self.type_annotation(), ">", self.expression()])
     }
 }
 

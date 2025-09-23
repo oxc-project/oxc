@@ -1537,20 +1537,20 @@ impl FunctionBody<'_> {
 impl<'a> ArrowFunctionExpression<'a> {
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        if self.expression {
-            if let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0] {
-                return Some(&expr_stmt.expression);
-            }
+        if self.expression
+            && let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0]
+        {
+            return Some(&expr_stmt.expression);
         }
         None
     }
 
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.expression {
-            if let Statement::ExpressionStatement(expr_stmt) = &mut self.body.statements[0] {
-                return Some(&mut expr_stmt.expression);
-            }
+        if self.expression
+            && let Statement::ExpressionStatement(expr_stmt) = &mut self.body.statements[0]
+        {
+            return Some(&mut expr_stmt.expression);
         }
         None
     }

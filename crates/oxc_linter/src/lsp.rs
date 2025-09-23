@@ -65,17 +65,37 @@ pub struct MessageWithPosition<'a> {
     pub fixes: PossibleFixesWithPosition<'a>,
 }
 
-impl From<OxcDiagnostic> for MessageWithPosition<'_> {
-    fn from(from: OxcDiagnostic) -> Self {
-        Self {
-            message: from.message.clone(),
-            labels: None,
-            help: from.help.clone(),
-            severity: from.severity,
-            code: from.code.clone(),
-            url: from.url.clone(),
-            fixes: PossibleFixesWithPosition::None,
-        }
+// clippy: the source field is checked and assumed to be less than 4GB, and
+// we assume that the fix offset will not exceed 2GB in either direction
+#[expect(clippy::cast_possible_truncation)]
+pub fn oxc_diagnostic_to_message_with_position<'a>(
+    diagnostic: &OxcDiagnostic,
+    source_text: &str,
+    rope: &Rope,
+) -> MessageWithPosition<'a> {
+    let labels = diagnostic.labels.as_ref().map(|labels| {
+        labels
+            .iter()
+            .map(|labeled_span| {
+                let offset = labeled_span.offset() as u32;
+                let start_position = offset_to_position(rope, offset, source_text);
+                let end_position =
+                    offset_to_position(rope, offset + labeled_span.len() as u32, source_text);
+                let message = labeled_span.label().map(|label| Cow::Owned(label.to_string()));
+
+                SpanPositionMessage::new(start_position, end_position).with_message(message)
+            })
+            .collect::<Vec<_>>()
+    });
+
+    MessageWithPosition {
+        message: diagnostic.message.clone(),
+        severity: diagnostic.severity,
+        help: diagnostic.help.clone(),
+        url: diagnostic.url.clone(),
+        code: diagnostic.code.clone(),
+        labels,
+        fixes: PossibleFixesWithPosition::None,
     }
 }
 

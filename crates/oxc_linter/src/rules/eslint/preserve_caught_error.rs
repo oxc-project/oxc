@@ -54,10 +54,10 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
             return;
         }
 
-        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1) {
-            if has_cause_property(obj_expr, self.catch_param, self.ctx) {
-                return;
-            }
+        if let Some(Argument::ObjectExpression(obj_expr)) = args.get(1)
+            && has_cause_property(obj_expr, self.catch_param, self.ctx)
+        {
+            return;
         }
 
         // Allow spread arguments - they may contain cause property

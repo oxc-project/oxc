@@ -38,7 +38,7 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
 ];
 
 const AST_NODE_NEEDS_PARENTHESES: &[&str] =
-    &["TSTypeAssertion", "TSInferType", "TSConditionalType"];
+    &["TSTypeAssertion", "TSInferType", "TSConditionalType", "TSUnionType", "TSIntersectionType"];
 
 const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "ArrowFunctionExpression" => "FormatJsArrowFunctionExpressionOptions",

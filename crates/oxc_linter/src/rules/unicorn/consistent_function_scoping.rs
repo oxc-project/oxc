@@ -349,17 +349,12 @@ impl<'a> Visit<'a> for ReferencesFinder {
 }
 
 fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    if let Some(parent_node) = outermost_paren_parent(node, ctx) {
-        if let Some(parent_node) = outermost_paren_parent(parent_node, ctx) {
-            if matches!(
-                parent_node.kind(),
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-            ) {
-                if let Some(parent_node) = outermost_paren_parent(parent_node, ctx) {
-                    return matches!(parent_node.kind(), AstKind::CallExpression(_));
-                }
-            }
-        }
+    if let Some(parent_node) = outermost_paren_parent(node, ctx)
+        && let Some(parent_node) = outermost_paren_parent(parent_node, ctx)
+        && matches!(parent_node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        && let Some(parent_node) = outermost_paren_parent(parent_node, ctx)
+    {
+        return matches!(parent_node.kind(), AstKind::CallExpression(_));
     }
 
     false
@@ -368,10 +363,10 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     // we want the 3rd outermost parent
     // parents are: function body -> function -> argument -> call expression
-    if let Some(parent) = nth_outermost_paren_parent(node, ctx, 3) {
-        if let AstKind::CallExpression(call_expr) = parent.kind() {
-            return is_react_hook(&call_expr.callee);
-        }
+    if let Some(parent) = nth_outermost_paren_parent(node, ctx, 3)
+        && let AstKind::CallExpression(call_expr) = parent.kind()
+    {
+        return is_react_hook(&call_expr.callee);
     }
     false
 }

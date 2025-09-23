@@ -89,20 +89,19 @@ impl Rule for NoUnnecessarySliceEnd {
                 );
             }
             Expression::ChainExpression(chain_expr) => {
-                if let Some(expr) = chain_expr.expression.as_member_expression() {
-                    if let Some(msg) =
+                if let Some(expr) = chain_expr.expression.as_member_expression()
+                    && let Some(msg) =
                         check_expression_and_get_diagnostic(member_expr, expr, true, ctx)
-                    {
-                        ctx.diagnostic_with_fix(
-                            no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
-                            |fixer| {
-                                fixer.delete_range(Span::new(
-                                    first_arg.span().end,
-                                    second_arg.span().end,
-                                ))
-                            },
-                        );
-                    }
+                {
+                    ctx.diagnostic_with_fix(
+                        no_unnecessary_slice_end_diagnostic(second_arg.span(), &msg),
+                        |fixer| {
+                            fixer.delete_range(Span::new(
+                                first_arg.span().end,
+                                second_arg.span().end,
+                            ))
+                        },
+                    );
                 }
             }
             match_member_expression!(Expression) => {

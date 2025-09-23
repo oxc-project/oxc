@@ -575,16 +575,17 @@ impl<'a> Codegen<'a> {
 
         // Ensure first string literal is not a directive.
         let mut first_needs_parens = false;
-        if directives.is_empty() && !self.options.minify {
-            if let Statement::ExpressionStatement(s) = first {
-                let s = s.expression.without_parentheses();
-                if matches!(s, Expression::StringLiteral(_)) {
-                    first_needs_parens = true;
-                    self.print_ascii_byte(b'(');
-                    s.print_expr(self, Precedence::Lowest, ctx);
-                    self.print_ascii_byte(b')');
-                    self.print_semicolon_after_statement();
-                }
+        if directives.is_empty()
+            && !self.options.minify
+            && let Statement::ExpressionStatement(s) = first
+        {
+            let s = s.expression.without_parentheses();
+            if matches!(s, Expression::StringLiteral(_)) {
+                first_needs_parens = true;
+                self.print_ascii_byte(b'(');
+                s.print_expr(self, Precedence::Lowest, ctx);
+                self.print_ascii_byte(b')');
+                self.print_semicolon_after_statement();
             }
         }
 
@@ -674,24 +675,23 @@ impl<'a> Codegen<'a> {
     }
 
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
-        if let Some(scoping) = &self.scoping {
-            if let Some(reference_id) = reference.reference_id.get() {
-                if let Some(name) = scoping.get_reference_name(reference_id) {
-                    // SAFETY: Hack the lifetime to be part of the allocator.
-                    return unsafe { std::mem::transmute_copy(&name) };
-                }
-            }
+        if let Some(scoping) = &self.scoping
+            && let Some(reference_id) = reference.reference_id.get()
+            && let Some(name) = scoping.get_reference_name(reference_id)
+        {
+            // SAFETY: Hack the lifetime to be part of the allocator.
+            return unsafe { std::mem::transmute_copy(&name) };
         }
         reference.name.as_str()
     }
 
     fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
-        if let Some(scoping) = &self.scoping {
-            if let Some(symbol_id) = ident.symbol_id.get() {
-                let name = scoping.symbol_name(symbol_id);
-                // SAFETY: Hack the lifetime to be part of the allocator.
-                return unsafe { std::mem::transmute_copy(&name) };
-            }
+        if let Some(scoping) = &self.scoping
+            && let Some(symbol_id) = ident.symbol_id.get()
+        {
+            let name = scoping.symbol_name(symbol_id);
+            // SAFETY: Hack the lifetime to be part of the allocator.
+            return unsafe { std::mem::transmute_copy(&name) };
         }
         ident.name.as_str()
     }
@@ -800,16 +800,17 @@ impl<'a> Codegen<'a> {
         // Check for numbers ending with zeros (but not hex numbers)
         // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
         // from being incorrectly converted to scientific notation
-        if !is_hex && best_candidate.ends_with('0') {
-            if let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0') {
-                let base = &best_candidate[0..best_candidate.len() - len];
-                let exp_str_len = itoa::Buffer::new().format(len).len();
-                // Calculate expected length: base + 'e' + len
-                let expected_len = base.len() + 1 + exp_str_len;
-                if expected_len < best_candidate.len() {
-                    best_candidate = format!("{base}e{len}").into();
-                    debug_assert_eq!(best_candidate.len(), expected_len);
-                }
+        if !is_hex
+            && best_candidate.ends_with('0')
+            && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
+        {
+            let base = &best_candidate[0..best_candidate.len() - len];
+            let exp_str_len = itoa::Buffer::new().format(len).len();
+            // Calculate expected length: base + 'e' + len
+            let expected_len = base.len() + 1 + exp_str_len;
+            if expected_len < best_candidate.len() {
+                best_candidate = format!("{base}e{len}").into();
+                debug_assert_eq!(best_candidate.len(), expected_len);
             }
         }
 
@@ -836,26 +837,26 @@ impl<'a> Codegen<'a> {
     }
 
     fn add_source_mapping(&mut self, span: Span) {
-        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            if !span.is_empty() {
-                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
-            }
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
         }
     }
 
     fn add_source_mapping_end(&mut self, span: Span) {
-        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            if !span.is_empty() {
-                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
-            }
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
         }
     }
 
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
-        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            if !span.is_empty() {
-                sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
-            }
+        if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
+            && !span.is_empty()
+        {
+            sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
         }
     }
 }

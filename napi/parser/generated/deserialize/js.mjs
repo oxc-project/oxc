@@ -7,7 +7,15 @@ const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
 
-export function deserialize(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput) {
+export function deserialize(buffer, sourceText, sourceByteLen, preserveParens) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeRawTransferData);
+}
+
+export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, preserveParens) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeProgram);
+}
+
+function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
@@ -17,7 +25,7 @@ export function deserialize(buffer, sourceTextInput, sourceByteLenInput, preserv
   sourceIsAscii = sourceText.length === sourceByteLen;
   preserveParens = preserveParensInput;
 
-  const data = deserializeRawTransferData(uint32[536870902]);
+  const data = deserialize(uint32[536870902]);
 
   uint8 =
     uint32 =

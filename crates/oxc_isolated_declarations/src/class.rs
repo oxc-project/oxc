@@ -453,8 +453,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                 )
                             } else {
                                 let mut params = params.clone_in(self.ast.allocator);
-                                if let Some(param) = params.items.first_mut() {
-                                    if let Some(annotation) =
+                                if let Some(param) = params.items.first_mut()
+                                    && let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
                                             if method.key.content_eq(key) {
                                                 Some(
@@ -465,9 +465,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                                 None
                                             }
                                         })
-                                    {
-                                        param.pattern.type_annotation = annotation;
-                                    }
+                                {
+                                    param.pattern.type_annotation = annotation;
                                 }
                                 params
                             }

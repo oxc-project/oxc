@@ -43,13 +43,13 @@ impl<'a> PeepholeOptimizations {
         // "a op (b op c)" => "(a op b) op c"
         // "a op (b op (c op d))" => "((a op b) op c) op d"
         loop {
-            if let Expression::LogicalExpression(logical_expr) = &mut b {
-                if logical_expr.operator == op {
-                    let right = logical_expr.left.take_in(ctx.ast);
-                    a = Self::join_with_left_associative_op(span, op, a, right, ctx);
-                    b = logical_expr.right.take_in(ctx.ast);
-                    continue;
-                }
+            if let Expression::LogicalExpression(logical_expr) = &mut b
+                && logical_expr.operator == op
+            {
+                let right = logical_expr.left.take_in(ctx.ast);
+                a = Self::join_with_left_associative_op(span, op, a, right, ctx);
+                b = logical_expr.right.take_in(ctx.ast);
+                continue;
             }
             break;
         }
@@ -157,10 +157,10 @@ impl<'a> PeepholeOptimizations {
         match expr {
             Expression::Identifier(id) => Some(id),
             Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign {
-                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
-                        return Some(id);
-                    }
+                if assign_expr.operator == AssignmentOperator::Assign
+                    && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
+                {
+                    return Some(id);
                 }
                 None
             }

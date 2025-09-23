@@ -984,10 +984,10 @@ fn is_stable_value<'a, 'b>(
     component_scope_id: ScopeId,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    if let Some(symbol_id) = ctx.scoping().get_reference(ident_reference_id).symbol_id() {
-        if !visited.insert(symbol_id) {
-            return true;
-        }
+    if let Some(symbol_id) = ctx.scoping().get_reference(ident_reference_id).symbol_id()
+        && !visited.insert(symbol_id)
+    {
+        return true;
     }
 
     match node.kind() {

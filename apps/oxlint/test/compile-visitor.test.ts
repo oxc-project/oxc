@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+// Lazy implementation
+/*
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
 import { NODE_TYPE_IDS_MAP } from '../dist/generated/lazy/types.mjs';
+*/
+// TODO(camc314): we need to generate `.d.ts` file for this module
+// @ts-expect-error
+import { NODE_TYPE_IDS_MAP } from '../dist/generated/visit/types.mjs';
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -30,6 +36,7 @@ describe('compile visitor', () => {
   });
 
   it('throws if unknown visitor key', () => {
+    // @ts-expect-error
     expect(() => addVisitorToCompiled({ Foo() {} }))
       .toThrow(new Error("Unknown node type 'Foo' in visitor object"));
   });

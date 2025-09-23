@@ -168,16 +168,14 @@ impl Rule for NoCycle {
                 // export function example1() { }
                 // export * as Example from './test.js';
                 // ```
-                if path == &parent.resolved_absolute_path {
-                    if let Some(e) = val
+                if path == &parent.resolved_absolute_path
+                    && let Some(e) = val
                         .indirect_export_entries
                         .iter()
                         .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
-                    {
-                        if e.export_name.is_name() {
-                            return false;
-                        }
-                    }
+                    && e.export_name.is_name()
+                {
+                    return false;
                 }
 
                 true

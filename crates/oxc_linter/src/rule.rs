@@ -354,6 +354,14 @@ mod test {
             &[IfStatement],
         );
         assert_rule_runs_on_node_types(
+            &eslint::max_params::MaxParams::default(),
+            &[Function, ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &import::no_dynamic_require::NoDynamicRequire::default(),
+            &[ImportExpression, CallExpression],
+        );
+        assert_rule_runs_on_node_types(
             &jest::prefer_jest_mocked::PreferJestMocked,
             &[TSAsExpression, TSTypeAssertion],
         );

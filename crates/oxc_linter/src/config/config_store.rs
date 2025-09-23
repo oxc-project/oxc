@@ -189,30 +189,30 @@ impl Config {
         let mut configured_plugins = self.base.config.plugins.builtin;
 
         for override_config in overrides_to_apply {
-            if let Some(override_plugins) = &override_config.plugins {
-                if *override_plugins != plugins {
-                    // Only apply categories to plugins that:
-                    // 1. Are in the current accumulated plugin set
-                    // 2. Have NOT been configured yet (not in root or previous overrides)
-                    let unconfigured_plugins = plugins.builtin & !configured_plugins;
+            if let Some(override_plugins) = &override_config.plugins
+                && *override_plugins != plugins
+            {
+                // Only apply categories to plugins that:
+                // 1. Are in the current accumulated plugin set
+                // 2. Have NOT been configured yet (not in root or previous overrides)
+                let unconfigured_plugins = plugins.builtin & !configured_plugins;
 
-                    if !unconfigured_plugins.is_empty() {
-                        for (rule, severity) in all_rules.iter().filter_map(|rule| {
-                            let rule_plugin = BuiltinLintPlugins::from(rule.plugin_name());
-                            // Only apply categories to rules from unconfigured plugins
-                            if unconfigured_plugins.contains(rule_plugin) {
-                                self.categories
-                                    .get(&rule.category())
-                                    .map(|severity| (rule.clone(), severity))
-                            } else {
-                                None
-                            }
-                        }) {
-                            rules.entry(rule).or_insert(*severity);
+                if !unconfigured_plugins.is_empty() {
+                    for (rule, severity) in all_rules.iter().filter_map(|rule| {
+                        let rule_plugin = BuiltinLintPlugins::from(rule.plugin_name());
+                        // Only apply categories to rules from unconfigured plugins
+                        if unconfigured_plugins.contains(rule_plugin) {
+                            self.categories
+                                .get(&rule.category())
+                                .map(|severity| (rule.clone(), severity))
+                        } else {
+                            None
                         }
-                        // Mark these plugins as configured
-                        configured_plugins |= unconfigured_plugins;
+                    }) {
+                        rules.entry(rule).or_insert(*severity);
                     }
+                    // Mark these plugins as configured
+                    configured_plugins |= unconfigured_plugins;
                 }
             }
 

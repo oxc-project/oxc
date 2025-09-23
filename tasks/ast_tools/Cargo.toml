@@ -23,7 +23,7 @@ cow-utils = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
 lazy-regex = { workspace = true }
-oxc_index = { workspace = true }
+oxc_index = { workspace = true, features = ["serde"] }
 phf = { workspace = true, features = ["macros"] }
 phf_codegen = { workspace = true }
 prettyplease = { workspace = true }
@@ -31,5 +31,6 @@ proc-macro2 = { workspace = true }
 quote = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 syn = { workspace = true, features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro"] }

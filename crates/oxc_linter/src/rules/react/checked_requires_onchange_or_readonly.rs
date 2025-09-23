@@ -104,13 +104,13 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     );
 
                 if let Some(checked_span) = checked_span {
-                    if !self.ignore_exclusive_checked_attribute {
-                        if let Some(default_checked_span) = default_checked_span {
-                            ctx.diagnostic(exclusive_checked_attribute(
-                                checked_span,
-                                default_checked_span,
-                            ));
-                        }
+                    if !self.ignore_exclusive_checked_attribute
+                        && let Some(default_checked_span) = default_checked_span
+                    {
+                        ctx.diagnostic(exclusive_checked_attribute(
+                            checked_span,
+                            default_checked_span,
+                        ));
                     }
 
                     if !self.ignore_missing_properties && is_missing_property {
@@ -168,13 +168,13 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     );
 
                 if let Some(checked_span) = checked_span {
-                    if !self.ignore_exclusive_checked_attribute {
-                        if let Some(default_checked_span) = default_checked_span {
-                            ctx.diagnostic(exclusive_checked_attribute(
-                                checked_span,
-                                default_checked_span,
-                            ));
-                        }
+                    if !self.ignore_exclusive_checked_attribute
+                        && let Some(default_checked_span) = default_checked_span
+                    {
+                        ctx.diagnostic(exclusive_checked_attribute(
+                            checked_span,
+                            default_checked_span,
+                        ));
                     }
 
                     if !self.ignore_missing_properties && is_missing_property {

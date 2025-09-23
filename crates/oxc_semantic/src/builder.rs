@@ -371,12 +371,11 @@ impl<'a> SemanticBuilder<'a> {
         // The `self.cfg.is_some()` check here could be removed, since `ast_node_records` is empty
         // if CFG is disabled. But benchmarks showed removing the extra check is a perf regression.
         // <https://github.com/oxc-project/oxc/pull/4273>
-        if self.cfg.is_some() {
-            if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == NodeId::DUMMY {
-                    *record = self.current_node_id;
-                }
-            }
+        if self.cfg.is_some()
+            && let Some(record) = self.ast_node_records.last_mut()
+            && *record == NodeId::DUMMY
+        {
+            *record = self.current_node_id;
         }
     }
 
@@ -1584,20 +1583,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 before_try_block_graph_ix,
                 EdgeType::Normal,
             );
-            if let Some(catch_block_end_ix) = catch_block_end_ix {
-                if finally_block_end_ix.is_none() {
-                    cfg.add_edge(
-                        after_try_block_graph_ix,
-                        after_try_statement_block_ix,
-                        EdgeType::Normal,
-                    );
+            if let Some(catch_block_end_ix) = catch_block_end_ix
+                && finally_block_end_ix.is_none()
+            {
+                cfg.add_edge(
+                    after_try_block_graph_ix,
+                    after_try_statement_block_ix,
+                    EdgeType::Normal,
+                );
 
-                    cfg.add_edge(
-                        catch_block_end_ix,
-                        after_try_statement_block_ix,
-                        EdgeType::Normal,
-                    );
-                }
+                cfg.add_edge(catch_block_end_ix, after_try_statement_block_ix, EdgeType::Normal);
             }
             if let Some(finally_block_end_ix) = finally_block_end_ix {
                 if catch_block_end_ix.is_some() {

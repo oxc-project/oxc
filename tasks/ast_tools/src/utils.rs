@@ -120,3 +120,13 @@ macro_rules! write_it {
     }}
 }
 pub(crate) use write_it;
+
+/// Macro to create a `String`.
+///
+/// e.g. `string!("hello")` -> "hello".to_string().
+macro_rules! string {
+    ($s:literal) => {
+        $s.to_string()
+    };
+}
+pub(crate) use string;

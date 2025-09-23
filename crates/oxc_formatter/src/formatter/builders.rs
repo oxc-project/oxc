@@ -2366,10 +2366,10 @@ where
     /// Adds a new entry to the join output.
     pub fn entry(&mut self, entry: &dyn Format<'ast>) -> &mut Self {
         self.result = self.result.and_then(|()| {
-            if let Some(with) = &self.with {
-                if self.has_elements {
-                    with.fmt(self.fmt)?;
-                }
+            if let Some(with) = &self.with
+                && self.has_elements
+            {
+                with.fmt(self.fmt)?;
             }
             self.has_elements = true;
 

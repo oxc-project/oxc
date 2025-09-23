@@ -1,6 +1,7 @@
 {
   "name": "oxlint",
   "version": "1.16.0",
+  "main": "dist/index.js",
   "bin": "dist/cli.js",
   "type": "module",
   "scripts": {
@@ -34,8 +35,9 @@
     "dist"
   ],
   "devDependencies": {
+    "eslint": "^9.36.0",
     "execa": "^9.6.0",
-    "tsdown": "^0.15.0",
+    "tsdown": "0.15.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

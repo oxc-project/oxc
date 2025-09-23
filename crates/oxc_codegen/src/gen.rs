@@ -945,10 +945,11 @@ impl Gen for ImportAttribute<'_> {
 impl Gen for ExportNamedDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        if let Some(Declaration::FunctionDeclaration(func)) = &self.declaration {
-            if func.pure && p.options.print_annotation_comment() {
-                p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
-            }
+        if let Some(Declaration::FunctionDeclaration(func)) = &self.declaration
+            && func.pure
+            && p.options.print_annotation_comment()
+        {
+            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
         p.add_source_mapping(self.span);
         p.print_indent();
@@ -1092,10 +1093,11 @@ impl Gen for ExportAllDeclaration<'_> {
 impl Gen for ExportDefaultDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &self.declaration {
-            if func.pure && p.options.print_annotation_comment() {
-                p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
-            }
+        if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &self.declaration
+            && func.pure
+            && p.options.print_annotation_comment()
+        {
+            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
         p.add_source_mapping(self.span);
         p.print_indent();
@@ -1586,10 +1588,10 @@ impl Gen for ObjectProperty<'_> {
         if let PropertyKey::StaticIdentifier(key) = &self.key {
             if key.name == "__proto__" {
                 shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses() {
-                if key.name == p.get_identifier_reference_name(ident) {
-                    shorthand = true;
-                }
+            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
+                && key.name == p.get_identifier_reference_name(ident)
+            {
+                shorthand = true;
             }
         }
 
@@ -1597,12 +1599,11 @@ impl Gen for ObjectProperty<'_> {
 
         // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
         // "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
-        if !computed {
-            if let Some(Expression::NumericLiteral(n)) = self.key.as_expression() {
-                if n.value.is_sign_negative() || n.value.is_infinite() {
-                    computed = true;
-                }
-            }
+        if !computed
+            && let Some(Expression::NumericLiteral(n)) = self.key.as_expression()
+            && (n.value.is_sign_negative() || n.value.is_infinite())
+        {
+            computed = true;
         }
 
         if !shorthand {
@@ -2811,10 +2812,9 @@ impl Gen for BindingProperty<'_> {
                 BindingPatternKind::AssignmentPattern(assignment_pattern) => {
                     if let BindingPatternKind::BindingIdentifier(ident) =
                         &assignment_pattern.left.kind
+                        && key.name == p.get_binding_identifier_name(ident)
                     {
-                        if key.name == p.get_binding_identifier_name(ident) {
-                            shorthand = true;
-                        }
+                        shorthand = true;
                     }
                 }
                 _ => {}
@@ -3205,12 +3205,12 @@ impl Gen for TSTemplateLiteralType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("`");
         for (index, item) in self.quasis.iter().enumerate() {
-            if index != 0 {
-                if let Some(types) = self.types.get(index - 1) {
-                    p.print_str("${");
-                    types.print(p, ctx);
-                    p.print_str("}");
-                }
+            if index != 0
+                && let Some(types) = self.types.get(index - 1)
+            {
+                p.print_str("${");
+                types.print(p, ctx);
+                p.print_str("}");
             }
             p.print_str(item.value.raw.as_str());
         }

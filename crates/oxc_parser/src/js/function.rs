@@ -154,10 +154,11 @@ impl<'a> ParserImpl<'a> {
             self.asi();
         }
 
-        if ctx.has_ambient() && modifiers.contains_declare() {
-            if let Some(body) = &body {
-                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
-            }
+        if ctx.has_ambient()
+            && modifiers.contains_declare()
+            && let Some(body) = &body
+        {
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
         self.verify_modifiers(
             modifiers,

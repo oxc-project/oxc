@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::OnceLock};
+use std::{fmt::Display, str::FromStr, sync::OnceLock};
 
 use browserslist::Version;
 use cow_utils::CowUtils;
@@ -76,6 +76,30 @@ impl FromStr for Engine {
     }
 }
 
+impl Display for Engine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            Self::Chrome => "chrome",
+            Self::Deno => "deno",
+            Self::Edge => "edge",
+            Self::Firefox => "firefox",
+            Self::Hermes => "hermes",
+            Self::Ie => "ie",
+            Self::Ios => "ios",
+            Self::Node => "node",
+            Self::Opera => "opera",
+            Self::Rhino => "rhino",
+            Self::Safari => "safari",
+            Self::Samsung => "samsung",
+            Self::Electron => "electron",
+            Self::OperaMobile => "opera_mobile",
+            Self::Android => "android",
+            Self::Es => "es",
+        };
+        f.write_str(name)
+    }
+}
+
 fn engines() -> &'static FxHashMap<&'static str, Engine> {
     static ENGINES: OnceLock<FxHashMap<&'static str, Engine>> = OnceLock::new();
     ENGINES.get_or_init(|| {
@@ -97,4 +121,33 @@ fn engines() -> &'static FxHashMap<&'static str, Engine> {
             ("android", Engine::Android),
         ])
     })
+}
+
+#[test]
+fn test_displayed_value_is_parsable() {
+    let engines = vec![
+        Engine::Chrome,
+        Engine::Deno,
+        Engine::Edge,
+        Engine::Firefox,
+        Engine::Hermes,
+        Engine::Ie,
+        Engine::Ios,
+        Engine::Node,
+        Engine::Opera,
+        Engine::Rhino,
+        Engine::Safari,
+        Engine::Samsung,
+        Engine::Electron,
+        Engine::OperaMobile,
+        Engine::Android,
+        Engine::Es,
+    ];
+    for engine in engines {
+        // Engine::ES is handled by `ESTarget`
+        if engine == Engine::Es {
+            continue;
+        }
+        assert!(engine.to_string().parse::<Engine>().is_ok(), "\"{engine}\" should be parsable");
+    }
 }

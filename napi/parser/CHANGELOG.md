@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.91.0] - 2025-09-22
+
+### 🐛 Bug Fixes
+
+- 0185984 napi/parser: Raw transfer `preserveParens` option apply to `TSParenthesizedType` (#13964) (overlookmotel)
+- bd2fa90 napi/parser: Move `browser.js` file (#13918) (overlookmotel)
+- 5ff91bc napi/parser: Fix example (#13887) (overlookmotel)
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 🚜 Refactor
+
+- 48062d0 napi/parser: Itemize files in `package.json` (#13978) (overlookmotel)
+- 329b7e7 napi/parser: Move scripts to `scripts` directory (#13900) (overlookmotel)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 2cef8ec napi/parser: Remove outdated comment (#13886) (overlookmotel)
+
+### 📚 Documentation
+
+- 7a50ad9 napi/parser, napi/transform: Correct README examples (#13934) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-22
+
+### 🐛 Bug Fixes
+
+- 0185984 napi/parser: Raw transfer `preserveParens` option apply to `TSParenthesizedType` (#13964) (overlookmotel)
+- bd2fa90 napi/parser: Move `browser.js` file (#13918) (overlookmotel)
+- 5ff91bc napi/parser: Fix example (#13887) (overlookmotel)
+- 21bbf95 napi: Rebuild bindings file for NAPI packages (#13889) (overlookmotel)
+
+### 🚜 Refactor
+
+- 48062d0 napi/parser: Itemize files in `package.json` (#13978) (overlookmotel)
+- 329b7e7 napi/parser: Move scripts to `scripts` directory (#13900) (overlookmotel)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 2cef8ec napi/parser: Remove outdated comment (#13886) (overlookmotel)
+
+### 📚 Documentation
+
+- 7a50ad9 napi/parser, napi/transform: Correct README examples (#13934) (overlookmotel)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
 ## [0.91.0] - 2025-09-21
 
 ### 🐛 Bug Fixes

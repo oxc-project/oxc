@@ -25,12 +25,12 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     pub fn substitute_object_property(prop: &mut ObjectProperty<'a>, ctx: &mut Ctx<'a, '_>) {
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
-        if !prop.method {
-            if let PropertyKey::StringLiteral(str) = &prop.key {
-                // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
-                if str.value == "__proto__" {
-                    return;
-                }
+        if !prop.method
+            && let PropertyKey::StringLiteral(str) = &prop.key
+        {
+            // "{ __proto__ }" sets prototype, while "{ ['__proto__'] }" does not
+            if str.value == "__proto__" {
+                return;
             }
         }
 
@@ -162,17 +162,14 @@ impl<'a> PeepholeOptimizations {
         if !arrow_expr.expression
             && arrow_expr.body.directives.is_empty()
             && arrow_expr.body.statements.len() == 1
+            && let Some(body) = arrow_expr.body.statements.first_mut()
+            && let Statement::ReturnStatement(ret_stmt) = body
         {
-            if let Some(body) = arrow_expr.body.statements.first_mut() {
-                if let Statement::ReturnStatement(ret_stmt) = body {
-                    let return_stmt_arg =
-                        ret_stmt.argument.as_mut().map(|arg| arg.take_in(ctx.ast));
-                    if let Some(arg) = return_stmt_arg {
-                        *body = ctx.ast.statement_expression(arg.span(), arg);
-                        arrow_expr.expression = true;
-                        ctx.state.changed = true;
-                    }
-                }
+            let return_stmt_arg = ret_stmt.argument.as_mut().map(|arg| arg.take_in(ctx.ast));
+            if let Some(arg) = return_stmt_arg {
+                *body = ctx.ast.statement_expression(arg.span(), arg);
+                arrow_expr.expression = true;
+                ctx.state.changed = true;
             }
         }
     }
@@ -1137,18 +1134,18 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.changed = true;
                     return;
                 }
-                if let Some(value) = Ctx::string_to_equivalent_number_value(value) {
-                    if value >= 0.0 {
-                        *computed = false;
-                        *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
-                            s.span,
-                            value,
-                            None,
-                            NumberBase::Decimal,
-                        ));
-                        ctx.state.changed = true;
-                        return;
-                    }
+                if let Some(value) = Ctx::string_to_equivalent_number_value(value)
+                    && value >= 0.0
+                {
+                    *computed = false;
+                    *key = PropertyKey::NumericLiteral(ctx.ast.alloc_numeric_literal(
+                        s.span,
+                        value,
+                        None,
+                        NumberBase::Decimal,
+                    ));
+                    ctx.state.changed = true;
+                    return;
                 }
                 if *computed {
                     *computed = false;
@@ -1426,16 +1423,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_catch_clause(catch: &mut CatchClause<'a>, ctx: &Ctx<'a, '_>) {
-        if ctx.supports_feature(ESFeature::ES2019OptionalCatchBinding) {
-            if let Some(param) = &catch.param {
-                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                    if catch.body.body.is_empty()
-                        || ctx.scoping().symbol_is_unused(ident.symbol_id())
-                    {
-                        catch.param = None;
-                    }
-                }
-            }
+        if ctx.supports_feature(ESFeature::ES2019OptionalCatchBinding)
+            && let Some(param) = &catch.param
+            && let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind
+            && (catch.body.body.is_empty() || ctx.scoping().symbol_is_unused(ident.symbol_id()))
+        {
+            catch.param = None;
         }
     }
 

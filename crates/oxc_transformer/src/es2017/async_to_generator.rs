@@ -131,11 +131,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
             _ => None,
         };
 
-        if let Some(function) = function {
-            if function.r#async && !function.generator && !function.is_typescript_syntax() {
-                let new_statement = self.executor.transform_function_declaration(function, ctx);
-                self.ctx.statement_injector.insert_after(stmt, new_statement);
-            }
+        if let Some(function) = function
+            && function.r#async
+            && !function.generator
+            && !function.is_typescript_syntax()
+        {
+            let new_statement = self.executor.transform_function_declaration(function, ctx);
+            self.ctx.statement_injector.insert_after(stmt, new_statement);
         }
     }
 
@@ -579,10 +581,10 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();
-        if let Some(first) = chars.next() {
-            if is_identifier_start(first) {
-                name.push(first);
-            }
+        if let Some(first) = chars.next()
+            && is_identifier_start(first)
+        {
+            name.push(first);
         }
 
         for c in chars {

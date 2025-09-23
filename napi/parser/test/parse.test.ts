@@ -1,7 +1,7 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
-import { parseAsync, parseSync } from '../src-js/index.mjs';
+import { parseAsync, parseSync, visitorKeys } from '../src-js/index.mjs';
 import type {
   ExpressionStatement,
   ParserOptions,

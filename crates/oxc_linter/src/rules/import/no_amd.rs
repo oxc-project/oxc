@@ -55,19 +55,19 @@ impl Rule for NoAmd {
         if node.scope_id() != ctx.scoping().root_scope_id() {
             return;
         }
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Expression::Identifier(identifier) = &call_expr.callee {
-                if identifier.name != "define" && identifier.name != "require" {
-                    return;
-                }
+        if let AstKind::CallExpression(call_expr) = node.kind()
+            && let Expression::Identifier(identifier) = &call_expr.callee
+        {
+            if identifier.name != "define" && identifier.name != "require" {
+                return;
+            }
 
-                if call_expr.arguments.len() != 2 {
-                    return;
-                }
+            if call_expr.arguments.len() != 2 {
+                return;
+            }
 
-                if let Argument::ArrayExpression(_) = call_expr.arguments[0] {
-                    ctx.diagnostic(no_amd_diagnostic(identifier.span, identifier.name.as_str()));
-                }
+            if let Argument::ArrayExpression(_) = call_expr.arguments[0] {
+                ctx.diagnostic(no_amd_diagnostic(identifier.span, identifier.name.as_str()));
             }
         }
     }

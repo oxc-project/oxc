@@ -135,10 +135,12 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
     }
 
     // `useRef(null)`
-    if let Expression::Identifier(ident) = &call_expr.callee {
-        if ident.name == "useRef" && call_expr.arguments.len() == 1 && !call_expr.optional {
-            return true;
-        }
+    if let Expression::Identifier(ident) = &call_expr.callee
+        && ident.name == "useRef"
+        && call_expr.arguments.len() == 1
+        && !call_expr.optional
+    {
+        return true;
     }
 
     // `React.useRef(null)`

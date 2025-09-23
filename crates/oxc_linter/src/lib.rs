@@ -302,10 +302,10 @@ impl Linter {
 
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
-            if let Some(severity) = self.options.report_unused_directive {
-                if severity.is_warn_deny() {
-                    ctx_host.report_unused_directives(severity.into());
-                }
+            if let Some(severity) = self.options.report_unused_directive
+                && severity.is_warn_deny()
+            {
+                ctx_host.report_unused_directives(severity.into());
             }
 
             // no next `<script>` block found, the complete file is finished linting

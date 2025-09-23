@@ -74,45 +74,44 @@ impl Rule for PreferLiteralEnumMember {
             return;
         }
 
-        if let Expression::TemplateLiteral(template) = initializer {
-            if template.expressions.is_empty() {
+        if let Expression::TemplateLiteral(template) = initializer
+            && template.expressions.is_empty()
+        {
+            return;
+        }
+
+        if let Expression::UnaryExpression(unary_expr) = initializer
+            && unary_expr.argument.is_literal()
+        {
+            if matches!(
+                unary_expr.operator,
+                UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation,
+            ) {
+                return;
+            }
+
+            if self.allow_bitwise_expressions
+                && matches!(unary_expr.operator, UnaryOperator::BitwiseNot)
+            {
                 return;
             }
         }
 
-        if let Expression::UnaryExpression(unary_expr) = initializer {
-            if unary_expr.argument.is_literal() {
-                if matches!(
-                    unary_expr.operator,
-                    UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation,
-                ) {
-                    return;
-                }
-
-                if self.allow_bitwise_expressions
-                    && matches!(unary_expr.operator, UnaryOperator::BitwiseNot)
-                {
-                    return;
-                }
-            }
-        }
-
-        if self.allow_bitwise_expressions {
-            if let Expression::BinaryExpression(binary_expr) = initializer {
-                if matches!(
-                    binary_expr.operator,
-                    BinaryOperator::BitwiseOR
-                        | BinaryOperator::BitwiseAnd
-                        | BinaryOperator::BitwiseXOR
-                        | BinaryOperator::ShiftLeft
-                        | BinaryOperator::ShiftRight
-                        | BinaryOperator::ShiftRightZeroFill
-                ) && binary_expr.left.is_literal()
-                    && binary_expr.right.is_literal()
-                {
-                    return;
-                }
-            }
+        if self.allow_bitwise_expressions
+            && let Expression::BinaryExpression(binary_expr) = initializer
+            && matches!(
+                binary_expr.operator,
+                BinaryOperator::BitwiseOR
+                    | BinaryOperator::BitwiseAnd
+                    | BinaryOperator::BitwiseXOR
+                    | BinaryOperator::ShiftLeft
+                    | BinaryOperator::ShiftRight
+                    | BinaryOperator::ShiftRightZeroFill
+            )
+            && binary_expr.left.is_literal()
+            && binary_expr.right.is_literal()
+        {
+            return;
         }
 
         ctx.diagnostic(prefer_literal_enum_member_diagnostic(decl.span));

@@ -1,0 +1,9 @@
+{
+    "plugins": ["./test_plugin"],
+    "categories": {"correctness": "off"},
+    "rules": {
+        "create-once-plugin/always-run": "error",
+        "create-once-plugin/skip-run": "error"
+    },
+    "ignorePatterns": ["test_plugin/**"]
+}

@@ -44,6 +44,10 @@
     "generated/lazy/constructors.mjs",
     "generated/lazy/types.mjs",
     "generated/lazy/walk.mjs",
+    "generated/visit/keys.mjs",
+    "generated/visit/types.mjs",
+    "generated/visit/visitor.d.ts",
+    "generated/visit/walk.mjs",
     "src-js/bindings.mjs",
     "src-js/index.d.ts",
     "src-js/index.mjs",
@@ -56,7 +60,9 @@
     "src-js/raw-transfer/lazy-common.mjs",
     "src-js/raw-transfer/node-array.mjs",
     "src-js/raw-transfer/supported.mjs",
-    "src-js/raw-transfer/visitor.mjs"
+    "src-js/raw-transfer/visitor.mjs",
+    "src-js/visit/index.mjs",
+    "src-js/visit/visitor.mjs"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -68,6 +74,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
     "@napi-rs/wasm-runtime": "catalog:",
+    "@typescript-eslint/visitor-keys": "^8.44.0",
     "@vitest/browser": "3.2.4",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
@@ -100,6 +107,6 @@
         "fs": false
       }
     },
-    "dtsHeaderFile": "src-js/header.js"
+    "dtsHeaderFile": "src-js/header.d.ts"
   }
 }
