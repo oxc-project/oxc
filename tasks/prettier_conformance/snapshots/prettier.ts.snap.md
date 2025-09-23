@@ -1,4 +1,4 @@
-ts compatibility: 448/573 (78.18%)
+ts compatibility: 452/573 (78.88%)
 
 # Failed
 
@@ -6,9 +6,7 @@ ts compatibility: 448/573 (78.18%)
 | :-------- | :--------------: | :---------: |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/fragment/fragment.js | 💥 | 98.61% |
 | jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
-| jsx/jsx/parens.js | 💥💥💥💥 | 84.21% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/stateless-arrow-fn/test.js | 💥 | 95.32% |
@@ -17,13 +15,13 @@ ts compatibility: 448/573 (78.18%)
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 84.75% |
+| typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 94.87% |
 | typescript/array/key.ts | 💥 | 75.00% |
-| typescript/arrow/16067.ts | 💥💥 | 90.91% |
+| typescript/arrow/16067.ts | 💥💥 | 89.80% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/as.ts | 💥 | 84.21% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
 | typescript/as/long-identifiers.ts | 💥 | 86.67% |
-| typescript/assert/index.ts | 💥 | 85.71% |
 | typescript/assignment/issue-10848.tsx | 💥 | 63.86% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
 | typescript/cast/generic-cast.ts | 💥 | 96.32% |
@@ -46,9 +44,7 @@ ts compatibility: 448/573 (78.18%)
 | typescript/comments/type_literals.ts | 💥 | 68.97% |
 | typescript/comments/union.ts | 💥 | 83.33% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 75.00% |
-| typescript/compiler/castTest.ts | 💥 | 96.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
-| typescript/compiler/decrementAndIncrementOperators.ts | 💥 | 93.33% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
 | typescript/conditional-types/conditonal-types.ts | 💥💥 | 82.25% |
@@ -76,6 +72,7 @@ ts compatibility: 448/573 (78.18%)
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/function-type/type-annotation.ts | 💥 | 0.00% |
 | typescript/functional-composition/pipe-function-calls.ts | 💥 | 82.76% |
+| typescript/generic/arrow-return-type.ts | 💥 | 57.69% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/infer-extends/basic.ts | 💥 | 90.48% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
@@ -110,7 +107,6 @@ ts compatibility: 448/573 (78.18%)
 | typescript/satisfies-operators/hug-args.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 95.45% |
-| typescript/static-blocks/multiple.ts | 💥 | 75.00% |
 | typescript/ternaries/indent.ts | 💥 | 93.33% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 40.00% |
 | typescript/tuple/dangling-comments.ts | 💥💥💥 | 21.28% |
