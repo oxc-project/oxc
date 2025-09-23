@@ -167,11 +167,11 @@ After applying targeted fixes and running conformance tests - **Net improvement:
 
 #### ❌ Still Need Work (Approximately 7-10 test cases)
 
-| Test                               | Current | Status   | Issues                                      | Priority |
-| ---------------------------------- | ------- | -------- | ------------------------------------------- | -------- |
-| `js/arrows/chain-as-arg.js`        | 35.14%  | Unfixed  | Arrow chain indentation & trailing commas   | HIGH     |
-| `js/arrows/currying-2.js`          | 59.08%  | Unfixed  | Call argument breaking with arrow chains    | HIGH     |
-| `js/identifier/parentheses/let.js` | Partial | Partial  | Call/method expression edge cases remain    | LOW      |
+| Test                               | Current | Status  | Issues                                    | Priority |
+| ---------------------------------- | ------- | ------- | ----------------------------------------- | -------- |
+| `js/arrows/chain-as-arg.js`        | 35.14%  | Unfixed | Arrow chain indentation & trailing commas | HIGH     |
+| `js/arrows/currying-2.js`          | 59.08%  | Unfixed | Call argument breaking with arrow chains  | HIGH     |
+| `js/identifier/parentheses/let.js` | Partial | Partial | Call/method expression edge cases remain  | LOW      |
 
 ## Detailed Test Case Analysis
 
@@ -308,12 +308,12 @@ for (var a in (x = b in c) => {});
 
 ### Success Stories
 
-| Test                                 | Before PR #6 | After Fixes | Status   |
-| ------------------------------------ | ------------ | ----------- | -------- |
-| `js/arrows/call.js`                  | 99.48%       | 100%        | ✅ Fixed |
-| `js/arrows/comment.js`               | 83.72%       | 100%        | ✅ Fixed |
-| `js/identifier/parentheses/const.js` | 0%           | 100%        | ✅ Fixed |
-| `js/for/parentheses.js`              | ~78%         | ✅ Fixed    | ✅ Fixed |
+| Test                                 | Before PR #6 | After Fixes | Status       |
+| ------------------------------------ | ------------ | ----------- | ------------ |
+| `js/arrows/call.js`                  | 99.48%       | 100%        | ✅ Fixed     |
+| `js/arrows/comment.js`               | 83.72%       | 100%        | ✅ Fixed     |
+| `js/identifier/parentheses/const.js` | 0%           | 100%        | ✅ Fixed     |
+| `js/for/parentheses.js`              | ~78%         | ✅ Fixed    | ✅ Fixed     |
 | Overall JS Conformance               | 83.52%       | **92.12%**  | ⬆️ **+8.60%** |
 
 ## Implementation Recommendations
@@ -352,6 +352,7 @@ for (var a in (x = b in c) => {});
 3. ⚠️ **Method/call contexts**: Still need refinement for cases like `((let)[0] = 1)()`
 
 **Remaining Edge Cases** (2-3 test cases):
+
 - Call expression context: `((let)[0] = 1)()`
 - Method call context: `(let)[x].foo()`
 

@@ -286,12 +286,11 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                                 return Some(true);
                             }
                         }
-                        _ => {}
                     }
-                }
-                None
-            })
-            .or(Some(false));
+                    None
+                })
+                .or(Some(false));
+        }
     }
 
     // Tests do not cover `return Promise.xxx()`, but should be...?
