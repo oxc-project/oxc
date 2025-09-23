@@ -1,6 +1,61 @@
-commit: 909a086f6
+commit: 261630d6
 
 formatter_typescript Summary:
-AST Parsed     : 5273/5273 (100.00%)
-Positive Passed: 0/5273 (0.00%)
-Negative Passed: 5273/5273 (100.00%)
+AST Parsed     : 8816/8816 (100.00%)
+Positive Passed: 8788/8816 (99.68%)
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
+`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules`await` is only allowed within async functions and at the top levels of modules
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/callOfConditionalTypeWithConcreteBranches.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCastReusesTypeNode4.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRecursiveConditionalAliasPreserved.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexport.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceGlobalReexportMissingAliasTarget.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespace.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/propertyAccessExpressionInnerComments.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
+An implementation cannot be declared in ambient contexts.
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationClasses.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/substitutionTypeForIndexedAccessType2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tryStatementInternalComments.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThisParameter.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
+Classes may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototype
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
+An implementation cannot be declared in ambient contexts.
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
+Unexpected token
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfAndAndOperator.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithPrivates2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithProtecteds2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembers.ts
+
