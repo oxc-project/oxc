@@ -307,6 +307,11 @@ pub fn optional_accessor_property(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn constructor_accessor(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Constructor can't have accessor modifier").with_label(span)
+}
+
+#[cold]
 pub fn optional_definite_property(span: Span) -> OxcDiagnostic {
     // NOTE: could not find an error code when tsc parses this; its parser panics.
     OxcDiagnostic::error("A property cannot be both optional and definite.")
