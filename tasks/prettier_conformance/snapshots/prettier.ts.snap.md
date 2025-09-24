@@ -1,4 +1,4 @@
-ts compatibility: 481/573 (83.94%)
+ts compatibility: 487/573 (84.99%)
 
 # Failed
 
@@ -21,7 +21,6 @@ ts compatibility: 481/573 (83.94%)
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
-| typescript/class/constructor.ts | 💥 | 96.15% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/16065.ts | 💥 | 63.64% |
@@ -41,10 +40,8 @@ ts compatibility: 481/573 (83.94%)
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 58.18% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
-| typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
-| typescript/custom/abstract/abstractProperties.ts | 💥 | 75.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
 | typescript/custom/modifiers/minustoken.ts | 💥 | 20.00% |
 | typescript/custom/modifiers/question.ts | 💥 | 0.00% |
@@ -54,13 +51,12 @@ ts compatibility: 481/573 (83.94%)
 | typescript/decorators/decorators-comments.ts | 💥 | 65.71% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
-| typescript/definite/definite.ts | 💥 | 57.14% |
-| typescript/definite/without-annotation.ts | 💥 | 25.00% |
+| typescript/definite/definite.ts | 💥 | 71.43% |
+| typescript/definite/without-annotation.ts | 💥 | 58.33% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/export/export.ts | 💥 | 85.71% |
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/function-type/type-annotation.ts | 💥 | 0.00% |
-| typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
 | typescript/interface/ignore.ts | 💥💥 | 88.26% |
 | typescript/interface2/comments-declare.ts | 💥 | 66.67% |
@@ -76,9 +72,7 @@ ts compatibility: 481/573 (83.94%)
 | typescript/module/global.ts | 💥 | 75.00% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
-| typescript/nosemi/index-signature.ts | 💥 | 75.00% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
-| typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 54.72% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 29.17% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |

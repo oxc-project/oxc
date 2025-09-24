@@ -78,7 +78,7 @@ use self::{
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     parameter_list::{ParameterLayout, ParameterList},
-    semicolon::{ClassPropertySemicolon, OptionalSemicolon},
+    semicolon::OptionalSemicolon,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
     utils::{
         array::{TrailingSeparatorMode, write_array_node},
@@ -1562,16 +1562,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.readonly() {
-            write!(f, ["readonly", space()])?;
-        }
-        // TODO: parameters only have one element for now.
-        write!(f, ["[", self.parameters().first().unwrap(), "]", self.type_annotation(),])
-    }
-}
-
 impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if let Some(type_parameters) = &self.type_parameters() {
@@ -1646,12 +1636,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
             write!(f, return_type)?;
         }
         Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.name().as_str()), self.type_annotation()])
     }
 }
 

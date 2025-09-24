@@ -5,7 +5,7 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
-    TrailingSeparator, format_args,
+    Semicolons, TrailingSeparator, format_args,
     formatter::{
         Buffer, FormatResult, Formatter,
         prelude::*,
@@ -20,10 +20,7 @@ use crate::{
         object::format_property_key,
     },
     write,
-    write::{
-        semicolon::{ClassPropertySemicolon, OptionalSemicolon},
-        type_parameters,
-    },
+    write::{semicolon::OptionalSemicolon, type_parameters},
 };
 
 use super::{
@@ -60,17 +57,22 @@ impl<'a> Format<'a> for (&AstNode<'a, ClassElement<'a>>, Option<&AstNode<'a, Cla
 
 impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        // Write modifiers in the correct order:
+        // decorators -> accessibility -> static -> abstract -> override -> async -> generator
         write!(f, [self.decorators()])?;
         if let Some(accessibility) = &self.accessibility() {
             write!(f, [accessibility.as_str(), space()])?;
         }
-        if self.r#type().is_abstract() {
-            write!(f, ["abstract", space()])?;
-        }
-        if self.r#static() {
+        if self.r#static {
             write!(f, ["static", space()])?;
         }
-        match &self.kind() {
+        if self.r#type.is_abstract() {
+            write!(f, ["abstract", space()])?;
+        }
+        if self.r#override {
+            write!(f, ["override", space()])?;
+        }
+        match &self.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
                 write!(f, ["get", space()])?;
@@ -79,10 +81,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
                 write!(f, ["set", space()])?;
             }
         }
-        if self.value().r#async() {
+        let value = self.value();
+        if value.r#async {
             write!(f, ["async", space()])?;
         }
-        if self.value().generator() {
+        if value.generator {
             write!(f, "*")?;
         }
         if self.computed {
@@ -94,10 +97,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if self.optional() {
             write!(f, "?")?;
         }
-        if let Some(type_parameters) = &self.value().type_parameters() {
+        if let Some(type_parameters) = &value.type_parameters() {
             write!(f, type_parameters)?;
         }
-        let value = self.value();
         // Handle comments between method name and parameters
         // Example: method /* comment */ (param) {}
         let comments = f.context().comments().comments_before(value.params().span.start);
@@ -161,24 +163,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
         let comments = f.context().comments().comments_before_character(self.span.start, b'a');
         FormatLeadingComments::Comments(comments).fmt(f)?;
 
-        if self.r#type().is_abstract() {
-            write!(f, ["abstract", space()])?;
-        }
         if let Some(accessibility) = self.accessibility() {
             write!(f, [accessibility.as_str(), space()])?;
         }
-        if self.r#static() {
+        if self.r#static {
             write!(f, ["static", space()])?;
         }
-        if self.r#override() {
+        if self.r#type.is_abstract() {
+            write!(f, ["abstract", space()])?;
+        }
+        if self.r#override {
             write!(f, ["override", space()])?;
         }
         write!(f, ["accessor", space()])?;
-        if self.computed() {
+        if self.computed {
             write!(f, "[")?;
         }
         write!(f, self.key())?;
-        if self.computed() {
+        if self.computed {
             write!(f, "]")?;
         }
         if let Some(type_annotation) = &self.type_annotation() {
@@ -188,6 +190,42 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
             write!(f, [space(), "=", space(), value])?;
         }
         Ok(())
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.r#static {
+            write!(f, ["static", space()])?;
+        }
+        if self.readonly {
+            write!(f, ["readonly", space()])?;
+        }
+        let is_class = matches!(self.parent, AstNodes::ClassBody(_));
+        write!(
+            f,
+            [
+                "[",
+                self.parameters(),
+                "]",
+                self.type_annotation(),
+                is_class.then_some(OptionalSemicolon)
+            ]
+        )
+    }
+}
+
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        f.join_with(&soft_line_break_or_space())
+            .entries_with_trailing_separator(self.iter(), ",", TrailingSeparator::Disallowed)
+            .finish()
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [dynamic_text(self.name().as_str()), self.type_annotation()])
     }
 }
 
@@ -515,4 +553,77 @@ fn should_group<'a>(class: &Class<'a>, f: &Formatter<'_, 'a>) -> bool {
         }
     }
     false
+}
+
+pub struct ClassPropertySemicolon<'a, 'b> {
+    element: &'b AstNode<'a, ClassElement<'a>>,
+    next_element: Option<&'b AstNode<'a, ClassElement<'a>>>,
+}
+
+impl<'a, 'b> ClassPropertySemicolon<'a, 'b> {
+    pub fn new(
+        element: &'b AstNode<'a, ClassElement<'a>>,
+        next_element: Option<&'b AstNode<'a, ClassElement<'a>>>,
+    ) -> Self {
+        Self { element, next_element }
+    }
+
+    fn needs_semicolon(&self) -> bool {
+        let Self { element, next_element, .. } = self;
+
+        if let ClassElement::PropertyDefinition(def) = element.as_ref()
+            && def.value.is_none()
+            && def.type_annotation.is_none()
+            && matches!(&def.key, PropertyKey::StaticIdentifier(ident) if matches!(ident.name.as_str(), "static" | "get" | "set") )
+        {
+            return true;
+        }
+
+        let Some(next_element) = next_element else { return false };
+
+        match next_element.as_ref() {
+            // When the name starts with the generator token or `[`
+            ClassElement::MethodDefinition(def) if !def.value.r#async => {
+                (def.computed
+                    && !(def.kind.is_accessor()
+                        || def.r#static
+                        || def.accessibility.is_some()
+                        || def.r#override))
+                    || def.value.generator
+            }
+            ClassElement::PropertyDefinition(def) => {
+                def.computed
+                    && !(def.accessibility.is_some()
+                        || def.r#static
+                        || def.declare
+                        || def.r#override
+                        || def.readonly)
+            }
+            ClassElement::AccessorProperty(def) => {
+                def.computed && !(def.accessibility.is_some() || def.r#static || def.r#override)
+            }
+            ClassElement::TSIndexSignature(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl<'a> Format<'a> for ClassPropertySemicolon<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if !matches!(
+            self.element.as_ref(),
+            ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
+        ) {
+            return Ok(());
+        }
+
+        if match f.options().semicolons {
+            Semicolons::Always => true,
+            Semicolons::AsNeeded => self.needs_semicolon(),
+        } {
+            write!(f, ";")
+        } else {
+            Ok(())
+        }
+    }
 }

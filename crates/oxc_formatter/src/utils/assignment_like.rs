@@ -184,7 +184,6 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
             }
             AssignmentLike::PropertyDefinition(property) => {
-                // Write modifiers
                 write!(f, property.decorators())?;
                 if property.declare {
                     write!(f, ["declare", space()])?;
@@ -192,11 +191,14 @@ impl<'a> AssignmentLike<'a, '_> {
                 if let Some(accessibility) = property.accessibility {
                     write!(f, [accessibility.as_str(), space()])?;
                 }
+                if property.r#static {
+                    write!(f, ["static", space()])?;
+                }
                 if property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
                     write!(f, ["abstract", space()])?;
                 }
-                if property.r#static {
-                    write!(f, ["static", space()])?;
+                if property.r#override {
+                    write!(f, ["override", space()])?;
                 }
                 if property.readonly {
                     write!(f, ["readonly", space()])?;
@@ -209,9 +211,12 @@ impl<'a> AssignmentLike<'a, '_> {
                     format_property_key(property.key(), f)?;
                 }
 
-                // Write optional and type annotation
+                // Write optional, definite, and type annotation
                 if property.optional {
                     write!(f, "?")?;
+                }
+                if property.definite {
+                    write!(f, "!")?;
                 }
                 if let Some(type_annotation) = property.type_annotation() {
                     write!(f, type_annotation)?;
