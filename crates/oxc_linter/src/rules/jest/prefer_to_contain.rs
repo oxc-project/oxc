@@ -144,6 +144,7 @@ impl PreferToContain {
 fn tests() {
     use crate::tester::Tester;
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     let pass = vec![
         ("expect.hasAssertions", None),
         ("expect.hasAssertions()", None),
@@ -178,6 +179,7 @@ fn tests() {
         ("expect(a.includes(b)).toEqual(0 as boolean);", None),
     ];
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     let fail = vec![
         ("expect(a.includes(b)).toEqual(true);", None),
         ("expect(a.includes(b,),).toEqual(true,)", None),

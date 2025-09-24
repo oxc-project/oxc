@@ -8,4 +8,6 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 
 npm i -g @withgraphite/graphite-cli
 
+cargo binstall ast-grep -y
+
 just init

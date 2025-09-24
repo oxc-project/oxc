@@ -8,7 +8,7 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
-    write::parameter_list::should_hug_function_parameters,
+    write::parameters::should_hug_function_parameters,
 };
 
 use super::{
@@ -38,12 +38,8 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::FormalParameter(_)) || self.is_hug_parameter(f)
-            }
-            Self::ObjectAssignmentTarget(node) => {
-                matches!(node.parent, AstNodes::FormalParameter(_))
-            }
+            Self::ObjectPattern(node) => self.is_hug_parameter(f),
+            Self::ObjectAssignmentTarget(node) => false,
         }
     }
 
@@ -53,9 +49,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
             Self::ObjectPattern(node) => {
                 matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
             }
-            Self::ObjectAssignmentTarget(node) => {
-                matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
-            }
+            Self::ObjectAssignmentTarget(node) => false,
         };
 
         if parent_is_catch_or_parameter {
@@ -104,16 +98,18 @@ impl<'a> ObjectPatternLike<'a, '_> {
     }
 
     fn is_hug_parameter(&self, f: &Formatter<'_, 'a>) -> bool {
-        match self {
-            Self::ObjectAssignmentTarget(_) => false,
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::FormalParameter(param) if {
-                    matches!(param.parent, AstNodes::FormalParameters(params) if {
-                        should_hug_function_parameters(params, false, f)
-                    })
+        matches!(self, Self::ObjectPattern(node) if {
+            matches!(node.parent, AstNodes::FormalParameter(param) if {
+                matches!(param.parent, AstNodes::FormalParameters(params) if {
+                    let this_param = if let AstNodes::Function(function) = params.parent {
+                        function.this_param()
+                    } else {
+                        None
+                    };
+                    should_hug_function_parameters(params, this_param, false, f)
                 })
-            }
-        }
+            })
+        })
     }
 
     fn layout(&self, f: &Formatter<'_, 'a>) -> ObjectPatternLayout {

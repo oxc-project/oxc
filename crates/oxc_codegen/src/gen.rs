@@ -2264,6 +2264,7 @@ impl Gen for Class<'_> {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
+            p.enter_class();
             p.print_decorators(&self.decorators, ctx);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -2295,6 +2296,7 @@ impl Gen for Class<'_> {
             p.print_soft_space();
             self.body.print(p, ctx);
             p.needs_semicolon = false;
+            p.exit_class();
         });
     }
 }
@@ -2747,9 +2749,20 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        let name = if let Some(class_index) = p.current_class_index()
+            && let Some(mangled) = &p
+                .private_member_mappings
+                .as_ref()
+                .and_then(|m| m[class_index].get(self.name.as_str()))
+        {
+            (*mangled).clone()
+        } else {
+            self.name.into_compact_str()
+        };
+
         p.print_ascii_byte(b'#');
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_str(name.as_str());
     }
 }
 

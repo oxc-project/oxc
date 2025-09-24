@@ -66,8 +66,7 @@ impl Rule for NoNamedAsDefault {
             };
 
             let specifier = import_entry.module_request.name();
-            let remote_module_record = module_record.loaded_modules.read().unwrap();
-            let Some(remote_module_record) = remote_module_record.get(specifier) else {
+            let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
                 continue;
             };
 

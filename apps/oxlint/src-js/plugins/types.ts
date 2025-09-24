@@ -39,3 +39,9 @@ export interface EnterExit {
   enter: VisitFn | null;
   exit: VisitFn | null;
 }
+
+// Rule metadata.
+// TODO: Fill in all properties.
+export interface RuleMeta {
+  [key: string]: unknown;
+}

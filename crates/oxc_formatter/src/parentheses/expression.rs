@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use oxc_data_structures::stack;
 use oxc_span::GetSpan;
 use oxc_syntax::{
+    keyword::is_reserved_keyword,
     operator,
     precedence::{GetPrecedence, Precedence},
 };
@@ -84,12 +85,31 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                         AstNodes::ForOfStatement(stmt) => {
                             return stmt.left.span().contains_inclusive(self.span);
                         }
+                        AstNodes::TSSatisfiesExpression(expr) => {
+                            return expr.expression.span() == self.span();
+                        }
                         _ => parent = parent.parent(),
                     }
                 }
                 unreachable!()
             }
-            _ => false,
+            name => {
+                // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/needs-parens.js#L123-L133>
+                matches!(
+                    self.parent,
+                    AstNodes::TSSatisfiesExpression(_) | AstNodes::TSAsExpression(_)
+                ) && matches!(
+                    name,
+                    "await"
+                        | "interface"
+                        | "module"
+                        | "using"
+                        | "yield"
+                        | "component"
+                        | "hook"
+                        | "type"
+                )
+            }
         }
     }
 }
@@ -463,6 +483,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AssignmentExpression<'a>> {
                 }
                 true
             }
+            // `interface { [a = 1]; }` and `class { [a = 1]; }` not need parens
+            AstNodes::TSPropertySignature(_) | AstNodes::PropertyDefinition(_) |
             // Never need parentheses in these contexts:
             // - `a = (b = c)` = nested assignments don't need extra parens
             AstNodes::AssignmentExpression(_) => false,
@@ -765,6 +787,7 @@ fn member_chain_callee_needs_parens(e: &Expression) -> bool {
     std::iter::successors(Some(e), |e| match e {
         Expression::ComputedMemberExpression(e) => Some(&e.object),
         Expression::StaticMemberExpression(e) => Some(&e.object),
+        Expression::TaggedTemplateExpression(e) => Some(&e.tag),
         Expression::TSNonNullExpression(e) => Some(&e.expression),
         _ => None,
     })

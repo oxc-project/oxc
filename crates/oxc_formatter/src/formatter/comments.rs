@@ -128,17 +128,29 @@ pub struct Comments<'a> {
     /// The index of the type cast comment that has been printed already.
     /// Used to prevent duplicate processing of special TypeScript type cast comments.
     handled_type_cast_comment: usize,
+    /// Optional limit for the unprinted_comments view.
+    ///
+    /// When set, [`Self::unprinted_comments()`] will only return comments up to this index,
+    /// effectively hiding comments beyond this point from the formatter.
+    pub view_limit: Option<usize>,
 }
 
 impl<'a> Comments<'a> {
     pub fn new(source_text: SourceText<'a>, comments: &'a [Comment]) -> Self {
-        Comments { source_text, comments, printed_count: 0, handled_type_cast_comment: 0 }
+        Comments {
+            source_text,
+            comments,
+            printed_count: 0,
+            handled_type_cast_comment: 0,
+            view_limit: None,
+        }
     }
 
     /// Returns comments that have not been printed yet.
     #[inline]
     pub fn unprinted_comments(&self) -> &'a [Comment] {
-        &self.comments[self.printed_count..]
+        let end = self.view_limit.unwrap_or(self.comments.len());
+        &self.comments[self.printed_count..end]
     }
 
     /// Returns comments that have already been printed.
@@ -485,6 +497,34 @@ impl<'a> Comments<'a> {
     /// Checks if the most recently printed type cast comment has been handled.
     pub fn is_already_handled_type_cast_comment(&self) -> bool {
         self.printed_count == self.handled_type_cast_comment
+    }
+
+    /// Temporarily limits the unprinted comments view to only those before the given position.
+    /// Returns the previous view limit to allow restoration.
+    pub fn limit_comments_up_to(&mut self, end_pos: u32) -> Option<usize> {
+        // Save the original limit for restoration
+        let original_limit = self.view_limit;
+
+        // Find the index of the first comment that starts at or after end_pos
+        // Using binary search would be more efficient for large comment arrays
+        let limit_index = self.comments[self.printed_count..]
+            .iter()
+            .position(|c| c.span.start >= end_pos)
+            .map_or(self.comments.len(), |idx| self.printed_count + idx);
+
+        // Only update if we're actually limiting the view
+        if limit_index < self.comments.len() {
+            self.view_limit = Some(limit_index);
+        }
+
+        original_limit
+    }
+
+    /// Restores the view limit to a previously saved value.
+    /// This is typically used after temporarily limiting the view with `limit_comments_up_to`.
+    #[inline]
+    pub fn restore_view_limit(&mut self, limit: Option<usize>) {
+        self.view_limit = limit;
     }
 }
 

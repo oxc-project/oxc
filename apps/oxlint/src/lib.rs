@@ -12,7 +12,7 @@ mod tester;
 
 /// Re-exported CLI-related items for use in `tasks/website`.
 pub mod cli {
-    pub use super::{command::*, lint::LintRunner, result::CliRunResult};
+    pub use super::{command::*, lint::CliRunner, result::CliRunResult};
 }
 
 // Only include code to run linter when the `napi` feature is enabled.
@@ -33,6 +33,9 @@ mod generated {
 #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
 mod js_plugins;
 
+// Use Mimalloc as the global allocator if `--features allocator` is enabled.
+// Mimalloc has better performance, but this is feature-gated because it's slow to compile.
+// `--features allocator` is only used in release builds.
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;

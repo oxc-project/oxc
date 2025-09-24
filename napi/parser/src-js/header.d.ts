@@ -8,6 +8,8 @@ export * from '@oxc-project/types';
 
 export { VisitorObject };
 
+export const visitorKeys: Record<string, string[]>;
+
 export class Visitor {
   constructor(visitor: VisitorObject);
   visit(program: Program): void;

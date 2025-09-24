@@ -11,9 +11,6 @@ allocs = "run -p oxc_track_memory_allocations --profile coverage --"
 rule = "run -p rulegen"
 lintgen = "run -p oxc_linter_codegen"
 
-# Build oxlint in release mode
-oxlint = "build --release -p oxlint --bin oxlint --features allocator"
-
 # Fix napi breaking in test environment <https://github.com/napi-rs/napi-rs/issues/1005#issuecomment-1011034770>
 # To be able to run unit tests on macOS, support compilation to 'x86_64-apple-darwin'.
 [target.'cfg(target_vendor = "apple")']

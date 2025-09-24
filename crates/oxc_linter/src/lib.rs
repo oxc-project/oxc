@@ -1,17 +1,20 @@
 #![expect(clippy::self_named_module_files)] // for rules.rs
-#![allow(clippy::literal_string_with_formatting_args)]
 
-use std::{path::Path, rc::Rc};
+use std::{
+    mem,
+    path::Path,
+    ptr::{self, NonNull},
+    rc::Rc,
+};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast_kind::AST_TYPE_MAX;
+use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
-
-#[cfg(test)]
-mod tester;
+use oxc_span::Span;
 
 mod ast_util;
 mod config;
@@ -42,6 +45,9 @@ mod generated {
     mod rule_runner_impls;
 }
 
+#[cfg(test)]
+mod tester;
+
 pub use crate::{
     config::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
@@ -67,7 +73,7 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
-    fixer::{Fixer, Message},
+    fixer::{Fixer, Message, PossibleFixes},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
 };
@@ -329,17 +335,6 @@ impl Linter {
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
     ) {
-        use std::{
-            mem,
-            ptr::{self, NonNull},
-        };
-
-        use oxc_ast::ast::Program;
-        use oxc_diagnostics::OxcDiagnostic;
-        use oxc_span::Span;
-
-        use crate::fixer::PossibleFixes;
-
         if external_rules.is_empty() {
             return;
         }
@@ -408,7 +403,7 @@ impl Linter {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
                     // Convert UTF-16 offsets back to UTF-8
-                    let mut span = Span::new(diagnostic.loc.start, diagnostic.loc.end);
+                    let mut span = Span::new(diagnostic.start, diagnostic.end);
                     span_converter.convert_span_back(&mut span);
 
                     let (external_rule_id, severity) =
@@ -466,13 +461,14 @@ impl RawTransferMetadata {
 
 #[cfg(test)]
 mod test {
+    use std::fs;
+
+    use project_root::get_project_root;
+
     use super::Oxlintrc;
 
     #[test]
     fn test_schema_json() {
-        use std::fs;
-
-        use project_root::get_project_root;
         let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
         let schema = schemars::schema_for!(Oxlintrc);
         let json = serde_json::to_string_pretty(&schema).unwrap();

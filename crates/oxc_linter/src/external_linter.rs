@@ -1,6 +1,6 @@
 use std::{fmt::Debug, sync::Arc};
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use oxc_allocator::Allocator;
 
@@ -13,7 +13,7 @@ pub type ExternalLinterLoadPluginCb = Arc<
 pub type ExternalLinterLintFileCb =
     Arc<dyn Fn(String, Vec<u32>, &Allocator) -> Result<Vec<LintFileResult>, String> + Sync + Send>;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub enum PluginLoadResult {
     #[serde(rename_all = "camelCase")]
     Success {
@@ -24,16 +24,11 @@ pub enum PluginLoadResult {
     Failure(String),
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LintFileResult {
     pub rule_index: u32,
     pub message: String,
-    pub loc: Loc,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Loc {
     pub start: u32,
     pub end: u32,
 }

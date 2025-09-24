@@ -75,17 +75,18 @@
 // Lazy implementation
 /*
 // TODO(camc314): we need to generate `.d.ts` file for this module.
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/generated/lazy/types.mjs';
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/generated/lazy/types.js';
 */
 
 // TODO(camc314): we need to generate `.d.ts` file for this module.
 // @ts-expect-error
-import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/generated/visit/types.mjs';
+import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../../dist/generated/visit/types.js';
 import { assertIs } from './utils.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
 
-const { isArray } = Array;
+const ObjectKeys = Object.keys,
+  { isArray } = Array;
 
 // Types for temporary state of entries of `compiledVisitor`
 // between calling `initCompiledVisitor` and `finalizeCompiledVisitor`.
@@ -210,7 +211,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   }
 
   // Exit if is empty visitor
-  const keys = Object.keys(visitor),
+  const keys = ObjectKeys(visitor),
     keysLen = keys.length;
   if (keysLen === 0) return;
 

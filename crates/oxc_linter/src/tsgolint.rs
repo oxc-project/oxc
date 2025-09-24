@@ -383,7 +383,7 @@ impl TsGoLintState {
 
                                             let mut message_with_position: MessageWithPosition<'_> =
                                                 message_to_message_with_position(
-                                                    &Message::from_tsgo_lint_diagnostic(
+                                                    Message::from_tsgo_lint_diagnostic(
                                                         tsgolint_diagnostic,
                                                         &source_text,
                                                     ),

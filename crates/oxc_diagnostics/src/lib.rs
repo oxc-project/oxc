@@ -338,4 +338,9 @@ impl OxcDiagnostic {
     pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
         Error::from(self).with_source_code(code)
     }
+
+    /// Consumes the diagnostic and returns the inner owned data.
+    pub fn inner_owned(self) -> OxcDiagnosticInner {
+        *self.inner
+    }
 }

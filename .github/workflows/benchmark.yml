@@ -19,7 +19,6 @@ on:
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - ".github/workflows/benchmark.yml"
-      - "tasks/benchmark/codspeed/*.mjs"
   push:
     branches:
       - main
@@ -30,7 +29,6 @@ on:
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - ".github/workflows/benchmark.yml"
-      - "tasks/benchmark/codspeed/*.mjs"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}

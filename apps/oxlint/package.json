@@ -1,15 +1,16 @@
 {
   "name": "oxlint",
-  "version": "1.16.0",
-  "bin": "dist/cli.js",
+  "version": "1.18.0",
   "type": "module",
+  "main": "dist/index.js",
+  "bin": "dist/cli.js",
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && pnpm run build-js",
     "build-test": "pnpm run build-napi-test && pnpm run build-js",
     "build-napi": "napi build --esm --platform --js ./bindings.js --dts ./bindings.d.ts --output-dir src-js --no-dts-cache",
     "build-napi-test": "pnpm run build-napi --features force_test_reporter",
-    "build-napi-release": "pnpm run build-napi --release",
+    "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
     "test": "tsc && vitest --dir ./test run"
   },
@@ -34,8 +35,9 @@
     "dist"
   ],
   "devDependencies": {
+    "eslint": "^9.36.0",
     "execa": "^9.6.0",
-    "tsdown": "^0.15.0",
+    "tsdown": "0.15.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

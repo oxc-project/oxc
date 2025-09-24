@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::PropName;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserImpl, StatementContext, diagnostics,
@@ -521,6 +521,9 @@ impl<'a> ParserImpl<'a> {
         if modifiers.contains(ModifierKind::Accessor) {
             if let Some(optional_span) = optional_span {
                 self.error(diagnostics::optional_accessor_property(optional_span));
+            }
+            if name.is_specific_string_literal("constructor") && !computed {
+                self.error(diagnostics::constructor_accessor(name.span()));
             }
             return self.parse_class_accessor_property(
                 span, name, computed, definite, modifiers, decorators,

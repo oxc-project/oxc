@@ -11,7 +11,10 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, TrailingSeparator},
-    utils::call_expression::is_test_call_expression,
+    utils::{
+        call_expression::is_test_call_expression,
+        typescript::{is_object_like_type, is_simple_type, should_hug_type},
+    },
     write,
 };
 
@@ -144,7 +147,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
         let first_arg_can_be_hugged = if params.len() == 1 {
             if let Some(first_type) = params.first() {
                 matches!(first_type.as_ref(), TSType::TSNullKeyword(_))
-                    || should_hug_single_type(first_type.as_ref())
+                    || should_hug_single_type(first_type.as_ref(), f)
             } else {
                 false
             }
@@ -169,39 +172,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
     }
 }
 
-/// Check if a TSType is a simple type (primitives, keywords, simple references)
-fn is_simple_type(ty: &TSType) -> bool {
-    match ty {
-        TSType::TSAnyKeyword(_)
-        | TSType::TSNullKeyword(_)
-        | TSType::TSThisType(_)
-        | TSType::TSVoidKeyword(_)
-        | TSType::TSNumberKeyword(_)
-        | TSType::TSBooleanKeyword(_)
-        | TSType::TSBigIntKeyword(_)
-        | TSType::TSStringKeyword(_)
-        | TSType::TSSymbolKeyword(_)
-        | TSType::TSNeverKeyword(_)
-        | TSType::TSObjectKeyword(_)
-        | TSType::TSUndefinedKeyword(_)
-        | TSType::TSTemplateLiteralType(_)
-        | TSType::TSLiteralType(_)
-        | TSType::TSUnknownKeyword(_) => true,
-        TSType::TSTypeReference(reference) => {
-            // Simple reference without type arguments
-            reference.type_arguments.is_none()
-        }
-        _ => false,
-    }
-}
-
-/// Check if a TSType is object-like (object literal, mapped type, etc.)
-fn is_object_like_type(ty: &TSType) -> bool {
-    matches!(ty, TSType::TSTypeLiteral(_) | TSType::TSMappedType(_))
-}
-
 /// Check if a single type should be "hugged" (kept inline)
-fn should_hug_single_type(ty: &TSType) -> bool {
+fn should_hug_single_type(ty: &TSType, f: &mut Formatter<'_, '_>) -> bool {
     // Simple types and object-like types can be hugged
     if is_simple_type(ty) || is_object_like_type(ty) {
         return true;
@@ -209,35 +181,7 @@ fn should_hug_single_type(ty: &TSType) -> bool {
 
     // Check for union types with mostly void types and one object type
     // (e.g., `SomeType<ObjectType | null | undefined>`)
-    if let TSType::TSUnionType(union_type) = ty {
-        let types = &union_type.types;
-
-        // Must have at least 2 types
-        if types.len() < 2 {
-            return types.len() == 1 && should_hug_single_type(&types[0]);
-        }
-
-        let has_object_type = types
-            .iter()
-            .any(|t| matches!(t, TSType::TSTypeLiteral(_) | TSType::TSTypeReference(_)));
-
-        let void_count = types
-            .iter()
-            .filter(|t| {
-                matches!(
-                    t,
-                    TSType::TSVoidKeyword(_)
-                        | TSType::TSNullKeyword(_)
-                        | TSType::TSUndefinedKeyword(_)
-                )
-            })
-            .count();
-
-        // Union is huggable if it's mostly void types with one object/reference type
-        (types.len() - 1 == void_count && has_object_type) || types.len() == 1
-    } else {
-        false
-    }
+    matches!(ty, TSType::TSUnionType(union) if should_hug_type(union, f))
 }
 
 /// Check if this type parameter instantiation is in an arrow function variable context
@@ -256,8 +200,9 @@ fn is_arrow_function_variable_type_argument<'a>(
         return false;
     }
 
+    // `node.parent` is `TSTypeReference`
     matches!(
-        &node.parent,
+        &node.parent.parent(),
         AstNodes::TSTypeAnnotation(type_annotation)
             if matches!(
                 &type_annotation.parent,

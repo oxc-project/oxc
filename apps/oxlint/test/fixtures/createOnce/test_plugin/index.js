@@ -8,8 +8,11 @@ const relativePath = sep === '/'
   ? path => path.slice(PARENT_DIR_PATH_LEN)
   : path => path.slice(PARENT_DIR_PATH_LEN).replace(/\\/g, '/');
 
+let createOnceCallCount = 0;
 const alwaysRunRule = {
   createOnce(context) {
+    createOnceCallCount++;
+
     const topLevelThis = this;
 
     // Check that these APIs throw here
@@ -21,6 +24,7 @@ const alwaysRunRule = {
 
     return {
       before() {
+        context.report({ message: `createOnce: call count: ${createOnceCallCount}`, node: SPAN });
         context.report({ message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`, node: SPAN });
         context.report({ message: `createOnce: id: ${idError?.message}`, node: SPAN });
         context.report({ message: `createOnce: filename: ${filenameError?.message}`, node: SPAN });
@@ -64,6 +68,53 @@ const skipRunRule = {
   },
 };
 
+const beforeOnlyRule = {
+  createOnce(context) {
+    return {
+      before() {
+        context.report({ message: `before hook: id: ${context.id}`, node: SPAN });
+        context.report({ message: `before hook: filename: ${relativePath(context.filename)}`, node: SPAN });
+      },
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}": filename: ${relativePath(context.filename)}`,
+          node,
+        });
+      },
+    };
+  },
+};
+
+const afterOnlyRule = {
+  createOnce(context) {
+    return {
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}": filename: ${relativePath(context.filename)}`,
+          node,
+        });
+      },
+      after() {
+        context.report({ message: `after hook: id: ${context.id}`, node: SPAN });
+        context.report({ message: `after hook: filename: ${relativePath(context.filename)}`, node: SPAN });
+      },
+    };
+  },
+};
+
+const noHooksRule = {
+  createOnce(context) {
+    return {
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}": filename: ${relativePath(context.filename)}`,
+          node,
+        });
+      },
+    };
+  },
+};
+
 export default {
   meta: {
     name: "create-once-plugin",
@@ -71,6 +122,9 @@ export default {
   rules: {
     "always-run": alwaysRunRule,
     "skip-run": skipRunRule,
+    "before-only": beforeOnlyRule,
+    "after-only": afterOnlyRule,
+    "no-hooks": noHooksRule,
   },
 };
 

@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.92.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 2f9e16d napi/minifier, napi/transformer: Rename CommonJS file to `.cjs` (#14047) (overlookmotel)
+
+### 🚜 Refactor
+
+- cc0019f napi: Move scripts into `scripts` directory (#14048) (overlookmotel)
+
+
+## [0.92.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 2f9e16d napi/minifier, napi/transformer: Rename CommonJS file to `.cjs` (#14047) (overlookmotel)
+
+### 🚜 Refactor
+
+- cc0019f napi: Move scripts into `scripts` directory (#14048) (overlookmotel)
+
+
 ## [0.91.0] - 2025-09-22
 
 ### 💥 BREAKING CHANGES

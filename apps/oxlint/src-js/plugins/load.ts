@@ -1,10 +1,12 @@
 import { Context } from './context.js';
 import { getErrorMessage } from './utils.js';
 
-import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
+import type { AfterHook, BeforeHook, RuleMeta, Visitor, VisitorWithHooks } from './types.ts';
+
+const ObjectKeys = Object.keys;
 
 // Linter plugin, comprising multiple rules
-interface Plugin {
+export interface Plugin {
   meta: {
     name: string;
   };
@@ -16,13 +18,15 @@ interface Plugin {
 // Linter rule.
 // `Rule` can have either `create` method, or `createOnce` method.
 // If `createOnce` method is present, `create` is ignored.
-type Rule = CreateRule | CreateOnceRule;
+export type Rule = CreateRule | CreateOnceRule;
 
 interface CreateRule {
+  meta?: RuleMeta;
   create: (context: Context) => Visitor;
 }
 
-interface CreateOnceRule {
+export interface CreateOnceRule {
+  meta?: RuleMeta;
   create?: (context: Context) => Visitor;
   createOnce: (context: Context) => VisitorWithHooks;
 }
@@ -54,28 +58,49 @@ const registeredPluginPaths = new Set<string>();
 // Indexed by `ruleId`, which is passed to `lintFile`.
 export const registeredRules: RuleAndContext[] = [];
 
+// Plugin details returned to Rust
+interface PluginDetails {
+  // Plugin name
+  name: string;
+  // Index of first rule of this plugin within `registeredRules`
+  offset: number;
+  // Names of rules within this plugin, in same order as in `registeredRules`
+  ruleNames: string[];
+}
+
+// Default rule metadata, used if `rule.meta` property is empty.
+const emptyRuleMeta: RuleMeta = {};
+
 /**
  * Load a plugin.
  *
  * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions
  * containing try/catch.
  *
- * @param {string} path - Absolute path of plugin file
- * @returns {string} - JSON result
+ * @param path - Absolute path of plugin file
+ * @returns JSON result
  */
 export async function loadPlugin(path: string): Promise<string> {
   try {
-    return await loadPluginImpl(path);
+    const res = await loadPluginImpl(path);
+    return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
   }
 }
 
-async function loadPluginImpl(path: string): Promise<string> {
+/**
+ * Load a plugin.
+ *
+ * @param path - Absolute path of plugin file
+ * @returns - Plugin details
+ * @throws {Error} If plugin has already been registered
+ * @throws {TypeError} If one of plugin's rules is malformed or its `createOnce` method returns invalid visitor
+ * @throws {*} If plugin throws an error during import
+ */
+async function loadPluginImpl(path: string): Promise<PluginDetails> {
   if (registeredPluginPaths.has(path)) {
-    return JSON.stringify({
-      Failure: 'This plugin has already been registered',
-    });
+    throw new Error('This plugin has already been registered. This is a bug in Oxlint. Please report it.');
   }
 
   const { default: plugin } = (await import(path)) as { default: Plugin };
@@ -86,20 +111,41 @@ async function loadPluginImpl(path: string): Promise<string> {
   const pluginName = plugin.meta.name;
   const offset = registeredRules.length;
   const { rules } = plugin;
-  const ruleNames = Object.keys(rules);
+  const ruleNames = ObjectKeys(rules);
   const ruleNamesLen = ruleNames.length;
 
   for (let i = 0; i < ruleNamesLen; i++) {
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
 
-    const context = new Context(`${pluginName}/${ruleName}`);
+    // Validate `rule.meta` and convert to object with standardized shape
+    // (all properties defined with default values if not supplied)
+    let ruleMeta = rule.meta;
+    if (ruleMeta == null) {
+      ruleMeta = emptyRuleMeta;
+    } else {
+      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
+      // TODO: Validate and conform individual properties of `meta` once they're supported
+      ruleMeta = emptyRuleMeta;
+    }
+
+    // Create `Context` object for rule. This will be re-used for every file.
+    // It's updated with file-specific data before linting each file with `setupContextForFile`.
+    const context = new Context(`${pluginName}/${ruleName}`, ruleMeta);
 
     let ruleAndContext;
     if ('createOnce' in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      const { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context);
-      ruleAndContext = { rule, context, visitor, beforeHook: beforeHook || null, afterHook: afterHook || null };
+      let visitorWithHooks = rule.createOnce(context);
+      if (typeof visitorWithHooks !== 'object' || visitorWithHooks === null) {
+        throw new TypeError('`createOnce` must return an object');
+      }
+
+      let { before: beforeHook, after: afterHook, ...visitor } = visitorWithHooks;
+      beforeHook = conformHookFn(beforeHook, 'before');
+      afterHook = conformHookFn(afterHook, 'after');
+
+      ruleAndContext = { rule, context, visitor, beforeHook, afterHook };
     } else {
       ruleAndContext = { rule, context, visitor: null, beforeHook: null, afterHook: null };
     }
@@ -107,5 +153,18 @@ async function loadPluginImpl(path: string): Promise<string> {
     registeredRules.push(ruleAndContext);
   }
 
-  return JSON.stringify({ Success: { name: pluginName, offset, ruleNames } });
+  return { name: pluginName, offset, ruleNames };
+}
+
+/**
+ * Validate and conform `before` / `after` hook function.
+ * @param hookFn - Hook function, or `null` / `undefined`
+ * @param hookName - Name of the hook
+ * @returns Hook function, or null
+ * @throws {TypeError} If `hookFn` is not a function, `null`, or `undefined`
+ */
+function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | null {
+  if (hookFn == null) return null;
+  if (typeof hookFn !== 'function') throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  return hookFn;
 }

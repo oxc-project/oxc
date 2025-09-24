@@ -18,7 +18,6 @@ use crate::{
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
-    utils::expression::FormatExpressionWithoutTrailingComments,
     write,
 };
 

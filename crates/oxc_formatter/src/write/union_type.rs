@@ -4,9 +4,14 @@ use oxc_span::GetSpan;
 
 use crate::{
     format_args,
-    formatter::{FormatResult, Formatter, prelude::*, trivia::FormatTrailingComments},
+    formatter::{
+        FormatResult, Formatter,
+        prelude::*,
+        trivia::{FormatLeadingComments, FormatTrailingComments},
+    },
     generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
+    utils::typescript::should_hug_type,
     write,
     write::FormatWrite,
 };
@@ -15,17 +20,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let types = self.types();
 
-        if types.len() == 1 {
-            return write!(f, self.types().first());
-        }
-
         // ```ts
         // {
         //   a: string
         // } | null | void
         // ```
         // should be inlined and not be printed in the multi-line variant
-        let should_hug = should_hug_type(self);
+        let should_hug = should_hug_type(self, f);
         if should_hug {
             return format_union_types(self.types(), true, f);
         }
@@ -42,14 +43,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // So the head of the current nested union type chain is `| (| (A | B))`
         // if we encounter a leading comment when navigating up the chain,
         // we consider the current union type as having leading comments
-        let mut has_leading_comments = f.comments().has_comment_before(self.span().start);
+        let leading_comments = f.context().comments().comments_before(self.span().start);
+        let has_leading_comments = !leading_comments.is_empty();
         let mut union_type_at_top = self;
-
         while let AstNodes::TSUnionType(parent) = union_type_at_top.parent {
             if parent.types().len() == 1 {
-                if f.comments().has_comment_before(parent.span().start) {
-                    has_leading_comments = true;
-                }
                 union_type_at_top = parent;
             } else {
                 break;
@@ -71,7 +69,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 
         let types = format_with(|f| {
             if has_leading_comments {
-                write!(f, [soft_line_break()])?;
+                write!(f, FormatLeadingComments::Comments(leading_comments))?;
             }
 
             let leading_soft_line_break_or_space = should_indent && !has_leading_comments;
@@ -123,26 +121,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 
         write!(f, [group(&content)])
     }
-}
-
-fn should_hug_type(node: &AstNode<'_, TSUnionType<'_>>) -> bool {
-    // Simple heuristic: hug unions with object types and simple nullable types
-    let types = node.types();
-
-    if types.len() <= 3 {
-        let has_object_type = types.iter().any(|t| matches!(t.as_ref(), TSType::TSTypeLiteral(_)));
-
-        let has_simple_types = types.iter().any(|t| {
-            matches!(
-                t.as_ref(),
-                TSType::TSNullKeyword(_) | TSType::TSUndefinedKeyword(_) | TSType::TSVoidKeyword(_)
-            )
-        });
-
-        return has_object_type && has_simple_types;
-    }
-
-    false
 }
 
 pub struct FormatTSType<'a, 'b> {

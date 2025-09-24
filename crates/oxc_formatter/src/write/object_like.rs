@@ -10,6 +10,7 @@ use crate::{
     generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
     write,
+    write::parameters::should_hug_function_parameters,
 };
 
 #[derive(Clone, Copy)]
@@ -26,25 +27,35 @@ impl<'a> ObjectLike<'a, '_> {
         }
     }
 
-    fn should_hug(&self) -> bool {
+    fn should_hug(&self, f: &Formatter<'_, 'a>) -> bool {
         // Check if the object type is the type annotation of the only parameter in a function.
         // This prevents breaking object properties in cases like:
         // const fn = ({ foo }: { foo: string }) => { ... };
-        match self {
-            Self::TSTypeLiteral(node) => {
-                // Check if parent is TSTypeAnnotation
-                matches!(node.parent, AstNodes::TSTypeAnnotation(type_ann) if {
-                    // Check if that parent is FormalParameter
-                    matches!(type_ann.parent, AstNodes::FormalParameter(param) if {
-                        // Check if that parent is FormalParameters with only one item
-                        matches!(param.parent, AstNodes::FormalParameters(params) if {
-                            params.items.len() == 1
+        matches!(self, Self::TSTypeLiteral(node) if {
+            // Check if parent is TSTypeAnnotation
+            matches!(node.parent, AstNodes::TSTypeAnnotation(type_ann) if {
+                match &type_ann.parent {
+                    AstNodes::FormalParameter(param) => {
+                        let AstNodes::FormalParameters(parameters) = &param.parent else {
+                            unreachable!()
+                        };
+                        let this_param = if let AstNodes::Function(function) = parameters.parent {
+                            function.this_param()
+                        } else {
+                            None
+                        };
+                        should_hug_function_parameters(parameters, this_param, false, f)
+
+                    }
+                    AstNodes::TSThisParameter(param) => {
+                        matches!(param.parent, AstNodes::Function(func) if {
+                            should_hug_function_parameters(func.params(), Some(param), false, f)
                         })
-                    })
-                })
-            }
-            Self::ObjectExpression(node) => false,
-        }
+                    },
+                    _ => false,
+                }
+            })
+        })
     }
 
     fn members_have_leading_newline(&self, f: &Formatter<'_, 'a>) -> bool {
@@ -95,7 +106,7 @@ impl<'a> Format<'a> for ObjectLike<'a, '_> {
             // const fn = ({ foo }: { foo: string }) => { ... };
             //                      ^ do not break properties here
             // ```
-            let should_hug = self.should_hug();
+            let should_hug = self.should_hug(f);
 
             let inner =
                 soft_block_indent_with_maybe_space(&members, should_insert_space_around_brackets);

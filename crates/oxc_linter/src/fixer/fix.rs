@@ -587,7 +587,6 @@ impl<'a> CompositeFix<'a> {
         };
 
         output.push_str(after);
-        output.shrink_to_fit();
 
         let mut fix = Fix::new(output, Span::new(start, end));
         if let Some(message) = merged_fix_message {

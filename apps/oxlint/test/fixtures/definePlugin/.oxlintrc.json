@@ -1,0 +1,13 @@
+{
+    "plugins": ["./test_plugin"],
+    "categories": {"correctness": "off"},
+    "rules": {
+        "define-plugin-plugin/create": "error",
+        "define-plugin-plugin/create-once": "error",
+        "define-plugin-plugin/create-once-before-false": "error",
+        "define-plugin-plugin/create-once-before-only": "error",
+        "define-plugin-plugin/create-once-after-only": "error",
+        "define-plugin-plugin/create-once-no-hooks": "error"
+    },
+    "ignorePatterns": ["test_plugin/**", "eslint.config.js"]
+}

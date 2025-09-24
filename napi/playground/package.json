@@ -14,8 +14,8 @@
   },
   "scripts": {
     "build-test": "echo 'Skipped because there are no tests.'",
-    "build-dev": "pnpm run build:napi && node patch.mjs",
-    "build": "pnpm run build:napi --release && node patch.mjs",
+    "build-dev": "pnpm run build:napi && node scripts/patch.js",
+    "build": "pnpm run build:napi --release && node scripts/patch.js",
     "build:napi": "napi build --platform --esm --target wasm32-wasip1-threads"
   },
   "dependencies": {

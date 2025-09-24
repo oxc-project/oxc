@@ -54,14 +54,13 @@ declare_oxc_lint!(
 impl Rule for Default {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
-        let loaded_modules = module_record.loaded_modules.read().unwrap();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(default_span) = import_entry.import_name else {
                 continue;
             };
 
             let specifier = import_entry.module_request.name();
-            let Some(remote_module_record) = loaded_modules.get(specifier) else {
+            let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
                 continue;
             };
             if !remote_module_record.has_module_syntax {

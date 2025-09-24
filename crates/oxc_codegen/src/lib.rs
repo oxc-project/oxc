@@ -12,12 +12,13 @@ use cow_utils::CowUtils;
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
+use rustc_hash::FxHashMap;
 
 mod binary_expr_visitor;
 mod comment;
@@ -82,6 +83,9 @@ pub struct Codegen<'a> {
 
     scoping: Option<Scoping>,
 
+    /// Private member name mappings for mangling
+    private_member_mappings: Option<Vec<FxHashMap<String, CompactStr>>>,
+
     /// Output Code
     code: CodeBuffer,
 
@@ -91,6 +95,7 @@ pub struct Codegen<'a> {
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
     binary_expr_stack: Stack<BinaryExpressionVisitor<'a>>,
+    class_stack_pos: usize,
     /// Indicates the output is JSX type, it is set in [`Program::gen`] and the result
     /// is obtained by [`oxc_span::SourceType::is_jsx`]
     is_jsx: bool,
@@ -146,11 +151,13 @@ impl<'a> Codegen<'a> {
             options,
             source_text: None,
             scoping: None,
+            private_member_mappings: None,
             code: CodeBuffer::default(),
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
             binary_expr_stack: Stack::with_capacity(12),
+            class_stack_pos: 0,
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
@@ -187,6 +194,19 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_scoping(mut self, scoping: Option<Scoping>) -> Self {
         self.scoping = scoping;
+        self
+    }
+
+    /// Set private member name mappings for mangling.
+    ///
+    /// This allows renaming of private class members like `#field` -> `#a`.
+    /// The Vec contains per-class mappings, indexed by class declaration order.
+    #[must_use]
+    pub fn with_private_member_mappings(
+        mut self,
+        mappings: Option<Vec<FxHashMap<String, CompactStr>>>,
+    ) -> Self {
+        self.private_member_mappings = mappings;
         self
     }
 
@@ -443,6 +463,21 @@ impl<'a> Codegen<'a> {
         if !self.options.minify {
             self.indent -= 1;
         }
+    }
+
+    #[inline]
+    fn enter_class(&mut self) {
+        self.class_stack_pos += 1;
+    }
+
+    #[inline]
+    fn exit_class(&mut self) {
+        self.class_stack_pos -= 1;
+    }
+
+    #[inline]
+    fn current_class_index(&self) -> Option<usize> {
+        if self.class_stack_pos > 0 { Some(self.class_stack_pos - 1) } else { None }
     }
 
     #[inline]

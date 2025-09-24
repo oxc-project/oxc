@@ -227,3 +227,28 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
         write!(f, [":", space(), self.value()])
     }
 }
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(
+            f,
+            [
+                "import",
+                space(),
+                self.import_kind(),
+                self.id(),
+                space(),
+                "=",
+                space(),
+                self.module_reference(),
+                OptionalSemicolon
+            ]
+        )
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, ["require(", self.expression(), ")"])
+    }
+}

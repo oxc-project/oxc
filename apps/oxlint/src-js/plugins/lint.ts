@@ -3,7 +3,7 @@ import {
   SOURCE_LEN_OFFSET,
   // TODO(camc314): we need to generate `.d.ts` file for this module.
   // @ts-expect-error
-} from '../generated/constants.mjs';
+} from '../generated/constants.js';
 import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
 import { assertIs } from './utils.js';
@@ -12,15 +12,15 @@ import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCom
 // Lazy implementation
 /*
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.mjs';
+import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { walkProgram } from '../../dist/generated/lazy/walk.mjs';
+import { walkProgram } from '../../dist/generated/lazy/walk.js';
 */
 
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.mjs';
+import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { walkProgram } from '../../dist/generated/visit/walk.mjs';
+import { walkProgram } from '../../dist/generated/visit/walk.js';
 
 import type { AfterHook } from './types.ts';
 
