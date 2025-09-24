@@ -715,7 +715,7 @@ describe('parse', () => {
       expect(ret.program.body[0].end).toBe(10);
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 }
+        end: { line: 1, column: 10 },
       });
     });
 
@@ -738,19 +738,19 @@ let z = 3;`;
       // First declaration: let x = 1;
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 }
+        end: { line: 1, column: 10 },
       });
 
       // Second declaration: let y = 2;
       expect(ret.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
-        end: { line: 2, column: 10 }
+        end: { line: 2, column: 10 },
       });
 
       // Third declaration: let z = 3;
       expect(ret.program.body[2].loc).toEqual({
         start: { line: 3, column: 0 },
-        end: { line: 3, column: 10 }
+        end: { line: 3, column: 10 },
       });
     });
 
@@ -761,13 +761,13 @@ let z = 3;`;
       const functionDecl = ret.program.body[0];
       expect(functionDecl.loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 3, column: 1 }
+        end: { line: 3, column: 1 },
       });
 
       const returnStmt = functionDecl.body.body[0];
       expect(returnStmt.loc).toEqual({
         start: { line: 2, column: 2 },
-        end: { line: 2, column: 11 }
+        end: { line: 2, column: 11 },
       });
     });
 
@@ -777,7 +777,7 @@ let z = 3;`;
       expect(ret.program.body[0].range).toEqual([0, 10]);
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 }
+        end: { line: 1, column: 10 },
       });
     });
 
@@ -787,7 +787,7 @@ let z = 3;`;
 
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 17 }
+        end: { line: 1, column: 17 },
       });
     });
 
@@ -798,11 +798,11 @@ let z = 3;`;
 
       expect(retWindows.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 }
+        end: { line: 1, column: 10 },
       });
       expect(retWindows.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
-        end: { line: 2, column: 10 }
+        end: { line: 2, column: 10 },
       });
 
       // Test with \r line endings (old Mac)
@@ -811,11 +811,11 @@ let z = 3;`;
 
       expect(retMac.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 }
+        end: { line: 1, column: 10 },
       });
       expect(retMac.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
-        end: { line: 2, column: 10 }
+        end: { line: 2, column: 10 },
       });
     });
 
@@ -829,25 +829,25 @@ let z = 3;`;
       // Identifier 'result'
       expect(declarator.id.loc).toEqual({
         start: { line: 1, column: 6 },
-        end: { line: 1, column: 12 }
+        end: { line: 1, column: 12 },
       });
 
       // Binary expression 'foo + bar'
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 15 },
-        end: { line: 1, column: 24 }
+        end: { line: 1, column: 24 },
       });
 
       // Left identifier 'foo'
       expect(declarator.init.left.loc).toEqual({
         start: { line: 1, column: 15 },
-        end: { line: 1, column: 18 }
+        end: { line: 1, column: 18 },
       });
 
       // Right identifier 'bar'
       expect(declarator.init.right.loc).toEqual({
         start: { line: 1, column: 21 },
-        end: { line: 1, column: 24 }
+        end: { line: 1, column: 24 },
       });
     });
 
@@ -857,13 +857,13 @@ let z = 3;`;
 
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 }
+        end: { line: 1, column: 10 },
       });
 
       // Second statement should be on line 3 (skipping empty line 2)
       expect(ret.program.body[1].loc).toEqual({
         start: { line: 3, column: 0 },
-        end: { line: 3, column: 10 }
+        end: { line: 3, column: 10 },
       });
     });
 
@@ -874,13 +874,13 @@ let z = 3;`;
       // Variable declaration should start after the comment
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 14 },
-        end: { line: 1, column: 24 }
+        end: { line: 1, column: 24 },
       });
 
       // Comment should also have loc
       expect(ret.comments[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 13 }
+        end: { line: 1, column: 13 },
       });
     });
 
@@ -891,7 +891,7 @@ let z = 3;`;
       const interfaceDecl = ret.program.body[0];
       expect(interfaceDecl.loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 4, column: 1 }
+        end: { line: 4, column: 1 },
       });
     });
 
@@ -905,13 +905,13 @@ let z = 3;`;
       // Object expression
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 12 },
-        end: { line: 1, column: 51 }
+        end: { line: 1, column: 51 },
       });
 
       // First property
       expect(declarator.init.properties[0].loc).toEqual({
         start: { line: 1, column: 14 },
-        end: { line: 1, column: 33 }
+        end: { line: 1, column: 33 },
       });
     });
 
@@ -925,7 +925,7 @@ let z = 3;`;
       // String literal
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 12 },
-        end: { line: 1, column: 26 }
+        end: { line: 1, column: 26 },
       });
     });
 
@@ -939,7 +939,7 @@ let z = 3;`;
       // Template literal spanning multiple lines
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 17 },
-        end: { line: 3, column: 6 }
+        end: { line: 3, column: 6 },
       });
     });
 
@@ -950,7 +950,7 @@ let z = 3;`;
       const forStmt = ret.program.body[0];
       expect(forStmt.loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 11 }
+        end: { line: 1, column: 11 },
       });
     });
 
@@ -965,14 +965,14 @@ const fn2 = (x) => {
       const firstDecl = ret.program.body[0];
       expect(firstDecl.declarations[0].init.loc).toEqual({
         start: { line: 1, column: 12 },
-        end: { line: 1, column: 21 }
+        end: { line: 1, column: 21 },
       });
 
       // Second arrow function (block body)
       const secondDecl = ret.program.body[1];
       expect(secondDecl.declarations[0].init.loc).toEqual({
         start: { line: 2, column: 12 },
-        end: { line: 4, column: 1 }
+        end: { line: 4, column: 1 },
       });
     });
 
@@ -983,14 +983,14 @@ const fn2 = (x) => {
       const asyncFn = ret.program.body[0];
       expect(asyncFn.loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 3, column: 1 }
+        end: { line: 3, column: 1 },
       });
 
       // Return statement with await expression
       const returnStmt = asyncFn.body.body[0];
       expect(returnStmt.loc).toEqual({
         start: { line: 2, column: 2 },
-        end: { line: 2, column: 26 }
+        end: { line: 2, column: 26 },
       });
     });
 
@@ -1000,12 +1000,12 @@ const fn2 = (x) => {
 
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 }
+        end: { line: 1, column: 10 },
       });
 
       expect(ret.program.body[1].loc).toEqual({
         start: { line: 2, column: 0 },
-        end: { line: 2, column: 10 }
+        end: { line: 2, column: 10 },
       });
     });
   });
