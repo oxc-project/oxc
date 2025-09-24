@@ -28,13 +28,13 @@ use crate::{
 use oxc_linter::LintIgnoreMatcher;
 
 #[derive(Debug)]
-pub struct LintRunner {
+pub struct CliRunner {
     options: LintCommand,
     cwd: PathBuf,
     external_linter: Option<ExternalLinter>,
 }
 
-impl LintRunner {
+impl CliRunner {
     pub(crate) fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
         Self {
             options,
@@ -411,7 +411,7 @@ impl LintRunner {
     }
 }
 
-impl LintRunner {
+impl CliRunner {
     const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
 
     #[must_use]
@@ -618,7 +618,7 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
 mod test {
     use std::{fs, path::PathBuf};
 
-    use super::LintRunner;
+    use super::CliRunner;
     use crate::tester::Tester;
 
     // lints the full directory of fixtures,
@@ -988,14 +988,14 @@ mod test {
 
     #[test]
     fn test_init_config() {
-        assert!(!fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
+        assert!(!fs::exists(CliRunner::DEFAULT_OXLINTRC).unwrap());
 
         let args = &["--init"];
         Tester::new().with_cwd("fixtures".into()).test(args);
 
-        assert!(fs::exists(LintRunner::DEFAULT_OXLINTRC).unwrap());
+        assert!(fs::exists(CliRunner::DEFAULT_OXLINTRC).unwrap());
 
-        fs::remove_file(LintRunner::DEFAULT_OXLINTRC).unwrap();
+        fs::remove_file(CliRunner::DEFAULT_OXLINTRC).unwrap();
     }
 
     #[test]
@@ -1190,17 +1190,17 @@ mod test {
 
         // Test case 1: Invalid path that should fail
         let invalid_config = PathBuf::from("child/../../fixtures/linter/eslintrc.json");
-        let result = LintRunner::find_oxlint_config(&cwd, Some(&invalid_config));
+        let result = CliRunner::find_oxlint_config(&cwd, Some(&invalid_config));
         assert!(result.is_err(), "Expected config lookup to fail with invalid path");
 
         // Test case 2: Valid path that should pass
         let valid_config = PathBuf::from("fixtures/linter/eslintrc.json");
-        let result = LintRunner::find_oxlint_config(&cwd, Some(&valid_config));
+        let result = CliRunner::find_oxlint_config(&cwd, Some(&valid_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with valid path");
 
         // Test case 3: Valid path using parent directory (..) syntax that should pass
         let valid_parent_config = PathBuf::from("fixtures/linter/../linter/eslintrc.json");
-        let result = LintRunner::find_oxlint_config(&cwd, Some(&valid_parent_config));
+        let result = CliRunner::find_oxlint_config(&cwd, Some(&valid_parent_config));
         assert!(result.is_ok(), "Expected config lookup to succeed with parent directory syntax");
 
         // Verify the resolved path is correct

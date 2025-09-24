@@ -10,7 +10,7 @@ use napi::{
 };
 use napi_derive::napi;
 
-use crate::{lint::LintRunner, result::CliRunResult};
+use crate::{lint::CliRunner, result::CliRunResult};
 
 /// JS callback to load a JS plugin.
 #[napi]
@@ -113,7 +113,7 @@ fn lint_impl(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> CliRunResu
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
 
-    LintRunner::new(command, external_linter).run(&mut stdout)
+    CliRunner::new(command, external_linter).run(&mut stdout)
 }
 
 /// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.

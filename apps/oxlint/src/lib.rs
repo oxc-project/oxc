@@ -12,7 +12,7 @@ mod tester;
 
 /// Re-exported CLI-related items for use in `tasks/website`.
 pub mod cli {
-    pub use super::{command::*, lint::LintRunner, result::CliRunResult};
+    pub use super::{command::*, lint::CliRunner, result::CliRunResult};
 }
 
 // Only include code to run linter when the `napi` feature is enabled.
