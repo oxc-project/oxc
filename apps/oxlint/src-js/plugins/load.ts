@@ -3,6 +3,8 @@ import { getErrorMessage } from './utils.js';
 
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
 
+const ObjectKeys = Object.keys;
+
 // Linter plugin, comprising multiple rules
 export interface Plugin {
   meta: {
@@ -86,7 +88,7 @@ async function loadPluginImpl(path: string): Promise<string> {
   const pluginName = plugin.meta.name;
   const offset = registeredRules.length;
   const { rules } = plugin;
-  const ruleNames = Object.keys(rules);
+  const ruleNames = ObjectKeys(rules);
   const ruleNamesLen = ruleNames.length;
 
   for (let i = 0; i < ruleNamesLen; i++) {

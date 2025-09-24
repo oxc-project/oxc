@@ -2,7 +2,7 @@ import type { Context } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
-const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf } = Object;
+const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf, create: ObjectCreate } = Object;
 
 const dummyOptions: unknown[] = [],
   dummyReport = () => {};
@@ -104,7 +104,7 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   // Really, `context` should be an instance of `Context`, which would throw error on accessing e.g. `id`
   // in body of `createOnce`. But any such bugs should have been caught when testing the rule in Oxlint,
   // so should be OK to take this shortcut.
-  const context = Object.create(null, {
+  const context = ObjectCreate(null, {
     id: { value: '', enumerable: true, configurable: true },
     options: { value: dummyOptions, enumerable: true, configurable: true },
     report: { value: dummyReport, enumerable: true, configurable: true },

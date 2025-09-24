@@ -85,7 +85,8 @@ import { assertIs } from './utils.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
 
-const { isArray } = Array;
+const ObjectKeys = Object.keys,
+  { isArray } = Array;
 
 // Types for temporary state of entries of `compiledVisitor`
 // between calling `initCompiledVisitor` and `finalizeCompiledVisitor`.
@@ -210,7 +211,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   }
 
   // Exit if is empty visitor
-  const keys = Object.keys(visitor),
+  const keys = ObjectKeys(visitor),
     keysLen = keys.length;
   if (keysLen === 0) return;
 
