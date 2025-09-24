@@ -100,8 +100,16 @@ async function loadPluginImpl(path: string): Promise<string> {
     let ruleAndContext;
     if ('createOnce' in rule) {
       // TODO: Compile visitor object to array here, instead of repeating compilation on each file
-      const { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context);
-      ruleAndContext = { rule, context, visitor, beforeHook: beforeHook || null, afterHook: afterHook || null };
+      let visitorWithHooks = rule.createOnce(context);
+      if (typeof visitorWithHooks !== 'object' || visitorWithHooks === null) {
+        throw new TypeError('`createOnce` must return an object');
+      }
+
+      let { before: beforeHook, after: afterHook, ...visitor } = visitorWithHooks;
+      beforeHook = conformHookFn(beforeHook, 'before');
+      afterHook = conformHookFn(afterHook, 'after');
+
+      ruleAndContext = { rule, context, visitor, beforeHook, afterHook };
     } else {
       ruleAndContext = { rule, context, visitor: null, beforeHook: null, afterHook: null };
     }
@@ -110,4 +118,17 @@ async function loadPluginImpl(path: string): Promise<string> {
   }
 
   return JSON.stringify({ Success: { name: pluginName, offset, ruleNames } });
+}
+
+/**
+ * Validate and conform `before` / `after` hook function.
+ * @param hookFn - Hook function, or `null` / `undefined`
+ * @param hookName - Name of the hook
+ * @returns Hook function, or null
+ * @throws {TypeError} If `hookFn` is not a function, `null`, or `undefined`
+ */
+function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | null {
+  if (hookFn == null) return null;
+  if (typeof hookFn !== 'function') throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
+  return hookFn;
 }
