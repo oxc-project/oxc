@@ -1,9 +1,7 @@
 use std::{
-    borrow::Cow,
     collections::BTreeSet,
     ffi::OsStr,
     io::{ErrorKind, Read, Write},
-    mem,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -601,6 +599,8 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 impl Message<'_> {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintDiagnostic, source_text: &str) -> Self {
+        use std::{borrow::Cow, mem};
+
         let mut fixes =
             Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
 
