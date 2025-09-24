@@ -24,15 +24,21 @@ fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct MaxProps {
     max_props: usize,
+}
+
+impl Default for MaxProps {
+    fn default() -> Self {
+        Self { max_props: 1 }
+    }
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// enforce maximum number of props in Vue component.
+    /// Enforce maximum number of props in Vue component.
     ///
     /// ### Why is this bad?
     ///
