@@ -1,15 +1,17 @@
+use crate::fixer::{RuleFix, RuleFixer};
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::{AstKind, ast::Statement};
+use oxc_ast::{AstKind, ast::IfStatement, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use serde_json::Value;
 
 fn curly_diagnostic(span: Span, keyword: &str, expected: bool) -> OxcDiagnostic {
     let condition_if_needed =
         matches!(keyword, "if" | "while" | "for").then_some(" condition").unwrap_or("");
-
     let prefix = if expected { "Expected" } else { "Unexpected" };
     let message = format!("{prefix} {{ after '{keyword}'{condition_if_needed}.");
+
     OxcDiagnostic::warn(message).with_label(span)
 }
 
@@ -20,7 +22,6 @@ enum CurlyType {
     Multi,
     MultiLine,
     MultiOrNest,
-    Consistent,
 }
 
 impl CurlyType {
@@ -29,30 +30,38 @@ impl CurlyType {
             "multi" => Self::Multi,
             "multi-line" => Self::MultiLine,
             "multi-or-nest" => Self::MultiOrNest,
-            "consistent" => Self::Consistent,
             _ => Self::All,
         }
     }
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct Curly(Box<CurlyConfig>);
+pub struct Curly(CurlyConfig);
 
 #[derive(Debug, Clone)]
 pub struct CurlyConfig {
-    options: Vec<CurlyType>,
+    curly_type: CurlyType,
+    consistent: bool,
 }
 
 impl Default for CurlyConfig {
     fn default() -> Self {
-        Self { options: vec![CurlyType::All] }
+        Self { curly_type: CurlyType::All, consistent: false }
     }
+}
+
+struct IfBranch<'a> {
+    statement: &'a Statement<'a>,
+    is_else: bool,
+    should_have_braces: Option<bool>,
+    has_braces: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces the use of curly braces `{}` for all control statements (`if`, `else`, `for`, `while`, `do`, etc.).
+    /// This rule enforces the use of curly braces `{}` for all control statements
+    /// (`if`, `else`, `for`, `while`, `do`, `with`).
     /// It ensures that all blocks are enclosed in curly braces to improve code clarity and maintainability.
     ///
     /// ### Why is this bad?
@@ -61,29 +70,203 @@ declare_oxc_lint!(
     /// It can also lead to bugs if additional statements are added later without properly enclosing them in braces.
     /// Using curly braces consistently makes the code safer and easier to modify.
     ///
+    /// ### Options
+    ///
+    /// First option:
+    /// - Type: `string`
+    /// - Default: `"all"`
+    /// - Possible values:
+    ///   - `"all"`: require braces in all cases
+    ///   - `"multi"`: require braces only for multi-statement blocks
+    ///   - `"multi-line"`: require braces only for multi-line blocks
+    ///   - `"multi-or-nest"`: require braces for multi-line blocks or when nested
+    ///
+    /// Second option:
+    /// - Type: `string`
+    /// - Default: `undefined`
+    /// - Possible values:
+    ///  - `"consistent"`: require braces if any other branch in the `if-else` chain has braces
+    ///
+    /// Note : The second option can only be used in conjunction with the first option.
+    ///
+    /// Example configuration:
+    /// ```json
+    /// {
+    ///   "curly": ["error", "multi-or-nest", "consistent"]
+    /// }
+    /// ```
+    ///
     /// ### Examples
+    ///
+    /// #### `"all"` (default)
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
+    /// /* curly: ["error", "all"] */
+    ///
     /// if (foo) foo++;
-    ///
-    /// for (let i = 0; i < 10; i++) doSomething(i);
-    ///
     /// while (bar) bar--;
+    /// do foo();
+    /// while (bar);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
+    /// /* curly: ["error", "all"] */
+    ///
+    /// if (foo) { foo++; }
+    /// while (bar) { bar--; }
+    /// do { foo(); } while (bar);
+    ///```
+    ///
+    /// #### `"multi"`
+    /// Examples of **incorrect** code for this rule with the `"multi"` option:
+    /// ```js
+    /// /* curly: ["error", "multi"] */
+    ///
+    /// if (foo) foo();
+    /// else { bar(); baz(); }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"multi"` option:
+    /// ```js
+    /// /* curly: ["error", "multi"] */
+    ///
+    /// if (foo) foo();
+    /// else bar();
+    /// ```
+    ///
+    /// #### `"multi-line"`
+    /// Examples of **incorrect** code for this rule with the `"multi-line"` option:
+    /// ```js
+    /// /* curly: ["error", "multi-line"] */
+    ///
+    /// if (foo) foo()
+    /// else
+    ///   bar();
+    ///
+    /// while (foo)
+    ///   foo()
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"multi-line"` option:
+    /// ```js
+    /// /* curly: ["error", "multi-line"] */
+    ///
+    /// if (foo) foo();
+    /// else bar();
+    ///
+    /// while (foo) foo();
+    ///
+    /// while (true) {
+    ///    doSomething();
+    ///    doSomethingElse();
+    /// }
+    /// ```
+    ///
+    /// #### `"multi-or-nest"`
+    /// Examples of **incorrect** code for this rule with the `"multi-or-nest"` option:
+    /// ```js
+    /// /* curly: ["error", "multi-or-nest"] */
+    ///
+    /// if (foo)
+    ///   if (bar) bar();
+    ///
+    /// while (foo)
+    ///   while (bar) bar();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with the `"multi-or-nest"` option:
+    /// ```js
+    /// /* curly: ["error", "multi-or-nest"] */
+    ///
     /// if (foo) {
-    ///     foo++;
+    ///   if (bar) bar();
     /// }
     ///
-    /// for (let i = 0; i < 10; i++) {
-    ///     doSomething(i);
+    /// while (foo) {
+    ///   while (bar) bar();
+    /// }
+    /// ```
+    ///
+    /// #### `{ "consistent": true }`
+    ///
+    /// When enabled, `consistent: true` enforces consistent use of braces within an `if-else` chain.
+    /// If one branch of the chain uses braces, then all branches must use braces, even if not strictly required by the first option.
+    ///
+    /// Examples of **incorrect** code with `"multi"` and `consistent: true`:
+    /// ```js
+    /// /* curly: ["error", "multi", "consistent"] */
+    ///
+    /// if (foo) {
+    ///   bar();
+    ///   baz();
+    /// } else qux();
+    ///
+    /// if (foo) bar();
+    /// else {
+    ///   baz();
+    ///   qux();
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code with `"multi"` and `consistent: true`:
+    /// ```js
+    /// /* curly: ["error", "multi", "consistent"] */
+    ///
+    /// if (foo) {
+    ///   bar();
+    ///   baz();
+    /// } else {
+    ///   qux();
     /// }
     ///
-    /// while (bar) {
-    ///     bar--;
+    /// if (foo) {
+    ///   bar();
+    /// } else {
+    ///   baz();
+    ///   qux();
+    /// }
+    /// ```
+    ///
+    /// Examples of **incorrect** code with `"multi-line"` and `consistent: true`:
+    /// ```js
+    /// /* curly: ["error", "multi-line", "consistent"] */
+    ///
+    /// if (foo) {
+    ///   bar();
+    /// } else
+    ///   baz();
+    /// ```
+    ///
+    /// Examples of **correct** code with `"multi-line"` and `consistent: true`:
+    /// ```js
+    /// /* curly: ["error", "multi-line", "consistent"] */
+    ///
+    /// if (foo) {
+    ///   bar();
+    /// } else {
+    ///   baz();
+    /// }
+    /// ```
+    ///
+    /// Examples of **incorrect** code with `"multi-or-nest"` and `consistent: true`:
+    /// ```js
+    /// /* curly: ["error", "multi-or-nest", "consistent"] */
+    ///
+    /// if (foo) {
+    ///   if (bar) baz();
+    /// } else qux();
+    /// ```
+    ///
+    /// Examples of **correct** code with `"multi-or-nest"` and `consistent: true`:
+    /// ```js
+    /// /* curly: ["error", "multi-or-nest", "consistent"] */
+    ///
+    /// if (foo) {
+    ///   if (bar) baz();
+    /// } else {
+    ///   qux();
     /// }
     /// ```
     Curly,
@@ -93,144 +276,104 @@ declare_oxc_lint!(
 );
 
 impl Rule for Curly {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let options = value.as_array().filter(|array| !array.is_empty()).map_or_else(
-            || vec![CurlyType::All],
-            |array| array.iter().filter_map(|v| v.as_str().map(CurlyType::from)).collect(),
-        );
+    fn from_configuration(value: Value) -> Self {
+        let curly_type =
+            value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
 
-        Self(Box::new(CurlyConfig { options }))
+        let consistent =
+            value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
+
+        Self(CurlyConfig { curly_type, consistent })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IfStatement(stmt) => {
-                struct StatementInfo<'a> {
-                    statement: &'a Statement<'a>,
-                    is_else: bool,
-                    should_have_braces: Option<bool>,
-                    has_braces: bool,
-                }
-
-                let mut infos = vec![StatementInfo {
-                    statement: &stmt.consequent,
-                    is_else: false,
-                    should_have_braces: should_have_braces(&self.0.options, &stmt.consequent, ctx),
-                    has_braces: has_braces(&stmt.consequent),
-                }];
-
-                let mut current_statement = &stmt.alternate;
-
-                while let Some(statement) = current_statement {
-                    if let Statement::IfStatement(node) = statement {
-                        infos.push(StatementInfo {
-                            statement: &node.consequent,
-                            is_else: false,
-                            should_have_braces: should_have_braces(
-                                &self.0.options,
-                                &node.consequent,
-                                ctx,
-                            ),
-                            has_braces: has_braces(&node.consequent),
-                        });
-                        current_statement = &node.alternate;
-                    } else {
-                        infos.push(StatementInfo {
-                            statement,
-                            is_else: true,
-                            should_have_braces: should_have_braces(&self.0.options, statement, ctx),
-                            has_braces: has_braces(statement),
-                        });
-                        break;
-                    }
-                }
-
-                let keyword = |is_else: bool| if is_else { "else" } else { "if" };
-
-                if self.0.options.contains(&CurlyType::Consistent) {
-                    let mut expected = Some(false);
-
-                    for info in &infos {
-                        expected = Some(info.should_have_braces.unwrap_or(info.has_braces));
-                        if expected == Some(true) {
-                            break;
-                        }
-                    }
-
-                    for info in &infos {
-                        report_if_needed(
-                            ctx,
-                            info.statement,
-                            keyword(info.is_else),
-                            info.has_braces,
-                            expected,
-                        );
-                    }
-                } else {
-                    for info in &infos {
-                        report_if_needed(
-                            ctx,
-                            info.statement,
-                            keyword(info.is_else),
-                            info.has_braces,
-                            info.should_have_braces,
-                        );
-                    }
-                }
-            }
-            AstKind::ForStatement(stmt) => {
-                report_if_needed(
-                    ctx,
-                    &stmt.body,
-                    "for",
-                    has_braces(&stmt.body),
-                    should_have_braces(&self.0.options, &stmt.body, ctx),
-                );
-            }
-            AstKind::ForInStatement(stmt) => {
-                report_if_needed(
-                    ctx,
-                    &stmt.body,
-                    "for-in",
-                    has_braces(&stmt.body),
-                    should_have_braces(&self.0.options, &stmt.body, ctx),
-                );
-            }
-            AstKind::ForOfStatement(stmt) => {
-                report_if_needed(
-                    ctx,
-                    &stmt.body,
-                    "for-of",
-                    has_braces(&stmt.body),
-                    should_have_braces(&self.0.options, &stmt.body, ctx),
-                );
-            }
-            AstKind::WhileStatement(stmt) => {
-                report_if_needed(
-                    ctx,
-                    &stmt.body,
-                    "while",
-                    has_braces(&stmt.body),
-                    should_have_braces(&self.0.options, &stmt.body, ctx),
-                );
-            }
-            AstKind::DoWhileStatement(stmt) => {
-                report_if_needed(
-                    ctx,
-                    &stmt.body,
-                    "do",
-                    has_braces(&stmt.body),
-                    should_have_braces(&self.0.options, &stmt.body, ctx),
-                );
-            }
+            AstKind::IfStatement(stmt) => self.run_for_if_statement(stmt, ctx),
+            AstKind::ForStatement(stmt) => self.run_for_loop("for", &stmt.body, ctx),
+            AstKind::ForInStatement(stmt) => self.run_for_loop("for-in", &stmt.body, ctx),
+            AstKind::ForOfStatement(stmt) => self.run_for_loop("for-of", &stmt.body, ctx),
+            AstKind::WhileStatement(stmt) => self.run_for_loop("while", &stmt.body, ctx),
+            AstKind::DoWhileStatement(stmt) => self.run_for_loop("do", &stmt.body, ctx),
             _ => {}
         }
     }
 }
 
+impl<'a> Curly {
+    fn run_for_if_statement(&self, stmt: &'a IfStatement<'a>, ctx: &LintContext<'a>) {
+        let branches = get_if_branches_from_statement(stmt, &self.0.curly_type, ctx);
+        let does_any_branch_need_braces =
+            branches.iter().any(|b| b.should_have_braces.unwrap_or(b.has_braces));
+
+        for branch in &branches {
+            let should_have_braces = if self.0.consistent {
+                Some(does_any_branch_need_braces)
+            } else {
+                branch.should_have_braces
+            };
+
+            report_if_needed(
+                ctx,
+                branch.statement,
+                get_if_else_keyword(branch.is_else),
+                branch.has_braces,
+                should_have_braces,
+            );
+        }
+    }
+
+    fn run_for_loop(&self, keyword: &str, body: &Statement<'a>, ctx: &LintContext<'a>) {
+        let has_braces = has_braces(body);
+        let should_have_braces = should_have_braces(&self.0.curly_type, body, ctx);
+        report_if_needed(ctx, body, keyword, has_braces, should_have_braces);
+    }
+}
+
+fn get_if_branches_from_statement<'a>(
+    stmt: &'a IfStatement<'a>,
+    curly_type: &CurlyType,
+    ctx: &LintContext<'a>,
+) -> Vec<IfBranch<'a>> {
+    let mut branches = vec![IfBranch {
+        statement: &stmt.consequent,
+        is_else: false,
+        should_have_braces: should_have_braces(curly_type, &stmt.consequent, ctx),
+        has_braces: has_braces(&stmt.consequent),
+    }];
+
+    let mut current_statement = &stmt.alternate;
+
+    while let Some(statement) = current_statement {
+        if let Statement::IfStatement(node) = statement {
+            branches.push(IfBranch {
+                statement: &node.consequent,
+                is_else: false,
+                should_have_braces: should_have_braces(curly_type, &node.consequent, ctx),
+                has_braces: has_braces(&node.consequent),
+            });
+            current_statement = &node.alternate;
+        } else {
+            branches.push(IfBranch {
+                statement,
+                is_else: true,
+                should_have_braces: should_have_braces(curly_type, statement, ctx),
+                has_braces: has_braces(statement),
+            });
+            break;
+        }
+    }
+
+    branches
+}
+
 fn get_node_by_statement<'a>(statement: &'a Statement, ctx: &'a LintContext) -> &'a AstNode<'a> {
     let span = statement.span();
+
     ctx.nodes().iter().find(|n| n.span() == span).expect("Failed to get node by statement")
+}
+
+fn get_if_else_keyword(is_else: bool) -> &'static str {
+    if is_else { "else" } else { "if" }
 }
 
 fn has_braces(body: &Statement) -> bool {
@@ -238,40 +381,66 @@ fn has_braces(body: &Statement) -> bool {
 }
 
 fn should_have_braces<'a>(
-    options: &[CurlyType],
+    curly_type: &CurlyType,
     body: &Statement<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<bool> {
-    let is_block = matches!(body, Statement::BlockStatement(_));
-    let is_not_single_statement = match body {
-        Statement::BlockStatement(block) => block.body.len() != 1,
-        _ => true,
-    };
     let braces_necessary = are_braces_necessary(body, ctx);
 
-    if is_block && (is_not_single_statement || braces_necessary) {
-        Some(true)
-    } else if options.contains(&CurlyType::Multi) {
-        Some(false)
-    } else if options.contains(&CurlyType::MultiLine) {
-        if is_collapsed_one_liner(body, ctx) { None } else { Some(true) }
-    } else if options.contains(&CurlyType::MultiOrNest) {
-        Some(if is_block {
-            let stmt = match body {
-                Statement::BlockStatement(block) => block.body.first(),
-                _ => None,
-            };
-            let body_start = body.span().start;
-            let stmt_start = stmt.map_or(body_start, |stmt| stmt.span().start);
-            let comments = ctx.comments_range(body_start..stmt_start - 1);
-
-            stmt.is_none_or(|stmt| !is_one_liner(stmt, ctx) || comments.count() > 0)
-        } else {
-            !is_one_liner(body, ctx)
-        })
-    } else {
-        Some(true)
+    if let Statement::BlockStatement(block) = body
+        && (block.body.len() != 1 || braces_necessary)
+    {
+        return Some(true);
     }
+
+    match curly_type {
+        CurlyType::Multi => Some(false),
+        CurlyType::MultiLine => {
+            if is_collapsed_one_liner(body, ctx) {
+                None
+            } else {
+                Some(true)
+            }
+        }
+        CurlyType::MultiOrNest => {
+            let Statement::BlockStatement(block) = body else {
+                return Some(!is_one_liner(body, ctx));
+            };
+
+            let stmt = block.body.first();
+            let body_start = body.span().start;
+            let stmt_start = stmt.map_or(body_start, |s| s.span().start);
+            let has_comment =
+                ctx.comments_range(body_start..stmt_start.saturating_sub(1)).next().is_some();
+
+            Some(stmt.is_none_or(|s| !is_one_liner(s, ctx) || has_comment))
+        }
+        CurlyType::All => Some(true),
+    }
+}
+
+fn apply_rule_fix<'a>(
+    fixer: &RuleFixer<'_, 'a>,
+    body: &Statement<'a>,
+    should_have_braces: bool,
+    ctx: &LintContext<'a>,
+) -> RuleFix<'a> {
+    let source = ctx.source_range(body.span());
+
+    let fixed = if should_have_braces {
+        format!("{{{source}}}")
+    } else {
+        let mut trimmed = source.trim_matches(|c| c == '{' || c == '}').to_string();
+        if matches!(
+            ctx.nodes().parent_kind(get_node_by_statement(body, ctx).id()),
+            AstKind::DoWhileStatement(_)
+        ) {
+            trimmed.insert(0, ' ');
+        }
+        trimmed
+    };
+
+    fixer.replace(body.span(), fixed)
 }
 
 fn report_if_needed<'a>(
@@ -289,43 +458,21 @@ fn report_if_needed<'a>(
     }
 
     ctx.diagnostic_with_fix(curly_diagnostic(body.span(), keyword, should_have_braces), |fixer| {
-        if should_have_braces {
-            let fixed = format!("{{{}}}", ctx.source_range(body.span()));
-            fixer.replace(body.span(), fixed)
-        } else {
-            let needs_preceding_space = matches!(
-                ctx.nodes().parent_kind(get_node_by_statement(body, ctx).id()),
-                AstKind::DoWhileStatement(_)
-            );
-            let mut fixed = ctx.source_range(body.span()).to_string();
-
-            if let Some(stripped) = fixed.strip_prefix(|c: char| c.is_whitespace() || c == '{') {
-                fixed = stripped.to_string();
-            }
-
-            if let Some(stripped) = fixed.strip_suffix(|c: char| c.is_whitespace() || c == '}') {
-                fixed = stripped.to_string();
-            } else if fixed.ends_with('}') {
-                fixed.pop();
-            }
-
-            if needs_preceding_space {
-                fixed.insert(0, ' ');
-            }
-            fixer.replace(body.span(), fixed)
-        }
+        apply_rule_fix(&fixer, body, should_have_braces, ctx)
     });
 }
 
-#[expect(clippy::cast_possible_truncation)] // for `as i32`
+#[expect(clippy::cast_possible_truncation)]
 fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
     let node = get_node_by_statement(node, ctx);
     let span = node.span();
     let node_string = ctx.source_range(span);
 
-    let trimmed_len =
-        u32::try_from(node_string.trim_end_matches(|c: char| c.is_whitespace() || c == ';').len())
-            .expect("Failed to convert to u32");
+    let trimmed = node_string.trim_end_matches(|c: char| c.is_whitespace() || c == ';');
+    let trimmed_len: u32 = match trimmed.len().try_into() {
+        Ok(val) => val,
+        Err(_) => return false, // length too large for u32
+    };
 
     let before_node_span = get_token_before(node, ctx).map_or_else(
         || {
@@ -344,10 +491,9 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
         return true;
     };
 
-    let text = ctx.source_range(Span::new(
-        next_char_offset,
-        span.end - ((node_string.len() as u32) - trimmed_len),
-    ));
+    let end_offset =
+        span.end.saturating_sub((node_string.len() as u32).saturating_sub(trimmed_len));
+    let text = ctx.source_range(Span::new(next_char_offset, end_offset));
 
     !text.contains('\n')
 }
@@ -359,11 +505,13 @@ fn is_one_liner(node: &Statement, ctx: &LintContext) -> bool {
 
     let source = ctx.source_range(node.span());
     let trimmed = source.trim_end_matches(|c: char| c.is_whitespace() || c == ';');
+
     !trimmed.contains('\n')
 }
 
 fn get_token_before<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a AstNode<'a>> {
     let span_start = node.span().start;
+
     ctx.nodes().iter().filter(|n| n.span().end < span_start).max_by_key(|n| n.span().end)
 }
 
@@ -392,6 +540,9 @@ fn is_lexical_declaration(node: &Statement) -> bool {
 fn get_next_char_offset(span: Span, ctx: &LintContext) -> Option<u32> {
     let src = ctx.source_text();
     let start = span.end as usize;
+    if start >= src.len() {
+        return None;
+    }
 
     if let Some(tail) = src.get(start..)
         && (tail.starts_with("\r\n") || tail.starts_with("\n\r"))
@@ -402,22 +553,25 @@ fn get_next_char_offset(span: Span, ctx: &LintContext) -> Option<u32> {
     src[start..].chars().next().map(|c| span.end + c.len_utf8() as u32)
 }
 
-#[expect(clippy::cast_possible_truncation)] // for `as i32`
 fn is_followed_by_else_keyword(node: &Statement, ctx: &LintContext) -> bool {
     let Some(next_char_offset) = get_next_char_offset(node.span(), ctx) else {
         return false;
     };
 
     let start = next_char_offset;
-    let end = ctx.source_text().len() as u32;
+    let end: u32 = match ctx.source_text().len().try_into() {
+        Ok(val) => val,
+        Err(_) => return false, // length too large for u32
+    };
 
     if start > end {
         return false;
     }
 
-    let followed_source = ctx.source_range(Span::new(start, end));
-    followed_source.trim_start().starts_with("else")
-        && followed_source.trim_start_matches("else").starts_with([' ', ';', '{'])
+    ctx.source_range(Span::new(start, end))
+        .trim_start()
+        .trim_start_matches("else")
+        .starts_with([' ', ';', '{'])
 }
 
 fn has_unsafe_if(node: &Statement) -> bool {
