@@ -217,7 +217,13 @@ fn collect_hash_from_variable_declarator(
     let key_hash: FxHashSet<String> = obj_pattern
         .properties
         .iter()
-        .filter_map(|prop| prop.key.static_name())
+        .filter_map(|prop| {
+            if matches!(prop.value.kind, BindingPatternKind::AssignmentPattern(_)) {
+                prop.key.static_name()
+            } else {
+                None
+            }
+        })
         .map(|key| key.to_string())
         .collect();
     Some(key_hash)
@@ -407,6 +413,18 @@ fn test() {
     use std::path::PathBuf;
 
     let pass = vec![
+        (
+            r#"
+            <script setup lang="ts">
+                const { laps } = defineProps<{
+                    laps: unknown[];
+                }>();
+            </script>
+                "#,
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
         (
             r#"
                 <script setup lang="ts">
