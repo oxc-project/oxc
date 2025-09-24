@@ -175,8 +175,9 @@ impl Rule for JsxPascalCase {
                 is_member_expression = true;
                 &member_expr.to_string()
             }
-            // Skip checking JSXIdentifier as it starts with a lowercase letter and
-            // is interpreted as an HTML tag by React
+            JSXElementName::Identifier(id) if !id.name.chars().next().unwrap().is_lowercase() => {
+                id.name.as_str()
+            }
             _ => return,
         };
 
