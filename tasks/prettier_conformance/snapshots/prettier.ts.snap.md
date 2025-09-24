@@ -1,4 +1,4 @@
-ts compatibility: 474/573 (82.72%)
+ts compatibility: 475/573 (82.90%)
 
 # Failed
 
@@ -78,7 +78,6 @@ ts compatibility: 474/573 (82.72%)
 | typescript/module/global.ts | 💥 | 75.00% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
-| typescript/non-null/parens.ts | 💥 | 96.00% |
 | typescript/nosemi/index-signature.ts | 💥 | 75.00% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/optional-type/complex.ts | 💥 | 0.00% |

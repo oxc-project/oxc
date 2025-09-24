@@ -765,6 +765,7 @@ fn member_chain_callee_needs_parens(e: &Expression) -> bool {
     std::iter::successors(Some(e), |e| match e {
         Expression::ComputedMemberExpression(e) => Some(&e.object),
         Expression::StaticMemberExpression(e) => Some(&e.object),
+        Expression::TaggedTemplateExpression(e) => Some(&e.tag),
         Expression::TSNonNullExpression(e) => Some(&e.expression),
         _ => None,
     })
