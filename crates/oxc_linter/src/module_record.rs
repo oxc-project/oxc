@@ -3,7 +3,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock, RwLock},
+    sync::{OnceLock, RwLock, Weak},
 };
 
 use rustc_hash::FxHashMap;
@@ -46,7 +46,7 @@ pub struct ModuleRecord {
     ///
     /// Note that Oxc does not support cross-file analysis, so this map will be empty after
     /// [`ModuleRecord`] is created. You must link the module records yourself.
-    pub loaded_modules: RwLock<FxHashMap<CompactStr, Arc<ModuleRecord>>>,
+    pub loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
 
     /// `[[ImportEntries]]`
     ///
