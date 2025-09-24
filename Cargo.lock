@@ -2060,6 +2060,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "papaya",
  "phf",
  "project-root",
  "rayon",
