@@ -916,6 +916,13 @@ exports[`oxlint CLI > should support \`defineRule\` + \`definePlugin\` 1`] = `
    : ^
    \`----
 
+  x define-rule-plugin(create-once-before-false): before hook:
+  | filename: files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let a, b;
+   : ^
+   \`----
+
   x define-rule-plugin(create-once-before-only): before hook:
   | filename: files/1.js
    ,-[files/1.js:1:1]
@@ -1025,6 +1032,20 @@ exports[`oxlint CLI > should support \`defineRule\` + \`definePlugin\` 1`] = `
    : ^
    \`----
 
+  x define-rule-plugin(create-once-before-false): before hook:
+  | filename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let c, d;
+   : ^
+   \`----
+
+  x define-rule-plugin(create-once-before-false): after hook:
+  | filename: files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let c, d;
+   : ^
+   \`----
+
   x define-rule-plugin(create-once-before-only): before hook:
   | filename: files/2.js
    ,-[files/2.js:1:1]
@@ -1048,6 +1069,13 @@ exports[`oxlint CLI > should support \`defineRule\` + \`definePlugin\` 1`] = `
    \`----
 
   x define-rule-plugin(create-once-after-only): ident visit fn "c":
+  | filename: files/2.js
+   ,-[files/2.js:1:5]
+ 1 | let c, d;
+   :     ^
+   \`----
+
+  x define-rule-plugin(create-once-before-false): ident visit fn "c":
   | filename: files/2.js
    ,-[files/2.js:1:5]
  1 | let c, d;
@@ -1090,6 +1118,13 @@ exports[`oxlint CLI > should support \`defineRule\` + \`definePlugin\` 1`] = `
    :        ^
    \`----
 
+  x define-rule-plugin(create-once-before-false): ident visit fn "d":
+  | filename: files/2.js
+   ,-[files/2.js:1:8]
+ 1 | let c, d;
+   :        ^
+   \`----
+
   x define-rule-plugin(create-once-before-only): ident visit fn "d":
   | filename: files/2.js
    ,-[files/2.js:1:8]
@@ -1104,7 +1139,7 @@ exports[`oxlint CLI > should support \`defineRule\` + \`definePlugin\` 1`] = `
    :        ^
    \`----
 
-Found 0 warnings and 30 errors.
+Found 0 warnings and 35 errors.
 Finished in Xms on 2 files using X threads."
 `;
 

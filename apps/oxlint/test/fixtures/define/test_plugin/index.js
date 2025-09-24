@@ -100,6 +100,38 @@ const createOnceRule = defineRule({
   },
 });
 
+// Tests that `before` hook returning `false` disables visiting AST for the file.
+const createOnceBeforeFalseRule = defineRule({
+  createOnce(context) {
+    return {
+      before() {
+        context.report({
+          message: 'before hook:\n'
+            + `filename: ${relativePath(context.filename)}`,
+          node: SPAN,
+        });
+
+        // Only visit AST for `files/2.js`
+        return context.filename.endsWith('2.js');
+      },
+      Identifier(node) {
+        context.report({
+          message: `ident visit fn "${node.name}":\n`
+            + `filename: ${relativePath(context.filename)}`,
+          node: { ...SPAN, ...node },
+        });
+      },
+      after() {
+        context.report({
+          message: 'after hook:\n'
+            + `filename: ${relativePath(context.filename)}`,
+          node: SPAN,
+        });
+      },
+    };
+  },
+});
+
 // These 3 rules test that `createOnce` without `before` and `after` hooks works correctly.
 
 const createOnceBeforeOnlyRule = defineRule({
@@ -165,6 +197,7 @@ export default definePlugin({
   rules: {
     create: createRule,
     "create-once": createOnceRule,
+    "create-once-before-false": createOnceBeforeFalseRule,
     "create-once-before-only": createOnceBeforeOnlyRule,
     "create-once-after-only": createOnceAfterOnlyRule,
     "create-once-no-hooks": createOnceNoHooksRule,
