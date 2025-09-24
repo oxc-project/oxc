@@ -15,7 +15,8 @@ use crate::{
     generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
     utils::{
-        assignment_like::AssignmentLike, expression::FormatExpressionWithoutTrailingComments,
+        assignment_like::AssignmentLike,
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         object::format_property_key,
     },
     write,
@@ -378,7 +379,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                                 type_arguments.fmt(f)
                             }
                         } else if implements.is_empty() {
-                            FormatExpressionWithoutTrailingComments(extends).fmt(f)?;
+                            FormatNodeWithoutTrailingComments(extends).fmt(f)?;
                             // Only add trailing comments if they're not line comments
                             // Line comments are handled separately to ensure proper placement
                             if !has_trailing_comments {

@@ -1829,7 +1829,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
         }
         write!(
             f,
-            [
+            [group(&format_args!(
                 "new",
                 space(),
                 type_parameters,
@@ -1838,7 +1838,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
                 "=>",
                 space(),
                 return_type.type_annotation()
-            ]
+            ))]
         );
         Ok(())
     }

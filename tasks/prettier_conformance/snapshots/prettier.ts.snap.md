@@ -35,12 +35,12 @@ ts compatibility: 481/573 (83.94%)
 | typescript/comments/union.ts | 💥 | 83.33% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 75.00% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
-| typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
+| typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
 | typescript/conditional-types/conditonal-types.ts | 💥✨ | 34.48% |
 | typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 54.03% |
-| typescript/conditional-types/parentheses.ts | 💥💥 | 60.24% |
+| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 58.18% |
+| typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
@@ -86,7 +86,7 @@ ts compatibility: 481/573 (83.94%)
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
 | typescript/tuple/trailing-comma-for-empty-tuples.ts | 💥💥💥 | 16.67% |
 | typescript/tuple/tuple.ts | 💥💥💥 | 87.50% |
-| typescript/type-alias/conditional.ts | 💥 | 38.10% |
+| typescript/type-alias/conditional.ts | 💥 | 47.62% |
 | typescript/type-alias/issue-9874.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |

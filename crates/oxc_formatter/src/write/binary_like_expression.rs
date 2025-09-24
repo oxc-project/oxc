@@ -9,7 +9,7 @@ use crate::{
     Format,
     formatter::{FormatResult, Formatter},
     generated::ast_nodes::{AstNode, AstNodes},
-    utils::expression::FormatExpressionWithoutTrailingComments,
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -322,7 +322,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                     }
 
                     if *root {
-                        write!(f, FormatExpressionWithoutTrailingComments(right))
+                        write!(f, FormatNodeWithoutTrailingComments(right))
                     } else {
                         write!(f, right)
                     }
