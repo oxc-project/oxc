@@ -1,4 +1,4 @@
-ts compatibility: 487/573 (84.99%)
+ts compatibility: 495/573 (86.39%)
 
 # Failed
 
@@ -27,7 +27,6 @@ ts compatibility: 487/573 (84.99%)
 | typescript/comments/16207.ts | 💥 | 71.43% |
 | typescript/comments/16889.ts | 💥 | 62.61% |
 | typescript/comments/location.ts | 💥 | 95.00% |
-| typescript/comments/mapped_types.ts | 💥 | 58.82% |
 | typescript/comments/method_types.ts | 💥 | 79.49% |
 | typescript/comments/type-parameters.ts | 💥 | 65.52% |
 | typescript/comments/type_literals.ts | 💥 | 68.97% |
@@ -38,14 +37,11 @@ ts compatibility: 487/573 (84.99%)
 | typescript/conditional-types/conditonal-types.ts | 💥✨ | 34.48% |
 | typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 58.18% |
+| typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
-| typescript/custom/modifiers/minustoken.ts | 💥 | 20.00% |
-| typescript/custom/modifiers/question.ts | 💥 | 0.00% |
-| typescript/custom/modifiers/readonly.ts | 💥 | 0.00% |
 | typescript/declare/object-type-in-declare-function.ts | 💥 | 56.25% |
 | typescript/decorators/comments.ts | 💥 | 60.00% |
 | typescript/decorators/decorators-comments.ts | 💥 | 65.71% |
@@ -63,17 +59,13 @@ ts compatibility: 487/573 (84.99%)
 | typescript/interface2/comments.ts | 💥 | 78.87% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 72.25% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
-| typescript/key-remapping-in-mapped-types/key-remapping.ts | 💥 | 55.56% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
-| typescript/mapped-type/intersection.ts | 💥 | 0.00% |
-| typescript/mapped-type/issue-11098.ts | 💥 | 60.00% |
-| typescript/mapped-type/break-mode/break-mode.ts | 💥 | 40.00% |
 | typescript/method/issue-10352-consistency.ts | 💥 | 63.64% |
 | typescript/module/global.ts | 💥 | 75.00% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
-| typescript/prettier-ignore/mapped-types.ts | 💥 | 54.72% |
+| typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 29.17% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |

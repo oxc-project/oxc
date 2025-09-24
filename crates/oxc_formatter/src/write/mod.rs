@@ -15,6 +15,7 @@ mod import_declaration;
 mod import_expression;
 mod intersection_type;
 mod jsx;
+mod mapped_type;
 mod member_expression;
 mod object_like;
 mod object_pattern_like;
@@ -1825,75 +1826,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
             ))]
         );
         Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let type_parameter = self.type_parameter();
-        let name_type = self.name_type();
-
-        let should_expand = false; // TODO has_line_break_before_property_name(node)?;
-
-        let type_annotation_has_leading_comment = false;
-        //TODO
-        //
-        // mapped_type
-        // .as_ref()
-        // .is_some_and(|annotation| comments.has_leading_comments(annotation.syntax()));
-
-        let format_inner = format_with(|f| {
-            // TODO:
-            // write!(f, FormatLeadingComments::Comments(comments.dangling_comments(self.span())))?;
-
-            match self.readonly() {
-                Some(TSMappedTypeModifierOperator::True) => write!(f, ["readonly", space()])?,
-                Some(TSMappedTypeModifierOperator::Plus) => write!(f, ["+readonly", space()])?,
-                Some(TSMappedTypeModifierOperator::Minus) => write!(f, ["-readonly", space()])?,
-                None => {}
-            }
-
-            let format_inner_inner = format_with(|f| {
-                write!(f, "[")?;
-                write!(f, type_parameter.name())?;
-                if let Some(constraint) = &type_parameter.constraint() {
-                    write!(f, [space(), "in", space(), constraint])?;
-                }
-                if let Some(default) = &type_parameter.default() {
-                    write!(f, [space(), "=", space(), default])?;
-                }
-                if let Some(name_type) = &name_type {
-                    write!(f, [space(), "as", space(), name_type])?;
-                }
-                write!(f, "]")?;
-                match self.optional() {
-                    Some(TSMappedTypeModifierOperator::True) => write!(f, "?"),
-                    Some(TSMappedTypeModifierOperator::Plus) => write!(f, "+?"),
-                    Some(TSMappedTypeModifierOperator::Minus) => write!(f, "-?"),
-                    None => Ok(()),
-                }
-            });
-
-            write!(f, [space(), group(&format_inner_inner)])?;
-            if let Some(type_annotation) = &self.type_annotation() {
-                write!(f, [":", space(), type_annotation])?;
-            }
-            write!(f, if_group_breaks(&OptionalSemicolon))
-        });
-
-        let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-        write!(
-            f,
-            [
-                "{",
-                group(&soft_block_indent_with_maybe_space(
-                    &format_inner,
-                    should_insert_space_around_brackets
-                ))
-                .should_expand(should_expand),
-                "}",
-            ]
-        )
     }
 }
 
