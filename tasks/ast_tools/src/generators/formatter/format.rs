@@ -44,6 +44,7 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSUnionType",
     "TSIntersectionType",
     "TSConstructorType",
+    "TSTypeQuery",
 ];
 
 const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {

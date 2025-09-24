@@ -19,6 +19,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSType<'a>> {
             AstNodes::TSIntersectionType(it) => it.needs_parentheses(f),
             AstNodes::TSConditionalType(it) => it.needs_parentheses(f),
             AstNodes::TSTypeOperator(it) => it.needs_parentheses(f),
+            AstNodes::TSTypeQuery(it) => it.needs_parentheses(f),
             _ => {
                 // TODO: incomplete
                 false
@@ -149,5 +150,28 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         operator_type_or_higher_needs_parens(self.span(), self.parent)
+    }
+}
+
+impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeQuery<'a>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        match self.parent {
+            AstNodes::TSArrayType(_) => true,
+            // Typeof operators are parenthesized when used as an object type in an indexed access
+            // to avoid ambiguity of precedence, as it's higher than the JS equivalent:
+            // ```typescript
+            // const array = [1, 2, 3]
+            // type T = typeof array[0]; // => number
+            // type T2 = (typeof array)[0]; // => number
+            // const J1 = typeof array[0]; // => 'number'
+            // const J2 = (typeof array)[0]; // => 'o', because `typeof array` is 'object'
+            // ```
+            AstNodes::TSIndexedAccessType(indexed) => {
+                // The typeof operator only needs parens if it's the object of the indexed access.
+                // If it's the index_type, then the braces already act as the visual precedence.
+                indexed.object_type().span() == self.span()
+            }
+            _ => false,
+        }
     }
 }

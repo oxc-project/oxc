@@ -357,7 +357,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
             return true;
         }
 
-        let has_parameters = parameters.items.is_empty();
+        let has_parameters = !parameters.items.is_empty();
         let has_type_and_parameters = arrow.return_type.is_some() && has_parameters;
         has_type_and_parameters || has_rest_object_or_array_parameter(parameters)
     }
@@ -491,7 +491,11 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // This tracks that state and is used to prevent the insertion of
         // additional indents under `format_arrow_signatures`, then also to
         // add the outer indent under `format_inner`.
-        let has_initial_indent = is_callee || is_assignment_rhs;
+        let has_initial_indent = is_callee
+            || self
+                .options
+                .assignment_layout
+                .is_some_and(|layout| layout != AssignmentLikeLayout::BreakAfterOperator);
 
         let format_arrow_signatures = format_with(|f| {
             let join_signatures = format_with(|f| {

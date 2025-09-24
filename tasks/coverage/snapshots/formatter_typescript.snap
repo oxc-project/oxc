@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8794/8816 (99.75%)
+Positive Passed: 8796/8816 (99.77%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
@@ -40,10 +40,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuar
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/generators/yieldStatementNoAsiAfterTransform.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithPrivates2.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClassWithProtecteds2.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/statements/returnStatements/returnStatementNoAsiAfterTransform.ts
 

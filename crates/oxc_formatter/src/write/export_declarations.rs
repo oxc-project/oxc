@@ -221,3 +221,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
         }
     }
 }
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSExportAssignment<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, ["export = ", self.expression(), OptionalSemicolon])
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, ["export as namespace ", self.id(), OptionalSemicolon])
+    }
+}

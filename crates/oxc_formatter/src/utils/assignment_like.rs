@@ -9,11 +9,12 @@ use crate::{
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
-        trivia::format_dangling_comments,
+        trivia::{FormatLeadingComments, format_dangling_comments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
     utils::{
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
     },
