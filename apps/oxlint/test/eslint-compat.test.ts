@@ -29,4 +29,16 @@ describe('ESLint compatibility', () => {
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
+
+  it('`definePlugin` should work', async () => {
+    const { stdout, exitCode } = await runEslint('test/fixtures/definePlugin');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('`definePlugin` and `defineRule` together should work', async () => {
+    const { stdout, exitCode } = await runEslint('test/fixtures/definePlugin_and_defineRule');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
 });

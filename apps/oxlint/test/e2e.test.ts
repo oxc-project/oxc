@@ -160,6 +160,18 @@ describe('oxlint CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
+  it('should support `definePlugin`', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/definePlugin');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should support `definePlugin` and `defineRule` together', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/definePlugin_and_defineRule');
+    expect(exitCode).toBe(1);
+    expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
   it('should have UTF-16 spans in AST', async () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/utf16_offsets');
     expect(exitCode).toBe(1);

@@ -1,22 +1,58 @@
 import type { Context } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
-import type { BeforeHook, Visitor } from './plugins/types.ts';
+import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
-const { defineProperty, getPrototypeOf, setPrototypeOf } = Object;
+const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf } = Object;
 
 const dummyOptions: unknown[] = [],
   dummyReport = () => {};
 
-// Define a plugin.
+/**
+ * Define a plugin.
+ *
+ * Converts any rules with `createOnce` method to have an ESLint-compatible `create` method.
+ *
+ * The `plugin` object passed in is mutated in-place.
+ *
+ * @param plugin - Plugin to define
+ * @returns Plugin with all rules having `create` method
+ * @throws {Error} If `plugin` is not an object, or `plugin.rules` is not an object
+ */
 export function definePlugin(plugin: Plugin): Plugin {
+  // Validate type of `plugin`
+  if (plugin === null || typeof plugin !== 'object') throw new Error('Plugin must be an object');
+
+  const { rules } = plugin;
+  if (rules === null || typeof rules !== 'object') throw new Error('Plugin must have an object as `rules` property');
+
+  // Make each rule in the plugin ESLint-compatible by calling `defineRule` on it
+  for (const ruleName in rules) {
+    if (hasOwn(rules, ruleName)) {
+      rules[ruleName] = defineRule(rules[ruleName]);
+    }
+  }
+
   return plugin;
 }
 
-// Define a rule.
-// If rule has `createOnce` method, add an ESLint-compatible `create` method which delegates to `createOnce`.
+/**
+ * Define a rule.
+ *
+ * If rules does not already have a `create` method, create an ESLint-compatible `create` method
+ * which delegates to `createOnce`.
+ *
+ * The `rule` object passed in is mutated in-place.
+ *
+ * @param rule - Rule to define
+ * @returns Rule with `create` method
+ * @throws {Error} If `rule` is not an object
+ */
 export function defineRule(rule: Rule): Rule {
-  if (!('createOnce' in rule)) return rule;
-  if ('create' in rule) throw new Error('Rules must define only `create` or `createOnce` methods, not both');
+  // Validate type of `rule`
+  if (rule === null || typeof rule !== 'object') throw new Error('Rule must be an object');
+
+  // If rule already has `create` method, return it as is
+  if ('create' in rule) return rule;
 
   // Add `create` function to `rule`
   let context: Context = null, visitor: Visitor, beforeHook: BeforeHook | null;
@@ -59,6 +95,11 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   visitor: Visitor;
   beforeHook: BeforeHook | null;
 } {
+  // Validate type of `createOnce`
+  const { createOnce } = rule;
+  if (createOnce == null) throw new Error('Rules must define either a `create` or `createOnce` method');
+  if (typeof createOnce !== 'function') throw new Error('Rule `createOnce` property must be a function');
+
   // Call `createOnce` with empty context object.
   // Really, `context` should be an instance of `Context`, which would throw error on accessing e.g. `id`
   // in body of `createOnce`. But any such bugs should have been caught when testing the rule in Oxlint,
@@ -69,7 +110,7 @@ function createContextAndVisitor(rule: CreateOnceRule): {
     report: { value: dummyReport, enumerable: true, configurable: true },
   });
 
-  let { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context);
+  let { before: beforeHook, after: afterHook, ...visitor } = createOnce.call(rule, context) as VisitorWithHooks;
 
   if (beforeHook === void 0) {
     beforeHook = null;

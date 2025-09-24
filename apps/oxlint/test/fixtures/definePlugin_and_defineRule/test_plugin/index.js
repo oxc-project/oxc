@@ -1,5 +1,5 @@
 import { dirname, sep } from 'node:path';
-import { defineRule } from '../../../../dist/index.js';
+import { definePlugin, defineRule } from '../../../../dist/index.js';
 
 // `loc` field is required for ESLint.
 // TODO: Remove this workaround when AST nodes have a `loc` field.
@@ -194,9 +194,9 @@ const createOnceNoHooksRule = defineRule({
   },
 });
 
-export default {
+export default definePlugin({
   meta: {
-    name: "define-rule-plugin",
+    name: "define-plugin-and-rule-plugin",
   },
   rules: {
     create: createRule,
@@ -206,4 +206,4 @@ export default {
     "create-once-after-only": createOnceAfterOnlyRule,
     "create-once-no-hooks": createOnceNoHooksRule,
   },
-};
+});
