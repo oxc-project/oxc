@@ -729,7 +729,7 @@ impl Runtime {
                                         messages.lock().unwrap().extend(
                                             diagnostics.into_iter().map(|diagnostic| {
                                                 oxc_diagnostic_to_message_with_position(
-                                                    &diagnostic,
+                                                    diagnostic,
                                                     source_text,
                                                     rope,
                                                 )
@@ -754,7 +754,7 @@ impl Runtime {
                         messages.lock().unwrap().extend(section_messages.iter().map(|message| {
                             let message = message_cloner.clone_message(message);
 
-                            message_to_message_with_position(&message, source_text, rope)
+                            message_to_message_with_position(message, source_text, rope)
                         }));
                     },
                 );

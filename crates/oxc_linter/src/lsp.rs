@@ -69,11 +69,13 @@ pub struct MessageWithPosition<'a> {
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn oxc_diagnostic_to_message_with_position<'a>(
-    diagnostic: &OxcDiagnostic,
+    diagnostic: OxcDiagnostic,
     source_text: &str,
     rope: &Rope,
 ) -> MessageWithPosition<'a> {
-    let labels = diagnostic.labels.as_ref().map(|labels| {
+    let inner = diagnostic.inner_owned();
+
+    let labels = inner.labels.as_ref().map(|labels| {
         labels
             .iter()
             .map(|labeled_span| {
@@ -89,56 +91,33 @@ pub fn oxc_diagnostic_to_message_with_position<'a>(
     });
 
     MessageWithPosition {
-        message: diagnostic.message.clone(),
-        severity: diagnostic.severity,
-        help: diagnostic.help.clone(),
-        url: diagnostic.url.clone(),
-        code: diagnostic.code.clone(),
+        message: inner.message,
+        severity: inner.severity,
+        help: inner.help,
+        url: inner.url,
+        code: inner.code,
         labels,
         fixes: PossibleFixesWithPosition::None,
     }
 }
 
-// clippy: the source field is checked and assumed to be less than 4GB, and
-// we assume that the fix offset will not exceed 2GB in either direction
-#[expect(clippy::cast_possible_truncation)]
 pub fn message_to_message_with_position<'a>(
-    message: &Message<'a>,
+    message: Message<'a>,
     source_text: &str,
     rope: &Rope,
 ) -> MessageWithPosition<'a> {
-    let labels = message.error.labels.as_ref().map(|labels| {
-        labels
-            .iter()
-            .map(|labeled_span| {
-                let offset = labeled_span.offset() as u32;
-                let start_position = offset_to_position(rope, offset, source_text);
-                let end_position =
-                    offset_to_position(rope, offset + labeled_span.len() as u32, source_text);
-                let message = labeled_span.label().map(|label| Cow::Owned(label.to_string()));
+    let mut result = oxc_diagnostic_to_message_with_position(message.error, source_text, rope);
+    result.fixes = match &message.fixes {
+        PossibleFixes::None => PossibleFixesWithPosition::None,
+        PossibleFixes::Single(fix) => {
+            PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
+        }
+        PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
+            fixes.iter().map(|fix| fix_to_fix_with_position(fix, rope, source_text)).collect(),
+        ),
+    };
 
-                SpanPositionMessage::new(start_position, end_position).with_message(message)
-            })
-            .collect::<Vec<_>>()
-    });
-
-    MessageWithPosition {
-        message: message.error.message.clone(),
-        severity: message.error.severity,
-        help: message.error.help.clone(),
-        url: message.error.url.clone(),
-        code: message.error.code.clone(),
-        labels,
-        fixes: match &message.fixes {
-            PossibleFixes::None => PossibleFixesWithPosition::None,
-            PossibleFixes::Single(fix) => {
-                PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
-            }
-            PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
-                fixes.iter().map(|fix| fix_to_fix_with_position(fix, rope, source_text)).collect(),
-            ),
-        },
-    }
+    result
 }
 
 #[derive(Debug)]
