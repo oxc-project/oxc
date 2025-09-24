@@ -56,28 +56,46 @@ const registeredPluginPaths = new Set<string>();
 // Indexed by `ruleId`, which is passed to `lintFile`.
 export const registeredRules: RuleAndContext[] = [];
 
+// Plugin details returned to Rust
+interface PluginDetails {
+  // Plugin name
+  name: string;
+  // Index of first rule of this plugin within `registeredRules`
+  offset: number;
+  // Names of rules within this plugin, in same order as in `registeredRules`
+  ruleNames: string[];
+}
+
 /**
  * Load a plugin.
  *
  * Main logic is in separate function `loadPluginImpl`, because V8 cannot optimize functions
  * containing try/catch.
  *
- * @param {string} path - Absolute path of plugin file
- * @returns {string} - JSON result
+ * @param path - Absolute path of plugin file
+ * @returns JSON result
  */
 export async function loadPlugin(path: string): Promise<string> {
   try {
-    return await loadPluginImpl(path);
+    const res = await loadPluginImpl(path);
+    return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
   }
 }
 
-async function loadPluginImpl(path: string): Promise<string> {
+/**
+ * Load a plugin.
+ *
+ * @param path - Absolute path of plugin file
+ * @returns - Plugin details
+ * @throws {Error} If plugin has already been registered
+ * @throws {TypeError} If one of plugin's rules is malformed or its `createOnce` method returns invalid visitor
+ * @throws {*} If plugin throws an error during import
+ */
+async function loadPluginImpl(path: string): Promise<PluginDetails> {
   if (registeredPluginPaths.has(path)) {
-    return JSON.stringify({
-      Failure: 'This plugin has already been registered',
-    });
+    throw new Error('This plugin has already been registered. This is a bug in Oxlint. Please report it.');
   }
 
   const { default: plugin } = (await import(path)) as { default: Plugin };
@@ -117,7 +135,7 @@ async function loadPluginImpl(path: string): Promise<string> {
     registeredRules.push(ruleAndContext);
   }
 
-  return JSON.stringify({ Success: { name: pluginName, offset, ruleNames } });
+  return { name: pluginName, offset, ruleNames };
 }
 
 /**
