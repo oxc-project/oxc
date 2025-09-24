@@ -566,7 +566,7 @@ impl Runtime {
                 for (record, requested_module_paths) in
                     records.iter().zip(requested_module_paths.into_iter())
                 {
-                    let mut loaded_modules = record.loaded_modules.write().unwrap();
+                    let mut loaded_modules = record.write_loaded_modules();
                     for request in requested_module_paths {
                         // TODO: revise how to store multiple sections in loaded_modules
                         let Some(dep_module_record) =
@@ -574,7 +574,7 @@ impl Runtime {
                         else {
                             continue;
                         };
-                        loaded_modules.insert(request.specifier, Arc::clone(dep_module_record));
+                        loaded_modules.insert(request.specifier, Arc::downgrade(dep_module_record));
                     }
                 }
             });
