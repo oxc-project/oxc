@@ -4,6 +4,7 @@ source: crates/oxc_language_server/src/tester.rs
 ########## 
 file: fixtures/linter/lint_on_run/on_save/on-save.ts
 ----------
+<<<<<<< HEAD
 
 code: "typescript-eslint(no-floating-promises)"
 code_description.href: "None"
@@ -83,3 +84,6 @@ fixed: Multiple(
         },
     ],
 )
+=======
+File is ignored
+>>>>>>> dfed4bbe0 (repair snapshot & parser.rs for loc)
