@@ -129,6 +129,29 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
         Self(ManuallyDrop::new(inner))
     }
 
+    /// Create a new [`HashMap`] whose elements are taken from an iterator and
+    /// allocated in the given `allocator`.
+    ///
+    /// This is behaviorially identical to [`FromIterator::from_iter`].
+    #[inline]
+    pub fn from_iter_in<I: IntoIterator<Item = (K, V)>>(
+        iter: I,
+        allocator: &'alloc Allocator,
+    ) -> Self
+    where
+        K: Eq + Hash,
+    {
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
+
+        let iter = iter.into_iter();
+        let hint = iter.size_hint();
+        let capacity = hint.1.unwrap_or(hint.0);
+        let mut map =
+            FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
+        map.extend(iter);
+        Self(ManuallyDrop::new(map))
+    }
+
     /// Creates a consuming iterator visiting all the keys in arbitrary order.
     ///
     /// The map cannot be used after calling this. The iterator element type is `K`.

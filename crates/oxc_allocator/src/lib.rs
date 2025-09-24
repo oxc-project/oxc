@@ -9,6 +9,7 @@
 //! * [`Vec`]
 //! * [`String`]
 //! * [`HashMap`]
+//! * [`HashSet`]
 //!
 //! See [`Allocator`] docs for information on efficient use of [`Allocator`].
 //!
@@ -50,6 +51,7 @@ mod convert;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
+pub mod hash_set;
 #[cfg(feature = "pool")]
 mod pool;
 mod string_builder;
@@ -68,6 +70,7 @@ pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
+pub use hash_set::HashSet;
 #[cfg(feature = "pool")]
 pub use pool::*;
 pub use string_builder::StringBuilder;

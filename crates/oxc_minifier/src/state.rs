@@ -1,5 +1,6 @@
+use oxc_allocator::HashSet;
 use oxc_ecmascript::constant_evaluation::ConstantValue;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::{Atom, SourceType};
@@ -23,14 +24,18 @@ pub struct MinifierState<'a> {
     pub changed: bool,
 }
 
-impl MinifierState<'_> {
-    pub fn new(source_type: SourceType, options: CompressOptions) -> Self {
+impl<'a> MinifierState<'a> {
+    pub fn new(
+        allocator: &'a oxc_allocator::Allocator,
+        source_type: SourceType,
+        options: CompressOptions,
+    ) -> Self {
         Self {
             source_type,
             options,
             pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
-            class_symbols_stack: ClassSymbolsStack::new(),
+            class_symbols_stack: ClassSymbolsStack::new_in(allocator),
             changed: false,
         }
     }
@@ -38,12 +43,12 @@ impl MinifierState<'_> {
 
 /// Stack to track class symbol information
 pub struct ClassSymbolsStack<'a> {
-    stack: NonEmptyStack<FxHashSet<Atom<'a>>>,
+    stack: NonEmptyStack<HashSet<'a, Atom<'a>>>,
 }
 
 impl<'a> ClassSymbolsStack<'a> {
-    pub fn new() -> Self {
-        Self { stack: NonEmptyStack::new(FxHashSet::default()) }
+    pub fn new_in(allocator: &'a oxc_allocator::Allocator) -> Self {
+        Self { stack: NonEmptyStack::new(HashSet::new_in(allocator)) }
     }
 
     /// Check if the stack is exhausted
@@ -52,8 +57,8 @@ impl<'a> ClassSymbolsStack<'a> {
     }
 
     /// Enter a new class scope
-    pub fn push_class_scope(&mut self) {
-        self.stack.push(FxHashSet::default());
+    pub fn push_class_scope(&mut self, allocator: &'a oxc_allocator::Allocator) {
+        self.stack.push(HashSet::new_in(allocator));
     }
 
     /// Exit the current class scope
