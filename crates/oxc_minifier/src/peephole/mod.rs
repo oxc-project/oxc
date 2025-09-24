@@ -124,7 +124,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 ctx.scoping_mut().delete_reference(*reference_id_to_remove);
             }
         }
-        debug_assert!(ctx.state.class_symbols_stack.is_empty());
+        debug_assert!(ctx.state.class_symbols_stack.is_exhausted());
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {

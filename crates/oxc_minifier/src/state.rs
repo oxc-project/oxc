@@ -1,6 +1,7 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::{Atom, SourceType};
 use oxc_syntax::symbol::SymbolId;
 
@@ -37,17 +38,17 @@ impl MinifierState<'_> {
 
 /// Stack to track class symbol information
 pub struct ClassSymbolsStack<'a> {
-    stack: Vec<FxHashSet<Atom<'a>>>,
+    stack: NonEmptyStack<FxHashSet<Atom<'a>>>,
 }
 
 impl<'a> ClassSymbolsStack<'a> {
     pub fn new() -> Self {
-        Self { stack: Vec::new() }
+        Self { stack: NonEmptyStack::new(FxHashSet::default()) }
     }
 
-    /// Check if the stack is empty
-    pub fn is_empty(&self) -> bool {
-        self.stack.is_empty()
+    /// Check if the stack is exhausted
+    pub fn is_exhausted(&self) -> bool {
+        self.stack.is_exhausted()
     }
 
     /// Enter a new class scope
@@ -62,13 +63,11 @@ impl<'a> ClassSymbolsStack<'a> {
 
     /// Add a private member to the current class scope
     pub fn push_private_member_to_current_class(&mut self, name: Atom<'a>) {
-        if let Some(current_class) = self.stack.last_mut() {
-            current_class.insert(name);
-        }
+        self.stack.last_mut().insert(name);
     }
 
     /// Check if a private member is used in the current class scope
     pub fn is_private_member_used_in_current_class(&self, name: &Atom<'a>) -> bool {
-        self.stack.last().is_some_and(|current_class| current_class.contains(name))
+        self.stack.last().contains(name)
     }
 }
