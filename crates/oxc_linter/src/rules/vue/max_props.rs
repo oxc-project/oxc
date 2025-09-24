@@ -1,10 +1,15 @@
+use oxc_allocator::Vec;
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSType, TSTypeName},
+    ast::{
+        ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, TSSignature, TSType,
+        TSTypeName, TSTypeReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 use serde_json::Value;
 
 use crate::{
@@ -12,10 +17,10 @@ use crate::{
     frameworks::FrameworkOptions, rule::Rule,
 };
 
-fn max_props_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
+    let msg = format!("Component has too many props ({cur}). Maximum allowed is {limit}.");
+    OxcDiagnostic::warn(msg)
+        .with_help("Consider refactoring the component by reducing the number of props.")
         .with_label(span)
 }
 
@@ -24,35 +29,57 @@ pub struct MaxProps {
     max_props: usize,
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// enforce maximum number of props in Vue component.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// This rule enforces a maximum number of props in a Vue SFC,
+    /// in order to aid in maintainability and reduce complexity.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule with the default `{ maxProps: 1 }` option:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// <script setup>
+    /// defineProps({
+    ///   prop1: String,
+    ///   prop2: String,
+    /// })
+    /// </script>
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// Examples of **correct** code for this rule with the default `{ maxProps: 1 }` option:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// <script setup>
+    /// defineProps({
+    ///   prop1: String,
+    /// })
+    /// </script>
+    /// ```
+    /// ### Options
+    ///
+    /// This rule takes an object, where you can specify the maximum number of props allowed in a Vue SFC.
+    ///
+    /// ```json
+    /// {
+    ///     "vue/max-props": [
+    ///         "error",
+    ///         {
+    ///             "maxProps": 1
+    ///         }
+    ///     ]
+    /// }
     /// ```
     MaxProps,
     vue,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    pending,
+    restriction,
 );
 
 impl Rule for MaxProps {
+    #[expect(clippy::cast_possible_truncation)]
     fn from_configuration(value: Value) -> Self {
         Self {
             max_props: value
@@ -92,16 +119,25 @@ impl MaxProps {
                 Some(Expression::ObjectExpression(obj_expr))
                     if obj_expr.properties.len() > self.max_props =>
                 {
-                    ctx.diagnostic(max_props_diagnostic(call_expr.span));
+                    ctx.diagnostic(max_props_diagnostic(
+                        call_expr.span,
+                        obj_expr.properties.len(),
+                        self.max_props,
+                    ));
                 }
                 Some(Expression::ArrayExpression(arr_expr))
                     if arr_expr.elements.len() > self.max_props =>
                 {
-                    ctx.diagnostic(max_props_diagnostic(call_expr.span));
+                    ctx.diagnostic(max_props_diagnostic(
+                        call_expr.span,
+                        arr_expr.elements.len(),
+                        self.max_props,
+                    ));
                 }
                 _ => {}
             }
         } else {
+            // e.g defineProps<A>();
             let Some(type_arguments) = call_expr.type_arguments.as_ref() else {
                 return;
             };
@@ -109,8 +145,9 @@ impl MaxProps {
                 return;
             };
 
-            if is_type_argument_length_exceeded(ctx, first_type_argument, self.max_props) {
-                ctx.diagnostic(max_props_diagnostic(call_expr.span));
+            let all_key_len = get_type_argument_keys(ctx, first_type_argument).len();
+            if all_key_len > self.max_props {
+                ctx.diagnostic(max_props_diagnostic(call_expr.span, all_key_len, self.max_props));
             }
         }
     }
@@ -125,82 +162,100 @@ impl MaxProps {
             return;
         };
 
-        // 优化后的props属性查找逻辑
-        let Some(props_obj_expr) = obj_expr.properties.iter()
-            // 查找key为"props"的ObjectProperty
-            .find_map(|item| {
-                if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
-                    && let Some(key) = obj_prop.key.static_name()
-                    && key == "props"
-                    // 直接获取并检查props的值是否为ObjectExpression
-                    && let Expression::ObjectExpression(props_expr) = obj_prop.value.get_inner_expression()
-                {
-                    Some(props_expr)
-                } else {
-                    None
-                }
-            })
-        else {
+        let Some(props_obj_expr) = obj_expr.properties.iter().find_map(|item| {
+            if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
+                && let Some(key) = obj_prop.key.static_name()
+                && key == "props"
+                && let Expression::ObjectExpression(props_expr) =
+                    obj_prop.value.get_inner_expression()
+            {
+                Some(props_expr)
+            } else {
+                None
+            }
+        }) else {
             return;
         };
 
-        // 添加props数量检查逻辑（与run_on_setup保持一致）
         if props_obj_expr.properties.len() > self.max_props {
-            ctx.diagnostic(max_props_diagnostic(props_obj_expr.span));
+            ctx.diagnostic(max_props_diagnostic(
+                props_obj_expr.span,
+                props_obj_expr.properties.len(),
+                self.max_props,
+            ));
         }
     }
 }
 
-fn is_type_argument_length_exceeded(
-    ctx: &LintContext,
-    type_argument: &TSType,
-    max_props: usize,
-) -> bool {
+fn get_type_argument_keys(ctx: &LintContext, type_argument: &TSType) -> FxHashSet<String> {
     match type_argument {
-        TSType::TSTypeReference(type_ref) => {
-            let TSTypeName::IdentifierReference(ident_ref) = &type_ref.type_name else {
-                return false;
-            };
-            // we need to find the reference of type_ref
-            let reference = ctx.scoping().get_reference(ident_ref.reference_id());
-            if !reference.is_type() {
-                return false;
-            }
-            let Some(reference_node) =
-                get_declaration_from_reference_id(ident_ref.reference_id(), ctx.semantic())
-            else {
-                return false;
-            };
-            let AstKind::TSInterfaceDeclaration(interface_decl) = reference_node.kind() else {
-                return false;
-            };
-            let interface_body = &interface_decl.body;
-            interface_body.body.len() > max_props
+        // e.g defineProps<A | B>();
+        TSType::TSUnionType(union_type) => {
+            union_type.types.iter().fold(FxHashSet::default(), |mut all_keys, args| {
+                let type_arg_keys = get_type_argument_keys(ctx, args);
+                all_keys.extend(type_arg_keys);
+                all_keys
+            })
         }
-        TSType::TSTypeLiteral(type_literal) => type_literal.members.len() > max_props,
-        _ => false,
+        // e.g defineProps<A & B>();
+        TSType::TSIntersectionType(intersection_type) => {
+            intersection_type.types.iter().fold(FxHashSet::default(), |mut all_keys, args| {
+                let type_arg_keys = get_type_argument_keys(ctx, args);
+                all_keys.extend(type_arg_keys);
+                all_keys
+            })
+        }
+        // e.g defineProps<A>();
+        TSType::TSTypeReference(type_ref) => collect_key_from_type_reference(ctx, type_ref),
+        // e.g defineProps<{ a: string }>();
+        TSType::TSTypeLiteral(type_literal) => collect_keys_from_signatures(&type_literal.members),
+        _ => FxHashSet::default(),
     }
+}
+
+fn collect_key_from_type_reference(
+    ctx: &LintContext,
+    type_ref: &TSTypeReference,
+) -> FxHashSet<String> {
+    let TSTypeName::IdentifierReference(ident_ref) = &type_ref.type_name else {
+        return FxHashSet::default();
+    };
+    // we need to find the reference of type_ref
+    let reference = ctx.scoping().get_reference(ident_ref.reference_id());
+    if !reference.is_type() {
+        return FxHashSet::default();
+    }
+    let Some(reference_node) =
+        get_declaration_from_reference_id(ident_ref.reference_id(), ctx.semantic())
+    else {
+        return FxHashSet::default();
+    };
+    let AstKind::TSInterfaceDeclaration(interface_decl) = reference_node.kind() else {
+        return FxHashSet::default();
+    };
+    let interface_body = &interface_decl.body;
+    collect_keys_from_signatures(&interface_body.body)
+}
+
+fn collect_keys_from_signatures(signatures: &Vec<TSSignature<'_>>) -> FxHashSet<String> {
+    signatures
+        .iter()
+        .filter_map(|member| match member {
+            TSSignature::TSPropertySignature(prop_signature) => {
+                prop_signature.key.static_name().map(|s| s.to_string())
+            }
+            TSSignature::TSMethodSignature(method_signature) => {
+                method_signature.key.static_name().map(|s| s.to_string())
+            }
+            _ => None,
+        })
+        .collect()
 }
 
 #[test]
 fn test() {
     use crate::tester::Tester;
     use std::path::PathBuf;
-
-    // let pass = vec![];
-
-    // let fail = vec![
-    //     (
-    //         r#"
-    // 		      <script setup lang="ts">
-    // 		      defineProps<{ prop1: string, prop2: string, prop3: string }>();
-    // 		      </script>
-    // 		      "#,
-    //         Some(serde_json::json!([{ "maxProps": 2 }])),
-    //         None,
-    //         Some(PathBuf::from("test.vue")),
-    //     ),
-    // ];
 
     let pass = vec![
         (
