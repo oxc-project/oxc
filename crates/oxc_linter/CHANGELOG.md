@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.18.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 444fcf0 linter: Fix false positive in `vue/no-required-prop-with-default` (#14066) (yefan)
+- 2186b28 linter: Fix Arc<ModuleRecord> memory leak and lifecycle issues (#14049) (Boshen)
+
+### ⚡ Performance
+
+- c2f7459 language_server: Avoid cloning on message conversion (#14058) (Sysix)
+
+
 ## [1.17.0] - 2025-09-23
 
 ### 🚀 Features

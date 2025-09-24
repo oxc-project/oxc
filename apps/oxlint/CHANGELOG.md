@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.18.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 314c27d linter/plugins: `definePlugin` apply `defineRule` to rules (#14065) (overlookmotel)
+- 7bd01ed linter/plugins: `defineRule` call `createOnce` lazily (#14062) (overlookmotel)
+- fb3e7e3 linter/plugins: `defineRule` accept visitor with no `before` / `after` hooks (#14060) (overlookmotel)
+
+### 🚜 Refactor
+
+- 3a706a7 linter: Rename `LintRunner` to `CliRunner` (#14050) (camc314)
+
+### ⚡ Performance
+
+- ce538c7 linter/plugins: Load methods of globals into local vars (#14073) (overlookmotel)
+
+### 🧪 Testing
+
+- 2fd4b1e linter/plugins: Rename test (#14064) (overlookmotel)
+- f2b3934 linter/plugins: Test returning `false` from `before` hook skips visitation in ESLint (#14061) (overlookmotel)
+- b109419 linter/plugins: Align ESLint plugin with Oxlint (#14059) (overlookmotel)
+
+
+## [1.18.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 314c27d linter/plugins: `definePlugin` apply `defineRule` to rules (#14065) (overlookmotel)
+- 7bd01ed linter/plugins: `defineRule` call `createOnce` lazily (#14062) (overlookmotel)
+- fb3e7e3 linter/plugins: `defineRule` accept visitor with no `before` / `after` hooks (#14060) (overlookmotel)
+
+### 🚜 Refactor
+
+- 3a706a7 linter: Rename `LintRunner` to `CliRunner` (#14050) (camc314)
+
+### ⚡ Performance
+
+- ce538c7 linter/plugins: Load methods of globals into local vars (#14073) (overlookmotel)
+
+### 🧪 Testing
+
+- 2fd4b1e linter/plugins: Rename test (#14064) (overlookmotel)
+- f2b3934 linter/plugins: Test returning `false` from `before` hook skips visitation in ESLint (#14061) (overlookmotel)
+- b109419 linter/plugins: Align ESLint plugin with Oxlint (#14059) (overlookmotel)
+
+
 ## [1.17.0] - 2025-09-23
 
 ### 🚀 Features
