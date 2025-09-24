@@ -19,7 +19,7 @@ mod mapped_type;
 mod member_expression;
 mod object_like;
 mod object_pattern_like;
-mod parameter_list;
+mod parameters;
 mod program;
 mod return_or_throw_statement;
 mod semicolon;
@@ -72,14 +72,14 @@ use crate::{
         suppressed::FormatSuppressedNode,
     },
     write,
-    write::parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
+    write::parameters::{can_avoid_parentheses, should_hug_function_parameters},
 };
 
 use self::{
     array_expression::FormatArrayExpression,
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
-    parameter_list::{ParameterLayout, ParameterList},
+    parameters::{ParameterLayout, ParameterList},
     semicolon::OptionalSemicolon,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
     utils::{
@@ -941,102 +941,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.span.start);
-        if !comments.is_empty() {
-            write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
-        }
-
-        let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent {
-            can_avoid_parentheses(arrow, f)
-        } else {
-            false
-        };
-
-        let has_any_decorated_parameter =
-            self.items.iter().any(|param| !param.decorators.is_empty());
-
-        let can_hug = should_hug_function_parameters(self, parentheses_not_needed, f)
-            && !has_any_decorated_parameter;
-
-        let layout = if !self.has_parameter() {
-            ParameterLayout::NoParameters
-        } else if can_hug || {
-            // `self.parent`: Function
-            // `self.parent.parent()`: Argument
-            // `self.parent.parent().parent()` CallExpression
-            if let AstNodes::CallExpression(call) = self.parent.parent().parent() {
-                is_test_call_expression(call)
-            } else {
-                false
-            }
-        } {
-            ParameterLayout::Hug
-        } else {
-            ParameterLayout::Default
-        };
-
-        if !parentheses_not_needed {
-            write!(f, "(")?;
-        }
-
-        match layout {
-            ParameterLayout::NoParameters => {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent())?;
-            }
-            ParameterLayout::Hug => {
-                write!(f, ParameterList::with_layout(self, layout))?;
-            }
-            ParameterLayout::Default => {
-                write!(f, soft_block_indent(&ParameterList::with_layout(self, layout)))?;
-            }
-        }
-
-        if !parentheses_not_needed {
-            write!(f, ")")?;
-        }
-
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let content = format_with(|f| {
-            if let Some(accessibility) = self.accessibility() {
-                write!(f, [accessibility.as_str(), space()])?;
-            }
-            if self.r#override() {
-                write!(f, ["override", space()])?;
-            }
-            if self.readonly() {
-                write!(f, ["readonly", space()])?;
-            }
-            write!(f, self.pattern())
-        });
-
-        // TODO
-        let is_hug_parameter = false;
-        // let is_hug_parameter = node
-        // .syntax()
-        // .grand_parent()
-        // .and_then(FormatAnyJsParameters::cast)
-        // .is_some_and(|parameters| {
-        // should_hug_function_parameters(&parameters, f.comments(), false).unwrap_or(false)
-        // });
-
-        let decorators = self.decorators();
-        if is_hug_parameter && decorators.is_empty() {
-            write!(f, [decorators, content])
-        } else if decorators.is_empty() {
-            write!(f, [decorators, group(&content)])
-        } else {
-            write!(f, [group(&decorators), group(&content)])
-        }
-    }
-}
-
 impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
     for AstNode<'a, ArrowFunctionExpression<'a>>
 {
@@ -1130,16 +1034,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         let flags = flags.iter().collect::<String>();
         let s = StringBuilder::from_strs_array_in([pattern, "/", &flags], f.context().allocator());
         write!(f, dynamic_text(s.into_str(),))
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "this")?;
-        if let Some(type_annotation) = self.type_annotation() {
-            type_annotation.fmt(f);
-        }
-        Ok(())
     }
 }
 

@@ -25,17 +25,17 @@ use crate::{
     write::{
         FormatFunctionOptions,
         arrow_function_expression::is_multiline_template_starting_on_same_line,
-        parameter_list::has_only_simple_parameters,
     },
 };
 
 use super::{
     array_element_list::can_concisely_print_array_list,
     arrow_function_expression::{
-        FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
-        FunctionBodyCacheMode, GroupedCallArgumentLayout,
+        FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions, FunctionCacheMode,
+        GroupedCallArgumentLayout,
     },
     function,
+    parameters::has_only_simple_parameters,
 };
 
 impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
@@ -573,7 +573,7 @@ fn write_grouped_arguments<'a>(
                             has_cached = true;
                             return function.fmt_with_options(
                                 FormatFunctionOptions {
-                                    cache_mode: FunctionBodyCacheMode::Cache,
+                                    cache_mode: FunctionCacheMode::Cache,
                                     ..Default::default()
                                 },
                                 f,
@@ -583,7 +583,7 @@ fn write_grouped_arguments<'a>(
                             has_cached = true;
                             return arrow.fmt_with_options(
                                 FormatJsArrowFunctionExpressionOptions {
-                                    cache_mode: FunctionBodyCacheMode::Cache,
+                                    cache_mode: FunctionCacheMode::Cache,
                                     ..FormatJsArrowFunctionExpressionOptions::default()
                                 },
                                 f,
@@ -801,7 +801,7 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
             AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 arrow.fmt_with_options(
                     FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionBodyCacheMode::Cache,
+                        cache_mode: FunctionCacheMode::Cache,
                         call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
                         ..FormatJsArrowFunctionExpressionOptions::default()
                     },
@@ -835,7 +835,7 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
                 with_token_tracking_disabled(f, |f| {
                     function.fmt_with_options(
                         FormatFunctionOptions {
-                            cache_mode: FunctionBodyCacheMode::Cache,
+                            cache_mode: FunctionCacheMode::Cache,
                             call_argument_layout: Some(
                                 GroupedCallArgumentLayout::GroupedLastArgument,
                             ),
@@ -848,7 +848,7 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 arrow.fmt_with_options(
                     FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionBodyCacheMode::Cache,
+                        cache_mode: FunctionCacheMode::Cache,
                         call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                         ..FormatJsArrowFunctionExpressionOptions::default()
                     },

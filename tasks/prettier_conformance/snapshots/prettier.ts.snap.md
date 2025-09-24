@@ -1,4 +1,4 @@
-ts compatibility: 520/573 (90.75%)
+ts compatibility: 521/573 (90.92%)
 
 # Failed
 
@@ -33,7 +33,6 @@ ts compatibility: 520/573 (90.75%)
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
-| typescript/declare/object-type-in-declare-function.ts | 💥 | 56.25% |
 | typescript/decorators/comments.ts | 💥 | 60.00% |
 | typescript/decorators/decorators-comments.ts | 💥 | 65.71% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
