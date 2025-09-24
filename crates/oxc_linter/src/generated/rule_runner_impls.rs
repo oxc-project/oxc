@@ -1690,6 +1690,11 @@ impl RuleRunner for crate::rules::react::jsx_no_useless_fragment::JsxNoUselessFr
         Some(&AstTypesBitset::from_types(&[AstType::JSXElement, AstType::JSXFragment]));
 }
 
+impl RuleRunner for crate::rules::react::jsx_pascal_case::JsxPascalCase {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
+}
+
 impl RuleRunner for crate::rules::react::jsx_props_no_spread_multi::JsxPropsNoSpreadMulti {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
