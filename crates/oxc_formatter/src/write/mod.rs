@@ -1725,6 +1725,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
                 write!(f, params)?;
             }
 
+            let comments = f.context().comments().comments_before_character(params.span.end, b'=');
+            FormatTrailingComments::Comments(comments).fmt(f)?;
+
             write!(f, [space(), "=>", space(), return_type.type_annotation()])
         });
 
@@ -1756,6 +1759,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
                 space(),
                 type_parameters,
                 params,
+                format_once(|f| {
+                    let comments =
+                        f.context().comments().comments_before_character(params.span.end, b'=');
+                    FormatTrailingComments::Comments(comments).fmt(f)
+                }),
                 space(),
                 "=>",
                 space(),

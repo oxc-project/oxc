@@ -60,7 +60,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         // Write modifiers in the correct order:
         // decorators -> accessibility -> static -> abstract -> override -> async -> generator
         write!(f, [self.decorators()])?;
-        if let Some(accessibility) = &self.accessibility() {
+
+        if let Some(accessibility) = &self.accessibility {
             write!(f, [accessibility.as_str(), space()])?;
         }
         if self.r#static {
@@ -157,11 +158,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, self.decorators())?;
-        // Handle comments between decorators and the 'accessor' keyword
-        // We look for comments before the first character 'a' of 'accessor'
-        // This ensures proper placement of comments like: @decorator /* comment */ accessor x
-        let comments = f.context().comments().comments_before_character(self.span.start, b'a');
-        FormatLeadingComments::Comments(comments).fmt(f)?;
 
         if let Some(accessibility) = self.accessibility() {
             write!(f, [accessibility.as_str(), space()])?;
