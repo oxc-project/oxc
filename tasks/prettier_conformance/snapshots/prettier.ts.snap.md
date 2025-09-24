@@ -1,4 +1,4 @@
-ts compatibility: 475/573 (82.90%)
+ts compatibility: 481/573 (83.94%)
 
 # Failed
 
@@ -34,13 +34,12 @@ ts compatibility: 475/573 (82.90%)
 | typescript/comments/type_literals.ts | 💥 | 68.97% |
 | typescript/comments/union.ts | 💥 | 83.33% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 75.00% |
-| typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 88.89% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/conditional-types/comments.ts | 💥💥 | 60.21% |
-| typescript/conditional-types/conditonal-types.ts | 💥💥 | 82.25% |
-| typescript/conditional-types/infer-type.ts | 💥💥 | 43.22% |
+| typescript/conditional-types/conditonal-types.ts | 💥✨ | 34.48% |
+| typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
-| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 52.64% |
+| typescript/conditional-types/new-ternary-spec.ts | 💥💥 | 54.03% |
 | typescript/conditional-types/parentheses.ts | 💥💥 | 60.24% |
 | typescript/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts | 💥 | 86.67% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
@@ -62,7 +61,6 @@ ts compatibility: 475/573 (82.90%)
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/function-type/type-annotation.ts | 💥 | 0.00% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
-| typescript/infer-extends/basic.ts | 💥 | 90.48% |
 | typescript/interface/comments-generic.ts | 💥💥 | 30.00% |
 | typescript/interface/ignore.ts | 💥💥 | 88.26% |
 | typescript/interface2/comments-declare.ts | 💥 | 66.67% |
@@ -80,14 +78,10 @@ ts compatibility: 475/573 (82.90%)
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/nosemi/index-signature.ts | 💥 | 75.00% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
-| typescript/optional-type/complex.ts | 💥 | 0.00% |
-| typescript/optional-variance/basic.ts | 💥 | 98.36% |
-| typescript/optional-variance/with-jsx.tsx | 💥 | 98.36% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 54.72% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 29.17% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
-| typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
 | typescript/tuple/trailing-comma-for-empty-tuples.ts | 💥💥💥 | 16.67% |
