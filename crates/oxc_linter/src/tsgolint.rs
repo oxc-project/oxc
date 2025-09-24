@@ -1,7 +1,9 @@
 use std::{
+    borrow::Cow,
     collections::BTreeSet,
     ffi::OsStr,
     io::{ErrorKind, Read, Write},
+    mem,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -598,16 +600,16 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 #[cfg(feature = "language_server")]
 impl Message<'_> {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
+    fn from_tsgo_lint_diagnostic(mut val: TsGoLintDiagnostic, source_text: &str) -> Self {
         let mut fixes =
             Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
 
         if !val.fixes.is_empty() {
-            let fix_vec = val
-                .fixes
-                .iter()
+            let fix_vec = mem::take(&mut val.fixes);
+            let fix_vec = fix_vec
+                .into_iter()
                 .map(|fix| crate::fixer::Fix {
-                    content: fix.text.clone().into(),
+                    content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
                 })
@@ -616,19 +618,31 @@ impl Message<'_> {
             fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
         }
 
-        for suggestion in &val.suggestions {
+        let suggestions = mem::take(&mut val.suggestions);
+        fixes.extend(suggestions.into_iter().map(|mut suggestion| {
+            let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
             let fix_vec = suggestion
                 .fixes
-                .iter()
-                .map(|fix| crate::fixer::Fix {
-                    content: fix.text.clone().into(),
-                    span: Span::new(fix.range.pos, fix.range.end),
-                    message: Some(suggestion.message.description.clone().into()),
+                .into_iter()
+                .enumerate()
+                .map(|(i, fix)| {
+                    // Don't clone the message description on last turn of loop
+                    let message = if i < last_fix_index {
+                        suggestion.message.description.clone()
+                    } else {
+                        mem::take(&mut suggestion.message.description)
+                    };
+
+                    crate::fixer::Fix {
+                        content: Cow::Owned(fix.text),
+                        span: Span::new(fix.range.pos, fix.range.end),
+                        message: Some(Cow::Owned(message)),
+                    }
                 })
                 .collect();
 
-            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
-        }
+            CompositeFix::merge_fixes(fix_vec, source_text)
+        }));
 
         let possible_fix = if fixes.is_empty() {
             PossibleFixes::None
