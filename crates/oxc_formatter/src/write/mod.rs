@@ -78,6 +78,8 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
+    class::format_grouped_parameters_with_return_type,
+    function::should_group_function_parameters,
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     parameters::{ParameterLayout, ParameterList},
@@ -1072,10 +1074,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if matches!(self.parent, AstNodes::TSTypePredicate(_)) {
-            write!(f, [self.type_annotation()])
-        } else {
-            write!(f, [":", space(), self.type_annotation()])
+        match self.parent {
+            AstNodes::TSFunctionType(_) | AstNodes::TSConstructorType(_) => {
+                write!(f, ["=>", space(), self.type_annotation()])
+            }
+            AstNodes::TSTypePredicate(_) => {
+                write!(f, [self.type_annotation()])
+            }
+            _ => {
+                write!(f, [":", space(), self.type_annotation()])
+            }
         }
     }
 }
@@ -1466,18 +1474,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let Some(type_parameters) = &self.type_parameters() {
-            write!(f, group(type_parameters))?;
-        }
-
-        if let Some(this_param) = &self.this_param() {
-            write!(f, [this_param, ",", soft_line_break_or_space()])?;
-        }
-        write!(f, group(&self.params()))?;
-        if let Some(return_type) = &self.return_type() {
-            write!(f, return_type)?;
-        }
-        Ok(())
+        write!(f, group(&format_args!(self.type_parameters(), self.params(), self.return_type())))
     }
 }
 
@@ -1502,42 +1499,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
         if self.optional() {
             write!(f, "?")?;
         }
-        // TODO:
-        // if should_group_function_parameters(
-        //         type_parameters.as_ref(),
-        //         parameters.len(),
-        //         return_type_annotation
-        //             .as_ref()
-        //             .map(|annotation| annotation.ty()),
-        //         &mut format_return_type_annotation,
-        //         f,
-        //     )? {
-        //         write!(f, [group(&parameters)])?;
-        //     } else {
-        //         write!(f, [parameters])?;
-        //     }
-        if let Some(type_parameters) = &self.type_parameters() {
-            write!(f, [group(&type_parameters)])?;
-        }
-        write!(f, group(&self.params()))?;
-        if let Some(return_type) = &self.return_type() {
-            write!(f, return_type)?;
-        }
-        Ok(())
+
+        format_grouped_parameters_with_return_type(
+            self.type_parameters(),
+            self.this_param.as_deref(),
+            self.params(),
+            self.return_type(),
+            f,
+        )
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["new", space()])?;
-        if let Some(type_parameters) = &self.type_parameters() {
-            write!(f, group(&type_parameters))?;
-        }
-        write!(f, group(&self.params()))?;
-        if let Some(return_type) = self.return_type() {
-            write!(f, return_type)?;
-        }
-        Ok(())
+        write!(f, group(&format_args!(self.type_parameters(), self.params(), self.return_type())))
     }
 }
 
@@ -1677,45 +1653,39 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let type_parameters = self.type_parameters();
-        let params = self.params();
-        let return_type = self.return_type();
-
         let format_inner = format_with(|f| {
+            let type_parameters = self.type_parameters();
             write!(f, type_parameters)?;
 
-            // TODO
-            // let mut format_return_type = return_type.format().memoized();
-            let should_group_parameters = false;
-            // TODO
-            //should_group_function_parameters(
-            // type_parameters.as_ref(),
-            // parameters.as_ref()?.items().len(),
-            // Some(return_type.clone()),
-            // &mut format_return_type,
-            // f,
-            // )?;
+            let params = self.params();
+            let return_type = self.return_type();
+            let mut format_parameters = params.memoized();
+            let mut format_return_type = return_type.memoized();
 
-            if should_group_parameters {
-                write!(f, group(&params))?;
+            // Inspect early, in case the `return_type` is formatted before `parameters`
+            // in `should_group_function_parameters`.
+            format_parameters.inspect(f)?;
+
+            let group_parameters = should_group_function_parameters(
+                type_parameters.map(AsRef::as_ref),
+                params.items.len()
+                    + usize::from(params.rest.is_some())
+                    + usize::from(self.this_param.is_some()),
+                Some(&self.return_type),
+                &mut format_return_type,
+                f,
+            )?;
+
+            if group_parameters {
+                write!(f, [group(&format_parameters)])
             } else {
-                write!(f, params)?;
-            }
+                write!(f, [format_parameters])
+            }?;
 
-            let comments = f.context().comments().comments_before_character(params.span.end, b'=');
-            FormatTrailingComments::Comments(comments).fmt(f)?;
-
-            write!(f, [space(), "=>", space(), return_type.type_annotation()])
+            write!(f, [space(), format_return_type])
         });
 
-        if self.needs_parentheses(f) {
-            "(".fmt(f)?;
-        }
-        write!(f, group(&format_inner))?;
-        if self.needs_parentheses(f) {
-            ")".fmt(f)?;
-        }
-        Ok(())
+        write!(f, group(&format_inner))
     }
 }
 
@@ -1731,21 +1701,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
         }
         write!(
             f,
-            [group(&format_args!(
-                "new",
-                space(),
-                type_parameters,
-                params,
-                format_once(|f| {
-                    let comments =
-                        f.context().comments().comments_before_character(params.span.end, b'=');
-                    FormatTrailingComments::Comments(comments).fmt(f)
-                }),
-                space(),
-                "=>",
-                space(),
-                return_type.type_annotation()
-            ))]
+            [group(&format_args!("new", space(), type_parameters, params, space(), return_type))]
         );
         Ok(())
     }
