@@ -1,5 +1,6 @@
 mod array_element_list;
 mod array_expression;
+mod array_pattern;
 mod arrow_function_expression;
 mod as_or_satisfies_expression;
 mod assignment_pattern_property_list;
@@ -871,7 +872,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        ObjectPatternLike::ObjectPattern(self).fmt(f)
+        if matches!(self.parent, AstNodes::FormalParameter(param) if param.pattern.type_annotation.is_some())
+        {
+            FormatNodeWithoutTrailingComments(&ObjectPatternLike::ObjectPattern(self)).fmt(f)
+        } else {
+            ObjectPatternLike::ObjectPattern(self).fmt(f)
+        }
     }
 }
 
@@ -903,35 +909,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingProperty<'a>> {
             }
         });
         write!(f, group(&format_inner))
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "[")?;
-
-        if self.elements.is_empty() && self.rest.is_none() {
-            write!(f, [format_dangling_comments(self.span()).with_block_indent()])?;
-        } else {
-            write!(
-                f,
-                group(&soft_block_indent(&format_once(|f| {
-                    if !self.elements.is_empty() {
-                        write_array_node(
-                            self.elements.len() + usize::from(self.rest.is_some()),
-                            self.elements().iter().map(AstNode::as_ref),
-                            f,
-                        )?;
-                    }
-                    if let Some(rest) = self.rest() {
-                        write!(f, [soft_line_break_or_space(), rest]);
-                    }
-                    Ok(())
-                })))
-            )?;
-        }
-
-        write!(f, "]")
     }
 }
 
