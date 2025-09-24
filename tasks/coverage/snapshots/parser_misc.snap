@@ -1,7 +1,54 @@
 parser_misc Summary:
-AST Parsed     : 43/43 (100.00%)
-Positive Passed: 43/43 (100.00%)
-Negative Passed: 47/47 (100.00%)
+AST Parsed     : 49/49 (100.00%)
+Positive Passed: 49/49 (100.00%)
+Negative Passed: 91/91 (100.00%)
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:1:10]
+ 1 │ function arguments() {}
+   ·          ─────────
+ 2 │ function eval() {}
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:2:10]
+ 1 │ function arguments() {}
+ 2 │ function eval() {}
+   ·          ────
+ 3 │ 
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:4:16]
+ 3 │ 
+ 4 │ function foo({ arguments }) {}
+   ·                ─────────
+ 5 │ function foo2([arguments]) {}
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:5:16]
+ 4 │ function foo({ arguments }) {}
+ 5 │ function foo2([arguments]) {}
+   ·                ─────────
+ 6 │ function foo3({ eval }) {}
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:6:17]
+ 5 │ function foo2([arguments]) {}
+ 6 │ function foo3({ eval }) {}
+   ·                 ────
+ 7 │ function foo4([eval]) {}
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/arguments-eval.ts:7:16]
+ 6 │ function foo3({ eval }) {}
+ 7 │ function foo4([eval]) {}
+   ·                ────
+ 8 │ 
+   ╰────
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -118,6 +165,216 @@ Negative Passed: 47/47 (100.00%)
    ·            ╰── `{` expected
    ╰────
 
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-1.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     abstract method();
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'async' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-10.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     async property;
+   ·     ─────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'const' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-11.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     const method();
+   ·     ─────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'const' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-12.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     const property;
+   ·     ─────
+ 3 │ }
+   ╰────
+
+  × TS(1071): 'const' modifier cannot appear on an index signature.
+   ╭─[misc/fail/oxc-11713-13.ts:2:3]
+ 1 │ interface Foo {
+ 2 │   const [index: string]: number
+   ·   ─────
+ 3 │ }
+   ╰────
+
+  × TS(1071): 'const' modifier cannot appear on an index signature.
+   ╭─[misc/fail/oxc-11713-14.ts:2:2]
+ 1 │ const foo: {
+ 2 │     const [index: string] : string
+   ·     ─────
+ 3 │ } = {};
+   ╰────
+
+  × TS(1070): 'declare' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-15.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     declare method();
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'declare' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-16.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     declare property;
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'default' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-17.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     default method();
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'default' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-18.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     default property;
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1071): 'default' modifier cannot appear on an index signature.
+   ╭─[misc/fail/oxc-11713-19.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     default [index: string]: number
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'static' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-2.ts:2:2]
+ 1 │ type Foo = {
+ 2 │     static bar;
+   ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(1071): 'default' modifier cannot appear on an index signature.
+   ╭─[misc/fail/oxc-11713-20.ts:2:2]
+ 1 │ const foo: {
+ 2 │     default [index: string] : string
+   ·     ───────
+ 3 │ } = {};
+   ╰────
+
+  × TS(1070): 'export' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-21.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     export method();
+   ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'export' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-22.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     export property;
+   ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/oxc-11713-23.ts:2:3]
+ 1 │ interface Foo {
+ 2 │   readonly method();
+   ·   ────────
+ 3 │ }
+   ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on class elements of this kind.
+   ╭─[misc/fail/oxc-11713-24.ts:2:3]
+ 1 │ class Foo {
+ 2 │   declare method() {}
+   ·   ───────
+ 3 │ }
+   ╰────
+
+  × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
+   ╭─[misc/fail/oxc-11713-25.ts:2:3]
+ 1 │ class Foo {
+ 2 │   readonly method() {}
+   ·   ────────
+ 3 │ }
+   ╰────
+
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+   ╭─[misc/fail/oxc-11713-26.ts:1:14]
+ 1 │ function foo(readonly parameter) {}
+   ·              ────────
+   ╰────
+
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+   ╭─[misc/fail/oxc-11713-27.ts:1:20]
+ 1 │ class Foo { method(readonly parameter) {} }
+   ·                    ────────
+   ╰────
+
+  × TS(1090): 'private' modifier cannot appear on a parameter.
+   ╭─[misc/fail/oxc-11713-3.ts:1:14]
+ 1 │ function foo(private parameter) {}
+   ·              ───────
+   ╰────
+
+  × 'declare' modifier cannot be used here.
+   ╭─[misc/fail/oxc-11713-4.ts:2:2]
+ 1 │ class Foo {
+ 2 │     declare get getter() {}
+   ·     ───────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-5.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     abstract method();
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'abstract' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-6.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     abstract property;
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'accessor' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-7.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     accessor method();
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'accessor' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-8.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     accessor property;
+   ·     ────────
+ 3 │ }
+   ╰────
+
+  × TS(1070): 'async' modifier cannot appear on a type member.
+   ╭─[misc/fail/oxc-11713-9.ts:2:2]
+ 1 │ interface Foo {
+ 2 │     async method();
+   ·     ─────
+ 3 │ }
+   ╰────
+
   × TS(1098): Type parameter list cannot be empty.
    ╭─[misc/fail/oxc-11789-1.ts:1:12]
  1 │ interface i<>implements 
@@ -139,6 +396,2475 @@ Negative Passed: 47/47 (100.00%)
    ╭─[misc/fail/oxc-11789-2.ts:1:14]
  1 │ interface i<>implements K {}
    ·              ──────────
+   ╰────
+
+  × Unterminated regular expression
+   ╭─[misc/fail/oxc-12546-1.ts:1:25]
+ 1 │ interface Props extends /MenuProps {
+   ·                         ─────────────
+ 2 │   collapse?: boolean;
+ 3 │   menus: MenuRecordRaw[];
+   ╰────
+
+  × Unterminated regular expression
+   ╭─[misc/fail/oxc-12546-2.ts:1:21]
+ 1 │ class Props extends /MenuProps {
+   ·                     ─────────────
+ 2 │ }
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-1.ts:1:2]
+ 1 │ (foo() as bar) = 123;
+   ·  ────────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-2.ts:1:2]
+ 1 │ (<any>foo()) = 123;
+   ·  ──────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-3.ts:1:2]
+ 1 │ (foo() satisfies any) = 123;
+   ·  ───────────────────
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[misc/fail/oxc-12612-4.ts:1:2]
+ 1 │ (foo() as number as any) = 123;
+   ·  ──────────────────────
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[misc/fail/oxc-12816.ts:1:6]
+ 1 │ {if(\ ()<1){}}
+   ·      ─
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284-1.js:2:1]
+ 1 │ // `super()` not in a class or object method
+ 2 │ super();
+   · ───────
+ 3 │ () => () => 123 + super();
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284-1.js:3:19]
+ 2 │ super();
+ 3 │ () => () => 123 + super();
+   ·                   ───────
+ 4 │ if (true) { while (false) { { super(); } } }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284-1.js:4:31]
+ 3 │ () => () => 123 + super();
+ 4 │ if (true) { while (false) { { super(); } } }
+   ·                               ───────
+ 5 │ () => (arg = super()) => {
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284-1.js:5:14]
+ 4 │ if (true) { while (false) { { super(); } } }
+ 5 │ () => (arg = super()) => {
+   ·              ───────
+ 6 │   super();
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284-1.js:6:3]
+ 5 │ () => (arg = super()) => {
+ 6 │   super();
+   ·   ───────
+ 7 │   () => () => 123 + super();
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284-1.js:7:21]
+ 6 │   super();
+ 7 │   () => () => 123 + super();
+   ·                     ───────
+ 8 │   if (true) { while (false) { { super(); } } }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284-1.js:8:33]
+ 7 │   () => () => 123 + super();
+ 8 │   if (true) { while (false) { { super(); } } }
+   ·                                 ───────
+ 9 │ };
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:12:18]
+ 11 │ // `super()` in a function
+ 12 │ function f(arg = super()) {
+    ·                  ───────
+ 13 │   super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:13:3]
+ 12 │ function f(arg = super()) {
+ 13 │   super();
+    ·   ───────
+ 14 │   () => () => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:14:21]
+ 13 │   super();
+ 14 │   () => () => 123 + super();
+    ·                     ───────
+ 15 │   if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:15:33]
+ 14 │   () => () => 123 + super();
+ 15 │   if (true) { while (false) { { super(); } } }
+    ·                                 ───────
+ 16 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:17:20]
+ 16 │ }
+ 17 │ f = function(arg = super()) {
+    ·                    ───────
+ 18 │   super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:18:3]
+ 17 │ f = function(arg = super()) {
+ 18 │   super();
+    ·   ───────
+ 19 │   () => () => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:19:21]
+ 18 │   super();
+ 19 │   () => () => 123 + super();
+    ·                     ───────
+ 20 │   if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:20:33]
+ 19 │   () => () => 123 + super();
+ 20 │   if (true) { while (false) { { super(); } } }
+    ·                                 ───────
+ 21 │ };
+    ╰────
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[misc/fail/oxc-13284-1.js:24:1]
+ 23 │     // `super()` in class constructor of class without super class
+ 24 │ ╭─▶ class A {
+ 25 │ │     constructor(arg = super()) {
+    · │                       ─────
+ 26 │ │       super();
+ 27 │ │       () => (arg = super()) => 123 + super();
+ 28 │ │       if (true) { while (false) { { super(); } } }
+ 29 │ │     }
+ 30 │ ├─▶ }
+    · ╰──── class does not have `extends`
+ 31 │     
+    ╰────
+  help: either remove this super, or extend the class
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[misc/fail/oxc-13284-1.js:24:1]
+ 23 │     // `super()` in class constructor of class without super class
+ 24 │ ╭─▶ class A {
+ 25 │ │     constructor(arg = super()) {
+ 26 │ │       super();
+    · │       ─────
+ 27 │ │       () => (arg = super()) => 123 + super();
+ 28 │ │       if (true) { while (false) { { super(); } } }
+ 29 │ │     }
+ 30 │ ├─▶ }
+    · ╰──── class does not have `extends`
+ 31 │     
+    ╰────
+  help: either remove this super, or extend the class
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[misc/fail/oxc-13284-1.js:24:1]
+ 23 │     // `super()` in class constructor of class without super class
+ 24 │ ╭─▶ class A {
+ 25 │ │     constructor(arg = super()) {
+ 26 │ │       super();
+ 27 │ │       () => (arg = super()) => 123 + super();
+    · │                    ─────
+ 28 │ │       if (true) { while (false) { { super(); } } }
+ 29 │ │     }
+ 30 │ ├─▶ }
+    · ╰──── class does not have `extends`
+ 31 │     
+    ╰────
+  help: either remove this super, or extend the class
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[misc/fail/oxc-13284-1.js:24:1]
+ 23 │     // `super()` in class constructor of class without super class
+ 24 │ ╭─▶ class A {
+ 25 │ │     constructor(arg = super()) {
+ 26 │ │       super();
+ 27 │ │       () => (arg = super()) => 123 + super();
+    · │                                      ─────
+ 28 │ │       if (true) { while (false) { { super(); } } }
+ 29 │ │     }
+ 30 │ ├─▶ }
+    · ╰──── class does not have `extends`
+ 31 │     
+    ╰────
+  help: either remove this super, or extend the class
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[misc/fail/oxc-13284-1.js:24:1]
+ 23 │     // `super()` in class constructor of class without super class
+ 24 │ ╭─▶ class A {
+ 25 │ │     constructor(arg = super()) {
+ 26 │ │       super();
+ 27 │ │       () => (arg = super()) => 123 + super();
+ 28 │ │       if (true) { while (false) { { super(); } } }
+    · │                                     ─────
+ 29 │ │     }
+ 30 │ ├─▶ }
+    · ╰──── class does not have `extends`
+ 31 │     
+    ╰────
+  help: either remove this super, or extend the class
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:34:10]
+ 33 │ class B extends Super {
+ 34 │   prop = super();
+    ·          ───────
+ 35 │   static prop = () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:35:30]
+ 34 │   prop = super();
+ 35 │   static prop = () => (arg = super()) => 123 + super();
+    ·                              ───────
+ 36 │ 
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:35:48]
+ 34 │   prop = super();
+ 35 │   static prop = () => (arg = super()) => 123 + super();
+    ·                                                ───────
+ 36 │ 
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:37:21]
+ 36 │ 
+ 37 │   accessor access = super();
+    ·                     ───────
+ 38 │   static accessor access = () => () => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:38:46]
+ 37 │   accessor access = super();
+ 38 │   static accessor access = () => () => 123 + super();
+    ·                                              ───────
+ 39 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:43:16]
+ 42 │ class C extends Super {
+ 43 │   method(arg = super()) {
+    ·                ───────
+ 44 │     super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:44:5]
+ 43 │   method(arg = super()) {
+ 44 │     super();
+    ·     ───────
+ 45 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:45:18]
+ 44 │     super();
+ 45 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 46 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:45:36]
+ 44 │     super();
+ 45 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 46 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:46:35]
+ 45 │     () => (arg = super()) => 123 + super();
+ 46 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 47 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:49:23]
+ 48 │ 
+ 49 │   static method(arg = super()) {
+    ·                       ───────
+ 50 │     super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:50:5]
+ 49 │   static method(arg = super()) {
+ 50 │     super();
+    ·     ───────
+ 51 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:51:18]
+ 50 │     super();
+ 51 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 52 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:51:36]
+ 50 │     super();
+ 51 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 52 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:52:35]
+ 51 │     () => (arg = super()) => 123 + super();
+ 52 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 53 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:55:15]
+ 54 │ 
+ 55 │   ['x'](arg = super()) {
+    ·               ───────
+ 56 │     super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:56:5]
+ 55 │   ['x'](arg = super()) {
+ 56 │     super();
+    ·     ───────
+ 57 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:57:18]
+ 56 │     super();
+ 57 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 58 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:57:36]
+ 56 │     super();
+ 57 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 58 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:58:35]
+ 57 │     () => (arg = super()) => 123 + super();
+ 58 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 59 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:61:22]
+ 60 │ 
+ 61 │   static ['x'](arg = super()) {
+    ·                      ───────
+ 62 │     super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:62:5]
+ 61 │   static ['x'](arg = super()) {
+ 62 │     super();
+    ·     ───────
+ 63 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:63:18]
+ 62 │     super();
+ 63 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 64 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:63:36]
+ 62 │     super();
+ 63 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 64 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:64:35]
+ 63 │     () => (arg = super()) => 123 + super();
+ 64 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 65 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:68:5]
+ 67 │   get y() {
+ 68 │     super();
+    ·     ───────
+ 69 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:69:18]
+ 68 │     super();
+ 69 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 70 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:69:36]
+ 68 │     super();
+ 69 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 70 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:70:35]
+ 69 │     () => (arg = super()) => 123 + super();
+ 70 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 71 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:73:15]
+ 72 │ 
+ 73 │   set y(arg = super()) {
+    ·               ───────
+ 74 │     super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:74:5]
+ 73 │   set y(arg = super()) {
+ 74 │     super();
+    ·     ───────
+ 75 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:75:18]
+ 74 │     super();
+ 75 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 76 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:75:36]
+ 74 │     super();
+ 75 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 76 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:76:35]
+ 75 │     () => (arg = super()) => 123 + super();
+ 76 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 77 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:80:5]
+ 79 │   static get y() {
+ 80 │     super();
+    ·     ───────
+ 81 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:81:18]
+ 80 │     super();
+ 81 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 82 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:81:36]
+ 80 │     super();
+ 81 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 82 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:82:35]
+ 81 │     () => (arg = super()) => 123 + super();
+ 82 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 83 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:85:22]
+ 84 │ 
+ 85 │   static set y(arg = super()) {
+    ·                      ───────
+ 86 │     super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:86:5]
+ 85 │   static set y(arg = super()) {
+ 86 │     super();
+    ·     ───────
+ 87 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:87:18]
+ 86 │     super();
+ 87 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 88 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:87:36]
+ 86 │     super();
+ 87 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 88 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:88:35]
+ 87 │     () => (arg = super()) => 123 + super();
+ 88 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 89 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:95:5]
+ 94 │   static {
+ 95 │     super();
+    ·     ───────
+ 96 │     () => (arg = super()) => 123 + super();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:96:18]
+ 95 │     super();
+ 96 │     () => (arg = super()) => 123 + super();
+    ·                  ───────
+ 97 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:96:36]
+ 95 │     super();
+ 96 │     () => (arg = super()) => 123 + super();
+    ·                                    ───────
+ 97 │     if (true) { while (false) { { super(); } } }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284-1.js:97:35]
+ 96 │     () => (arg = super()) => 123 + super();
+ 97 │     if (true) { while (false) { { super(); } } }
+    ·                                   ───────
+ 98 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:104:26]
+ 103 │   constructor() {
+ 104 │     function inner(arg = super()) {
+     ·                          ───────
+ 105 │       super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:105:7]
+ 104 │     function inner(arg = super()) {
+ 105 │       super();
+     ·       ───────
+ 106 │       () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:106:20]
+ 105 │       super();
+ 106 │       () => (arg = super()) => 123 + super();
+     ·                    ───────
+ 107 │       if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:106:38]
+ 105 │       super();
+ 106 │       () => (arg = super()) => 123 + super();
+     ·                                      ───────
+ 107 │       if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:107:37]
+ 106 │       () => (arg = super()) => 123 + super();
+ 107 │       if (true) { while (false) { { super(); } } }
+     ·                                     ───────
+ 108 │     }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:109:30]
+ 108 │     }
+ 109 │     f = () => function(arg = super()) {
+     ·                              ───────
+ 110 │       super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:110:7]
+ 109 │     f = () => function(arg = super()) {
+ 110 │       super();
+     ·       ───────
+ 111 │       () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:111:20]
+ 110 │       super();
+ 111 │       () => (arg = super()) => 123 + super();
+     ·                    ───────
+ 112 │       if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:111:38]
+ 110 │       super();
+ 111 │       () => (arg = super()) => 123 + super();
+     ·                                      ───────
+ 112 │       if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:112:37]
+ 111 │       () => (arg = super()) => 123 + super();
+ 112 │       if (true) { while (false) { { super(); } } }
+     ·                                     ───────
+ 113 │     };
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:115:20]
+ 114 │     obj = {
+ 115 │       method(arg = super()) {
+     ·                    ───────
+ 116 │         super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:116:9]
+ 115 │       method(arg = super()) {
+ 116 │         super();
+     ·         ───────
+ 117 │         () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:117:22]
+ 116 │         super();
+ 117 │         () => (arg = super()) => 123 + super();
+     ·                      ───────
+ 118 │         if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:117:40]
+ 116 │         super();
+ 117 │         () => (arg = super()) => 123 + super();
+     ·                                        ───────
+ 118 │         if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:118:39]
+ 117 │         () => (arg = super()) => 123 + super();
+ 118 │         if (true) { while (false) { { super(); } } }
+     ·                                       ───────
+ 119 │       },
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:120:19]
+ 119 │       },
+ 120 │       set x(arg = super()) {
+     ·                   ───────
+ 121 │         super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:121:9]
+ 120 │       set x(arg = super()) {
+ 121 │         super();
+     ·         ───────
+ 122 │         () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:122:22]
+ 121 │         super();
+ 122 │         () => (arg = super()) => 123 + super();
+     ·                      ───────
+ 123 │         if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:122:40]
+ 121 │         super();
+ 122 │         () => (arg = super()) => 123 + super();
+     ·                                        ───────
+ 123 │         if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:123:39]
+ 122 │         () => (arg = super()) => 123 + super();
+ 123 │         if (true) { while (false) { { super(); } } }
+     ·                                       ───────
+ 124 │       },
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:131:4]
+ 130 │ class F extends Super {
+ 131 │   [super()] = 1;
+     ·    ───────
+ 132 │   static [(arg = super()) => super()] = 2;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:132:18]
+ 131 │   [super()] = 1;
+ 132 │   static [(arg = super()) => super()] = 2;
+     ·                  ───────
+ 133 │   accessor [123 + super()] = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:132:30]
+ 131 │   [super()] = 1;
+ 132 │   static [(arg = super()) => super()] = 2;
+     ·                              ───────
+ 133 │   accessor [123 + super()] = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:133:19]
+ 132 │   static [(arg = super()) => super()] = 2;
+ 133 │   accessor [123 + super()] = 3;
+     ·                   ───────
+ 134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:134:33]
+ 133 │   accessor [123 + super()] = 3;
+ 134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ·                                 ───────
+ 135 │   [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:134:51]
+ 133 │   accessor [123 + super()] = 3;
+ 134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ·                                                   ───────
+ 135 │   [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:135:4]
+ 134 │   static accessor [() => (arg = super()) => 123 + super()] = 4;
+ 135 │   [super()]() {};
+     ·    ───────
+ 136 │   static [() => super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:136:17]
+ 135 │   [super()]() {};
+ 136 │   static [() => super()]() {};
+     ·                 ───────
+ 137 │   get [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:137:8]
+ 136 │   static [() => super()]() {};
+ 137 │   get [super()]() {};
+     ·        ───────
+ 138 │   static get [() => super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:138:21]
+ 137 │   get [super()]() {};
+ 138 │   static get [() => super()]() {};
+     ·                     ───────
+ 139 │   set [super()](v) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:139:8]
+ 138 │   static get [() => super()]() {};
+ 139 │   set [super()](v) {};
+     ·        ───────
+ 140 │   static set [() => () => 123 + super()](v) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:140:33]
+ 139 │   set [super()](v) {};
+ 140 │   static set [() => () => 123 + super()](v) {};
+     ·                                 ───────
+ 141 │ }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:144:17]
+ 143 │ // `super()` in class extends
+ 144 │ class G extends super() {}
+     ·                 ───────
+ 145 │ class H extends (() => () => 123 + super()) {}
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:145:36]
+ 144 │ class G extends super() {}
+ 145 │ class H extends (() => () => 123 + super()) {}
+     ·                                    ───────
+ 146 │ 
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:148:2]
+ 147 │ // `super()` in class decorators
+ 148 │ @super()
+     ·  ───────
+ 149 │ class I extends Super {
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:150:4]
+ 149 │ class I extends Super {
+ 150 │   @super() prop = 1;
+     ·    ───────
+ 151 │   @super() static prop = 2;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:151:4]
+ 150 │   @super() prop = 1;
+ 151 │   @super() static prop = 2;
+     ·    ───────
+ 152 │   @super() accessor access = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:152:4]
+ 151 │   @super() static prop = 2;
+ 152 │   @super() accessor access = 3;
+     ·    ───────
+ 153 │   @super() static accessor access = 4;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:153:4]
+ 152 │   @super() accessor access = 3;
+ 153 │   @super() static accessor access = 4;
+     ·    ───────
+ 154 │   @super() method() {}
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:154:4]
+ 153 │   @super() static accessor access = 4;
+ 154 │   @super() method() {}
+     ·    ───────
+ 155 │ }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:161:14]
+ 160 │     class Inner {
+ 161 │       prop = super();
+     ·              ───────
+ 162 │       static prop = (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:162:28]
+ 161 │       prop = super();
+ 162 │       static prop = (arg = super()) => 123 + super();
+     ·                            ───────
+ 163 │       accessor access = super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:162:46]
+ 161 │       prop = super();
+ 162 │       static prop = (arg = super()) => 123 + super();
+     ·                                              ───────
+ 163 │       accessor access = super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:163:25]
+ 162 │       static prop = (arg = super()) => 123 + super();
+ 163 │       accessor access = super();
+     ·                         ───────
+ 164 │       static accessor access = (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:164:39]
+ 163 │       accessor access = super();
+ 164 │       static accessor access = (arg = super()) => 123 + super();
+     ·                                       ───────
+ 165 │       method() { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:164:57]
+ 163 │       accessor access = super();
+ 164 │       static accessor access = (arg = super()) => 123 + super();
+     ·                                                         ───────
+ 165 │       method() { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:165:18]
+ 164 │       static accessor access = (arg = super()) => 123 + super();
+ 165 │       method() { super(); }
+     ·                  ───────
+ 166 │       static method() { (arg = super()) => 123 + super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:166:32]
+ 165 │       method() { super(); }
+ 166 │       static method() { (arg = super()) => 123 + super(); }
+     ·                                ───────
+ 167 │       get x() { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:166:50]
+ 165 │       method() { super(); }
+ 166 │       static method() { (arg = super()) => 123 + super(); }
+     ·                                                  ───────
+ 167 │       get x() { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:167:17]
+ 166 │       static method() { (arg = super()) => 123 + super(); }
+ 167 │       get x() { super(); }
+     ·                 ───────
+ 168 │       static get y() { (arg = super()) => 123 + super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:168:31]
+ 167 │       get x() { super(); }
+ 168 │       static get y() { (arg = super()) => 123 + super(); }
+     ·                               ───────
+ 169 │       set x(v) { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:168:49]
+ 167 │       get x() { super(); }
+ 168 │       static get y() { (arg = super()) => 123 + super(); }
+     ·                                                 ───────
+ 169 │       set x(v) { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:169:18]
+ 168 │       static get y() { (arg = super()) => 123 + super(); }
+ 169 │       set x(v) { super(); }
+     ·                  ───────
+ 170 │       static set y(v) { (arg = super()) => 123 + super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:170:32]
+ 169 │       set x(v) { super(); }
+ 170 │       static set y(v) { (arg = super()) => 123 + super(); }
+     ·                                ───────
+ 171 │       static { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:170:50]
+ 169 │       set x(v) { super(); }
+ 170 │       static set y(v) { (arg = super()) => 123 + super(); }
+     ·                                                  ───────
+ 171 │       static { super(); }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:171:16]
+ 170 │       static set y(v) { (arg = super()) => 123 + super(); }
+ 171 │       static { super(); }
+     ·                ───────
+ 172 │     }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:179:6]
+ 178 │   prop = class Inner {
+ 179 │     [super()] = 1;
+     ·      ───────
+ 180 │     static [(arg = super()) => super()] = 2;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:180:20]
+ 179 │     [super()] = 1;
+ 180 │     static [(arg = super()) => super()] = 2;
+     ·                    ───────
+ 181 │     accessor [123 + super()] = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:180:32]
+ 179 │     [super()] = 1;
+ 180 │     static [(arg = super()) => super()] = 2;
+     ·                                ───────
+ 181 │     accessor [123 + super()] = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:181:21]
+ 180 │     static [(arg = super()) => super()] = 2;
+ 181 │     accessor [123 + super()] = 3;
+     ·                     ───────
+ 182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:182:35]
+ 181 │     accessor [123 + super()] = 3;
+ 182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ·                                   ───────
+ 183 │     [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:182:53]
+ 181 │     accessor [123 + super()] = 3;
+ 182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ·                                                     ───────
+ 183 │     [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:183:6]
+ 182 │     static accessor [() => (arg = super()) => 123 + super()] = 4;
+ 183 │     [super()]() {};
+     ·      ───────
+ 184 │     static [() => super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:184:19]
+ 183 │     [super()]() {};
+ 184 │     static [() => super()]() {};
+     ·                   ───────
+ 185 │     get [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:185:10]
+ 184 │     static [() => super()]() {};
+ 185 │     get [super()]() {};
+     ·          ───────
+ 186 │     static get [() => super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:186:23]
+ 185 │     get [super()]() {};
+ 186 │     static get [() => super()]() {};
+     ·                       ───────
+ 187 │     set [super()](v) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:187:10]
+ 186 │     static get [() => super()]() {};
+ 187 │     set [super()](v) {};
+     ·          ───────
+ 188 │     static set [() => () => 123 + super()](v) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:188:35]
+ 187 │     set [super()](v) {};
+ 188 │     static set [() => () => 123 + super()](v) {};
+     ·                                   ───────
+ 189 │   };
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:196:8]
+ 195 │     class Inner {
+ 196 │       [super()] = 1;
+     ·        ───────
+ 197 │       static [(arg = super()) => super()] = 2;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:197:22]
+ 196 │       [super()] = 1;
+ 197 │       static [(arg = super()) => super()] = 2;
+     ·                      ───────
+ 198 │       accessor [123 + super()] = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:197:34]
+ 196 │       [super()] = 1;
+ 197 │       static [(arg = super()) => super()] = 2;
+     ·                                  ───────
+ 198 │       accessor [123 + super()] = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:198:23]
+ 197 │       static [(arg = super()) => super()] = 2;
+ 198 │       accessor [123 + super()] = 3;
+     ·                       ───────
+ 199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:199:37]
+ 198 │       accessor [123 + super()] = 3;
+ 199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ·                                     ───────
+ 200 │       [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:199:55]
+ 198 │       accessor [123 + super()] = 3;
+ 199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
+     ·                                                       ───────
+ 200 │       [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:200:8]
+ 199 │       static accessor [() => (arg = super()) => 123 + super()] = 4;
+ 200 │       [super()]() {};
+     ·        ───────
+ 201 │       static [() => super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:201:21]
+ 200 │       [super()]() {};
+ 201 │       static [() => super()]() {};
+     ·                     ───────
+ 202 │       get [super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:202:12]
+ 201 │       static [() => super()]() {};
+ 202 │       get [super()]() {};
+     ·            ───────
+ 203 │       static get [() => super()]() {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:203:25]
+ 202 │       get [super()]() {};
+ 203 │       static get [() => super()]() {};
+     ·                         ───────
+ 204 │       set [super()](v) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:204:12]
+ 203 │       static get [() => super()]() {};
+ 204 │       set [super()](v) {};
+     ·            ───────
+ 205 │       static set [() => () => 123 + super()](v) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:205:37]
+ 204 │       set [super()](v) {};
+ 205 │       static set [() => () => 123 + super()](v) {};
+     ·                                     ───────
+ 206 │     }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:212:31]
+ 211 │ class M extends Super {
+ 212 │   prop1 = class Inner extends super() {};
+     ·                               ───────
+ 213 │   prop2 = class Inner extends (() => (arg = super()) => 123 + super()) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:213:45]
+ 212 │   prop1 = class Inner extends super() {};
+ 213 │   prop2 = class Inner extends (() => (arg = super()) => 123 + super()) {};
+     ·                                             ───────
+ 214 │ }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:213:63]
+ 212 │   prop1 = class Inner extends super() {};
+ 213 │   prop2 = class Inner extends (() => (arg = super()) => 123 + super()) {};
+     ·                                                               ───────
+ 214 │ }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:219:26]
+ 218 │   method() {
+ 219 │     class Inner1 extends super() {};
+     ·                          ───────
+ 220 │     class Inner2 extends (() => (arg = super()) => 123 + super()) {};
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:220:40]
+ 219 │     class Inner1 extends super() {};
+ 220 │     class Inner2 extends (() => (arg = super()) => 123 + super()) {};
+     ·                                        ───────
+ 221 │   }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:220:58]
+ 219 │     class Inner1 extends super() {};
+ 220 │     class Inner2 extends (() => (arg = super()) => 123 + super()) {};
+     ·                                                          ───────
+ 221 │   }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:226:11]
+ 225 │ class O extends Super {
+ 226 │   prop = @super() class Inner extends Super {
+     ·           ───────
+ 227 │     @super() prop = 1;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:227:6]
+ 226 │   prop = @super() class Inner extends Super {
+ 227 │     @super() prop = 1;
+     ·      ───────
+ 228 │     @super() static prop = 2;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:228:6]
+ 227 │     @super() prop = 1;
+ 228 │     @super() static prop = 2;
+     ·      ───────
+ 229 │     @super() accessor access = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:229:6]
+ 228 │     @super() static prop = 2;
+ 229 │     @super() accessor access = 3;
+     ·      ───────
+ 230 │     @super() static accessor access = 4;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:230:6]
+ 229 │     @super() accessor access = 3;
+ 230 │     @super() static accessor access = 4;
+     ·      ───────
+ 231 │     @super() method() {}
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:231:6]
+ 230 │     @super() static accessor access = 4;
+ 231 │     @super() method() {}
+     ·      ───────
+ 232 │   };
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:238:6]
+ 237 │   method() {
+ 238 │     @super()
+     ·      ───────
+ 239 │     class Inner extends Super {
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:240:8]
+ 239 │     class Inner extends Super {
+ 240 │       @super() prop = 1;
+     ·        ───────
+ 241 │       @super() static prop = 2;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:241:8]
+ 240 │       @super() prop = 1;
+ 241 │       @super() static prop = 2;
+     ·        ───────
+ 242 │       @super() accessor access = 3;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:242:8]
+ 241 │       @super() static prop = 2;
+ 242 │       @super() accessor access = 3;
+     ·        ───────
+ 243 │       @super() static accessor access = 4;
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:243:8]
+ 242 │       @super() accessor access = 3;
+ 243 │       @super() static accessor access = 4;
+     ·        ───────
+ 244 │       @super() method() {}
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:244:8]
+ 243 │       @super() static accessor access = 4;
+ 244 │       @super() method() {}
+     ·        ───────
+ 245 │     }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:257:16]
+ 256 │             class C {
+ 257 │               [super()]() {}
+     ·                ───────
+ 258 │             }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:264:53]
+ 263 │ 
+ 264 │     class D extends class E extends class F extends super() {} {} {}
+     ·                                                     ───────
+ 265 │ 
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:271:16]
+ 270 │             class I {
+ 271 │               @super()
+     ·                ───────
+ 272 │               method() {}
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:286:5]
+ 285 │   method() {
+ 286 │     super();
+     ·     ───────
+ 287 │     () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:287:18]
+ 286 │     super();
+ 287 │     () => (arg = super()) => 123 + super();
+     ·                  ───────
+ 288 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:287:36]
+ 286 │     super();
+ 287 │     () => (arg = super()) => 123 + super();
+     ·                                    ───────
+ 288 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:288:35]
+ 287 │     () => (arg = super()) => 123 + super();
+ 288 │     if (true) { while (false) { { super(); } } }
+     ·                                   ───────
+ 289 │   },
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:291:5]
+ 290 │   ['x']() {
+ 291 │     super();
+     ·     ───────
+ 292 │     () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:292:18]
+ 291 │     super();
+ 292 │     () => (arg = super()) => 123 + super();
+     ·                  ───────
+ 293 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:292:36]
+ 291 │     super();
+ 292 │     () => (arg = super()) => 123 + super();
+     ·                                    ───────
+ 293 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:293:35]
+ 292 │     () => (arg = super()) => 123 + super();
+ 293 │     if (true) { while (false) { { super(); } } }
+     ·                                   ───────
+ 294 │   },
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:296:5]
+ 295 │   get x() {
+ 296 │     super();
+     ·     ───────
+ 297 │     () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:297:18]
+ 296 │     super();
+ 297 │     () => (arg = super()) => 123 + super();
+     ·                  ───────
+ 298 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:297:36]
+ 296 │     super();
+ 297 │     () => (arg = super()) => 123 + super();
+     ·                                    ───────
+ 298 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:298:35]
+ 297 │     () => (arg = super()) => 123 + super();
+ 298 │     if (true) { while (false) { { super(); } } }
+     ·                                   ───────
+ 299 │   },
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:301:5]
+ 300 │   set x(v) {
+ 301 │     super();
+     ·     ───────
+ 302 │     () => (arg = super()) => 123 + super();
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:302:18]
+ 301 │     super();
+ 302 │     () => (arg = super()) => 123 + super();
+     ·                  ───────
+ 303 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:302:36]
+ 301 │     super();
+ 302 │     () => (arg = super()) => 123 + super();
+     ·                                    ───────
+ 303 │     if (true) { while (false) { { super(); } } }
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+     ╭─[misc/fail/oxc-13284-1.js:303:35]
+ 302 │     () => (arg = super()) => 123 + super();
+ 303 │     if (true) { while (false) { { super(); } } }
+     ·                                   ───────
+ 304 │   },
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:2:1]
+ 1 │ // `super.foo` not in a class or object method
+ 2 │ super.foo;
+   · ─────
+ 3 │ () => (arg = super.foo) => 123 + super.foo;
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:3:14]
+ 2 │ super.foo;
+ 3 │ () => (arg = super.foo) => 123 + super.foo;
+   ·              ─────
+ 4 │ if (true) { while (false) { { super.foo; } } }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:3:34]
+ 2 │ super.foo;
+ 3 │ () => (arg = super.foo) => 123 + super.foo;
+   ·                                  ─────
+ 4 │ if (true) { while (false) { { super.foo; } } }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:4:31]
+ 3 │ () => (arg = super.foo) => 123 + super.foo;
+ 4 │ if (true) { while (false) { { super.foo; } } }
+   ·                               ─────
+ 5 │ () => () => {
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:6:3]
+ 5 │ () => () => {
+ 6 │   super.foo;
+   ·   ─────
+ 7 │   () => (arg = super.foo) => 123 + super.foo;
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:7:16]
+ 6 │   super.foo;
+ 7 │   () => (arg = super.foo) => 123 + super.foo;
+   ·                ─────
+ 8 │   if (true) { while (false) { { super.foo; } } }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:7:36]
+ 6 │   super.foo;
+ 7 │   () => (arg = super.foo) => 123 + super.foo;
+   ·                                    ─────
+ 8 │   if (true) { while (false) { { super.foo; } } }
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13284-2.js:8:33]
+ 7 │   () => (arg = super.foo) => 123 + super.foo;
+ 8 │   if (true) { while (false) { { super.foo; } } }
+   ·                                 ─────
+ 9 │ };
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:12:18]
+ 11 │ // `super.foo` in a function
+ 12 │ function f(arg = super.foo) {
+    ·                  ─────
+ 13 │   super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:13:3]
+ 12 │ function f(arg = super.foo) {
+ 13 │   super.foo;
+    ·   ─────
+ 14 │   () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:14:16]
+ 13 │   super.foo;
+ 14 │   () => (arg = super.foo) => 123 + super.foo;
+    ·                ─────
+ 15 │   if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:14:36]
+ 13 │   super.foo;
+ 14 │   () => (arg = super.foo) => 123 + super.foo;
+    ·                                    ─────
+ 15 │   if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:15:33]
+ 14 │   () => (arg = super.foo) => 123 + super.foo;
+ 15 │   if (true) { while (false) { { super.foo; } } }
+    ·                                 ─────
+ 16 │ }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:17:20]
+ 16 │ }
+ 17 │ f = function(arg = super.foo) {
+    ·                    ─────
+ 18 │   super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:18:3]
+ 17 │ f = function(arg = super.foo) {
+ 18 │   super.foo;
+    ·   ─────
+ 19 │   () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:19:16]
+ 18 │   super.foo;
+ 19 │   () => (arg = super.foo) => 123 + super.foo;
+    ·                ─────
+ 20 │   if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:19:36]
+ 18 │   super.foo;
+ 19 │   () => (arg = super.foo) => 123 + super.foo;
+    ·                                    ─────
+ 20 │   if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:20:33]
+ 19 │   () => (arg = super.foo) => 123 + super.foo;
+ 20 │   if (true) { while (false) { { super.foo; } } }
+    ·                                 ─────
+ 21 │ };
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:26:26]
+ 25 │   constructor() {
+ 26 │     function inner(arg = super.foo) {
+    ·                          ─────
+ 27 │       super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:27:7]
+ 26 │     function inner(arg = super.foo) {
+ 27 │       super.foo;
+    ·       ─────
+ 28 │       () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:28:20]
+ 27 │       super.foo;
+ 28 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                    ─────
+ 29 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:28:40]
+ 27 │       super.foo;
+ 28 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                                        ─────
+ 29 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:29:37]
+ 28 │       () => (arg = super.foo) => 123 + super.foo;
+ 29 │       if (true) { while (false) { { super.foo; } } }
+    ·                                     ─────
+ 30 │     }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:31:30]
+ 30 │     }
+ 31 │     f = () => function(arg = super.foo) {
+    ·                              ─────
+ 32 │       super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:32:7]
+ 31 │     f = () => function(arg = super.foo) {
+ 32 │       super.foo;
+    ·       ─────
+ 33 │       () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:33:20]
+ 32 │       super.foo;
+ 33 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                    ─────
+ 34 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:33:40]
+ 32 │       super.foo;
+ 33 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                                        ─────
+ 34 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:34:37]
+ 33 │       () => (arg = super.foo) => 123 + super.foo;
+ 34 │       if (true) { while (false) { { super.foo; } } }
+    ·                                     ─────
+ 35 │     };
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:42:26]
+ 41 │   method() {
+ 42 │     function inner(arg = super.foo) {
+    ·                          ─────
+ 43 │       super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:43:7]
+ 42 │     function inner(arg = super.foo) {
+ 43 │       super.foo;
+    ·       ─────
+ 44 │       () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:44:20]
+ 43 │       super.foo;
+ 44 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                    ─────
+ 45 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:44:40]
+ 43 │       super.foo;
+ 44 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                                        ─────
+ 45 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:45:37]
+ 44 │       () => (arg = super.foo) => 123 + super.foo;
+ 45 │       if (true) { while (false) { { super.foo; } } }
+    ·                                     ─────
+ 46 │     }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:47:30]
+ 46 │     }
+ 47 │     f = () => function(arg = super.foo) {
+    ·                              ─────
+ 48 │       super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:48:7]
+ 47 │     f = () => function(arg = super.foo) {
+ 48 │       super.foo;
+    ·       ─────
+ 49 │       () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:49:20]
+ 48 │       super.foo;
+ 49 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                    ─────
+ 50 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:49:40]
+ 48 │       super.foo;
+ 49 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                                        ─────
+ 50 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:50:37]
+ 49 │       () => (arg = super.foo) => 123 + super.foo;
+ 50 │       if (true) { while (false) { { super.foo; } } }
+    ·                                     ─────
+ 51 │     };
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:58:26]
+ 57 │   prop = () => {
+ 58 │     function inner(arg = super.foo) {
+    ·                          ─────
+ 59 │       super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:59:7]
+ 58 │     function inner(arg = super.foo) {
+ 59 │       super.foo;
+    ·       ─────
+ 60 │       () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:60:20]
+ 59 │       super.foo;
+ 60 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                    ─────
+ 61 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:60:40]
+ 59 │       super.foo;
+ 60 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                                        ─────
+ 61 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:61:37]
+ 60 │       () => (arg = super.foo) => 123 + super.foo;
+ 61 │       if (true) { while (false) { { super.foo; } } }
+    ·                                     ─────
+ 62 │     }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:63:30]
+ 62 │     }
+ 63 │     f = () => function(arg = super.foo) {
+    ·                              ─────
+ 64 │       super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:64:7]
+ 63 │     f = () => function(arg = super.foo) {
+ 64 │       super.foo;
+    ·       ─────
+ 65 │       () => (arg = super.foo) => 123 + super.foo;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:65:20]
+ 64 │       super.foo;
+ 65 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                    ─────
+ 66 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:65:40]
+ 64 │       super.foo;
+ 65 │       () => (arg = super.foo) => 123 + super.foo;
+    ·                                        ─────
+ 66 │       if (true) { while (false) { { super.foo; } } }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:66:37]
+ 65 │       () => (arg = super.foo) => 123 + super.foo;
+ 66 │       if (true) { while (false) { { super.foo; } } }
+    ·                                     ─────
+ 67 │     };
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:73:4]
+ 72 │ class D {
+ 73 │   [super.foo] = 1;
+    ·    ─────
+ 74 │   static [() => super.foo] = 2;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:74:17]
+ 73 │   [super.foo] = 1;
+ 74 │   static [() => super.foo] = 2;
+    ·                 ─────
+ 75 │   accessor [123 + super.foo] = 3;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:75:19]
+ 74 │   static [() => super.foo] = 2;
+ 75 │   accessor [123 + super.foo] = 3;
+    ·                   ─────
+ 76 │   static accessor [() => () => 123 + super.foo] = 4;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:76:38]
+ 75 │   accessor [123 + super.foo] = 3;
+ 76 │   static accessor [() => () => 123 + super.foo] = 4;
+    ·                                      ─────
+ 77 │   [super.foo]() {};
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:77:4]
+ 76 │   static accessor [() => () => 123 + super.foo] = 4;
+ 77 │   [super.foo]() {};
+    ·    ─────
+ 78 │   static [() => super.foo]() {};
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:78:17]
+ 77 │   [super.foo]() {};
+ 78 │   static [() => super.foo]() {};
+    ·                 ─────
+ 79 │   get [super.foo]() {};
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:79:8]
+ 78 │   static [() => super.foo]() {};
+ 79 │   get [super.foo]() {};
+    ·        ─────
+ 80 │   static get [() => super.foo]() {};
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:80:21]
+ 79 │   get [super.foo]() {};
+ 80 │   static get [() => super.foo]() {};
+    ·                     ─────
+ 81 │   set [super.foo](v) {};
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:81:8]
+ 80 │   static get [() => super.foo]() {};
+ 81 │   set [super.foo](v) {};
+    ·        ─────
+ 82 │   static set [() => () => 123 + super.foo](v) {};
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:82:33]
+ 81 │   set [super.foo](v) {};
+ 82 │   static set [() => () => 123 + super.foo](v) {};
+    ·                                 ─────
+ 83 │ }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:86:17]
+ 85 │ // `super.foo` in class extends
+ 86 │ class E extends super.foo {}
+    ·                 ─────
+ 87 │ class F extends (() => (arg = super.foo) => 123 + super.foo) {}
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:87:31]
+ 86 │ class E extends super.foo {}
+ 87 │ class F extends (() => (arg = super.foo) => 123 + super.foo) {}
+    ·                               ─────
+ 88 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:87:51]
+ 86 │ class E extends super.foo {}
+ 87 │ class F extends (() => (arg = super.foo) => 123 + super.foo) {}
+    ·                                                   ─────
+ 88 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:90:2]
+ 89 │ // `super.foo` in class decorators
+ 90 │ @super.foo
+    ·  ─────
+ 91 │ class G extends Super {
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:92:4]
+ 91 │ class G extends Super {
+ 92 │   @super.foo prop = 1;
+    ·    ─────
+ 93 │   @super.foo static prop = 2;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:93:4]
+ 92 │   @super.foo prop = 1;
+ 93 │   @super.foo static prop = 2;
+    ·    ─────
+ 94 │   @super.foo accessor access = 3;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:94:4]
+ 93 │   @super.foo static prop = 2;
+ 94 │   @super.foo accessor access = 3;
+    ·    ─────
+ 95 │   @super.foo static accessor access = 4;
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:95:4]
+ 94 │   @super.foo accessor access = 3;
+ 95 │   @super.foo static accessor access = 4;
+    ·    ─────
+ 96 │   @super.foo method() {}
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284-2.js:96:4]
+ 95 │   @super.foo static accessor access = 4;
+ 96 │   @super.foo method() {}
+    ·    ─────
+ 97 │ }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:102:6]
+ 101 │   class Inner {
+ 102 │     [super.foo] = 1;
+     ·      ─────
+ 103 │     static [(arg = super.foo) => super.foo] = 2;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:103:20]
+ 102 │     [super.foo] = 1;
+ 103 │     static [(arg = super.foo) => super.foo] = 2;
+     ·                    ─────
+ 104 │     accessor [123 + super.foo] = 3;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:103:34]
+ 102 │     [super.foo] = 1;
+ 103 │     static [(arg = super.foo) => super.foo] = 2;
+     ·                                  ─────
+ 104 │     accessor [123 + super.foo] = 3;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:104:21]
+ 103 │     static [(arg = super.foo) => super.foo] = 2;
+ 104 │     accessor [123 + super.foo] = 3;
+     ·                     ─────
+ 105 │     static accessor [() => (arg = super.foo) => 123 + super.foo] = 4;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:105:35]
+ 104 │     accessor [123 + super.foo] = 3;
+ 105 │     static accessor [() => (arg = super.foo) => 123 + super.foo] = 4;
+     ·                                   ─────
+ 106 │     [super.foo]() {};
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:105:55]
+ 104 │     accessor [123 + super.foo] = 3;
+ 105 │     static accessor [() => (arg = super.foo) => 123 + super.foo] = 4;
+     ·                                                       ─────
+ 106 │     [super.foo]() {};
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:106:6]
+ 105 │     static accessor [() => (arg = super.foo) => 123 + super.foo] = 4;
+ 106 │     [super.foo]() {};
+     ·      ─────
+ 107 │     static [() => super.foo]() {};
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:107:19]
+ 106 │     [super.foo]() {};
+ 107 │     static [() => super.foo]() {};
+     ·                   ─────
+ 108 │     get [super.foo]() {};
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:108:10]
+ 107 │     static [() => super.foo]() {};
+ 108 │     get [super.foo]() {};
+     ·          ─────
+ 109 │     static get [() => super.foo]() {};
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:109:23]
+ 108 │     get [super.foo]() {};
+ 109 │     static get [() => super.foo]() {};
+     ·                       ─────
+ 110 │     set [super.foo](v) {};
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:110:10]
+ 109 │     static get [() => super.foo]() {};
+ 110 │     set [super.foo](v) {};
+     ·          ─────
+ 111 │     static set [() => () => 123 + super.foo](v) {};
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:111:35]
+ 110 │     set [super.foo](v) {};
+ 111 │     static set [() => () => 123 + super.foo](v) {};
+     ·                                   ─────
+ 112 │   }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:117:19]
+ 116 │ function h() {
+ 117 │   class E extends super.foo {}
+     ·                   ─────
+ 118 │   class F extends (() => (arg = super.foo) => 123 + super.foo) {}
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:118:33]
+ 117 │   class E extends super.foo {}
+ 118 │   class F extends (() => (arg = super.foo) => 123 + super.foo) {}
+     ·                                 ─────
+ 119 │ }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:118:53]
+ 117 │   class E extends super.foo {}
+ 118 │   class F extends (() => (arg = super.foo) => 123 + super.foo) {}
+     ·                                                     ─────
+ 119 │ }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:123:4]
+ 122 │ function i() {
+ 123 │   @super.foo
+     ·    ─────
+ 124 │   class Inner {
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:125:6]
+ 124 │   class Inner {
+ 125 │     @super.foo prop = 1;
+     ·      ─────
+ 126 │     @super.foo static prop = 2;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:126:6]
+ 125 │     @super.foo prop = 1;
+ 126 │     @super.foo static prop = 2;
+     ·      ─────
+ 127 │     @super.foo accessor access = 3;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:127:6]
+ 126 │     @super.foo static prop = 2;
+ 127 │     @super.foo accessor access = 3;
+     ·      ─────
+ 128 │     @super.foo static accessor access = 4;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:128:6]
+ 127 │     @super.foo accessor access = 3;
+ 128 │     @super.foo static accessor access = 4;
+     ·      ─────
+ 129 │     @super.foo method() {}
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:129:6]
+ 128 │     @super.foo static accessor access = 4;
+ 129 │     @super.foo method() {}
+     ·      ─────
+ 130 │   }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:135:16]
+ 134 │ obj = {
+ 135 │   prop: (arg = super.foo) => {
+     ·                ─────
+ 136 │     super.foo;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:136:5]
+ 135 │   prop: (arg = super.foo) => {
+ 136 │     super.foo;
+     ·     ─────
+ 137 │     () => (arg = super.foo) => 123 + super.foo;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:137:18]
+ 136 │     super.foo;
+ 137 │     () => (arg = super.foo) => 123 + super.foo;
+     ·                  ─────
+ 138 │     if (true) { while (false) { { super.foo; } } }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:137:38]
+ 136 │     super.foo;
+ 137 │     () => (arg = super.foo) => 123 + super.foo;
+     ·                                      ─────
+ 138 │     if (true) { while (false) { { super.foo; } } }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:138:35]
+ 137 │     () => (arg = super.foo) => 123 + super.foo;
+ 138 │     if (true) { while (false) { { super.foo; } } }
+     ·                                   ─────
+ 139 │   },
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:140:17]
+ 139 │   },
+ 140 │   ['x']: (arg = super.foo) => {
+     ·                 ─────
+ 141 │     super.foo;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:141:5]
+ 140 │   ['x']: (arg = super.foo) => {
+ 141 │     super.foo;
+     ·     ─────
+ 142 │     () => (arg = super.foo) => 123 + super.foo;
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:142:18]
+ 141 │     super.foo;
+ 142 │     () => (arg = super.foo) => 123 + super.foo;
+     ·                  ─────
+ 143 │     if (true) { while (false) { { super.foo; } } }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:142:38]
+ 141 │     super.foo;
+ 142 │     () => (arg = super.foo) => 123 + super.foo;
+     ·                                      ─────
+ 143 │     if (true) { while (false) { { super.foo; } } }
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+     ╭─[misc/fail/oxc-13284-2.js:143:35]
+ 142 │     () => (arg = super.foo) => 123 + super.foo;
+ 143 │     if (true) { while (false) { { super.foo; } } }
+     ·                                   ─────
+ 144 │   },
+     ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[misc/fail/oxc-13284.ts:6:46]
+ 5 │ class C extends Super {
+ 6 │   [keys: string]: typeof import('x', { with: super() }).y;
+   ·                                              ───────
+ 7 │ }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284.ts:10:37]
+  9 │ class D extends Super {
+ 10 │   [keys: typeof import('x', { with: super() }).y]: string;
+    ·                                     ───────
+ 11 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+    ╭─[misc/fail/oxc-13284.ts:16:50]
+ 15 │     class Inner {
+ 16 │       [keys: string]: typeof import('x', { with: super() }).y;
+    ·                                                  ───────
+ 17 │     }
+    ╰────
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[misc/fail/oxc-13284.ts:21:1]
+ 20 │     
+ 21 │ ╭─▶ class Outer2 {
+ 22 │ │     constructor() {
+ 23 │ │       class Inner extends Super {
+ 24 │ │         [keys: typeof import('x', { with: super() }).y]: string;
+    · │                                           ─────
+ 25 │ │       }
+ 26 │ │     }
+ 27 │ ├─▶ }
+    · ╰──── class does not have `extends`
+ 28 │     
+    ╰────
+  help: either remove this super, or extend the class
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13284.ts:35:37]
+ 34 │ class F {
+ 35 │   [keys: typeof import('x', { with: super.foo }).y]: string;
+    ·                                     ─────
+ 36 │ }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13323.js:3:5]
+ 2 │   foo: function() {
+ 3 │     super.foo;
+   ·     ─────
+ 4 │   },
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[misc/fail/oxc-13323.js:8:7]
+ 7 │     return function() {
+ 8 │       super.bar;
+   ·       ─────
+ 9 │     };
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:12:18]
+ 11 │ 
+ 12 │   [ function() { super.qux; } ]() {},
+    ·                  ─────
+ 13 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:14:22]
+ 13 │ 
+ 14 │   get [ function() { super.bing; } ]() {},
+    ·                      ─────
+ 15 │ 
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+    ╭─[misc/fail/oxc-13323.js:16:22]
+ 15 │ 
+ 16 │   set [ function() { super.bong; } ](v) {},
+    ·                      ─────
+ 17 │ };
+    ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-1.ts:1:4]
+ 1 │ foo<>()
+   ·    ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-2.ts:1:8]
+ 1 │ new Foo<>()
+   ·        ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-3.ts:1:25]
+ 1 │ class Foo {property: Bar<> = 1}
+   ·                         ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[misc/fail/oxc-13617-4.ts:1:15]
+ 1 │ const foo: Foo<> = 1
+   ·               ──
+   ╰────
+
+  × Classes may not have a field named 'constructor'
+   ╭─[misc/fail/oxc-14014.ts:2:12]
+ 1 │ class Bar {
+ 2 │   accessor 'constructor'
+   ·            ─────────────
+ 3 │ }
+   ╰────
+
+  × Classes may not have a field named 'constructor'
+   ╭─[misc/fail/oxc-14014.ts:5:12]
+ 4 │ abstract class Baz {
+ 5 │   accessor 'constructor'
+   ·            ─────────────
+ 6 │ }
    ╰────
 
   × Unexpected token

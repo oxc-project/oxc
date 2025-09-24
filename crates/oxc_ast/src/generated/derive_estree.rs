@@ -773,11 +773,7 @@ impl ESTree for ChainElement<'_> {
 
 impl ESTree for ParenthesizedExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
-        state.serialize_field("expression", &self.expression);
-        state.serialize_span(self.span);
-        state.end();
+        crate::serialize::js::ParenthesizedExpressionConverter(self).serialize(serializer)
     }
 }
 
@@ -2350,11 +2346,7 @@ impl ESTree for TSIntersectionType<'_> {
 
 impl ESTree for TSParenthesizedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
-        state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_span(self.span);
-        state.end();
+        crate::serialize::ts::TSParenthesizedTypeConverter(self).serialize(serializer)
     }
 }
 
@@ -2628,10 +2620,9 @@ impl ESTree for TSTypeReference<'_> {
 impl ESTree for TSTypeName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::IdentifierReference(it) => {
-                crate::serialize::ts::TSTypeNameIdentifierReference(it).serialize(serializer)
-            }
+            Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -2965,10 +2956,9 @@ impl ESTree for TSTypeQueryExprName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::TSImportType(it) => it.serialize(serializer),
-            Self::IdentifierReference(it) => {
-                crate::serialize::ts::TSTypeNameIdentifierReference(it).serialize(serializer)
-            }
+            Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }
@@ -2981,6 +2971,26 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for TSImportTypeQualifier<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Identifier(it) => it.serialize(serializer),
+            Self::QualifiedName(it) => it.serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for TSImportTypeQualifiedName<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
         state.serialize_span(self.span);
         state.end();
     }
@@ -3096,10 +3106,9 @@ impl ESTree for TSModuleReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::ExternalModuleReference(it) => it.serialize(serializer),
-            Self::IdentifierReference(it) => {
-                crate::serialize::ts::TSTypeNameIdentifierReference(it).serialize(serializer)
-            }
+            Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
+            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }

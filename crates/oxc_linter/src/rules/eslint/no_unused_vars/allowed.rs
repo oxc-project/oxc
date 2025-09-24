@@ -42,8 +42,13 @@ impl Symbol<'_, '_> {
                 AstKind::ParenthesizedExpression(_)
                 | AstKind::VariableDeclaration(_)
                 | AstKind::BindingIdentifier(_)
-                | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::AssignmentTarget(_) => {}
+                | AstKind::IdentifierReference(_)
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,
@@ -204,7 +209,7 @@ impl NoUnusedVars {
         param: &FormalParameter<'a>,
         params_id: NodeId,
     ) -> bool {
-        let mut parents_iter = semantic.nodes().ancestor_kinds(params_id).skip(1);
+        let mut parents_iter = semantic.nodes().ancestor_kinds(params_id);
 
         // in function declarations, the parent immediately before the
         // FormalParameters is a TSDeclareBlock

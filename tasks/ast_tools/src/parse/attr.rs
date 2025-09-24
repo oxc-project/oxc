@@ -91,7 +91,7 @@ pub enum AttrLocation<'d> {
 
 impl AttrLocation<'_> {
     /// Convert `&mut AttrLocation` to `AttrLocation`.
-    pub fn unpack(&mut self) -> AttrLocation {
+    pub fn unpack(&mut self) -> AttrLocation<'_> {
         match self {
             AttrLocation::Struct(struct_def) => AttrLocation::Struct(struct_def),
             AttrLocation::Enum(enum_def) => AttrLocation::Enum(enum_def),

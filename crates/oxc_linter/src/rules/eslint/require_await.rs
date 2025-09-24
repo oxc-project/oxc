@@ -107,7 +107,15 @@ impl Rule for RequireAwait {
                                 span, key, ..
                             }) = parent_parent_node
                             {
-                                let need_delete_span = get_delete_span(ctx, span.start);
+                                let need_delete_span = get_delete_span(
+                                    ctx,
+                                    if matches!(parent_parent_node, AstKind::ObjectProperty(x) if !x.method)
+                                    {
+                                        func.span.start
+                                    } else {
+                                        span.start
+                                    },
+                                );
                                 let check_span = if matches!(key, PropertyKey::StaticIdentifier(_))
                                 {
                                     key.span()
@@ -151,10 +159,27 @@ impl Rule for RequireAwait {
 
 #[expect(clippy::cast_possible_truncation)]
 fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
-    let end = start + 5;
-    let async_key_span = Span::new(start, end);
+    let source_text = ctx.source_text();
+    let source_from_start = &source_text[(start as usize)..];
+
+    // Find the position of "async" keyword from the start position
+    let async_pos = source_from_start.find("async").unwrap_or(0);
+    let async_start = start + async_pos as u32;
+    let async_end = async_start + 5;
+    let async_key_span = Span::new(async_start, async_end);
+
+    // debug assertions
+    #[cfg(debug_assertions)]
+    {
+        assert!(
+            async_key_span.source_text(ctx.source_text()) == "async",
+            "Expected 'async' at span {async_key_span:?}, found: {:?}",
+            async_key_span.source_text(ctx.source_text())
+        );
+    }
+
     let mut offset: u32 = 0;
-    for c in ctx.source_text()[(end as usize)..].chars() {
+    for c in ctx.source_text()[(async_end as usize)..].chars() {
         if !c.is_whitespace() {
             break;
         }
@@ -284,6 +309,8 @@ fn test() {
             "let a = { c: () => { let c }, t:()=>{ let r } }",
         ),
         ("async function O(){r}", "function O(){r}"),
+        ("s={expoí:async function(){{}}}", "s={expoí:function(){{}}}"),
+        ("class foo { private async bar() { x() } }", "class foo { private bar() { x() } }"),
     ];
 
     Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail)

@@ -135,10 +135,12 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
     }
 
     // `useRef(null)`
-    if let Expression::Identifier(ident) = &call_expr.callee {
-        if ident.name == "useRef" && call_expr.arguments.len() == 1 && !call_expr.optional {
-            return true;
-        }
+    if let Expression::Identifier(ident) = &call_expr.callee
+        && ident.name == "useRef"
+        && call_expr.arguments.len() == 1
+        && !call_expr.optional
+    {
+        return true;
     }
 
     // `React.useRef(null)`
@@ -180,7 +182,7 @@ impl Rule for NoNull {
             return;
         };
 
-        let mut parents = iter_outer_expressions(ctx, node.id());
+        let mut parents = iter_outer_expressions(ctx.nodes(), node.id());
         let Some(parent_kind) = parents.next() else {
             ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                 fix_null(fixer, null_literal)
@@ -205,7 +207,7 @@ impl Rule for NoNull {
                 ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     let mut null_span = null_literal.span;
                     // Find the last parent that is a TSAsExpression (`null as any`) or TSNonNullExpression (`null!`)
-                    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
+                    for parent in ctx.nodes().ancestors(node.id()) {
                         let parent = parent.kind();
                         if matches!(
                             parent,

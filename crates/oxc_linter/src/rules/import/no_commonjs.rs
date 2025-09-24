@@ -162,7 +162,7 @@ impl Rule for NoCommonjs {
                 let object = member_expr_kind.object();
 
                 if object.is_specific_id("module") && property_name == "exports" {
-                    let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(3) else {
+                    let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(1) else {
                         return;
                     };
 
@@ -174,26 +174,52 @@ impl Rule for NoCommonjs {
                         ));
                     }
 
-                    if let AstKind::AssignmentExpression(assignment_expr) = parent_node.kind() {
-                        if let Expression::ObjectExpression(_object_expr) =
-                            &assignment_expr.right.without_parentheses()
+                    match parent_node.kind() {
+                        AstKind::ExpressionStatement(expr_statement)
+                            if matches!(
+                                expr_statement.expression,
+                                Expression::AssignmentExpression(_)
+                            ) =>
                         {
+                            match &expr_statement.expression {
+                                Expression::AssignmentExpression(assign_expr) => {
+                                    if !assign_expr.right.is_function()
+                                        && !assign_expr.right.is_string_literal()
+                                    {
+                                        ctx.diagnostic(no_commonjs_diagnostic(
+                                            member_expr_kind.span(),
+                                            "export",
+                                            property_name,
+                                        ));
+                                    }
+
+                                    return;
+                                }
+                                _ => return,
+                            }
+                        }
+                        AstKind::AssignmentExpression(assignment_expr) => {
+                            if let Expression::ObjectExpression(_object_expr) =
+                                &assignment_expr.right.without_parentheses()
+                            {
+                                ctx.diagnostic(no_commonjs_diagnostic(
+                                    member_expr_kind.span(),
+                                    "export",
+                                    property_name,
+                                ));
+                            } else {
+                                return;
+                            }
+                        }
+                        _ => {
                             ctx.diagnostic(no_commonjs_diagnostic(
                                 member_expr_kind.span(),
                                 "export",
                                 property_name,
                             ));
-                        } else {
                             return;
                         }
-                    } else {
-                        ctx.diagnostic(no_commonjs_diagnostic(
-                            member_expr_kind.span(),
-                            "export",
-                            property_name,
-                        ));
                     }
-                    return;
                 }
 
                 // exports.
@@ -224,10 +250,10 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0] {
-                    if !template_literal.expressions.is_empty() {
-                        return;
-                    }
+                if let Argument::TemplateLiteral(template_literal) = &call_expr.arguments[0]
+                    && !template_literal.expressions.is_empty()
+                {
+                    return;
                 }
 
                 if self.allow_require {

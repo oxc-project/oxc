@@ -21,6 +21,25 @@ This is the linter for Oxc. The currently supported features are listed below.
   to automatically apply fixes when saving the file.
 - Support for multi root workspaces
 
+## Oxfmt
+
+This is the formatter for Oxc. The currently supported features are listed below.
+
+- Experimental formatting with `oxc.fmt.experimental`
+
+To enable it, use a VSCode `settings.json` like:
+
+```json
+{
+  "oxc.fmt.experimental": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode"
+  // Or enable it for specific files:
+  // "[javascript]": {
+  //   "editor.defaultFormatter": "oxc.oxc-vscode"
+  // },
+}
+```
+
 ## Configuration
 
 ### Window Configuration
@@ -38,12 +57,15 @@ Following configuration are supported via `settings.json` and effect the window 
 
 Following configuration are supported via `settings.json` and can be changed for each workspace:
 
-| Key                           | Default Value | Possible Values             | Description                                                                                                                                  |
-| ----------------------------- | ------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `oxc.lint.run`                | `onType`      | `onSave` \| `onType`        | Run the linter on save (onSave) or on type (onType)                                                                                          |
-| `oxc.configPath`              | `null`        | `null` \| `<string>`        | Path to ESlint configuration. Keep it empty to enable nested configuration.                                                                  |
-| `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny` | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway. |
-| `oxc.flags`                   | -             | `Record<string, string>`    | Custom flags passed to the language server.                                                                                                  |
+| Key                           | Default Value | Possible Values             | Description                                                                                                                                      |
+| ----------------------------- | ------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `oxc.lint.run`                | `onType`      | `onSave` \| `onType`        | Run the linter on save (onSave) or on type (onType)                                                                                              |
+| `oxc.configPath`              | `null`        | `null` \| `<string>`        | Path to ESlint configuration. Keep it empty to enable nested configuration.                                                                      |
+| `oxc.tsConfigPath`            | `null`        | `null` \| `<string>`        | Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin. |
+| `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny` | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.     |
+| `oxc.typeAware`               | `false`       | `false` \| `true`           | Enable type aware linting.                                                                                                                       |
+| `oxc.flags`                   | -             | `Record<string, string>`    | Custom flags passed to the language server.                                                                                                      |
+| `oxc.fmt.experimental`        | `false`       | `false` \| `true`           | Enable experimental formatting support. This feature is experimental and might not work as expected.                                             |
 
 #### Flags
 

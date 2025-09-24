@@ -78,11 +78,11 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner},
             utils::PossibleJestNode,
             AstNode
         };
-        use oxc_semantic::SymbolId;
+        use oxc_semantic::{AstTypesBitset, SymbolId};
 
         #[derive(Debug, Clone)]
         #[expect(clippy::enum_variant_names)]
@@ -177,6 +177,18 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*
                 }
             }
+
+            pub fn is_tsgolint_rule(&self) -> bool {
+                match self {
+                    #(Self::#struct_names(rule) => #struct_names::IS_TSGOLINT_RULE),*
+                }
+            }
+
+            pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
+                match self {
+                    #(Self::#struct_names(rule) => rule.types_info()),*
+                }
+            }
         }
 
         impl std::hash::Hash for RuleEnum {
@@ -205,11 +217,9 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             }
         }
 
-        lazy_static::lazy_static! {
-            pub static ref RULES: Vec<RuleEnum> = vec![
-                #(RuleEnum::#struct_names(#struct_names::default())),*
-            ];
-        }
+        pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(|| vec![
+            #(RuleEnum::#struct_names(#struct_names::default())),*
+        ]);
     };
 
     TokenStream::from(expanded)

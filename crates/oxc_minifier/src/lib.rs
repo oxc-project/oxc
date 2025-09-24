@@ -1,12 +1,56 @@
-//! ECMAScript Minifier
-
-#![allow(clippy::literal_string_with_formatting_args, clippy::needless_pass_by_ref_mut)]
+//! # Oxc Minifier
+//!
+//! High-performance JavaScript/TypeScript minifier focused on maximum compression.
+//!
+//! ## Overview
+//!
+//! The Oxc minifier applies a comprehensive set of optimizations to JavaScript code
+//! to achieve the smallest possible output while maintaining correctness. It draws
+//! inspiration from industry-leading minifiers like Closure Compiler, Terser, esbuild,
+//! and SWC.
+//!
+//! ## Features
+//!
+//! - **Maximum Compression**: Fixed-point iteration ensures all optimization opportunities are found
+//! - **Comprehensive Optimizations**: 17+ transformation passes and growing
+//! - **100% Correct**: Extensive testing with test262, Babel, and TypeScript test suites
+//! - **Fast**: Efficient algorithms and arena allocation for performance
+//!
+//! ## Example
+//!
+//! ```rust
+//! use oxc_minifier::{Minifier, MinifierOptions};
+//! use oxc_allocator::Allocator;
+//! use oxc_parser::Parser;
+//! use oxc_span::SourceType;
+//!
+//! let allocator = Allocator::default();
+//! let source_text = "const x = 1 + 1; console.log(x);";
+//! let source_type = SourceType::mjs();
+//! let ret = Parser::new(&allocator, source_text, source_type).parse();
+//! let mut program = ret.program;
+//!
+//! let options = MinifierOptions::default();
+//! let minifier = Minifier::new(options);
+//! let result = minifier.minify(&allocator, &mut program);
+//! ```
+//!
+//! ## Architecture
+//!
+//! The minifier consists of:
+//! - **Compressor**: Orchestrates the optimization pipeline
+//! - **Peephole Optimizations**: Individual transformation passes
+//! - **Mangler**: Variable renaming for size reduction
+//!
+//! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
 mod compressor;
 mod ctx;
 mod keep_var;
 mod options;
 mod peephole;
+mod state;
+mod symbol_value;
 
 #[cfg(test)]
 mod tester;
@@ -14,7 +58,7 @@ mod tester;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
-use oxc_semantic::{Scoping, SemanticBuilder, Stats};
+use oxc_semantic::{Scoping, SemanticBuilder};
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
@@ -34,27 +78,55 @@ impl Default for MinifierOptions {
 
 pub struct MinifierReturn {
     pub scoping: Option<Scoping>,
+
+    /// Total number of iterations ran. Useful for debugging performance issues.
+    pub iterations: u8,
 }
 
 pub struct Minifier {
     options: MinifierOptions,
 }
 
-impl Minifier {
+impl<'a> Minifier {
     pub fn new(options: MinifierOptions) -> Self {
         Self { options }
     }
 
-    pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        let stats = if let Some(compress) = self.options.compress {
-            let semantic = SemanticBuilder::new().build(program).semantic;
-            let stats = semantic.stats();
-            let scoping = semantic.into_scoping();
-            Compressor::new(allocator, compress).build_with_scoping(scoping, program);
-            stats
-        } else {
-            Stats::default()
-        };
+    pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
+        self.build(false, allocator, program)
+    }
+
+    pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
+        self.build(true, allocator, program)
+    }
+
+    fn build(
+        self,
+        dce: bool,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+    ) -> MinifierReturn {
+        let (stats, iterations) = self
+            .options
+            .compress
+            .map(|options| {
+                let semantic = SemanticBuilder::new().build(program).semantic;
+                let stats = semantic.stats();
+                let scoping = semantic.into_scoping();
+                let compressor = Compressor::new(allocator);
+                let iterations = if dce {
+                    let options = CompressOptions {
+                        target: options.target,
+                        treeshake: options.treeshake,
+                        ..CompressOptions::dce()
+                    };
+                    compressor.dead_code_elimination_with_scoping(program, scoping, options)
+                } else {
+                    compressor.build_with_scoping(program, scoping, options)
+                };
+                (stats, iterations)
+            })
+            .unwrap_or_default();
         let scoping = self.options.mangle.map(|options| {
             let mut semantic = SemanticBuilder::new()
                 .with_stats(stats)
@@ -64,6 +136,6 @@ impl Minifier {
             Mangler::default().with_options(options).build_with_semantic(&mut semantic, program);
             semantic.into_scoping()
         });
-        MinifierReturn { scoping }
+        MinifierReturn { scoping, iterations }
     }
 }

@@ -17,6 +17,13 @@ const _: () = {
     assert!(offset_of!(RawTransferData, module) == 152);
     assert!(offset_of!(RawTransferData, errors) == 256);
 
+    // Padding: 3 bytes
+    assert!(size_of::<RawTransferMetadata>() == 16);
+    assert!(align_of::<RawTransferMetadata>() == 8);
+    assert!(offset_of!(RawTransferMetadata, data_offset) == 8);
+    assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
+    assert!(offset_of!(RawTransferMetadata, _padding) == 0);
+
     // Padding: 7 bytes
     assert!(size_of::<Error>() == 80);
     assert!(align_of::<Error>() == 8);
@@ -59,7 +66,7 @@ const _: () = {
 };
 
 #[cfg(target_pointer_width = "32")]
-const _: () = {
+const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     // Padding: 0 bytes
     assert!(size_of::<RawTransferData>() == 188);
     assert!(align_of::<RawTransferData>() == 4);
@@ -67,6 +74,13 @@ const _: () = {
     assert!(offset_of!(RawTransferData, comments) == 88);
     assert!(offset_of!(RawTransferData, module) == 104);
     assert!(offset_of!(RawTransferData, errors) == 172);
+
+    // Padding: 3 bytes
+    assert!(size_of::<RawTransferMetadata>() == 16);
+    assert!(align_of::<RawTransferMetadata>() == 8);
+    assert!(offset_of!(RawTransferMetadata, data_offset) == 8);
+    assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
+    assert!(offset_of!(RawTransferMetadata, _padding) == 0);
 
     // Padding: 3 bytes
     assert!(size_of::<Error>() == 44);

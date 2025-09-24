@@ -1,11 +1,11 @@
 // Tests for raw transfer.
 
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
-import { parseAsync, parseSync } from '../index.js';
+import { parseAsync, parseSync, type TSTypeAliasDeclaration, type VariableDeclaration } from '../src-js/index.js';
 
 import {
   ACORN_TEST262_DIR_PATH,
@@ -26,7 +26,7 @@ import {
   TS_ESTREE_DIR_PATH,
   TS_SHORT_DIR_PATH,
   TS_SNAPSHOT_PATH,
-} from './parse-raw-common.mjs';
+} from './parse-raw-common.js';
 
 const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
   ? [describe, it]
@@ -35,7 +35,7 @@ const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
 // Worker pool for running test cases.
 // Vitest provides parallelism across test files, but not across cases within a single test file.
 // So we run each case in a worker to achieve parallelism.
-const pool = new Tinypool({ filename: new URL('./parse-raw-worker.mjs', import.meta.url).href });
+const pool = new Tinypool({ filename: new URL('./parse-raw-worker.js', import.meta.url).href });
 
 let runCase;
 
@@ -46,14 +46,11 @@ async function runCaseInWorker(type, props) {
   // If test failed in worker, run it again in main thread with Vitest's `expect`,
   // to get a nice diff and stack trace
   if (!success) {
-    if (!runCase) ({ runCase } = await import('./parse-raw-worker.mjs'));
-    try {
-      type |= TEST_TYPE_PRETTY;
-      await runCase({ type, props }, expect);
-      throw new Error('Failed on worker but unexpectedly passed on main thread');
-    } catch (err) {
-      throw err;
-    }
+    if (!runCase) ({ runCase } = await import('./parse-raw-worker.js'));
+
+    type |= TEST_TYPE_PRETTY;
+    await runCase({ type, props }, expect);
+    throw new Error('Failed on worker but unexpectedly passed on main thread');
   }
 }
 
@@ -71,6 +68,8 @@ const benchFixtureUrls = [
   // ES5 (3.9M)
   'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
 ];
+
+await mkdir(TARGET_DIR_PATH, { recursive: true });
 
 const benchFixturePaths = await Promise.all(benchFixtureUrls.map(async (url) => {
   const filename = url.split('/').at(-1),
@@ -100,11 +99,13 @@ for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
 }
 
 describe.concurrent('test262', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy test262', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_LAZY, path));
 });
 
@@ -117,11 +118,13 @@ const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.jsx') && !jsxFailPaths.has(path));
 
 describe.concurrent('JSX', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX, filename));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy JSX', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_LAZY, filename));
 });
 
@@ -138,11 +141,13 @@ const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.md') && !tsFailPaths.has(path.slice(0, -3)));
 
 describe.concurrent('TypeScript', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy TypeScript', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_LAZY, path));
 });
 
@@ -166,7 +171,9 @@ describe.concurrent('edge cases', () => {
     '#!/usr/bin/env node\nlet x;',
     '#!/usr/bin/env node\nlet x;\n// foo',
   ])('%s', (sourceText) => {
+    // oxlint-disable-next-line jest/expect-expect
     it('JS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.js', sourceText }));
+    // oxlint-disable-next-line jest/expect-expect
     it('TS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.ts', sourceText }));
 
     itLazy(
@@ -182,11 +189,13 @@ describe.concurrent('edge cases', () => {
 
 // Test raw transfer output matches standard (via JSON) output for some large files
 describe.concurrent('fixtures', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy fixtures', () => {
+  // oxlint-disable-next-line jest/expect-expect
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_LAZY, path));
 });
 
@@ -214,6 +223,7 @@ describe.concurrent('`parseAsync`', () => {
     expect(programRaw).toEqual(programStandard);
   });
 
+  // oxlint-disable-next-line jest/expect-expect
   it('processes multiple files', async () => {
     await testMultiple(4);
   });
@@ -221,6 +231,7 @@ describe.concurrent('`parseAsync`', () => {
   // This is primarily testing the queuing mechanism.
   // At least on Mac OS, this test does not cause out-of-memory without the queue implemented,
   // but the test doesn't complete in a reasonable time (I gave up waiting after 20 minutes).
+  // oxlint-disable-next-line jest/expect-expect
   it('does not exhaust memory when called huge number of times in succession', async () => {
     await testMultiple(10_000);
   });
@@ -252,4 +263,54 @@ it.concurrent('checks semantic', async () => {
   // @ts-ignore
   ret = parseSync('test.js', code, { experimentalRawTransfer: true, showSemanticErrors: true });
   expect(ret.errors.length).toBe(1);
+});
+
+describe.concurrent('`preserveParens` option', () => {
+  describe.concurrent('should not include parens when false', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = (1 + 2);';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: false });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = (1 + 2); type T = (string);';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: false });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSStringKeyword');
+    });
+  });
+
+  describe.concurrent('should include parens when true', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = (1 + 2);';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: true });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = (1 + 2); type T = (string);';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: true });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSParenthesizedType');
+    });
+  });
 });

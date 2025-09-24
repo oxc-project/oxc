@@ -20,16 +20,15 @@
 //! [`Error`]s over a multi-producer, single consumer
 //!
 //! ```
-//! use std::{sync::Arc, thread};
-//! use oxc_diagnostics::{DiagnosticService, Error, OxcDiagnostic};
+//! use std::{path::PathBuf, sync::Arc, thread};
+//! use oxc_diagnostics::{DiagnosticService, Error, OxcDiagnostic, GraphicalReportHandler, NamedSource};
 //!
 //! fn my_tool() -> Result<()> {
 //!     try_something().map_err(|e| OxcDiagnostic::error(e.to_string()))?;
 //!     Ok(())
 //! }
 //!
-//! let mut service = DiagnosticService::default();
-//! let mut sender = service.sender().clone();
+//! let (mut service, sender) = DiagnosticService::new(Box::new(GraphicalReportHandler::new()));
 //!
 //! thread::spawn(move || {
 //!     let file_path_being_processed = PathBuf::from("file.txt");
@@ -38,10 +37,9 @@
 //!     for _ in 0..10 {
 //!         if let Err(diagnostic) = my_tool() {
 //!             let report = diagnostic.with_source_code(Arc::clone(&file_being_processed));
-//!             sender.send(Some(file_path_being_processed, vec![Error::new(e)]));
+//!             sender.send((file_path_being_processed, vec![Error::new(e)]));
 //!         }
-//!         // send None to stop the service
-//!         sender.send(None);
+//!         // The service will stop when all senders are dropped
 //!     }
 //! });
 //!
@@ -93,7 +91,7 @@ impl DerefMut for OxcDiagnostic {
     }
 }
 
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct OxcCode {
     pub scope: Option<Cow<'static, str>>,
     pub number: Option<Cow<'static, str>>,
@@ -339,5 +337,10 @@ impl OxcDiagnostic {
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
     pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
         Error::from(self).with_source_code(code)
+    }
+
+    /// Consumes the diagnostic and returns the inner owned data.
+    pub fn inner_owned(self) -> OxcDiagnosticInner {
+        *self.inner
     }
 }

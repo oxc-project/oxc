@@ -1,7 +1,7 @@
 use std::slice;
 
 use oxc_ast::ast::StringLiteral;
-use oxc_data_structures::{assert_unchecked, pointer_ext::PointerExt};
+use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
 use oxc_syntax::identifier::{LS, NBSP, PS};
 
 use crate::Codegen;
@@ -46,7 +46,7 @@ impl Codegen<'_> {
         // String is written to buffer in chunks.
         let bytes = s.value.as_bytes().iter();
         let mut state = PrintStringState {
-            chunk_start: bytes.as_slice().as_ptr(),
+            chunk_start: bytes.ptr(),
             bytes,
             quote,
             lone_surrogates: s.lone_surrogates,
@@ -104,7 +104,7 @@ impl PrintStringState<'_> {
     /// Peek next byte in `bytes` iterator.
     #[inline]
     fn peek(&self) -> Option<u8> {
-        self.bytes.clone().next().copied()
+        self.bytes.peek_copy()
     }
 
     /// Advance the `bytes` iterator by 1 byte.
@@ -118,40 +118,28 @@ impl PrintStringState<'_> {
     ///   before calling other methods e.g. `flush`.
     #[inline]
     unsafe fn consume_byte_unchecked(&mut self) {
-        // `assert_unchecked!` produces less instructions than `self.bytes.next().unwrap_unchecked()`
-        // https://godbolt.org/z/TWzfK1eKj
-
         // SAFETY: Caller guarantees there is a byte to consume in `bytes` iterator,
-        // and that consuming it leaves the iterator on a UTF-8 char boundary.
-        unsafe { assert_unchecked!(!self.bytes.as_slice().is_empty()) };
-        self.bytes.next().unwrap();
+        // and that consuming it leaves the iterator on a UTF-8 char boundary
+        unsafe { self.bytes.next_unchecked() };
     }
 
-    /// Advance the `bytes` iterator by `N` bytes.
+    /// Advance the `bytes` iterator by `count` bytes.
     ///
     /// # SAFETY
     ///
-    /// * There must be at least `N` more bytes in the `bytes` iterator.
+    /// * There must be at least `count` more bytes in the `bytes` iterator.
     /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
     #[inline]
-    unsafe fn consume_bytes_unchecked<const N: usize>(&mut self) {
-        // `assert_unchecked!` produces many less instructions than
-        // `for _i in 0..N { self.bytes.next().unwrap_unchecked(); }`.
-        // The `unwrap` in loop below is required for compact assembly.
-        // https://godbolt.org/z/TWzfK1eKj
-
-        // SAFETY: Caller guarantees there are `N` bytes to consume in `bytes` iterator,
+    unsafe fn consume_bytes_unchecked(&mut self, count: usize) {
+        // SAFETY: Caller guarantees there are `count` bytes to consume in `bytes` iterator,
         // and that consuming them leaves the iterator on a UTF-8 char boundary.
-        unsafe { assert_unchecked!(self.bytes.as_slice().len() >= N) };
-        for _i in 0..N {
-            self.bytes.next().unwrap();
-        }
+        unsafe { self.bytes.advance_unchecked(count) };
     }
 
     /// Set the start of next chunk to be current position of `bytes` iterator.
     #[inline]
     fn start_chunk(&mut self) {
-        self.chunk_start = self.bytes.as_slice().as_ptr();
+        self.chunk_start = self.bytes.ptr();
     }
 
     /// Flush current chunk to buffer, consume 1 byte, and start next chunk after that byte.
@@ -164,23 +152,22 @@ impl PrintStringState<'_> {
     #[inline]
     unsafe fn flush_and_consume_byte(&mut self, codegen: &mut Codegen) {
         // SAFETY: Caller guarantees `flush_and_consume_bytes`'s requirements are met
-        unsafe { self.flush_and_consume_bytes::<1>(codegen) };
+        unsafe { self.flush_and_consume_bytes(codegen, 1) };
     }
 
-    /// Flush current chunk to buffer, consume `N` bytes, and start next chunk after those bytes.
+    /// Flush current chunk to buffer, consume `count` bytes, and start next chunk after those bytes.
     ///
     /// # SAFETY
     ///
-    /// * There must be at least `N` more bytes in the `bytes` iterator.
+    /// * There must be at least `count` more bytes in the `bytes` iterator.
     /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
     #[inline]
-    unsafe fn flush_and_consume_bytes<const N: usize>(&mut self, codegen: &mut Codegen) {
+    unsafe fn flush_and_consume_bytes(&mut self, codegen: &mut Codegen, count: usize) {
         self.flush(codegen);
 
-        debug_assert!(self.bytes.as_slice().len() >= N);
-        // SAFETY: Caller guarantees there are `N` bytes to consume in `bytes` iterator,
+        // SAFETY: Caller guarantees there are `count` bytes to consume in `bytes` iterator,
         // and that consuming them leaves the iterator on a UTF-8 char boundary
-        unsafe { self.consume_bytes_unchecked::<N>() };
+        unsafe { self.consume_bytes_unchecked(count) };
 
         self.start_chunk();
     }
@@ -196,8 +183,8 @@ impl PrintStringState<'_> {
         // SAFETY: `chunk_start` is pointer to current position of `bytes` iterator at some point,
         // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
         let len = unsafe {
-            let bytes_ptr = self.bytes.as_slice().as_ptr();
-            bytes_ptr.offset_from_usize(self.chunk_start)
+            let bytes_ptr = self.bytes.ptr();
+            bytes_ptr.offset_from_unsigned(self.chunk_start)
         };
 
         // SAFETY: `chunk_start` is within bounds of original `&str`.
@@ -236,10 +223,13 @@ impl PrintStringState<'_> {
 
     /// Calculate optimum quote character to use, when backtick (`) is an option.
     fn calculate_quote_maybe_backtick(&self) -> Quote {
-        // String length is max `u32::MAX`, so use `i64` to make overflow impossible
-        let mut single_cost: i64 = 0;
-        let mut double_cost: i64 = 0;
-        let mut backtick_cost: i64 = 0;
+        // Max string length is:
+        // * 64-bit platforms: `u32::MAX`.
+        // * 32-bit platforms: `i32::MAX`.
+        // In either case, `isize` is sufficient to make overflow impossible.
+        let mut single_cost: isize = 0;
+        let mut double_cost: isize = 0;
+        let mut backtick_cost: isize = 0;
         let mut bytes = self.bytes.clone();
         while let Some(b) = bytes.next() {
             match b {
@@ -248,7 +238,7 @@ impl PrintStringState<'_> {
                 b'"' => double_cost += 1,
                 b'`' => backtick_cost += 1,
                 b'$' => {
-                    if bytes.clone().next() == Some(&b'{') {
+                    if bytes.peek() == Some(&b'{') {
                         backtick_cost += 1;
                     }
                 }
@@ -261,24 +251,27 @@ impl PrintStringState<'_> {
         // 2. Double quote
         // 3. Single quote
         #[rustfmt::skip]
-        let quote = if double_cost >= backtick_cost {
-            if backtick_cost > single_cost {
-                Quote::Single
-            } else {
+        let quote = if backtick_cost <= double_cost {
+            if backtick_cost <= single_cost {
                 Quote::Backtick
+            } else {
+                Quote::Single
             }
-        } else if double_cost > single_cost {
-            Quote::Single
-        } else {
+        } else if double_cost <= single_cost {
             Quote::Double
+        } else {
+            Quote::Single
         };
         quote
     }
 
     /// Calculate optimum quote character to use, when backtick (`) is not an option.
     fn calculate_quote_no_backtick(&self) -> Quote {
-        // String length is max `u32::MAX`, so `i64` cannot overflow
-        let mut single_cost: i64 = 0;
+        // Max string length is:
+        // * 64-bit platforms: `u32::MAX`.
+        // * 32-bit platforms: `i32::MAX`.
+        // In either case, `isize` is sufficient to make overflow impossible.
+        let mut single_cost: isize = 0;
         for &b in self.bytes.clone() {
             match b {
                 b'\'' => single_cost += 1,
@@ -294,6 +287,7 @@ impl PrintStringState<'_> {
 
 /// Convert `char` to UTF-8 bytes array.
 const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+    assert!(ch.len_utf8() == N);
     let mut bytes = [0u8; N];
     ch.encode_utf8(&mut bytes);
     bytes
@@ -304,10 +298,16 @@ const LS_BYTES: [u8; 3] = to_bytes(LS);
 /// `PS` character as UTF-8 bytes.
 const PS_BYTES: [u8; 3] = to_bytes(PS);
 
-const _: () = assert!(LS_BYTES[0] == 0xE2);
-const _: () = assert!(PS_BYTES[0] == 0xE2);
-const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
-const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
+/// First byte of either `LS` or `PS`
+pub const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
+
+const _: () = assert!(LS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
+const _: () = assert!(PS_BYTES[0] == LS_OR_PS_FIRST_BYTE);
+
+/// Last 2 bytes of `LS` character.
+pub const LS_LAST_2_BYTES: [u8; 2] = [LS_BYTES[1], LS_BYTES[2]];
+/// Last 2 bytes of `PS` character.
+pub const PS_LAST_2_BYTES: [u8; 2] = [PS_BYTES[1], PS_BYTES[2]];
 
 /// `NBSP` character as UTF-8 bytes.
 const NBSP_BYTES: [u8; 2] = to_bytes(NBSP);
@@ -601,7 +601,7 @@ unsafe fn print_less_than(codegen: &mut Codegen, state: &mut PrintStringState) {
         // SAFETY: The check above ensures there are 6 bytes left, after consuming 2 already.
         // `script` / `SCRIPT` is all ASCII bytes, so skipping them leaves `bytes` iterator
         // positioned on UTF-8 char boundary.
-        unsafe { state.consume_bytes_unchecked::<6>() };
+        unsafe { state.consume_bytes_unchecked(6) };
     }
 }
 
@@ -622,13 +622,13 @@ unsafe fn print_ls_or_ps(codegen: &mut Codegen, state: &mut PrintStringState) {
         _ => {
             // Some other character starting with 0xE2. Advance past it.
             // SAFETY: 0xE2 is always the start of a 3-byte Unicode character
-            unsafe { state.consume_bytes_unchecked::<3>() };
+            unsafe { state.consume_bytes_unchecked(3) };
             return;
         }
     };
 
     // SAFETY: 0xE2 is always the start of a 3-byte Unicode character
-    unsafe { state.flush_and_consume_bytes::<3>(codegen) };
+    unsafe { state.flush_and_consume_bytes(codegen, 3) };
     codegen.print_str(replacement);
 }
 
@@ -642,12 +642,12 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
     if next == NBSP_LAST_BYTE {
         // Character is NBSP.
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
-        unsafe { state.flush_and_consume_bytes::<2>(codegen) };
+        unsafe { state.flush_and_consume_bytes(codegen, 2) };
         codegen.print_str("\\xA0");
     } else {
         // Some other character starting with 0xC2. Advance past it.
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
-        unsafe { state.consume_bytes_unchecked::<2>() };
+        unsafe { state.consume_bytes_unchecked(2) };
     }
 }
 
@@ -675,12 +675,12 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
                 // Actual lossy replacement character.
                 // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
                 // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-                unsafe { state.consume_bytes_unchecked::<3>() };
+                unsafe { state.consume_bytes_unchecked(3) };
                 state.flush(codegen);
                 // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
                 // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
                 // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-                unsafe { state.consume_bytes_unchecked::<4>() };
+                unsafe { state.consume_bytes_unchecked(4) };
                 // Start next chunk after the 4 hex bytes
                 state.start_chunk();
                 return;
@@ -695,7 +695,7 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
             // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there weren't at least 7 bytes
             // remaining. First 3 bytes are lossy replacement character, and we just checked that
             // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-            unsafe { state.consume_bytes_unchecked::<7>() };
+            unsafe { state.consume_bytes_unchecked(7) };
 
             // Start next chunk after the 4 hex bytes
             state.start_chunk();
@@ -711,7 +711,7 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
     // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
     // Advance past the character.
     // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-    unsafe { state.consume_bytes_unchecked::<3>() };
+    unsafe { state.consume_bytes_unchecked(3) };
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.

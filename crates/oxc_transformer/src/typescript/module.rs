@@ -43,12 +43,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Declaration::TSImportEqualsDeclaration(import_equals) = decl {
-            if import_equals.import_kind.is_value() {
-                if let Some(new_decl) = self.transform_ts_import_equals(import_equals, ctx) {
-                    *decl = new_decl;
-                }
-            }
+        if let Declaration::TSImportEqualsDeclaration(import_equals) = decl
+            && import_equals.import_kind.is_value()
+            && let Some(new_decl) = self.transform_ts_import_equals(import_equals, ctx)
+        {
+            *decl = new_decl;
         }
     }
 }
@@ -106,15 +105,18 @@ impl<'a> TypeScriptModule<'a, '_> {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
             match &mut decl.module_reference {
                 module_reference @ match_ts_type_name!(TSModuleReference) => {
-                    let ident = module_reference.to_ts_type_name().get_identifier_reference();
-                    let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
-                    // The binding of TSImportEqualsDeclaration has treated as a type reference,
-                    // so an identifier reference that it referenced also should be treated as a type reference.
-                    // `import TypeBinding = X.Y.Z`
-                    //                       ^ `X` should be treated as a type reference.
-                    let flags = reference.flags_mut();
-                    debug_assert_eq!(*flags, ReferenceFlags::Read);
-                    *flags = ReferenceFlags::Type;
+                    if let Some(ident) =
+                        module_reference.to_ts_type_name().get_identifier_reference()
+                    {
+                        let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
+                        // The binding of TSImportEqualsDeclaration has treated as a type reference,
+                        // so an identifier reference that it referenced also should be treated as a type reference.
+                        // `import TypeBinding = X.Y.Z`
+                        //                       ^ `X` should be treated as a type reference.
+                        let flags = reference.flags_mut();
+                        debug_assert_eq!(*flags, ReferenceFlags::Read);
+                        *flags = ReferenceFlags::Type;
+                    }
                 }
                 TSModuleReference::ExternalModuleReference(_) => {}
             }
@@ -191,6 +193,7 @@ impl<'a> TypeScriptModule<'a, '_> {
                     false,
                 )
                 .into(),
+            TSTypeName::ThisExpression(e) => ctx.ast.expression_this(e.span),
         }
     }
 }

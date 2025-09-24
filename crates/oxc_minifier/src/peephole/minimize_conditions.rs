@@ -1,66 +1,21 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType};
+use oxc_compat::ESFeature;
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    side_effects::MayHaveSideEffects,
+};
+use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
-use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
-use super::{PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 /// Minimize Conditions
 ///
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_conditions_exit_expression(
-        &self,
-        expr: &mut Expression<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
-        let mut changed = false;
-        loop {
-            let mut local_change = false;
-            if let Some(folded_expr) = match expr {
-                Expression::UnaryExpression(e) => self.try_minimize_not(e, ctx),
-                Expression::BinaryExpression(e) => {
-                    if Self::try_compress_is_loose_boolean(e, ctx) {
-                        local_change = true;
-                    }
-                    Self::try_minimize_binary(e, ctx)
-                }
-                Expression::LogicalExpression(e) => self.minimize_logical_expression(e, ctx),
-                Expression::ConditionalExpression(logical_expr) => {
-                    if self.try_fold_expr_in_boolean_context(&mut logical_expr.test, ctx) {
-                        local_change = true;
-                    }
-                    self.try_minimize_conditional(logical_expr, ctx)
-                }
-                Expression::AssignmentExpression(e) => {
-                    if self.try_compress_normal_assignment_to_combined_logical_assignment(e, ctx) {
-                        local_change = true;
-                    }
-                    if Self::try_compress_normal_assignment_to_combined_assignment(e, ctx) {
-                        local_change = true;
-                    }
-                    Self::try_compress_assignment_to_update_expression(e, ctx)
-                }
-                _ => None,
-            } {
-                *expr = folded_expr;
-                local_change = true;
-            }
-            if local_change {
-                changed = true;
-            } else {
-                break;
-            }
-        }
-        if changed {
-            state.changed = true;
-        }
-    }
-
     // The goal of this function is to "rotate" the AST if it's possible to use the
     // left-associative property of the operator to avoid unnecessary parentheses.
     //
@@ -68,7 +23,6 @@ impl<'a> PeepholeOptimizations {
     // associative. For example, the "+" operator is not associative for
     // floating-point numbers.
     pub fn join_with_left_associative_op(
-        &self,
         span: Span,
         op: LogicalOperator,
         a: Expression<'a>,
@@ -80,7 +34,7 @@ impl<'a> PeepholeOptimizations {
             if let Some(right) = sequence_expr.expressions.pop() {
                 sequence_expr
                     .expressions
-                    .push(self.join_with_left_associative_op(span, op, right, b, ctx));
+                    .push(Self::join_with_left_associative_op(span, op, right, b, ctx));
             }
             return Expression::SequenceExpression(sequence_expr);
         }
@@ -89,21 +43,21 @@ impl<'a> PeepholeOptimizations {
         // "a op (b op c)" => "(a op b) op c"
         // "a op (b op (c op d))" => "((a op b) op c) op d"
         loop {
-            if let Expression::LogicalExpression(logical_expr) = &mut b {
-                if logical_expr.operator == op {
-                    let right = logical_expr.left.take_in(ctx.ast);
-                    a = self.join_with_left_associative_op(span, op, a, right, ctx);
-                    b = logical_expr.right.take_in(ctx.ast);
-                    continue;
-                }
+            if let Expression::LogicalExpression(logical_expr) = &mut b
+                && logical_expr.operator == op
+            {
+                let right = logical_expr.left.take_in(ctx.ast);
+                a = Self::join_with_left_associative_op(span, op, a, right, ctx);
+                b = logical_expr.right.take_in(ctx.ast);
+                continue;
             }
             break;
         }
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
-        let mut logic_expr = ctx.ast.logical_expression(span, a, op, b);
-        self.minimize_logical_expression(&mut logic_expr, ctx)
-            .unwrap_or_else(|| Expression::LogicalExpression(ctx.ast.alloc(logic_expr)))
+        let mut logic_expr = ctx.ast.expression_logical(span, a, op, b);
+        Self::minimize_logical_expression(&mut logic_expr, ctx);
+        logic_expr
     }
 
     // `typeof foo === 'number'` -> `typeof foo == 'number'`
@@ -113,17 +67,15 @@ impl<'a> PeepholeOptimizations {
     //  ^^^^^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_boolean()` is `true`.
     // `x >> +y !== 0` -> `x >> +y`
     //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
-    fn try_minimize_binary(
-        e: &mut BinaryExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
+    pub fn minimize_binary(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::BinaryExpression(e) = expr else { return };
         if !e.operator.is_equality() {
-            return None;
+            return;
         }
         let left = e.left.value_type(ctx);
         let right = e.right.value_type(ctx);
         if left.is_undetermined() || right.is_undetermined() {
-            return None;
+            return;
         }
         if left == right {
             match e.operator {
@@ -136,28 +88,33 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             }
         }
-        match &mut e.right {
-            Expression::BooleanLiteral(b) if left.is_boolean() => {
-                match e.operator {
-                    BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
-                        e.operator = BinaryOperator::Equality;
-                        b.value = !b.value;
-                    }
-                    BinaryOperator::StrictEquality => {
-                        e.operator = BinaryOperator::Equality;
-                    }
-                    BinaryOperator::Equality => {}
-                    _ => return None,
-                }
-                Some(if b.value {
-                    e.left.take_in(ctx.ast)
-                } else {
-                    let argument = e.left.take_in(ctx.ast);
-                    ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
-                })
-            }
-            _ => None,
+        if !left.is_boolean() {
+            return;
         }
+        if e.right.may_have_side_effects(ctx) {
+            return;
+        }
+        let Some(mut b) = e.right.evaluate_value(ctx).and_then(ConstantValue::into_boolean) else {
+            return;
+        };
+        match e.operator {
+            BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+                e.operator = BinaryOperator::Equality;
+                b = !b;
+            }
+            BinaryOperator::StrictEquality => {
+                e.operator = BinaryOperator::Equality;
+            }
+            BinaryOperator::Equality => {}
+            _ => return,
+        }
+        *expr = if b {
+            e.left.take_in(ctx.ast)
+        } else {
+            let argument = e.left.take_in(ctx.ast);
+            ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
+        };
+        ctx.state.changed = true;
     }
 
     /// Compress `foo == true` into `foo == 1`.
@@ -167,11 +124,11 @@ impl<'a> PeepholeOptimizations {
     ///
     /// In `IsLooselyEqual`, `true` and `false` are converted to `1` and `0` first.
     /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islooselyequal>
-    fn try_compress_is_loose_boolean(e: &mut BinaryExpression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    pub fn minimize_loose_boolean(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::BinaryExpression(e) = e else { return };
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
-            return false;
+            return;
         }
-
         if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
             e.left = ctx.ast.expression_numeric_literal(
                 e.left.span(),
@@ -179,7 +136,8 @@ impl<'a> PeepholeOptimizations {
                 None,
                 NumberBase::Decimal,
             );
-            return true;
+            ctx.state.changed = true;
+            return;
         }
         if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
             e.right = ctx.ast.expression_numeric_literal(
@@ -188,9 +146,8 @@ impl<'a> PeepholeOptimizations {
                 None,
                 NumberBase::Decimal,
             );
-            return true;
+            ctx.state.changed = true;
         }
-        false
     }
 
     /// Returns the identifier or the assignment target's identifier of the given expression.
@@ -200,10 +157,10 @@ impl<'a> PeepholeOptimizations {
         match expr {
             Expression::Identifier(id) => Some(id),
             Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign {
-                    if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left {
-                        return Some(id);
-                    }
+                if assign_expr.operator == AssignmentOperator::Assign
+                    && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
+                {
+                    return Some(id);
                 }
                 None
             }
@@ -214,19 +171,17 @@ impl<'a> PeepholeOptimizations {
     /// Compress `a = a || b` to `a ||= b`
     ///
     /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
-    fn try_compress_normal_assignment_to_combined_logical_assignment(
-        &self,
+    pub fn minimize_normal_assignment_to_combined_logical_assignment(
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
-        if self.target < ESTarget::ES2020 {
-            return false;
-        }
-        if !matches!(expr.operator, AssignmentOperator::Assign) {
-            return false;
+    ) {
+        if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
+            || !matches!(expr.operator, AssignmentOperator::Assign)
+        {
+            return;
         }
 
-        let Expression::LogicalExpression(logical_expr) = &mut expr.right else { return false };
+        let Expression::LogicalExpression(logical_expr) = &mut expr.right else { return };
         // NOTE: if the right hand side is an anonymous function, applying this compression will
         // set the `name` property of that function.
         // Since codes relying on the fact that function's name is undefined should be rare,
@@ -237,75 +192,77 @@ impl<'a> PeepholeOptimizations {
             Expression::Identifier(read_id_ref),
         ) = (&expr.left, &logical_expr.left)
         else {
-            return false;
+            return;
         };
         // It should also early return when the reference might refer to a reference value created by a with statement
         // when the minifier supports with statements
         if write_id_ref.name != read_id_ref.name || ctx.is_global_reference(write_id_ref) {
-            return false;
+            return;
         }
+
+        let reference = ctx.scoping_mut().get_reference_mut(write_id_ref.reference_id());
+        reference.flags_mut().insert(ReferenceFlags::Read);
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
         expr.right = logical_expr.right.take_in(ctx.ast);
-        true
+        ctx.state.changed = true;
     }
 
     /// Compress `a = a + b` to `a += b`
-    fn try_compress_normal_assignment_to_combined_assignment(
+    pub fn minimize_normal_assignment_to_combined_assignment(
         expr: &mut AssignmentExpression<'a>,
         ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
+    ) {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
-            return false;
+            return;
         }
-
-        let Expression::BinaryExpression(binary_expr) = &mut expr.right else { return false };
-        let Some(new_op) = binary_expr.operator.to_assignment_operator() else { return false };
-
+        let Expression::BinaryExpression(binary_expr) = &mut expr.right else { return };
+        let Some(new_op) = binary_expr.operator.to_assignment_operator() else { return };
         if !Self::has_no_side_effect_for_evaluation_same_target(&expr.left, &binary_expr.left, ctx)
         {
-            return false;
+            return;
         }
+
+        Self::mark_assignment_target_as_read(&expr.left, ctx);
 
         expr.operator = new_op;
         expr.right = binary_expr.right.take_in(ctx.ast);
-        true
+        ctx.state.changed = true;
     }
 
     /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
     #[expect(clippy::float_cmp)]
-    fn try_compress_assignment_to_update_expression(
-        expr: &mut AssignmentExpression<'a>,
+    pub fn minimize_assignment_to_update_expression(
+        expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if !matches!(expr.operator, AssignmentOperator::Subtraction) {
-            return None;
+    ) {
+        let Expression::AssignmentExpression(e) = expr else { return };
+        if !matches!(e.operator, AssignmentOperator::Subtraction) {
+            return;
         }
-        let Expression::NumericLiteral(num) = &expr.right else {
-            return None;
-        };
-        let target = expr.left.as_simple_assignment_target_mut()?;
-        let operator = if num.value == 1.0 {
-            UpdateOperator::Decrement
-        } else if num.value == -1.0 {
-            UpdateOperator::Increment
+        let operator = if let Expression::NumericLiteral(num) = &e.right {
+            if num.value == 1.0 {
+                UpdateOperator::Decrement
+            } else if num.value == -1.0 {
+                UpdateOperator::Increment
+            } else {
+                return;
+            }
         } else {
-            return None;
+            return;
         };
+        let Some(target) = e.left.as_simple_assignment_target_mut() else { return };
         let target = target.take_in(ctx.ast);
-        Some(ctx.ast.expression_update(expr.span, operator, true, target))
+        *expr = ctx.ast.expression_update(e.span, operator, true, target);
+        ctx.state.changed = true;
     }
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeMinimizeConditionsTest.java>
 #[cfg(test)]
 mod test {
-    use crate::{
-        CompressOptions,
-        tester::{run, test, test_same},
-    };
-    use oxc_syntax::es_target::ESTarget;
+    use crate::tester::{test, test_same, test_target, test_target_same};
 
     /** Check that removing blocks with 1 child works */
     #[test]
@@ -452,7 +409,7 @@ mod test {
 
     /** Try to minimize assignments */
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Assignment folding optimization not yet implemented"]
     fn test_fold_assignments() {
         test("function f(){if(x)y=3;else y=4;}", "function f(){y=x?3:4}");
         test("function f(){if(x)y=1+a;else y=2+a;}", "function f(){y=x?1+a:2+a}");
@@ -474,7 +431,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Duplicate statement removal not yet implemented"]
     fn test_remove_duplicate_statements() {
         test("if (a) { x = 1; x++ } else { x = 2; x++ }", "x=(a) ? 1 : 2; x++");
         test(
@@ -527,8 +484,9 @@ mod test {
         // In the following test case, we can't remove the duplicate "alert(x);" lines since each "x"
         // refers to a different variable.
         // We only try removing duplicate statements if the AST is normalized and names are unique.
-        test_same(
+        test(
             "if (Math.random() < 0.5) { let x = 3; alert(x); } else { let x = 5; alert(x); }",
+            "if (Math.random() < 0.5) { let x = 3; alert(3); } else { let x = 5; alert(5); }",
         );
     }
 
@@ -542,7 +500,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Parentheses counting optimization not yet implemented"]
     fn test_and_parentheses_count() {
         test("function f(){if(x||y)a.foo()}", "function f(){(x||y)&&a.foo()}");
         test("function f(){if(x.a)x.a=0}", "function f(){x.a&&(x.a=0)}");
@@ -604,7 +562,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan_remove_leading_not() {
         test("if(!(!a||!b)&&c) foo()", "((a&&b)&&c)&&foo()");
         test("if(!(x&&y)) foo()", "x&&y||foo()");
@@ -612,39 +570,39 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan1() {
         test("if(!a&&!b)foo()", "(a||b)||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan2() {
         // Make sure trees with cloned functions are marked as changed
         test("(!(a&&!((function(){})())))||foo()", "!a||(function(){})()||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan2b() {
         // Make sure unchanged trees with functions are not marked as changed
         test_same("!a||(function(){})()||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan3() {
         test("if((!a||!b)&&(c||d)) foo()", "(a&&b||!c&&!d)||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan5() {
         test("if((!a||!b)&&c) foo()", "(a&&b||!c)||foo()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan11() {
         test(
             "if (x && (y===2 || !f()) && (y===3 || !h())) foo()",
@@ -653,7 +611,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan20a() {
         test(
             "if (0===c && (2===a || 1===a)) f(); else g()",
@@ -662,7 +620,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan20b() {
         test("if (0!==c || 2!==a && 1!==a) g(); else f()", "(0!==c || 2!==a && 1!==a) ? g() : f()");
     }
@@ -713,7 +671,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Expression result minimization not yet implemented"]
     fn test_minimize_expr_result() {
         test("!x||!y", "x&&y");
         test("if(!(x&&!y)) foo()", "(!x||y)&&foo()");
@@ -722,13 +680,13 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: De Morgan's law optimization not yet implemented"]
     fn test_minimize_demorgan21() {
         test("if (0===c && (2===a || 1===a)) f()", "(0!==c || 2!==a && 1!==a) || f()");
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: AND/OR minimization not yet implemented"]
     fn test_minimize_and_or1() {
         test("if ((!a || !b) && (d || e)) f()", "(a&&b || !d&&!e) || f()");
     }
@@ -778,7 +736,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Conditional variable declaration folding not yet implemented"]
     fn test_fold_conditional_var_declaration() {
         test("if(x) var y=1;else y=2", "var y=x?1:2");
         test("if(x) y=1;else var y=2", "var y=x?1:2");
@@ -801,7 +759,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Return statement substitution not yet implemented"]
     fn test_substitute_return() {
         test("function f() { while(x) { return }}", "function f() { while(x) { break }}");
 
@@ -898,7 +856,7 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    #[ignore = "TODO: Break/throw substitution not yet implemented"]
     fn test_substitute_break_for_throw() {
         test_same("function f() { while(x) { throw Error }}");
 
@@ -1156,64 +1114,64 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_disabled() {
-        test_same("var x = {}; if (x != null) throw 'a';");
-        test("var x = {}; var y = x != null;", "var x = {}, y = x != null;");
+        test("var x = {}; if (x != null) throw 'a';", "throw 'a';");
+        test("var x = {}; var y = x != null;", "var y = !0;");
 
-        test_same("var x = 1; if (x != 0) throw 'a';");
-        test("var x = 1; var y = x != 0;", "var x = 1, y = x != 0;");
+        test("var x = 1; if (x != 0) throw 'a';", "throw 'a';");
+        test("var x = 1; var y = x != 0;", "var y = !0;");
     }
 
     #[test]
     fn test_coercion_substitution_boolean_result0() {
-        test("var x = {}; var y = x != null;", "var x = {}, y = x != null");
+        test_same("var x = {}, y = x != null;");
     }
 
     #[test]
     fn test_coercion_substitution_boolean_result1() {
-        test("var x = {}; var y = x == null;", "var x = {}, y = x == null;");
-        test("var x = {}; var y = x !== null;", "var x = {}, y = x !== null;");
-        test("var x = undefined; var y = x !== null;", "var x = void 0, y = x !== null;");
-        test("var x = {}; var y = x === null;", "var x = {}, y = x === null;");
-        test("var x = undefined; var y = x === null;", "var x = void 0, y = x === null;");
+        test_same("export var x = {}, y = x == null;");
+        test_same("export var x = {}, y = x !== null;");
+        test("export var x = undefined, y = x !== null;", "export var x = void 0, y = x !== null;");
+        test_same("export var x = {}, y = x === null;");
+        test("export var x = undefined, y = x === null;", "export var x = void 0, y = x === null;");
 
-        test("var x = 1; var y = x != 0;", "var x = 1, y = x != 0;");
-        test("var x = 1; var y = x == 0;", "var x = 1, y = x == 0;");
-        test("var x = 1; var y = x !== 0;", "var x = 1, y = x !== 0;");
-        test("var x = 1; var y = x === 0;", "var x = 1, y = x === 0;");
+        test_same("export var x = 1, y = x != 0;");
+        test_same("export var x = 1, y = x == 0;");
+        test_same("export var x = 1, y = x !== 0;");
+        test_same("export var x = 1, y = x === 0;");
     }
 
     #[test]
     fn test_coercion_substitution_if() {
-        test("var x = {};\nif (x != null) throw 'a';\n", "var x={}; if (x!=null) throw 'a'");
-        test_same("var x = {};\nif (x == null) throw 'a';\n");
-        test_same("var x = {};\nif (x != null) throw 'a';\n");
-        test_same("var x = {};\nif (x !== null) throw 'a';\n");
-        test_same("var x = {};\nif (x === null) throw 'a';\n");
+        test("var x = {};\nif (x != null) throw 'a';\n", "throw 'a'");
+        test("var x = {};\nif (x == null) throw 'a';\n", "");
+        test("var x = {};\nif (x != null) throw 'a';\n", "throw 'a'");
+        test("var x = {};\nif (x !== null) throw 'a';\n", "throw 'a'");
+        test("var x = {};\nif (x === null) throw 'a';\n", "");
 
-        test_same("var x = 1;\nif (x != 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x != 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x == 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x !== 0) throw 'a';\n");
-        test_same("var x = 1;\nif (x === 0) throw 'a';\n");
-        test_same("var x = NaN;\nif (x === 0) throw 'a';\n");
+        test("var x = 1;\nif (x != 0) throw 'a';\n", "throw 'a'");
+        test("var x = 1;\nif (x != 0) throw 'a';\n", "throw 'a'");
+        test("var x = 1;\nif (x == 0) throw 'a';\n", "");
+        test("var x = 1;\nif (x !== 0) throw 'a';\n", "throw 'a'");
+        test("var x = 1;\nif (x === 0) throw 'a';\n", "");
+        test("var x = NaN;\nif (x === 0) throw 'a';\n", "");
     }
 
     #[test]
     fn test_coercion_substitution_expression() {
-        test_same("var x = {}; x != null && alert('b');");
-        test_same("var x = 1; x != 0 && alert('b');");
+        test("var x = {}; x != null && alert('b');", "alert('b');");
+        test("var x = 1; x != 0 && alert('b');", "alert('b');");
     }
 
     #[test]
     fn test_coercion_substitution_hook() {
-        test("var x = {}; var y = x != null ? 1 : 2;", "var x = {}, y = x == null ? 2 : 1;");
-        test("var x = 1; var y = x != 0 ? 1 : 2;", "var x = 1, y = x == 0 ? 2 : 1;");
+        test("var x = {}; var y = x != null ? 1 : 2;", "var y = 1;");
+        test("var x = 1; var y = x != 0 ? 1 : 2;", "var y = 1;");
     }
 
     #[test]
     fn test_coercion_substitution_not() {
-        test("var x = {}; var y = !(x != null) ? 1 : 2;", "var x = {}, y = x == null ? 1 : 2;");
-        test("var x = 1; var y = !(x != 0) ? 1 : 2; ", "var x = 1, y = x == 0 ? 1 : 2; ");
+        test("var x = {}; var y = !(x != null) ? 1 : 2;", "var y = 2;");
+        test("var x = 1; var y = !(x != 0) ? 1 : 2; ", "var y = 2; ");
     }
 
     #[test]
@@ -1224,40 +1182,52 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_unknown_type() {
-        test_same("var x = /** @type {?} */ ({});\nif (x != null) throw 'a';\n");
-        test_same("var x = /** @type {?} */ (1);\nif (x != 0) throw 'a';\n");
+        test("var x = /** @type {?} */ ({});\nif (x != null) throw 'a';\n", "throw 'a';\n");
+        test("var x = /** @type {?} */ (1);\nif (x != 0) throw 'a';\n", "throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_all_type() {
-        test_same("var x = /** @type {*} */ ({});\nif (x != null) throw 'a';\n");
-        test_same("var x = /** @type {*} */ (1);\nif (x != 0) throw 'a';\n");
+        test_same("export var x = /** @type {*} */ ({});\nif (x != null) throw 'a';\n");
+        test_same("export var x = /** @type {*} */ (1);\nif (x != 0) throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_primitives_vs_null() {
-        test_same("var x = 0;\nif (x != null) throw 'a';\n");
-        test_same("var x = '';\nif (x != null) throw 'a';\n");
-        test_same("var x = !1;\nif (x != null) throw 'a';\n");
+        test("var x = 0;\nif (x != null) throw 'a';\n", "throw 'a';\n");
+        test("var x = '';\nif (x != null) throw 'a';\n", "throw 'a';\n");
+        test("var x = !1;\nif (x != null) throw 'a';\n", "throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_non_number_vs_zero() {
-        test_same("var x = {};\nif (x != 0) throw 'a';\n");
-        test_same("var x = '';\nif (x != 0) throw 'a';\n");
-        test_same("var x = !1;\nif (x != 0) throw 'a';\n");
+        test("var x = {};\nif (x != 0) throw 'a';\n", "if ({} != 0) throw 'a';");
+        test("var x = '';\nif (x != 0) throw 'a';\n", "");
+        test("var x = !1;\nif (x != 0) throw 'a';\n", "");
     }
 
     #[test]
     fn test_coercion_substitution_boxed_number_vs_zero() {
-        test_same("var x = /* @__PURE__ */ new Number(0);\nif (x != 0) throw 'a';\n");
+        test(
+            "var x = /* @__PURE__ */ new Number(0);\nif (x != 0) throw 'a';\n",
+            "if (/* @__PURE__ */ new Number(0) != 0) throw 'a';\n",
+        );
     }
 
     #[test]
     fn test_coercion_substitution_boxed_primitives() {
-        test_same("var x = /* @__PURE__ */ new Number(); if (x != null) throw 'a';");
-        test_same("var x = /* @__PURE__ */ new String(); if (x != null) throw 'a';");
-        test_same("var x = /* @__PURE__ */ new Boolean();\nif (x != null) throw 'a';");
+        test(
+            "var x = /* @__PURE__ */ new Number(); if (x != null) throw 'a';",
+            "if (/* @__PURE__ */ new Number() != null) throw 'a';",
+        );
+        test(
+            "var x = /* @__PURE__ */ new String(); if (x != null) throw 'a';",
+            "if (/* @__PURE__ */ new String() != null) throw 'a';",
+        );
+        test(
+            "var x = /* @__PURE__ */ new Boolean(); if (x != null) throw 'a';",
+            "if (/* @__PURE__ */ new Boolean() != null) throw 'a';",
+        );
     }
 
     #[test]
@@ -1364,7 +1334,10 @@ mod test {
         test("v = foo === null || foo === void 0 || foo === 1", "v = foo == null || foo === 1");
         test("v = foo === 1 || foo === null || foo === void 0", "v = foo === 1 || foo == null");
         test_same("v = foo === void 0 || bar === null");
-        test_same("var undefined = 1; v = foo === null || foo === undefined");
+        test(
+            "var undefined = 1; v = foo === null || foo === undefined",
+            "v = foo === null || foo === 1",
+        );
         test_same("v = foo !== 1 && foo === void 0 || foo === null");
         test_same("v = foo.a === void 0 || foo.a === null"); // cannot be folded because accessing foo.a might have a side effect
 
@@ -1428,12 +1401,22 @@ mod test {
         // foo() might have a side effect
         test_same("foo().a || (foo().a = 3)");
 
-        let target = ESTarget::ES2019;
-        let code = "x || (x = 3)";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
+        test_target_same("x || (x = 3)", "chrome84");
+
+        test("x || (a, x = 3)", "x ||= (a, 3)");
+        test("x && (a, x = 3)", "x &&= (a, 3)");
+        test("x ?? (a, x = 3)", "x ??= (a, 3)");
+        test("x || (a, x = g())", "x ||= (a, g())");
+        test("x && (a, x = g())", "x &&= (a, g())");
+        test("x ?? (a, x = g())", "x ??= (a, g())");
+        test("var x; x.y || (a, x.y = 3)", "var x; x.y ||= (a, 3)");
+        test("var x; x.y && (a, x.y = 3)", "var x; x.y &&= (a, 3)");
+        test("var x; x.y ?? (a, x.y = 3)", "var x; x.y ??= (a, 3)");
+        // x may have a sideeffect
+        // Example case: `var a; Object.defineProperty(globalThis, 'x', { get() { console.log('x'); return {} } }); x.y || (a, x.y = 3);`
+        test_same("x.y || (a, x.y = 3)");
+        test_same("x.y && (a, x.y = 3)");
+        test_same("x.y ?? (a, x.y = 3)");
     }
 
     #[test]
@@ -1455,12 +1438,7 @@ mod test {
         // Example case: `let f = false; f = f || (() => {}); console.log(f.name)`
         test("var x; x = x || (() => 'a')", "var x; x ||= (() => 'a')");
 
-        let target = ESTarget::ES2019;
-        let code = "var x; x = x || 1";
-        assert_eq!(
-            run(code, Some(CompressOptions { target, ..CompressOptions::default() })),
-            run(code, None)
-        );
+        test_target("var x; x = x || 1", "var x = x || 1", "chrome84");
     }
 
     #[test]
@@ -1473,5 +1451,13 @@ mod test {
         test("v = x != !0", "v = x != 1");
         test("v = x == !1", "v = x == 0");
         test("v = x != !1", "v = x != 0");
+    }
+
+    #[test]
+    fn try_minimize_binary() {
+        test("f(!a === !0)", "f(!a)");
+        test("f(!a === !1)", "f(!!a)");
+        test("f(!a === true)", "f(!a)");
+        test("f(!a === false)", "f(!!a)");
     }
 }

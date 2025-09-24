@@ -46,6 +46,14 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub disable_nested_config: bool,
 
+    /// Enables rules that require type information.
+    #[bpaf(switch, hide_usage)]
+    pub type_aware: bool,
+
+    /// Enables JS plugins (experimental).
+    #[bpaf(switch, hide)]
+    pub js_plugins: bool,
+
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
@@ -56,24 +64,58 @@ pub struct LintCommand {
 
 impl LintCommand {
     pub fn handle_threads(&self) {
-        Self::set_rayon_threads(self.misc_options.threads);
+        Self::init_rayon_thread_pool(self.misc_options.threads);
     }
 
-    fn set_rayon_threads(threads: Option<usize>) {
-        if let Some(threads) = threads {
-            rayon::ThreadPoolBuilder::new().num_threads(threads).build_global().unwrap();
-        }
+    /// Initialize Rayon global thread pool with specified number of threads.
+    ///
+    /// If `--threads` option is not used, or `--threads 0` is given,
+    /// default to the number of available CPU cores.
+    #[expect(clippy::print_stderr)]
+    fn init_rayon_thread_pool(threads: Option<usize>) {
+        // Always initialize thread pool, even if using default thread count,
+        // to ensure thread pool's thread count is locked after this point.
+        // `rayon::current_num_threads()` will always return the same number after this point.
+        //
+        // If you don't initialize the global thread pool explicitly, or don't specify `num_threads`,
+        // Rayon will initialize the thread pool when it's first used, with a thread count of
+        // `std::thread::available_parallelism()`, and that thread count won't change thereafter.
+        // So we don't *need* to initialize the thread pool here if we just want the default thread count.
+        //
+        // However, Rayon's docs state that:
+        // > In the future, the default behavior may change to dynamically add or remove threads as needed.
+        // https://docs.rs/rayon/1.11.0/rayon/struct.ThreadPoolBuilder.html#method.num_threads
+        //
+        // To ensure we continue to have a "locked" thread count, even after future Rayon upgrades,
+        // we always initialize the thread pool and explicitly specify thread count here.
+
+        let thread_count = if let Some(thread_count) = threads
+            && thread_count > 0
+        {
+            thread_count
+        } else if let Ok(thread_count) = std::thread::available_parallelism() {
+            thread_count.get()
+        } else {
+            eprintln!(
+                "Unable to determine available thread count. Defaulting to 1.\nConsider specifying the number of threads explicitly with `--threads` option."
+            );
+            1
+        };
+
+        rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
     }
 }
+
 /// Basic Configuration
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
     /// Oxlint configuration file (experimental)
     ///  * only `.json` extension is supported
+    ///  * you can use comments in configuration files.
     ///  * tries to be compatible with the ESLint v8's format
     ///
     /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
-    #[bpaf(long, short, argument("./oxlintrc.json"))]
+    #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
@@ -267,6 +309,14 @@ pub struct EnablePlugins {
     /// Enable the node plugin and detect node usage problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub node_plugin: OverrideToggle,
+
+    /// Enable the regex plugin and detect regex usage problems
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub regex_plugin: OverrideToggle,
+
+    /// Enable the vue plugin and detect vue usage problems
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub vue_plugin: OverrideToggle,
 }
 
 /// Enables or disables a boolean option, or leaves it unset.
@@ -343,6 +393,8 @@ impl EnablePlugins {
             .inspect(|yes| plugins.builtin.set(BuiltinLintPlugins::REACT_PERF, yes));
         self.promise_plugin.inspect(|yes| plugins.builtin.set(BuiltinLintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.builtin.set(BuiltinLintPlugins::NODE, yes));
+        self.regex_plugin.inspect(|yes| plugins.builtin.set(BuiltinLintPlugins::REGEX, yes));
+        self.vue_plugin.inspect(|yes| plugins.builtin.set(BuiltinLintPlugins::VUE, yes));
 
         // Without this, jest plugins adapted to vitest will not be enabled.
         if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {
@@ -363,7 +415,7 @@ pub enum ReportUnusedDirectives {
         /// Same as `--report-unused-disable-directives`, but allows you to specify the severity level of the reported errors.
         /// Only one of these two options can be used at a time.
         #[bpaf(
-            long("report-unused-disable-directives-severity"), 
+            long("report-unused-disable-directives-severity"),
             argument::<String>("SEVERITY"),
             guard(|s| AllowWarnDeny::try_from(s.as_str()).is_ok(), "Invalid severity value"),
             map(|s| AllowWarnDeny::try_from(s.as_str()).unwrap()), // guard ensures try_from will be Ok
@@ -562,6 +614,14 @@ mod lint_options {
         assert!(options.disable_nested_config);
         let options = get_lint_options(".");
         assert!(!options.disable_nested_config);
+    }
+
+    #[test]
+    fn type_aware() {
+        let options = get_lint_options("--type-aware");
+        assert!(options.type_aware);
+        let options = get_lint_options(".");
+        assert!(!options.type_aware);
     }
 }
 

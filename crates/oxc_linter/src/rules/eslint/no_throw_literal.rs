@@ -133,6 +133,7 @@ fn test() {
         "function main(x) { throw x; }", // cannot determine type of x
         "function main(x: any) { throw x; }",
         "function main(x: TypeError) { throw x; }",
+        "async function json(stream) { try { } catch (_err) { const err = err; throw err; } }",
     ];
 
     let fail = vec![

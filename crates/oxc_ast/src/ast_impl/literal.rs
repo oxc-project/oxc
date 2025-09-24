@@ -58,7 +58,7 @@ impl NumericLiteral<'_> {
 
     /// Return raw source code for `NumericLiteral`.
     /// If `raw` is `None` (node is generated, not parsed from source), fallback to formatting `value`.
-    pub fn raw_str(&self) -> Cow<str> {
+    pub fn raw_str(&self) -> Cow<'_, str> {
         match self.raw.as_ref() {
             Some(raw) => Cow::Borrowed(raw),
             None => Cow::Owned(format!("{}", self.value)),
@@ -87,10 +87,10 @@ impl StringLiteral<'_> {
         while let Some(c) = chars.next() {
             if c == '\\' && chars.next() == Some('u') {
                 let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16) {
-                    if (0xd800..=0xdfff).contains(&hex) {
-                        return false;
-                    }
+                if let Ok(hex) = u32::from_str_radix(hex, 16)
+                    && (0xd800..=0xdfff).contains(&hex)
+                {
+                    return false;
                 }
             }
         }
@@ -127,6 +127,33 @@ impl BigIntLiteral<'_> {
 impl Display for BigIntLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}n", self.value)
+    }
+}
+
+impl<'a> RegExpLiteral<'a> {
+    /// Parse the pattern string.
+    ///
+    /// # Errors
+    /// Returns an error if the pattern is invalid.
+    pub fn parse_pattern(
+        &self,
+        allocator: &'a Allocator,
+    ) -> oxc_diagnostics::Result<oxc_regular_expression::ast::Pattern<'a>> {
+        let pattern_text = self.regex.pattern.text.as_str();
+        #[expect(clippy::cast_possible_truncation)]
+        let pattern_len = pattern_text.len() as u32;
+        let literal_span = self.span;
+        let pattern_span_offset = literal_span.start + 1; // +1 to skip the opening `/`
+        let flags_span_offset = pattern_span_offset + pattern_len + 1; // +1 to skip the closing `/`
+        let flags_text = &self.regex.flags.to_inline_string();
+
+        oxc_regular_expression::LiteralParser::new(
+            allocator,
+            pattern_text,
+            Some(flags_text),
+            oxc_regular_expression::Options { pattern_span_offset, flags_span_offset },
+        )
+        .parse()
     }
 }
 

@@ -109,10 +109,10 @@ impl Rule for ButtonHasType {
                             .properties
                             .iter()
                             .find_map(|prop| {
-                                if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                                    if prop.key.is_specific_static_name("type") {
-                                        return Some(prop);
-                                    }
+                                if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                                    && prop.key.is_specific_static_name("type")
+                                {
+                                    return Some(prop);
                                 }
 
                                 None
@@ -180,15 +180,9 @@ impl ButtonHasType {
             Expression::StringLiteral(str) => {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }
-            Expression::TemplateLiteral(template_literal) => {
-                if !template_literal.is_no_substitution_template() {
-                    return false;
-                }
-                if let Some(quasi) = template_literal.quasi() {
-                    return self.is_valid_button_type_prop_string_literal(quasi.as_str());
-                }
-                false
-            }
+            Expression::TemplateLiteral(template_literal) => template_literal
+                .single_quasi()
+                .is_some_and(|quasi| self.is_valid_button_type_prop_string_literal(quasi.as_str())),
             Expression::ConditionalExpression(conditional_expr) => {
                 self.is_valid_button_type_prop_expression(&conditional_expr.consequent)
                     && self.is_valid_button_type_prop_expression(&conditional_expr.alternate)

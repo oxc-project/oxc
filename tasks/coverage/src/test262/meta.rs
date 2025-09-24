@@ -118,7 +118,7 @@ impl MetaData {
                 .unwrap_or_default(),
             negative: yaml
                 .as_mapping_get("negative")
-                .filter(|yaml| (!yaml.is_null() && !yaml.is_badvalue()))
+                .filter(|yaml| !yaml.is_null() && !yaml.is_badvalue())
                 .map(|yaml| Negative::from_yaml(yaml)),
             // locale: Self::get_vec_of_string(&yaml["locale"]),
         }

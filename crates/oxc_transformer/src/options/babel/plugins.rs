@@ -3,6 +3,7 @@ use serde::Deserialize;
 use crate::{
     DecoratorOptions, TypeScriptOptions, es2015::ArrowFunctionsOptions,
     es2018::ObjectRestSpreadOptions, es2022::ClassPropertiesOptions, jsx::JsxOptions,
+    plugins::StyledComponentsOptions,
 };
 
 use super::PluginPresetEntries;
@@ -73,6 +74,8 @@ pub struct BabelPlugins {
     pub legacy_decorator: Option<DecoratorOptions>,
     // Proposals
     pub explicit_resource_management: bool,
+    // Built-in plugins
+    pub styled_components: Option<StyledComponentsOptions>,
 }
 
 impl TryFrom<PluginPresetEntries> for BabelPlugins {
@@ -160,7 +163,13 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                     p.legacy_decorator =
                         entry.value::<DecoratorOptions>().map_err(|err| p.errors.push(err)).ok();
                 }
-                "proposal-explicit-resource-management" => p.explicit_resource_management = true,
+                "transform-explicit-resource-management" => p.explicit_resource_management = true,
+                "styled-components" => {
+                    p.styled_components = entry
+                        .value::<StyledComponentsOptions>()
+                        .map_err(|err| p.errors.push(err))
+                        .ok();
+                }
                 s => p.unsupported.push(s.to_string()),
             }
         }

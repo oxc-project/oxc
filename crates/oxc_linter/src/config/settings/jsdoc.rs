@@ -100,7 +100,7 @@ impl Default for JSDocPluginSettings {
 impl JSDocPluginSettings {
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if blocked
-    pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<Cow<str>> {
+    pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<Cow<'_, str>> {
         match self.tag_name_preference.get(tag_name) {
             Some(TagNamePreference::FalseOnly(_)) => {
                 Some(Cow::Owned(format!("Unexpected tag `@{tag_name}`.")))
@@ -112,7 +112,7 @@ impl JSDocPluginSettings {
 
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if replacement found or default aliased
-    pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<Cow<str>> {
+    pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<Cow<'_, str>> {
         let reason = |preferred_name: &str| -> Cow<str> {
             Cow::Owned(format!("Replace tag `@{original_name}` with `@{preferred_name}`."))
         };

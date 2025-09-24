@@ -6,6 +6,7 @@ mod suite;
 // Suites
 mod babel;
 mod misc;
+mod node_compat_table;
 mod test262;
 mod typescript;
 
@@ -22,6 +23,7 @@ use crate::{
     babel::{BabelCase, BabelSuite},
     driver::Driver,
     misc::{MiscCase, MiscSuite},
+    node_compat_table::NodeCompatSuite,
     suite::Suite,
     test262::{Test262Case, Test262Suite},
     tools::{
@@ -30,7 +32,7 @@ use crate::{
         formatter::{
             FormatterBabelCase, FormatterMiscCase, FormatterTest262Case, FormatterTypeScriptCase,
         },
-        minifier::{MinifierBabelCase, MinifierTest262Case},
+        minifier::{MinifierBabelCase, MinifierNodeCompatCase, MinifierTest262Case},
         semantic::{
             SemanticBabelCase, SemanticMiscCase, SemanticTest262Case, SemanticTypeScriptCase,
         },
@@ -68,7 +70,7 @@ impl AppArgs {
         self.run_parser();
         self.run_semantic();
         self.run_codegen();
-        // self.run_formatter();
+        self.run_formatter();
         self.run_transformer();
         self.run_transpiler();
         self.run_minifier();
@@ -135,6 +137,7 @@ impl AppArgs {
     pub fn run_minifier(&self) {
         Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self);
         BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self);
+        NodeCompatSuite::<MinifierNodeCompatCase>::new().run("minifier_node_compat", self);
     }
 }
 

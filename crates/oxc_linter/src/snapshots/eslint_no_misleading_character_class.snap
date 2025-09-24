@@ -1,0 +1,776 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC4D]/
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC4D-\uffff]/
+   ·          ─────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /before[\uD83D\uDC4D]after/
+   ·          ─────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[before\uD83D\uDC4Dafter]/
+   ·          ─────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /\uDC4D[\uD83D\uDC4D]/
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👍]\a/
+   ·          ──────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /\a[👍]\a/
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /(?<=[👍])/
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /(?<=[👍])/
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[Á]/
+   ·          ───
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[Á]/u
+   ·          ───
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u0041\u0301]/
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u0041\u0301]/u
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{41}\u{301}]/u
+   ·          ───────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[❇️]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[❇️]/u
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u2747\uFE0F]/
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u2747\uFE0F]/u
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{2747}\u{FE0F}]/u
+   ·          ──────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👶🏻]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👶🏻]/u
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[a\uD83C\uDFFB]/u
+   ·          ───────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC76\uD83C\uDFFB]/u
+   ·          ──────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F476}\u{1F3FB}]/u
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[🇯🇵]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[🇯🇵]/i
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[🇯🇵]/u
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83C\uDDEF\uD83C\uDDF5]/u
+   ·          ──────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F1EF}\u{1F1F5}]/u
+   ·          ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]/u
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👩‍👦]/u
+   ·          ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👩‍👦][👩‍👦]/u
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·          ───────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦👩‍👦]/u
+   ·          ──────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66]/u
+   ·          ──────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·          ─────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69]/u
+   ·          ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}]/u
+   ·          ────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·          ─────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("[👍]", "")
+   ·                 ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp('[👍]', ``)
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ ╭─▶ var r = new RegExp(`
+ 2 │ ╰─▶                             [👍]`)
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ ╭─▶ var r = new RegExp(`
+ 2 │ ╰─▶                             [❇️]`)
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ ╭─▶ var r = new RegExp(`
+ 2 │ ╰─▶             [❇️]`)
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:39]
+ 1 │ const flags = ""; var r = new RegExp("[👍]", flags)
+   ·                                       ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("[\\uD83D\\uDC4D]", "")
+   ·                 ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("before[\\uD83D\\uDC4D]after", "")
+   ·                 ───────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("[before\\uD83D\\uDC4Dafter]", "")
+   ·                 ───────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp("\t\t\t👍[👍]")
+   ·                 ────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("\u1234[\\uD83D\\uDC4D]")
+   ·                     ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("\\u1234\\u5678👎[👍]")
+   ·                     ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("\\u1234\\u5678👍[👍]")
+   ·                     ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👍]\\a", "")
+   ·                     ───────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("/(?<=[👍])", "")
+   ·                     ──────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("/(?<=[👍])", "")
+   ·                     ──────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[Á]", "")
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[Á]", "u")
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u0041\\u0301]", "")
+   ·                     ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u0041\\u0301]", "u")
+   ·                     ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{41}\\u{301}]", "u")
+   ·                     ─────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[❇️]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[❇️]", "u")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe0f]", "")
+   ·             ──────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe0f]", "u")
+   ·             ──────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
+   ·             ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "")
+   ·                     ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u2747\\uFE0F]", "u")
+   ·                     ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{2747}\\u{FE0F}]", "u")
+   ·                     ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👶🏻]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👶🏻]", "u")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\uD83D\\uDC76\\uD83C\\uDFFB]", "u")
+   ·                     ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{1F476}\\u{1F3FB}]", "u")
+   ·                     ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp(`            👍[👍]`)
+   ·                 ────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:17]
+ 1 │ var r = RegExp(`\t\t\t👍[👍]`)
+   ·                 ────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]", "i")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp('[🇯🇵]', `i`)
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]",)
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp(("[🇯🇵]"))
+   ·                      ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:23]
+ 1 │ var r = new RegExp((("[🇯🇵]")))
+   ·                       ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = new RegExp(("[🇯🇵]"),)
+   ·                      ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[🇯🇵]", "u")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\uD83C\\uDDEF\\uD83C\\uDDF5]", "u")
+   ·                     ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{1F1EF}\\u{1F1F5}]", "u")
+   ·                     ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "u")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👩‍👦]", "u")
+   ·                     ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👩‍👦][👩‍👦]", "u")
+   ·                     ────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                     ───────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦👩‍👦]", "u")
+   ·                     ──────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\uD83D\\uDC68\\u200D\\uD83D\\uDC69\\u200D\\uD83D\\uDC66]", "u")
+   ·                     ──────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                     ──────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[❇️]", "")
+   ·                                ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[👶🏻]", "u")
+   ·                                ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[🇯🇵]", "")
+   ·                                ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:32]
+ 1 │ var r = new globalThis.RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                                ──────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\ud83d\u{dc4d}]/u
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\u{d83d}\udc4d]/u
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\u{d83d}\u{dc4d}]/u
+   ·  ──────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\uD83D\u{DC4d}]/u
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(/[👍]/)
+   ·         ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(/[👍]/, 'i');
+   ·         ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(/[👍]/, 'g');
+   ·         ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("\x5B \\ufe0f\u005D")
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \u{5c}ufe0f]")
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe\60f]")
+   ·             ────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\uf\e0f]")
+   ·             ───────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp(`[.\\u200D.]`)
+   ·             ───────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp(`[.\\\x75200D.]`)
+   ·             ──────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[[👶🏻]]/v
+   ·          ──────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[Á]/
+   ·  ───
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\\̶]/
+   ·  ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\n̅]/
+   ·  ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\👍]/
+   ·  ─────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\è]')
+   ·         ────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\👍]')
+   ·         ─────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\\👍]')
+   ·         ──────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp('[\❇️]')
+   ·         ─────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:9]
+ 1 │ RegExp(`[\👍]`) // Backslash + U+D83D + U+DC4D
+   ·         ─────
+   ╰────

@@ -413,15 +413,15 @@ impl<'a> OptionalChaining<'a, '_> {
     /// 2. Recurse and go into the deepest optional expression `foo?.bar`
     ///
     /// 3. The `foo?.bar` is an optional [`StaticMemberExpression`], so transform `foo` to
-    /// `foo === null || foo === void 0` and return the transformed expression back to the parent
+    ///    `foo === null || foo === void 0` and return the transformed expression back to the parent
     ///
     /// 4. Got to here, we now have a left expression as the above transformed expression, and the current expression
-    /// is `foo.bar?.baz`, and it's also an optional [`StaticMemberExpression`], so transform `foo.bar` to
-    /// `(_foo$bar = foo.bar) === null || _foo$bar === void 0` and join it with the left expression, and return
-    /// the joined expression back to the parent.
+    ///    is `foo.bar?.baz`, and it's also an optional [`StaticMemberExpression`], so transform `foo.bar` to
+    ///    `(_foo$bar = foo.bar) === null || _foo$bar === void 0` and join it with the left expression, and return
+    ///    the joined expression back to the parent.
     ///
     /// > NOTE: The callee(`foo.bar`) is assigned to a temp binding(`_foo$bar`), so the original callee is also replaced with
-    /// the temp binding(`_foo$bar`)
+    /// > the temp binding(`_foo$bar`)
     ///
     /// 5. Repeat the above steps until back to the root expression, and the final expression will be
     ///
@@ -487,16 +487,16 @@ impl<'a> OptionalChaining<'a, '_> {
                     if !self.ctx.assumptions.pure_getters {
                         // After transformation of the callee, this call expression may lose the original context,
                         // so we need to check if we need to specify the context.
-                        if let Expression::Identifier(ident) = callee {
-                            if self.should_specify_context(ident, ctx) {
-                                // `foo$bar(...)` -> `foo$bar.call(context, ...)`
-                                let callee = callee.take_in(ctx.ast);
-                                let property = ctx.ast.identifier_name(SPAN, "call");
-                                let member =
-                                    ctx.ast.member_expression_static(SPAN, callee, property, false);
-                                call.callee = Expression::from(member);
-                                call.arguments.insert(0, self.get_call_context(ctx));
-                            }
+                        if let Expression::Identifier(ident) = callee
+                            && self.should_specify_context(ident, ctx)
+                        {
+                            // `foo$bar(...)` -> `foo$bar.call(context, ...)`
+                            let callee = callee.take_in(ctx.ast);
+                            let property = ctx.ast.identifier_name(SPAN, "call");
+                            let member =
+                                ctx.ast.member_expression_static(SPAN, callee, property, false);
+                            call.callee = Expression::from(member);
+                            call.arguments.insert(0, self.get_call_context(ctx));
                         }
                     }
 
@@ -531,28 +531,28 @@ impl<'a> OptionalChaining<'a, '_> {
 
         // If the expression is an identifier and it's not a global reference, we just wrap it with checks
         // `foo` -> `foo === null || foo === void 0`
-        if let Expression::Identifier(ident) = expr {
-            if let Some(binding) = self.get_existing_binding_for_identifier(ident, ctx) {
-                if ident.name == "eval" {
-                    // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
-                    let zero = ctx.ast.number_0();
-                    let original_callee = expr.take_in(ctx.ast);
-                    let expressions = ctx.ast.vec_from_array([zero, original_callee]);
-                    *expr = ctx.ast.expression_sequence(SPAN, expressions);
-                }
-
-                let left1 = binding.create_read_expression(ctx);
-                let replacement = if self.ctx.assumptions.no_document_all {
-                    // `foo === null`
-                    self.wrap_null_check(left1, ctx)
-                } else {
-                    // `foo === null || foo === void 0`
-                    let left2 = binding.create_read_expression(ctx);
-                    self.wrap_optional_check(left1, left2, ctx)
-                };
-                self.set_binding_context(binding);
-                return replacement;
+        if let Expression::Identifier(ident) = expr
+            && let Some(binding) = self.get_existing_binding_for_identifier(ident, ctx)
+        {
+            if ident.name == "eval" {
+                // `eval?.()` is an indirect eval call transformed to `(0,eval)()`
+                let zero = ctx.ast.number_0();
+                let original_callee = expr.take_in(ctx.ast);
+                let expressions = ctx.ast.vec_from_array([zero, original_callee]);
+                *expr = ctx.ast.expression_sequence(SPAN, expressions);
             }
+
+            let left1 = binding.create_read_expression(ctx);
+            let replacement = if self.ctx.assumptions.no_document_all {
+                // `foo === null`
+                self.wrap_null_check(left1, ctx)
+            } else {
+                // `foo === null || foo === void 0`
+                let left2 = binding.create_read_expression(ctx);
+                self.wrap_optional_check(left1, left2, ctx)
+            };
+            self.set_binding_context(binding);
+            return replacement;
         }
 
         // We should generate a temp binding for the expression first to avoid the next step changing the expression.

@@ -49,9 +49,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
-            if !self.at(Kind::RParen) {
-                self.expect(Kind::Comma);
-            }
+            self.bump(Kind::Comma);
             Some(param)
         } else {
             None
@@ -72,11 +70,14 @@ impl<'a> ParserImpl<'a> {
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
+            let allowed_modifiers = if func_kind == FunctionKind::Constructor {
+                ModifierFlags::ACCESSIBILITY | ModifierFlags::OVERRIDE | ModifierFlags::READONLY
+            } else {
+                ModifierFlags::empty()
+            };
             self.verify_modifiers(
                 &modifiers,
-                ModifierFlags::ACCESSIBILITY
-                    .union(ModifierFlags::READONLY)
-                    .union(ModifierFlags::OVERRIDE),
+                allowed_modifiers,
                 diagnostics::cannot_appear_on_a_parameter,
             );
         } else {
@@ -87,7 +88,10 @@ impl<'a> ParserImpl<'a> {
             );
         }
         let pattern = self.parse_binding_pattern_with_initializer();
-        if func_kind != FunctionKind::ClassMethod || !self.is_ts {
+        let are_decorators_allowed =
+            matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
+                && self.is_ts;
+        if !are_decorators_allowed {
             for decorator in &decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
@@ -131,7 +135,10 @@ impl<'a> ParserImpl<'a> {
                     FunctionType::FunctionDeclaration
                 }
             }
-            FunctionKind::Expression | FunctionKind::ClassMethod | FunctionKind::ObjectMethod => {
+            FunctionKind::Expression
+            | FunctionKind::ClassMethod
+            | FunctionKind::Constructor
+            | FunctionKind::ObjectMethod => {
                 if body.is_none() {
                     FunctionType::TSEmptyBodyFunctionExpression
                 } else {
@@ -147,10 +154,11 @@ impl<'a> ParserImpl<'a> {
             self.asi();
         }
 
-        if ctx.has_ambient() && modifiers.contains_declare() {
-            if let Some(body) = &body {
-                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
-            }
+        if ctx.has_ambient()
+            && modifiers.contains_declare()
+            && let Some(body) = &body
+        {
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
         self.verify_modifiers(
             modifiers,
@@ -264,11 +272,11 @@ impl<'a> ParserImpl<'a> {
 
     /// Section 15.4 Method Definitions
     /// `ClassElementName` ( `UniqueFormalParameters` ) { `FunctionBody` }
-    /// `GeneratorMethod`
+    /// * `GeneratorMethod`
     ///   * `ClassElementName`
-    /// `AsyncMethod`
+    /// * `AsyncMethod`
     ///   async `ClassElementName`
-    /// `AsyncGeneratorMethod`
+    /// * `AsyncGeneratorMethod`
     ///   async * `ClassElementName`
     pub(crate) fn parse_method(
         &mut self,

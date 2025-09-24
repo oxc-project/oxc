@@ -311,6 +311,7 @@ fn test() {
             None,
         ),
         ("foo.every(function() { try { bar(); } finally { return true; } })", None),
+        ("foo.every(function() { switch (a) { default: case0: return true; } })", None),
         (
             "Array.from(x, function() { return; })",
             Some(serde_json::json!([{"allowImplicit": true}])),
@@ -425,6 +426,10 @@ fn test() {
         ("foo[`${every}`](function() {})", None),
         ("foo.every(() => true)", None),
         ("return function() {}", None),
+        (
+            "array.map((node) => { if (isTaskNode(node)) { return someObj; } else if (isOtherNode(node)) { return otherObj; } else { throw new Error('Unsupported'); } })",
+            None,
+        ),
     ];
 
     let fail = vec![

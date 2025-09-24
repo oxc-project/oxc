@@ -2813,6 +2813,36 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_ts_import_type_qualifier(
+        &mut self,
+        node: &mut TSImportTypeQualifier<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_import_type_qualifier(
+        &mut self,
+        node: &mut TSImportTypeQualifier<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_import_type_qualified_name(
+        &mut self,
+        node: &mut TSImportTypeQualifiedName<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_import_type_qualified_name(
+        &mut self,
+        node: &mut TSImportTypeQualifiedName<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_function_type(
         &mut self,
         node: &mut TSFunctionType<'a>,

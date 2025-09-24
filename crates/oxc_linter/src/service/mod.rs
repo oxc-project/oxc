@@ -5,23 +5,15 @@ use std::{
 };
 
 use oxc_diagnostics::DiagnosticSender;
-use runtime::Runtime;
-pub use runtime::RuntimeFileSystem;
 
 use crate::Linter;
 
 mod runtime;
-
-#[cfg(feature = "language_server")]
-pub mod offset_to_position;
-
+use runtime::Runtime;
+pub use runtime::RuntimeFileSystem;
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,
-
-    /// All paths to lint
-    paths: Vec<Arc<OsStr>>,
-
     /// TypeScript `tsconfig.json` path for reading path alias and project references
     tsconfig: Option<PathBuf>,
 
@@ -30,11 +22,11 @@ pub struct LintServiceOptions {
 
 impl LintServiceOptions {
     #[must_use]
-    pub fn new<T>(cwd: T, paths: Vec<Arc<OsStr>>) -> Self
+    pub fn new<T>(cwd: T) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), paths, tsconfig: None, cross_module: false }
+        Self { cwd: cwd.into(), tsconfig: None, cross_module: false }
     }
 
     #[inline]
@@ -65,39 +57,38 @@ impl LintServiceOptions {
     }
 }
 
-pub struct LintService<'l> {
-    runtime: Runtime<'l>,
+pub struct LintService {
+    runtime: Runtime,
 }
 
-impl<'l> LintService<'l> {
-    pub fn new(
-        linter: &'l Linter,
-        allocator_pool: oxc_allocator::AllocatorPool,
-        options: LintServiceOptions,
-    ) -> Self {
-        let runtime = Runtime::new(linter, allocator_pool, options);
+impl LintService {
+    pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
+        let runtime = Runtime::new(linter, options);
         Self { runtime }
     }
 
-    #[must_use]
     pub fn with_file_system(
-        mut self,
+        &mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> Self {
-        self.runtime = self.runtime.with_file_system(file_system);
+    ) -> &mut Self {
+        self.runtime.with_file_system(file_system);
+        self
+    }
+
+    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
+        self.runtime.with_paths(paths);
         self
     }
 
     /// # Panics
     pub fn run(&mut self, tx_error: &DiagnosticSender) {
         self.runtime.run(tx_error);
-        tx_error.send(None).unwrap();
     }
 
     #[cfg(feature = "language_server")]
     pub fn run_source<'a>(
         &mut self,
-        allocator: &'a oxc_allocator::Allocator,
+        allocator: &'a mut oxc_allocator::Allocator,
     ) -> Vec<crate::MessageWithPosition<'a>> {
         self.runtime.run_source(allocator)
     }
@@ -106,7 +97,7 @@ impl<'l> LintService<'l> {
     #[cfg(test)]
     pub(crate) fn run_test_source<'a>(
         &mut self,
-        allocator: &'a oxc_allocator::Allocator,
+        allocator: &'a mut oxc_allocator::Allocator,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<crate::Message<'a>> {

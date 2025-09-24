@@ -208,12 +208,11 @@ impl<'a> IsolatedDeclarations<'a> {
 
                             let mut decl = decl.clone_in(self.ast.allocator);
                             // Remove export keyword from all statements in `declare module "xxx" { ... }`
-                            if !is_global {
-                                if let Some(body) =
+                            if !is_global
+                                && let Some(body) =
                                     decl.body.as_mut().and_then(|body| body.as_module_block_mut())
-                                {
-                                    self.strip_export_keyword(&mut body.body);
-                                }
+                            {
+                                self.strip_export_keyword(&mut body.body);
                             }
 
                             // We need to visit the module declaration to collect all references
@@ -376,10 +375,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 if matches!(
                     new_stmt,
                     Statement::ExportDefaultDeclaration(_) | Statement::TSExportAssignment(_)
-                ) {
-                    if let Some(export_external_var_statement) = extra_export_var_statement.take() {
-                        new_stmts.push(export_external_var_statement);
-                    }
+                ) && let Some(export_external_var_statement) = extra_export_var_statement.take()
+                {
+                    new_stmts.push(export_external_var_statement);
                 }
                 new_stmts.push(new_stmt);
                 continue;
@@ -574,20 +572,19 @@ impl<'a> IsolatedDeclarations<'a> {
             match stmt {
                 Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
                     Some(Declaration::FunctionDeclaration(func)) => {
-                        if func.body.is_some() {
-                            if let Some(id) = func.id.as_ref() {
-                                can_expando_function_names.insert(id.name);
-                            }
+                        if func.body.is_some()
+                            && let Some(id) = func.id.as_ref()
+                        {
+                            can_expando_function_names.insert(id.name);
                         }
                     }
                     Some(Declaration::VariableDeclaration(decl)) => {
                         for declarator in &decl.declarations {
                             if declarator.id.type_annotation.is_none()
                                 && declarator.init.as_ref().is_some_and(Expression::is_function)
+                                && let Some(name) = declarator.id.get_identifier_name()
                             {
-                                if let Some(name) = declarator.id.get_identifier_name() {
-                                    can_expando_function_names.insert(name);
-                                }
+                                can_expando_function_names.insert(name);
                             }
                         }
                     }
@@ -596,55 +593,44 @@ impl<'a> IsolatedDeclarations<'a> {
                 Statement::ExportDefaultDeclaration(decl) => {
                     if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                         &decl.declaration
+                        && func.body.is_some()
+                        && let Some(name) = func.name()
                     {
-                        if func.body.is_some() {
-                            if let Some(name) = func.name() {
-                                can_expando_function_names.insert(name);
-                            }
-                        }
+                        can_expando_function_names.insert(name);
                     }
                 }
                 Statement::FunctionDeclaration(func) => {
-                    if func.body.is_some() {
-                        if let Some(name) = func.name() {
-                            if self.scope.has_reference(&name) {
-                                can_expando_function_names.insert(name);
-                            }
-                        }
+                    if func.body.is_some()
+                        && let Some(name) = func.name()
+                        && self.scope.has_value_reference(&name)
+                    {
+                        can_expando_function_names.insert(name);
                     }
                 }
                 Statement::VariableDeclaration(decl) => {
                     for declarator in &decl.declarations {
                         if declarator.id.type_annotation.is_none()
                             && declarator.init.as_ref().is_some_and(Expression::is_function)
+                            && let Some(name) = declarator.id.get_identifier_name()
+                            && self.scope.has_value_reference(&name)
                         {
-                            if let Some(name) = declarator.id.get_identifier_name() {
-                                if self.scope.has_reference(&name) {
-                                    can_expando_function_names.insert(name);
-                                }
-                            }
+                            can_expando_function_names.insert(name);
                         }
                     }
                 }
                 Statement::ExpressionStatement(stmt) => {
-                    if let Expression::AssignmentExpression(assignment) = &stmt.expression {
-                        if let AssignmentTarget::StaticMemberExpression(static_member_expr) =
+                    if let Expression::AssignmentExpression(assignment) = &stmt.expression
+                        && let AssignmentTarget::StaticMemberExpression(static_member_expr) =
                             &assignment.left
-                        {
-                            if let Expression::Identifier(ident) = &static_member_expr.object {
-                                if can_expando_function_names.contains(&ident.name)
-                                    && !assignable_properties_for_namespace
-                                        .get(&ident.name.as_str())
-                                        .is_some_and(|properties| {
-                                            properties.contains(&static_member_expr.property.name)
-                                        })
-                                {
-                                    self.error(function_with_assigning_properties(
-                                        static_member_expr.span,
-                                    ));
-                                }
-                            }
-                        }
+                        && let Expression::Identifier(ident) = &static_member_expr.object
+                        && can_expando_function_names.contains(&ident.name)
+                        && !assignable_properties_for_namespace
+                            .get(&ident.name.as_str())
+                            .is_some_and(|properties| {
+                                properties.contains(&static_member_expr.property.name)
+                            })
+                    {
+                        self.error(function_with_assigning_properties(static_member_expr.span));
                     }
                 }
 

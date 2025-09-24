@@ -6,13 +6,6 @@ use oxc_span::{GetSpan, Span};
 
 use crate::LintContext;
 
-#[cfg(feature = "language_server")]
-use crate::service::offset_to_position::SpanPositionMessage;
-#[cfg(feature = "language_server")]
-pub use fix::{FixWithPosition, PossibleFixesWithPosition};
-#[cfg(feature = "language_server")]
-use oxc_diagnostics::{OxcCode, Severity};
-
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, PossibleFixes, RuleFix};
 use oxc_allocator::{Allocator, CloneIn};
@@ -218,45 +211,19 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct FixResult<'a> {
     pub fixed: bool,
     pub fixed_code: Cow<'a, str>,
     pub messages: Vec<Message<'a>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes<'a>,
     span: Span,
     fixed: bool,
-}
-
-#[cfg(feature = "language_server")]
-#[derive(Debug)]
-pub struct MessageWithPosition<'a> {
-    pub message: Cow<'a, str>,
-    pub labels: Option<Vec<SpanPositionMessage<'a>>>,
-    pub help: Option<Cow<'a, str>>,
-    pub severity: Severity,
-    pub code: OxcCode,
-    pub url: Option<Cow<'a, str>>,
-    pub fixes: PossibleFixesWithPosition<'a>,
-}
-
-#[cfg(feature = "language_server")]
-impl From<OxcDiagnostic> for MessageWithPosition<'_> {
-    fn from(from: OxcDiagnostic) -> Self {
-        Self {
-            message: from.message.clone(),
-            labels: None,
-            help: from.help.clone(),
-            severity: from.severity,
-            code: from.code.clone(),
-            url: from.url.clone(),
-            fixes: PossibleFixesWithPosition::None,
-        }
-    }
 }
 
 impl<'new> CloneIn<'new> for Message<'_> {
@@ -275,20 +242,41 @@ impl<'new> CloneIn<'new> for Message<'_> {
 impl<'a> Message<'a> {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes<'a>) -> Self {
-        let (start, end) = if let Some(labels) = &error.labels {
-            let start = labels
-                .iter()
-                .min_by_key(|span| span.offset())
-                .map_or(0, |span| span.offset() as u32);
-            let end = labels
-                .iter()
-                .max_by_key(|span| span.offset() + span.len())
-                .map_or(0, |span| (span.offset() + span.len()) as u32);
-            (start, end)
-        } else {
-            (0, 0)
-        };
-        Self { error, span: Span::new(start, end), fixes, fixed: false }
+        let span = error
+            .labels
+            .as_ref()
+            .and_then(|labels| labels.iter().find(|span| span.primary()).or_else(|| labels.first()))
+            .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
+            .unwrap_or_default();
+
+        Self { error, span, fixes, fixed: false }
+    }
+
+    /// move the offset of all spans to the right
+    pub fn move_offset(&mut self, offset: u32) -> &mut Self {
+        debug_assert!(offset != 0);
+
+        self.span = self.span.move_right(offset);
+
+        if let Some(labels) = &mut self.error.labels {
+            for label in labels {
+                label.set_span_offset(label.offset().saturating_add(offset as usize));
+            }
+        }
+
+        match &mut self.fixes {
+            PossibleFixes::None => {}
+            PossibleFixes::Single(fix) => {
+                fix.span = fix.span.move_right(offset);
+            }
+            PossibleFixes::Multiple(fixes) => {
+                for fix in fixes {
+                    fix.span = fix.span.move_right(offset);
+                }
+            }
+        }
+
+        self
     }
 }
 
@@ -342,7 +330,7 @@ impl<'a> Fixer<'a> {
         self.messages.sort_unstable_by_key(|m| m.fixes.span());
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
-        let mut last_pos: i64 = -1;
+        let mut last_pos: u32 = 0;
 
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
@@ -366,21 +354,20 @@ impl<'a> Fixer<'a> {
                 filtered_messages.push(m);
                 continue;
             }
-            if i64::from(start) < last_pos {
+            if start < last_pos {
                 filtered_messages.push(m);
                 continue;
             }
 
             m.fixed = true;
             fixed = true;
-            let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
+            let offset = last_pos as usize;
             output.push_str(&source_text[offset..start as usize]);
             output.push_str(content);
-            last_pos = i64::from(end);
+            last_pos = end;
         }
 
-        let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
-        output.push_str(&source_text[offset..]);
+        output.push_str(&source_text[last_pos as usize..]);
 
         filtered_messages.sort_unstable_by_key(GetSpan::span);
         FixResult { fixed, fixed_code: Cow::Owned(output), messages: filtered_messages }

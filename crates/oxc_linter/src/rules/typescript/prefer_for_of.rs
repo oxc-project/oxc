@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
 fn prefer_for_of_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -145,7 +145,7 @@ impl Rule for PreferForOf {
             return;
         }
 
-        let array_name = {
+        let (array_name, array_expr) = {
             let Some(mem_expr) = test_expr.right.as_member_expression() else {
                 return;
             };
@@ -154,7 +154,8 @@ impl Rule for PreferForOf {
                 return;
             }
 
-            match mem_expr.object() {
+            let array_expr = mem_expr.object();
+            let array_name = match mem_expr.object() {
                 Expression::Identifier(id) => id.name.as_str(),
                 expr @ match_member_expression!(Expression) => {
                     match expr.to_member_expression().static_property_name() {
@@ -163,7 +164,9 @@ impl Rule for PreferForOf {
                     }
                 }
                 _ => return,
-            }
+            };
+
+            (array_name, array_expr)
         };
 
         let Some(update_expr) = &for_stmt.update else {
@@ -186,37 +189,19 @@ impl Rule for PreferForOf {
 
             let parent = nodes.parent_node(ref_id);
             let grand_parent = nodes.parent_node(parent.id());
-            match grand_parent.kind() {
-                AstKind::SimpleAssignmentTarget(_) => {
-                    return true;
-                }
-                AstKind::UnaryExpression(unary_expr)
-                    if unary_expr.operator == UnaryOperator::Delete =>
-                {
-                    return true;
-                }
-                _ => {}
+
+            // Check for direct uses of the loop variable that prevent for-of conversion
+            if prevents_for_of_conversion_direct_usage(grand_parent, parent) {
+                return true;
             }
 
-            let parent_kind = parent.kind();
-            match parent_kind {
-                mem_expr if mem_expr.is_member_expression_kind() => {
-                    let Some(mem_expr) = mem_expr.as_member_expression_kind() else {
-                        return true;
-                    };
-                    match &mem_expr.object() {
-                        Expression::Identifier(id) => id.name.as_str() != array_name,
-                        expr if expr.is_member_expression() => {
-                            match expr.to_member_expression().static_property_name() {
-                                Some(prop_name) => prop_name != array_name,
-                                None => true,
-                            }
-                        }
-                        _ => true,
-                    }
-                }
-                _ => true,
+            // Check if arr[i] usage prevents for-of conversion
+            if prevents_for_of_array_access(parent, grand_parent, array_name, nodes) {
+                return true;
             }
+
+            // Check if this is a non-array access that prevents conversion
+            prevents_for_of_non_array_access(parent, array_expr, ctx)
         }) {
             return;
         }
@@ -224,6 +209,81 @@ impl Rule for PreferForOf {
         let span = for_stmt_init.span.merge(test_expr.span).merge(update_expr.span());
         ctx.diagnostic(prefer_for_of_diagnostic(span));
     }
+}
+
+/// Check if direct usage of the loop variable prevents for-of conversion
+fn prevents_for_of_conversion_direct_usage(grand_parent: &AstNode, parent: &AstNode) -> bool {
+    match grand_parent.kind() {
+        AstKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::Delete => {
+            true
+        }
+        AstKind::UpdateExpression(_) => true,
+        // Check if the loop variable itself is being assigned to (like i = something)
+        AstKind::AssignmentExpression(assign_expr) => assign_expr.left.span() == parent.span(),
+        _ => false,
+    }
+}
+
+/// Check if array item access prevents for-of conversion
+fn prevents_for_of_array_access(
+    parent: &AstNode,
+    grand_parent: &AstNode,
+    array_name: &str,
+    nodes: &oxc_semantic::AstNodes,
+) -> bool {
+    let Some(mem_expr) = parent.kind().as_member_expression_kind() else {
+        return false;
+    };
+
+    let Expression::Identifier(id) = mem_expr.object() else {
+        return false;
+    };
+
+    if id.name.as_str() != array_name {
+        return false;
+    }
+
+    // Check for direct assignment: arr[i] = value
+    if let AstKind::AssignmentExpression(assign_expr) = grand_parent.kind()
+        && assign_expr.left.span() == parent.span()
+    {
+        return true;
+    }
+
+    // Check if arr[i] is a direct element in destructuring
+    if is_direct_assignment_target(&grand_parent.kind()) {
+        return true;
+    }
+
+    // Check one level deeper for nested destructuring
+    let great_grand_parent = nodes.parent_node(grand_parent.id());
+    if is_direct_assignment_target(&great_grand_parent.kind()) {
+        // Only prevent for-of if grand_parent is NOT a member expression
+        // This distinguishes [arr[i]] from [obj[arr[i]]]
+        return !grand_parent.kind().is_member_expression_kind();
+    }
+
+    false
+}
+
+/// Check if this is a non-array access that prevents conversion
+fn prevents_for_of_non_array_access(
+    parent: &AstNode,
+    array_expr: &Expression,
+    ctx: &LintContext,
+) -> bool {
+    let parent_kind = parent.kind();
+
+    if let Some(mem_expr) = parent_kind.as_member_expression_kind() {
+        !is_same_expression(mem_expr.object(), array_expr, ctx)
+    } else {
+        true
+    }
+}
+
+/// Check if the AST kind represents a direct assignment target
+fn is_direct_assignment_target(kind: &AstKind) -> bool {
+    matches!(kind, AstKind::ArrayAssignmentTarget(_) | AstKind::ObjectAssignmentTarget(_))
 }
 
 #[test]
@@ -308,6 +368,18 @@ fn test() {
         "for (var j = 0; j < 10; j++) {}",
         "const arr = [];
         for (i = 0; i < arr.length; i++) { el = arr[i]; console.log(i, el); }",
+        "for (let x = 0; x < series.data.length; x++) { let newValue = series.data[x].y; for (const otherSeries of subseries) { newValue -= otherSeries.data[x].y; } series.data[x].y = newValue; }",
+        // Deep nesting test cases
+        "const a = { b: { c: { d: { e: [1, 2, 3] } } } };
+         const x = { b: { c: { d: { e: [4, 5, 6] } } } };
+         for (let i = 0; i < a.b.c.d.e.length; i++) {
+             console.log(x.b.c.d.e[i]); // Different object with same path
+         }",
+        "const obj1 = { a: { b: [1, 2, 3] } };
+         const obj2 = { a: { b: [4, 5, 6] } };
+         for (let i = 0; i < obj1.a.b.length; i++) {
+             console.log(obj2.a.b[i]); // Different object
+         }",
     ];
 
     let fail = vec![
@@ -339,6 +411,15 @@ fn test() {
         "const array = []; for (let i = 0; i < array.length; i++) { let foo = array[i]; }",
         "const array = []; for (let i = 0; i < array.length; i++) { const foo = array[i]; }",
         "const array = []; for (let i = 0; i < array.length; i++) { var foo = array[i], bar = 1; }",
+        // Deep nesting test cases that should trigger warning
+        "const a = { b: { c: { d: { e: [1, 2, 3] } } } };
+         for (let i = 0; i < a.b.c.d.e.length; i++) {
+             console.log(a.b.c.d.e[i]); // Same deeply nested array
+         }",
+        "const obj = { a: { b: [1, 2, 3] } };
+         for (let i = 0; i < obj.a.b.length; i++) {
+             console.log(obj.a.b[i]); // Same nested array
+         }",
     ];
 
     Tester::new(PreferForOf::NAME, PreferForOf::PLUGIN, pass, fail).test_and_snapshot();

@@ -5,6 +5,90 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚜 Refactor
+
+- 08cbd39 transformer, estree: Clarify code using `is_exhausted` stack methods (#13674) (overlookmotel)
+
+
+
+## [0.86.0] - 2025-08-31
+
+### 💥 BREAKING CHANGES
+
+- edeebc6 data_structures: [**BREAKING**] Rename `SliceIterExt` to `SliceIter` (#13439) (overlookmotel)
+
+### 🚀 Features
+
+- 5b139aa data_structures: Add `ptr` and `end_ptr` methods to `SliceIterExt` (#13435) (overlookmotel)
+
+
+
+
+
+## [0.82.3] - 2025-08-20
+
+### 🚜 Refactor
+
+- 3f92fa8 estree: Add `#[repr(transparent)]` to config structs (#13212) (overlookmotel)
+
+### 🧪 Testing
+
+- 792ae31 estree, allocator: Use `default` to create `ESTreeSerializer`s (#13211) (overlookmotel)
+
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 🚜 Refactor
+
+- d93e373 estree: Remove serializer for f32 (#12838) (Boshen)
+
+### ⚡ Performance
+
+- 2c4369a syntax,codegen: Replace `ryu_js` with `dragonbox_ecma` for floating point formatting (#12821) (Copilot)
+
+
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+
+
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚜 Refactor
+
+- 42abcd2 estree: Use `SliceIterExt` in string serializer (#12297) (overlookmotel)
+
+
+
+
 ## [0.75.1] - 2025-07-03
 
 ### 🚜 Refactor

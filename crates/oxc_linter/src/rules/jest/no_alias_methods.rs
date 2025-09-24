@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// These aliases are going to be removed in the next major version of Jest - see [jestjs/jest#13164](https://github.com/jestjs/jest/issues/13164) for more.
-    /// This rule will makes it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.
+    /// This rule will make it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.
     ///
     /// ### Examples
     ///

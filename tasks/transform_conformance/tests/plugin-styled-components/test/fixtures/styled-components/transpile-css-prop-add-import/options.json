@@ -1,0 +1,20 @@
+{
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "modules": false,
+        "targets": "defaults"
+      }
+    ]
+  ],
+  "plugins": [
+    ["styled-components", {
+      "ssr": false,
+      "displayName": false,
+      "transpileTemplateLiterals": false,
+      "minify": false,
+      "cssProp": true
+    }]
+  ]
+}

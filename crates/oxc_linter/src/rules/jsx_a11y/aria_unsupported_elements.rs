@@ -14,10 +14,15 @@ use crate::{
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Enforces that reserved DOM elements do not contain ARIA roles, states,
+    /// or properties.
+    ///
+    /// ### Why is this bad?
+    ///
     /// Certain reserved DOM elements do not support ARIA roles, states and
     /// properties. This is often because they are not visible, for example
-    /// `meta`, `html`, `script`, `style`. This rule enforces that these DOM
-    /// elements do not contain the `role` and/or `aria-*` props.
+    /// `meta`, `html`, `script`, `style`. Adding ARIA attributes to these
+    /// elements is meaningless and can create confusion for screen readers.
     ///
     /// ### Examples
     ///
@@ -28,7 +33,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    ///	<meta charset="UTF-8" />
+    /// <meta charset="UTF-8" />
     /// ```
     AriaUnsupportedElements,
     jsx_a11y,

@@ -7,6 +7,7 @@ use crate::{
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
+mod estree_visit;
 mod formatter;
 mod get_id;
 mod raw_transfer;
@@ -19,9 +20,8 @@ mod visit;
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
-pub use formatter::{
-    FormatterAstNodesGenerator, FormatterFormatGenerator, FormatterFormatWriteGenerator,
-};
+pub use estree_visit::ESTreeVisitGenerator;
+pub use formatter::{FormatterAstNodesGenerator, FormatterFormatGenerator};
 pub use get_id::GetIdGenerator;
 pub use raw_transfer::RawTransferGenerator;
 pub use raw_transfer_lazy::RawTransferLazyGenerator;

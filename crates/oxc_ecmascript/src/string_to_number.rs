@@ -1,3 +1,5 @@
+use oxc_syntax::identifier::{is_line_terminator, is_white_space};
+
 pub trait StringToNumber {
     fn string_to_number(&self) -> f64;
 }
@@ -7,7 +9,7 @@ pub trait StringToNumber {
 /// <https://tc39.es/ecma262/#sec-stringtonumber>
 impl StringToNumber for &str {
     fn string_to_number(&self) -> f64 {
-        let s = *self;
+        let s = self.trim_start_matches(is_str_white_space_char);
         match s {
             "" => return 0.0,
             "-Infinity" => return f64::NEG_INFINITY,
@@ -65,4 +67,10 @@ impl StringToNumber for &str {
 
         s.parse::<f64>().unwrap_or(f64::NAN)
     }
+}
+
+/// whether the char is a StrWhiteSpaceChar
+/// <https://tc39.es/ecma262/#sec-tonumber-applied-to-the-string-type>
+fn is_str_white_space_char(c: char) -> bool {
+    is_white_space(c) || is_line_terminator(c)
 }

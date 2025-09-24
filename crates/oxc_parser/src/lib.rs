@@ -458,11 +458,11 @@ impl<'a> ParserImpl<'a> {
         let mut is_flow_language = false;
         let mut errors = vec![];
         // only check for `@flow` if the file failed to parse.
-        if !self.lexer.errors.is_empty() || !self.errors.is_empty() {
-            if let Some(error) = self.flow_error() {
-                is_flow_language = true;
-                errors.push(error);
-            }
+        if (!self.lexer.errors.is_empty() || !self.errors.is_empty())
+            && let Some(error) = self.flow_error()
+        {
+            is_flow_language = true;
+            errors.push(error);
         }
         let (module_record, module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
@@ -513,8 +513,9 @@ impl<'a> ParserImpl<'a> {
 
     #[expect(clippy::cast_possible_truncation)]
     fn parse_program(&mut self) -> Program<'a> {
-        // initialize cur_token and prev_token by moving onto the first token
-        self.bump_any();
+        // Initialize by moving onto the first token.
+        // Checks for hashbang comment.
+        self.token = self.lexer.first_token();
 
         let hashbang = self.parse_hashbang();
         let (directives, statements) =

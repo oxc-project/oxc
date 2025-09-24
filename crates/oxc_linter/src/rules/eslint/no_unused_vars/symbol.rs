@@ -1,4 +1,4 @@
-use std::{cell::OnceCell, fmt};
+use std::{cell::OnceCell, fmt, iter};
 
 use oxc_ast::{
     AstKind,
@@ -69,7 +69,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// check if a references is "used" under the criteria of this rule.
     #[inline]
     pub fn has_references(&self) -> bool {
-        !self.scoping().get_resolved_reference_ids(self.id).is_empty()
+        !self.scoping().symbol_is_unused(self.id)
     }
 
     #[inline]
@@ -99,18 +99,20 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     #[inline]
     pub fn iter_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
-        self.iter_self_and_parents().skip(1)
+        self.nodes().ancestors(self.declaration_id())
     }
 
     pub fn iter_self_and_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
-        self.nodes().ancestors(self.declaration_id())
+        let node_id = self.declaration_id();
+        let node = self.nodes().get_node(node_id);
+        iter::once(node).chain(self.nodes().ancestors(node_id))
     }
 
     pub fn iter_relevant_parents_of(
         &self,
         node_id: NodeId,
     ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
-        self.nodes().ancestors(node_id).skip(1).filter(|n| Self::is_relevant_kind(n.kind()))
+        self.nodes().ancestors(node_id).filter(|n| Self::is_relevant_kind(n.kind()))
     }
 
     pub fn iter_relevant_parent_and_grandparent_kinds(
@@ -118,11 +120,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
         node_id: NodeId,
     ) -> impl Iterator<Item = (/* parent */ AstKind<'a>, /* grandparent */ AstKind<'a>)> + Clone + '_
     {
-        let parents_iter = self
-            .nodes()
-            .ancestor_kinds(node_id)
-            // no skip
-            .filter(|kind| Self::is_relevant_kind(*kind));
+        let parents_iter = iter::once(self.nodes().kind(node_id)).chain(
+            self.nodes().ancestor_kinds(node_id).filter(|kind| Self::is_relevant_kind(*kind)),
+        );
 
         let grandparents_iter = parents_iter.clone().skip(1);
 
@@ -184,7 +184,7 @@ impl<'a> Symbol<'_, 'a> {
 
     /// We need to do this due to limitations of [`Semantic`].
     fn in_export_node(&self) -> bool {
-        for parent in self.nodes().ancestors(self.declaration_id()).skip(1) {
+        for parent in self.nodes().ancestors(self.declaration_id()) {
             match parent.kind() {
                 AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_) => {
                     return true;

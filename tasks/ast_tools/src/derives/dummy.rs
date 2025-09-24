@@ -114,6 +114,10 @@ fn calculate_alloc(type_id: TypeId, schema: &mut Schema) -> Alloc {
         TypeDef::Vec(_) => Alloc::ZERO,
         // `Cell`s only own allocations if their inner type does
         TypeDef::Cell(cell_def) => calculate_alloc(cell_def.inner_type_id, schema),
+        // Pointers cannot be created in dummies.
+        // Pointers don't implement `Dummy`, so attempting to implement `Dummy` on a type containing
+        // pointers will generate code which will not compile.
+        TypeDef::Pointer(_) => Alloc::ZERO,
     }
 }
 

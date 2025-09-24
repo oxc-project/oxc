@@ -21,7 +21,7 @@ fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NewCap(Box<NewCapConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NewCapConfig {
     new_is_cap: bool,
     cap_is_new: bool,
@@ -30,6 +30,20 @@ pub struct NewCapConfig {
     cap_is_new_exceptions: Vec<CompactStr>,
     cap_is_new_exception_pattern: Option<Regex>,
     properties: bool,
+}
+
+impl Default for NewCapConfig {
+    fn default() -> Self {
+        Self {
+            new_is_cap: true,
+            cap_is_new: true,
+            new_is_cap_exceptions: caps_allowed_vec(),
+            new_is_cap_exception_pattern: None,
+            cap_is_new_exceptions: vec![],
+            cap_is_new_exception_pattern: None,
+            properties: true,
+        }
+    }
 }
 
 impl std::ops::Deref for NewCap {
@@ -81,15 +95,7 @@ fn regex_serde_value(map: &serde_json::Map<String, serde_json::Value>, key: &str
 impl From<&serde_json::Value> for NewCap {
     fn from(raw: &serde_json::Value) -> Self {
         let Some(config_entry) = raw.get(0) else {
-            return Self(Box::new(NewCapConfig {
-                new_is_cap: true,
-                cap_is_new: true,
-                new_is_cap_exceptions: caps_allowed_vec(),
-                new_is_cap_exception_pattern: None,
-                cap_is_new_exceptions: vec![],
-                cap_is_new_exception_pattern: None,
-                properties: true,
-            }));
+            return Self(Box::default());
         };
 
         let config = config_entry
@@ -470,7 +476,7 @@ impl Rule for NewCap {
                     || is_cap_allowed_expression(
                         short_name,
                         name,
-                        &self.new_is_cap_exceptions,
+                        self.new_is_cap_exceptions.iter().map(CompactStr::as_str),
                         self.new_is_cap_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
@@ -492,14 +498,14 @@ impl Rule for NewCap {
 
                 let capitalization = &get_cap(short_name);
 
-                let mut caps_is_new_exceptions = self.cap_is_new_exceptions.clone();
-                caps_is_new_exceptions.append(&mut caps_allowed_vec());
-
                 let allowed = *capitalization != GetCapResult::Upper
                     || is_cap_allowed_expression(
                         short_name,
                         name,
-                        &caps_is_new_exceptions,
+                        self.cap_is_new_exceptions
+                            .iter()
+                            .map(CompactStr::as_str)
+                            .chain(CAPS_ALLOWED),
                         self.cap_is_new_exception_pattern.as_ref(),
                     )
                     || (!self.properties && short_name != name);
@@ -582,8 +588,12 @@ fn get_computed_member_name(computed_member: &ComputedMemberExpression) -> Optio
     let expression = computed_member.expression.without_parentheses();
 
     match &expression {
-        Expression::StringLiteral(lit) => Some(lit.value.as_ref().into()),
-        Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
+        Expression::StringLiteral(lit) if !lit.value.is_empty() => Some(lit.value.as_ref().into()),
+        Expression::TemplateLiteral(lit)
+            if lit.expressions.is_empty()
+                && lit.quasis.len() == 1
+                && !lit.quasis[0].value.raw.is_empty() =>
+        {
             Some(lit.quasis[0].value.raw.as_ref().into())
         }
         Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|&x| x.into_compact_str()),
@@ -618,14 +628,19 @@ fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
     }
 }
 
-fn is_cap_allowed_expression(
+fn is_cap_allowed_expression<'a, I>(
     short_name: &CompactStr,
     name: &CompactStr,
-    exceptions: &[CompactStr],
+    exceptions: I,
     patterns: Option<&Regex>,
-) -> bool {
-    if exceptions.contains(name) || exceptions.contains(short_name) {
-        return true;
+) -> bool
+where
+    I: Iterator<Item = &'a str>,
+{
+    for exception in exceptions {
+        if exception == name.as_str() || exception == short_name.as_str() {
+            return true;
+        }
     }
 
     if name == "Date.UTC" {
@@ -739,6 +754,11 @@ fn test() {
         ("new (foo?.bar)();", Some(serde_json::json!([{ "properties": false }]))), // { "ecmaVersion": 2020 },
         ("Date?.UTC();", None),   // { "ecmaVersion": 2020 },
         ("(Date?.UTC)();", None), // { "ecmaVersion": 2020 }
+        (r#"expect(1)[""](1);"#, None),
+        (
+            "let tz = Intl.DateTimeFormat().resolvedOptions().timezone()",
+            Some(serde_json::json!([{ "capIsNewExceptions": ["Intl.DateTimeFormat"] }])),
+        ),
     ];
 
     let fail = vec![

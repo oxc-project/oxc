@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_accessor_recursion_diagnostic(span: Span, kind: &str) -> OxcDiagnostic {
     let method_kind = match kind {
@@ -65,7 +65,8 @@ impl Rule for NoAccessorRecursion {
         let AstKind::ThisExpression(this_expr) = node.kind() else {
             return;
         };
-        let Some(target) = ctx.nodes().ancestors(node.id()).skip(1).find(|n| match n.kind() {
+
+        let Some(target) = ctx.nodes().ancestors(node.id()).find(|n| match n.kind() {
             member_expr if member_expr.is_member_expression_kind() => {
                 let Some(member_expr) = member_expr.as_member_expression_kind() else {
                     return false;
@@ -88,6 +89,7 @@ impl Rule for NoAccessorRecursion {
         if !is_property_or_method_def(func_parent) {
             return;
         }
+
         match target.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(key_name) = get_property_or_method_def_name(func_parent) else {
@@ -133,6 +135,7 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+
                         if property.kind == PropertyKind::Set && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
@@ -162,6 +165,7 @@ impl Rule for NoAccessorRecursion {
                                 "getters",
                             ));
                         }
+
                         if method_def.kind == MethodDefinitionKind::Set
                             && is_property_write(target, ctx)
                         {
@@ -182,18 +186,67 @@ impl Rule for NoAccessorRecursion {
 // Check if the property is written
 // e.g. "this.bar = value"
 fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(parent) = nth_outermost_paren_parent(node, ctx, 1) else {
-        return false;
-    };
-    match parent.kind() {
-        // e.g. "++this.bar"
-        AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
-            argument.span() == node.span()
+    // Check a few parent levels up for assignment contexts
+    for ancestor in ctx.nodes().ancestors(node.id()).take(3) {
+        match ancestor.kind() {
+            // e.g. "++this.bar"
+            AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
+                if argument.span() == node.span() {
+                    return true;
+                }
+            }
+            // e.g. "this.bar = 1"
+            AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
+                if assign_target.span() == node.span() {
+                    return true;
+                }
+            }
+            // e.g. "[this.bar] = array"
+            AstKind::ArrayAssignmentTarget(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            // e.g. "({property: this.bar} = object)"
+            AstKind::ObjectAssignmentTarget(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+                if assign_target.span.contains_inclusive(node.span()) {
+                    return true;
+                }
+            }
+            // Main assignment expression check
+            AstKind::AssignmentExpression(assign_expr) => {
+                if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
+                    let is_target = match simple_target {
+                        oxc_ast::ast::SimpleAssignmentTarget::ComputedMemberExpression(
+                            member_expr,
+                        ) => member_expr.span == node.span(),
+                        oxc_ast::ast::SimpleAssignmentTarget::StaticMemberExpression(
+                            member_expr,
+                        ) => member_expr.span == node.span(),
+                        oxc_ast::ast::SimpleAssignmentTarget::PrivateFieldExpression(
+                            member_expr,
+                        ) => member_expr.span == node.span(),
+                        _ => false,
+                    };
+                    if is_target {
+                        return true;
+                    }
+                }
+            }
+            _ => {}
         }
-        // e.g. "this.bar = 1" or "[this.bar] = array"
-        AstKind::AssignmentTarget(assign_target) => assign_target.span() == node.span(),
-        _ => false,
     }
+    false
 }
 
 fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
@@ -421,17 +474,17 @@ fn test() {
         ",
         r"
             class Foo {
-				get bar() {
-					return this.bar;
-				}
-			}
+        		get bar() {
+        			return this.bar;
+        		}
+        	}
         ",
         r"
             const foo = {
-				get bar() {
-					return this.bar.baz;
-				}
-			};
+        		get bar() {
+        			return this.bar.baz;
+        		}
+        	};
         ",
         r"
             const foo = {

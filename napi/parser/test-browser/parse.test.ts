@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { parseAsync, parseSync } from '../wasm.mjs';
+import { parseAsync, parseSync } from '../src-js/wasm.js';
 
 test('parseSync', () => {
   const result = parseSync('test.js', 'ok');

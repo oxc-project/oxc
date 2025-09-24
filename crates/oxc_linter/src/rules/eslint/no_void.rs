@@ -22,10 +22,10 @@ declare_oxc_lint!(
     ///
     /// Disallows the use of the `void` operator.
     ///
-    /// Why is this bad
+    /// ### Why is this bad?
     ///
-    /// The `void` operator is often used to get `undefined`,
-    /// but this is unnecessary because `undefined` can be used directly instead.
+    /// The `void` operator is often used to get `undefined`, but this is
+    /// unnecessary because `undefined` can be used directly instead.
     ///
     /// ### Examples
     ///
@@ -71,10 +71,11 @@ impl Rule for NoVoid {
             return;
         };
 
-        if let Some(node) = outermost_paren_parent(node, ctx) {
-            if self.allow_as_statement && matches!(node.kind(), AstKind::ExpressionStatement(_)) {
-                return;
-            }
+        if let Some(node) = outermost_paren_parent(node, ctx)
+            && self.allow_as_statement
+            && matches!(node.kind(), AstKind::ExpressionStatement(_))
+        {
+            return;
         }
 
         if unary_expr.operator == UnaryOperator::Void {

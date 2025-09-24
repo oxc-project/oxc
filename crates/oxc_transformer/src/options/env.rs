@@ -1,9 +1,6 @@
-use std::str::FromStr;
-
 use serde::Deserialize;
 
 use crate::{
-    EngineTargets,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
     es2017::ES2017Options,
@@ -15,7 +12,8 @@ use crate::{
     regexp::RegExpOptions,
 };
 
-use super::{ESFeature, ESTarget, Engine, Module, babel::BabelEnvOptions};
+use super::{Module, babel::BabelEnvOptions};
+use oxc_compat::{ESFeature, EngineTargets};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(try_from = "BabelEnvOptions")]
@@ -104,39 +102,14 @@ impl EnvOptions {
     ///
     /// * When the query failed to parse.
     pub fn from_target(s: &str) -> Result<Self, String> {
-        if s.contains(',') {
-            Self::from_target_list(&s.split(',').collect::<Vec<_>>())
-        } else {
-            Self::from_target_list(&[s])
-        }
+        EngineTargets::from_target(s).map(Self::from)
     }
 
     /// # Errors
     ///
     /// * When the query failed to parse.
     pub fn from_target_list<S: AsRef<str>>(list: &[S]) -> Result<Self, String> {
-        use crate::options::es_target::ESVersion;
-        let mut es_target = None;
-        let mut engine_targets = EngineTargets::default();
-
-        for s in list {
-            let s = s.as_ref();
-            // Parse `esXXXX`.
-            if let Ok(target) = ESTarget::from_str(s) {
-                if let Some(target) = es_target {
-                    return Err(format!("'{target}' is already specified."));
-                }
-                es_target = Some(target);
-            } else {
-                // Parse `chromeXX`, `edgeXX` etc.
-                let (engine, version) = Engine::parse_name_and_version(s)?;
-                if engine_targets.insert(engine, version).is_some() {
-                    return Err(format!("'{s}' is already specified."));
-                }
-            }
-        }
-        engine_targets.insert(Engine::Es, es_target.unwrap_or(ESTarget::default()).version());
-        Ok(EnvOptions::from(engine_targets))
+        EngineTargets::from_target_list(list).map(Self::from)
     }
 }
 

@@ -19,12 +19,15 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
 
 These options can be passed with [initialize](#initialize), [workspace/didChangeConfiguration](#workspace/didChangeConfiguration) and [workspace/configuration](#workspace/configuration).
 
-| Option Key                | Value(s)                       | Default    | Description                                                                                                                                 |
-| ------------------------- | ------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `run`                     | `"onSave" \| "onType"`         | `"onType"` | Should the server lint the files when the user is typing or saving                                                                          |
-| `configPath`              | `<string>` \| `null`           | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration                                                     |
-| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"` | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway |
-| `flags`                   | `Map<string, string>`          | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config`                                        |
+| Option Key                | Value(s)                       | Default    | Description                                                                                                                                            |
+| ------------------------- | ------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `run`                     | `"onSave" \| "onType"`         | `"onType"` | Should the server lint the files when the user is typing or saving                                                                                     |
+| `configPath`              | `<string>` \| `null`           | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration                                                                |
+| `tsConfigPath`            | `<string>` \| `null`           | `null`     | Path to a TypeScript configuration file. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin |
+| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"` | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway            |
+| `typeAware`               | `true` \| `false`              | `false`    | Enables type-aware linting                                                                                                                             |
+| `flags`                   | `Map<string, string>`          | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config`                                                   |
+| `fmt.experimental`        | `true` \| `false`              | `false`    | Enables experimental formatting with `oxc_formatter`                                                                                                   |
 
 ## Supported LSP Specifications from Server
 
@@ -40,8 +43,11 @@ The client can pass the workspace options like following:
     "options": {
       "run": "onType",
       "configPath": null,
+      "tsConfigPath": null,
       "unusedDisableDirectives": "allow",
-      "flags": {}
+      "typeAware": false,
+      "flags": {},
+      "fmt.experimental": false
     }
   }]
 }
@@ -74,8 +80,11 @@ The client can pass the workspace options like following:
     "options": {
       "run": "onType",
       "configPath": null,
+      "tsConfigPath": null,
       "unusedDisableDirectives": "allow",
-      "flags": {}
+      "typeAware": false,
+      "flags": {},
+      "fmt.experimental": false
     }
   }]
 }
@@ -136,6 +145,10 @@ Returns a list of [CodeAction](https://microsoft.github.io/language-server-proto
 
 Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
 
+#### [textDocument/formatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting)
+
+Returns a list of [TextEdit](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit)
+
 ## Optional LSP Specifications from Client
 
 ### Client
@@ -161,7 +174,10 @@ The client can return a response like:
 [{
   "run": "onType",
   "configPath": null,
+  "tsConfigPath": null,
   "unusedDisableDirectives": "allow",
-  "flags": {}
+  "typeAware": false,
+  "flags": {},
+  "fmt.experimental": false
 }]
 ```

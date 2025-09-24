@@ -142,12 +142,13 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 };
                 ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
             }
-        } else if let Expression::Identifier(ident) = &call_expr.callee {
-            if ident.name.as_str() == "pending" && ctx.is_reference_to_global_variable(ident) {
-                // `describe('foo', function () { pending() })`
-                let (error, help) = Message::Pending.details();
-                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
-            }
+        } else if let Expression::Identifier(ident) = &call_expr.callee
+            && ident.name.as_str() == "pending"
+            && ctx.is_reference_to_global_variable(ident)
+        {
+            // `describe('foo', function () { pending() })`
+            let (error, help) = Message::Pending.details();
+            ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
         }
     }
 }

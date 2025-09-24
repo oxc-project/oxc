@@ -23,9 +23,15 @@ fn switch_case_braces_diagnostic_unnecessary_braces(span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct SwitchCaseBraces {
     always_braces: bool,
+}
+
+impl Default for SwitchCaseBraces {
+    fn default() -> Self {
+        Self { always_braces: true }
+    }
 }
 
 declare_oxc_lint!(
@@ -136,7 +142,12 @@ impl Rule for SwitchCaseBraces {
             };
 
             if self.always_braces && missing_braces {
-                let colon = u32::try_from(ctx.source_range(case.span).find(':').unwrap()).unwrap();
+                let colon = u32::try_from(
+                    ctx.source_range(Span::new(case.span.start, case.consequent[0].span().start))
+                        .rfind(':')
+                        .unwrap(),
+                )
+                .unwrap();
                 let span = Span::sized(case.span.start, colon + 1);
                 ctx.diagnostic_with_fix(
                     switch_case_braces_diagnostic_missing_braces(span),
@@ -245,6 +256,21 @@ fn test() {
             None,
         ),
         ("switch(foo){ case 1: {}; break; }", "switch(foo){ case 1: { {}; break;} }", None),
+        (
+            "switch(something) { case `scope:type`: doSomething();}",
+            "switch(something) { case `scope:type`: { doSomething();}}",
+            None,
+        ),
+        (
+            "switch(something) { case \"scope:type\": doSomething();}",
+            "switch(something) { case \"scope:type\": { doSomething();}}",
+            None,
+        ),
+        (
+            "switch(something) { case 'scope:type': doSomething();}",
+            "switch(something) { case 'scope:type': { doSomething();}}",
+            None,
+        ),
     ];
 
     Tester::new(SwitchCaseBraces::NAME, SwitchCaseBraces::PLUGIN, pass, fail)

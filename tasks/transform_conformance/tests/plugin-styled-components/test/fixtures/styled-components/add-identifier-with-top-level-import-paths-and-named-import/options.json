@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    ["styled-components", {
+      "displayName": true,
+      "fileName": false,
+      "ssr": true,
+      "topLevelImportPaths": ["*(../)**/example"],
+      "transpileTemplateLiterals": false
+    }]
+  ]
+}

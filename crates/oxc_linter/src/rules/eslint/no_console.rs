@@ -81,7 +81,7 @@ declare_oxc_lint!(
     /// console.log('foo');
     /// ```
     ///
-    /// Example of **incorrect** code for this option:
+    /// Example of **correct** code for this option:
     /// ```javascript
     /// console.info('foo');
     /// ```
@@ -158,7 +158,7 @@ fn remove_console<'c, 'a: 'c>(
     node: &AstNode<'a>,
 ) -> RuleFix<'a> {
     let mut node_to_delete = node;
-    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
+    for parent in ctx.nodes().ancestors(node.id()) {
         match parent.kind() {
             AstKind::ParenthesizedExpression(_)
             | AstKind::ExpressionStatement(_)

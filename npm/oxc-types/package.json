@@ -1,7 +1,8 @@
 {
   "name": "@oxc-project/types",
-  "version": "0.76.0",
+  "version": "0.92.0",
   "description": "Types for Oxc AST nodes",
+  "type": "module",
   "keywords": [
     "AST",
     "Parser"
@@ -12,7 +13,7 @@
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "npm/oxc-types"
   },
   "funding": {

@@ -15,7 +15,7 @@
     "@babel/plugin-transform-class-static-block": "^7.26.0",
     "@babel/plugin-transform-exponentiation-operator": "^7.25.9",
     "@babel/plugin-transform-logical-assignment-operators": "^7.25.9",
-    "@babel/plugin-proposal-explicit-resource-management": "^7.25.9",
+    "@babel/plugin-transform-explicit-resource-management": "^7.25.9",
     "@babel/plugin-transform-optional-chaining": "^7.25.9",
     "@babel/plugin-transform-private-methods": "^7.25.9",
     "@babel/plugin-transform-private-property-in-object": "^7.25.9",

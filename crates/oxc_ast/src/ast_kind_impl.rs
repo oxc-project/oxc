@@ -1,9 +1,18 @@
-#![expect(missing_docs)] // FIXME
+//! Implementation details for AST node kinds
+//!
+//! This module provides methods and utilities for working with [`AstKind`],
+//! including type checking, conversions, and tree traversal helpers.
+
+use oxc_allocator::{Address, GetAddress};
 use oxc_span::{Atom, GetSpan};
 
 use super::{AstKind, ast::*};
 
 impl<'a> AstKind<'a> {
+    /// Check if this AST node is a statement
+    ///
+    /// Returns `true` for all statement types including iteration statements,
+    /// control flow statements, and declaration statements.
     #[rustfmt::skip]
     pub fn is_statement(self) -> bool {
         self.is_iteration_statement()
@@ -14,6 +23,10 @@ impl<'a> AstKind<'a> {
                     | Self::IfStatement(_) | Self::VariableDeclaration(_) | Self::ExportDefaultDeclaration(_))
     }
 
+    /// Check if this AST node is a declaration
+    ///
+    /// Returns `true` for function declarations, class declarations,
+    /// variable declarations, TypeScript declarations, and module declarations.
     #[rustfmt::skip]
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
@@ -24,10 +37,17 @@ impl<'a> AstKind<'a> {
         ) || self.is_module_declaration()
     }
 
+    /// Check if this AST node is a module declaration
+    ///
+    /// Returns `true` for import/export declarations.
     pub fn is_module_declaration(self) -> bool {
         self.as_module_declaration_kind().is_some()
     }
 
+    /// Attempt to convert this AST node to a module declaration kind
+    ///
+    /// Returns `Some(ModuleDeclarationKind)` if this is a module declaration,
+    /// `None` otherwise.
     pub fn as_module_declaration_kind(&self) -> Option<ModuleDeclarationKind<'a>> {
         match self {
             Self::ImportDeclaration(decl) => Some(ModuleDeclarationKind::Import(decl)),
@@ -44,12 +64,19 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this AST node is an iteration statement
+    ///
+    /// Returns `true` for do-while, while, for-in, for-of, and for statements.
     #[rustfmt::skip]
     pub fn is_iteration_statement(self) -> bool {
         matches!(self, Self::DoWhileStatement(_) | Self::WhileStatement(_) | Self::ForInStatement(_)
                 | Self::ForOfStatement(_) | Self::ForStatement(_))
     }
 
+    /// Check if this AST node is any kind of identifier
+    ///
+    /// Returns `true` for binding identifiers, identifier references,
+    /// and label identifiers.
     #[rustfmt::skip]
     pub fn is_identifier(self) -> bool {
         matches!(self, Self::BindingIdentifier(_)
@@ -57,6 +84,10 @@ impl<'a> AstKind<'a> {
                 | Self::LabelIdentifier(_))
     }
 
+    /// Check if this AST node is a TypeScript type
+    ///
+    /// Returns `true` for all TypeScript type nodes including keywords,
+    /// type references, unions, intersections, etc.
     #[rustfmt::skip]
     pub fn is_type(self) -> bool {
         matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSIntrinsicKeyword(_)
@@ -67,6 +98,10 @@ impl<'a> AstKind<'a> {
                 | Self::TSTypeLiteral(_) | Self::TSTypeReference(_) | Self::TSUnionType(_))
     }
 
+    /// Check if this AST node is a literal
+    ///
+    /// Returns `true` for numeric, string, boolean, null, bigint,
+    /// regexp, and template literals.
     pub fn is_literal(self) -> bool {
         matches!(
             self,
@@ -80,10 +115,17 @@ impl<'a> AstKind<'a> {
         )
     }
 
+    /// Check if this AST node is function-like
+    ///
+    /// Returns `true` for function expressions/declarations and arrow functions.
     pub fn is_function_like(self) -> bool {
         matches!(self, Self::Function(_) | Self::ArrowFunctionExpression(_))
     }
 
+    /// Get the name of an identifier node
+    ///
+    /// Returns the identifier name if this is any kind of identifier node,
+    /// `None` otherwise.
     pub fn identifier_name(self) -> Option<Atom<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name),
@@ -94,6 +136,9 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this is an identifier reference with a specific name
+    ///
+    /// Returns `true` if this is an `IdentifierReference` with the given name.
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
@@ -123,10 +168,17 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Check if this AST node is a property key
+    ///
+    /// Returns `true` for identifier names and private identifiers used as property keys.
     pub fn is_property_key(&self) -> bool {
         self.as_property_key_kind().is_some()
     }
 
+    /// Attempt to convert this AST node to a property key kind
+    ///
+    /// Returns `Some(PropertyKeyKind)` if this is a property key,
+    /// `None` otherwise.
     pub fn as_property_key_kind(&self) -> Option<PropertyKeyKind<'a>> {
         match self {
             Self::IdentifierName(ident) => Some(PropertyKeyKind::Static(ident)),
@@ -135,6 +187,9 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Create an `AstKind` from an expression
+    ///
+    /// Converts any expression type to its corresponding `AstKind` variant.
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
@@ -182,6 +237,65 @@ impl<'a> AstKind<'a> {
             Expression::V8IntrinsicExpression(e) => Self::V8IntrinsicExpression(e),
         }
     }
+
+    /// Given an [`AstKind`] which is an [`IdentifierReference`], and [`AstKind`] representing its parent node,
+    /// returns `true` if the identifier is assigned to.
+    ///
+    /// Note: `parent` must be the parent node of the identifier, and `self` must be an `IdentifierReference`.
+    /// This method does not check those things, and may return incorrect results if either is not true.
+    //
+    // This method's implementation is identical to `MemberExpressionKind::is_assigned_to_in_parent`
+    // except for addition of `AssignmentTargetPropertyIdentifier`.
+    pub fn ident_reference_is_assigned_to_in_parent(&self, parent: &AstKind<'a>) -> bool {
+        debug_assert!(matches!(self, AstKind::IdentifierReference(_)));
+
+        #[expect(clippy::match_same_arms)]
+        match parent {
+            // `ident++`, `--ident`
+            // `UpdateExpression` has only 1 field containing child node - `argument`.
+            AstKind::UpdateExpression(_) => true,
+            // `[ident] = arr`
+            // `ArrayAssignmentTarget` has only 1 field containing child nodes - `elements`.
+            AstKind::ArrayAssignmentTarget(_) => true,
+            // `[...ident] = arr`, `({ ...ident } = obj)`
+            // `AssignmentTargetRest` has only 1 field containing child node - `target`.
+            AstKind::AssignmentTargetRest(_) => true,
+            // `ident = value`
+            // Only match if ident is on left
+            // - not on right e.g. `assignee = ident`.
+            AstKind::AssignmentExpression(assign_expr) => {
+                assign_expr.left.address() == self.address()
+            }
+            // `[ident = value] = arr`, `({ prop: ident = value } = obj)`
+            // Only match if ident is the assignee
+            // - not the default value e.g. `[assignee = ident] = arr`.
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `({ ident } = obj)`
+            // Only match if ident is the assignee
+            // - not the default value e.g. `({ assignee = ident } = obj)`.
+            AstKind::AssignmentTargetPropertyIdentifier(assign_target) => {
+                let binding = &assign_target.binding;
+                Address::from_ptr(binding) == self.address()
+            }
+            // `({ prop: ident } = obj)`
+            // Only match if ident is the assignee
+            // - not computed prop key e.g. `({ [ident]: assignee } = obj)`.
+            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `for (ident in obj)`
+            // Only match if ident is on left
+            // - not object being iterated e.g. `for (assignee in ident)`
+            AstKind::ForInStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            // `for (ident of obj)`
+            // Only match if ident is on left
+            // - not array being iterated e.g. `for (assignee of ident)`
+            AstKind::ForOfStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            _ => false,
+        }
+    }
 }
 
 impl AstKind<'_> {
@@ -190,11 +304,10 @@ impl AstKind<'_> {
     ///
     /// Note that this method does not exist in release builds. Do not include
     /// usage of this method within your code.
-    pub fn debug_name(&self) -> std::borrow::Cow<str> {
+    pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
         use std::borrow::Cow;
 
         const COMPUTED: Cow<'static, str> = Cow::Borrowed("<computed>");
-        const UNKNOWN: Cow<'static, str> = Cow::Borrowed("<unknown>");
         const ANONYMOUS: Cow<'static, str> = Cow::Borrowed("<anonymous>");
         const DESTRUCTURE: Cow<'static, str> = Cow::Borrowed("<destructure>");
 
@@ -207,7 +320,6 @@ impl AstKind<'_> {
             Self::Program(_) => "Program".into(),
             Self::Directive(d) => d.directive.as_ref().into(),
             Self::Hashbang(_) => "Hashbang".into(),
-
             Self::BlockStatement(_) => "BlockStatement".into(),
             Self::BreakStatement(_) => "BreakStatement".into(),
             Self::ContinueStatement(_) => "ContinueStatement".into(),
@@ -251,7 +363,7 @@ impl AstKind<'_> {
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
-                t.quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
+                t.single_quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
             )
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
@@ -304,11 +416,6 @@ impl AstKind<'_> {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
             }
             Self::Argument(_) => "Argument".into(),
-            Self::AssignmentTarget(_) => "AssignmentTarget".into(),
-            Self::SimpleAssignmentTarget(a) => {
-                format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
-                    .into()
-            }
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
@@ -394,6 +501,7 @@ impl AstKind<'_> {
             Self::TSArrayType(_) => "TSArrayType".into(),
             Self::TSOptionalType(_) => "TSOptionalType".into(),
             Self::TSTypeOperator(_) => "TSTypeOperator".into(),
+            Self::TSFunctionType(_) => "TSFunctionType".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 
@@ -447,6 +555,7 @@ impl AstKind<'_> {
                 "AssignmentTargetPropertyIdentifier".into()
             }
             Self::AssignmentTargetPropertyProperty(_) => "AssignmentTargetPropertyProperty".into(),
+            Self::TSImportTypeQualifiedName(_) => "TSImportTypeQualifiedName".into(),
         }
     }
 }
@@ -523,6 +632,53 @@ impl<'a> MemberExpressionKind<'a> {
             Self::PrivateField(member_expr) => member_expr.optional,
         }
     }
+
+    /// Given a [`MemberExpressionKind`] and [`AstKind`] representing its parent node,
+    /// returns `true` if the member expression is assigned to.
+    ///
+    /// Note: `parent` must be the parent node of the member expression.
+    /// This method does not check that, and may return incorrect results if it's not.
+    pub fn is_assigned_to_in_parent(&self, parent: &AstKind<'a>) -> bool {
+        #[expect(clippy::match_same_arms)]
+        match parent {
+            // `x.y++`, `--x.y`
+            // `UpdateExpression` has only 1 field containing child node - `argument`.
+            AstKind::UpdateExpression(_) => true,
+            // `[x.y] = arr`
+            // `ArrayAssignmentTarget` has only 1 field containing child nodes - `elements`.
+            AstKind::ArrayAssignmentTarget(_) => true,
+            // `[...x.y] = arr`, `({ ...x.y } = obj)`
+            // `AssignmentTargetRest` has only 1 field containing child node - `target`.
+            AstKind::AssignmentTargetRest(_) => true,
+            // `x.y = value`
+            // Only match if member expr is on left
+            // - not on right e.g. `assignee = x.y`.
+            AstKind::AssignmentExpression(assign_expr) => {
+                assign_expr.left.address() == self.address()
+            }
+            // `[x.y = value] = arr`, `({ prop: x.y = value } = obj)`
+            // Only match if member expr is the assignee
+            // - not the default value e.g. `[assignee = x.y] = arr`.
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `({ prop: x.y } = obj)`
+            // Only match if member expr is the assignee
+            // - not computed prop key e.g. `({ [x.y]: assignee } = obj)`.
+            AstKind::AssignmentTargetPropertyProperty(assign_target) => {
+                assign_target.binding.address() == self.address()
+            }
+            // `for (x.y in obj)`
+            // Only match if member expr is on left
+            // - not object being iterated e.g. `for (assignee in x.y)`
+            AstKind::ForInStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            // `for (x.y of obj)`
+            // Only match if member expr is on left
+            // - not array being iterated e.g. `for (assignee of x.y)`
+            AstKind::ForOfStatement(for_stmt) => for_stmt.left.address() == self.address(),
+            _ => false,
+        }
+    }
 }
 
 impl GetSpan for MemberExpressionKind<'_> {
@@ -535,12 +691,32 @@ impl GetSpan for MemberExpressionKind<'_> {
     }
 }
 
+impl GetAddress for MemberExpressionKind<'_> {
+    #[inline] // This should boil down to a single instruction
+    fn address(&self) -> Address {
+        match *self {
+            Self::Computed(member_expr) => Address::from_ptr(member_expr),
+            Self::Static(member_expr) => Address::from_ptr(member_expr),
+            Self::PrivateField(member_expr) => Address::from_ptr(member_expr),
+        }
+    }
+}
+
+/// Module declaration types
+///
+/// Represents different kinds of module import and export declarations.
 pub enum ModuleDeclarationKind<'a> {
+    /// An import declaration like `import foo from 'bar'`
     Import(&'a ImportDeclaration<'a>),
+    /// An export all declaration like `export * from 'foo'`
     ExportAll(&'a ExportAllDeclaration<'a>),
+    /// A named export declaration like `export { foo, bar }`
     ExportNamed(&'a ExportNamedDeclaration<'a>),
+    /// A default export declaration like `export default foo`
     ExportDefault(&'a ExportDefaultDeclaration<'a>),
+    /// A TypeScript export assignment like `export = foo`
     TSExportAssignment(&'a TSExportAssignment<'a>),
+    /// A TypeScript namespace export like `export as namespace foo`
     TSNamespaceExport(&'a TSNamespaceExportDeclaration<'a>),
 }
 
@@ -571,6 +747,9 @@ impl GetSpan for ModuleDeclarationKind<'_> {
     }
 }
 
+/// Property key types
+///
+/// Represents different kinds of property keys in objects and classes.
 pub enum PropertyKeyKind<'a> {
     /// A static identifier property key, like `a` in `{ a: 1 }`.
     Static(&'a IdentifierName<'a>),

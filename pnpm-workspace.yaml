@@ -1,12 +1,35 @@
 packages:
+  - apps/*
   - napi/*
   - wasm/*
   - npm/*
   - editors/*
   - tasks/transform_conformance
   - tasks/compat_data
+  - tasks/mcp
 
 catalog:
-  "@napi-rs/cli": 3.0.0-alpha.88
-  "vitest": 3.2.4
-  "typescript": 5.8.3
+  '@napi-rs/cli': 3.2.0
+  typescript: 5.9.2
+  vitest: 3.2.4
+  '@napi-rs/wasm-runtime': 1.0.5
+
+verifyDepsBeforeRun: install
+
+# To reduce the risk of installing compromised packages.
+minimumReleaseAge: 1440 # 1 day
+minimumReleaseAgeExclude:
+  - '@oxfmt/*'
+  - '@oxlint-tsgolint/*'
+  - '@oxlint/*'
+  - '@rolldown/*'
+  - 'oxfmt'
+  - 'oxlint'
+  - 'oxlint-tsgolint'
+  - 'rolldown'
+  - 'rolldown-plugin-dts'
+  - 'rolldown-vite'
+  - 'tsdown'
+  - 'vite'
+  - 'vitepress'
+  - 'vitest'

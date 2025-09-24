@@ -4,6 +4,9 @@
 //! * [`Allocator::alloc_bytes_start`]
 //! * [`Allocator::data_ptr`]
 //! * [`Allocator::set_data_ptr`]
+//! * [`Allocator::set_cursor_ptr`]
+//! * [`Allocator::data_end_ptr`]
+//! * [`Allocator::end_ptr`]
 
 use std::{
     alloc::Layout,
@@ -13,8 +16,6 @@ use std::{
 };
 
 use bumpalo::Bump;
-
-use oxc_data_structures::pointer_ext::PointerExt;
 
 use crate::Allocator;
 
@@ -75,8 +76,8 @@ impl Allocator {
         }
 
         // Debug assert that `ptr` and `size` fulfill size and alignment requirements
-        debug_assert!(is_multiple_of(ptr.as_ptr() as usize, MIN_ALIGN));
-        debug_assert!(is_multiple_of(size, MIN_ALIGN));
+        debug_assert!((ptr.as_ptr() as usize).is_multiple_of(MIN_ALIGN));
+        debug_assert!(size.is_multiple_of(MIN_ALIGN));
         debug_assert!(size >= CHUNK_FOOTER_SIZE);
 
         let current_chunk_footer_field_offset = get_current_chunk_footer_field_offset();
@@ -138,11 +139,10 @@ impl Allocator {
     /// describes the start of the allocation obtained from system allocator.
     ///
     /// The `Allocator` **must not be allowed to be dropped** or it would be UB.
-    /// Only use this method if you prevent that possibililty. e.g.:
+    /// Only use this method if you prevent that possibility. e.g.:
     ///
     /// 1. Set the data pointer back to its correct value before it is dropped, using [`set_data_ptr`].
-    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and taking care of deallocating it manually
-    ///    with the correct pointer.
+    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and deallocate its memory manually with the correct pointer.
     ///
     /// # Panics
     ///
@@ -158,14 +158,23 @@ impl Allocator {
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
     pub unsafe fn alloc_bytes_start(&self, bytes: usize) -> NonNull<u8> {
         // Round up number of bytes to reserve to multiple of `MIN_ALIGN`,
-        // so data pointer remains aligned on `MIN_ALIGN`
-        let alloc_bytes = (bytes + MIN_ALIGN - 1) & !(MIN_ALIGN - 1);
+        // so data pointer remains aligned on `MIN_ALIGN`.
+        //
+        // `saturating_add` is required to prevent overflow in case `bytes > usize::MAX - MIN_ALIGN`.
+        // In that case, `alloc_bytes` will be rounded down instead of up here, but that's OK because
+        // no allocation can be larger than `isize::MAX` bytes, and therefore it's guaranteed that
+        // `free_capacity < isize::MAX`. So `free_capacity > alloc_bytes` check below will always fail
+        // for such a large value of `alloc_bytes`, regardless of rounding.
+        //
+        // It's preferable to use branchless `saturating_add` instead of `assert!(size <= isize::MAX as usize)`,
+        // to avoid a branch here.
+        let alloc_bytes = bytes.saturating_add(MIN_ALIGN - 1) & !(MIN_ALIGN - 1);
 
         let data_ptr = self.data_ptr();
         let cursor_ptr = self.cursor_ptr();
         // SAFETY: Cursor pointer is always `>=` data pointer.
         // Both pointers are within same allocation, and derived from the same original pointer.
-        let free_capacity = unsafe { cursor_ptr.offset_from_usize(data_ptr) };
+        let free_capacity = unsafe { cursor_ptr.offset_from_unsigned(data_ptr) };
 
         // Check sufficient capacity to write `alloc_bytes` bytes, without overwriting data already
         // stored in allocator.
@@ -181,8 +190,10 @@ impl Allocator {
         // Set new data pointer.
         // SAFETY: `Allocator` must have at least 1 allocated chunk or check for sufficient capacity
         // above would have failed.
+        // `new_data_ptr` cannot be after the cursor pointer, or free capacity check would have failed.
         // Data pointer is always aligned on `MIN_ALIGN`, and we rounded `alloc_bytes` up to a multiple
         // of `MIN_ALIGN`, so that remains the case.
+        // It is caller's responsibility to ensure that the `Allocator` is not dropped after this call.
         unsafe { self.set_data_ptr(new_data_ptr) };
 
         // Return original data pointer
@@ -203,17 +214,30 @@ impl Allocator {
     /// It is only here for manually writing data to start of the allocator chunk,
     /// and then adjusting the start pointer to after it.
     ///
+    /// If calling this method with any pointer which is not the original data pointer for this
+    /// `Allocator` chunk, the `Allocator` must NOT be allowed to be dropped after this call,
+    /// because data pointer no longer correctly describes the start of the allocation obtained
+    /// from system allocator. If the `Allocator` were dropped, it'd be UB.
+    ///
+    /// Only use this method if you prevent that possibility. e.g.:
+    ///
+    /// 1. Set the data pointer back to its correct value before it is dropped, using [`set_data_ptr`].
+    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and deallocate its memory manually with the correct pointer.
+    ///
     /// # SAFETY
     ///
     /// * Allocator must have at least 1 allocated chunk.
     ///   It is UB to call this method on an `Allocator` which has not allocated
     ///   i.e. fresh from `Allocator::new`.
-    /// * `ptr` must point to within the allocation underlying this allocator.
+    /// * `ptr` must point to within the `Allocator`'s current chunk.
+    /// * `ptr` must be equal to or before cursor pointer for this chunk.
     /// * `ptr` must be aligned on [`RAW_MIN_ALIGN`].
+    /// * `Allocator` must not be dropped if `ptr` is not the original data pointer for this chunk.
     ///
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
+    /// [`set_data_ptr`]: Self::set_data_ptr
     pub unsafe fn set_data_ptr(&self, ptr: NonNull<u8>) {
-        debug_assert!(is_multiple_of(ptr.as_ptr() as usize, MIN_ALIGN));
+        debug_assert!((ptr.as_ptr() as usize).is_multiple_of(MIN_ALIGN));
 
         // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
         // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference
@@ -228,6 +252,41 @@ impl Allocator {
         // reference is alive
         let chunk_footer = unsafe { self.chunk_footer() };
         chunk_footer.ptr.get()
+    }
+
+    /// Set cursor pointer for this [`Allocator`]'s current chunk.
+    ///
+    /// This is dangerous, and this method should not ordinarily be used.
+    /// It is only here for manually resetting the allocator.
+    ///
+    /// # SAFETY
+    ///
+    /// * Allocator must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Allocator` which has not allocated
+    ///   i.e. fresh from `Allocator::new`.
+    /// * `ptr` must point to within the `Allocator`'s current chunk.
+    /// * `ptr` must be equal to or after data pointer for this chunk.
+    pub unsafe fn set_cursor_ptr(&self, ptr: NonNull<u8>) {
+        // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
+        // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference
+        // is alive, beyond setting the cursor pointer.
+        let chunk_footer = unsafe { self.chunk_footer_mut() };
+        chunk_footer.ptr.set(ptr);
+    }
+
+    /// Get pointer to end of the data region of this [`Allocator`]'s current chunk
+    /// i.e to the start of the `ChunkFooter`.
+    pub fn data_end_ptr(&self) -> NonNull<u8> {
+        self.chunk_footer_ptr().cast::<u8>()
+    }
+
+    /// Get pointer to end of this [`Allocator`]'s current chunk (after the `ChunkFooter`).
+    pub fn end_ptr(&self) -> NonNull<u8> {
+        // SAFETY: `chunk_footer_ptr` returns pointer to a valid `ChunkFooter`,
+        // so stepping past it cannot be out of bounds of the chunk's allocation.
+        // If `Allocator` has not allocated, so `chunk_footer_ptr` returns a pointer to the static
+        // empty chunk, it's still valid.
+        unsafe { self.chunk_footer_ptr().add(1).cast::<u8>() }
     }
 
     /// Get reference to current [`ChunkFooter`].
@@ -365,9 +424,4 @@ fn get_current_chunk_footer_field_offset() -> usize {
             2
         }
     }
-}
-
-/// Returns `true` if `n` is a multiple of `divisor`.
-const fn is_multiple_of(n: usize, divisor: usize) -> bool {
-    n % divisor == 0
 }

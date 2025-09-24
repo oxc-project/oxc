@@ -123,35 +123,31 @@ impl Rule for ValidTypeof {
             return;
         }
 
-        if let Expression::TemplateLiteral(template) = sibling {
-            if template.expressions.is_empty() {
-                if template.quasi().is_some_and(|value| !VALID_TYPES.contains(&value.as_str())) {
-                    ctx.diagnostic(invalid_value(None, sibling.span()));
-                }
-                return;
+        if let Expression::TemplateLiteral(template) = sibling
+            && let Some(quasi) = template.single_quasi()
+        {
+            if !VALID_TYPES.contains(&quasi.as_str()) {
+                ctx.diagnostic(invalid_value(None, sibling.span()));
             }
+            return;
         }
 
-        if let Expression::Identifier(ident) = sibling {
-            if ident.name == "undefined"
-                && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
-            {
-                ctx.diagnostic_with_fix(
-                    if self.require_string_literals {
-                        not_string(
-                            Some("Use `\"undefined\"` instead of `undefined`."),
-                            sibling.span(),
-                        )
-                    } else {
-                        invalid_value(
-                            Some("Use `\"undefined\"` instead of `undefined`."),
-                            sibling.span(),
-                        )
-                    },
-                    |fixer| fixer.replace(sibling.span(), "\"undefined\""),
-                );
-                return;
-            }
+        if let Expression::Identifier(ident) = sibling
+            && ident.name == "undefined"
+            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
+        {
+            ctx.diagnostic_with_fix(
+                if self.require_string_literals {
+                    not_string(Some("Use `\"undefined\"` instead of `undefined`."), sibling.span())
+                } else {
+                    invalid_value(
+                        Some("Use `\"undefined\"` instead of `undefined`."),
+                        sibling.span(),
+                    )
+                },
+                |fixer| fixer.replace(sibling.span(), "\"undefined\""),
+            );
+            return;
         }
 
         if self.require_string_literals

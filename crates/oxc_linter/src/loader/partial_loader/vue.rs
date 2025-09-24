@@ -2,6 +2,8 @@ use memchr::memmem::Finder;
 
 use oxc_span::SourceType;
 
+use crate::frameworks::FrameworkOptions;
+
 use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START, find_script_closing_angle};
 
 pub struct VuePartialLoader<'a> {
@@ -20,7 +22,7 @@ impl<'a> VuePartialLoader<'a> {
     /// Each *.vue file can contain at most
     ///  * one `<script>` block (excluding `<script setup>`).
     ///  * one `<script setup>` block (excluding normal `<script>`).
-    /// <https://vuejs.org/api/sfc-spec.html#script>
+    ///    <https://vuejs.org/api/sfc-spec.html#script>
     fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
         let mut pointer = 0;
         let Some(result1) = self.parse_script(&mut pointer) else {
@@ -51,15 +53,9 @@ impl<'a> VuePartialLoader<'a> {
         let content = &self.source_text[*pointer..*pointer + offset];
 
         // parse `lang`
-        let lang = content.split_once("lang").map_or(Some("mjs"), |(_, s)| {
-            const QUOTES: [char; 2] = ['"', '\''];
-            s.trim_start()
-                .trim_start_matches('=')
-                .trim_start()
-                .trim_start_matches(QUOTES)
-                .split_once(QUOTES)
-                .map(|(s, _)| s)
-        })?;
+        let lang = Self::extract_lang_attribute(content);
+        let is_setup = content.contains("setup"); // check if "setup" is present, does not check if its inside an attribute
+
         let Ok(mut source_type) = SourceType::from_extension(lang) else { return None };
         if !lang.contains('x') {
             source_type = source_type.with_standard(true);
@@ -77,7 +73,49 @@ impl<'a> VuePartialLoader<'a> {
         let source_text = &self.source_text[js_start..js_end];
         // NOTE: loader checked that source_text.len() is less than u32::MAX
         #[expect(clippy::cast_possible_truncation)]
-        Some(JavaScriptSource::partial(source_text, source_type, js_start as u32))
+        Some(JavaScriptSource::partial_with_framework_options(
+            source_text,
+            source_type,
+            if is_setup { FrameworkOptions::VueSetup } else { FrameworkOptions::Default },
+            js_start as u32,
+        ))
+    }
+
+    fn extract_lang_attribute(content: &str) -> &str {
+        let content = content.trim();
+
+        let Some(lang_index) = content.find("lang") else { return "mjs" };
+
+        // Move past "lang"
+        let mut rest = content[lang_index + 4..].trim_start();
+
+        if !rest.starts_with('=') {
+            return "mjs";
+        }
+
+        // Move past "="
+        rest = rest[1..].trim_start();
+
+        let first_char = rest.chars().next();
+
+        match first_char {
+            Some('"' | '\'') => {
+                let quote = first_char.unwrap();
+                rest = &rest[1..];
+                match rest.find(quote) {
+                    Some(end) => &rest[..end],
+                    None => "mjs", // Unterminated quote
+                }
+            }
+            Some(_) => {
+                // Unquoted value: take until first whitespace or attribute separator
+                match rest.find(|c: char| c.is_whitespace() || c == '>') {
+                    Some(end) => &rest[..end],
+                    None => rest, // whole rest is the lang value
+                }
+            }
+            None => "mjs", // nothing after =
+        }
     }
 }
 
@@ -242,16 +280,26 @@ mod test {
     }
 
     #[test]
+    fn test_closing_character_inside_attribute() {
+        let source_text = r"
+        <script description='PI > 5'>a</script>
+        ";
+
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text, "a");
+    }
+
+    #[test]
     fn lang() {
         let cases = [
             ("<script>debugger</script>", Some(SourceType::mjs())),
             ("<script lang = 'tsx' >debugger</script>", Some(SourceType::tsx())),
             (r#"<script lang = "cjs" >debugger</script>"#, Some(SourceType::cjs())),
+            ("<script lang=tsx>debugger</script>", Some(SourceType::tsx())),
             ("<script lang = 'xxx'>debugger</script>", None),
             (r#"<script lang = "xxx">debugger</script>"#, None),
             ("<script lang='xxx'>debugger</script>", None),
             (r#"<script lang="xxx">debugger</script>"#, None),
-            ("<script lang=tsx>debugger</script>", None), // this is valid but too compliated to parse
         ];
 
         for (source_text, source_type) in cases {

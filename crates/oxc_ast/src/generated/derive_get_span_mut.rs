@@ -1817,6 +1817,7 @@ impl GetSpanMut for TSTypeName<'_> {
         match self {
             Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
@@ -2013,11 +2014,28 @@ impl GetSpanMut for TSTypeQueryExprName<'_> {
             Self::TSImportType(it) => GetSpanMut::span_mut(&mut **it),
             Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
 
 impl GetSpanMut for TSImportType<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for TSImportTypeQualifier<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        match self {
+            Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
+            Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+        }
+    }
+}
+
+impl GetSpanMut for TSImportTypeQualifiedName<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -2086,6 +2104,7 @@ impl GetSpanMut for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

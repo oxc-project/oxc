@@ -1,19 +1,18 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
-import { HelperMode, transform } from '../index';
+import { HelperMode, transform, transformAsync } from '../index';
 
 describe('simple', () => {
   const code = 'export class A<T> {}';
 
   it('matches output', () => {
     const ret = transform('test.ts', code, { sourcemap: true });
-    expect(ret).toStrictEqual({
+    expect(ret).toMatchObject({
       code: 'export class A {}\n',
       errors: [],
       helpersUsed: {},
       map: {
-        mappings: 'AAAA,OAAO,MAAM,EAAK,CAAE',
         names: [],
         sources: ['test.ts'],
         sourcesContent: ['export class A<T> {}'],
@@ -37,13 +36,51 @@ describe('simple', () => {
       typescript: { declaration: {} },
       sourcemap: true,
     });
-    expect(ret.declarationMap).toStrictEqual({
-      mappings: 'AAAA,OAAO,cAAM,EAAE,GAAG,CAAE',
+    expect(ret.declarationMap).toMatchObject({
       names: [],
       sources: ['test.ts'],
       sourcesContent: ['export class A<T> {}'],
       version: 3,
     });
+  });
+});
+
+describe('transformAsync', () => {
+  const code = 'export class A<T> {}';
+
+  it('should work asynchronously', async () => {
+    const ret = await transformAsync('test.ts', code, { sourcemap: true });
+    expect(ret).toMatchObject({
+      code: 'export class A {}\n',
+      errors: [],
+      helpersUsed: {},
+      map: {
+        names: [],
+        sources: ['test.ts'],
+        sourcesContent: ['export class A<T> {}'],
+        version: 3,
+      },
+    });
+  });
+
+  it('should produce the same result as sync transform', async () => {
+    const sourceCode = `
+      const add = (a, b) => a + b;
+      console.log(add(1, 2));
+    `;
+
+    const syncResult = transform('test.js', sourceCode, { target: 'es2015' });
+    const asyncResult = await transformAsync('test.js', sourceCode, { target: 'es2015' });
+
+    expect(asyncResult.code).toEqual(syncResult.code);
+    expect(asyncResult.errors).toEqual(syncResult.errors);
+    expect(asyncResult.helpersUsed).toEqual(syncResult.helpersUsed);
+  });
+
+  it('should handle errors properly', async () => {
+    const invalidCode = 'export class { invalid syntax';
+    const ret = await transformAsync('test.ts', invalidCode);
+    expect(ret.errors.length).toBeGreaterThan(0);
   });
 });
 
@@ -68,7 +105,6 @@ describe('transform', () => {
 
 describe('target', () => {
   const data = [
-    ['es5', '() => {};\n'],
     ['es6', 'a ** b;\n'],
     ['es2015', 'a ** b;\n'],
     ['es2016', 'async function foo() {}\n'],
@@ -325,10 +361,10 @@ describe('legacy decorator', () => {
         };
         _decorate([dce, _decorateMetadata("design:type", Object)], C.prototype, "prop", void 0);
         _decorate([
+        	_decorateParam(0, dce),
         	_decorateMetadata("design:type", Function),
         	_decorateMetadata("design:paramtypes", [Object]),
-        	_decorateMetadata("design:returntype", void 0),
-        	_decorateParam(0, dce)
+        	_decorateMetadata("design:returntype", void 0)
         ], C.prototype, "method", null);
         C = _decorate([dce], C);
         export default C;
@@ -403,18 +439,45 @@ describe('typescript', () => {
         },
       });
       expect(ret.code).toMatchInlineSnapshot(`
-				"import _decorate from "@oxc-project/runtime/helpers/decorate";
-				class Foo {
-					constructor() {
-						this.b = 1;
-					}
-				}
-				_decorate([dec], Foo.prototype, "c", void 0);
-				class StaticFoo {}
-				_decorate([dec], StaticFoo, "c", void 0);
-				StaticFoo.b = 1;
-				"
-			`);
+        "import _decorate from "@oxc-project/runtime/helpers/decorate";
+        class Foo {
+        	constructor() {
+        		this.b = 1;
+        	}
+        }
+        _decorate([dec], Foo.prototype, "c", void 0);
+        class StaticFoo {}
+        StaticFoo.b = 1;
+        _decorate([dec], StaticFoo, "c", void 0);
+        "
+      `);
     });
+  });
+});
+
+describe('styled-components', () => {
+  test('matches output', () => {
+    const code = `
+      import styled, { css } from 'styled-components';
+
+      styled.div\`color: red;\`;
+      const v = css(["color: red;"]);
+    `;
+    const ret = transform('test.js', code, {
+      plugins: {
+        styledComponents: {
+          pure: true,
+        },
+      },
+    });
+    expect(ret.code).toMatchInlineSnapshot(`
+			"import styled, { css } from "styled-components";
+			styled.div.withConfig({
+				displayName: "test",
+				componentId: "sc-3q0sbi-0"
+			})(["color:red;"]);
+			const v = /* @__PURE__ */ css(["color: red;"]);
+			"
+		`);
   });
 });

@@ -19,38 +19,36 @@ use oxc_napi::get_source_type;
 
 use crate::{
     AstType, ParserOptions, get_ast_type, parse,
-    raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
+    raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BUFFER_SIZE},
+    raw_transfer_types::{EcmaScriptModule, Error, RawTransferData, RawTransferMetadata},
 };
 
-// Only 64-bit little-endian platforms are supported at present.
-const IS_SUPPORTED_PLATFORM: bool =
-    cfg!(all(target_pointer_width = "64", target_endian = "little"));
-
-// For raw transfer, use a buffer 4 GiB in size, with 4 GiB alignment.
+// For raw transfer, use a buffer 2 GiB in size, with 4 GiB alignment.
 // This ensures that all 64-bit pointers have the same value in upper 32 bits,
 // so JS only needs to read the lower 32 bits to get an offset into the buffer.
-// However, only use first half of buffer (2 GiB) for the arena, so 32-bit offsets
-// don't have the highest bit set. JS bitwise operators interpret the highest bit as sign bit,
-// so this enables using `>>` bitshift operator in JS, rather than the more expensive `>>>`,
-// without offsets being interpreted as negative.
-const TWO_GIB: usize = 1 << 31;
-// `1 << 32`.
-// We use `IS_SUPPORTED_PLATFORM as usize * 32` to avoid compilation failure on 32-bit platforms.
-const FOUR_GIB: usize = 1 << (IS_SUPPORTED_PLATFORM as usize * 32);
+//
+// Buffer size only 2 GiB so 32-bit offsets don't have the highest bit set.
+// This is advantageous for 2 reasons:
+//
+// 1. V8 stores small integers ("SMI"s) inline, rather than on heap, which is more performant.
+//    But when V8 pointer compression is enabled, 31 bits is the max integer considered an SMI.
+//    So using 32 bits for offsets would be a large perf hit when pointer compression is enabled.
+// 2. JS bitwise operators work only on signed 32-bit integers, with 32nd bit as sign bit.
+//    So avoiding the 32nd bit being set enables using `>>` bitshift operator, which may be cheaper
+//    than `>>>`, without offsets being interpreted as negative.
 
-const BUFFER_SIZE: usize = TWO_GIB;
-const BUFFER_ALIGN: usize = FOUR_GIB;
 const BUMP_ALIGN: usize = 16;
 
-/// Get offset within a `Uint8Array` which is aligned on 4 GiB.
+/// Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
 ///
 /// Does not check that the offset is within bounds of `buffer`.
-/// To ensure it always is, provide a `Uint8Array` of at least 4 GiB size.
+/// To ensure it always is, provide a `Uint8Array` of at least `BUFFER_SIZE + BUFFER_ALIGN` bytes.
 #[napi(skip_typescript)]
 pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
     let buffer = &*buffer;
-    let buffer_addr32 = buffer.as_ptr() as u32;
-    0u32.wrapping_sub(buffer_addr32)
+    let offset = (BUFFER_ALIGN - (buffer.as_ptr() as usize % BUFFER_ALIGN)) % BUFFER_ALIGN;
+    #[expect(clippy::cast_possible_truncation)]
+    return offset as u32;
 }
 
 /// Parse AST into provided `Uint8Array` buffer, synchronously.
@@ -175,28 +173,23 @@ unsafe fn parse_raw_impl(
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
-    assert!(
-        IS_SUPPORTED_PLATFORM,
-        "Raw transfer is only supported on 64-bit little-endian platforms"
-    );
-
     // Check buffer has expected size and alignment
     assert_eq!(buffer.len(), BUFFER_SIZE);
     let buffer_ptr = ptr::from_mut(buffer).cast::<u8>();
-    assert!(is_multiple_of(buffer_ptr as usize, BUFFER_ALIGN));
+    assert!((buffer_ptr as usize).is_multiple_of(BUFFER_ALIGN));
 
     // Get offsets and size of data region to be managed by arena allocator.
-    // Leave space for source before it, and 16 bytes for metadata after it.
+    // Leave space for source before it, and space for metadata after it.
     // Metadata actually only takes 5 bytes, but round everything up to multiple of 16,
     // as `bumpalo` requires that alignment.
-    const METADATA_SIZE: usize = 16;
+    const RAW_METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
-        assert!(METADATA_SIZE >= BUMP_ALIGN);
-        assert!(is_multiple_of(METADATA_SIZE, BUMP_ALIGN));
+        assert!(RAW_METADATA_SIZE >= BUMP_ALIGN);
+        assert!(RAW_METADATA_SIZE.is_multiple_of(BUMP_ALIGN));
     };
     let source_len = source_len as usize;
     let data_offset = source_len.next_multiple_of(BUMP_ALIGN);
-    let data_size = BUFFER_SIZE.saturating_sub(data_offset + METADATA_SIZE);
+    let data_size = (BUFFER_SIZE - RAW_METADATA_SIZE).saturating_sub(data_offset);
     assert!(data_size >= Allocator::RAW_MIN_SIZE, "Source text is too long");
 
     // Create `Allocator`.
@@ -204,8 +197,8 @@ unsafe fn parse_raw_impl(
     // SAFETY: `data_offset` is less than `buffer.len()`, so `.add(data_offset)` cannot wrap
     // or be out of bounds.
     let data_ptr = unsafe { buffer_ptr.add(data_offset) };
-    debug_assert!(is_multiple_of(data_ptr as usize, BUMP_ALIGN));
-    debug_assert!(is_multiple_of(data_size, BUMP_ALIGN));
+    debug_assert!((data_ptr as usize).is_multiple_of(BUMP_ALIGN));
+    debug_assert!(data_size.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `data_ptr` and `data_size` outline a section of the memory in `buffer`.
     // `data_ptr` and `data_size` are multiples of 16.
     // `data_size` is greater than `Allocator::MIN_SIZE`.
@@ -278,25 +271,24 @@ unsafe fn parse_raw_impl(
         ptr::from_ref(data).cast::<u8>()
     };
 
-    // Write offset of `RawTransferData` and `bool` representing AST type into end of buffer
+    // Write metadata into end of buffer
     #[allow(clippy::cast_possible_truncation)]
-    let data_offset = data_ptr as u32;
-    const METADATA_OFFSET: usize = BUFFER_SIZE - METADATA_SIZE;
-    // SAFETY: `METADATA_OFFSET` is less than length of `buffer`
+    let metadata = RawTransferMetadata::new(data_ptr as u32, ast_type == AstType::TypeScript);
+    const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
+    const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
+    // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
+    // `RAW_METADATA_OFFSET` is aligned on 16.
     #[expect(clippy::cast_ptr_alignment)]
     unsafe {
-        buffer_ptr.add(METADATA_OFFSET).cast::<u32>().write(data_offset);
-        buffer_ptr.add(METADATA_OFFSET + 4).cast::<bool>().write(ast_type == AstType::TypeScript);
+        buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
     }
 }
 
 /// Returns `true` if raw transfer is supported on this platform.
+//
+// This module is only compiled on 64-bit little-endian platforms.
+// Fallback version for unsupported platforms in `lib.rs`.
 #[napi]
 pub fn raw_transfer_supported() -> bool {
-    IS_SUPPORTED_PLATFORM
-}
-
-/// Returns `true` if `n` is a multiple of `divisor`.
-const fn is_multiple_of(n: usize, divisor: usize) -> bool {
-    n % divisor == 0
+    true
 }

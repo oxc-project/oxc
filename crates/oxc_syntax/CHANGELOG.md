@@ -5,6 +5,77 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- ab51394 raw_transfer: Disable layout assertions on some 32-bit platforms (#13716) (overlookmotel)
+
+### 🚜 Refactor
+
+- babbaca all: Remove `pub` from modules with no exports (#13618) (overlookmotel)
+
+
+
+
+
+
+
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚀 Features
+
+- 33c0e9f ecmascript: Add global `isNaN`, `isFinite`, `parseFloat`, `parseInt` functions support to constant evaluation (#12954) (Copilot)
+
+
+## [0.81.0] - 2025-08-06
+
+### ⚡ Performance
+
+- 2c4369a syntax,codegen: Replace `ryu_js` with `dragonbox_ecma` for floating point formatting (#12821) (Copilot)
+
+
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+
+## [0.78.0] - 2025-07-24
+
+### 💥 BREAKING CHANGES
+
+- ccbcf3e transformer, minifier, syntax: [**BREAKING**] Remove `ESTarget::ES5` (#12448) (Dunqing)
+
+
+
+
+
+## [0.77.0] - 2025-07-12
+
+### 🚜 Refactor
+
+- 228cff5 semantic,linter: Assert that Program is always the first node (#12123) (Ulrich Stark)
+
+
+
 ## [0.75.1] - 2025-07-03
 
 ### 🚜 Refactor

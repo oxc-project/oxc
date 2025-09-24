@@ -99,9 +99,60 @@ pub struct RulesOfHooks;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This enforces the Rules of Hooks
+    /// Enforces the Rules of Hooks, ensuring that React Hooks are only called
+    /// in valid contexts and in the correct order.
     ///
-    /// <https://reactjs.org/docs/hooks-rules.html>
+    /// ### Why is this bad?
+    ///
+    /// React Hooks must follow specific rules to ensure they work correctly:
+    /// 1. Only call Hooks at the top level (never inside loops, conditions,
+    ///    or nested functions)
+    /// 2. Only call Hooks from React function components or custom Hooks
+    /// 3. Hooks must be called in the same order every time a component renders
+    ///
+    /// Breaking these rules can lead to bugs where state gets corrupted or
+    /// component behavior becomes unpredictable.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// // Don't call Hooks inside loops, conditions, or nested functions
+    /// function BadComponent() {
+    ///   if (condition) {
+    ///     const [state, setState] = useState(); // ❌ Hook in condition
+    ///   }
+    ///
+    ///   for (let i = 0; i < 10; i++) {
+    ///     useEffect(() => {}); // ❌ Hook in loop
+    ///   }
+    /// }
+    ///
+    /// // Don't call Hooks from regular JavaScript functions
+    /// function regularFunction() {
+    ///   const [state, setState] = useState(); // ❌ Hook in regular function
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// // ✅ Call Hooks at the top level of a React component
+    /// function GoodComponent() {
+    ///   const [state, setState] = useState();
+    ///
+    ///   useEffect(() => {
+    ///     // Effect logic here
+    ///   });
+    ///
+    ///   return <div>{state}</div>;
+    /// }
+    ///
+    /// // ✅ Call Hooks from custom Hooks
+    /// function useCustomHook() {
+    ///   const [state, setState] = useState();
+    ///   return state;
+    /// }
+    /// ```
     ///
     RulesOfHooks,
     react,
@@ -324,10 +375,7 @@ fn has_conditional_path_accept_throw(
 }
 
 fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
-    nodes
-        .ancestor_ids(node.id())
-        .map(|id| nodes.get_node(id))
-        .find(|it| it.kind().is_function_like())
+    nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
 }
 
 /// Checks if the `node_id` is a callback argument,
@@ -349,8 +397,7 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
-        .ancestor_ids(node_id)
-        .map(|id| nodes.get_node(id))
+        .ancestors(node_id)
         .filter(|node| node.kind().is_function_like())
         .map(|node| {
             (
@@ -386,10 +433,7 @@ fn get_declaration_identifier<'a>(
             Some(Cow::Borrowed(id.name.as_str()))
         }
         AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-            let parent =
-                nodes.ancestor_ids(node_id).skip(1).map(|node| nodes.get_node(node)).next()?;
-
-            match parent.kind() {
+            match nodes.parent_kind(node_id) {
                 AstKind::VariableDeclarator(decl) => {
                     decl.id.get_identifier_name().map(|id| Cow::Borrowed(id.as_str()))
                 }
@@ -417,7 +461,7 @@ fn get_declaration_identifier<'a>(
 /// # Panics
 /// `node_id` should always point to a valid `Function`.
 fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
-    nodes.ancestor_ids(node_id).map(|id| nodes.get_node(id)).any(|node| {
+    nodes.ancestors(node_id).any(|node| {
         if let AstKind::CallExpression(call) = node.kind() {
             call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))
         } else {

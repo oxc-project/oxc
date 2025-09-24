@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use napi::Either;
+use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
@@ -123,8 +123,8 @@ pub struct TransformOptions {
     ///
     /// Example:
     ///
-    /// * 'es2015'
-    /// * ['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']
+    /// * `'es2015'`
+    /// * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
     ///
     /// @default `esnext` (No transformation)
     ///
@@ -144,6 +144,9 @@ pub struct TransformOptions {
 
     /// Decorator plugin
     pub decorator: Option<DecoratorOptions>,
+
+    /// Third-party plugins to use.
+    pub plugins: Option<PluginsOptions>,
 }
 
 impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
@@ -182,6 +185,10 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
+            plugins: options
+                .plugins
+                .map(oxc::transformer::PluginsOptions::from)
+                .unwrap_or_default(),
         })
     }
 }
@@ -384,6 +391,114 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
         oxc::transformer::DecoratorOptions {
             legacy: options.legacy.unwrap_or_default(),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
+        }
+    }
+}
+
+/// Configure how styled-components are transformed.
+///
+/// @see {@link https://styled-components.com/docs/tooling#babel-plugin}
+#[napi(object)]
+#[derive(Default)]
+pub struct StyledComponentsOptions {
+    /// Enhances the attached CSS class name on each component with richer output to help
+    /// identify your components in the DOM without React DevTools.
+    ///
+    /// @default true
+    pub display_name: Option<bool>,
+
+    /// Controls whether the `displayName` of a component will be prefixed with the filename
+    /// to make the component name as unique as possible.
+    ///
+    /// @default true
+    pub file_name: Option<bool>,
+
+    /// Adds a unique identifier to every styled component to avoid checksum mismatches
+    /// due to different class generation on the client and server during server-side rendering.
+    ///
+    /// @default true
+    pub ssr: Option<bool>,
+
+    /// Transpiles styled-components tagged template literals to a smaller representation
+    /// than what Babel normally creates, helping to reduce bundle size.
+    ///
+    /// @default true
+    pub transpile_template_literals: Option<bool>,
+
+    /// Minifies CSS content by removing all whitespace and comments from your CSS,
+    /// keeping valuable bytes out of your bundles.
+    ///
+    /// @default true
+    pub minify: Option<bool>,
+
+    /// Enables transformation of JSX `css` prop when using styled-components.
+    ///
+    /// **Note: This feature is not yet implemented in oxc.**
+    ///
+    /// @default true
+    pub css_prop: Option<bool>,
+
+    /// Enables "pure annotation" to aid dead code elimination by bundlers.
+    ///
+    /// @default false
+    pub pure: Option<bool>,
+
+    /// Adds a namespace prefix to component identifiers to ensure class names are unique.
+    ///
+    /// Example: With `namespace: "my-app"`, generates `componentId: "my-app__sc-3rfj0a-1"`
+    pub namespace: Option<String>,
+
+    /// List of file names that are considered meaningless for component naming purposes.
+    ///
+    /// When the `fileName` option is enabled and a component is in a file with a name
+    /// from this list, the directory name will be used instead of the file name for
+    /// the component's display name.
+    ///
+    /// @default `["index"]`
+    pub meaningless_file_names: Option<Vec<String>>,
+
+    /// Import paths to be considered as styled-components imports at the top level.
+    ///
+    /// **Note: This feature is not yet implemented in oxc.**
+    pub top_level_import_paths: Option<Vec<String>>,
+}
+
+#[napi(object)]
+#[derive(Default)]
+pub struct PluginsOptions {
+    pub styled_components: Option<StyledComponentsOptions>,
+}
+
+impl From<PluginsOptions> for oxc::transformer::PluginsOptions {
+    fn from(options: PluginsOptions) -> Self {
+        oxc::transformer::PluginsOptions {
+            styled_components: options
+                .styled_components
+                .map(oxc::transformer::StyledComponentsOptions::from),
+        }
+    }
+}
+
+impl From<StyledComponentsOptions> for oxc::transformer::StyledComponentsOptions {
+    fn from(options: StyledComponentsOptions) -> Self {
+        let ops = oxc::transformer::StyledComponentsOptions::default();
+        oxc::transformer::StyledComponentsOptions {
+            display_name: options.display_name.unwrap_or(ops.display_name),
+            file_name: options.file_name.unwrap_or(ops.file_name),
+            ssr: options.ssr.unwrap_or(ops.ssr),
+            transpile_template_literals: options
+                .transpile_template_literals
+                .unwrap_or(ops.transpile_template_literals),
+            minify: options.minify.unwrap_or(ops.minify),
+            css_prop: options.css_prop.unwrap_or(ops.css_prop),
+            pure: options.pure.unwrap_or(ops.pure),
+            namespace: options.namespace,
+            meaningless_file_names: options
+                .meaningless_file_names
+                .unwrap_or(ops.meaningless_file_names),
+            top_level_import_paths: options
+                .top_level_import_paths
+                .unwrap_or(ops.top_level_import_paths),
         }
     }
 }
@@ -785,6 +900,74 @@ pub fn transform(
         helpers_used: compiler.helpers_used,
         errors: OxcError::from_diagnostics(&filename, &source_text, compiler.errors),
     }
+}
+
+pub struct TransformTask {
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+}
+
+#[napi]
+impl Task for TransformTask {
+    type JsValue = TransformResult;
+    type Output = TransformResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        let source_path = Path::new(&self.filename);
+
+        let source_type = get_source_type(
+            &self.filename,
+            self.options.as_ref().and_then(|options| options.lang.as_deref()),
+            self.options.as_ref().and_then(|options| options.source_type.as_deref()),
+        );
+
+        let mut compiler = match Compiler::new(self.options.take()) {
+            Ok(compiler) => compiler,
+            Err(errors) => {
+                return Ok(TransformResult {
+                    errors: OxcError::from_diagnostics(&self.filename, &self.source_text, errors),
+                    ..Default::default()
+                });
+            }
+        };
+
+        compiler.compile(&self.source_text, source_type, source_path);
+
+        Ok(TransformResult {
+            code: compiler.printed,
+            map: compiler.printed_sourcemap,
+            declaration: compiler.declaration,
+            declaration_map: compiler.declaration_map,
+            helpers_used: compiler.helpers_used,
+            errors: OxcError::from_diagnostics(&self.filename, &self.source_text, compiler.errors),
+        })
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
+///
+/// Note: This function can be slower than `transform` due to the overhead of spawning a thread.
+///
+/// @param filename The name of the file being transformed. If this is a
+/// relative path, consider setting the {@link TransformOptions#cwd} option.
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// TransformOptions} for more information.
+///
+/// @returns a promise that resolves to an object containing the transformed code,
+/// source maps, and any errors that occurred during parsing or transformation.
+#[napi]
+pub fn transform_async(
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+) -> AsyncTask<TransformTask> {
+    AsyncTask::new(TransformTask { filename, source_text, options })
 }
 
 #[derive(Default)]

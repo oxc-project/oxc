@@ -1,29 +1,31 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-'use strict';
-
-module.exports = deserialize;
-
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceLen;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
 
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
 
-function deserialize(buffer, sourceTextInput, sourceLenInput) {
+export function deserialize(buffer, sourceText, sourceByteLen, preserveParens) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeRawTransferData);
+}
+
+export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, preserveParens) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeProgram);
+}
+
+function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
 
   sourceText = sourceTextInput;
-  sourceLen = sourceLenInput;
-  sourceIsAscii = sourceText.length === sourceLen;
+  sourceByteLen = sourceByteLenInput;
+  sourceIsAscii = sourceText.length === sourceByteLen;
+  preserveParens = preserveParensInput;
 
-  // (2 * 1024 * 1024 * 1024 - 16) >> 2
-  const metadataPos32 = 536870908;
-
-  const data = deserializeRawTransferData(uint32[metadataPos32]);
+  const data = deserialize(uint32[536870902]);
 
   uint8 =
     uint32 =
@@ -358,7 +360,7 @@ function deserializeAssignmentExpression(pos) {
 
 function deserializeArrayAssignmentTarget(pos) {
   const elements = deserializeVecOptionAssignmentTargetMaybeDefault(pos + 8);
-  const rest = deserializeOptionAssignmentTargetRest(pos + 32);
+  const rest = deserializeOptionBoxAssignmentTargetRest(pos + 32);
   if (rest !== null) elements.push(rest);
   return {
     type: 'ArrayPattern',
@@ -373,7 +375,7 @@ function deserializeArrayAssignmentTarget(pos) {
 
 function deserializeObjectAssignmentTarget(pos) {
   const properties = deserializeVecAssignmentTargetProperty(pos + 8);
-  const rest = deserializeOptionAssignmentTargetRest(pos + 32);
+  const rest = deserializeOptionBoxAssignmentTargetRest(pos + 32);
   if (rest !== null) properties.push(rest);
   return {
     type: 'ObjectPattern',
@@ -495,12 +497,16 @@ function deserializeChainExpression(pos) {
 }
 
 function deserializeParenthesizedExpression(pos) {
-  return {
-    type: 'ParenthesizedExpression',
-    expression: deserializeExpression(pos + 8),
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
+  let node = deserializeExpression(pos + 8);
+  if (preserveParens) {
+    node = {
+      type: 'ParenthesizedExpression',
+      expression: node,
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+    };
+  }
+  return node;
 }
 
 function deserializeDirective(pos) {
@@ -1088,7 +1094,7 @@ function deserializeImportNamespaceSpecifier(pos) {
 
 function deserializeWithClause(pos) {
   return {
-    attributes: deserializeVecImportAttribute(pos + 32),
+    attributes: deserializeVecImportAttribute(pos + 8),
   };
 }
 
@@ -1119,7 +1125,7 @@ function deserializeExportNamedDeclaration(pos) {
 function deserializeExportDefaultDeclaration(pos) {
   return {
     type: 'ExportDefaultDeclaration',
-    declaration: deserializeExportDefaultDeclarationKind(pos + 64),
+    declaration: deserializeExportDefaultDeclarationKind(pos + 8),
     exportKind: 'value',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
@@ -1504,12 +1510,16 @@ function deserializeTSIntersectionType(pos) {
 }
 
 function deserializeTSParenthesizedType(pos) {
-  return {
-    type: 'TSParenthesizedType',
-    typeAnnotation: deserializeTSType(pos + 8),
-    start: deserializeU32(pos),
-    end: deserializeU32(pos + 4),
-  };
+  let node = deserializeTSType(pos + 8);
+  if (preserveParens) {
+    node = {
+      type: 'TSParenthesizedType',
+      typeAnnotation: node,
+      start: deserializeU32(pos),
+      end: deserializeU32(pos + 4),
+    };
+  }
+  return node;
 }
 
 function deserializeTSTypeOperator(pos) {
@@ -2012,8 +2022,18 @@ function deserializeTSImportType(pos) {
     type: 'TSImportType',
     argument: deserializeTSType(pos + 8),
     options: deserializeOptionBoxObjectExpression(pos + 24),
-    qualifier: deserializeOptionTSTypeName(pos + 32),
+    qualifier: deserializeOptionTSImportTypeQualifier(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 48),
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
+  };
+}
+
+function deserializeTSImportTypeQualifiedName(pos) {
+  return {
+    type: 'TSQualifiedName',
+    left: deserializeTSImportTypeQualifier(pos + 8),
+    right: deserializeIdentifierName(pos + 24),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3770,11 +3790,11 @@ function deserializeTSTupleElement(pos) {
 function deserializeTSTypeName(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeBoxIdentifierReference(pos + 8);
-      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
-      return id;
+      return deserializeBoxIdentifierReference(pos + 8);
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
+    case 2:
+      return deserializeBoxThisExpression(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSTypeName`);
   }
@@ -3872,15 +3892,26 @@ function deserializeTSModuleDeclarationBody(pos) {
 function deserializeTSTypeQueryExprName(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeBoxIdentifierReference(pos + 8);
-      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
-      return id;
+      return deserializeBoxIdentifierReference(pos + 8);
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
+      return deserializeBoxThisExpression(pos + 8);
+    case 3:
       return deserializeBoxTSImportType(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSTypeQueryExprName`);
+  }
+}
+
+function deserializeTSImportTypeQualifier(pos) {
+  switch (uint8[pos]) {
+    case 0:
+      return deserializeBoxIdentifierName(pos + 8);
+    case 1:
+      return deserializeBoxTSImportTypeQualifiedName(pos + 8);
+    default:
+      throw new Error(`Unexpected discriminant ${uint8[pos]} for TSImportTypeQualifier`);
   }
 }
 
@@ -3900,12 +3931,12 @@ function deserializeTSMappedTypeModifierOperator(pos) {
 function deserializeTSModuleReference(pos) {
   switch (uint8[pos]) {
     case 0:
-      let id = deserializeBoxIdentifierReference(pos + 8);
-      if (id.name === 'this') id = { type: 'ThisExpression', start: id.start, end: id.end };
-      return id;
+      return deserializeBoxIdentifierReference(pos + 8);
     case 1:
       return deserializeBoxTSQualifiedName(pos + 8);
     case 2:
+      return deserializeBoxThisExpression(pos + 8);
+    case 3:
       return deserializeBoxTSExternalModuleReference(pos + 8);
     default:
       throw new Error(`Unexpected discriminant ${uint8[pos]} for TSModuleReference`);
@@ -4154,13 +4185,21 @@ function deserializeErrorSeverity(pos) {
   }
 }
 
+function deserializeU32(pos) {
+  return uint32[pos >> 2];
+}
+
+function deserializeU8(pos) {
+  return uint8[pos];
+}
+
 function deserializeStr(pos) {
   const pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   if (len === 0) return '';
 
   pos = uint32[pos32];
-  if (sourceIsAscii && pos < sourceLen) return sourceText.substr(pos, len);
+  if (sourceIsAscii && pos < sourceByteLen) return sourceText.substr(pos, len);
 
   // Longer strings use `TextDecoder`
   // TODO: Find best switch-over point
@@ -4515,9 +4554,13 @@ function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
   return arr;
 }
 
-function deserializeOptionAssignmentTargetRest(pos) {
-  if (uint8[pos + 8] === 51) return null;
-  return deserializeAssignmentTargetRest(pos);
+function deserializeBoxAssignmentTargetRest(pos) {
+  return deserializeAssignmentTargetRest(uint32[pos >> 2]);
+}
+
+function deserializeOptionBoxAssignmentTargetRest(pos) {
+  if (uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0) return null;
+  return deserializeBoxAssignmentTargetRest(pos);
 }
 
 function deserializeVecAssignmentTargetProperty(pos) {
@@ -4989,10 +5032,6 @@ function deserializeF64(pos) {
   return float64[pos >> 3];
 }
 
-function deserializeU8(pos) {
-  return uint8[pos];
-}
-
 function deserializeBoxJSXOpeningElement(pos) {
   return deserializeJSXOpeningElement(uint32[pos >> 2]);
 }
@@ -5354,9 +5393,13 @@ function deserializeOptionBoxObjectExpression(pos) {
   return deserializeBoxObjectExpression(pos);
 }
 
-function deserializeOptionTSTypeName(pos) {
+function deserializeOptionTSImportTypeQualifier(pos) {
   if (uint8[pos] === 2) return null;
-  return deserializeTSTypeName(pos);
+  return deserializeTSImportTypeQualifier(pos);
+}
+
+function deserializeBoxTSImportTypeQualifiedName(pos) {
+  return deserializeTSImportTypeQualifiedName(uint32[pos >> 2]);
 }
 
 function deserializeOptionTSMappedTypeModifierOperator(pos) {
@@ -5368,18 +5411,14 @@ function deserializeBoxTSExternalModuleReference(pos) {
   return deserializeTSExternalModuleReference(uint32[pos >> 2]);
 }
 
-function deserializeU32(pos) {
-  return uint32[pos >> 2];
+function deserializeU64(pos) {
+  const pos32 = pos >> 2;
+  return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
 }
 
 function deserializeOptionNameSpan(pos) {
   if (uint32[(pos + 8) >> 2] === 0 && uint32[(pos + 12) >> 2] === 0) return null;
   return deserializeNameSpan(pos);
-}
-
-function deserializeU64(pos) {
-  const pos32 = pos >> 2;
-  return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
 }
 
 function deserializeOptionU64(pos) {

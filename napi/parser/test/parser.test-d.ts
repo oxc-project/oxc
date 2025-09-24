@@ -1,7 +1,7 @@
 import { assertType, describe, it } from 'vitest';
 
-import type { Node, Statement } from '../index';
-import { parseSync } from '../index';
+import type { Node, Statement } from '../src-js/index.js';
+import { parseSync } from '../src-js/index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
@@ -11,6 +11,7 @@ describe('parse', () => {
     assertType<Statement>(ret.program.body[0]);
   });
 
+  // oxlint-disable-next-line jest/expect-expect
   it('Node type', () => {
     function example(node: Node) {
       node.type satisfies string;

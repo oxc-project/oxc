@@ -14,7 +14,8 @@ use crate::{
     codegen::Codegen,
     schema::{
         BoxDef, CellDef, Def, EnumDef, FieldDef, File, FileId, MetaId, MetaType, OptionDef,
-        PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef, VecDef, Visibility,
+        PointerDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, VariantDef,
+        VecDef, Visibility,
     },
     utils::{FxIndexMap, FxIndexSet, ident_name},
 };
@@ -63,6 +64,7 @@ struct Parser<'c> {
     boxes: FxHashMap<TypeId, TypeId>,
     vecs: FxHashMap<TypeId, TypeId>,
     cells: FxHashMap<TypeId, TypeId>,
+    non_nulls: FxHashMap<TypeId, TypeId>,
 }
 
 impl<'c> Parser<'c> {
@@ -83,6 +85,7 @@ impl<'c> Parser<'c> {
             boxes: FxHashMap::default(),
             vecs: FxHashMap::default(),
             cells: FxHashMap::default(),
+            non_nulls: FxHashMap::default(),
         }
     }
 
@@ -143,6 +146,7 @@ impl<'c> Parser<'c> {
                 TypeDef::Box(def) => def.containers.option_id = Some(option_id),
                 TypeDef::Vec(def) => def.containers.option_id = Some(option_id),
                 TypeDef::Cell(def) => def.containers.option_id = Some(option_id),
+                TypeDef::Pointer(def) => def.containers.option_id = Some(option_id),
             }
         }
 
@@ -155,6 +159,7 @@ impl<'c> Parser<'c> {
                 TypeDef::Box(def) => def.containers.box_id = Some(box_id),
                 TypeDef::Vec(def) => def.containers.box_id = Some(box_id),
                 TypeDef::Cell(def) => def.containers.box_id = Some(box_id),
+                TypeDef::Pointer(def) => def.containers.box_id = Some(box_id),
             }
         }
 
@@ -167,6 +172,7 @@ impl<'c> Parser<'c> {
                 TypeDef::Box(def) => def.containers.vec_id = Some(vec_id),
                 TypeDef::Vec(def) => def.containers.vec_id = Some(vec_id),
                 TypeDef::Cell(def) => def.containers.vec_id = Some(vec_id),
+                TypeDef::Pointer(def) => def.containers.vec_id = Some(vec_id),
             }
         }
 
@@ -179,6 +185,20 @@ impl<'c> Parser<'c> {
                 TypeDef::Box(def) => def.containers.cell_id = Some(cell_id),
                 TypeDef::Vec(def) => def.containers.cell_id = Some(cell_id),
                 TypeDef::Cell(def) => def.containers.cell_id = Some(cell_id),
+                TypeDef::Pointer(def) => def.containers.cell_id = Some(cell_id),
+            }
+        }
+
+        for (&inner_type_id, &non_null_id) in &self.non_nulls {
+            match &mut types[inner_type_id] {
+                TypeDef::Struct(def) => def.containers.non_null_id = Some(non_null_id),
+                TypeDef::Enum(def) => def.containers.non_null_id = Some(non_null_id),
+                TypeDef::Primitive(def) => def.containers.non_null_id = Some(non_null_id),
+                TypeDef::Option(def) => def.containers.non_null_id = Some(non_null_id),
+                TypeDef::Box(def) => def.containers.non_null_id = Some(non_null_id),
+                TypeDef::Vec(def) => def.containers.non_null_id = Some(non_null_id),
+                TypeDef::Cell(def) => def.containers.non_null_id = Some(non_null_id),
+                TypeDef::Pointer(def) => def.containers.non_null_id = Some(non_null_id),
             }
         }
     }
@@ -221,6 +241,20 @@ impl<'c> Parser<'c> {
             "NonZeroI64" => primitive("NonZeroI64"),
             "NonZeroI128" => primitive("NonZeroI128"),
             "NonZeroIsize" => primitive("NonZeroIsize"),
+            "AtomicBool" => primitive("AtomicBool"),
+            "AtomicU8" => primitive("AtomicU8"),
+            "AtomicU16" => primitive("AtomicU16"),
+            "AtomicU32" => primitive("AtomicU32"),
+            "AtomicU64" => primitive("AtomicU64"),
+            "AtomicU128" => primitive("AtomicU128"),
+            "AtomicUsize" => primitive("AtomicUsize"),
+            "AtomicI8" => primitive("AtomicI8"),
+            "AtomicI16" => primitive("AtomicI16"),
+            "AtomicI32" => primitive("AtomicI32"),
+            "AtomicI64" => primitive("AtomicI64"),
+            "AtomicI128" => primitive("AtomicI128"),
+            "AtomicIsize" => primitive("AtomicIsize"),
+            "AtomicPtr" => primitive("AtomicPtr"),
             "&str" => primitive("&str"),
             "Atom" => primitive("Atom"),
             // TODO: Remove the need for this by adding
@@ -248,6 +282,7 @@ impl<'c> Parser<'c> {
             TypeDef::Box(def) => def.id = type_id,
             TypeDef::Vec(def) => def.id = type_id,
             TypeDef::Cell(def) => def.id = type_id,
+            TypeDef::Pointer(def) => def.id = type_id,
         }
 
         let was_inserted = self.type_names.insert(type_def.name().to_string());
@@ -447,15 +482,13 @@ impl<'c> Parser<'c> {
         // Get doc comment
         let mut doc_comment = None;
         for attr in &field.attrs {
-            if let Meta::NameValue(name_value) = &attr.meta {
-                if name_value.path.is_ident("doc") {
-                    if let Expr::Lit(expr_lit) = &name_value.value {
-                        if let Lit::Str(lit_str) = &expr_lit.lit {
-                            doc_comment = Some(lit_str.value().trim().to_string());
-                            break;
-                        }
-                    }
-                }
+            if let Meta::NameValue(name_value) = &attr.meta
+                && name_value.path.is_ident("doc")
+                && let Expr::Lit(expr_lit) = &name_value.value
+                && let Lit::Str(lit_str) = &expr_lit.lit
+            {
+                doc_comment = Some(lit_str.value().trim().to_string());
+                break;
             }
         }
 
@@ -564,6 +597,14 @@ impl<'c> Parser<'c> {
                 let type_def = TypeDef::Cell(CellDef::new(name, inner_type_id));
                 let type_id = self.create_new_type(type_def);
                 self.cells.insert(inner_type_id, type_id);
+                type_id
+            }),
+            "NonNull" => self.non_nulls.get(&inner_type_id).copied().unwrap_or_else(|| {
+                let name = format!("NonNull<{}>", self.type_name(inner_type_id));
+                let type_def =
+                    TypeDef::Pointer(PointerDef::new(name, inner_type_id, PointerKind::NonNull));
+                let type_id = self.create_new_type(type_def);
+                self.non_nulls.insert(inner_type_id, type_id);
                 type_id
             }),
             _ => return None,

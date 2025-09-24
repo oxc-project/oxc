@@ -1,0 +1,213 @@
+---
+source: crates/oxc_codegen/tests/integration/sourcemap.rs
+---
+## Input
+const fn = () => {
+    Error.stackTraceLimit = 2;
+    throw new Error()
+};
+fn()
+
+## Output
+const fn = () => {
+	Error.stackTraceLimit = 2;
+	throw new Error();
+};
+fn();
+
+
+## Stderr
+/project/input.js:3
+    throw new Error()
+          ^
+
+
+Error
+    at fn (/project/input.js:3:11)
+    at <anonymous> (/project/input.js:5:1)
+
+------------------------------------------------------
+## Input
+const obj = {
+    fn() {
+        Error.stackTraceLimit = 2;
+        throw new Error()
+    }
+}
+obj.fn()
+
+## Output
+const obj = { fn() {
+	Error.stackTraceLimit = 2;
+	throw new Error();
+} };
+obj.fn();
+
+
+## Stderr
+/project/input.js:4
+        throw new Error()
+              ^
+
+
+Error
+    at Object.fn (/project/input.js:4:15)
+    at <anonymous> (/project/input.js:7:5)
+
+------------------------------------------------------
+## Input
+const obj = {
+    obj2: {
+        fn() {
+            Error.stackTraceLimit = 2;
+            throw new Error()
+        }
+    }
+}
+obj.obj2.fn()
+
+## Output
+const obj = { obj2: { fn() {
+	Error.stackTraceLimit = 2;
+	throw new Error();
+} } };
+obj.obj2.fn();
+
+
+## Stderr
+/project/input.js:5
+            throw new Error()
+                  ^
+
+
+Error
+    at Object.fn (/project/input.js:5:19)
+    at <anonymous> (/project/input.js:9:10)
+
+------------------------------------------------------
+## Input
+const obj = {
+    fn() {
+        return function fn2() {
+            Error.stackTraceLimit = 2;
+            throw new Error()
+        }
+    }
+}
+obj.fn()()
+
+## Output
+const obj = { fn() {
+	return function fn2() {
+		Error.stackTraceLimit = 2;
+		throw new Error();
+	};
+} };
+obj.fn()();
+
+
+## Stderr
+/project/input.js:5
+            throw new Error()
+                  ^
+
+
+Error
+    at fn2 (/project/input.js:5:19)
+    at <anonymous> (/project/input.js:9:9)
+
+------------------------------------------------------
+## Input
+const obj = {
+    fn() {
+        return () => {
+            Error.stackTraceLimit = 2;
+            throw new Error()
+        }
+    }
+}
+obj.fn([1])()
+
+## Output
+const obj = { fn() {
+	return () => {
+		Error.stackTraceLimit = 2;
+		throw new Error();
+	};
+} };
+obj.fn([1])();
+
+
+## Stderr
+/project/input.js:5
+            throw new Error()
+                  ^
+
+
+Error
+    at <anonymous> (/project/input.js:5:19)
+    at <anonymous> (/project/input.js:9:12)
+
+------------------------------------------------------
+## Input
+var a
+const obj = {
+    fn() {
+        return () => {
+            Error.stackTraceLimit = 2;
+            throw new Error()
+        }
+    }
+}
+obj.fn({a})()
+
+## Output
+var a;
+const obj = { fn() {
+	return () => {
+		Error.stackTraceLimit = 2;
+		throw new Error();
+	};
+} };
+obj.fn({ a })();
+
+
+## Stderr
+/project/input.js:6
+            throw new Error()
+                  ^
+
+
+Error
+    at <anonymous> (/project/input.js:6:19)
+    at <anonymous> (/project/input.js:10:12)
+
+------------------------------------------------------
+## Input
+const fn = (name, cb) => {
+    cb()
+}
+fn('name', () => {
+    Error.stackTraceLimit = 2;
+    throw new Error()
+})
+
+## Output
+const fn = (name, cb) => {
+	cb();
+};
+fn("name", () => {
+	Error.stackTraceLimit = 2;
+	throw new Error();
+});
+
+
+## Stderr
+/project/input.js:6
+    throw new Error()
+          ^
+
+
+Error
+    at <anonymous> (/project/input.js:6:11)
+    at fn (/project/input.js:2:5)

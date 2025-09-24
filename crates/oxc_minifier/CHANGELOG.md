@@ -4,6 +4,390 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.92.0] - 2025-09-24
+
+### 🚀 Features
+
+- 0fe4d95 mangler: Mangle private class members (#14027) (sapphi-red)
+- aac45ef minifier: Remove unused private class members (#14026) (sapphi-red)
+
+### ⚡ Performance
+
+- c0ef5f3 minifier: Use oxc_data_structures::stack::Stack for ClassSymbolsStack (#14029) (sapphi-red)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🚀 Features
+
+- b2b2037 minifier: Only apply `arguments` copy loop transformation in functions (#13952) (sapphi-red)
+- fa76365 minifier: Only apply `arguments` copy loop transformation in strict mode (#13951) (sapphi-red)
+- 638416e tasks/coverage: Add node compat table tests for minifier (#13925) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 5198a01 minifier: Handle __proto__ when inlining single-use variables (#13926) (sapphi-red)
+
+### 📚 Documentation
+
+- 4817021 minifier: Clarify assumptions (#13950) (sapphi-red)
+- f1862c4 minifier: Add comprehensive documentation for oxc_minifier (#13938) (Boshen)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 💥 BREAKING CHANGES
+
+- 6fcb0d0 minifier: [**BREAKING**] Receive supported engines instead of ecmascript versions (#13933) (sapphi-red)
+
+### 🚀 Features
+
+- b2b2037 minifier: Only apply `arguments` copy loop transformation in functions (#13952) (sapphi-red)
+- fa76365 minifier: Only apply `arguments` copy loop transformation in strict mode (#13951) (sapphi-red)
+- 638416e tasks/coverage: Add node compat table tests for minifier (#13925) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 5198a01 minifier: Handle __proto__ when inlining single-use variables (#13926) (sapphi-red)
+
+### 📚 Documentation
+
+- 4817021 minifier: Clarify assumptions (#13950) (sapphi-red)
+- f1862c4 minifier: Add comprehensive documentation for oxc_minifier (#13938) (Boshen)
+
+
+
+## [0.89.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- f0af9a4 minifier: Don't inline single use variables that are not literals to for statement initializers (#13769) (sapphi-red)
+
+### 🧪 Testing
+
+- fcc3663 minifier: Merge variable declarations into for statement initializers (#13770) (sapphi-red)
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- a49d7cf minifier: Remove `typeof` guarded global access expressions (#13751) (sapphi-red)
+- c364ad1 minifier: Support ForStatements for single use variable inlining (#13755) (sapphi-red)
+- c868796 minifier: Remove unused variable declarations in dead code (#13754) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 3d895cf minifier: Remove unused long array expressions (#13752) (sapphi-red)
+- f9fd65b minifier: Disallow merging assignments to let declarations when TDZ error would be introduced (#13635) (sapphi-red)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- 2cd4c7b minifier: Inline constant that is declared in normal for statement initializer (#13509) (sapphi-red)
+- 52f3e89 minifier: Remove unused variables in for init (#13508) (sapphi-red)
+- b4dfddd minifier: Store symbol information for for init variables (#13507) (sapphi-red)
+- 05def8c minifier: Constant fold `RegExp.prototype.source` (#13472) (sapphi-red)
+- 78dcfc6 minifier: Return total iterations ran for DCE as well (#13476) (sapphi-red)
+- ecf69bb minifier: Respect `--max-iterations` for DCE as well (#13475) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+- 946669b minifier: Inline multiple variable declarations at once (#13477) (sapphi-red)
+
+### ⚡ Performance
+
+- 60dd9c9 minifier: Prealloc template exprs vec (#13410) (camchenry)
+
+
+## [0.86.0] - 2025-08-31
+
+### 🚀 Features
+
+- 2931356 minifier: Inline single use functions past sideeffectful expressions (#13426) (sapphi-red)
+- f97283b ecmascript: Support more cases for IsLiteralValue with `include_functions` (#13425) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 68b9b33 minifier: Set proper scope information for injected if blocks (#13444) (sapphi-red)
+- 73b93ce minifier: Set reference_id when removing `window.` from `window?.Object` (#13442) (sapphi-red)
+- 6d0e355 minifier: Avoid inlining single use variables when the name needs to be preserved (#13422) (sapphi-red)
+
+### 🚜 Refactor
+
+- 46fc83d minifier: Use `.reference_id()` instead of `.reference_id` (#13443) (sapphi-red)
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 🚀 Features
+
+- 95d4311 ecmascript: Check side effects inside static blocks (#13404) (sapphi-red)
+- 2d0414d minifier: Remove pure function calls when the return value is not used (#13403) (sapphi-red)
+- c557854 ecmascript: Support MayHaveSideEffects for Statements (#13402) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 3e902a0 minifier: Keep argument spread side effects against empty functions (#13401) (sapphi-red)
+
+
+## [0.83.0] - 2025-08-29
+
+### 💥 BREAKING CHANGES
+
+- e459866 ecmascript: [**BREAKING**] Remove `PropertyReadSideEffects::OnlyMemberPropertyAccess` (#13348) (sapphi-red)
+
+### 🚀 Features
+
+- a40140a minifier: Use `is_literal_value` in `substitute_single_use_symbol_in_expression` (#13364) (sapphi-red)
+- ac2067b ecmascript: Examine and improve `is_literal_value` (#13363) (sapphi-red)
+- 56d2da3 minifier: Inline top-level variables for module scripts (#13361) (sapphi-red)
+- 593f54c minifier: Add `--max-iterations` for debugging (#13291) (sapphi-red)
+- a08dd5a minifier: Merge assignments in sequence exprs to variable declaration (#13270) (sapphi-red)
+- a19e84f minifier: Merge assignment to variable declaration (#13269) (sapphi-red)
+- 07afa70 minifier: Support remaining expressions for single use variable inlining (#13280) (sapphi-red)
+- 8e34656 ecmascript: Implement MayHaveSideEffects for AssignmentTarget (#13279) (sapphi-red)
+- a951eee minifier: Support more statements for single use variable inlining (#13277) (sapphi-red)
+- dcda3a2 minifier: Support more expressions for single use variable inlining (#13276) (sapphi-red)
+- 66d6005 minifier: Implement basic single use variable inlining (#13275) (sapphi-red)
+- 53f55a4 minifier: Remove unnecessary parenthesis from nested optional chaining (#13268) (sapphi-red)
+- 8ca9909 minifier: Remove unused assignments for vars (#13231) (sapphi-red)
+- cae222c minifier: Compress `return void foo()` => `foo(); return` (#13271) (sapphi-red)
+- a1b6ad4 minifier: Implement known methods `Math.clz32` and `Math.imul` (#12405) (Ethan Wu)
+
+### 🐛 Bug Fixes
+
+- 72468f9 minifier: Keep variables that are modified by `typeof foo === 'object' && foo !== null` compression (2) (#13362) (sapphi-red)
+- 5d898e8 ecmascript: Treat shadowed global calls correctly (#13292) (sapphi-red)
+- 87e68b5 minifier: Keep variables that are modified by `typeof foo === 'object' && foo !== null` compression (#13290) (sapphi-red)
+- 0e804aa minifier: Keep variables that are modified by combined assignments made by minification (#13267) (sapphi-red)
+- 6003285 minifier: Keep property access before call expressions as-is to preserve `this` value (#13278) (sapphi-red)
+
+### ⚡ Performance
+
+- d7c9169 minifier: Exit early in `is_closest_function_scope_an_async_generator` (#13273) (sapphi-red)
+
+### 🧪 Testing
+
+- d0f1d63 minifier: Share test helper functions between unit tests and integration tests (#13360) (sapphi-red)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- d27a04b ecmascript: Skip array length evaluation if there are any spread elements (#13162) (Monad)
+- f10ac33 codegen: Remove end sourcemaps for `}`, `]`, `)` (#13180) (Boshen)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚀 Features
+
+- fbe6663 minifier: Mark more known global methods as side-effect free (#13086) (Boshen)
+- 36386e4 ecmascript: Treat `[...arguments]` as side effect free (#13116) (sapphi-red)
+- 5dfb40e minifier: Drop `var r = [...arguments]` if `r` is not used (#13115) (sapphi-red)
+- 3d0d31a minifier: Rewrite `arguments` copy loops to spread syntax (#13114) (sapphi-red)
+- dea41dc minifier: Compress `Object(expr)(args)` to `(0, expr)(args)` (#13092) (sapphi-red)
+- fe4589b minifier: Mark more global constructors as side-effect free (#13082) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 896c3ba minifier: Keep `Array` reference id when compressing `Array()` (#13113) (sapphi-red)
+- 6686cc4 minifier: Do not remove `using x = ` (#13052) (Boshen)
+
+### 🚜 Refactor
+
+- a36c3ce minfier: Consistent method names (#13060) (Boshen)
+- e190ee5 minifier: Clean up `remove_unused_expression` (#13080) (Boshen)
+
+### ⚡ Performance
+
+- 2625bdf minifier: No need to collect references if AST is not changed (#13078) (Boshen)
+
+
+## [0.82.1] - 2025-08-13
+
+### 🚀 Features
+
+- 993db89 minifier: `.minify` and `.dce` methods; run dce in loop (#13026) (Boshen)
+
+### 🚜 Refactor
+
+- 73a6f25 minifier: Inline statement methods (#13044) (Boshen)
+- 53c51f9 minifier: Remove clippy allow directives and fix needless_pass_by_ref_mut warnings in oxc_minifier (#13030) (Copilot)
+- 3a8a3ce minifier: Remove clippy::unused_self allow directive by converting methods to associated functions (#13029) (Copilot)
+- 7223686 minifier: Use the original vec in-place in `minimize_statements` (#13028) (Boshen)
+
+
+## [0.82.0] - 2025-08-12
+
+### 🚀 Features
+
+- 54d1750 ecmascript: Handle `typeof` guarded global access as side effect free (#12981) (Copilot)
+- 7b9a781 minifier: Return total number of iterations for debugging (#12995) (Boshen)
+- 33c0e9f ecmascript: Add global `isNaN`, `isFinite`, `parseFloat`, `parseInt` functions support to constant evaluation (#12954) (Copilot)
+- 577d742 minifier: Logical assignment with sequential (#12957) (sapphi-red)
+- 96a1a4f minifier: Remove optional chaining calls when the function is `undefined` or `null` (#12956) (sapphi-red)
+- 208e6f7 ecmascript: Add URI encoding/decoding support to constant evaluation (#12934) (Copilot)
+- 53f7a9f minifier: `new Date()` has `ValueType::Object` (#12951) (Boshen)
+- e0e835b minifier: `f(!a === !1)` -> `f(!!a)` (#12942) (Boshen)
+- 6e393ec minifier: Evaluate String constructor (#12943) (Boshen)
+- 784796d minifier: Fold `(!0).toString()` to `true` (#12938) (Boshen)
+- 2c303f5 minifier: Fold `({ ...!0 })` into `({})` (#12935) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 64326c1 minifier: Improve quoted property key handling for class methods and properties (#12999) (Copilot)
+- ad4aeaf minifier: Evaluate `e ? consequent : alternate` (#12940) (Boshen)
+
+### 🚜 Refactor
+
+- ca91a26 minfier: Single match expression (#13000) (Boshen)
+- 70f742a minifier: Change AST in-place instead of returning `Option<Expression>` (#12993) (Boshen)
+- d3ba782 minifier: Fix double mut in DerefMut for Ctx by correcting Target type (#12994) (Copilot)
+- 451bc07 minifier: Change AST in-place instead of returning `Option<Expression>` (#12969) (Boshen)
+- e5e2496 minifier: Clean up `try_compress_typeof_undefined` (#12958) (Boshen)
+- 8a5c9b9 minifier,ecmascript: Clean up `is_global_reference` (#12953) (Boshen)
+- 0c5bffc ecmascript: Change `IsGlobalReference` to `GlobalContext` (#12952) (Boshen)
+
+### 📚 Documentation
+
+- 3ce27e9 ecmascript, minifier: Revert changes to changelogs (#12962) (overlookmotel)
+
+### ⚡ Performance
+
+- 96b4009 minifier: Remove late optimization pass (#12670) (Boshen)
+
+### 🧪 Testing
+
+- 2c06eda minifier: Add comprehensive test coverage for unary plus removal (#12860) (Copilot)
+
+
+## [0.81.0] - 2025-08-06
+
+### 🐛 Bug Fixes
+
+- 44b37f7 minifier: Keep classes with static properties + side effect initializer (#12848) (Boshen)
+- 00fda91 minifier: Fix `KATAKANA MIDDLE DOT` syntax error for unicode 4.1 to 15 (#12829) (Boshen)
+
+
+## [0.80.0] - 2025-08-03
+
+### 🐛 Bug Fixes
+
+- 7dae2e4 minifier: Keep class if class has decorators (#12669) (Boshen)
+
+### 🚜 Refactor
+
+- 5f50bc3 minifier: Move string method constant evaluation from minifier to ecmascript crate (#12672) (Copilot)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+### 🧪 Testing
+
+- 16312d7 minifier: Add more tests (#12722) (Copilot)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚀 Features
+
+- a286dd4 minifier: Remove unnecessary 'use strict' directive (#12642) (Boshen)
+- 763a618 minifier: Inline small constant values (#12639) (Boshen)
+- f46818a minifier: Remove unused class expression (#12618) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 08a7379 minifier: Do not read constant value from for loop init (#12654) (Boshen)
+- 5642b29 minifier: Initialize constant value in DCE (#12610) (Boshen)
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚀 Features
+
+- 23f7f82 minifier: Remove unused assignment expression (#12509) (Boshen)
+- b877039 minifier: Inline `const` variables that are only used once (#12488) (Boshen)
+
+### 🐛 Bug Fixes
+
+- fe9c8e1 minifier: Do not remove non-plain empty functions (#12573) (Boshen)
+
+
+## [0.78.0] - 2025-07-24
+
+### 🚀 Features
+
+- c135beb codegen: Keep function expression PIFEs (#12470) (sapphi-red)
+- f6e2f29 minifier: Remove unused class declaration (#12419) (Boshen)
+
+### 🚜 Refactor
+
+- 6838948 minifier: Remove change detection based on function changes (#12429) (Boshen)
+- 1cf08c0 minifier: Make DCE remove more code to align with rollup (#12427) (Boshen)
+
+
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- 0920e98 codegen: Keep arrow function PIFEs (#12353) (sapphi-red)
+- 998c67b minifier: Remove no-op function call (#12373) (Boshen)
+
+### ⚡ Performance
+
+- 8bae417 codegen: Remove the useless tokens generated by some expressions (#12394) (Boshen)
+
+
+## [0.77.2] - 2025-07-17
+
+### 🐛 Bug Fixes
+
+- ed696b5 minifier: Remove more unused assignment expressions (#12364) (Boshen)
+- 8777839 minifier: Improve remove unused variable declaration (#12351) (Boshen)
+
+### 🚜 Refactor
+
+- cc3bea4 minifier: Do not remove unused assignment expression yet (#12367) (Boshen)
+- eb12132 minifier: Unify access `CompressOptions` through `ctx.state` (#12346) (Boshen)
+- 7aea02c minifier: Move `State` to a separate file (#12322) (Boshen)
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 1b80633 minifier: Remove unused function declaration (#12318) (Boshen)
+- 3f33e8c minifier: Remove unused assignment expression (#12314) (Boshen)
+- fb8289c minifier: Remove unused variable declaration (#11796) (Boshen)
+- 2cdf722 minifier: Constant fold small integer multiplication (n <= 255) (#12236) (Boshen)
+- 314f970 minifier: Remove unused `-1n` (#12235) (Boshen)
+
+### 🚜 Refactor
+
+- 30e8690 minifier: Move tests around (#12237) (Boshen)
+
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 💥 BREAKING CHANGES

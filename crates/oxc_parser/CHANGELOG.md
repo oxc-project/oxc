@@ -4,6 +4,216 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.92.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- f4d6790 parser: Forbid accessors named `constructor` (#14017) (Don Isaac)
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 035ea19 parser: Optimize `parse_simple_arrow_function_expression` (#13965) (Ulrich Stark)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- 00e4477 parser: Update ident reference check in jsx (#13819) (camc314)
+
+### 📚 Documentation
+
+- 3a03b85 parser: Improve docs for `Token::read_bool` (#13873) (overlookmotel)
+- 5d4e4f0 parser: Document is_on_new_line and read_bool performance characteristics (#13867) (Boshen)
+
+### ⚡ Performance
+
+- ca4a081 parser: Cache redundant token operations in hot paths (#13775) (Boshen)
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- db33196 parser: Adds typescript rule for empty argument list (#13730) (Karan Kiri)
+
+### 🐛 Bug Fixes
+
+- f795d69 parser: Improve diagnostics around modifier checks (#13526) (Ulrich Stark)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🐛 Bug Fixes
+
+- 34d3cde rust: Fix clippy issues (#13540) (Boshen)
+- 65aca9e parser: Reset popped lexer errors when rewinding (#13494) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 3ead0dd parser: Store Option<diagnostic> for lexer errors (#13520) (camc314)
+
+
+
+
+
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- 903a150 parser: Report more invalid modifier locations (#13368) (Ulrich Stark)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🐛 Bug Fixes
+
+- ade2ccb parser: Produce syntax error for `export enum` and similar ts syntaxes (#13208) (Boshen)
+
+### 🚜 Refactor
+
+- b2d59a2 parser: Improve safety of char to bytes conversions (#13193) (overlookmotel)
+
+
+## [0.82.2] - 2025-08-17
+
+### 🚜 Refactor
+
+- fdfec21 lexer: Simplify byte handler macros (#13057) (overlookmotel)
+
+### 📚 Documentation
+
+- 56ae824 lexer: Update comment to match code (#13103) (overlookmotel)
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 🚜 Refactor
+
+- 51aaafd rust: Enable `unnecessary_unwrap` lint (#12908) (camc314)
+
+### ⚡ Performance
+
+- 47a565f lexer: Only check for hashbang at start of file (#12521) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🚜 Refactor
+
+- febb4fa parser: Add `StatementContext::TopLevelStatementList` (#12806) (overlookmotel)
+
+### ⚡ Performance
+
+- 373b5b7 lexer: Add `#[cold]` to unicode path (#12768) (copilot-swe-agent)
+- ae0137c lexer: Improve byte_handlers for `!` and `?` (#12831) (Boshen)
+- 5d96425 parser: Register `import` / `export` statements in module record directly (#12807) (overlookmotel)
+- 00bdfc0 parser: Remove a bound check in `match_keyword` (#12778) (Boshen)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+- 7332ae4 ast: [**BREAKING**] Box `rest` fields of `ArrayAssignmentTarget` and `ObjectAssignmentTarget` (#12698) (Copilot)
+
+### 🐛 Bug Fixes
+
+- e836e55 parser: Prevent panic when parsing invalid extends clause (#12551) (Cameron)
+- ce5876d parser: Validate inner expression of type assertions in assignment targets (#12614) (camc314)
+
+### 🚜 Refactor
+
+- 4fc0868 parser: Reduce unnecessary backtracking in hot paths (#12708) (Copilot)
+- 8a27974 parser: Shorten `AstBuilder` calls (#12716) (overlookmotel)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- 45e2fe8 rust: Fix typos and grammar mistakes in Rust documentation comments (#12715) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🎨 Styling
+
+- 977d3ba lexer: Reformat `Kind` matchers (#12520) (overlookmotel)
+
+
+## [0.78.0] - 2025-07-24
+
+### 🚀 Features
+
+- c135beb codegen: Keep function expression PIFEs (#12470) (sapphi-red)
+
+
+## [0.77.3] - 2025-07-20
+
+### 🚀 Features
+
+- 0920e98 codegen: Keep arrow function PIFEs (#12353) (sapphi-red)
+
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 9b14fbc ast: Add `ThisExpression` to `TSTypeName` (#12156) (Boshen)
+
+### 🚜 Refactor
+
+- 4d88252 parser: Remove unnecessary `unbox` (#12302) (overlookmotel)
+- 1058e8a parser: Shorten code (#12301) (overlookmotel)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🐛 Bug Fixes
+
+- a46708f parser: Handle `%` token as a v8_intrinsic only if option is enabled (#12128) (leaysgur)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### ⚡ Performance

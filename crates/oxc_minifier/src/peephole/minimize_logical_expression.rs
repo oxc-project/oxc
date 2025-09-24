@@ -1,20 +1,21 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_compat::ESFeature;
+use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan};
-use oxc_syntax::es_target::ESTarget;
 
 use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn minimize_logical_expression(
-        &self,
-        e: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        Self::try_compress_is_null_or_undefined(e, ctx)
-            .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
+    pub fn minimize_logical_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::LogicalExpression(e) = expr else { return };
+        if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
+            *expr = changed;
+            ctx.state.changed = true;
+        }
+        Self::try_compress_logical_expression_to_assignment_expression(expr, ctx);
     }
 
     /// Compress `foo === null || foo === undefined` into `foo == null`.
@@ -31,7 +32,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -77,7 +78,7 @@ impl<'a> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -162,7 +163,7 @@ impl<'a> PeepholeOptimizations {
     pub fn has_no_side_effect_for_evaluation_same_target(
         assignment_target: &AssignmentTarget<'a>,
         expr: &Expression,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &Ctx<'a, '_>,
     ) -> bool {
         if let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
@@ -172,13 +173,13 @@ impl<'a> PeepholeOptimizations {
             return write_id_ref.name == read_id_ref.name;
         }
         if let Some(write_expr) = assignment_target.as_member_expression() {
-            if let MemberExpression::ComputedMemberExpression(e) = write_expr {
-                if !matches!(
+            if let MemberExpression::ComputedMemberExpression(e) = write_expr
+                && !matches!(
                     e.expression,
                     Expression::StringLiteral(_) | Expression::NumericLiteral(_)
-                ) {
-                    return false;
-                }
+                )
+            {
+                return false;
             }
             let has_same_object = match &write_expr.object() {
                 // It should also return false when the reference might refer to a reference value created by a with statement
@@ -202,30 +203,86 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Compress `a || (a = b)` to `a ||= b`
+    ///
+    /// Also `a || (foo, bar, a = b)` to `a ||= (foo, bar, b)`
     fn try_compress_logical_expression_to_assignment_expression(
-        &self,
-        expr: &mut LogicalExpression<'a>,
+        expr: &mut Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        if self.target < ESTarget::ES2020 {
-            return None;
+    ) {
+        if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators) {
+            return;
         }
-        let Expression::AssignmentExpression(assignment_expr) = &mut expr.right else {
-            return None;
+        let Expression::LogicalExpression(e) = expr else { return };
+        if let Expression::SequenceExpression(sequence_expr) = &e.right {
+            let Some(Expression::AssignmentExpression(assignment_expr)) =
+                sequence_expr.expressions.last()
+            else {
+                return;
+            };
+            if assignment_expr.operator != AssignmentOperator::Assign {
+                return;
+            }
+            if !Self::has_no_side_effect_for_evaluation_same_target(
+                &assignment_expr.left,
+                &e.left,
+                ctx,
+            ) {
+                return;
+            }
+
+            let Expression::SequenceExpression(sequence_expr) = &mut e.right else { return };
+            let Some(Expression::AssignmentExpression(mut assignment_expr)) =
+                sequence_expr.expressions.pop()
+            else {
+                unreachable!()
+            };
+
+            Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+
+            let assign_value = assignment_expr.right.take_in(ctx.ast);
+            sequence_expr.expressions.push(assign_value);
+            *expr = ctx.ast.expression_assignment(
+                e.span,
+                e.operator.to_assignment_operator(),
+                assignment_expr.left.take_in(ctx.ast),
+                e.right.take_in(ctx.ast),
+            );
+            ctx.state.changed = true;
+            return;
+        }
+
+        let Expression::AssignmentExpression(assignment_expr) = &e.right else {
+            return;
         };
         if assignment_expr.operator != AssignmentOperator::Assign {
-            return None;
+            return;
         }
-        let new_op = expr.operator.to_assignment_operator();
-        if !Self::has_no_side_effect_for_evaluation_same_target(
-            &assignment_expr.left,
-            &expr.left,
-            ctx,
-        ) {
-            return None;
+        let new_op = e.operator.to_assignment_operator();
+        if !Self::has_no_side_effect_for_evaluation_same_target(&assignment_expr.left, &e.left, ctx)
+        {
+            return;
         }
-        assignment_expr.span = expr.span;
+
+        Self::mark_assignment_target_as_read(&assignment_expr.left, ctx);
+
+        let span = e.span;
+        let Expression::AssignmentExpression(assignment_expr) = &mut e.right else {
+            return;
+        };
+        assignment_expr.span = span;
         assignment_expr.operator = new_op;
-        Some(expr.right.take_in(ctx.ast))
+        *expr = e.right.take_in(ctx.ast);
+        ctx.state.changed = true;
+    }
+
+    /// Marks the AssignmentTargetIdentifier of assignment expressions as ReferenceFlags::Read
+    ///
+    /// When creating AssignmentTargetIdentifier from normal expressions, the identifier only has ReferenceFlags::Write.
+    /// But assignment expressions changes the value, so we should add ReferenceFlags::Read.
+    pub fn mark_assignment_target_as_read(assign_target: &AssignmentTarget, ctx: &mut Ctx<'a, '_>) {
+        if let AssignmentTarget::AssignmentTargetIdentifier(id) = assign_target {
+            let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
+            reference.flags_mut().insert(ReferenceFlags::Read);
+        }
     }
 }

@@ -76,7 +76,7 @@ fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {
         return false;
     }
 
-    ctx.nodes().ancestors(node.id()).nth(2).is_some_and(|node| {
+    ctx.nodes().ancestors(node.id()).nth(1).is_some_and(|node| {
         node.kind().as_call_expression().is_some_and(|a| {
             is_promise(a).is_some_and(|prop_name| prop_name == "then" || prop_name == "catch")
         })
@@ -88,14 +88,12 @@ fn closest_promise_cb<'a, 'b>(
     node: &'a AstNode<'b>,
     ctx: &'a LintContext<'b>,
 ) -> Option<&'a CallExpression<'b>> {
-    ctx.nodes()
-        .ancestors(node.id())
-        .filter_map(|node| node.kind().as_call_expression())
-        .filter(|ancestor| {
+    ctx.nodes().ancestors(node.id()).filter_map(|node| node.kind().as_call_expression()).find(
+        |ancestor| {
             is_promise(ancestor)
                 .is_some_and(|prop_name| prop_name == "then" || prop_name == "catch")
-        })
-        .nth(1)
+        },
+    )
 }
 
 /// Checks if we can safely unnest the promise callback.

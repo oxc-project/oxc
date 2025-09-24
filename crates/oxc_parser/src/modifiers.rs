@@ -28,8 +28,8 @@ bitflags! {
       const OUT           = 1 << 11;
       const DEFAULT       = 1 << 13;
       const ACCESSOR      = 1 << 14;
+      const EXPORT        = 1 << 15;
       const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
-      // NOTE: `export` and `default` are not handled here, they are parsed explicitly in the parser.
   }
 }
 
@@ -52,6 +52,8 @@ impl From<Kind> for ModifierFlags {
             Kind::In => Self::IN,
             Kind::Out => Self::OUT,
             Kind::Accessor => Self::ACCESSOR,
+            Kind::Default => Self::DEFAULT,
+            Kind::Export => Self::EXPORT,
             _ => unreachable!(),
         }
     }
@@ -73,6 +75,8 @@ impl From<ModifierKind> for ModifierFlags {
             ModifierKind::In => Self::IN,
             ModifierKind::Out => Self::OUT,
             ModifierKind::Accessor => Self::ACCESSOR,
+            ModifierKind::Default => Self::DEFAULT,
+            ModifierKind::Export => Self::EXPORT,
         }
     }
 }
@@ -235,6 +239,8 @@ pub enum ModifierKind {
     Static,
     Out,
     Override,
+    Default,
+    Export,
 }
 
 impl ModifierKind {
@@ -253,6 +259,8 @@ impl ModifierKind {
             Self::Static => "static",
             Self::Out => "out",
             Self::Override => "override",
+            Self::Default => "default",
+            Self::Export => "export",
         }
     }
 }
@@ -274,6 +282,8 @@ impl TryFrom<Kind> for ModifierKind {
             Kind::In => Ok(Self::In),
             Kind::Out => Ok(Self::Out),
             Kind::Accessor => Ok(Self::Accessor),
+            Kind::Default => Ok(Self::Default),
+            Kind::Export => Ok(Self::Export),
             _ => Err(()),
         }
     }
@@ -298,6 +308,12 @@ impl<'a> ParserImpl<'a> {
             let kind = self.cur_kind();
             self.bump_any();
             let modifier = self.modifier(kind, self.end_span(span));
+            if modifier.kind == ModifierKind::Export {
+                self.error(diagnostics::modifier_must_precede_other_modifier(
+                    &modifier,
+                    ModifierKind::Declare,
+                ));
+            }
             self.check_for_duplicate_modifiers(flags, &modifier);
             flags.set(modifier_flags, true);
             modifiers.push(modifier);
@@ -455,14 +471,14 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn check_for_duplicate_modifiers(&mut self, seen_flags: ModifierFlags, modifier: &Modifier) {
-        if seen_flags.contains(modifier.kind.into())
-            || (matches!(
-                modifier.kind,
-                ModifierKind::Public | ModifierKind::Protected | ModifierKind::Private
-            ) && seen_flags.intersects(
-                ModifierFlags::PUBLIC | ModifierFlags::PROTECTED | ModifierFlags::PRIVATE,
-            ))
+        if matches!(
+            modifier.kind,
+            ModifierKind::Public | ModifierKind::Protected | ModifierKind::Private
+        ) && seen_flags
+            .intersects(ModifierFlags::PUBLIC | ModifierFlags::PROTECTED | ModifierFlags::PRIVATE)
         {
+            self.error(diagnostics::accessibility_modifier_already_seen(modifier));
+        } else if seen_flags.contains(modifier.kind.into()) {
             self.error(diagnostics::modifier_already_seen(modifier));
         }
     }

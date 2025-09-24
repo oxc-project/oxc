@@ -8,7 +8,7 @@ use crate::schema::{
 };
 
 /// The layout of a type.
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, PartialEq, Eq, Debug)]
 pub struct Layout {
     /// Layout on 64-bit platforms
     pub layout_64: PlatformLayout,
@@ -57,7 +57,7 @@ impl Layout {
 }
 
 /// The layout of a type on a specific platform type (64 bit or 32 bit).
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, PartialEq, Eq, Debug)]
 pub struct PlatformLayout {
     pub size: u32,
     pub align: u32,
@@ -77,7 +77,7 @@ impl PlatformLayout {
 }
 
 /// Niche that a type has.
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Niche {
     /// Byte offset of the niche from start of type
     pub offset: u32,
@@ -159,6 +159,7 @@ impl GetLayout for TypeDef {
             TypeDef::Box(def) => &def.layout,
             TypeDef::Vec(def) => &def.layout,
             TypeDef::Cell(def) => &def.layout,
+            TypeDef::Pointer(def) => &def.layout,
         }
     }
 }

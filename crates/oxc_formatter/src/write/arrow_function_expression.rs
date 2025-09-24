@@ -1,19 +1,24 @@
+use std::iter;
+
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
     format_args,
     formatter::{
-        Buffer, Comments, Format, FormatError, FormatResult, Formatter,
-        buffer::RemoveSoftLinesBuffer, comments::has_new_line_backward, prelude::*,
-        trivia::format_trailing_comments,
+        Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
+        buffer::RemoveSoftLinesBuffer,
+        prelude::*,
+        trivia::{FormatLeadingComments, format_trailing_comments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
     utils::assignment_like::AssignmentLikeLayout,
     write,
-    write::parameter_list::has_only_simple_parameters,
+    write::function::FormatContentWithCacheMode,
 };
+
+use super::parameters::has_only_simple_parameters;
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
@@ -25,10 +30,11 @@ pub struct FormatJsArrowFunctionExpression<'a, 'b> {
 pub struct FormatJsArrowFunctionExpressionOptions {
     pub assignment_layout: Option<AssignmentLikeLayout>,
     pub call_arg_layout: Option<GroupedCallArgumentLayout>,
-    pub body_cache_mode: FunctionBodyCacheMode,
+    // Determine whether the signature and body should be cached.
+    pub cache_mode: FunctionCacheMode,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GroupedCallArgumentLayout {
     /// Group the first call argument.
     GroupedFirstArgument,
@@ -37,14 +43,21 @@ pub enum GroupedCallArgumentLayout {
     GroupedLastArgument,
 }
 
-#[derive(Default, Clone, Copy)]
-pub enum FunctionBodyCacheMode {
+impl GroupedCallArgumentLayout {
+    pub fn is_grouped_first(self) -> bool {
+        matches!(self, GroupedCallArgumentLayout::GroupedFirstArgument)
+    }
+
+    pub fn is_grouped_last(self) -> bool {
+        matches!(self, GroupedCallArgumentLayout::GroupedLastArgument)
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy)]
+pub enum FunctionCacheMode {
     /// Format the body without caching it or retrieving it from the cache.
     #[default]
     NoCache,
-
-    /// The body has been cached before, try to retrieve the body from the cache.
-    Cached,
 
     /// Cache the body during the next [formatting](Format::fmt).
     Cache,
@@ -79,7 +92,12 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     write!(
                         f,
                         [
-                            format_signature(arrow, self.options.call_arg_layout.is_some(), true),
+                            format_signature(
+                                arrow,
+                                self.options.call_arg_layout.is_some(),
+                                true,
+                                self.options.cache_mode
+                            ),
                             space(),
                             "=>"
                         ]
@@ -89,7 +107,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 let format_body = FormatMaybeCachedFunctionBody {
                     body,
                     expression: arrow.expression(),
-                    mode: self.options.body_cache_mode,
+                    mode: self.options.cache_mode,
                 };
 
                 // With arrays, arrow self and objects, they have a natural line breaking strategy:
@@ -111,10 +129,8 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 // going to get broken anyways.
                 let arrow_expression = arrow.get_expression();
 
-                if matches!(arrow_expression, Some(Expression::SequenceExpression(_))) {
-                    // let has_comment = f.context().comments().has_comments(sequence.syntax());
-                    let has_comment = false;
-                    return if has_comment {
+                if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
+                    return if f.context().comments().has_comment_before(sequence.span().start) {
                         write!(
                             f,
                             [group(&format_args!(
@@ -283,35 +299,28 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut should_break = false;
 
         loop {
-            if current.expression() {
-                if let Some(AstNodes::ExpressionStatement(expr_stmt)) =
+            if current.expression()
+                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                {
-                    if let AstNodes::ArrowFunctionExpression(next) =
-                        &expr_stmt.expression().as_ast_nodes()
-                    {
-                        if matches!(
-                            options.call_arg_layout,
-                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                        )
-                        // TODO: Unsupported yet
-                        //  && !comments.is_suppressed(next.span())
-                        {
-                            should_break = should_break || Self::should_break_chain(current);
+                && let AstNodes::ArrowFunctionExpression(next) =
+                    &expr_stmt.expression().as_ast_nodes()
+                && matches!(
+                    options.call_arg_layout,
+                    None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+                )
+            {
+                should_break = should_break || Self::should_break_chain(current);
 
-                            should_break = should_break || Self::should_break_chain(next);
+                should_break = should_break || Self::should_break_chain(next);
 
-                            if head.is_none() {
-                                head = Some(current);
-                            } else {
-                                middle.push(current);
-                            }
-
-                            current = next;
-                            continue;
-                        }
-                    }
+                if head.is_none() {
+                    head = Some(current);
+                } else {
+                    middle.push(current);
                 }
+
+                current = next;
+                continue;
             }
             break match head {
                 None => ArrowFunctionLayout::Single(current),
@@ -350,7 +359,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
             return true;
         }
 
-        let has_parameters = parameters.items.is_empty();
+        let has_parameters = !parameters.items.is_empty();
         let has_type_and_parameters = arrow.return_type.is_some() && has_parameters;
         has_type_and_parameters || has_rest_object_or_array_parameter(parameters)
     }
@@ -385,10 +394,10 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 pub fn is_multiline_template_starting_on_same_line(
     start: u32,
     template: &TemplateLiteral,
-    source_text: &str,
+    source_text: SourceText,
 ) -> bool {
-    template.quasis.iter().any(|quasi| quasi.value.raw.contains('\n'))
-        && !has_new_line_backward(&source_text[..start as usize])
+    template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
+        && !source_text.has_newline_before(start)
 }
 
 struct ArrowChain<'a, 'b> {
@@ -484,7 +493,11 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // This tracks that state and is used to prevent the insertion of
         // additional indents under `format_arrow_signatures`, then also to
         // add the outer indent under `format_inner`.
-        let has_initial_indent = is_callee || is_assignment_rhs;
+        let has_initial_indent = is_callee
+            || self
+                .options
+                .assignment_layout
+                .is_some_and(|layout| layout != AssignmentLikeLayout::BreakAfterOperator);
 
         let format_arrow_signatures = format_with(|f| {
             let join_signatures = format_with(|f| {
@@ -496,7 +509,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // comments manually, since they won't have their own
                     // Format node to handle it.
                     let should_format_comments = !is_first_in_chain
-                        && f.context().comments().has_comments_before(arrow.span.start);
+                        && f.context().comments().has_comment_before(arrow.span.start);
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
@@ -520,7 +533,15 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             }
                         }
 
-                        write!(f, [format_signature(arrow, is_grouped_call_arg_layout, is_first)])
+                        write!(
+                            f,
+                            [format_signature(
+                                arrow,
+                                is_grouped_call_arg_layout,
+                                is_first,
+                                self.options.cache_mode
+                            )]
+                        )
                     });
 
                     // Arrow chains indent a second level for every item other than the first:
@@ -552,25 +573,17 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             write!(f, [group(&join_signatures).should_expand(*expand_signatures)])
         });
 
-        // TODO
-        let has_comment = false; //
-        // matches!(
-        // &tail_body,
-        // AnyJsFunctionBody::Expression(Expression::JsSequenceExpression(sequence))
-        // if f.context().comments().has_comments(sequence.syntax())
-        // );
-
         let format_tail_body_inner = format_with(|f| {
             let format_tail_body = FormatMaybeCachedFunctionBody {
                 body: tail_body,
                 expression: tail.expression(),
-                mode: self.options.body_cache_mode,
+                mode: self.options.cache_mode,
             };
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
-            if matches!(tail.get_expression(), Some(Expression::SequenceExpression(_))) {
-                if has_comment {
+            if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
+                if f.context().comments().has_comment_before(sequence.span().start) {
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(
@@ -671,32 +684,33 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum ExpressionLeftSide<'a, 'b> {
-    Expression(&'b Expression<'a>),
-    AssignmentTarget(&'b AssignmentTarget<'a>),
-    SimpleAssignmentTarget(&'b SimpleAssignmentTarget<'a>),
+    Expression(&'b AstNode<'a, Expression<'a>>),
+    AssignmentTarget(&'b AstNode<'a, AssignmentTarget<'a>>),
+    SimpleAssignmentTarget(&'b AstNode<'a, SimpleAssignmentTarget<'a>>),
 }
 
-impl<'a, 'b> From<&'b Expression<'a>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b Expression<'a>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, Expression<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, Expression<'a>>) -> Self {
         Self::Expression(value)
     }
 }
 
-impl<'a, 'b> From<&'b AssignmentTarget<'a>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AssignmentTarget<'a>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, AssignmentTarget<'a>>) -> Self {
         Self::AssignmentTarget(value)
     }
 }
 
-impl<'a, 'b> From<&'b SimpleAssignmentTarget<'a>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b SimpleAssignmentTarget<'a>) -> Self {
+impl<'a, 'b> From<&'b AstNode<'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
+    fn from(value: &'b AstNode<'a, SimpleAssignmentTarget<'a>>) -> Self {
         Self::SimpleAssignmentTarget(value)
     }
 }
 
 impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
-    pub fn leftmost(expression: &'b Expression<'a>) -> Self {
+    pub fn leftmost(expression: &'b AstNode<'a, Expression<'a>>) -> Self {
         let mut current: Self = expression.into();
         loop {
             match current.left_expression() {
@@ -714,53 +728,63 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
     /// if the expression has no left side.
     pub fn left_expression(&self) -> Option<Self> {
         match self {
-            Self::Expression(expression) => match expression {
-                Expression::SequenceExpression(expr) => expr.expressions.first().map(Into::into),
-                Expression::StaticMemberExpression(expr) => Some((&expr.object).into()),
-                Expression::ComputedMemberExpression(expr) => Some((&expr.object).into()),
-                Expression::TaggedTemplateExpression(expr) => Some((&expr.tag).into()),
-                Expression::NewExpression(expr) => Some((&expr.callee).into()),
-                Expression::CallExpression(expr) => Some((&expr.callee).into()),
-                Expression::ConditionalExpression(expr) => Some((&expr.test).into()),
-                Expression::TSAsExpression(expr) => Some((&expr.expression).into()),
-                Expression::TSSatisfiesExpression(expr) => Some((&expr.expression).into()),
-                Expression::TSNonNullExpression(expr) => Some((&expr.expression).into()),
-                Expression::AssignmentExpression(expr) => Some(Self::AssignmentTarget(&expr.left)),
-                Expression::UpdateExpression(expr) => {
+            Self::Expression(expression) => match expression.as_ast_nodes() {
+                AstNodes::SequenceExpression(expr) => expr.expressions().first().map(Into::into),
+                AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
+                AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
+                AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
+                AstNodes::TaggedTemplateExpression(expr) => Some(expr.tag().into()),
+                AstNodes::NewExpression(expr) => Some(expr.callee().into()),
+                AstNodes::CallExpression(expr) => Some(expr.callee().into()),
+                AstNodes::ConditionalExpression(expr) => Some(expr.test().into()),
+                AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
+                AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),
+                AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
+                AstNodes::AssignmentExpression(expr) => Some(Self::AssignmentTarget(expr.left())),
+                AstNodes::UpdateExpression(expr) => {
                     if expr.prefix {
                         None
                     } else {
-                        Some(Self::SimpleAssignmentTarget(&expr.argument))
+                        Some(Self::SimpleAssignmentTarget(expr.argument()))
                     }
                 }
-                Expression::BinaryExpression(binary) => Some((&binary.left).into()),
-                Expression::LogicalExpression(logical) => Some((&logical.left).into()),
+                AstNodes::BinaryExpression(binary) => Some(binary.left().into()),
+                AstNodes::LogicalExpression(logical) => Some(logical.left().into()),
+                AstNodes::ChainExpression(chain) => match &chain.expression().as_ast_nodes() {
+                    AstNodes::CallExpression(expr) => Some(expr.callee().into()),
+                    AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
+                    AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
+                    AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
+                    AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
+                    _ => {
+                        unreachable!()
+                    }
+                },
                 _ => None,
             },
-            Self::AssignmentTarget(target) => match target {
-                match_simple_assignment_target!(AssignmentTarget) => {
-                    Self::SimpleAssignmentTarget(target.to_simple_assignment_target())
-                        .left_expression()
-                }
-                _ => None,
-            },
-            Self::SimpleAssignmentTarget(target) => match target {
-                SimpleAssignmentTarget::TSAsExpression(expr) => Some((&expr.expression).into()),
-                SimpleAssignmentTarget::TSSatisfiesExpression(expr) => {
-                    Some((&expr.expression).into())
-                }
-                SimpleAssignmentTarget::TSNonNullExpression(expr) => {
-                    Some((&expr.expression).into())
-                }
-                SimpleAssignmentTarget::TSTypeAssertion(expr) => Some((&expr.expression).into()),
-                SimpleAssignmentTarget::ComputedMemberExpression(expr) => {
-                    Some((&expr.object).into())
-                }
-                SimpleAssignmentTarget::StaticMemberExpression(expr) => Some((&expr.object).into()),
-                SimpleAssignmentTarget::PrivateFieldExpression(expr) => Some((&expr.object).into()),
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier_reference) => None,
-            },
+            Self::AssignmentTarget(target) => {
+                Self::get_left_side_of_assignment(target.as_ast_nodes())
+            }
+            Self::SimpleAssignmentTarget(target) => {
+                Self::get_left_side_of_assignment(target.as_ast_nodes())
+            }
         }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'a, 'b>> {
+        iter::successors(Some(*self), |f| match f {
+            ExpressionLeftSide::Expression(expression) => {
+                Self::Expression(expression).left_expression()
+            }
+            _ => None,
+        })
+    }
+
+    pub fn iter_expression(&self) -> impl Iterator<Item = &AstNode<'_, Expression<'_>>> {
+        self.iter().filter_map(|left| match left {
+            ExpressionLeftSide::Expression(expression) => Some(expression),
+            _ => None,
+        })
     }
 
     pub fn span(&self) -> Span {
@@ -770,10 +794,24 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
             ExpressionLeftSide::SimpleAssignmentTarget(target) => target.span(),
         }
     }
+
+    fn get_left_side_of_assignment(node: &'b AstNodes<'a>) -> Option<ExpressionLeftSide<'a, 'b>> {
+        match node {
+            AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
+            AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),
+            AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
+            AstNodes::TSTypeAssertion(expr) => Some(expr.expression().into()),
+            AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
+            AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
+            AstNodes::PrivateFieldExpression(expr) => Some(expr.object().into()),
+            _ => None,
+        }
+    }
 }
 
-fn should_add_parens(body: &FunctionBody) -> bool {
-    let Statement::ExpressionStatement(stmt) = body.statements.first().unwrap() else {
+fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
+    let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
+    else {
         unreachable!()
     };
 
@@ -782,11 +820,13 @@ fn should_add_parens(body: &FunctionBody) -> bool {
     // case and added by the object expression itself
     if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(&stmt.expression),
+            ExpressionLeftSide::leftmost(stmt.expression()),
             ExpressionLeftSide::Expression(
+                e
+            ) if matches!(e.as_ref(),
                 Expression::ObjectExpression(_)
-                    | Expression::FunctionExpression(_)
-                    | Expression::ClassExpression(_)
+                | Expression::FunctionExpression(_)
+                | Expression::ClassExpression(_)
             )
         )
     } else {
@@ -814,34 +854,32 @@ fn format_signature<'a, 'b>(
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
     is_first_or_last_call_argument: bool,
     is_first_in_chain: bool,
+    cache_mode: FunctionCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
-        let formatted_async_token =
-            format_with(|f| if arrow.r#async() { write!(f, ["async", space()]) } else { Ok(()) });
-
-        let formatted_parameters =
-            format_with(|f| write!(f, [arrow.type_parameters(), arrow.params()]));
-
-        let format_return_type = format_with(|f| {
-            if let Some(return_type) = &arrow.return_type() {
-                write!(f, return_type)?;
-            }
-            Ok(())
+        let content = format_once(|f| {
+            group(&format_args!(
+                maybe_space(!is_first_in_chain),
+                arrow.r#async().then_some("async "),
+                arrow.type_parameters(),
+                arrow.params(),
+                format_once(|f| {
+                    let needs_space = arrow.return_type.as_ref().is_some_and(|return_type| {
+                        f.context().comments().has_comment_before(return_type.span.start)
+                    });
+                    maybe_space(needs_space).fmt(f)
+                }),
+                group(&arrow.return_type())
+            ))
+            .fmt(f)
         });
+        let format_head = FormatContentWithCacheMode::new(arrow.params.span, content, cache_mode);
 
         if is_first_or_last_call_argument {
             let mut buffer = RemoveSoftLinesBuffer::new(f);
             let mut recording = buffer.start_recording();
 
-            write!(
-                recording,
-                [group(&format_args!(
-                    maybe_space(!is_first_in_chain),
-                    formatted_async_token,
-                    group(&formatted_parameters),
-                    group(&format_return_type)
-                ))]
-            )?;
+            write!(recording, format_head)?;
 
             if recording.stop().will_break() {
                 return Err(FormatError::PoorLayout);
@@ -855,11 +893,7 @@ fn format_signature<'a, 'b>(
                     // line and can't break pre-emptively without also causing
                     // the parent (i.e., this ArrowChain) to break first.
                     (!is_first_in_chain).then_some(soft_line_break_or_space()),
-                    group(&format_args!(
-                        formatted_async_token,
-                        formatted_parameters,
-                        group(&format_return_type)
-                    ))
+                    format_head
                 ]
             )?;
         }
@@ -882,50 +916,20 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
     pub expression: bool,
 
     /// If the body should be cached or if the formatter should try to retrieve it from the cache.
-    pub mode: FunctionBodyCacheMode,
-}
-
-impl<'a> FormatMaybeCachedFunctionBody<'a, '_> {
-    fn format(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.expression {
-            if let AstNodes::ExpressionStatement(s) =
-                &self.body.statements().first().unwrap().as_ast_nodes()
-            {
-                return s.expression().fmt(f);
-            }
-        }
-        self.body.fmt(f)
-    }
+    pub mode: FunctionCacheMode,
 }
 
 impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self.mode {
-            FunctionBodyCacheMode::NoCache => self.format(f),
-            FunctionBodyCacheMode::Cached => {
-                match f.context().get_cached_function_body(self.body) {
-                    Some(cached) => f.write_element(cached),
-                    None => {
-                        // This can happen in the unlikely event where a function has a parameter with
-                        // an initializer that contains a call expression with a first or last function/arrow
-                        // ```javascript
-                        // test((
-                        //   problematic = test(() => body)
-                        // ) => {});
-                        // ```
-                        // This case should be rare as it requires very specific syntax (and is rather messy to write)
-                        // which is why it's fine to just fallback to formatting the body again in this case.
-                        self.format(f)
-                    }
-                }
+        let content = format_once(|f| {
+            if self.expression
+                && let AstNodes::ExpressionStatement(s) =
+                    &self.body.statements().first().unwrap().as_ast_nodes()
+            {
+                return s.expression().fmt(f);
             }
-            FunctionBodyCacheMode::Cache => match f.intern(&format_once(|f| self.format(f)))? {
-                Some(interned) => {
-                    f.context_mut().set_cached_function_body(self.body, interned.clone());
-                    f.write_element(interned)
-                }
-                None => Ok(()),
-            },
-        }
+            self.body.fmt(f)
+        });
+        FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f)
     }
 }

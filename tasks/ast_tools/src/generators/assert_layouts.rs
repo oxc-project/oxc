@@ -8,6 +8,7 @@ use std::{
     borrow::Cow,
     cmp::{Ordering, max, min},
     num,
+    sync::atomic,
 };
 
 use phf_codegen::Map as PhfMapGen;
@@ -20,7 +21,8 @@ use crate::{
     AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{
-        Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
+        Def, Discriminant, EnumDef, PointerKind, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
+        Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::{format_cow, number_lit},
@@ -107,6 +109,13 @@ fn calculate_layout(type_id: TypeId, schema: &mut Schema) -> &Layout {
                 schema.cell_def_mut(type_id).layout = calculate_layout_for_cell(type_id, schema);
             }
             &schema.cell_def(type_id).layout
+        }
+        TypeDef::Pointer(pointer_def) => {
+            if is_not_calculated(&pointer_def.layout) {
+                schema.pointer_def_mut(type_id).layout =
+                    calculate_layout_for_pointer(type_id, schema);
+            }
+            &schema.pointer_def(type_id).layout
         }
     }
 }
@@ -217,7 +226,7 @@ fn calculate_layout_for_struct(
             // to fill in the gap between `span` and the `u128` field.
             let offset = layout.size;
             assert!(
-                offset % field_layout.align == 0,
+                offset.is_multiple_of(field_layout.align),
                 "Incorrect alignment for struct fields in `{struct_name}`"
             );
 
@@ -229,16 +238,16 @@ fn calculate_layout_for_struct(
             // * Largest single range of niche values.
             // * Largest number of niche values at start of range.
             // * Earlier field (earlier after re-ordering).
-            if let Some(field_niche) = &field_layout.niche {
-                if layout.niche.as_ref().is_none_or(|niche| {
+            if let Some(field_niche) = &field_layout.niche
+                && layout.niche.as_ref().is_none_or(|niche| {
                     field_niche.count_max() > niche.count_max()
                         || (field_niche.count_max() == niche.count_max()
                             && field_niche.count_start > niche.count_start)
-                }) {
-                    let mut niche = field_niche.clone();
-                    niche.offset += offset;
-                    layout.niche = Some(niche);
-                }
+                })
+            {
+                let mut niche = field_niche.clone();
+                niche.offset += offset;
+                layout.niche = Some(niche);
             }
 
             // Next field starts after this one
@@ -409,6 +418,24 @@ fn calculate_layout_for_cell(type_id: TypeId, schema: &mut Schema) -> Layout {
     layout
 }
 
+/// Calculate layout for a pointer.
+///
+/// `NonNull` pointers have a niche, `*const` and `*mut` have no niche.
+fn calculate_layout_for_pointer(type_id: TypeId, schema: &Schema) -> Layout {
+    let pointer_def = schema.pointer_def(type_id);
+    if pointer_def.kind == PointerKind::NonNull {
+        Layout {
+            layout_64: PlatformLayout::from_size_align_niche(8, 8, Niche::new(0, 8, 1, 0)),
+            layout_32: PlatformLayout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
+        }
+    } else {
+        Layout {
+            layout_64: PlatformLayout::from_size_align(8, 8),
+            layout_32: PlatformLayout::from_size_align(4, 4),
+        }
+    }
+}
+
 /// Calculate layout for a primitive.
 ///
 /// Primitives have varying layouts. Some have niches, most don't.
@@ -472,6 +499,20 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
             )
         }
         "NonZeroIsize" => non_zero_usize_layout,
+        // Unlike `bool`, `AtomicBool` does not have any niches
+        "AtomicBool" => Layout::from_type::<atomic::AtomicBool>(),
+        "AtomicU8" => Layout::from_type::<atomic::AtomicU8>(),
+        "AtomicU16" => Layout::from_type::<atomic::AtomicU16>(),
+        "AtomicU32" => Layout::from_type::<atomic::AtomicU32>(),
+        "AtomicU64" => Layout::from_type::<atomic::AtomicU64>(),
+        "AtomicUsize" => usize_layout,
+        "AtomicI8" => Layout::from_type::<atomic::AtomicI8>(),
+        "AtomicI16" => Layout::from_type::<atomic::AtomicI16>(),
+        "AtomicI32" => Layout::from_type::<atomic::AtomicI32>(),
+        "AtomicI64" => Layout::from_type::<atomic::AtomicI64>(),
+        "AtomicIsize" => usize_layout,
+        // `AtomicPtr` has no niche - like `*mut T`, not `NonNull<T>`
+        "AtomicPtr" => usize_layout,
         "PointerAlign" => Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),
@@ -643,9 +684,20 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
         #[cfg(target_pointer_width = "64")]
         const _: () = { #assertions_64 };
 
+        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
+        //
+        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
+        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/issues/13694
+        //
+        // At present 32-bit layouts aren't relied on by any code, so it's fine if they're incorrect for now.
+        // However, raw transfer will be supported on WASM32 in future, and layout calculations are correct
+        // for WASM32 at present. So keep these assertions for WASM, to ensure changes to AST or this codegen
+        // don't break anything.
         ///@@line_break
         #[cfg(target_pointer_width = "32")]
-        const _: () = { #assertions_32 };
+        const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
+            #assertions_32
+        };
 
         ///@@line_break
         #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

@@ -52,6 +52,15 @@ declare_oxc_lint!(
     /// - Types
     /// - Calls to the standard Jest globals
     ///
+    /// ### Why is this bad?
+    ///
+    /// Having setup and teardown code outside of hooks can lead to unpredictable test
+    /// behavior. Code that runs at the top level executes when the test file is loaded,
+    /// not when tests run, which can cause issues with test isolation and make tests
+    /// dependent on execution order. Using proper hooks like `beforeEach`, `beforeAll`,
+    /// `afterEach`, and `afterAll` ensures that setup and teardown code runs at the
+    /// correct time and maintains test isolation.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -211,17 +220,16 @@ impl RequireHook {
     fn check<'a>(&self, node: &AstNode<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
             self.check_should_report_in_hook(node, &expr_stmt.expression, ctx);
-        } else if let Statement::VariableDeclaration(var_decl) = stmt {
-            if var_decl.kind != VariableDeclarationKind::Const
-                && var_decl.declarations.iter().any(|decl| {
-                    let Some(init_call) = &decl.init else {
-                        return false;
-                    };
-                    !init_call.is_null_or_undefined()
-                })
-            {
-                ctx.diagnostic(use_hook(var_decl.span));
-            }
+        } else if let Statement::VariableDeclaration(var_decl) = stmt
+            && var_decl.kind != VariableDeclarationKind::Const
+            && var_decl.declarations.iter().any(|decl| {
+                let Some(init_call) = &decl.init else {
+                    return false;
+                };
+                !init_call.is_null_or_undefined()
+            })
+        {
+            ctx.diagnostic(use_hook(var_decl.span));
         }
     }
 

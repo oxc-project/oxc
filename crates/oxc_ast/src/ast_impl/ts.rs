@@ -19,7 +19,7 @@ impl<'a> TSEnumMemberName<'a> {
             Self::Identifier(ident) => ident.name,
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
             Self::ComputedTemplateString(template) => template
-                .quasi()
+                .single_quasi()
                 .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),
         }
     }
@@ -32,9 +32,7 @@ impl<'a> TSType<'a> {
     /// returned.
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
         match self {
-            TSType::TSTypeReference(reference) => {
-                Some(reference.type_name.get_identifier_reference())
-            }
+            TSType::TSTypeReference(reference) => reference.type_name.get_identifier_reference(),
             TSType::TSTypeQuery(query) => match &query.expr_name {
                 TSTypeQueryExprName::IdentifierReference(ident) => Some(ident),
                 _ => None,
@@ -86,19 +84,20 @@ impl<'a> TSTypeName<'a> {
     /// type Foo = Bar; // -> Bar
     /// type Foo = Bar.Baz; // -> Bar
     /// ```
-    pub fn get_identifier_reference(&self) -> &IdentifierReference<'a> {
+    pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
         match self {
-            TSTypeName::IdentifierReference(ident) => ident,
+            TSTypeName::IdentifierReference(ident) => Some(ident),
             TSTypeName::QualifiedName(name) => name.left.get_identifier_reference(),
+            TSTypeName::ThisExpression(_) => None,
         }
     }
 
     /// Returns `true` if this is a reference to `const`.
     pub fn is_const(&self) -> bool {
-        if let TSTypeName::IdentifierReference(ident) = self {
-            if ident.name == "const" {
-                return true;
-            }
+        if let TSTypeName::IdentifierReference(ident) = self
+            && ident.name == "const"
+        {
+            return true;
         }
         false
     }
@@ -120,6 +119,7 @@ impl fmt::Display for TSTypeName<'_> {
         match self {
             TSTypeName::IdentifierReference(ident) => ident.fmt(f),
             TSTypeName::QualifiedName(qualified) => qualified.fmt(f),
+            TSTypeName::ThisExpression(_) => "this".fmt(f),
         }
     }
 }

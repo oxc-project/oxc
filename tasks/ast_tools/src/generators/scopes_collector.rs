@@ -116,6 +116,7 @@ impl<'s> ScopesCalculator<'s> {
             TypeDef::Box(box_def) => self.calculate_type(box_def.inner_type_id),
             TypeDef::Vec(vec_def) => self.calculate_type(vec_def.inner_type_id),
             TypeDef::Cell(cell_def) => self.calculate_type(cell_def.inner_type_id),
+            TypeDef::Pointer(pointer_def) => self.calculate_type(pointer_def.inner_type_id),
         };
 
         // Either `Calculated(true)`, `Calculated(false)`, or `NotCalculated`.
@@ -328,13 +329,12 @@ fn generate_visit_method_for_struct(
         for (field_index, field) in struct_def.fields.iter().enumerate() {
             // Identify `ScopeId` field
             let field_type = field.type_def(schema);
-            if let TypeDef::Cell(cell_def) = field_type {
-                if let TypeDef::Option(option_def) = cell_def.inner_type(schema) {
-                    if option_def.inner_type_id == scope_id_type_id {
-                        scope_id_field = Some(field);
-                        continue;
-                    }
-                }
+            if let TypeDef::Cell(cell_def) = field_type
+                && let TypeDef::Option(option_def) = cell_def.inner_type(schema)
+                && option_def.inner_type_id == scope_id_type_id
+            {
+                scope_id_field = Some(field);
+                continue;
             }
 
             // Check if field is before enter scope / after exit scope

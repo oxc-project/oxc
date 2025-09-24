@@ -14,7 +14,7 @@ working directory: fixtures/extends_config
   help: Delete this console statement.
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file with 88 rules using 1 threads.
+Finished in <variable>ms on 1 file with 89 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

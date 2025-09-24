@@ -14,28 +14,21 @@ use crate::{
     es2021::ES2021Options,
     es2022::ES2022Options,
     jsx::JsxOptions,
+    plugins::{PluginsOptions, StyledComponentsOptions},
     proposals::ProposalOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
 };
 
 pub mod babel;
-mod browserslist_query;
-mod engine;
-mod engine_targets;
 mod env;
-mod es_features;
-mod es_target;
 mod module;
 
 use babel::BabelOptions;
-pub use browserslist_query::BrowserslistQuery;
-pub use engine::Engine;
-pub use engine_targets::EngineTargets;
 pub use env::EnvOptions;
-pub use es_features::ESFeature;
-pub use es_target::ESTarget;
 pub use module::Module;
+pub use oxc_compat::{Engine, EngineTargets};
+pub use oxc_syntax::es_target::ESTarget;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]
@@ -69,6 +62,9 @@ pub struct TransformOptions {
     /// Proposals
     pub proposals: ProposalOptions,
 
+    /// Plugins
+    pub plugins: PluginsOptions,
+
     pub helper_loader: HelperLoaderOptions,
 }
 
@@ -90,6 +86,7 @@ impl TransformOptions {
             },
             env: EnvOptions::enable_all(/* include_unfinished_plugins */ false),
             proposals: ProposalOptions::default(),
+            plugins: PluginsOptions { styled_components: Some(StyledComponentsOptions::default()) },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
                 ..Default::default()
@@ -131,7 +128,7 @@ impl TransformOptions {
 
 impl From<ESTarget> for TransformOptions {
     fn from(target: ESTarget) -> Self {
-        use crate::options::es_target::ESVersion;
+        use oxc_compat::ESVersion;
         let mut engine_targets = EngineTargets::default();
         engine_targets.insert(Engine::Es, target.version());
         let env = EnvOptions::from(engine_targets);
@@ -258,6 +255,11 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             ..HelperLoaderOptions::default()
         };
 
+        let mut plugins = PluginsOptions::default();
+        if let Some(styled_components) = &options.plugins.styled_components {
+            plugins.styled_components = Some(styled_components.clone());
+        }
+
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
             assumptions: options.assumptions,
@@ -280,6 +282,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 explicit_resource_management: options.plugins.explicit_resource_management,
             },
             helper_loader,
+            plugins,
         })
     }
 }

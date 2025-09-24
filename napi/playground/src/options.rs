@@ -1,99 +1,114 @@
+use napi::Either;
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
 
 #[napi(object)]
 #[derive(Default)]
 pub struct OxcOptions {
-    pub run: Option<OxcRunOptions>,
-    pub parser: Option<OxcParserOptions>,
+    pub run: OxcRunOptions,
+    pub parser: OxcParserOptions,
     pub linter: Option<OxcLinterOptions>,
     pub transformer: Option<OxcTransformerOptions>,
+    pub isolated_declarations: Option<OxcIsolatedDeclarationsOptions>,
     pub codegen: Option<OxcCodegenOptions>,
-    pub minifier: Option<OxcMinifierOptions>,
+    pub compress: Option<OxcCompressOptions>,
+    pub mangle: Option<OxcMangleOptions>,
     pub control_flow: Option<OxcControlFlowOptions>,
+    pub inject: Option<OxcInjectOptions>,
+    pub define: Option<OxcDefineOptions>,
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct OxcRunOptions {
-    pub syntax: Option<bool>,
-    pub lint: Option<bool>,
-    pub format: Option<bool>,
-    pub formatter_format: Option<bool>,
-    pub formatter_ir: Option<bool>,
-    pub transform: Option<bool>,
-    pub type_check: Option<bool>,
-    pub scope: Option<bool>,
-    pub symbol: Option<bool>,
+    pub lint: bool,
+    pub formatter: bool,
+    pub formatter_ir: bool,
+    pub transform: bool,
+    pub isolated_declarations: bool,
+    pub whitespace: bool,
+    pub compress: bool,
+    pub mangle: bool,
+    pub scope: bool,
+    pub symbol: bool,
+    pub cfg: bool,
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcParserOptions {
-    pub allow_return_outside_function: Option<bool>,
-    pub preserve_parens: Option<bool>,
-    pub allow_v8_intrinsics: Option<bool>,
-    pub source_type: Option<String>,
-    pub source_filename: Option<String>,
+    pub extension: String,
+    pub allow_return_outside_function: bool,
+    pub preserve_parens: bool,
+    pub allow_v8_intrinsics: bool,
+    pub semantic_errors: bool,
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcLinterOptions {
     pub config: Option<String>,
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcTransformerOptions {
     pub target: Option<String>,
-    pub isolated_declarations: Option<bool>,
+    pub use_define_for_class_fields: bool,
+    pub experimental_decorators: bool,
+    pub emit_decorator_metadata: bool,
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
+pub struct OxcInjectOptions {
+    /// Map of variable name to module source or [source, specifier]
+    #[napi(ts_type = "Record<string, string | [string, string]>")]
+    pub inject: FxHashMap<String, Either<String, Vec<String>>>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcDefineOptions {
+    /// Map of variable name to value for replacement
+    #[napi(ts_type = "Record<string, string>")]
+    pub define: FxHashMap<String, String>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcIsolatedDeclarationsOptions {
+    pub strip_internal: bool,
+}
+
+#[napi(object)]
+#[derive(Clone)]
 pub struct OxcCodegenOptions {
-    pub indentation: Option<u8>,
-    pub enable_typescript: Option<bool>,
-    pub enable_sourcemap: Option<bool>,
+    pub normal: bool,
+    pub jsdoc: bool,
+    pub annotation: bool,
+    pub legal: bool,
+}
+
+impl Default for OxcCodegenOptions {
+    fn default() -> Self {
+        Self { normal: true, jsdoc: true, annotation: true, legal: true }
+    }
 }
 
 #[napi(object)]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct OxcControlFlowOptions {
     pub verbose: Option<bool>,
 }
 
 #[napi(object)]
-#[derive(Default)]
-pub struct OxcMinifierOptions {
-    pub whitespace: Option<bool>,
-    pub mangle: Option<bool>,
-    pub compress: Option<bool>,
-    pub compress_options: Option<OxcCompressOptions>,
+#[derive(Clone, Copy)]
+pub struct OxcMangleOptions {
+    pub top_level: bool,
+    pub keep_names: bool,
 }
 
 #[napi(object)]
-pub struct OxcCompressOptions {
-    pub booleans: bool,
-    pub drop_debugger: bool,
-    pub drop_console: bool,
-    pub evaluate: bool,
-    pub join_vars: bool,
-    pub loops: bool,
-    pub typeofs: bool,
-}
-
-// keep same with `oxc_minifier::options::CompressOptions`
-impl Default for OxcCompressOptions {
-    fn default() -> Self {
-        Self {
-            booleans: true,
-            drop_debugger: true,
-            drop_console: false,
-            evaluate: true,
-            join_vars: true,
-            loops: true,
-            typeofs: true,
-        }
-    }
-}
+#[derive(Clone, Copy, Default)]
+pub struct OxcCompressOptions;

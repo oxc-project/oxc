@@ -3,7 +3,7 @@
 //! This plugin mainly does the following transformations:
 //!
 //! 1. transforms async generator functions (async function *name() {}) to generator functions
-//! and wraps them with `awaitAsyncGenerator` helper function.
+//!    and wraps them with `awaitAsyncGenerator` helper function.
 //! 2. transforms `await expr` expression to `yield awaitAsyncGenerator(expr)`.
 //! 3. transforms `yield * argument` expression to `yield asyncGeneratorDelegate(asyncIterator(argument))`.
 //! 4. transforms `for await` statement to `for` statement, and inserts many code to handle async iteration.
@@ -139,11 +139,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a, '_> {
             _ => None,
         };
 
-        if let Some(function) = function {
-            if function.r#async && function.generator && !function.is_typescript_syntax() {
-                let new_statement = self.executor.transform_function_declaration(function, ctx);
-                self.ctx.statement_injector.insert_after(stmt, new_statement);
-            }
+        if let Some(function) = function
+            && function.r#async
+            && function.generator
+            && !function.is_typescript_syntax()
+        {
+            let new_statement = self.executor.transform_function_declaration(function, ctx);
+            self.ctx.statement_injector.insert_after(stmt, new_statement);
         }
     }
 

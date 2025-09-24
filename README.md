@@ -18,11 +18,18 @@
 
 ## ⚓ Oxc
 
-The Oxidation Compiler is creating a collection of high-performance tools for JavaScript and TypeScript.
+The Oxidation Compiler is a collection of high-performance tools for JavaScript and TypeScript written in Rust.
 
-Oxc is building a parser, linter, formatter, transformer, minifier, resolver ... all written in Rust.
+Our goal is to enable a new generation of faster, more reliable development tools by providing:
 
-See more at [oxc.rs](https://oxc.rs)!
+- **Performance**: 2-100x faster than existing JavaScript tools
+- **Reliability**: 100% compatibility with JavaScript and TypeScript standards
+- **Modularity**: Use individual tools or compose them into complete toolchains
+- **Developer Experience**: Clear error messages and seamless editor integration
+
+We are building a parser, linter, formatter, transformer, minifier, resolver ... all written in Rust.
+
+For more information, check out our documentation at [oxc.rs](https://oxc.rs) and architecture guide in [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## VoidZero Inc.
 
@@ -34,9 +41,21 @@ If you have requirements for JavaScript tools at scale, please [get in touch](ht
 
 - [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transformation.
 - [Nova engine](https://trynova.dev) uses the [oxc][docs-oxc-url] crate for parsing.
-- [Rolldown][rolldown], [Biome][biome] and [swc-node](https://github.com/swc-project/swc-node) uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- [Rolldown][rolldown], [swc-node](https://github.com/swc-project/swc-node) and [knip](https://github.com/webpro-nl/knip) use the [oxc_resolver][docs-resolver-url] crate for module resolution.
 - Projects and companies like [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json), [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint), ByteDance and Shopee uses oxlint for linting.
 - ...[and many more](https://oxc.rs/docs/guide/projects.html)
+
+## ✍️ Contribute
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
+
+Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
+
+If you are unable to contribute by code, you can still participate by:
+
+- Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
+- Join us on [Discord][discord-url].
+- [Follow me on X](https://x.com/boshen_c) and post about this project.
 
 ## ⚡️ Linter Quick Start
 
@@ -75,13 +94,8 @@ Individual crates are published, you may use them to build your own JavaScript t
 - The resolver crate [oxc_resolver][docs-resolver-url] for module resolution is also production ready.
 - Example usages of these crates can be found in their respective `crates/*/examples` directory.
 
-While Rust has gained a reputation for its comparatively slower compilation speed,
-we have dedicated significant effort to fine-tune the Rust compilation speed.
-Our aim is to minimize any impact on your development workflow,
-ensuring that developing your own Oxc based tools remains a smooth and efficient experience.
-
-This is demonstrated by our [CI runs](https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=branch%3Amain),
-where warm runs complete in 3 minutes.
+We have optimized Rust compilation speed to ensure developing your own Oxc-based tools remains efficient.
+Our [CI runs](https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=branch%3Amain) complete in approximately 3 minutes.
 
 ### Node.js
 
@@ -106,32 +120,11 @@ where warm runs complete in 3 minutes.
 
 Oxc maintains its own AST and parser, which is by far the fastest and most conformant JavaScript and TypeScript (including JSX and TSX) parser written in Rust.
 
-As the parser often represents a key performance bottleneck in JavaScript tooling,
-any minor improvements can have a cascading effect on our downstream tools.
-By developing our parser, we have the opportunity to explore and implement well-researched performance techniques.
-
-While many existing JavaScript tools rely on [estree] as their AST specification,
-a notable drawback is its abundance of ambiguous nodes.
-This ambiguity often leads to confusion during development with [estree].
-
-The Oxc AST differs slightly from the [estree] AST by removing ambiguous nodes and introducing distinct types.
-For example, instead of using a generic [estree] `Identifier`,
-the Oxc AST provides specific types such as `BindingIdentifier`, `IdentifierReference`, and `IdentifierName`.
-This clear distinction greatly enhances the development experience by aligning more closely with the ECMAScript specification.
+As the parser often represents a key performance bottleneck in JavaScript tooling, any minor improvements can have a cascading effect on our downstream tools.
 
 #### 🏆 Parser Performance
 
 Our [benchmark][parser-benchmark] reveals that the Oxc parser surpasses the speed of the [swc] parser by approximately 3 times and the [Biome][biome] parser by 5 times.
-
-<details>
-  <summary>How is it so fast?</summary>
-  <ul>
-    <li>AST is allocated in a memory arena (<a href="https://crates.io/crates/bumpalo">bumpalo</a>) for fast AST memory allocation and deallocation.</li>
-    <li>Short strings are inlined by <a href="https://crates.io/crates/compact_str">CompactString</a>.</li>
-    <li>No other heap allocations are done except the above two.</li>
-    <li>Scope binding, symbol resolution and some syntax errors are not done in the parser, they are delegated to the semantic analyzer.</li>
-  </ul>
-</details>
 
 ### 🔸 Linter
 
@@ -154,16 +147,6 @@ As an upside, the binary is approximately 5MB, whereas [ESLint] and its associat
 You may also download the linter binary from the [latest release tag](https://github.com/oxc-project/oxc/releases/latest) as a standalone binary,
 this lets you run the linter without a Node.js installation in your CI.
 
-<details>
-  <summary>How is it so fast?</summary>
-  <ul>
-    <li>Oxc parser is used.</li>
-    <li>AST visit is a fast operation due to linear memory scan from the memory arena.</li>
-    <li>Files are linted in a multi-threaded environment, so scales with the total number of CPU cores.</li>
-    <li>Every single lint rule is tuned for performance.</li>
-  </ul>
-</details>
-
 ### 🔸 Resolver
 
 Module resolution plays a crucial role in JavaScript tooling, especially for tasks like multi-file analysis or bundling. However, it can often become a performance bottleneck.
@@ -175,7 +158,7 @@ The resolver is production-ready and is currently being used in [Rolldown][rolld
 
 A transformer is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
 
-TypeScript and React transforms are complete. See [Milestone 2](https://github.com/oxc-project/oxc/issues/2859) for current goals.
+TypeScript, React, ES6 transforms are complete.
 
 [oxc-transform][npm-napi-transform] can be used for experimentation.
 
@@ -203,6 +186,8 @@ by porting all test cases from well-known minifiers such as [google-closure-comp
 Preliminary results indicate that we are on track to achieve our objectives.
 With the Oxc minifier, you can expect faster minification times without sacrificing compression quality.
 
+See [minification benchmarks](https://github.com/privatenumber/minification-benchmarks) for comparisons.
+
 ### 🔸 Formatter
 
 While [prettier] has established itself as the de facto code formatter for JavaScript, there is a significant demand in the developer community for a less opinionated alternative. Recognizing this need, our ambition is to undertake research and development to create a new JavaScript formatter that offers increased flexibility and customization options.
@@ -228,18 +213,6 @@ We spend half of our time on strengthening the test infrastructure to prevent pr
 - End to end 3000 top npm packages
 
 ---
-
-## ✍️ Contribute
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
-
-Check out some of the [good first issues](https://github.com/oxc-project/oxc/contribute) or ask us on [Discord][discord-url].
-
-If you are unable to contribute by code, you can still participate by:
-
-- Add a [GitHub Star](https://github.com/oxc-project/oxc/stargazers) to the project.
-- Join us on [Discord][discord-url].
-- [Follow me on twitter](https://twitter.com/boshen_c) and tweet about this project.
 
 ## 📚 Learning Resources
 

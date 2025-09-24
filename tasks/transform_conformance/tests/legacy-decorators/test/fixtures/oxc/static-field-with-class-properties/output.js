@@ -5,5 +5,5 @@ function Bar() {
   };
 }
 let Foo = _Foo = class Foo {};
-Foo = _Foo = babelHelpers.decorate([Bar()], Foo);
 babelHelpers.defineProperty(Foo, "foo", `${_Foo.name}`);
+Foo = _Foo = babelHelpers.decorate([Bar()], Foo);

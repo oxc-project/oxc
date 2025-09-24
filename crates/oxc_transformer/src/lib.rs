@@ -37,6 +37,7 @@ mod regexp;
 mod typescript;
 
 mod decorator;
+mod plugins;
 
 use common::Common;
 use context::{TransformCtx, TraverseCtx};
@@ -56,6 +57,7 @@ use rustc_hash::FxHashMap;
 use state::TransformState;
 use typescript::TypeScript;
 
+use crate::plugins::Plugins;
 pub use crate::{
     common::helper_loader::{Helper, HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
@@ -73,6 +75,7 @@ pub use crate::{
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
         babel::{BabelEnvOptions, BabelOptions},
     },
+    plugins::{PluginsOptions, StyledComponentsOptions},
     proposals::ProposalOptions,
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
@@ -92,6 +95,7 @@ pub struct Transformer<'a> {
 
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
+    plugins: PluginsOptions,
     jsx: JsxOptions,
     env: EnvOptions,
     proposals: ProposalOptions,
@@ -105,6 +109,7 @@ impl<'a> Transformer<'a> {
             allocator,
             typescript: options.typescript.clone(),
             decorator: options.decorator,
+            plugins: options.plugins.clone(),
             jsx: options.jsx.clone(),
             env: options.env,
             proposals: options.proposals,
@@ -134,6 +139,7 @@ impl<'a> Transformer<'a> {
         let mut transformer = TransformerImpl {
             common: Common::new(&self.env, &self.ctx),
             decorator: Decorator::new(self.decorator, &self.ctx),
+            plugins: Plugins::new(self.plugins, &self.ctx),
             explicit_resource_management: self
                 .proposals
                 .explicit_resource_management
@@ -171,6 +177,7 @@ struct TransformerImpl<'a, 'ctx> {
     // NOTE: all callbacks must run in order.
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
     decorator: Decorator<'a, 'ctx>,
+    plugins: Plugins<'a, 'ctx>,
     explicit_resource_management: Option<ExplicitResourceManagement<'a, 'ctx>>,
     x1_jsx: Jsx<'a, 'ctx>,
     x2_es2022: ES2022<'a, 'ctx>,
@@ -191,6 +198,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_program(program, ctx);
         }
+        self.plugins.enter_program(program, ctx);
         self.x1_jsx.enter_program(program, ctx);
         if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
             explicit_resource_management.enter_program(program, ctx);
@@ -198,6 +206,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.exit_program(program, ctx);
         self.x1_jsx.exit_program(program, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.exit_program(program, ctx);
@@ -236,6 +245,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_variable_declarator(decl, ctx);
         }
+        self.plugins.enter_variable_declarator(decl, ctx);
     }
 
     fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -268,6 +278,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_call_expression(expr, ctx);
         }
+        self.plugins.enter_call_expression(expr, ctx);
         self.x1_jsx.enter_call_expression(expr, ctx);
     }
 
@@ -290,12 +301,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
             typescript.exit_class(class, ctx);
         }
         self.x2_es2022.exit_class(class, ctx);
+        // `decorator` has some statements should be inserted after `class-properties` plugin.
+        self.decorator.exit_class_at_end(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.enter_class_body(body, ctx);
-        }
         self.x2_es2022.enter_class_body(body, ctx);
     }
 
@@ -318,6 +328,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_expression(expr, ctx);
         }
+        self.plugins.enter_expression(expr, ctx);
         self.x2_es2022.enter_expression(expr, ctx);
         self.x2_es2021.enter_expression(expr, ctx);
         self.x2_es2020.enter_expression(expr, ctx);
@@ -453,6 +464,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         }
     }
 
+    fn exit_method_definition(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator.exit_method_definition(def, ctx);
+    }
+
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_new_expression(expr, ctx);
@@ -476,6 +495,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         def: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.decorator.exit_property_definition(def, ctx);
         self.x2_es2022.exit_property_definition(def, ctx);
     }
 
@@ -488,6 +508,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_accessor_property(node, ctx);
         }
+    }
+
+    fn exit_accessor_property(
+        &mut self,
+        node: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator.exit_accessor_property(node, ctx);
     }
 
     fn enter_statements(
@@ -570,6 +598,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.decorator.enter_statement(stmt, ctx);
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_statement(stmt, ctx);
         }
@@ -679,5 +708,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_ts_export_assignment(export_assignment, ctx);
         }
+    }
+
+    fn enter_decorator(
+        &mut self,
+        node: &mut oxc_ast::ast::Decorator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.decorator.enter_decorator(node, ctx);
     }
 }

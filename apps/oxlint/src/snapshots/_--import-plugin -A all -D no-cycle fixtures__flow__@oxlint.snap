@@ -6,7 +6,7 @@ arguments: --import-plugin -A all -D no-cycle fixtures/flow/
 working directory: 
 ----------
 Found 0 warnings and 0 errors.
-Finished in <variable>ms on 2 files with 89 rules using 1 threads.
+Finished in <variable>ms on 2 files with 90 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

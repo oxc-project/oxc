@@ -11,18 +11,18 @@ use crate::{
 /// Regular expression parser for `/literal/` usage.
 /// - `pattern_text`: the text between `/` and `/`
 /// - `flags_text`: the text after the second `/`
-pub struct LiteralParser<'a> {
+pub struct LiteralParser<'a, 'b> {
     allocator: &'a Allocator,
     pattern_text: &'a str,
-    flags_text: Option<&'a str>,
+    flags_text: Option<&'b str>,
     options: Options,
 }
 
-impl<'a> LiteralParser<'a> {
+impl<'a, 'b> LiteralParser<'a, 'b> {
     pub fn new(
         allocator: &'a Allocator,
         pattern_text: &'a str,
-        flags_text: Option<&'a str>,
+        flags_text: Option<&'b str>,
         options: Options,
     ) -> Self {
         Self { allocator, pattern_text, flags_text, options }
@@ -93,7 +93,7 @@ impl<'a> ConstructorParser<'a> {
             (false, false)
         };
 
-        let pattern_text = if matches!(self.pattern_text, r#""""# | "''") {
+        let pattern_text = if matches!(self.pattern_text, r#""""# | "''" | "``") {
             r#""(?:)""#
         } else {
             self.pattern_text

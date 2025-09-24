@@ -142,43 +142,43 @@ impl Rule for AriaRole {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_el) = node.kind() {
-            if let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role") {
-                let element_type = get_element_type(ctx, &jsx_el.opening_element);
+        if let AstKind::JSXElement(jsx_el) = node.kind()
+            && let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role")
+        {
+            let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
-                if self.ignore_non_dom && !HTML_TAG.contains(element_type.as_ref()) {
-                    return;
-                }
+            if self.ignore_non_dom && !HTML_TAG.contains(element_type.as_ref()) {
+                return;
+            }
 
-                let JSXAttributeItem::Attribute(attr) = aria_role else {
-                    return;
-                };
+            let JSXAttributeItem::Attribute(attr) = aria_role else {
+                return;
+            };
 
-                match get_prop_value(aria_role) {
-                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        let jsexp = &container.expression;
-                        if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
-                            ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
-                        }
-                    }
-                    Some(JSXAttributeValue::StringLiteral(str)) => {
-                        let words_str = String::from(str.value.as_str());
-                        let words = words_str.split_whitespace();
-                        if words_str.trim().is_empty() {
-                            ctx.diagnostic(aria_role_diagnostic(str.span, ""));
-                        } else if let Some(error_prop) = words.into_iter().find(|word| {
-                            !VALID_ARIA_ROLES.contains(word)
-                                && !self.allowed_invalid_roles.contains(&(*word).to_string())
-                        }) {
-                            ctx.diagnostic(aria_role_diagnostic(
-                                str.span,
-                                &format!(", `{error_prop}` is an invalid aria role"),
-                            ));
-                        }
-                    }
-                    _ => {
+            match get_prop_value(aria_role) {
+                Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                    let jsexp = &container.expression;
+                    if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
                         ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                     }
+                }
+                Some(JSXAttributeValue::StringLiteral(str)) => {
+                    let words_str = String::from(str.value.as_str());
+                    let words = words_str.split_whitespace();
+                    if words_str.trim().is_empty() {
+                        ctx.diagnostic(aria_role_diagnostic(str.span, ""));
+                    } else if let Some(error_prop) = words.into_iter().find(|word| {
+                        !VALID_ARIA_ROLES.contains(word)
+                            && !self.allowed_invalid_roles.contains(&(*word).to_string())
+                    }) {
+                        ctx.diagnostic(aria_role_diagnostic(
+                            str.span,
+                            &format!(", `{error_prop}` is an invalid aria role"),
+                        ));
+                    }
+                }
+                _ => {
+                    ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                 }
             }
         }

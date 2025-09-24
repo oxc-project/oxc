@@ -79,25 +79,26 @@ pub struct RawOutput {
 
 impl RawOutput {
     /// Write [`RawOutput`] to file
-    pub fn write_to_file(&self) -> io::Result<()> {
+    pub fn write_to_file(&self, root_path: &Path) -> io::Result<()> {
         log!("Write {}... ", &self.path);
-        let result = write_to_file_impl(&self.content, &self.path);
+        let result = write_to_file_impl(&self.content, &self.path, root_path);
         log_result!(result);
         result
     }
 }
 
-fn write_to_file_impl(data: &[u8], path: &str) -> io::Result<()> {
+fn write_to_file_impl(data: &[u8], path: &str, root_path: &Path) -> io::Result<()> {
+    let path = root_path.join(path);
+
     // If contents hasn't changed, don't touch the file
-    if let Ok(existing_data) = fs::read(path) {
-        if existing_data == data {
-            return Ok(());
-        }
+    if let Ok(existing_data) = fs::read(&path)
+        && existing_data == data
+    {
+        return Ok(());
     }
 
-    let path = Path::new(path);
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
+    if let Some(parent_path) = path.parent() {
+        fs::create_dir_all(parent_path)?;
     }
     fs::write(path, data)
 }

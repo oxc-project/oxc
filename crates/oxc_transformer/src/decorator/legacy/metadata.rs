@@ -89,9 +89,11 @@
 /// * TypeScript's [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig#emitDecoratorMetadata)
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
-use oxc_semantic::ReferenceFlags;
+use oxc_data_structures::stack::SparseStack;
+use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
+use rustc_hash::FxHashMap;
 
 use crate::{
     Helper,
@@ -100,41 +102,94 @@ use crate::{
     utils::ast_builder::create_property_access,
 };
 
+/// Type of an enum inferred from its members
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EnumType {
+    /// All members are string literals or template literals with string-only expressions
+    String,
+    /// All members are numeric, bigint, unary numeric, or auto-incremented
+    Number,
+    /// Mixed types or computed values
+    Object,
+}
+
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
+    /// Stack of method metadata arrays, each array contains 3 expressions:
+    /// `[design:type, design:paramtypes, design:returntype]`
+    ///
+    /// Only the method that needs to be pushed onto a stack is the method metadata,
+    /// which should be inserted after all real decorators. However, method parameters
+    /// will be processed before the metadata generation, so we need to temporarily store
+    /// them in a stack and pop them when in exit_method_definition.
+    method_metadata_stack: SparseStack<[Expression<'a>; 3]>,
+    /// Stack of constructor metadata expressions, each expression
+    /// is the `design:paramtypes`.
+    ///
+    /// Same as `method_metadata_stack`, but for constructors. Because the constructor is specially treated
+    /// in the class, we need to handle it in `exit_class` rather than `exit_method_definition`.
+    constructor_metadata_stack: SparseStack<Expression<'a>>,
+    enum_types: FxHashMap<SymbolId, EnumType>,
 }
 
 impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
     pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        LegacyDecoratorMetadata { ctx }
+        LegacyDecoratorMetadata {
+            ctx,
+            method_metadata_stack: SparseStack::new(),
+            constructor_metadata_stack: SparseStack::new(),
+            enum_types: FxHashMap::default(),
+        }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
-    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if class.is_expression() || class.declare {
-            return;
+    #[inline]
+    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        debug_assert!(
+            self.method_metadata_stack.is_exhausted(),
+            "All method metadata should have been popped."
+        );
+        debug_assert!(
+            self.constructor_metadata_stack.is_exhausted(),
+            "All constructor metadata should have been popped."
+        );
+    }
+
+    // `#[inline]` because this is a hot path and most `Statement`s are not `TSEnumDeclaration`s.
+    // We want to avoid overhead of a function call for the common case.
+    #[inline]
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Collect enum types here instead of in `enter_ts_enum_declaration` because the TypeScript
+        // plugin transforms enum declarations in `enter_statement`, and we need to collect the
+        // enum type before it gets transformed.
+        if let Statement::TSEnumDeclaration(decl) = stmt {
+            self.collect_enum_type(decl, ctx);
         }
+    }
+
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        let should_transform = !(class.is_expression() || class.declare);
 
         let constructor = class.body.body.iter_mut().find_map(|item| match item {
             ClassElement::MethodDefinition(method) if method.kind.is_constructor() => Some(method),
             _ => None,
         });
 
-        if let Some(constructor) = constructor {
-            if class.decorators.is_empty()
-                && constructor.value.params.items.iter().all(|param| param.decorators.is_empty())
-            {
-                return;
-            }
-
+        let metadata = if should_transform
+            && let Some(constructor) = constructor
+            && !(class.decorators.is_empty()
+                && constructor.value.params.items.iter().all(|param| param.decorators.is_empty()))
+        {
             let serialized_type =
                 self.serialize_parameter_types_of_node(&constructor.value.params, ctx);
-            let metadata_decorator =
-                self.create_metadata_decorate("design:paramtypes", serialized_type, ctx);
 
-            class.decorators.push(metadata_decorator);
-        }
+            Some(self.create_metadata("design:paramtypes", serialized_type, ctx))
+        } else {
+            None
+        };
+
+        self.constructor_metadata_stack.push(metadata);
     }
 
     fn enter_method_definition(
@@ -142,30 +197,32 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
         method: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if method.kind.is_constructor() || method.value.is_typescript_syntax() {
+        if method.kind.is_constructor() {
+            // Handle constructor in `enter_class`
             return;
         }
 
-        let is_decorated = !method.decorators.is_empty()
-            || method.value.params.items.iter().any(|param| !param.decorators.is_empty());
-        if !is_decorated {
-            return;
-        }
+        let is_typescript_syntax = method.value.is_typescript_syntax();
+        let is_decorated = !is_typescript_syntax
+            && (!method.decorators.is_empty()
+                || method.value.params.items.iter().any(|param| !param.decorators.is_empty()));
 
-        let metadata_decorators = ctx.ast.vec_from_array([
-            self.create_metadata_decorate("design:type", Self::global_function(ctx), ctx),
-            {
-                let serialized_type =
-                    self.serialize_parameter_types_of_node(&method.value.params, ctx);
-                self.create_metadata_decorate("design:paramtypes", serialized_type, ctx)
-            },
-            {
-                let serialized_type = self.serialize_return_type_of_node(&method.value, ctx);
-                self.create_metadata_decorate("design:returntype", serialized_type, ctx)
-            },
-        ]);
+        let metadata = is_decorated.then(|| {
+            [
+                self.create_metadata("design:type", Self::global_function(ctx), ctx),
+                {
+                    let serialized_type =
+                        self.serialize_parameter_types_of_node(&method.value.params, ctx);
+                    self.create_metadata("design:paramtypes", serialized_type, ctx)
+                },
+                {
+                    let serialized_type = self.serialize_return_type_of_node(&method.value, ctx);
+                    self.create_metadata("design:returntype", serialized_type, ctx)
+                },
+            ]
+        });
 
-        method.decorators.extend(metadata_decorators);
+        self.method_metadata_stack.push(metadata);
     }
 
     #[inline]
@@ -174,7 +231,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
         prop: &mut PropertyDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if prop.declare || prop.decorators.is_empty() {
+        if prop.decorators.is_empty() {
             return;
         }
         prop.decorators.push(self.create_design_type_metadata(prop.type_annotation.as_ref(), ctx));
@@ -194,6 +251,65 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
 }
 
 impl<'a> LegacyDecoratorMetadata<'a, '_> {
+    /// Collects enum type information for decorator metadata generation.
+    fn collect_enum_type(&mut self, decl: &TSEnumDeclaration<'a>, ctx: &TraverseCtx<'a>) {
+        let symbol_id = decl.id.symbol_id();
+
+        // Optimization:
+        // If the enum doesn't have any type references, that implies that no decorators
+        // refer to this enum, so there is no need to infer its type.
+        let has_type_reference =
+            ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_type);
+        if has_type_reference {
+            let enum_type = Self::infer_enum_type(&decl.body.members);
+            self.enum_types.insert(symbol_id, enum_type);
+        }
+    }
+
+    /// Infer the type of an enum based on its members
+    fn infer_enum_type(members: &[TSEnumMember<'a>]) -> EnumType {
+        let mut enum_type = EnumType::Object;
+
+        for member in members {
+            if let Some(init) = &member.initializer {
+                match init {
+                    Expression::StringLiteral(_) | Expression::TemplateLiteral(_)
+                        if enum_type != EnumType::Number =>
+                    {
+                        enum_type = EnumType::String;
+                    }
+                    // TS considers `+x`, `-x`, `~x` to be `Number` type, no matter what `x` is.
+                    // All other unary expressions (`!x`, `void x`, `typeof x`, `delete x`) are illegal in enum initializers,
+                    // so we can ignore those cases here and just say all `UnaryExpression`s are numeric.
+                    // Bigint literals are also illegal in enum initializers, so we don't need to consider them here.
+                    Expression::NumericLiteral(_) | Expression::UnaryExpression(_)
+                        if enum_type != EnumType::String =>
+                    {
+                        enum_type = EnumType::Number;
+                    }
+                    // For other expressions, we can't determine the type statically
+                    _ => return EnumType::Object,
+                }
+            } else {
+                // No initializer means numeric (auto-incrementing from previous member)
+                if enum_type == EnumType::String {
+                    return EnumType::Object;
+                }
+                enum_type = EnumType::Number;
+            }
+        }
+
+        enum_type
+    }
+
+    pub fn pop_method_metadata(&mut self) -> Option<[Expression<'a>; 3]> {
+        self.method_metadata_stack.pop()
+    }
+
+    pub fn pop_constructor_metadata(&mut self) -> Option<Expression<'a>> {
+        self.constructor_metadata_stack.pop()
+    }
+
     fn serialize_type_annotation(
         &mut self,
         type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
@@ -339,6 +455,20 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         name: &TSTypeName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        // Check if this is an enum type reference - if so, return the primitive type directly
+        if let TSTypeName::IdentifierReference(ident) = name {
+            let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
+            if let Some(symbol_id) = symbol_id
+                && let Some(enum_type) = self.enum_types.get(&symbol_id)
+            {
+                return match enum_type {
+                    EnumType::String => Self::global_string(ctx),
+                    EnumType::Number => Self::global_number(ctx),
+                    EnumType::Object => Self::global_object(ctx),
+                };
+            }
+        }
+
         let Some(serialized_type) = self.serialize_entity_name_as_expression_fallback(name, ctx)
         else {
             // Reach here means the referent is a type symbol, so use `Object` as fallback.
@@ -419,6 +549,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     Some(ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member))
                 }
             }
+            TSTypeName::ThisExpression(_) => None,
         }
     }
 
@@ -608,18 +739,27 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     }
 
     // `_metadata(key, value)
+    fn create_metadata(
+        &self,
+        key: &'a str,
+        value: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let arguments = ctx.ast.vec_from_array([
+            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
+            Argument::from(value),
+        ]);
+        self.ctx.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx)
+    }
+
+    // `_metadata(key, value)
     fn create_metadata_decorate(
         &self,
         key: &'a str,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, key, None)),
-            Argument::from(value),
-        ]);
-        let expr = self.ctx.helper_call_expr(Helper::DecorateMetadata, SPAN, arguments, ctx);
-        ctx.ast.decorator(SPAN, expr)
+        ctx.ast.decorator(SPAN, self.create_metadata(key, value, ctx))
     }
 
     /// `_metadata("design:type", type)`

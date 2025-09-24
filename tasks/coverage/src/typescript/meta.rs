@@ -156,8 +156,20 @@ impl TestCaseContent {
             // e.g. typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
             // Based on some config, it's not expected to be read in the first place.
             .filter(|unit| {
-                !(unit.content.starts_with("This file is not ")
-                    || unit.content.starts_with("Nor is this one."))
+                // `unit.content.trim().starts_with()` is insufficient when dealing with the first unit.
+                // This is because the first unit may contain normal comments before the invalid content.
+                let is_invalid_line = |line: &str| {
+                    [
+                        "This file is not read.",
+                        "This file is not processed.",
+                        "Nor is this one.",
+                        "not read",
+                        "content not parsed",
+                    ]
+                    .iter()
+                    .any(|&invalid| line.starts_with(invalid))
+                };
+                !unit.content.lines().any(is_invalid_line)
             })
             .filter_map(|mut unit| {
                 let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;

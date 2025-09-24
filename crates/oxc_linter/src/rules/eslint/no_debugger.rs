@@ -55,7 +55,6 @@ impl Rule for NoDebugger {
                 let Some(parent) = ctx
                     .nodes()
                     .ancestors(node.id())
-                    .skip(1)
                     .find(|p| !matches!(p.kind(), AstKind::ParenthesizedExpression(_)))
                 else {
                     return fixer.delete(&stmt.span).with_message(REMOVE_DEBUGGER);

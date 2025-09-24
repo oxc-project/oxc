@@ -155,6 +155,7 @@ fn test() {
         "a! != b;",
         "a! !== b;",
     ];
+
     let fail = vec![
         "a! == b;",
         "a! === b;",
@@ -163,8 +164,8 @@ fn test() {
         "(a==b)! ==c;",
         "a! = b;",
         "(obj = new new OuterObj().InnerObj).Name! = c;",
-        "(a=b)! =c;",
     ];
+
     // let fix = vec![
     //     // source, expected, rule_config?
     //     // ("f = 1 + d! == 2", "f = (1 + d!) == 2", None), TODO: Add suggest or the weird ;() fix

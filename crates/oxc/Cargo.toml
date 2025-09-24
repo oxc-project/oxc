@@ -1,6 +1,6 @@
 [package]
 name = "oxc"
-version = "0.76.0"
+version = "0.92.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -54,7 +54,6 @@ full = [
   "transformer",
   "isolated_declarations",
   "ast_visit",
-  "cfg",
   "regular_expression",
 ]
 
@@ -63,7 +62,7 @@ transformer = ["oxc_transformer", "oxc_transformer_plugins"]
 minifier = ["oxc_mangler", "oxc_minifier"]
 codegen = ["oxc_codegen"]
 mangler = ["oxc_mangler"]
-cfg = ["oxc_cfg"]
+cfg = ["oxc_cfg", "oxc_semantic/cfg"]
 isolated_declarations = ["oxc_isolated_declarations"]
 ast_visit = ["oxc_ast_visit"]
 regular_expression = ["oxc_regular_expression", "oxc_parser/regular_expression"]

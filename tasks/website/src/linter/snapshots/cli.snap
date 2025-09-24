@@ -3,12 +3,13 @@ source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./.oxlintrc.json>`_\] \[_`PATH`_\]...
 
 ## Basic Configuration
-- **`-c`**, **`--config`**=_`<./oxlintrc.json>`_ &mdash; 
+- **`-c`**, **`--config`**=_`<./.oxlintrc.json>`_ &mdash; 
   Oxlint configuration file (experimental)
 * only `.json` extension is supported
+* you can use comments in configuration files.
 * tries to be compatible with the ESLint v8's format
 
   If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
@@ -71,6 +72,10 @@ Arguments:
   Enable the promise plugin and detect promise usage problems
 - **`    --node-plugin`** &mdash; 
   Enable the node plugin and detect node usage problems
+- **`    --regex-plugin`** &mdash; 
+  Enable the regex plugin and detect regex usage problems
+- **`    --vue-plugin`** &mdash; 
+  Enable the vue plugin and detect vue usage problems
 
 
 
@@ -141,6 +146,8 @@ Arguments:
   list all the rules that are currently registered
 - **`    --disable-nested-config`** &mdash; 
   Disables the automatic loading of nested configuration files.
+- **`    --type-aware`** &mdash; 
+  Enables rules that require type information.
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 

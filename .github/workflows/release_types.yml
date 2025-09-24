@@ -8,7 +8,8 @@ on:
     branches:
       - main
     paths:
-      - npm/oxc-types/package.json # Please only commit this file, so we don't need to wait for all the other CI jobs to finish.
+      - npm/oxc-types/package.json
+      - .github/workflows/release_types.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +26,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Check version changes
-        uses: EndBug/version-check@36ff30f37c7deabe56a30caa043d127be658c425 # v2.1.5
+        uses: EndBug/version-check@5102328418c0130d66ca712d755c303e93368ce2 # v2.1.7
         id: version
         with:
           static-checking: localIsNew
@@ -50,10 +51,11 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
-      - name: Publish
+      - run: npm install -g npm@latest # For trusted publishing support
+
+      # Trusted publishing is configured, publish token is not required.
+      - name: Trusted Publish
         working-directory: npm/oxc-types
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --provenance --access public --no-git-checks

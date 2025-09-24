@@ -124,18 +124,18 @@ pub(crate) use byte_match_table;
 /// To make this guarantee, one of the following must be true:
 ///
 /// 1. Table contains `true` for all byte values 192 - 247
-///   i.e. first byte of any multi-byte Unicode character matches.
-///   (NB: 248 - 255 cannot occur in UTF-8 strings)
-///   e.g.
-///   `safe_byte_match_table!(|b| b >= 192)`
-///   `safe_byte_match_table!(|b| !b.is_ascii())`
+///    i.e. first byte of any multi-byte Unicode character matches.
+///    (NB: 248 - 255 cannot occur in UTF-8 strings)
+///    e.g.
+///    * `safe_byte_match_table!(|b| b >= 192)`
+///    * `safe_byte_match_table!(|b| !b.is_ascii())`
 ///
 /// 2. Table contains `false` for all byte values 128 - 191
-///   i.e. the continuation bytes of any multi-byte Unicode chars will be consumed in full.
-///   e.g.
-///   `safe_byte_match_table!(|b| b < 128 || b >= 192)`
-///   `safe_byte_match_table!(|b| b.is_ascii())`
-///   `safe_byte_match_table!(|b| b == ' ' || b == '\t')`
+///    i.e. the continuation bytes of any multi-byte Unicode chars will be consumed in full.
+///    e.g.
+///    * `safe_byte_match_table!(|b| b < 128 || b >= 192)`
+///    * `safe_byte_match_table!(|b| b.is_ascii())`
+///    * `safe_byte_match_table!(|b| b == ' ' || b == '\t')`
 ///
 /// This is statically checked by `SafeByteMatchTable::new`, and will fail to compile if match
 /// pattern does not satisfy one of the above.

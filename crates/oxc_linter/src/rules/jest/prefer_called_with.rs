@@ -29,6 +29,14 @@ declare_oxc_lint!(
     ///
     /// Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`
     ///
+    /// ### Why is this bad?
+    ///
+    /// When testing function calls, it's often more valuable to assert both
+    /// that a function was called AND what arguments it was called with.
+    /// Using `toBeCalled()` or `toHaveBeenCalled()` only verifies the function
+    /// was invoked, but doesn't validate the arguments, potentially missing
+    /// bugs where functions are called with incorrect parameters.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -78,13 +86,13 @@ impl PreferCalledWith {
             return;
         }
 
-        if let Some(matcher_property) = jest_fn_call.matcher() {
-            if let Some(matcher_name) = matcher_property.name() {
-                if matcher_name == "toBeCalled" {
-                    ctx.diagnostic(use_to_be_called_with(matcher_property.span));
-                } else if matcher_name == "toHaveBeenCalled" {
-                    ctx.diagnostic(use_have_been_called_with(matcher_property.span));
-                }
+        if let Some(matcher_property) = jest_fn_call.matcher()
+            && let Some(matcher_name) = matcher_property.name()
+        {
+            if matcher_name == "toBeCalled" {
+                ctx.diagnostic(use_to_be_called_with(matcher_property.span));
+            } else if matcher_name == "toHaveBeenCalled" {
+                ctx.diagnostic(use_have_been_called_with(matcher_property.span));
             }
         }
     }

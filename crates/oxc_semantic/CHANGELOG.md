@@ -4,6 +4,251 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🐛 Bug Fixes
+
+- 9fa551a semantic: Handle edge cases checking `super` (#13499) (overlookmotel)
+- 198243b semantic: Dont parse `@` as jsdoc tags inside quotes (#13571) (Gwenn Le Bihan)
+
+### 📚 Documentation
+
+- 5dc82ff semantic: Make doc tests for `AstNode::contains_any` etc runnable (#13595) (overlookmotel)
+
+### ⚡ Performance
+
+- 08c05df semantic: Make CFG construction a compile-time feature (#13678) (Boshen)
+
+
+## [0.87.0] - 2025-09-08
+
+### 🚀 Features
+
+- f00adbe semantic: Add ability to lookup if AST contains any node kinds (#13137) (camchenry)
+
+### 🐛 Bug Fixes
+
+- d6b2e57 semantic: Correct comment on `AstTypesBitset` (#13572) (overlookmotel)
+- dc9645f semantic: Allow super in object literal method inside a class (#13463) (Boshen)
+
+### ⚡ Performance
+
+- 5648b31 semantic: Speed up `Scoping::clone_in_with_semantic_ids_with_another_arena` (#13563) (overlookmotel)
+
+
+
+
+## [0.84.0] - 2025-08-30
+
+### 🐛 Bug Fixes
+
+- fd3233c semantic: Flag `super` in function inside `ObjectExpression` (#13325) (overlookmotel)
+
+### 🚜 Refactor
+
+- 84a584c semantic: Clarify logic when checking `super` (#13324) (overlookmotel)
+
+
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- 9a828de semantic: Derive `Default` for `Semantic` (#13343) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 8a43068 semantic: Allow `super` in object method in js but not in ts (#13318) (Boshen)
+
+### 🚜 Refactor
+
+- d787517 semantic: Store comments as a slice instead of `&Vec` (#13336) (overlookmotel)
+
+
+## [0.82.3] - 2025-08-20
+
+### 🚜 Refactor
+
+- cc067c2 semantic: Implement `Send` and `Sync` for `ScopingCell` (#13042) (overlookmotel)
+
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 🐛 Bug Fixes
+
+- 724837e semantic: Label redeclaration check for crossing boundary on arrow function (#12679) (#12948) (Li Wei)
+
+### 🚜 Refactor
+
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+### 🚜 Refactor
+
+- 69fd08d semantic: Improve unused label tracking and add debug assertions (#12812) (camc314)
+
+### ⚡ Performance
+
+- 09ae2a9 linter: Eliminate unnecessary Iterator::collect() allocations (#12776) (Copilot)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- 3175aa3 semantic: [**BREAKING**] `Scoping::get_resolved_reference_ids` return slice (#12665) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6a1c7c6 semantic: `ArrowFunctionExpression` leave scope before leaving node (#12659) (overlookmotel)
+- 090cf88 semantic: Fix typo in comment (#12714) (overlookmotel)
+- 79cc41f semantic: Move LabeledStatement enter node handling to visit methods (#12636) (camc314)
+- bbc446f semantic: Move LabeledStatement exit node handling to visit methods (#12635) (camc314)
+- e741634 semantic: Move comments (#12658) (overlookmotel)
+- 109fc3c semantic: Move Function and ArrowFunctionExpression handling to visit methods (#12630) (camc314)
+- 8369bbd semantic: Move AstKind::Class handling from leave_kind to visit_class (#12629) (camc314)
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+### ⚡ Performance
+
+- 2ccf725 semantic: Remove function stack (#12676) (overlookmotel)
+- 6564215 semantic: Remove check for `Program` when iterating ancestors (#12682) (overlookmotel)
+
+### 🎨 Styling
+
+- da3a881 semantic: Remove extraneous line breaks (#12681) (overlookmotel)
+- 65847c0 semantic: Reorder imports (#12671) (overlookmotel)
+
+### 🧪 Testing
+
+- 2aa65b9 semantic: Remove unnecessary clone (#12667) (overlookmotel)
+
+
+## [0.79.1] - 2025-07-31
+
+### 🚜 Refactor
+
+- f12e3a0 semantic: Remove unnecessary lifetime extension (#12649) (overlookmotel)
+
+
+## [0.79.0] - 2025-07-30
+
+### 💥 BREAKING CHANGES
+
+- 5a7e72a semantic: [**BREAKING**] `AstNodes::program` return `&Program` not `Option<&Program>` (#12515) (overlookmotel)
+
+### 🚜 Refactor
+
+- a696227 linter: Remove AstKind for SimpleAssignmentTarget (#12401) (Tyler Earls)
+- 8912134 semantic: Remove `AstNodes` `program` field (#12516) (overlookmotel)
+- 89d747a semantic: Correct comment (#12512) (overlookmotel)
+
+
+## [0.78.0] - 2025-07-24
+
+### 🚜 Refactor
+
+- 2874ec4 semantic: Remove redundant default implementation for `Binder::binder` (#12447) (Dunqing)
+
+
+
+## [0.77.2] - 2025-07-17
+
+### 🚜 Refactor
+
+- 3c6b88b semantic: Refactor `check_binding_identifier` (#12303) (overlookmotel)
+
+### ⚡ Performance
+
+- b60d63b semantic: Reduce match arms in `check_binding_identifier` (#12304) (overlookmotel)
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- fb8289c minifier: Remove unused variable declaration (#11796) (Boshen)
+- c995fe2 semantic: Build semantic for `.d.ts` files (#12193) (camc314)
+
+### 🐛 Bug Fixes
+
+- 089f7b1 semantic: Allow `arguments`/`eval` as name of `TSTypeAliasDeclaration`, `TSInterfaceDeclaration` (#12291) (camc314)
+- 1bfd44f semantic: Allow `arguments`/`eval` as spread argument name inside `TSMethodSignature`, `TSFunctionType` (#12290) (camc314)
+- a740f3f semantic: Allow `arguments`/`eval` as argument name inside `TSMethodSignature` (#12289) (camc314)
+- cd98426 semantic: Handle var hoisting in catch block with same catch parameter name (#12313) (Dunqing)
+- e82f758 semantic: Allow `arguments`/`eval` as argument name inside `TSFunctionType` (#12288) (camc314)
+- 2a1e805 semantic: Allow assigning to `eval` and `arguments` in ambient context (#12208) (camc314)
+
+### 🚜 Refactor
+
+- ee761de ast: Remove `AstKind` for `AssignmentTarget` (#12252) (Tyler Earls)
+- c025868 ast: Remove `AstKind` for `TSFunctionType` (#12287) (camc314)
+
+### ⚡ Performance
+
+- 6f58abc semantic: Inline `SemanticBuilder::pop_ast_node` (#12280) (Boshen)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🐛 Bug Fixes
+
+- e095e99 semantic: Panics when function is the part of `IfStatement` (#12190) (Dunqing)
+
+### 🚜 Refactor
+
+- 8a7c9e8 semantic: Streamline handling of no side effects for function (#12221) (Dunqing)
+- c868ee3 semantic: Rename `AstNodeIdAncestorsIter` and add comments (#12136) (overlookmotel)
+- 8814c53 ast: Remove `AstKind` for `PropertyKey` (#12108) (camchenry)
+- 228cff5 semantic,linter: Assert that Program is always the first node (#12123) (Ulrich Stark)
+
+### ⚡ Performance
+
+- c7889c3 semantic,linter: Simplify implementation and uses of ancestors iterators (#12164) (Ulrich Stark)
+- 6cfcb7e semantic: Dereference `parent_id`s to slice only once (#12137) (overlookmotel)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 🚜 Refactor

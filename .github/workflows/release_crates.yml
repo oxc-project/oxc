@@ -19,25 +19,28 @@ jobs:
     name: Release crates
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      actions: write
+      contents: write # For git tag push
+      id-token: write # Required for OIDC token exchange
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           token: ${{ secrets.OXC_BOT_PAT }} # required for git tag push
-          persist-credentials: true
+          persist-credentials: true # for git tag push
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
         with:
           cache-key: warm
           tools: cargo-release-oxc
 
       - run: cargo ck
 
+      - uses: rust-lang/crates-io-auth-action@e919bc7605cde86df457cf5b93c5e103838bd879 # v1.0.1
+        id: auth
+
       - name: Run
         id: run
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
         run: |
           cargo release-oxc publish --release crates
           echo "TAG=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT

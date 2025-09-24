@@ -1,7 +1,7 @@
-use itertools::Itertools;
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, AstNodes, ReferenceId, Scoping, SymbolId};
-use rustc_hash::FxHashSet;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct MangleOptionsKeepNames {
@@ -74,10 +74,10 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
     }
 
     fn has_name_set_reference_node(&self, symbol_id: SymbolId) -> bool {
-        self.scoping.get_resolved_reference_ids(symbol_id).into_iter().any(|reference_id| {
-            let node = self.ast_nodes.get_node(self.scoping.get_reference(*reference_id).node_id());
-            self.is_name_set_reference_node(node, *reference_id)
-        })
+        self.scoping
+            .get_resolved_reference_ids(symbol_id)
+            .iter()
+            .any(|&reference_id| self.is_name_set_reference_node(reference_id))
     }
 
     fn is_name_set_declare_node(&self, node: &'a AstNode, symbol_id: SymbolId) -> bool {
@@ -90,12 +90,13 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
                 self.options.class && cls.id.as_ref().is_some_and(|id| id.symbol_id() == symbol_id)
             }
             AstKind::VariableDeclarator(decl) => {
-                if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
-                    if id.symbol_id() == symbol_id {
-                        return decl.init.as_ref().is_some_and(|init| {
-                            self.is_expression_whose_name_needs_to_be_kept(init)
-                        });
-                    }
+                if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind
+                    && id.symbol_id() == symbol_id
+                {
+                    return decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| self.is_expression_whose_name_needs_to_be_kept(init));
                 }
                 if let Some(assign_pattern) =
                     Self::find_assign_binding_pattern_kind_of_specific_symbol(
@@ -111,18 +112,33 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
         }
     }
 
-    fn is_name_set_reference_node(&self, node: &AstNode, reference_id: ReferenceId) -> bool {
-        let parent_node = self.ast_nodes.parent_node(node.id());
-        match parent_node.kind() {
-            AstKind::SimpleAssignmentTarget(_) => {
-                let Some((grand_parent_node_kind, grand_grand_parent_node_kind)) =
-                    self.ast_nodes.ancestor_kinds(parent_node.id()).skip(1).take(2).collect_tuple()
-                else {
-                    return false;
-                };
-                debug_assert!(matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)));
+    fn is_name_set_reference_node(&self, reference_id: ReferenceId) -> bool {
+        let node_id = self.scoping.get_reference(reference_id).node_id();
+        let parent_node_id = self.ast_nodes.parent_id(node_id);
+        match self.ast_nodes.kind(parent_node_id) {
+            // Check for direct assignment: foo = function() {}
+            AstKind::AssignmentExpression(assign_expr) => {
+                Self::is_assignment_target_id_of_specific_reference(&assign_expr.left, reference_id)
+                    && self.is_expression_whose_name_needs_to_be_kept(&assign_expr.right)
+            }
+            // Check for assignments within assignment targets with defaults: [foo = function() {}] = []
+            AstKind::AssignmentTargetWithDefault(assign_target) => {
+                Self::is_assignment_target_id_of_specific_reference(
+                    &assign_target.binding,
+                    reference_id,
+                ) && self.is_expression_whose_name_needs_to_be_kept(&assign_target.init)
+            }
+            AstKind::IdentifierReference(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::ComputedMemberExpression(_)
+            | AstKind::PrivateFieldExpression(_)
+            | AstKind::StaticMemberExpression(_) => {
+                let grand_parent_node_kind = self.ast_nodes.parent_kind(parent_node_id);
 
-                match grand_grand_parent_node_kind {
+                match grand_parent_node_kind {
                     AstKind::AssignmentExpression(assign_expr) => {
                         Self::is_assignment_target_id_of_specific_reference(
                             &assign_expr.left,
@@ -225,7 +241,7 @@ impl<'a, 'b: 'a> NameSymbolCollector<'a, 'b> {
             return true;
         }
 
-        let is_class = matches!(expr, Expression::ClassExpression(_));
+        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
         (self.options.class && is_class) || (self.options.function && !is_class)
     }
 }
@@ -276,8 +292,11 @@ mod test {
     #[test]
     fn test_simple_declare_init() {
         assert_eq!(collect(function_only(), "var foo = function() {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = (function() {})"), data("foo"));
         assert_eq!(collect(function_only(), "var foo = () => {}"), data("foo"));
+        assert_eq!(collect(function_only(), "var foo = (() => {})"), data("foo"));
         assert_eq!(collect(class_only(), "var Foo = class {}"), data("Foo"));
+        assert_eq!(collect(class_only(), "var Foo = (class {})"), data("Foo"));
     }
 
     #[test]

@@ -5,13 +5,15 @@ import {
   WASI as __WASI,
 } from '@napi-rs/wasm-runtime'
 
-import __wasmUrl from './transform.wasm32-wasi.wasm?url'
+
 
 const __wasi = new __WASI({
   version: 'preview1',
 })
 
+const __wasmUrl = new URL('./transform.wasm32-wasi.wasm', import.meta.url).href
 const __emnapiContext = __emnapiGetDefaultContext()
+
 
 const __sharedMemory = new WebAssembly.Memory({
   initial: 4000,
@@ -59,3 +61,4 @@ export const HelperMode = __napiModule.exports.HelperMode
 export const isolatedDeclaration = __napiModule.exports.isolatedDeclaration
 export const moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
 export const transform = __napiModule.exports.transform
+export const transformAsync = __napiModule.exports.transformAsync

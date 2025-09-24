@@ -102,32 +102,29 @@ declare_oxc_lint!(
     /// Enforce that all elements that require alternative text have meaningful
     /// information to relay back to the end user.
     ///
-    /// ### Why is this necessary?
+    /// ### Why is this bad?
     ///
     /// Alternative text is a critical component of accessibility for screen
-    /// reader users, enabling them to understand the content and function
-    /// of an element.
-    ///
-    /// ### What it checks
-    ///
-    /// This rule checks for alternative text on the following elements:
-    /// `<img>`, `<area>`, `<input type="image">`, and `<object>`.
-    ///
-    /// ### How to fix it
-    ///
-    /// Ensure that the `alt` attribute is present and contains meaningful
-    /// text that describes the element's content or purpose.
+    /// reader users, enabling them to understand the content and function of
+    /// an element. Missing or inadequate alt text makes content inaccessible
+    /// to users who rely on assistive technologies.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// <img src="flower.jpg" alt="A close-up of a white daisy" />
+    /// <img src="flower.jpg" />
+    /// <img src="flower.jpg" alt="" />
+    /// <object />
+    /// <area />
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    /// <img src="flower.jpg" />
+    /// <img src="flower.jpg" alt="A close-up of a white daisy" />
+    /// <img src="decorative.jpg" alt="" role="presentation" />
+    /// <object aria-label="Interactive chart" />
+    /// <area alt="Navigation link" />
     /// ```
     AltText,
     jsx_a11y,
@@ -177,29 +174,28 @@ impl Rule for AltText {
         let name = &get_element_type(ctx, jsx_el);
 
         // <img>
-        if let Some(custom_tags) = &self.img {
-            if name == "img" || custom_tags.iter().any(|i| i == name) {
-                img_rule(jsx_el, ctx);
-                return;
-            }
+        if let Some(custom_tags) = &self.img
+            && (name == "img" || custom_tags.iter().any(|i| i == name))
+        {
+            img_rule(jsx_el, ctx);
+            return;
         }
 
         // <object>
-        if let Some(custom_tags) = &self.object {
-            if name == "object" || custom_tags.iter().any(|i| i == name) {
-                if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id()) {
-                    object_rule(jsx_el, parent, ctx);
-                    return;
-                }
-            }
+        if let Some(custom_tags) = &self.object
+            && (name == "object" || custom_tags.iter().any(|i| i == name))
+            && let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id())
+        {
+            object_rule(jsx_el, parent, ctx);
+            return;
         }
 
         // <area>
-        if let Some(custom_tags) = &self.area {
-            if name == "area" || custom_tags.iter().any(|i| i == name) {
-                area_rule(jsx_el, ctx);
-                return;
-            }
+        if let Some(custom_tags) = &self.area
+            && (name == "area" || custom_tags.iter().any(|i| i == name))
+        {
+            area_rule(jsx_el, ctx);
+            return;
         }
 
         // <input type="image">

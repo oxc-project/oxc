@@ -37,6 +37,12 @@ pub struct NoThisAliasConfig {
     allow_names: FxHashSet<CompactStr>,
 }
 
+impl Default for NoThisAliasConfig {
+    fn default() -> Self {
+        Self { allow_destructuring: true, allow_names: FxHashSet::default() }
+    }
+}
+
 impl std::ops::Deref for NoThisAlias {
     type Target = NoThisAliasConfig;
 
@@ -45,11 +51,6 @@ impl std::ops::Deref for NoThisAlias {
     }
 }
 
-impl Default for NoThisAliasConfig {
-    fn default() -> Self {
-        Self { allow_destructuring: true, allow_names: FxHashSet::default() }
-    }
-}
 impl NoThisAlias {
     fn is_allowed(&self, name: &str) -> bool {
         self.allow_names.contains(name)
@@ -86,7 +87,7 @@ impl Rule for NoThisAlias {
             allow_destructuring: obj
                 .and_then(|v| v.get("allowDestructuring"))
                 .and_then(Value::as_bool)
-                .unwrap_or_default(),
+                .unwrap_or(true),
             allow_names: allowed_names,
         }))
     }

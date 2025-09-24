@@ -3,11 +3,13 @@ import { ConfigurationTarget, workspace } from 'vscode';
 import { WorkspaceConfig } from '../client/WorkspaceConfig.js';
 import { WORKSPACE_FOLDER } from './test-helpers.js';
 
+const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives', 'typeAware', 'fmt.experimental'];
+
 suite('WorkspaceConfig', () => {
   setup(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'configPath', 'flags', 'unusedDisableDirectives'];
+
 
     await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
@@ -18,7 +20,6 @@ suite('WorkspaceConfig', () => {
   teardown(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'configPath', 'flags', 'unusedDisableDirectives'];
 
     await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
@@ -30,8 +31,11 @@ suite('WorkspaceConfig', () => {
     const config = new WorkspaceConfig(WORKSPACE_FOLDER);
     strictEqual(config.runTrigger, 'onType');
     strictEqual(config.configPath, null);
+    strictEqual(config.tsConfigPath, null);
     strictEqual(config.unusedDisableDirectives, 'allow');
+    strictEqual(config.typeAware, false);
     deepStrictEqual(config.flags, {});
+    strictEqual(config.formattingExperimental, false);
   });
 
   test('configPath defaults to null when using nested configs and configPath is empty', async () => {
@@ -62,15 +66,21 @@ suite('WorkspaceConfig', () => {
     await Promise.all([
       config.updateRunTrigger('onSave'),
       config.updateConfigPath('./somewhere'),
+      config.updateTsConfigPath('./tsconfig.json'),
       config.updateUnusedDisableDirectives('deny'),
+      config.updateTypeAware(true),
       config.updateFlags({ test: 'value' }),
+      config.updateFormattingExperimental(true),
     ]);
 
     const wsConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
 
     strictEqual(wsConfig.get('lint.run'), 'onSave');
     strictEqual(wsConfig.get('configPath'), './somewhere');
+    strictEqual(wsConfig.get('tsConfigPath'), './tsconfig.json');
     strictEqual(wsConfig.get('unusedDisableDirectives'), 'deny');
+    strictEqual(wsConfig.get('typeAware'), true);
     deepStrictEqual(wsConfig.get('flags'), { test: 'value' });
+    strictEqual(wsConfig.get('fmt.experimental'), true);
   });
 });

@@ -36,6 +36,15 @@ declare_oxc_lint!(
     ///
     /// Disallow [optional chaining](https://github.com/tc39/proposal-optional-chaining).
     ///
+    /// ### Why is this bad?
+    ///
+    /// Optional chaining is a relatively new JavaScript feature that may not be
+    /// supported in older environments. In some cases, transpiling optional
+    /// chaining can result in verbose helper code that impacts bundle size or
+    /// performance. This rule is useful when you need to maintain compatibility
+    /// with older JavaScript targets or want to avoid the overhead of transpiled
+    /// optional chaining.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

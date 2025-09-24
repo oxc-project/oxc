@@ -3,10 +3,11 @@ use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, SPAN, Span};
+use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,
-    vars: std::vec::Vec<(Atom<'a>, Span)>,
+    vars: std::vec::Vec<(Atom<'a>, Span, Option<SymbolId>)>,
     all_hoisted: bool,
 }
 
@@ -44,7 +45,7 @@ impl<'a> Visit<'a> for KeepVar<'a> {
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
         if it.kind.is_var() {
             it.bound_names(&mut |ident| {
-                self.vars.push((ident.name, ident.span));
+                self.vars.push((ident.name, ident.span, ident.symbol_id.get()));
             });
             if it.has_init() {
                 self.all_hoisted = false;
@@ -58,18 +59,21 @@ impl<'a> KeepVar<'a> {
         Self { ast, vars: std::vec![], all_hoisted: true }
     }
 
-    pub fn all_hoisted(&self) -> bool {
-        self.all_hoisted
-    }
-
     pub fn get_variable_declaration(self) -> Option<ArenaBox<'a, VariableDeclaration<'a>>> {
         if self.vars.is_empty() {
             return None;
         }
 
         let kind = VariableDeclarationKind::Var;
-        let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span)| {
-            let binding_kind = self.ast.binding_pattern_kind_binding_identifier(span, name);
+        let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span, symbol_id)| {
+            let binding_kind = symbol_id.map_or_else(
+                || self.ast.binding_pattern_kind_binding_identifier(span, name),
+                |symbol_id| {
+                    self.ast.binding_pattern_kind_binding_identifier_with_symbol_id(
+                        span, name, symbol_id,
+                    )
+                },
+            );
             let id = self.ast.binding_pattern(binding_kind, NONE, false);
             self.ast.variable_declarator(span, kind, id, None, false)
         }));

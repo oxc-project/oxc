@@ -1,3 +1,7 @@
+use std::path::Path;
+
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -5,8 +9,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use serde_json::Value;
-use std::path::Path;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -139,11 +141,10 @@ impl Rule for NoAbsolutePath {
                         }
                         Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
                             for el in &arr_expr.elements {
-                                if let Some(el_expr) = el.as_expression() {
-                                    if matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
-                                    {
-                                        ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
-                                    }
+                                if let Some(el_expr) = el.as_expression()
+                                    && matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
+                                {
+                                    ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
                                 }
                             }
                         }

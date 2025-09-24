@@ -68,8 +68,8 @@ impl TestFiles {
             "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
             // Heavy with classes (554K)
             "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
-            // ES5 (3.9M)
-            "https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js",
+            // ES5 (6.7M)
+            "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
             // TypeScript syntax (189K)
             "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
         ]
@@ -113,7 +113,7 @@ impl TestFile {
 
                     let _drop = std::fs::remove_file(&file);
                     let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;
-                    let _drop = std::io::copy(&mut reader, &mut writer);
+                    std::io::copy(&mut reader, &mut writer).map_err(err_to_string)?;
 
                     std::fs::read_to_string(&file)
                         .map_err(err_to_string)

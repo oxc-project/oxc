@@ -451,7 +451,7 @@ impl<'a> Dummy<'a> for SimpleAssignmentTarget<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetPattern<'a> {
     /// Create a dummy [`AssignmentTargetPattern`].
     ///
-    /// Has cost of making 1 allocation (56 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::ArrayAssignmentTarget(Dummy::dummy(allocator))
     }
@@ -1058,6 +1058,7 @@ impl<'a> Dummy<'a> for Function<'a> {
             body: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
             pure: Dummy::dummy(allocator),
+            pife: Dummy::dummy(allocator),
         }
     }
 }
@@ -1140,6 +1141,7 @@ impl<'a> Dummy<'a> for ArrowFunctionExpression<'a> {
             body: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
             pure: Dummy::dummy(allocator),
+            pife: Dummy::dummy(allocator),
         }
     }
 }
@@ -1432,9 +1434,19 @@ impl<'a> Dummy<'a> for WithClause<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            attributes_keyword: Dummy::dummy(allocator),
+            keyword: Dummy::dummy(allocator),
             with_entries: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for WithClauseKeyword {
+    /// Create a dummy [`WithClauseKeyword`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::With
     }
 }
 
@@ -1481,11 +1493,7 @@ impl<'a> Dummy<'a> for ExportDefaultDeclaration<'a> {
     ///
     /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self {
-            span: Dummy::dummy(allocator),
-            exported: Dummy::dummy(allocator),
-            declaration: Dummy::dummy(allocator),
-        }
+        Self { span: Dummy::dummy(allocator), declaration: Dummy::dummy(allocator) }
     }
 }
 
@@ -2232,7 +2240,7 @@ impl<'a> Dummy<'a> for TSBigIntKeyword {
 impl<'a> Dummy<'a> for TSTypeReference<'a> {
     /// Create a dummy [`TSTypeReference`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2245,16 +2253,16 @@ impl<'a> Dummy<'a> for TSTypeReference<'a> {
 impl<'a> Dummy<'a> for TSTypeName<'a> {
     /// Create a dummy [`TSTypeName`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::IdentifierReference(Dummy::dummy(allocator))
+        Self::ThisExpression(Dummy::dummy(allocator))
     }
 }
 
 impl<'a> Dummy<'a> for TSQualifiedName<'a> {
     /// Create a dummy [`TSQualifiedName`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2328,7 +2336,7 @@ impl<'a> Dummy<'a> for TSAccessibility {
 impl<'a> Dummy<'a> for TSClassImplements<'a> {
     /// Create a dummy [`TSClassImplements`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2591,7 +2599,7 @@ impl<'a> Dummy<'a> for TSInferType<'a> {
 impl<'a> Dummy<'a> for TSTypeQuery<'a> {
     /// Create a dummy [`TSTypeQuery`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2604,9 +2612,9 @@ impl<'a> Dummy<'a> for TSTypeQuery<'a> {
 impl<'a> Dummy<'a> for TSTypeQueryExprName<'a> {
     /// Create a dummy [`TSTypeQueryExprName`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::IdentifierReference(Dummy::dummy(allocator))
+        Self::ThisExpression(Dummy::dummy(allocator))
     }
 }
 
@@ -2621,6 +2629,28 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
             options: Dummy::dummy(allocator),
             qualifier: Dummy::dummy(allocator),
             type_arguments: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for TSImportTypeQualifier<'a> {
+    /// Create a dummy [`TSImportTypeQualifier`].
+    ///
+    /// Has cost of making 1 allocation (24 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Identifier(Dummy::dummy(allocator))
+    }
+}
+
+impl<'a> Dummy<'a> for TSImportTypeQualifiedName<'a> {
+    /// Create a dummy [`TSImportTypeQualifiedName`].
+    ///
+    /// Has cost of making 1 allocation (24 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            span: Dummy::dummy(allocator),
+            left: Dummy::dummy(allocator),
+            right: Dummy::dummy(allocator),
         }
     }
 }
@@ -2738,7 +2768,7 @@ impl<'a> Dummy<'a> for TSTypeAssertion<'a> {
 impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
     /// Create a dummy [`TSImportEqualsDeclaration`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2752,9 +2782,9 @@ impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
 impl<'a> Dummy<'a> for TSModuleReference<'a> {
     /// Create a dummy [`TSModuleReference`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::IdentifierReference(Dummy::dummy(allocator))
+        Self::ThisExpression(Dummy::dummy(allocator))
     }
 }
 

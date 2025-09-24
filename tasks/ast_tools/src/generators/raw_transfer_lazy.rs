@@ -13,8 +13,8 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, OptionDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
-        VecDef,
+        BoxDef, CellDef, Def, EnumDef, OptionDef, PointerDef, PrimitiveDef, Schema, StructDef,
+        TypeDef, TypeId, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{format_cow, upper_case_first, write_it},
@@ -58,8 +58,6 @@ struct State {
     constructors: String,
     /// Code for walkers
     walkers: String,
-    /// Code for constructor class names
-    constructor_names: String,
     /// Code for constructor class names which are used in walkers
     walked_constructor_names: String,
     /// Code for mapping from struct name to ID
@@ -97,7 +95,6 @@ fn generate(
     let mut state = State {
         constructors: String::new(),
         walkers: String::new(),
-        constructor_names: String::new(),
         walked_constructor_names: String::new(),
         leaf_node_type_ids_map: String::new(),
         non_leaf_node_type_ids_map: String::new(),
@@ -149,18 +146,19 @@ fn generate(
             TypeDef::Cell(_cell_def) => {
                 // No constructor for `Cell`s - use inner type's constructor
             }
+            TypeDef::Pointer(_pointer_def) => {
+                // No constructor for pointers - use `Box`'s constructor.
+                // TODO: Need to make sure constructor for `Box<T>` is generated.
+            }
         }
     }
 
     // Generate file containing constructors
     let constructors = &state.constructors;
-    let constructor_names = &state.constructor_names;
     #[rustfmt::skip]
     let constructors = format!("
-        'use strict';
-
-        const {{ TOKEN, constructorError }} = require('../../raw-transfer/lazy-common.js'),
-            NodeArray = require('../../raw-transfer/node-array.js');
+        import {{ constructorError, TOKEN }} from '../../src-js/raw-transfer/lazy-common.js';
+        import {{ NodeArray }} from '../../src-js/raw-transfer/node-array.js';
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -168,10 +166,6 @@ fn generate(
             inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
 
         {constructors}
-
-        module.exports = {{
-            {constructor_names}
-        }};
     ");
 
     // Generate file containing walk functions
@@ -179,13 +173,9 @@ fn generate(
     let walked_constructor_names = &state.walked_constructor_names;
     #[rustfmt::skip]
     let walkers = format!("
-        'use strict';
+        import {{ {walked_constructor_names} }} from './constructors.js';
 
-        const {{
-            {walked_constructor_names}
-        }} = require('./constructors.js');
-
-        module.exports = walkProgram;
+        export {{ walkProgram }};
 
         {walkers}
     ");
@@ -198,20 +188,15 @@ fn generate(
     let non_leaf_node_type_ids_map = &state.non_leaf_node_type_ids_map;
     #[rustfmt::skip]
     let node_type_ids_map = format!("
-        'use strict';
-
         // Mapping from node type name to node type ID
-        const NODE_TYPE_IDS_MAP = new Map([
+        export const NODE_TYPE_IDS_MAP = new Map([
             // Leaf nodes
             {leaf_node_type_ids_map}// Non-leaf nodes
             {non_leaf_node_type_ids_map}
         ]);
 
-        module.exports = {{
-            NODE_TYPE_IDS_MAP,
-            NODE_TYPES_COUNT: {nodes_count},
-            LEAF_NODE_TYPES_COUNT: {leaf_nodes_count},
-        }};
+        export const NODE_TYPES_COUNT = {nodes_count};
+        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
     ");
 
     (constructors, walkers, node_type_ids_map)
@@ -280,6 +265,7 @@ impl<'s> WalkStatuses<'s> {
             TypeDef::Box(box_def) => self.is_walked(box_def.inner_type(self.schema)),
             TypeDef::Vec(vec_def) => self.is_walked(vec_def.inner_type(self.schema)),
             TypeDef::Cell(cell_def) => self.is_walked(cell_def.inner_type(self.schema)),
+            TypeDef::Pointer(pointer_def) => self.is_walked(pointer_def.inner_type(self.schema)),
         };
 
         self.statuses[type_id] = if is_walked { WalkStatus::Walk } else { WalkStatus::NoWalk };
@@ -359,12 +345,13 @@ impl<'s> CacheKeyOffsets<'s> {
             .types
             .iter()
             .map(|type_def| {
-                if let TypeDef::Struct(struct_def) = type_def {
-                    if struct_def.generates_derive(estree_derive_id) {
-                        return UNCALCULATED;
-                    }
+                if let TypeDef::Struct(struct_def) = type_def
+                    && struct_def.generates_derive(estree_derive_id)
+                {
+                    UNCALCULATED
+                } else {
+                    0
                 }
-                0
             })
             .collect::<IndexVec<TypeId, u8>>();
 
@@ -376,10 +363,10 @@ impl<'s> CacheKeyOffsets<'s> {
         let mut cache_key_offsets = Self { offsets, estree_derive_id, span_type_id, schema };
 
         for type_def in &schema.types {
-            if let TypeDef::Struct(struct_def) = type_def {
-                if struct_def.generates_derive(estree_derive_id) {
-                    cache_key_offsets.calculate_struct_key_offset(struct_def);
-                }
+            if let TypeDef::Struct(struct_def) = type_def
+                && struct_def.generates_derive(estree_derive_id)
+            {
+                cache_key_offsets.calculate_struct_key_offset(struct_def);
             }
         }
 
@@ -509,8 +496,8 @@ impl<'s> CacheKeyOffsets<'s> {
             }
             // Primitives don't contain structs, so all offsets are available
             TypeDef::Primitive(_) => true,
-            // `Box` and `Vec` store payload in a separate allocation, so all offsets are available
-            TypeDef::Box(_) | TypeDef::Vec(_) => true,
+            // `Box`, `Vec`, and pointers store payload in a separate allocation, so all offsets are available
+            TypeDef::Box(_) | TypeDef::Vec(_) | TypeDef::Pointer(_) => true,
         }
     }
 }
@@ -590,6 +577,9 @@ impl<'s> LocalCacheTypes<'s> {
             }
             TypeDef::Box(box_def) => self.needs_cached_prop(box_def.inner_type(self.schema)),
             TypeDef::Cell(cell_def) => self.needs_cached_prop(cell_def.inner_type(self.schema)),
+            TypeDef::Pointer(pointer_def) => {
+                self.needs_cached_prop(pointer_def.inner_type(self.schema))
+            }
         };
 
         self.state[type_id] =
@@ -724,7 +714,7 @@ fn generate_struct(
     // TODO: Add `visit` method to all classes which are nodes?
     #[rustfmt::skip]
     write_it!(state.constructors, "
-        class {struct_name} {{
+        export class {struct_name} {{
             {type_prop_init}
             #internal;
 
@@ -754,8 +744,6 @@ fn generate_struct(
 
         const Debug{struct_name} = class {struct_name} {{}};
     ");
-
-    write_it!(state.constructor_names, "{struct_name}, ");
 
     // Generate walk function
     if !is_walked {
@@ -801,7 +789,7 @@ fn generate_struct(
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
                 const enterExit = visitors[{node_type_id}];
-                let node, enter, exit;
+                let node, enter, exit = null;
                 if (enterExit !== null) {{
                     ({{ enter, exit }} = enterExit);
                     node = new {struct_name}(pos, ast);
@@ -810,7 +798,7 @@ fn generate_struct(
 
                 {walk_stmts}
 
-                if (exit) exit(node);
+                if (exit !== null) exit(node);
             }}
         ");
 
@@ -925,8 +913,9 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
         ",
         "f64" => "return ast.buffer.float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
-        // Reuse constructors for zeroed types
+        // Reuse constructors for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
+        type_name if type_name.starts_with("Atomic") => return,
         type_name => panic!("Cannot generate constructor for primitive `{type_name}`"),
     };
 
@@ -949,7 +938,7 @@ static STR_DESERIALIZER_BODY: &str = "
     if (len === 0) return '';
 
     pos = uint32[pos32];
-    if (ast.sourceIsAscii && pos < ast.sourceLen) return ast.sourceText.substr(pos, len);
+    if (ast.sourceIsAscii && pos < ast.sourceByteLen) return ast.sourceText.substr(pos, len);
 
     // Longer strings use `TextDecoder`
     // TODO: Find best switch-over point
@@ -1193,6 +1182,7 @@ impl FunctionNames for TypeDef {
             TypeDef::Box(def) => def.constructor_name(schema),
             TypeDef::Vec(def) => def.constructor_name(schema),
             TypeDef::Cell(def) => def.constructor_name(schema),
+            TypeDef::Pointer(def) => def.constructor_name(schema),
         }
     }
 
@@ -1205,6 +1195,7 @@ impl FunctionNames for TypeDef {
             TypeDef::Box(def) => def.plain_name(schema),
             TypeDef::Vec(def) => def.plain_name(schema),
             TypeDef::Cell(def) => def.plain_name(schema),
+            TypeDef::Pointer(def) => def.plain_name(schema),
         }
     }
 }
@@ -1248,6 +1239,9 @@ impl FunctionNames for PrimitiveDef {
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
             // Use zeroed type's constructor for `NonZero*` types
             Cow::Borrowed(type_name)
+        } else if let Some(type_name) = type_name.strip_prefix("Atomic") {
+            // Use standard type's constructor for `Atomic*` types
+            Cow::Borrowed(type_name)
         } else {
             upper_case_first(type_name)
         }
@@ -1262,5 +1256,12 @@ impl FunctionNames for CellDef {
 
     fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
         self.inner_type(schema).plain_name(schema)
+    }
+}
+
+// Pointers use same construct and walk functions as `Box`, as layout is identical
+impl FunctionNames for PointerDef {
+    fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
+        format_cow!("Box{}", self.inner_type(schema).plain_name(schema))
     }
 }

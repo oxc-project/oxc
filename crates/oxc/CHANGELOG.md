@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.92.0] - 2025-09-24
+
+### 🚀 Features
+
+- 0fe4d95 mangler: Mangle private class members (#14027) (sapphi-red)
+
+
+## [0.91.0] - 2025-09-22
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+
+
+
+## [0.88.0] - 2025-09-15
+
+### ⚡ Performance
+
+- 08c05df semantic: Make CFG construction a compile-time feature (#13678) (Boshen)
+
+
+
+
+
+
+
+
+
+
+
+
+## [0.80.0] - 2025-08-03
+
+### 📚 Documentation
+
+- 514322c rust: Add minimal documentation to example files in crates directory (#12731) (Copilot)
+
+
+
+
+
+
+## [0.77.2] - 2025-07-17
+
+### 🚜 Refactor
+
+- eb12132 minifier: Unify access `CompressOptions` through `ctx.state` (#12346) (Boshen)
+
+
+
+
 
 
 

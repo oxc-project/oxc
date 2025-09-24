@@ -135,7 +135,7 @@ impl Rule for InitDeclarations {
                     return;
                 }
                 let decl_ancestor =
-                    ctx.nodes().ancestor_kinds(node.id()).skip(1).find(|el| {
+                    ctx.nodes().ancestor_kinds(node.id()).find(|el| {
                         matches!(el, AstKind::TSModuleDeclaration(ts_module_decl) if ts_module_decl.declare)
                     });
                 if decl_ancestor.is_some() {

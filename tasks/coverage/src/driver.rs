@@ -29,7 +29,7 @@ pub struct Driver {
     pub path: PathBuf,
     // options
     pub transform: Option<TransformOptions>,
-    pub compress: bool,
+    pub compress: Option<CompressOptions>,
     pub remove_whitespace: bool,
     pub codegen: bool,
     pub check_semantic: bool,
@@ -58,7 +58,7 @@ impl CompilerInterface for Driver {
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        self.compress.then(CompressOptions::smallest)
+        self.compress.clone()
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
@@ -92,9 +92,7 @@ impl CompilerInterface for Driver {
 
     fn after_semantic(&mut self, ret: &mut SemanticBuilderReturn) -> ControlFlow<()> {
         if self.check_semantic {
-            let Some(program) = ret.semantic.nodes().program() else {
-                return ControlFlow::Break(());
-            };
+            let program = ret.semantic.nodes().program();
             if let Some(errors) = check_semantic_ids(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());
@@ -108,13 +106,12 @@ impl CompilerInterface for Driver {
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        if self.check_semantic {
-            if let Some(errors) =
+        if self.check_semantic
+            && let Some(errors) =
                 check_semantic_after_transform(&transformer_return.scoping, program)
-            {
-                self.errors.extend(errors);
-                return ControlFlow::Break(());
-            }
+        {
+            self.errors.extend(errors);
+            return ControlFlow::Break(());
         }
         ControlFlow::Continue(())
     }

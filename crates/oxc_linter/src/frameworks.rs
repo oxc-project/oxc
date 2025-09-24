@@ -95,3 +95,10 @@ pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
 pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| entry.module_request.name() == "@jest/globals")
 }
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+
+pub enum FrameworkOptions {
+    Default,  // default
+    VueSetup, // context is inside `<script setup>`
+}

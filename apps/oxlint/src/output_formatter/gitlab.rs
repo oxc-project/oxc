@@ -1,28 +1,30 @@
+use std::hash::{DefaultHasher, Hash, Hasher};
+
+use serde::Serialize;
+
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
-
-use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::output_formatter::InternalFormatter;
 
 #[derive(Debug, Default)]
 pub struct GitlabOutputFormatter;
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, Serialize)]
 struct GitlabErrorLocationLinesJson {
     begin: usize,
     end: usize,
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, Serialize)]
 struct GitlabErrorLocationJson {
     path: String,
     lines: GitlabErrorLocationLinesJson,
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, Serialize)]
 struct GitlabErrorJson {
     description: String,
     check_name: String,

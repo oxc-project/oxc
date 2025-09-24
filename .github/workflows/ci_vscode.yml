@@ -25,27 +25,16 @@ concurrency:
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
-  lint:
-    name: Check VSCode
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
-
-      - name: Lint VSCode
-        working-directory: editors/vscode
-        run: pnpm run lint
-
-      - name: Type-Check VSCode
-        working-directory: editors/vscode
-        run: pnpm run type-check
-
   test:
     name: Test VSCode
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+
+      - name: Type-Check VSCode
+        working-directory: editors/vscode
+        run: pnpm run type-check
 
       - name: Build Language Server
         working-directory: editors/vscode

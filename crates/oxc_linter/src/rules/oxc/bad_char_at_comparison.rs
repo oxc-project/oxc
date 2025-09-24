@@ -78,14 +78,14 @@ impl Rule for BadCharAtComparison {
             &binary_expr.left
         };
 
-        if let Expression::StringLiteral(string_lit) = comparison_with {
-            if !is_string_valid(string_lit.value.as_str()) {
-                ctx.diagnostic(bad_char_at_comparison_diagnostic(
-                    call_expr.span,
-                    string_lit.span,
-                    string_lit.value.len(),
-                ));
-            }
+        if let Expression::StringLiteral(string_lit) = comparison_with
+            && !is_string_valid(string_lit.value.as_str())
+        {
+            ctx.diagnostic(bad_char_at_comparison_diagnostic(
+                call_expr.span,
+                string_lit.span,
+                string_lit.value.len(),
+            ));
         }
     }
 }

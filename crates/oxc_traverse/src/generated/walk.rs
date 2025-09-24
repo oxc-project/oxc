@@ -1035,10 +1035,10 @@ unsafe fn walk_array_assignment_target<'a, State, Tr: Traverse<'a, State>>(
         walk_assignment_target_maybe_default(traverser, item as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ARRAY_ASSIGNMENT_TARGET_REST)
-        as *mut Option<AssignmentTargetRest>)
+        as *mut Option<Box<AssignmentTargetRest>>)
     {
         ctx.retag_stack(AncestorType::ArrayAssignmentTargetRest);
-        walk_assignment_target_rest(traverser, field as *mut _, ctx);
+        walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_array_assignment_target(&mut *node, ctx);
@@ -1060,10 +1060,10 @@ unsafe fn walk_object_assignment_target<'a, State, Tr: Traverse<'a, State>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_OBJECT_ASSIGNMENT_TARGET_REST)
-        as *mut Option<AssignmentTargetRest>)
+        as *mut Option<Box<AssignmentTargetRest>>)
     {
         ctx.retag_stack(AncestorType::ObjectAssignmentTargetRest);
-        walk_assignment_target_rest(traverser, field as *mut _, ctx);
+        walk_assignment_target_rest(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_object_assignment_target(&mut *node, ctx);
@@ -2889,16 +2889,9 @@ unsafe fn walk_with_clause<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_with_clause(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::WithClauseAttributesKeyword(
-        ancestor::WithClauseWithoutAttributesKeyword(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::WithClauseWithEntries(
+        ancestor::WithClauseWithoutWithEntries(node, PhantomData),
     ));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_WITH_CLAUSE_ATTRIBUTES_KEYWORD)
-            as *mut IdentifierName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::WithClauseWithEntries);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_WITH_CLAUSE_WITH_ENTRIES)
         as *mut Vec<ImportAttribute>)
     {
@@ -2994,16 +2987,9 @@ unsafe fn walk_export_default_declaration<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_export_default_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationExported(
-        ancestor::ExportDefaultDeclarationWithoutExported(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationDeclaration(
+        ancestor::ExportDefaultDeclarationWithoutDeclaration(node, PhantomData),
     ));
-    walk_module_export_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_EXPORTED)
-            as *mut ModuleExportName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::ExportDefaultDeclarationDeclaration);
     walk_export_default_declaration_kind(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
@@ -4439,6 +4425,9 @@ unsafe fn walk_ts_type_name<'a, State, Tr: Traverse<'a, State>>(
         TSTypeName::QualifiedName(node) => {
             walk_ts_qualified_name(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSTypeName::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_ts_type_name(&mut *node, ctx);
 }
@@ -5128,7 +5117,9 @@ unsafe fn walk_ts_type_query_expr_name<'a, State, Tr: Traverse<'a, State>>(
         TSTypeQueryExprName::TSImportType(node) => {
             walk_ts_import_type(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSTypeQueryExprName::IdentifierReference(_) | TSTypeQueryExprName::QualifiedName(_) => {
+        TSTypeQueryExprName::IdentifierReference(_)
+        | TSTypeQueryExprName::QualifiedName(_)
+        | TSTypeQueryExprName::ThisExpression(_) => {
             walk_ts_type_name(traverser, node as *mut _, ctx)
         }
     }
@@ -5156,10 +5147,10 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
         walk_object_expression(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
-        as *mut Option<TSTypeName>)
+        as *mut Option<TSImportTypeQualifier>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeQualifier);
-        walk_ts_type_name(traverser, field as *mut _, ctx);
+        walk_ts_import_type_qualifier(traverser, field as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_ARGUMENTS)
@@ -5170,6 +5161,49 @@ unsafe fn walk_ts_import_type<'a, State, Tr: Traverse<'a, State>>(
     }
     ctx.pop_stack(pop_token);
     traverser.exit_ts_import_type(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_type_qualifier<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TSImportTypeQualifier<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_ts_import_type_qualifier(&mut *node, ctx);
+    match &mut *node {
+        TSImportTypeQualifier::Identifier(node) => {
+            walk_identifier_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSImportTypeQualifier::QualifiedName(node) => {
+            walk_ts_import_type_qualified_name(traverser, (&mut **node) as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_import_type_qualifier(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_import_type_qualified_name<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TSImportTypeQualifiedName<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_ts_import_type_qualified_name(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSImportTypeQualifiedNameLeft(
+        ancestor::TSImportTypeQualifiedNameWithoutLeft(node, PhantomData),
+    ));
+    walk_ts_import_type_qualifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_LEFT)
+            as *mut TSImportTypeQualifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSImportTypeQualifiedNameRight);
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIED_NAME_RIGHT)
+            as *mut IdentifierName,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ts_import_type_qualified_name(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_function_type<'a, State, Tr: Traverse<'a, State>>(
@@ -5424,9 +5458,9 @@ unsafe fn walk_ts_module_reference<'a, State, Tr: Traverse<'a, State>>(
         TSModuleReference::ExternalModuleReference(node) => {
             walk_ts_external_module_reference(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSModuleReference::IdentifierReference(_) | TSModuleReference::QualifiedName(_) => {
-            walk_ts_type_name(traverser, node as *mut _, ctx)
-        }
+        TSModuleReference::IdentifierReference(_)
+        | TSModuleReference::QualifiedName(_)
+        | TSModuleReference::ThisExpression(_) => walk_ts_type_name(traverser, node as *mut _, ctx),
     }
     traverser.exit_ts_module_reference(&mut *node, ctx);
 }

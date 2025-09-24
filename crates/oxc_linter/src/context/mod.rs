@@ -17,10 +17,11 @@ use crate::{
     config::GlobalValue,
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
+    frameworks::FrameworkOptions,
 };
 
 mod host;
-pub use host::ContextHost;
+pub use host::{ContextHost, ContextSubHost};
 
 /// Contains all of the state and context specific to this lint rule.
 ///
@@ -105,8 +106,8 @@ impl<'a> LintContext<'a> {
     ///
     /// Refer to [`Semantic`]'s documentation for more information.
     #[inline]
-    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
-        &self.parent.semantic
+    pub fn semantic(&self) -> &Semantic<'a> {
+        self.parent.semantic()
     }
 
     #[inline]
@@ -119,19 +120,19 @@ impl<'a> LintContext<'a> {
     pub fn cfg(&self) -> &ControlFlowGraph {
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
         // assert the existence of control flow so it should always be `Some`.
-        unsafe { self.parent.semantic.cfg().unwrap_unchecked() }
+        unsafe { self.parent.semantic().cfg().unwrap_unchecked() }
     }
 
     /// List of all disable directives in the file being linted.
     #[inline]
-    pub fn disable_directives(&self) -> &DisableDirectives<'a> {
-        &self.parent.disable_directives
+    pub fn disable_directives(&self) -> &DisableDirectives {
+        self.parent.disable_directives()
     }
 
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
-        span.source_text(self.parent.semantic.source_text())
+        span.source_text(self.parent.semantic().source_text())
     }
 
     /// Path to the file currently being linted.
@@ -187,10 +188,10 @@ impl<'a> LintContext<'a> {
         }
 
         for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env) {
-                if let Some(value) = env.get(var) {
-                    return Some(GlobalValue::from(*value));
-                }
+            if let Some(env) = GLOBALS.get(env)
+                && let Some(value) = env.get(var)
+            {
+                return Some(GlobalValue::from(*value));
             }
         }
 
@@ -208,10 +209,10 @@ impl<'a> LintContext<'a> {
             return true;
         }
         for env in self.env().iter() {
-            if let Some(env) = GLOBALS.get(env) {
-                if env.contains_key(var) {
-                    return true;
-                }
+            if let Some(env) = GLOBALS.get(env)
+                && env.contains_key(var)
+            {
+                return true;
             }
         }
         false
@@ -222,7 +223,7 @@ impl<'a> LintContext<'a> {
     /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
     /// name, severity, and a link to the rule's documentation URL.
     fn add_diagnostic(&self, mut message: Message<'a>) {
-        if self.parent.disable_directives.contains(self.current_rule_name, message.span()) {
+        if self.parent.disable_directives().contains(self.current_rule_name, message.span()) {
             return;
         }
         message.error = message
@@ -289,6 +290,27 @@ impl<'a> LintContext<'a> {
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::Suggestion, fix);
+    }
+
+    /// Report a lint rule violation and provide a suggestion for fixing it.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Fixes created this way should not create parse errors, but have the
+    /// potential to change the code's semantics. If your fix is completely safe
+    /// and definitely does not change semantics, use [`LintContext::diagnostic_with_fix`].
+    /// If your fix has the potential to create parse errors, use
+    /// [`LintContext::diagnostic_with_dangerous_fix`].
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    #[inline]
+    pub fn diagnostic_with_dangerous_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
+    where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousSuggestion, fix);
     }
 
     /// Report a lint rule violation and provide a potentially dangerous
@@ -421,6 +443,16 @@ impl<'a> LintContext<'a> {
     pub fn frameworks(&self) -> FrameworkFlags {
         self.parent.frameworks
     }
+
+    /// Returns the framework options for the current script block.
+    /// For Vue files, this can be `FrameworkOptions::VueSetup` if we're in a `<script setup>` block.
+    pub fn frameworks_options(&self) -> FrameworkOptions {
+        self.parent.frameworks_options()
+    }
+
+    pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
+        self.parent.other_file_hosts()
+    }
 }
 
 /// Gets the prefixed plugin name, given the short plugin name.
@@ -449,4 +481,6 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",
     "node" => "eslint-plugin-node",
+    "vue" => "eslint-plugin-vue",
+    "regexp" => "eslint-plugin-regexp",
 };

@@ -23,7 +23,7 @@ use super::{NonEmptyStack, Stack};
 ///
 /// e.g. if `T` is 24 bytes, and 90% of stack entries have no values:
 /// * `Vec<Option<T>>` is 24 bytes per entry (or 32 bytes if `T` has no niche).
-/// * `NonEmptyStack<Option<T>>` is same.
+/// * `NonEmptyStack<Option<T>>` is the same.
 /// * `SparseStack<T>` is 4 bytes per entry.
 ///
 /// When the stack grows and reallocates, `SparseStack` has less memory to copy, which is a performance
@@ -249,6 +249,22 @@ impl<T> SparseStack<T> {
         self.has_values.len()
     }
 
+    /// Get if stack is back in its initial state.
+    /// i.e. Every `push` has been followed by a corresponding `pop`.
+    ///
+    /// [`SparseStack`] is never empty, so this is the closest thing to `is_empty` that makes sense.
+    ///
+    /// If this method returns `true`, the stack only contains the initial element,
+    /// and calling [`pop`] will panic.
+    ///
+    /// Equivalent to `stack.len() == 1`.
+    ///
+    /// [`pop`]: Self::pop
+    #[inline]
+    pub fn is_exhausted(&self) -> bool {
+        self.has_values.is_exhausted()
+    }
+
     /// Get number of filled entries on the stack.
     #[inline]
     pub fn filled_len(&self) -> usize {
@@ -283,5 +299,34 @@ impl<T> SparseStack<T> {
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         self.values.as_mut_slice()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_exhausted() {
+        let mut stack = SparseStack::<u64>::new();
+        assert!(stack.is_exhausted());
+
+        stack.push(None);
+        assert!(!stack.is_exhausted());
+        stack.push(None);
+        assert!(!stack.is_exhausted());
+        stack.pop();
+        assert!(!stack.is_exhausted());
+        stack.pop();
+        assert!(stack.is_exhausted());
+
+        stack.push(Some(10));
+        assert!(!stack.is_exhausted());
+        stack.push(Some(20));
+        assert!(!stack.is_exhausted());
+        stack.pop();
+        assert!(!stack.is_exhausted());
+        stack.pop();
+        assert!(stack.is_exhausted());
     }
 }

@@ -332,9 +332,17 @@ impl<'a> ReplaceGlobalDefines<'a> {
         ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if !ident.is_global_reference(ctx.scoping()) {
-            return None;
+        if let Some(symbol_id) = ident
+            .reference_id
+            .get()
+            .and_then(|reference_id| ctx.scoping().get_reference(reference_id).symbol_id())
+        {
+            // Ignore `declare const IS_PROD: boolean;`
+            if !ctx.scoping().symbol_flags(symbol_id).is_ambient() {
+                return None;
+            }
         }
+        // This is a global variable, including ambient variants such as `declare const`.
         for (key, value) in &self.config.0.identifier.identifier_defines {
             if ident.name.as_str() == key {
                 let value = self.parse_value(value);
@@ -404,13 +412,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 }
             }
             Expression::MetaProperty(meta_property) => {
-                if let Some(replacement) = &self.config.0.import_meta {
-                    if meta_property.meta.name == "import" && meta_property.property.name == "meta"
-                    {
-                        let value = self.parse_value(replacement);
-                        *expr = value;
-                        return true;
-                    }
+                if let Some(replacement) = &self.config.0.import_meta
+                    && meta_property.meta.name == "import"
+                    && meta_property.property.name == "meta"
+                {
+                    let value = self.parse_value(replacement);
+                    *expr = value;
+                    return true;
                 }
             }
             _ => {}
@@ -465,6 +473,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
         meta_define: &MetaPropertyDefine,
         member: &StaticMemberExpression<'a>,
     ) -> bool {
+        enum WildCardStatus {
+            None,
+            Pending,
+            Matched,
+        }
         if meta_define.parts.is_empty() && meta_define.postfix_wildcard {
             match &member.object {
                 Expression::MetaProperty(meta) => {
@@ -480,6 +493,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
         let mut is_full_match = true;
         let mut i = meta_define.parts.len() - 1;
         let mut has_matched_part = false;
+        let mut wildcard_status = if meta_define.postfix_wildcard {
+            WildCardStatus::Pending
+        } else {
+            WildCardStatus::None
+        };
         loop {
             let part = &meta_define.parts[i];
             let matched = cur_part_name.as_str() == part;
@@ -493,10 +511,15 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 // import.res.meta.env // should not matched
                 // ```
                 // So we use has_matched_part to track if any part has matched.
-
-                if !meta_define.postfix_wildcard || has_matched_part {
+                // `None` means there is no postfix wildcard defined, so any part not matched should return false
+                // `Matched` means there is a postfix wildcard defined, and already matched a part, so any further
+                // not matched part should return false
+                if matches!(wildcard_status, WildCardStatus::None | WildCardStatus::Matched)
+                    || has_matched_part
+                {
                     return false;
                 }
+                wildcard_status = WildCardStatus::Matched;
             }
 
             current_part_member_expression = if let Some(member) = current_part_member_expression {

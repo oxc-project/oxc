@@ -35,6 +35,14 @@ declare_oxc_lint!(
     ///
     /// The default threshold is 100;
     ///
+    /// ### Why is this bad?
+    ///
+    /// Barrel files that re-export many modules can significantly slow down
+    /// applications and bundlers. When a barrel file exports a large number of
+    /// modules, importing from it forces the runtime or bundler to process all
+    /// the exported modules, even if only a few are actually used. This leads
+    /// to slower startup times and larger bundle sizes.
+    ///
     /// References:
     ///
     /// * <https://github.com/thepassle/eslint-plugin-barrel-files>
@@ -100,13 +108,11 @@ impl Rule for NoBarrelFile {
             // the own module is counted as well
             total += 1;
 
-            if let Some(remote_module) =
-                module_record.loaded_modules.read().unwrap().get(module_request.name())
+            if let Some(remote_module) = module_record.get_loaded_module(module_request.name())
+                && let Some(count) = count_loaded_modules(&remote_module)
             {
-                if let Some(count) = count_loaded_modules(remote_module) {
-                    total += count;
-                    labels.push(module_request.span.label(format!("{count} modules")));
-                }
+                total += count;
+                labels.push(module_request.span.label(format!("{count} modules")));
             }
         }
 
@@ -122,7 +128,7 @@ impl Rule for NoBarrelFile {
 }
 
 fn count_loaded_modules(module_record: &ModuleRecord) -> Option<usize> {
-    if module_record.loaded_modules.read().unwrap().is_empty() {
+    if module_record.loaded_modules().is_empty() {
         return None;
     }
     Some(

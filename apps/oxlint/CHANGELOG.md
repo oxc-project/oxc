@@ -4,6 +4,354 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- f47f978 linter/plugins: Add `definePlugin` API (#14008) (overlookmotel)
+- 3e117c6 linter/plugins: Add `defineRule` API (#13945) (overlookmotel)
+- 2dc8adb linter/plugins: Add `createOnce` API (#13944) (overlookmotel)
+- bef8753 linter/plugins: ESTree-compatible AST for JS plugins (#13942) (overlookmotel)
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- c75ae8c linter/plugins: Add options to `Context` (#13810) (overlookmotel)
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 1f4be38 napi/parser: Generate `.d.mts` extension for types (#14038) (Daniel Roe)
+- a018756 linter/plugins: Pin `tsdown` dependency to 0.15.1 (#14005) (overlookmotel)
+- a34918a linter/plugins: Avoid lint warnings compiling WASM or big-endian (#13968) (overlookmotel)
+- dd3843f linter: Set package version in `package.json` (#13890) (overlookmotel)
+- fac7624 linter/plugins: Improve error for no JS plugins (#13858) (overlookmotel)
+
+### 🚜 Refactor
+
+- bb040bc parser, linter: Replace `.mjs` files with `.js` (#14045) (overlookmotel)
+- 0d48511 linter/plugins: Improve handling `Context` method calls in `createOnce` (#14032) (overlookmotel)
+- 6bc7664 oxlint: Run oxlint before tsgolint (#13519) (camc314)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+- 6245c8c linter/plugins: Make `Context` properties getters (#13809) (overlookmotel)
+- a2342a6 linter/plugins: Import named in tests (#13807) (overlookmotel)
+
+### 📚 Documentation
+
+- 601c876 linter: Add comment explaining why Mimalloc is feature-gated (#14037) (overlookmotel)
+
+### ⚡ Performance
+
+- 4d04c6e linter/plugins: Flatten `LintFileResult` fields (#14033) (overlookmotel)
+- a79af0a linter: Replace `for (... of ...)` loops (#13913) (overlookmotel)
+
+### 🎨 Styling
+
+- 8083740 linter: Import `Serialize` at top level (#14030) (overlookmotel)
+
+### 🧪 Testing
+
+- f51240e linter/plugins: Tests for different import styles (#13859) (overlookmotel)
+- 407c95e linter/plugins: Check `this` is undefined in visit functions (#13811) (overlookmotel)
+- f023a22 linter/plugins: Include stack trace in plugin loading errors (#13808) (overlookmotel)
+
+### 💼 Other
+
+- 0630d68 linter: Build `oxlint` locally with Mimalloc in release mode (#14034) (overlookmotel)
+
+
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- f47f978 linter/plugins: Add `definePlugin` API (#14008) (overlookmotel)
+- 3e117c6 linter/plugins: Add `defineRule` API (#13945) (overlookmotel)
+- 2dc8adb linter/plugins: Add `createOnce` API (#13944) (overlookmotel)
+- bef8753 linter/plugins: ESTree-compatible AST for JS plugins (#13942) (overlookmotel)
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- c75ae8c linter/plugins: Add options to `Context` (#13810) (overlookmotel)
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 1f4be38 napi/parser: Generate `.d.mts` extension for types (#14038) (Daniel Roe)
+- a018756 linter/plugins: Pin `tsdown` dependency to 0.15.1 (#14005) (overlookmotel)
+- a34918a linter/plugins: Avoid lint warnings compiling WASM or big-endian (#13968) (overlookmotel)
+- dd3843f linter: Set package version in `package.json` (#13890) (overlookmotel)
+- fac7624 linter/plugins: Improve error for no JS plugins (#13858) (overlookmotel)
+
+### 🚜 Refactor
+
+- bb040bc parser, linter: Replace `.mjs` files with `.js` (#14045) (overlookmotel)
+- 0d48511 linter/plugins: Improve handling `Context` method calls in `createOnce` (#14032) (overlookmotel)
+- 6bc7664 oxlint: Run oxlint before tsgolint (#13519) (camc314)
+- ac3e9e9 napi/parser: Move JS code into `src-js` directory (#13899) (overlookmotel)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+- 6245c8c linter/plugins: Make `Context` properties getters (#13809) (overlookmotel)
+- a2342a6 linter/plugins: Import named in tests (#13807) (overlookmotel)
+
+### 📚 Documentation
+
+- 601c876 linter: Add comment explaining why Mimalloc is feature-gated (#14037) (overlookmotel)
+
+### ⚡ Performance
+
+- 4d04c6e linter/plugins: Flatten `LintFileResult` fields (#14033) (overlookmotel)
+- a79af0a linter: Replace `for (... of ...)` loops (#13913) (overlookmotel)
+
+### 🎨 Styling
+
+- 8083740 linter: Import `Serialize` at top level (#14030) (overlookmotel)
+
+### 🧪 Testing
+
+- f51240e linter/plugins: Tests for different import styles (#13859) (overlookmotel)
+- 407c95e linter/plugins: Check `this` is undefined in visit functions (#13811) (overlookmotel)
+- f023a22 linter/plugins: Include stack trace in plugin loading errors (#13808) (overlookmotel)
+
+### 💼 Other
+
+- 0630d68 linter: Build `oxlint` locally with Mimalloc in release mode (#14034) (overlookmotel)
+
+
+## [1.16.0] - 2025-09-16
+
+### 🐛 Bug Fixes
+
+- 3af1e5d linter/no-unsafe-declaration-merging: Always mark first span as primary (#13830) (camc314)
+- 12baf5e linter/exhaustive-deps: Respect primary span when identifying disable directive location (#13781) (camc314)
+- 09428f6 linter/plugins: Remove outdated comment (#13691) (overlookmotel)
+- a294721 linter/plugins: Exit early if JS plugins enabled on unsupported platforms (#13689) (overlookmotel)
+- 68a2280 linter/plugins: More graceful exit for `--experimental-js-plugins` CLI option (#13688) (overlookmotel)
+
+### 🚜 Refactor
+
+- 7346099 linter: Move `oxlint` application code into separate module (#13745) (overlookmotel)
+- 6dd4107 linter: Remove `#[cfg(test)]` attributes from `tester` module (#13714) (overlookmotel)
+- c40c6ef linter/plugins: Directory for JS plugins-related code (#13701) (overlookmotel)
+- 1fd993f napi/oxlint: Rename `napi/oxlint2` to `napi/oxlint` (#13682) (overlookmotel)
+
+### 🎨 Styling
+
+- 99a7638 linter: Add comments + re-organise imports (#13715) (overlookmotel)
+
+### 🧪 Testing
+
+- fb2d087 linter: Set CWD for tests (#13722) (overlookmotel)
+
+
+## [1.15.0] - 2025-09-11
+
+### 💥 BREAKING CHANGES
+
+- edc70ea allocator/pool: [**BREAKING**] Remove `disable_fixed_size` Cargo feature (#13625) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0d867b1 linter: Skip running tsgolint when no files need type aware linting (#13502) (Copilot)
+
+### 🚜 Refactor
+
+- 7775c21 linter/plugins: Remove `oxlint2` Cargo feature (#13648) (overlookmotel)
+- 6cd6be2 linter: Add `--experimental-js-plugins` CLI arg (#13658) (overlookmotel)
+- 2f02ac6 linter/plugins: Remove `disable_oxlint2` Cargo feature (#13626) (overlookmotel)
+- ff9e4fb linter/plugins: Use fixed-size allocators when `ExternalLinter` exists (#13623) (overlookmotel)
+- 91759c6 linter/plugins: Only use `RawTransferFileSystem` if JS plugins registered (#13599) (overlookmotel)
+- 118020c linter/plugins: Discard `ExternalLinter` if no JS plugins registered (#13598) (overlookmotel)
+- 8d30bce linter/tsgolint: Report an error if the tsgolint exe could not be found (#13590) (camc314)
+- d245376 oxlint: Remove unused `runner` module (#13561) (camc314)
+
+### 🧪 Testing
+
+- 58e6c94 oxlint: Add test for ignorePatterns whitelist (#13372) (Sysix)
+
+
+## [1.14.0] - 2025-08-30
+
+### 🚜 Refactor
+
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### 📚 Documentation
+
+- 51d3840 linter: Update oxlint CLI help message on `.oxlintrc.json` config file (#13334) (0xCLARITY)
+
+### 🧪 Testing
+
+- 6eeeb67 oxlint: Add test for ignore patterns referenced by symlink file (#13356) (Sysix)
+
+
+## [1.13.0] - 2025-08-26
+
+### 💥 BREAKING CHANGES
+
+- 63abd7c oxlint: [**BREAKING**] Do not ignore hidden dot directories by default (#13194) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 648e939 linter: Parse `ignorePatterns` with gitignore syntax (#13221) (Sysix)
+
+### 🚜 Refactor
+
+- c138fad linter: Avoid fs reads in `TsGoLintState` when `--silent` is used (#13199) (Sysix)
+
+
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- da3c7fb oxlint: Oxlint v0.0.3 (#13148) (Boshen)
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+- 61112a3 linter: Add 36 new TypeScript ESLint rules with comprehensive test fixtures (#12893) (Copilot)
+
+### 🐛 Bug Fixes
+
+- 66a350e oxlint: Should type linting files after ignore (#13149) (Boshen)
+- 43b1c5a linter: Do not count type-aware rules, when not enabled (#13062) (Sysix)
+- a0ccada tsgolint: Handle non-zero exit status from tsgolint process (#13087) (camc314)
+
+### 🚜 Refactor
+
+- 8459a12 linter: Pass paths to `TsGoLintState.lint` method (#13131) (Sysix)
+- f0a517f linter: Pass cwd instead of `LintServiceOptions` into `TsGoLintState` (#13127) (Sysix)
+- 34ae2f0 linter: Move `tsgolint.rs` to `oxc_linter` crate (#13126) (Sysix)
+- 9f924f6 linter: Always explicitly initialize Rayon thread pool (#13122) (overlookmotel)
+- 6c5b8be linter: Create `AllocatorPool` in `Runtime::new` (#13106) (overlookmotel)
+- cc2a85b linter: Remove `CliRunResult` from `TsGoLintState` (#13119) (Sysix)
+- 23e5642 linter: Move `TsGoLintInput` creation into own function (#13118) (Sysix)
+
+### ⚡ Performance
+
+- 3bfb235 linter: Implement streaming diagnostics for tsgolint instead of waiting for output to finish (#13098) (copilot-swe-agent)
+
+### 🎨 Styling
+
+- 4f2cc96 linter: Add line break (#13061) (overlookmotel)
+
+
+## [1.11.2] - 2025-08-12
+
+### 🐛 Bug Fixes
+
+- c461a86 oxlint: Fix type-aware linting crash when Vue files are present (#13007) (Copilot)
+- 2936545 linter/tsgolint: Report an error if tsgolint executable failed to spawn (#12984) (camc314)
+- a13b3ee oxlint: Run `tsgolint.CMD` under windows (#12932) (Sysix)
+
+### 🚜 Refactor
+
+- 69303de oxlint: Pass `DiagnosticService` as a parameter for `TsGoLintState.lint()` (#13004) (Sysix)
+
+### 🧪 Testing
+
+- fb8cbbf oxlint: Enable tsgolint test with config parameter for windows (#13001) (Alexander S.)
+- d59f3bb oxlint: Match `x.ys` when replacing var (#12990) (camc314)
+- d7cca12 linter: Add test for extended configs and overrides for tsgolint (#12924) (camchenry)
+
+
+## [1.11.1] - 2025-08-09
+
+### 🐛 Bug Fixes
+
+- 7fc907f linter: Resolve configured rules for every file linted by `tsgolint` (#12886) (camchenry)
+
+### 🚜 Refactor
+
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+### 🧪 Testing
+
+- 9d946aa oxlint: Skip `--type--aware` test for `big-endian` (#12911) (Sysix)
+- 695fbdd oxlint: Fix `--type-aware` test on `big-endian` and skip for `windows` (#12910) (Sysix)
+- 38118ab oxlint: Fix `--type-aware` snapshot + add non tsgolint rule (#12909) (Sysix)
+
+
+## [1.11.0] - 2025-08-07
+
+### 🚀 Features
+
+- ac46347 oxlint: Add `tsgolint` integration (#12485) (camchenry)
+
+
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 9b35600 linter/jsx-a11y: Add support for mapped attributes in label association checks (#12805) (camc314)
+
+### 🐛 Bug Fixes
+
+- 45206dd linter: Apply fix span offset after fixing the section source text (#12758) (Sysix)
+
+### 🚜 Refactor
+
+- 030e397 linter: Simplify parsing CLI args (#12802) (overlookmotel)
+- c0e224a linter: Store `ExternalRuleId` in `OxlintOverrides` not raw names (#12502) (camc314)
+
+### ⚡ Performance
+
+- 693673b linter: Reduce iterations when collecting directories for nested configs (#12329) (overlookmotel)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+### 🧪 Testing
+
+- d8ccff7 oxlint: Add `Tester::test_fix` mehod (#12754) (Sysix)
+
+
+## [1.9.0] - 2025-07-29
+
+### 🚜 Refactor
+
+- 543fd53 napi/oxlint: Rename `run` to `lintFile` (#12567) (overlookmotel)
+- 491c401 linter: Remove `#[must_use]` from `LintService::with_*` methods (#12560) (overlookmotel)
+- d44b0ac linter: Remove `Runner` trait (#12559) (overlookmotel)
+- bea652f linter: Add `vue` and `regex` to `BuiltinLintPlugins` (#12542) (Sysix)
+- 5c33fc7 diagnostics: Implement `Eq` and `Ord` for `InfoPosition` (#12505) (overlookmotel)
+- 7a0da04 diagnostics: Remove Option wrapper from MPSC channel and sender field (#12467) (camc314)
+
+### 🧪 Testing
+
+- d31adcf linter: Improve sorting diagnostics (#12504) (overlookmotel)
+
+
+## [1.8.0] - 2025-07-22
+
+### 🐛 Bug Fixes
+
+- 46e33d5 linter: Improve error handling in config file lookup (#12391) (camc314)
+
+
+## [1.7.0] - 2025-07-16
+
+### 🚀 Features
+
+- 5e428a4 linter/eslint-plugin-next: No-html-link-for-pages rule addition (#12194) (Gabriel Díaz Aguilera)
+- c551b8f linter: Report diagnostics from custom plugins (#12219) (camc314)
+- d387729 linter: JS custom rules config (#12160) (camc314)
+- 152e59d napi/oxlint: Read source text into start of allocator (#12122) (overlookmotel)
+- d4ebd14 linter: Add `oxlint2`/`disable_oxlint2` feature flags (#12130) (camc314)
+- a4dae73 linter: Introduce `LintPlugins` to store builtin + custom plugins (#12117) (camc314)
+
+### 🐛 Bug Fixes
+
+- 9720774 linter: Report implicit config parse errors (#12260) (Simon Buchan)
+- 853d2bc linter, language_server: Correctly identify usage of `import` plugin (#12157) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6e54645 language_server: Store `LintService` instead of `Linter` (#12016) (Sysix)
+- 113cf8c linter: Move `LintServiceOptions.paths` to `LintService.with_paths` (#12015) (Sysix)
+- acfac68 oxlint: Adjust ignore patterns by counting bytes instead of chars (#12209) (Sysix)
+- 1d2eaca oxlint2: Introduce `force_test_reporter` feature for consistent graphical outputs (#12133) (camc314)
+- f7c675d linter: Rename `LintPlugins` to `BuiltinLintPlugins` (#12116) (camc314)
+
+### 🧪 Testing
+
+- d1194e8 oxlint: Ignore test on windows (#12262) (camc314)
+
+
 ## [1.6.0] - 2025-07-07
 
 ### 🚀 Features

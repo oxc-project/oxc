@@ -29,8 +29,8 @@ impl<'a> TypeScript<'a, '_> {
     /// 2. Convert class fields to `this` assignments in the constructor body.
     ///
     /// > This transformation only works when `set_public_class_fields` is `true`,
-    ///   and the fields have initializers, which is to align with the behavior of TypeScript's
-    ///   `useDefineForClassFields: false` option.
+    /// > and the fields have initializers, which is to align with the behavior of TypeScript's
+    /// > `useDefineForClassFields: false` option.
     ///
     /// Input:
     /// ```ts
@@ -110,18 +110,18 @@ impl<'a> TypeScript<'a, '_> {
                         } else {
                             property_assignments.push(assignment);
                         }
-                    } else if self.remove_class_fields_without_initializer {
-                        if let Some(key) = prop.key.as_expression_mut() {
-                            // `TypeScript` uses `isSimpleInlineableExpression` to check if the key needs to be kept.
-                            // There is a little difference that we treat `BigIntLiteral` and `RegExpLiteral` can be kept, and
-                            // `IdentifierReference` without symbol is not kept.
-                            // https://github.com/microsoft/TypeScript/blob/8c62e08448e0ec76203bd519dd39608dbcb31705/src/compiler/transformers/classFields.ts#L2720
-                            if self.ctx.key_needs_temp_var(key, ctx) {
-                                // When `remove_class_fields_without_initializer` is true, the property without initializer
-                                // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
-                                // keeps and is evaluated in the same order as the original class field in static block.
-                                computed_key_assignments.push(key.take_in(ctx.ast));
-                            }
+                    } else if self.remove_class_fields_without_initializer
+                        && let Some(key) = prop.key.as_expression_mut()
+                    {
+                        // `TypeScript` uses `isSimpleInlineableExpression` to check if the key needs to be kept.
+                        // There is a little difference that we treat `BigIntLiteral` and `RegExpLiteral` can be kept, and
+                        // `IdentifierReference` without symbol is not kept.
+                        // https://github.com/microsoft/TypeScript/blob/8c62e08448e0ec76203bd519dd39608dbcb31705/src/compiler/transformers/classFields.ts#L2720
+                        if self.ctx.key_needs_temp_var(key, ctx) {
+                            // When `remove_class_fields_without_initializer` is true, the property without initializer
+                            // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
+                            // keeps and is evaluated in the same order as the original class field in static block.
+                            computed_key_assignments.push(key.take_in(ctx.ast));
                         }
                     }
                 }
@@ -215,10 +215,11 @@ impl<'a> TypeScript<'a, '_> {
         }
 
         class.body.body.retain(|element| {
-            if let ClassElement::PropertyDefinition(prop) = element {
-                if prop.value.is_none() && !prop.key.is_private_identifier() {
-                    return false;
-                }
+            if let ClassElement::PropertyDefinition(prop) = element
+                && prop.value.is_none()
+                && !prop.key.is_private_identifier()
+            {
+                return false;
             }
             true
         });
@@ -246,14 +247,13 @@ impl<'a> TypeScript<'a, '_> {
         constructor: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !constructor.kind.is_constructor() {
+        if !constructor.kind.is_constructor() || constructor.value.body.is_none() {
             return;
         }
 
         let params = &constructor.value.params.items;
         let assignments = Self::convert_constructor_params(params, ctx).collect::<Vec<_>>();
 
-        // `constructor {}` is guaranteed that it is `Some`.
         let constructor_body_statements = &mut constructor.value.body.as_mut().unwrap().statements;
         let super_call_position = Self::get_super_call_position(constructor_body_statements);
 

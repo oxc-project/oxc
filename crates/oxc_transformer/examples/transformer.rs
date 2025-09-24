@@ -1,4 +1,23 @@
 #![expect(clippy::print_stdout)]
+//! # Transformer Example
+//!
+//! This example demonstrates code transformation using the Oxc transformer.
+//! It supports various transformation options including Babel compatibility
+//! and environment-specific transforms.
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_transformer --example transformer [filename] [options]
+//! ```
+//!
+//! ## Options
+//!
+//! - `--babel-options <path>`: Path to Babel options file
+//! - `--targets <targets>`: Browser/environment targets
+//! - `--target <target>`: Single target environment
+
 use std::path::Path;
 
 use oxc_allocator::Allocator;
@@ -13,6 +32,7 @@ use pico_args::Arguments;
 // create a `test.js`,
 // run `just example transformer` or `just watch-example transformer`
 
+/// Demonstrate code transformation with various options
 fn main() {
     let mut args = Arguments::from_env();
     let babel_options_path: Option<String> =

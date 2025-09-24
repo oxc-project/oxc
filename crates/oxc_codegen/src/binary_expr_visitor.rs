@@ -1,6 +1,7 @@
 //! Visit binary and logical expression in a loop without recursion.
 //!
 //! Reference: <https://github.com/evanw/esbuild/blob/78f89e41d5e8a7088f4820351c6305cc339f8820/internal/js_printer/js_printer.go#L3266>
+
 use std::ops::Not;
 
 use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
@@ -185,15 +186,15 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
         match self.operator {
             BinaryishOperator::Logical(LogicalOperator::Coalesce) => {
-                if let Expression::LogicalExpression(logical_expr) = e.left() {
-                    if matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                        self.left_precedence = Precedence::Prefix;
-                    }
+                if let Expression::LogicalExpression(logical_expr) = e.left()
+                    && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
+                {
+                    self.left_precedence = Precedence::Prefix;
                 }
-                if let Expression::LogicalExpression(logical_expr) = e.right() {
-                    if matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                        self.right_precedence = Precedence::Prefix;
-                    }
+                if let Expression::LogicalExpression(logical_expr) = e.right()
+                    && matches!(logical_expr.operator, LogicalOperator::And | LogicalOperator::Or)
+                {
+                    self.right_precedence = Precedence::Prefix;
                 }
             }
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {

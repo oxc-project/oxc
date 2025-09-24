@@ -6,7 +6,10 @@ use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::ctx::{Ctx, MinifierState, TraverseCtx};
+use crate::{
+    ctx::{Ctx, TraverseCtx},
+    state::MinifierState,
+};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -27,6 +30,7 @@ pub struct NormalizeOptions {
 /// * convert `var x; void x` to `void 0`
 /// * convert `undefined` to `void 0`
 /// * apply `pure` to side-effect free global constructors (e.g. `new WeakMap()`)
+/// * remove unnecessary 'use strict' directive
 ///
 /// Also
 ///
@@ -48,6 +52,12 @@ impl<'a> Normalize {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
+    fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if node.source_type.is_module() {
+            node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+        }
+    }
+
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))
@@ -90,7 +100,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
                 None
             }
             Expression::CallExpression(_) if ctx.state.options.drop_console => {
-                self.compress_console(expr, ctx)
+                Self::compress_console(expr, ctx)
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
@@ -106,6 +116,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::set_pure_or_no_side_effects_to_new_expr(e, ctx);
     }
+
+    fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::remove_unused_use_strict_directive(body, ctx);
+    }
 }
 
 impl<'a> Normalize {
@@ -120,11 +134,7 @@ impl<'a> Normalize {
         matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
     }
 
-    fn compress_console(
-        &self,
-        expr: &Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
+    fn compress_console(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> Option<Expression<'a>> {
         debug_assert!(ctx.state.options.drop_console);
         Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
     }
@@ -387,11 +397,26 @@ impl<'a> Normalize {
             // Throw is never pure.
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))
     }
+
+    fn remove_unused_use_strict_directive(body: &mut FunctionBody<'a>, ctx: &TraverseCtx<'a>) {
+        if !body.directives.is_empty()
+            && ctx
+                .scoping()
+                .scope_parent_id(ctx.current_scope_id())
+                .map(|scope_id| ctx.scoping().scope_flags(scope_id))
+                .is_some_and(ScopeFlags::is_strict_mode)
+        {
+            body.directives.drain_filter(|d| d.directive.as_str() == "use strict");
+        }
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use crate::{
+        CompressOptions,
+        tester::{default_options, test, test_options, test_options_source_type, test_same},
+    };
 
     #[test]
     fn test_while() {
@@ -430,23 +455,27 @@ mod test {
 
     #[test]
     fn drop_console() {
-        test("console.log()", "");
-        test("(() => console.log())()", "");
-        test(
+        let options = CompressOptions { drop_console: true, ..default_options() };
+        test_options("console.log()", "", &options);
+        test_options("(() => console.log())()", "", &options);
+        test_options(
             "(() => { try { return console.log() } catch {} })()",
             "(() => { try { return } catch {} })()",
+            &options,
         );
     }
 
     #[test]
     fn drop_debugger() {
-        test("debugger", "");
+        let options = CompressOptions { drop_debugger: true, ..default_options() };
+        test_options("debugger", "", &options);
     }
 
     #[test]
     fn fold_number_nan() {
         test("foo(Number.NaN)", "foo(NaN)");
-        test_same("let Number; foo(Number.NaN)");
+        test_same("var Number; foo(Number.NaN)");
+        test_same("let Number; foo((void 0).NaN)");
     }
 
     #[test]
@@ -639,5 +668,26 @@ mod test {
         test("new URIError(a)", "URIError(a)");
         test_same("new WeakMap(a)");
         test_same("new WeakSet(a)");
+    }
+
+    #[test]
+    fn remove_unused_use_strict_directive() {
+        use oxc_span::SourceType;
+        let options = default_options();
+        let source_type = SourceType::cjs();
+        test_options_source_type(
+            "'use strict'; function _() { 'use strict' }",
+            "'use strict'; function _() {  }",
+            source_type,
+            &options,
+        );
+        test_options_source_type(
+            "function _() { 'use strict'; function __() { 'use strict' } }",
+            "function _() { 'use strict'; function __() { } }",
+            source_type,
+            &options,
+        );
+        test("'use strict'; function _() { 'use strict' }", "function _() {}");
+        test("'use strict';", "");
     }
 }

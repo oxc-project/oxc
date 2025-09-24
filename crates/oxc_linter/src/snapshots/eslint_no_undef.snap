@@ -174,3 +174,15 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export class Foo{ bar: notDefined; }; const t = r + 1;
    ·                                                 ─
    ╰────
+
+  ⚠ eslint(no-undef): 'arguments' is not defined.
+   ╭─[no_undef.tsx:1:21]
+ 1 │ const arrow = () => arguments;
+   ·                     ─────────
+   ╰────
+
+  ⚠ eslint(no-undef): 'arguments' is not defined.
+   ╭─[no_undef.tsx:1:9]
+ 1 │ var a = arguments;
+   ·         ─────────
+   ╰────

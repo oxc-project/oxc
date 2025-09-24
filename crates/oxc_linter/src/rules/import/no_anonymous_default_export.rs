@@ -14,7 +14,7 @@ fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcD
     OxcDiagnostic::warn(msg).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoAnonymousDefaultExport {
     allow_array: bool,
     allow_arrow_function: bool,
@@ -24,6 +24,21 @@ pub struct NoAnonymousDefaultExport {
     allow_new: bool,
     allow_literal: bool,
     allow_object: bool,
+}
+
+impl Default for NoAnonymousDefaultExport {
+    fn default() -> Self {
+        Self {
+            allow_array: false,
+            allow_arrow_function: false,
+            allow_anonymous_class: false,
+            allow_anonymous_function: false,
+            allow_call_expression: true,
+            allow_new: false,
+            allow_literal: false,
+            allow_object: false,
+        }
+    }
 }
 
 declare_oxc_lint!(
@@ -205,15 +220,14 @@ impl Rule for NoAnonymousDefaultExport {
                 ));
             }
             _ => {
-                if let Some(expr) = export_decl.declaration.as_expression() {
-                    if !self.allow_literal
-                        && (expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)))
-                    {
-                        ctx.diagnostic(no_anonymous_default_export_diagnostic(
-                            export_decl.span,
-                            "Assign literal to a variable before exporting as module default",
-                        ));
-                    }
+                if let Some(expr) = export_decl.declaration.as_expression()
+                    && !self.allow_literal
+                    && (expr.is_literal() || matches!(expr, Expression::TemplateLiteral(_)))
+                {
+                    ctx.diagnostic(no_anonymous_default_export_diagnostic(
+                        export_decl.span,
+                        "Assign literal to a variable before exporting as module default",
+                    ));
                 }
             }
         }

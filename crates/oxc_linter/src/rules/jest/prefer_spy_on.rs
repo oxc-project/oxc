@@ -40,6 +40,14 @@ declare_oxc_lint!(
     /// `mockFn.mockImplementation()` or by some of the
     /// [other mock functions](https://jestjs.io/docs/en/mock-function-api).
     ///
+    /// ### Why is this bad?
+    ///
+    /// Directly overwriting properties with mock functions can lead to cleanup issues
+    /// and test isolation problems. When you manually assign a mock to a property,
+    /// you're responsible for restoring the original implementation, which is easy to
+    /// forget and can cause tests to interfere with each other. Using `jest.spyOn()`
+    /// provides automatic cleanup capabilities and makes your tests more reliable.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

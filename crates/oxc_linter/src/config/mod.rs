@@ -5,16 +5,17 @@ mod config_builder;
 mod config_store;
 mod env;
 mod globals;
+mod ignore_matcher;
 mod overrides;
 mod oxlintrc;
 mod plugins;
 mod rules;
 mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
-pub use config_store::ResolvedLinterState;
-pub use config_store::{Config, ConfigStore};
+pub use config_store::{Config, ConfigStore, ResolvedLinterState};
 pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
+pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
 pub use plugins::{BuiltinLintPlugins, LintPlugins};
@@ -54,7 +55,7 @@ mod test {
     use serde::Deserialize;
 
     use super::Oxlintrc;
-    use crate::rules::RULES;
+    use crate::{ExternalPluginStore, rules::RULES};
 
     #[test]
     fn test_from_file() {
@@ -112,7 +113,17 @@ mod test {
             env::current_dir().unwrap().join("fixtures/eslint_config_vitest_replace.json");
         let config = Oxlintrc::from_file(&fixture_path).unwrap();
         let mut set = FxHashMap::default();
-        config.rules.override_rules(&mut set, &RULES);
+        let mut external_rules_for_override = FxHashMap::default();
+        let external_linter_store = ExternalPluginStore::default();
+        config
+            .rules
+            .override_rules(
+                &mut set,
+                &mut external_rules_for_override,
+                &RULES,
+                &external_linter_store,
+            )
+            .unwrap();
 
         let (rule, _) = set.into_iter().next().unwrap();
         assert_eq!(rule.name(), "no-disabled-tests");

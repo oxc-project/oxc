@@ -97,7 +97,6 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             .nodes()
             // get first non-parenthesis parent node
             .ancestor_kinds(node.id())
-            .skip(1) // first node is the call expr
             .find(|kind| !is_ignorable_kind(kind))
             // check if it's an `await ...` expression
             .is_some_and(|kind| matches!(kind, AstKind::AwaitExpression(_)));
@@ -128,7 +127,7 @@ fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
 }
 
 fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
-    for parent in ctx.nodes().ancestors(call_node_id).skip(1) {
+    for parent in ctx.nodes().ancestors(call_node_id) {
         match parent.kind() {
             AstKind::CallExpression(_)
             | AstKind::VariableDeclarator(_)

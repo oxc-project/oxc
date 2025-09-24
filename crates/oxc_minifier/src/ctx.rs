@@ -1,9 +1,4 @@
-use std::{
-    ops::{Deref, DerefMut},
-    rc::Rc,
-};
-
-use rustc_hash::FxHashMap;
+use std::ops::{Deref, DerefMut};
 
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::{
@@ -14,25 +9,14 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
 use oxc_span::format_atom;
-use oxc_syntax::reference::ReferenceId;
+use oxc_syntax::{
+    identifier::{is_identifier_part, is_identifier_start},
+    reference::ReferenceId,
+};
+use oxc_traverse::Ancestor;
 
-use crate::CompressOptions;
-
-pub struct MinifierState<'a> {
-    pub options: Rc<CompressOptions>,
-
-    /// Constant values evaluated from expressions.
-    ///
-    /// Values are saved during constant evaluation phase.
-    /// Values are read during [oxc_ecmascript::is_global_reference::IsGlobalReference::get_constant_value_for_reference_id].
-    pub constant_values: FxHashMap<SymbolId, ConstantValue<'a>>,
-}
-
-impl MinifierState<'_> {
-    pub fn new(options: Rc<CompressOptions>) -> Self {
-        Self { options, constant_values: FxHashMap::default() }
-    }
-}
+use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
+use oxc_compat::ESFeature;
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
@@ -44,24 +28,23 @@ impl<'a, 'b> Ctx<'a, 'b> {
     }
 }
 
-impl<'a, 'b> Deref for Ctx<'a, 'b> {
-    type Target = &'b mut TraverseCtx<'a>;
+impl<'a> Deref for Ctx<'a, '_> {
+    type Target = TraverseCtx<'a>;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.0
     }
 }
 
-#[expect(clippy::mut_mut)]
-impl<'a, 'b> DerefMut for Ctx<'a, 'b> {
-    fn deref_mut(&mut self) -> &mut &'b mut TraverseCtx<'a> {
-        &mut self.0
+impl<'a> DerefMut for Ctx<'a, '_> {
+    fn deref_mut(&mut self) -> &mut TraverseCtx<'a> {
+        self.0
     }
 }
 
-impl<'a> oxc_ecmascript::is_global_reference::IsGlobalReference<'a> for Ctx<'a, '_> {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
-        Some(ident.is_global_reference(self.0.scoping()))
+impl<'a> oxc_ecmascript::GlobalContext<'a> for Ctx<'a, '_> {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
+        ident.is_global_reference(self.0.scoping())
     }
 
     fn get_constant_value_for_reference_id(
@@ -71,7 +54,9 @@ impl<'a> oxc_ecmascript::is_global_reference::IsGlobalReference<'a> for Ctx<'a, 
         self.scoping()
             .get_reference(reference_id)
             .symbol_id()
-            .and_then(|symbol_id| self.state.constant_values.get(&symbol_id))
+            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
+            .filter(|sv| sv.write_references_count == 0)
+            .and_then(|sv| sv.initialized_constant.as_ref())
             .cloned()
     }
 }
@@ -114,8 +99,23 @@ pub fn is_exact_int64(num: f64) -> bool {
 }
 
 impl<'a> Ctx<'a, '_> {
-    fn scoping(&self) -> &Scoping {
+    pub fn scoping(&self) -> &Scoping {
         self.0.scoping()
+    }
+
+    pub fn options(&self) -> &CompressOptions {
+        &self.0.state.options
+    }
+
+    /// Check if the target engines supports a feature.
+    ///
+    /// Returns `true` if the feature is supported.
+    pub fn supports_feature(&self, feature: ESFeature) -> bool {
+        !self.options().target.has_feature(feature)
+    }
+
+    pub fn source_type(&self) -> SourceType {
+        self.0.state.source_type
     }
 
     pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
@@ -177,6 +177,41 @@ impl<'a> Ctx<'a, '_> {
         false
     }
 
+    pub fn init_value(&mut self, symbol_id: SymbolId, constant: Option<ConstantValue<'a>>) {
+        let mut exported = false;
+        if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
+            for ancestor in self.ancestors() {
+                if ancestor.is_export_named_declaration()
+                    || ancestor.is_export_all_declaration()
+                    || ancestor.is_export_default_declaration()
+                {
+                    exported = true;
+                }
+            }
+        }
+
+        let mut read_references_count = 0;
+        let mut write_references_count = 0;
+        for r in self.scoping().get_resolved_references(symbol_id) {
+            if r.is_read() {
+                read_references_count += 1;
+            }
+            if r.is_write() {
+                write_references_count += 1;
+            }
+        }
+
+        let scope_id = self.scoping.current_scope_id();
+        let symbol_value = SymbolValue {
+            initialized_constant: constant,
+            exported,
+            read_references_count,
+            write_references_count,
+            scope_id,
+        };
+        self.state.symbol_values.init_value(symbol_id, symbol_value);
+    }
+
     /// If two expressions are equal.
     /// Special case `undefined` == `void 0`
     pub fn expr_eq(&self, a: &Expression<'a>, b: &Expression<'a>) -> bool {
@@ -211,5 +246,39 @@ impl<'a> Ctx<'a, '_> {
             })?;
         }
         Some(f64::from(int_value))
+    }
+
+    /// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
+    /// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
+    /// 15.
+    /// <https://github.com/oxc-project/unicode-id-start/pull/3>
+    pub fn is_identifier_name_patched(s: &str) -> bool {
+        let mut chars = s.chars();
+        chars.next().is_some_and(is_identifier_start)
+            && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
+    }
+
+    /// Whether the closest function scope is created by an async generator
+    pub fn is_closest_function_scope_an_async_generator(&self) -> bool {
+        self.ancestors()
+            .find_map(|ancestor| match ancestor {
+                Ancestor::FunctionBody(body) => Some(*body.r#async() && *body.generator()),
+                Ancestor::ArrowFunctionExpressionBody(_) => Some(false),
+                _ => None,
+            })
+            .unwrap_or_default()
+    }
+
+    /// Whether the assignment expression needs to be kept to preserve the name
+    pub fn is_expression_whose_name_needs_to_be_kept(&self, expr: &Expression) -> bool {
+        let options = &self.options().keep_names;
+        if !options.class && !options.function {
+            return false;
+        }
+        if !expr.is_anonymous_function_definition() {
+            return false;
+        }
+        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        (options.class && is_class) || (options.function && !is_class)
     }
 }

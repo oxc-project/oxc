@@ -1,15 +1,12 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
 use nonmax::NonMaxU32;
+
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
 
-// Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
-const LS_OR_PS_FIRST: u8 = 0xE2;
-const LS_OR_PS_SECOND: u8 = 0x80;
-const LS_THIRD: u8 = 0xA8;
-const PS_THIRD: u8 = 0xA9;
+use crate::str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES};
 
 /// Number of lines to check with linear search when translating byte position to line index
 const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
@@ -65,9 +62,9 @@ pub struct ColumnOffsets {
 }
 
 #[expect(clippy::struct_field_names)]
-pub struct SourcemapBuilder {
+pub struct SourcemapBuilder<'a> {
     source_id: u32,
-    original_source: Arc<str>,
+    original_source: &'a str,
     last_generated_update: usize,
     last_position: Option<u32>,
     line_offset_tables: LineOffsetTables,
@@ -80,15 +77,15 @@ pub struct SourcemapBuilder {
     last_line_lookup: u32,
 }
 
-impl SourcemapBuilder {
-    pub fn new(path: &Path, source_text: &str) -> Self {
+impl<'a> SourcemapBuilder<'a> {
+    pub fn new(path: &Path, source_text: &'a str) -> Self {
         let mut sourcemap_builder = oxc_sourcemap::SourceMapBuilder::default();
         let line_offset_tables = Self::generate_line_offset_tables(source_text);
         let source_id =
             sourcemap_builder.set_source_and_content(path.to_string_lossy().as_ref(), source_text);
         Self {
             source_id,
-            original_source: Arc::from(source_text),
+            original_source: source_text,
             last_generated_update: 0,
             last_position: None,
             line_offset_tables,
@@ -114,18 +111,17 @@ impl SourcemapBuilder {
         let original_name = self.original_source.get(span.start as usize..span.end as usize);
         // The token name should be original name.
         // If it hasn't change, name should be `None` to reduce `SourceMap` size.
-        let token_name =
-            if original_name == Some(name) { None } else { original_name.map(Into::into) };
+        let token_name = if original_name == Some(name) { None } else { original_name };
         self.add_source_mapping(output, span.start, token_name);
     }
 
-    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<Arc<str>>) {
-        if matches!(self.last_position, Some(last_position) if last_position == position) {
+    pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<&str>) {
+        if self.last_position == Some(position) {
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
-        let name_id = name.map(|s| self.sourcemap_builder.add_name(&s));
+        let name_id = name.map(|s| self.sourcemap_builder.add_name(s));
         self.sourcemap_builder.add_token(
             self.generated_line,
             self.generated_column,
@@ -250,58 +246,78 @@ impl SourcemapBuilder {
 
     #[expect(clippy::cast_possible_truncation)]
     fn update_generated_line_and_column(&mut self, output: &[u8]) {
-        let remaining = &output[self.last_generated_update..];
+        const BATCH_SIZE: usize = 32;
+
+        let start_index = self.last_generated_update;
 
         // Find last line break
-        let mut line_start_ptr = remaining.as_ptr();
+        let mut line_start_index = start_index;
+        let mut idx = line_start_index;
         let mut last_line_is_ascii = true;
-        let mut iter = remaining.iter();
-        while let Some(&b) = iter.next() {
-            match b {
-                b'\n' => {}
-                b'\r' => {
-                    // Handle Windows-specific "\r\n" newlines
-                    if iter.clone().next() == Some(&b'\n') {
-                        iter.next();
+
+        macro_rules! handle_byte {
+            ($byte:ident) => {
+                match $byte {
+                    b'\n' => {}
+                    b'\r' => {
+                        // Handle Windows-specific "\r\n" newlines
+                        if output.get(idx + 1) == Some(&b'\n') {
+                            idx += 1;
+                        }
                     }
-                }
-                _ if b.is_ascii() => {
-                    continue;
-                }
-                LS_OR_PS_FIRST => {
-                    let next_byte = *iter.next().unwrap();
-                    let next_next_byte = *iter.next().unwrap();
-                    if next_byte != LS_OR_PS_SECOND
-                        || !matches!(next_next_byte, LS_THIRD | PS_THIRD)
-                    {
+                    _ if $byte.is_ascii() => {
+                        idx += 1;
+                        continue;
+                    }
+                    LS_OR_PS_FIRST_BYTE => {
+                        let next_byte = output[idx + 1];
+                        let next_next_byte = output[idx + 2];
+                        if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES)
+                        {
+                            last_line_is_ascii = false;
+                            idx += 1;
+                            continue;
+                        }
+                    }
+                    _ => {
+                        // Unicode char
                         last_line_is_ascii = false;
+                        idx += 1;
                         continue;
                     }
                 }
-                _ => {
-                    // Unicode char
-                    last_line_is_ascii = false;
-                    continue;
-                }
-            }
 
-            // Line break found.
-            // `iter` is now positioned after line break.
-            line_start_ptr = iter.as_slice().as_ptr();
-            self.generated_line += 1;
-            self.generated_column = 0;
-            last_line_is_ascii = true;
+                // Line break found.
+                // `iter` is now positioned after line break.
+                line_start_index = idx + 1;
+                self.generated_line += 1;
+                self.generated_column = 0;
+                last_line_is_ascii = true;
+                idx += 1;
+            };
+        }
+
+        while let (end, overflow) = idx.overflowing_add(BATCH_SIZE)
+            && !overflow
+            && end < output.len()
+        {
+            while idx < end {
+                let b = output[idx];
+                handle_byte!(b);
+            }
+        }
+        while idx < output.len() {
+            let b = output[idx];
+            handle_byte!(b);
         }
 
         // Calculate column
         self.generated_column += if last_line_is_ascii {
-            // `iter` is now exhausted, so `iter.as_slice().as_ptr()` is pointer to end of `output`
-            (iter.as_slice().as_ptr() as usize - line_start_ptr as usize) as u32
+            (output.len() - line_start_index) as u32
         } else {
-            let line_byte_offset = line_start_ptr as usize - remaining.as_ptr() as usize;
             // TODO: It'd be better if could use `from_utf8_unchecked` here, but we'd need to make this
             // function unsafe and caller guarantees `output` contains a valid UTF-8 string
-            let last_line = std::str::from_utf8(&remaining[line_byte_offset..]).unwrap();
+            let last_line = std::str::from_utf8(&output[line_start_index..]).unwrap();
             // Mozilla's "source-map" library counts columns using UTF-16 code units
             last_line.encode_utf16().count() as u32
         };
@@ -311,6 +327,13 @@ impl SourcemapBuilder {
     fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
         let mut lines = vec![];
         let mut column_offsets = IndexVec::new();
+
+        // Used as a buffer to reduce memory reallocations.
+        // Pre-allocate with reasonable capacity to avoid frequent reallocations.
+        // 16 is a guess, probably adequate for most files which don't heavily use unicode chars.
+        // 16 entries is 64 bytes = 1 CPU cache line on most CPUs.
+        // If file does heavily use unicode chars, `columns` will grow adaptively as needed.
+        let mut columns = Vec::with_capacity(16);
 
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
@@ -350,8 +373,6 @@ impl SourcemapBuilder {
                         line.column_offsets_id =
                             Some(ColumnOffsetsId::from_usize(column_offsets.len()));
 
-                        let mut columns = vec![];
-
                         // Loop through rest of line char-by-char.
                         // `chunk_byte_offset` in this loop is byte offset from start of this 1st
                         // Unicode char.
@@ -361,9 +382,7 @@ impl SourcemapBuilder {
                         for (chunk_byte_offset, ch) in remaining.char_indices() {
                             #[expect(clippy::cast_possible_truncation)]
                             let mut chunk_byte_offset = chunk_byte_offset as u32;
-                            for _ in 0..ch.len_utf8() {
-                                columns.push(column);
-                            }
+                            columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
 
                             match ch {
                                 '\r' => {
@@ -394,11 +413,18 @@ impl SourcemapBuilder {
                             // `chunk_byte_offset` is now the offset of *end* of the line break.
                             line_byte_offset += chunk_byte_offset;
 
-                            // Record column offsets
+                            // Record column offsets.
+                            // `columns.clone().into_boxed_slice()` does perform an allocation,
+                            // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
+                            // so `Vec::into_boxed_slice` just drops the `capacity` field,
+                            // and does not need to reallocate again.
+                            // `columns` is reused for next line, and will grow adaptively depending on
+                            // how heavily the file uses unicode chars.
                             column_offsets.push(ColumnOffsets {
                                 byte_offset_to_first: byte_offset_from_line_start,
-                                columns: columns.into_boxed_slice(),
+                                columns: columns.clone().into_boxed_slice(),
                             });
+                            columns.clear();
 
                             // Revert back to outer loop for next line
                             continue 'lines;
@@ -550,7 +576,7 @@ mod test {
         // The name `b` -> `c`, save `b` to token.
         assert_eq!(
             sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
-            Some("b")
+            Some(&"b".into())
         );
     }
 

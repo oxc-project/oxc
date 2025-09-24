@@ -108,8 +108,8 @@ declare_oxc_lint!(
 
 impl Rule for MaxNestedCallbacks {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if is_function_node(node) {
-            let depth = ctx
+        if is_callback(node, ctx) {
+            let depth = 1 + ctx
                 .semantic()
                 .nodes()
                 .ancestors(node.id())
@@ -144,7 +144,10 @@ impl Rule for MaxNestedCallbacks {
 
 fn is_callback<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
     is_function_node(node)
-        && matches!(iter_outer_expressions(semantic, node.id()).next(), Some(AstKind::Argument(_)))
+        && matches!(
+            iter_outer_expressions(semantic.nodes(), node.id()).next(),
+            Some(AstKind::Argument(_))
+        )
 }
 
 #[test]

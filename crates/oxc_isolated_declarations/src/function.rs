@@ -43,13 +43,12 @@ impl<'a> IsolatedDeclarations<'a> {
         is_remaining_params_have_required: bool,
     ) -> Option<FormalParameter<'a>> {
         let pattern = &param.pattern;
-        if let BindingPatternKind::AssignmentPattern(pattern) = &pattern.kind {
-            if pattern.left.kind.is_destructuring_pattern()
-                && pattern.left.type_annotation.is_none()
-            {
-                self.error(parameter_must_have_explicit_type(param.span));
-                return None;
-            }
+        if let BindingPatternKind::AssignmentPattern(pattern) = &pattern.kind
+            && pattern.left.kind.is_destructuring_pattern()
+            && pattern.left.type_annotation.is_none()
+        {
+            self.error(parameter_must_have_explicit_type(param.span));
+            return None;
         }
 
         let is_assignment_pattern = pattern.kind.is_assignment_pattern();
@@ -62,7 +61,10 @@ impl<'a> IsolatedDeclarations<'a> {
 
         FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
 
-        if is_assignment_pattern || pattern.type_annotation.is_none() {
+        if is_assignment_pattern
+            || pattern.type_annotation.is_none()
+            || (param.pattern.optional && param.has_modifier())
+        {
             let type_annotation = pattern
                 .type_annotation
                 .as_ref()
@@ -78,7 +80,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|ts_type| {
                     // jf next param is not optional and current param is assignment pattern
                     // we need to add undefined to it's type
-                    if is_remaining_params_have_required {
+                    if is_remaining_params_have_required
+                        || (param.pattern.optional && param.has_modifier())
+                    {
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
@@ -134,10 +138,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 }),
         );
 
-        if let Some(rest) = &params.rest {
-            if rest.argument.type_annotation.is_none() {
-                self.error(parameter_must_have_explicit_type(rest.span));
-            }
+        if let Some(rest) = &params.rest
+            && rest.argument.type_annotation.is_none()
+        {
+            self.error(parameter_must_have_explicit_type(rest.span));
         }
 
         self.ast.alloc_formal_parameters(

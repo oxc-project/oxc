@@ -325,7 +325,7 @@ struct ParsedNumberLiteral<'n> {
     exponent_part: Option<&'n str>,
 }
 
-fn parse_number_literal(num: &str) -> ParsedNumberLiteral {
+fn parse_number_literal(num: &str) -> ParsedNumberLiteral<'_> {
     let mut parsed = ParsedNumberLiteral {
         integer_part: None,
         decimal_part: None,
@@ -345,39 +345,39 @@ fn parse_number_literal(num: &str) -> ParsedNumberLiteral {
     }
 
     // Decimal separator is just a dot '.'.
-    if let Some(ch) = num[offset..].chars().next() {
-        if ch == '.' {
-            offset += 1;
+    if let Some(ch) = num[offset..].chars().next()
+        && ch == '.'
+    {
+        offset += 1;
 
-            // Decimal part is everything after the decimal separator until the exponent.
-            let decimal_part =
-                num[offset..].split_once(['e', 'E']).map_or(&num[offset..], |(decimal, _)| decimal);
-            offset += decimal_part.len();
-            if !decimal_part.is_empty() {
-                parsed.decimal_part = Some(decimal_part);
-            }
+        // Decimal part is everything after the decimal separator until the exponent.
+        let decimal_part =
+            num[offset..].split_once(['e', 'E']).map_or(&num[offset..], |(decimal, _)| decimal);
+        offset += decimal_part.len();
+        if !decimal_part.is_empty() {
+            parsed.decimal_part = Some(decimal_part);
         }
     }
 
     // Exponent marker is either 'e' or 'E", following the integer part.
-    if let Some(ch) = num[offset..].chars().next() {
-        if ch == 'e' || ch == 'E' {
-            parsed.exponent_mark = Some(ch);
-            offset += 1; // note: assuming that 'e' or 'E' is always one byte long
+    if let Some(ch) = num[offset..].chars().next()
+        && (ch == 'e' || ch == 'E')
+    {
+        parsed.exponent_mark = Some(ch);
+        offset += 1; // note: assuming that 'e' or 'E' is always one byte long
 
-            // Exponent sign is either '+' or '-', following the exponent marker.
-            if let Some(ch) = num[offset..].chars().next() {
-                if ch == '+' || ch == '-' {
-                    parsed.exponent_sign = Some(&num[offset..=offset]);
-                    offset += 1; // note: assuming that '+' or '-' is always one byte long
-                }
-            }
+        // Exponent sign is either '+' or '-', following the exponent marker.
+        if let Some(ch) = num[offset..].chars().next()
+            && (ch == '+' || ch == '-')
+        {
+            parsed.exponent_sign = Some(&num[offset..=offset]);
+            offset += 1; // note: assuming that '+' or '-' is always one byte long
+        }
 
-            // Exponent part is everything after the exponent sign.
-            let exponent_part = &num[offset..];
-            if !exponent_part.is_empty() {
-                parsed.exponent_part = Some(exponent_part);
-            }
+        // Exponent part is everything after the exponent sign.
+        let exponent_part = &num[offset..];
+        if !exponent_part.is_empty() {
+            parsed.exponent_part = Some(exponent_part);
         }
     }
 

@@ -77,7 +77,10 @@ impl Rule for PreferAwaitToCallbacks {
                         .as_member_expression()
                         .and_then(MemberExpression::static_property_name);
 
-                    if matches!(callee_property_name, Some("on" | "once")) {
+                    if matches!(
+                        callee_property_name,
+                        Some("on" | "once" | "addEventListener" | "removeEventListener")
+                    ) {
                         return;
                     }
 
@@ -133,7 +136,7 @@ impl PreferAwaitToCallbacks {
     }
 
     fn is_inside_yield_or_await(id: NodeId, ctx: &LintContext) -> bool {
-        ctx.nodes().ancestors(id).skip(1).any(|parent| {
+        ctx.nodes().ancestors(id).any(|parent| {
             matches!(parent.kind(), AstKind::AwaitExpression(_) | AstKind::YieldExpression(_))
         })
     }
@@ -165,6 +168,10 @@ fn test() {
         r#"map(errors, function(error) { return  err.type === "CoolError" })"#,
         r#"_.find(errors, function(error) { return  err.type === "CoolError" })"#,
         r#"_.map(errors, function(err) { return  err.type === "CoolError" })"#,
+        r#"socket.addEventListener("error", err => { console.error(err) })"#,
+        r#"socket.addEventListener("message", error => { console.log(error) })"#,
+        r#"element.removeEventListener("click", error => { console.log(error) })"#,
+        r#"ws.addEventListener("close", (error) => { console.log(error) })"#,
     ];
 
     let fail = vec![

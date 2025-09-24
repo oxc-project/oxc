@@ -205,8 +205,12 @@ impl<'a> Symbol<'_, 'a> {
             match parent.kind() {
                 AstKind::ParenthesizedExpression(_)
                 | AstKind::IdentifierReference(_)
-                | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::AssignmentTarget(_) => {}
+                | AstKind::ComputedMemberExpression(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_) => {}
                 AstKind::ForInStatement(ForInStatement { body, .. })
                 | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
                     Statement::ReturnStatement(_) => return true,
@@ -245,13 +249,14 @@ impl<'a> Symbol<'_, 'a> {
             return false;
         }
 
-        for parent in self.nodes().ancestors(reference.node_id()).map(AstNode::kind) {
+        for parent in self.nodes().ancestor_kinds(reference.node_id()) {
             match parent {
                 AstKind::IdentifierReference(_)
-                | AstKind::SimpleAssignmentTarget(_)
+                | AstKind::StaticMemberExpression(_)
+                | AstKind::PrivateFieldExpression(_)
+                | AstKind::ComputedMemberExpression(_)
                 | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::AssignmentTargetPropertyProperty(_)
-                | AstKind::AssignmentTarget(_) => {}
+                | AstKind::AssignmentTargetPropertyProperty(_) => {}
                 AstKind::AssignmentExpression(assignment) => {
                     return options.is_ignored_assignment_target(self, &assignment.left);
                 }
@@ -366,11 +371,11 @@ impl<'a> Symbol<'_, 'a> {
     /// for code like `let a = 0; a`, but bans code like `let a = 0; a++`;
     ///
     /// - We encounter a node proving that the reference is absolutely used by
-    /// another variable, we return `false` immediately.
+    ///   another variable, we return `false` immediately.
     /// - When we encounter an AST node that updates the value of the symbol this
-    /// reference is for, such as an [`AssignmentExpression`] with the symbol on
-    /// the LHS or a mutating [`UnaryExpression`], we mark the reference as not
-    /// being used by others.
+    ///   reference is for, such as an [`AssignmentExpression`] with the symbol on
+    ///   the LHS or a mutating [`UnaryExpression`], we mark the reference as not
+    ///   being used by others.
     /// - When we encounter a node where we are sure the value produced by an
     ///   expression will no longer be used, such as an [`ExpressionStatement`],
     ///   we end our search. This is because expression statements produce a
@@ -405,20 +410,20 @@ impl<'a> Symbol<'_, 'a> {
         let name = self.name();
         let ref_span = self.get_ref_span(reference);
 
-        for node in self.nodes().ancestors(reference.node_id()).skip(1) {
+        for node in self.nodes().ancestors(reference.node_id()) {
             match node.kind() {
                 // references used in declaration of another variable are definitely
                 // used by others
                 AstKind::VariableDeclarator(_)
                 | AstKind::JSXExpressionContainer(_)
-                | AstKind::Argument(_) => {
+                | AstKind::Argument(_)
+                | AstKind::PropertyDefinition(_) => {
                     // definitely used, short-circuit
                     return false;
                 }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
-                AstKind::UpdateExpression(UpdateExpression { argument, .. })
-                | AstKind::SimpleAssignmentTarget(argument) => {
+                AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
                     // `a.b++` or `a[b] + 1` are not reassignment of `a`
                     if !argument.is_member_expression() {
                         is_used_by_others = false;
@@ -647,6 +652,7 @@ impl<'a> Symbol<'_, 'a> {
                         AstKind::CallExpression(_)
                             | AstKind::AwaitExpression(_)
                             | AstKind::YieldExpression(_)
+                            | AstKind::ChainExpression(_)
                     ) {
                         continue;
                     }
@@ -816,13 +822,8 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::VariableDeclarator(decl) if needs_variable_identifier => {
                     return decl.id.get_binding_identifier().map(BindingIdentifier::symbol_id);
                 }
-                AstKind::AssignmentTarget(target) if needs_variable_identifier => {
-                    return match target {
-                        AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            self.scoping().get_reference(id.reference_id()).symbol_id()
-                        }
-                        _ => None,
-                    };
+                AstKind::IdentifierReference(id) if needs_variable_identifier => {
+                    return self.scoping().get_reference(id.reference_id()).symbol_id();
                 }
                 AstKind::Program(_) => {
                     return None;

@@ -1,3 +1,5 @@
+#![cfg_attr(not(all(target_pointer_width = "64", target_endian = "little")), expect(dead_code))]
+
 use std::sync::Arc;
 
 use rustc_hash::FxHashMap;
@@ -21,6 +23,27 @@ pub struct RawTransferData<'a> {
     pub comments: Vec<'a, Comment>,
     pub module: EcmaScriptModule<'a>,
     pub errors: Vec<'a, Error<'a>>,
+}
+
+/// Metadata written to end of buffer.
+///
+/// Duplicated as `RawTransferMetadata2` in `crates/oxc_linter/src/lib.rs`.
+/// Any changes made here also need to be made there.
+/// `oxc_ast_tools` checks that the 2 copies are identical.
+#[ast]
+pub struct RawTransferMetadata {
+    /// Offset of `RawTransferData` within buffer.
+    pub data_offset: u32,
+    /// `true` if AST is TypeScript.
+    pub is_ts: bool,
+    /// Padding to pad struct to size 16.
+    pub(crate) _padding: u64,
+}
+
+impl RawTransferMetadata {
+    pub fn new(data_offset: u32, is_ts: bool) -> Self {
+        Self { data_offset, is_ts, _padding: 0 }
+    }
 }
 
 // Errors.

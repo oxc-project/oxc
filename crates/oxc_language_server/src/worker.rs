@@ -1,7 +1,6 @@
-use std::{str::FromStr, sync::Arc, vec};
+use std::vec;
 
 use log::debug;
-use rustc_hash::FxBuildHasher;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
@@ -12,22 +11,24 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    ConcurrentHashMap, Options, Run,
+    ConcurrentHashMap,
     code_actions::{
         apply_all_fix_code_action, apply_fix_code_actions, ignore_this_line_code_action,
         ignore_this_rule_code_action,
     },
+    formatter::server_formatter::ServerFormatter,
     linter::{
         error_with_position::{DiagnosticReport, PossibleFixContent},
-        server_linter::{ServerLinter, normalize_path},
+        server_linter::{ServerLinter, ServerLinterRun, normalize_path},
     },
+    options::Options,
 };
 
 pub struct WorkspaceWorker {
     root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
-    diagnostics_report_map: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
-    options: Mutex<Options>,
+    server_formatter: RwLock<Option<ServerFormatter>>,
+    options: Mutex<Option<Options>>,
 }
 
 impl WorkspaceWorker {
@@ -35,8 +36,8 @@ impl WorkspaceWorker {
         Self {
             root_uri,
             server_linter: RwLock::new(None),
-            diagnostics_report_map: Arc::new(ConcurrentHashMap::default()),
-            options: Mutex::new(Options::default()),
+            server_formatter: RwLock::new(None),
+            options: Mutex::new(None),
         }
     }
 
@@ -51,9 +52,14 @@ impl WorkspaceWorker {
         false
     }
 
-    pub async fn init_linter(&self, options: &Options) {
-        *self.options.lock().await = options.clone();
-        *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, options));
+    pub async fn start_worker(&self, options: &Options) {
+        *self.options.lock().await = Some(options.clone());
+
+        *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
+        if options.format.experimental {
+            debug!("experimental formatter enabled");
+            *self.server_formatter.write().await = Some(ServerFormatter::new());
+        }
     }
 
     // WARNING: start all programs (linter, formatter) before calling this function
@@ -63,13 +69,16 @@ impl WorkspaceWorker {
 
         // clone the options to avoid locking the mutex
         let options = self.options.lock().await;
-        let use_nested_configs = options.use_nested_configs();
+        let default_options = Options::default();
+        let options = options.as_ref().unwrap_or(&default_options);
+        let use_nested_configs = options.lint.use_nested_configs();
 
         // append the base watcher
         watchers.push(FileSystemWatcher {
             glob_pattern: GlobPattern::Relative(RelativePattern {
                 base_uri: OneOf::Right(self.root_uri.clone()),
                 pattern: options
+                    .lint
                     .config_path
                     .as_ref()
                     .unwrap_or(&"**/.oxlintrc.json".to_owned())
@@ -108,94 +117,76 @@ impl WorkspaceWorker {
         watchers
     }
 
-    pub async fn needs_init_linter(&self) -> bool {
-        self.server_linter.read().await.is_none()
+    pub async fn needs_init_options(&self) -> bool {
+        self.options.lock().await.is_none()
     }
 
-    pub fn remove_diagnostics(&self, uri: &Uri) {
-        self.diagnostics_report_map.pin().remove(&uri.to_string());
+    pub async fn has_active_formatter(&self) -> bool {
+        self.server_formatter.read().await.is_some()
+    }
+
+    pub async fn remove_diagnostics(&self, uri: &Uri) {
+        let server_linter_guard = self.server_linter.read().await;
+        let Some(server_linter) = server_linter_guard.as_ref() else {
+            return;
+        };
+        server_linter.remove_diagnostics(uri);
     }
 
     async fn refresh_server_linter(&self) {
         let options = self.options.lock().await;
-        let server_linter = ServerLinter::new(&self.root_uri, &options);
+        let default_options = Options::default();
+        let lint_options = &options.as_ref().unwrap_or(&default_options).lint;
+        let server_linter = ServerLinter::new(&self.root_uri, lint_options);
 
         *self.server_linter.write().await = Some(server_linter);
-    }
-
-    fn needs_linter_restart(old_options: &Options, new_options: &Options) -> bool {
-        old_options.config_path != new_options.config_path
-            || old_options.use_nested_configs() != new_options.use_nested_configs()
-            || old_options.fix_kind() != new_options.fix_kind()
-            || old_options.unused_disable_directives != new_options.unused_disable_directives
-    }
-
-    pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {
-        let run_level = { self.options.lock().await.run };
-
-        run_level == current_run
     }
 
     pub async fn lint_file(
         &self,
         uri: &Uri,
         content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
-        let diagnostics = self.lint_file_internal(uri, content).await;
-
-        if let Some(diagnostics) = &diagnostics {
-            self.update_diagnostics(uri, diagnostics);
-        }
-
-        diagnostics
-    }
-
-    async fn lint_file_internal(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
+        run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
 
-        server_linter.run_single(uri, content)
+        server_linter.run_single(uri, content, run_type).await
     }
 
-    fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
-        self.diagnostics_report_map.pin().insert(uri.to_string(), diagnostics.to_owned());
-    }
-
-    async fn revalidate_diagnostics(&self) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
-        let diagnostics_map = ConcurrentHashMap::with_capacity_and_hasher(
-            self.diagnostics_report_map.len(),
-            FxBuildHasher,
-        );
-        let server_linter = self.server_linter.read().await;
-        let Some(server_linter) = &*server_linter else {
-            debug!("no server_linter initialized in the worker");
-            return diagnostics_map;
+    pub async fn format_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
+        let Some(server_formatter) = &*self.server_formatter.read().await else {
+            return None;
         };
 
-        for uri in self.diagnostics_report_map.pin_owned().keys() {
-            if let Some(diagnostics) = server_linter.run_single(&Uri::from_str(uri).unwrap(), None)
-            {
-                self.diagnostics_report_map.pin().insert(uri.clone(), diagnostics.clone());
-                diagnostics_map.pin().insert(uri.clone(), diagnostics);
-            } else {
-                self.diagnostics_report_map.pin().remove(uri);
-            }
-        }
-
-        diagnostics_map
+        server_formatter.run_single(uri, content)
     }
 
-    pub fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
-        self.diagnostics_report_map
-            .pin()
-            .keys()
-            .map(|uri| (uri.clone(), vec![]))
-            .collect::<Vec<_>>()
+    async fn revalidate_diagnostics(
+        &self,
+        uris: Vec<Uri>,
+    ) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return ConcurrentHashMap::default();
+        };
+
+        server_linter.revalidate_diagnostics(uris).await
+    }
+
+    pub async fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
+        self.server_linter
+            .read()
+            .await
+            .as_ref()
+            .map(|server_linter| {
+                server_linter
+                    .get_cached_files_of_diagnostics()
+                    .iter()
+                    .map(|uri| (uri.to_string(), vec![]))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
     }
 
     pub async fn get_code_actions_or_commands(
@@ -204,12 +195,15 @@ impl WorkspaceWorker {
         range: &Range,
         is_source_fix_all_oxc: bool,
     ) -> Vec<CodeActionOrCommand> {
-        let report_map_ref = self.diagnostics_report_map.pin_owned();
-        let value = match report_map_ref.get(&uri.to_string()) {
-            Some(value) => value,
-            // code actions / commands can be requested without opening the file
-            // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return vec![];
+        };
+
+        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            diagnostics.unwrap_or_default()
         };
 
         if value.is_empty() {
@@ -260,12 +254,14 @@ impl WorkspaceWorker {
 
     /// This function is used for executing the `oxc.fixAll` command
     pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
-        let report_map_ref = self.diagnostics_report_map.pin_owned();
-        let value = match report_map_ref.get(&uri.to_string()) {
-            Some(value) => value,
-            // code actions / commands can be requested without opening the file
-            // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
+        let Some(server_linter) = &*self.server_linter.read().await else {
+            return vec![];
+        };
+        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
+            cached_diagnostics
+        } else {
+            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            diagnostics.unwrap_or_default()
         };
 
         if value.is_empty() {
@@ -298,16 +294,32 @@ impl WorkspaceWorker {
         &self,
         _file_event: &FileEvent,
     ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+        let files = {
+            let server_linter_guard = self.server_linter.read().await;
+            let server_linter = server_linter_guard.as_ref()?;
+            server_linter.get_cached_files_of_diagnostics()
+        };
         self.refresh_server_linter().await;
-        Some(self.revalidate_diagnostics().await)
+        Some(self.revalidate_diagnostics(files).await)
     }
 
     pub async fn did_change_configuration(
         &self,
         changed_options: &Options,
-    ) -> (Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>, Option<FileSystemWatcher>) {
-        // clone the current options to avoid locking the mutex
-        let current_option = &self.options.lock().await.clone();
+    ) -> (
+        // Diagnostic reports that need to be revalidated
+        Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+        // File system watcher for lint config changes
+        Option<FileSystemWatcher>,
+        // Is true, when the formatter was added to the workspace worker
+        bool,
+    ) {
+        // Scope the first lock so it is dropped before the second lock
+        let current_option = {
+            let options_guard = self.options.lock().await;
+            options_guard.clone()
+        }
+        .unwrap_or_default();
 
         debug!(
             "
@@ -317,18 +329,43 @@ impl WorkspaceWorker {
         "
         );
 
-        *self.options.lock().await = changed_options.clone();
+        {
+            let mut options_guard = self.options.lock().await;
+            *options_guard = Some(changed_options.clone());
+        }
 
-        if Self::needs_linter_restart(current_option, changed_options) {
+        let mut formatting = false;
+        if current_option.format.experimental != changed_options.format.experimental {
+            if changed_options.format.experimental {
+                debug!("experimental formatter enabled");
+                *self.server_formatter.write().await = Some(ServerFormatter::new());
+                formatting = true;
+            } else {
+                debug!("experimental formatter disabled");
+                *self.server_formatter.write().await = None;
+            }
+        }
+
+        if ServerLinter::needs_restart(&current_option.lint, &changed_options.lint) {
+            let files = {
+                let server_linter_guard = self.server_linter.read().await;
+                let server_linter = server_linter_guard.as_ref();
+                if let Some(server_linter) = server_linter {
+                    server_linter.get_cached_files_of_diagnostics()
+                } else {
+                    vec![]
+                }
+            };
             self.refresh_server_linter().await;
 
-            if current_option.config_path != changed_options.config_path {
+            if current_option.lint.config_path != changed_options.lint.config_path {
                 return (
-                    Some(self.revalidate_diagnostics().await),
+                    Some(self.revalidate_diagnostics(files).await),
                     Some(FileSystemWatcher {
                         glob_pattern: GlobPattern::Relative(RelativePattern {
                             base_uri: OneOf::Right(self.root_uri.clone()),
                             pattern: changed_options
+                                .lint
                                 .config_path
                                 .as_ref()
                                 .unwrap_or(&"**/.oxlintrc.json".to_string())
@@ -336,13 +373,14 @@ impl WorkspaceWorker {
                         }),
                         kind: Some(WatchKind::all()), // created, deleted, changed
                     }),
+                    formatting,
                 );
             }
 
-            return (Some(self.revalidate_diagnostics().await), None);
+            return (Some(self.revalidate_diagnostics(files).await), None, formatting);
         }
 
-        (None, None)
+        (None, None, formatting)
     }
 }
 
@@ -352,6 +390,8 @@ fn range_overlaps(a: Range, b: Range) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
 
     #[test]

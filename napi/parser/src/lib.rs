@@ -22,19 +22,38 @@ use oxc::{
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
+mod types;
+pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
+
+// Raw transfer is only supported on 64-bit little-endian systems.
+// Don't include raw transfer code on other platforms (notably WASM32).
+// `raw_transfer_types` still needs to be compiled, as `assert_layouts` refers to those types,
+// but it's all dead code on unsupported platforms, and will be excluded from binary.
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 mod raw_transfer;
 mod raw_transfer_types;
-mod types;
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
 pub use raw_transfer::{
     get_buffer_offset, parse_async_raw, parse_sync_raw, raw_transfer_supported,
 };
-pub use types::{EcmaScriptModule, ParseResult, ParserOptions};
+
+// Fallback for 32-bit or big-endian platforms.
+/// Returns `true` if raw transfer is supported on this platform.
+#[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+#[napi]
+pub fn raw_transfer_supported() -> bool {
+    false
+}
 
 mod generated {
     // Note: We intentionally don't import `generated/derive_estree.rs`. It's not needed.
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
+    #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+    pub mod raw_transfer_constants;
 }
+#[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+use generated::raw_transfer_constants;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum AstType {

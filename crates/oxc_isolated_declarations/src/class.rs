@@ -277,25 +277,43 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    fn transform_constructor_params_to_class_properties(
+    /// Transform constructor parameters to class properties.
+    ///
+    /// For example:
+    ///
+    /// `class C { constructor(public x: string) {} }`
+    ///
+    /// to
+    ///
+    /// `class C { public x: string; constructor(x: string) {} }`
+    fn transform_constructor_parameter_properties(
         &self,
         function: &Function<'a>,
-        params: &FormalParameters<'a>,
+        typed_params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
         self.ast.vec_from_iter(
             function
                 .params
                 .items
                 .iter()
-                .filter(|param| param.has_modifier())
+                .filter(|param| {
+                    // To follow up `transform_formal_parameters`'s behavior
+                    typed_params.items.len() == function.params.items.len() || param.has_modifier()
+                })
                 .enumerate()
                 .filter_map(|(index, param)| {
+                    if !param.has_modifier() {
+                        return None;
+                    }
                     let type_annotation =
                         if param.accessibility.is_some_and(TSAccessibility::is_private) {
                             None
                         } else {
                             // transformed params will definitely have type annotation
-                            params.items[index].pattern.type_annotation.clone_in(self.ast.allocator)
+                            typed_params.items[index]
+                                .pattern
+                                .type_annotation
+                                .clone_in(self.ast.allocator)
                         };
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 }),
@@ -435,8 +453,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                 )
                             } else {
                                 let mut params = params.clone_in(self.ast.allocator);
-                                if let Some(param) = params.items.first_mut() {
-                                    if let Some(annotation) =
+                                if let Some(param) = params.items.first_mut()
+                                    && let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
                                             if method.key.content_eq(key) {
                                                 Some(
@@ -447,9 +465,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                                 None
                                             }
                                         })
-                                    {
-                                        param.pattern.type_annotation = annotation;
-                                    }
+                                {
+                                    param.pattern.type_annotation = annotation;
                                 }
                                 params
                             }
@@ -462,9 +479,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 self.transform_formal_parameters(&function.params, is_private);
                             elements.splice(
                                 0..0,
-                                self.transform_constructor_params_to_class_properties(
-                                    function, &params,
-                                ),
+                                self.transform_constructor_parameter_properties(function, &params),
                             );
 
                             if is_function_overloads && function.body.is_some() {

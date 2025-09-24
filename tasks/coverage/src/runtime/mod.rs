@@ -194,14 +194,14 @@ impl Test262RuntimeCase {
 
         let symbol_table = if minify {
             Minifier::new(MinifierOptions { mangle: None, ..MinifierOptions::default() })
-                .build(&allocator, &mut program)
+                .minify(&allocator, &mut program)
                 .scoping
         } else {
             None
         };
 
         let mut text = Codegen::new()
-            .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+            .with_options(if minify { CodegenOptions::minify() } else { CodegenOptions::default() })
             .with_scoping(symbol_table)
             .build(&program)
             .code;
@@ -235,14 +235,12 @@ impl Test262RuntimeCase {
             Ok(output) => {
                 if output.is_empty() {
                     TestResult::Passed
+                } else if let Some(negative) = &self.base.meta().negative
+                    && negative.phase.is_runtime()
+                    && output.starts_with(&negative.error_type.to_string())
+                {
+                    TestResult::Passed
                 } else {
-                    if let Some(negative) = &self.base.meta().negative {
-                        if negative.phase.is_runtime()
-                            && output.starts_with(&negative.error_type.to_string())
-                        {
-                            return TestResult::Passed;
-                        }
-                    }
                     TestResult::GenericError(case, output)
                 }
             }

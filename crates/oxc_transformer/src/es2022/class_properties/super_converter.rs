@@ -299,10 +299,10 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     /// Transform update expression where the argument is a member expression with `super`.
     ///
     /// * `++super.prop` or `super.prop--`
-    /// See [`Self::transform_update_expression_for_super_static_member_expr`]
+    ///   See [`Self::transform_update_expression_for_super_static_member_expr`]
     ///
     /// * `++super[prop]` or `super[prop]--`
-    /// See [`Self::transform_update_expression_for_super_computed_member_expr`]
+    ///   See [`Self::transform_update_expression_for_super_computed_member_expr`]
     //
     // `#[inline]` so can bail out fast without a function call if `argument` is not a member expression
     // with `super` as member expression object (fairly rare).
@@ -598,13 +598,13 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
     }
 
     /// * [`ClassPropertiesSuperConverterMode::Static`]
-    /// (_Class, _Class)
+    ///   (_Class, _Class)
     ///
     /// * [`ClassPropertiesSuperConverterMode::PrivateMethod`]
-    /// (_Class.prototype, this)
+    ///   (_Class.prototype, this)
     ///
     /// * [`ClassPropertiesSuperConverterMode::StaticPrivateMethod`]
-    /// (_Class, this)
+    ///   (_Class, this)
     fn get_class_binding_arguments(
         &mut self,
         ctx: &mut TraverseCtx<'a>,

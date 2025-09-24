@@ -73,7 +73,7 @@ impl Rule for BanTypes {
             AstKind::TSTypeReference(ty) => {
                 let name = match &ty.type_name {
                     TSTypeName::IdentifierReference(v) => &v.name,
-                    TSTypeName::QualifiedName(_) => return,
+                    TSTypeName::QualifiedName(_) | TSTypeName::ThisExpression(_) => return,
                 };
 
                 match name.as_str() {

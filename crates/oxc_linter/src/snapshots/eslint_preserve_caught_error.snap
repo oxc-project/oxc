@@ -1,0 +1,246 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:16]
+ 3 │                     } catch (err) {
+ 4 │                         throw new Error("Something failed");
+   ·                         ────────────────────────────────────
+ 5 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:5:16]
+ 4 │                         const unrelated = new Error("other");
+ 5 │                         throw new Error("Something failed", { cause: unrelated });
+   ·                         ──────────────────────────────────────────────────────────
+ 6 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:5:16]
+ 4 │                         const e = err;
+ 5 │                         throw new Error("Failed", { cause: e });
+   ·                         ────────────────────────────────────────
+ 6 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:16]
+ 3 │                     } catch (error) {
+ 4 │                         throw new Error("Failed", { cause: error.message });
+   ·                         ────────────────────────────────────────────────────
+ 5 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:7:28]
+ 6 │                                 if (Math.random() > 0.5) {
+ 7 │                                     throw new Error("Failed without cause");
+   ·                                     ────────────────────────────────────────
+ 8 │                                 }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:6:24]
+ 5 │                             case "A":
+ 6 │                                 throw new Error("Type A");
+   ·                                 ──────────────────────────
+ 7 │                             case "B":
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:16]
+ 3 │                         } catch (error) {
+ 4 │ ╭─▶                         throw new Error(`The certificate key "${chalk.yellow(keyFile)}" is invalid.
+ 5 │ ╰─▶             ${err.message}`);
+ 6 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:5:16]
+ 4 │                         const errorMessage = "Operation failed";
+ 5 │                         throw new Error(errorMessage);
+   ·                         ──────────────────────────────
+ 6 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:5:16]
+ 4 │                         const errorMessage = "Operation failed";
+ 5 │                         throw new Error(errorMessage, { existingOption: true, complexOption: { moreOptions: {} } });
+   ·                         ────────────────────────────────────────────────────────────────────────────────────────────
+ 6 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:5:20]
+ 4 │                         if (err.code === "A") {
+ 5 │                             throw new Error("Type A");
+   ·                             ──────────────────────────
+ 6 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:7:16]
+ 6 │                         }
+ 7 │                         throw new TypeError("Fallback error");
+   ·                         ──────────────────────────────────────
+ 8 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:16]
+ 3 │                     } catch (err) {
+ 4 │                         throw Error("Something failed");
+   ·                         ────────────────────────────────
+ 5 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:16]
+ 3 │                         my_label:
+ 4 │                         throw new Error("Failed without cause");
+   ·                         ────────────────────────────────────────
+ 5 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:20]
+ 3 │                         {
+ 4 │                             throw new Error("Something went wrong");
+   ·                             ────────────────────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:20]
+ 3 │                         {
+ 4 │                             throw new Error();
+   ·                             ──────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:20]
+ 3 │                         {
+ 4 │                             throw new AggregateError([], "Lorem ipsum");
+   ·                             ────────────────────────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:20]
+ 3 │                         {
+ 4 │                             throw new AggregateError();
+   ·                             ───────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:20]
+ 3 │                         {
+ 4 │                             throw new AggregateError([]);
+   ·                             ─────────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:3:8]
+ 2 │                             doSomething();
+ 3 │ ╭─▶                     } catch {
+ 4 │ │                           throw new Error("Something went wrong");
+ 5 │ ╰─▶                     }
+   ╰────
+  help: Catch clause must have a parameter when 'requireCatchParameter' is enabled
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:16]
+ 3 │                     } catch (err) {
+ 4 │                         throw new Error("Something failed", { cause });
+   ·                         ───────────────────────────────────────────────
+ 5 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:8]
+ 3 │                         } catch ({ message }) {
+ 4 │                             throw new Error(message);
+   ·                             ─────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:8]
+ 3 │                         } catch ({ ...error }) {
+ 4 │                             throw new Error(error.message);
+   ·                             ───────────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:6:9]
+ 5 │                                 const error = anotherError;
+ 6 │                                 throw new Error("Something went wrong", { cause: error });
+   ·                                 ──────────────────────────────────────────────────────────
+ 7 │                             }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:8]
+ 3 │                             } catch (error) {
+ 4 │ ╭─▶                             throw new Error(
+ 5 │ │                                   "Something went wrong" // some comments
+ 6 │ ╰─▶                             );
+ 7 │                             }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:8]
+ 3 │                         } catch (err) {
+ 4 │                             throw new Error("Something failed", {});
+   ·                             ────────────────────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:5:7]
+ 4 │                         const cause = "desc";
+ 5 │                         throw new Error("Something failed", { [cause]: "Some error" });
+   ·                         ───────────────────────────────────────────────────────────────
+ 6 │                     }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property
+
+  ⚠ eslint(preserve-caught-error): preserve-caught-error
+   ╭─[preserve_caught_error.tsx:4:7]
+ 3 │                         } catch (error) {
+ 4 │                         throw new Error("Something failed", { cause() { /* do something */ }  });
+   ·                         ─────────────────────────────────────────────────────────────────────────
+ 5 │                         }
+   ╰────
+  help: When re-throwing an error, preserve the original error using the 'cause' property

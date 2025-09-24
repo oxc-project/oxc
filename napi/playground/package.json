@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./index.d.ts",
@@ -13,12 +13,13 @@
     "./*": "./*"
   },
   "scripts": {
-    "build-dev": "napi build --platform --target wasm32-wasip1-threads && node patch.mjs",
-    "build-test": "pnpm run build",
-    "build": "napi build --platform --release --target wasm32-wasip1-threads && node patch.mjs"
+    "build-test": "echo 'Skipped because there are no tests.'",
+    "build-dev": "pnpm run build:napi && node scripts/patch.js",
+    "build": "pnpm run build:napi --release && node scripts/patch.js",
+    "build:napi": "napi build --platform --esm --target wasm32-wasip1-threads"
   },
   "dependencies": {
-    "@napi-rs/wasm-runtime": "^0.2.7"
+    "@napi-rs/wasm-runtime": "catalog:"
   },
   "collaborators": [
     "Boshen <boshenc@gmail.com>",

@@ -9,7 +9,7 @@ use oxc_ast::{
     },
     match_member_expression,
 };
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};
@@ -68,13 +68,13 @@ pub fn is_hidden_from_screen_reader<'a>(
     node: &JSXOpeningElement<'a>,
 ) -> bool {
     let name = get_element_type(ctx, node);
-    if name.eq_ignore_ascii_case("input") {
-        if let Some(item) = has_jsx_prop_ignore_case(node, "type") {
-            let hidden = get_string_literal_prop_value(item);
+    if name.eq_ignore_ascii_case("input")
+        && let Some(item) = has_jsx_prop_ignore_case(node, "type")
+    {
+        let hidden = get_string_literal_prop_value(item);
 
-            if hidden.is_some_and(|val| val.eq_ignore_ascii_case("hidden")) {
-                return true;
-            }
+        if hidden.is_some_and(|val| val.eq_ignore_ascii_case("hidden")) {
+            return true;
         }
     }
 
@@ -129,12 +129,11 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
     match element_type {
         "button" | "details" | "embed" | "iframe" | "label" | "select" | "textarea" => true,
         "input" => {
-            if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type") {
-                if get_string_literal_prop_value(input_type)
+            if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type")
+                && get_string_literal_prop_value(input_type)
                     .is_some_and(|val| val.eq_ignore_ascii_case("hidden"))
-                {
-                    return false;
-                }
+            {
+                return false;
             }
             true
         }
@@ -153,11 +152,10 @@ pub fn is_es5_component(node: &AstNode) -> bool {
         return false;
     };
 
-    if let Some(member_expr) = call_expr.callee.as_member_expression() {
-        if let Expression::Identifier(ident) = member_expr.object() {
-            return ident.name == PRAGMA
-                && member_expr.static_property_name() == Some(CREATE_CLASS);
-        }
+    if let Some(member_expr) = call_expr.callee.as_member_expression()
+        && let Expression::Identifier(ident) = member_expr.object()
+    {
+        return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
     }
 
     if let Some(ident_reference) = call_expr.callee.get_identifier_reference() {
@@ -175,13 +173,13 @@ pub fn is_es6_component(node: &AstNode) -> bool {
         return false;
     };
     if let Some(super_class) = &class_expr.super_class {
-        if let Some(member_expr) = super_class.as_member_expression() {
-            if let Expression::Identifier(ident) = member_expr.object() {
-                return ident.name == PRAGMA
-                    && member_expr
-                        .static_property_name()
-                        .is_some_and(|name| name == COMPONENT || name == PURE_COMPONENT);
-            }
+        if let Some(member_expr) = super_class.as_member_expression()
+            && let Expression::Identifier(ident) = member_expr.object()
+        {
+            return ident.name == PRAGMA
+                && member_expr
+                    .static_property_name()
+                    .is_some_and(|name| name == COMPONENT || name == PURE_COMPONENT);
         }
 
         if let Some(ident_reference) = super_class.get_identifier_reference() {
@@ -196,13 +194,7 @@ pub fn get_parent_component<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    for node_id in ctx.nodes().ancestor_ids(node.id()) {
-        let node = ctx.nodes().get_node(node_id);
-        if is_es5_component(node) || is_es6_component(node) {
-            return Some(node);
-        }
-    }
-    None
+    ctx.nodes().ancestors(node.id()).find(|node| is_es5_component(node) || is_es6_component(node))
 }
 
 fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str> {
@@ -337,5 +329,23 @@ pub fn is_react_function_call(call: &CallExpression, expected_call: &str) -> boo
         )
     } else {
         true
+    }
+}
+
+/// Checks if a JSX opening element is a React Fragment.
+/// Recognizes both `<Fragment>` and `<React.Fragment>` forms.
+pub fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
+    match &elem.name {
+        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
+        JSXElementName::MemberExpression(mem_expr) => {
+            if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
+                ident.name == "React" && mem_expr.property.name == "Fragment"
+            } else {
+                false
+            }
+        }
+        JSXElementName::NamespacedName(_)
+        | JSXElementName::Identifier(_)
+        | JSXElementName::ThisExpression(_) => false,
     }
 }

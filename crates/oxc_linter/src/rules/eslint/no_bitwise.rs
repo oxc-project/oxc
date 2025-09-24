@@ -73,7 +73,7 @@ declare_oxc_lint!(
     ///
     /// `{ type: string[], default: [] }`
     ///
-    /// The`allow` option permits the given list of bitwise operators to be used
+    /// The `allow` option permits the given list of bitwise operators to be used
     /// as exceptions to this rule.
     ///
     /// For example `{ "allow": ["~"] }` would allow the use of the bitwise operator

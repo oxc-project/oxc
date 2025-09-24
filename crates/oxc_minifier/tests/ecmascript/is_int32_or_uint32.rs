@@ -1,8 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Statement;
-use oxc_ecmascript::{
-    constant_evaluation::IsInt32OrUint32, is_global_reference::WithoutGlobalReferenceInformation,
-};
+use oxc_ecmascript::{WithoutGlobalReferenceInformation, constant_evaluation::IsInt32OrUint32};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 

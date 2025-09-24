@@ -277,6 +277,13 @@ fn test_vars_discarded_reads() {
                 return (yield fn(), 1);
             }
         }",
+        // https://github.com/oxc-project/oxc/issues/12592
+        "export const Foo = ({ onDismiss }) => {
+            const { remove } = useToaster();
+            return (
+                <button onClick={() => (onDismiss?.(), remove())}>x</button>
+            );
+        };",
     ];
 
     let fail = vec![
@@ -1051,6 +1058,11 @@ fn test_classes() {
         }
         new Bar();
         ",
+        // Variables used in class property initializers should not be marked as unused
+        "let a = 0; class A { c = a++ } new A()",
+        "let a = 0; class A { c = a } new A()",
+        "let a = 0; class A { c = a + 1 } new A()",
+        "let a = 0, b = 1; class A { c = a; d = b++ } new A()",
     ];
 
     let fail = vec![
@@ -1345,6 +1357,22 @@ import Layout from '../layouts/Layout.astro';
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_jsx_non_ascii() {
+    // Test that non-ASCII component names (e.g., Korean characters) are correctly recognized
+    // as references in JSX, ensuring they don't trigger false positives for unused variables.
+    // Non-ASCII identifiers are always treated as component references in JSX.
+    let pass = vec![
+        ("const 테스트 = () => <div>Hello</div>; <테스트 />;"),
+        ("const $foo = () => <div>Hello</div>; <$foo />;"),
+        ("const _foo = () => <div>Hello</div>; <_foo />;"),
+    ];
+    let fail = vec![("const foo = () => <div>Hello</div>; <foo />;")];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .test();
 }

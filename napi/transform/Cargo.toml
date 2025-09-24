@@ -1,6 +1,6 @@
 [package]
 name = "oxc_transform_napi"
-version = "0.76.0"
+version = "0.92.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -24,7 +24,7 @@ doctest = false
 [dependencies]
 oxc = { workspace = true, features = ["full"] }
 oxc_napi = { workspace = true }
-oxc_sourcemap = { workspace = true, features = ["napi", "rayon"] }
+oxc_sourcemap = { workspace = true, features = ["napi"] }
 
 rustc-hash = { workspace = true }
 

@@ -63,6 +63,7 @@ impl DefaultOutputFormatter {
 /// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
 ///
 /// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
+#[cfg_attr(all(not(test), feature = "force_test_reporter"), expect(dead_code))]
 struct GraphicalReporter {
     handler: GraphicalReportHandler,
 }
@@ -132,8 +133,10 @@ mod test_implementation {
             let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none());
             let mut output = String::new();
 
-            self.diagnostics.sort_by_key(|diagnostic| Info::new(diagnostic).filename);
-            self.diagnostics.sort_by_key(|diagnostic| Info::new(diagnostic).start.line);
+            self.diagnostics.sort_by_cached_key(|diagnostic| {
+                let info = Info::new(diagnostic);
+                (info.filename, info.start, info.end, info.rule_id, info.message)
+            });
 
             for diagnostic in &self.diagnostics {
                 handler.render_report(&mut output, diagnostic.as_ref()).unwrap();

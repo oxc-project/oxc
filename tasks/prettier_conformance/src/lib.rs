@@ -144,10 +144,10 @@ impl TestRunner {
                 .filter_map(Result::ok)
                 .map(|e| {
                     let mut path = e.into_path();
-                    if path.is_file() {
-                        if let Some(parent_path) = path.parent() {
-                            path = parent_path.into();
-                        }
+                    if path.is_file()
+                        && let Some(parent_path) = path.parent()
+                    {
+                        path = parent_path.into();
                     }
                     path
                 })
@@ -263,20 +263,20 @@ impl TestRunner {
                     // println!("--- {title} {}", "-".repeat(w - title.len() - 5));
                     // };
 
-                    // println!(
-                    // "{} Test: {}",
-                    // if result { "✨" } else { "💥" },
-                    // path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
-                    // );
-                    // println!(
-                    // "Options: {{ {} }}",
-                    // snapshot_options
-                    // .iter()
-                    // .filter(|(k, _)| k != "parsers")
-                    // .map(|(k, v)| format!("{k}: {v}"))
-                    // .collect::<Vec<_>>()
-                    // .join(", ")
-                    // );
+                    println!(
+                        "{} Test: {}",
+                        if result { "✨" } else { "💥" },
+                        path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
+                    );
+                    println!(
+                        "Options: {{ {} }}",
+                        snapshot_options
+                            .iter()
+                            .filter(|(k, _)| k != "parsers")
+                            .map(|(k, v)| format!("{k}: {v}"))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
 
                     if !result {
                         // print_with_border("Input");
@@ -422,9 +422,12 @@ impl TestRunner {
         let source_type = source_type.with_jsx(source_type.is_javascript());
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(ParseOptions {
-                preserve_parens: false,
+                parse_regular_expression: false,
+                // Enable all syntax features
                 allow_v8_intrinsics: true,
-                ..ParseOptions::default()
+                allow_return_outside_function: true,
+                // `oxc_formatter` expects this to be false
+                preserve_parens: false,
             })
             .parse();
         Formatter::new(&allocator, formatter_options).build(&ret.program)

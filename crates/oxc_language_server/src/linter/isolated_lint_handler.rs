@@ -10,10 +10,10 @@ use tower_lsp_server::{
     lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Uri},
 };
 
-use oxc_allocator::{Allocator, AllocatorPool};
+use oxc_allocator::Allocator;
 use oxc_linter::{
-    LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    loader::Loader, read_to_arena_str,
+    ConfigStore, LINTABLE_EXTENSIONS, LintOptions, LintService, LintServiceOptions, Linter,
+    MessageWithPosition, read_to_arena_str,
 };
 use oxc_linter::{RuntimeFileSystem, read_to_string};
 
@@ -26,11 +26,11 @@ use super::error_with_position::{
 pub struct IsolatedLintHandlerOptions {
     pub use_cross_module: bool,
     pub root_path: PathBuf,
+    pub tsconfig_path: Option<PathBuf>,
 }
 
 pub struct IsolatedLintHandler {
-    linter: Linter,
-    options: IsolatedLintHandlerOptions,
+    service: LintService,
 }
 
 pub struct IsolatedLintHandlerFileSystem {
@@ -63,96 +63,97 @@ impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
 }
 
 impl IsolatedLintHandler {
-    pub fn new(linter: Linter, options: IsolatedLintHandlerOptions) -> Self {
-        Self { linter, options }
+    pub fn new(
+        lint_options: LintOptions,
+        config_store: ConfigStore,
+        options: &IsolatedLintHandlerOptions,
+    ) -> Self {
+        let linter = Linter::new(lint_options, config_store, None);
+        let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
+            .with_cross_module(options.use_cross_module);
+
+        if let Some(tsconfig_path) = &options.tsconfig_path {
+            lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
+        }
+
+        let service = LintService::new(linter, lint_service_options);
+
+        Self { service }
     }
 
-    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(
+        &mut self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
         let path = uri.to_file_path()?;
 
         if !Self::should_lint_path(&path) {
             return None;
         }
 
-        let allocator = Allocator::default();
+        let mut allocator = Allocator::default();
+        let source_text = content.or_else(|| read_to_string(&path).ok())?;
+        let errors = self.lint_path(&mut allocator, &path, source_text);
 
-        Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
-            let mut diagnostics: Vec<DiagnosticReport> = errors
-                .iter()
-                .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
-                .collect();
+        let mut diagnostics: Vec<DiagnosticReport> =
+            errors.iter().map(|e| message_with_position_to_lsp_diagnostic_report(e, uri)).collect();
 
-            // a diagnostics connected from related_info to original diagnostic
-            let mut inverted_diagnostics = vec![];
-            for d in &diagnostics {
-                let Some(related_info) = &d.diagnostic.related_information else {
+        // a diagnostics connected from related_info to original diagnostic
+        let mut inverted_diagnostics = vec![];
+        for d in &diagnostics {
+            let Some(related_info) = &d.diagnostic.related_information else {
+                continue;
+            };
+            let related_information = Some(vec![DiagnosticRelatedInformation {
+                location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+                message: "original diagnostic".to_string(),
+            }]);
+            for r in related_info {
+                if r.location.range == d.diagnostic.range {
                     continue;
-                };
-                let related_information = Some(vec![DiagnosticRelatedInformation {
-                    location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
-                    message: "original diagnostic".to_string(),
-                }]);
-                for r in related_info {
-                    if r.location.range == d.diagnostic.range {
-                        continue;
-                    }
-                    // If there is no message content for this span, then don't produce an additional diagnostic
-                    // which also has no content. This prevents issues where editors expect diagnostics to have messages.
-                    if r.message.is_empty() {
-                        continue;
-                    }
-                    inverted_diagnostics.push(DiagnosticReport {
-                        diagnostic: lsp_types::Diagnostic {
-                            range: r.location.range,
-                            severity: Some(DiagnosticSeverity::HINT),
-                            code: None,
-                            message: r.message.clone(),
-                            source: d.diagnostic.source.clone(),
-                            code_description: None,
-                            related_information: related_information.clone(),
-                            tags: None,
-                            data: None,
-                        },
-                        fixed_content: PossibleFixContent::None,
-                        rule_name: None,
-                    });
                 }
+                // If there is no message content for this span, then don't produce an additional diagnostic
+                // which also has no content. This prevents issues where editors expect diagnostics to have messages.
+                if r.message.is_empty() {
+                    continue;
+                }
+                inverted_diagnostics.push(DiagnosticReport {
+                    diagnostic: lsp_types::Diagnostic {
+                        range: r.location.range,
+                        severity: Some(DiagnosticSeverity::HINT),
+                        code: None,
+                        message: r.message.clone(),
+                        source: d.diagnostic.source.clone(),
+                        code_description: None,
+                        related_information: related_information.clone(),
+                        tags: None,
+                        data: None,
+                    },
+                    fixed_content: PossibleFixContent::None,
+                    rule_name: None,
+                });
             }
-            diagnostics.append(&mut inverted_diagnostics);
-            diagnostics
-        }))
+        }
+        diagnostics.append(&mut inverted_diagnostics);
+        Some(diagnostics)
     }
 
     fn lint_path<'a>(
-        &self,
-        allocator: &'a Allocator,
+        &mut self,
+        allocator: &'a mut Allocator,
         path: &Path,
-        source_text: Option<String>,
-    ) -> Option<Vec<MessageWithPosition<'a>>> {
-        if !Loader::can_load(path) {
-            debug!("extension not supported yet.");
-            return None;
-        }
-
-        let source_text = source_text.or_else(|| read_to_string(path).ok())?;
-
+        source_text: String,
+    ) -> Vec<MessageWithPosition<'a>> {
         debug!("lint {}", path.display());
 
-        let lint_service_options = LintServiceOptions::new(
-            self.options.root_path.clone(),
-            vec![Arc::from(path.as_os_str())],
-        )
-        .with_cross_module(self.options.use_cross_module);
-
-        let mut lint_service =
-            LintService::new(&self.linter, AllocatorPool::default(), lint_service_options)
-                .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
-                    path.to_path_buf(),
-                    source_text,
-                )));
-        let result = lint_service.run_source(allocator);
-
-        Some(result)
+        self.service
+            .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
+                path.to_path_buf(),
+                source_text,
+            )))
+            .with_paths(vec![Arc::from(path.as_os_str())])
+            .run_source(allocator)
     }
 
     fn should_lint_path(path: &Path) -> bool {

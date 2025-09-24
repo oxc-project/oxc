@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- 55c2e11 editor: Add `oxc.fmt.experimental` flag (#13923) (Sysix)
+
+### 🧪 Testing
+
+- ad14a41 editor: Fix test setup (#13929) (Sysix)
+
+
+## [1.16.0] - 2025-09-16
+
+### 🐛 Bug Fixes
+
+- 50e6e3c editor: Restrict servers paths for  `oxc.path.server` (#13740) (Sysix)
+- b45077d editor: Strip leading slash for bin path on windows (#13738) (Sysix)
+- 8fa6227 editor: Don't allow `oxc.path.server` for untrusted workspaces (#13734) (Sysix)
+
+
+## [1.15.0] - 2025-09-11
+
+### 🚀 Features
+
+- 75a673e editor: Support relative path for `oxc.path.server` (#13542) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 2f36350 editor: Add notice for a possible restart when fixing `filename-case` (#13557) (Sysix)
+- b677376 language_server: Include the diagnostic of the other linter (#13490) (Sysix)
+
+
+
+
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+
+### 🚜 Refactor
+
+- b638371 language_server: Do not check twice for supported extension (#13130) (Sysix)
+
+
+
+
+
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 5475075 vscode/language_server: Add `tsConfigPath` option (#12484) (Sysix)
+
+
+## [1.9.0] - 2025-07-29
+
+### 🐛 Bug Fixes
+
+- cc19c8b vscode: Fix statusbar icon order (#12544) (Christian Fehmer)
+
+
+
+
 
 
 

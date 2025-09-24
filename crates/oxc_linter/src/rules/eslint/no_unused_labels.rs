@@ -84,6 +84,12 @@ fn test() {
             None,
         ),
         ("A: { var A = 0; console.log(A); break A; console.log(A); }", None),
+        (
+            "label: while (true) { f = function() { label: while (true) { break label; } }; break label; }",
+            None,
+        ),
+        ("outer: { function f() { inner: { break inner; } } break outer; }", None),
+        ("A: { const f = () => { B: { break B; } }; break A; }", None),
     ];
 
     let fail = vec![
@@ -96,6 +102,9 @@ fn test() {
         ("A: { var A = 0; console.log(A); }", None),
         ("A: /* comment */ foo", None),
         ("A /* comment */: foo", None),
+        // Ensure inner label in function is still marked as unused when not used
+        ("A: { function f() { B: { } } break A; }", None),
+        ("label: while (true) { (() => { label: while (false) {} })(); }", None),
     ];
     let fix = vec![
         ("A: var foo = 0;", "var foo = 0;", None),

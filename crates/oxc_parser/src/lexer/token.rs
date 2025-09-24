@@ -7,13 +7,14 @@ use oxc_span::Span;
 use super::kind::Kind;
 
 // Bit layout for `u128`:
-// - Bits 0-31 (32 bits): `start`
-// - Bits 32-63 (32 bits): `end`
-// - Bits 64-71 (8 bits): `kind` (as u8)
-// - Bit 72 (1 bit): `is_on_new_line`
-// - Bit 73 (1 bit): `escaped`
-// - Bit 74 (1 bit): `lone_surrogates`
-// - Bit 75 (1 bit): `has_separator`
+// - Bits 0-31 (32 bits): `start` (`u32`)
+// - Bits 32-63 (32 bits): `end` (`u32`)
+// - Bits 64-71 (8 bits): `kind` (`Kind`)
+// - Bits 72-79 (8 bits): `is_on_new_line` (`bool`)
+// - Bits 80-87 (8 bits): `escaped` (`bool`)
+// - Bits 88-95 (8 bits): `lone_surrogates` (`bool`)
+// - Bits 96-103 (8 bits): `has_separator` (`bool`)
+// - Bits 104-127 (24 bits): unused
 
 const START_SHIFT: usize = 0;
 const END_SHIFT: usize = 32;
@@ -31,7 +32,7 @@ const BOOL_MASK: u128 = 0xFF; // 8 bits
 const _: () = {
     // Check flags fields are aligned on 8 and in bounds, so can be read via pointers
     const fn is_valid_shift(shift: usize) -> bool {
-        shift % 8 == 0 && shift < u128::BITS as usize
+        shift.is_multiple_of(8) && shift < u128::BITS as usize
     }
 
     assert!(is_valid_shift(IS_ON_NEW_LINE_SHIFT));
@@ -129,6 +130,11 @@ impl Token {
         self.0 |= u128::from(kind as u8) << KIND_SHIFT;
     }
 
+    /// Checks if this token appears at the start of a new line.
+    ///
+    /// Returns `true` if the token was preceded by a line terminator during lexical analysis.
+    /// This information is crucial for automatic semicolon insertion (ASI) and other
+    /// JavaScript parsing rules that depend on line boundaries.
     #[inline]
     pub fn is_on_new_line(&self) -> bool {
         // Use a pointer read rather than arithmetic as it produces less instructions.
@@ -188,8 +194,37 @@ impl Token {
     /// Read `bool` from 8 bits starting at bit position `shift`.
     ///
     /// # SAFETY
+    ///
     /// `shift` must be the location of a valid boolean "field" in [`Token`]
-    /// e.g. `ESCAPED_SHIFT`
+    /// e.g. `ESCAPED_SHIFT`. The caller must guarantee that the 8 bits at
+    /// `shift` contain only 0 or 1, making it safe to read as a `bool`.
+    ///
+    /// # Performance analysis
+    ///
+    /// This method uses unsafe pointer arithmetic to directly read a boolean value
+    /// from the token's 128-bit representation. This approach is deliberately chosen
+    /// for performance optimization on hot paths.
+    ///
+    /// This unsafe pointer arithmetic approach generates only 1 CPU instruction:
+    /// ```asm
+    /// movzx   eax, byte ptr [rdi + 9]  ; Load byte at offset
+    /// ```
+    ///
+    /// Compared to the safe bit-shift alternative:
+    /// ```ignore
+    /// (token.0 >> shift) & 1 != 0
+    /// ```
+    ///
+    /// ```asm
+    /// movzx   eax, byte ptr [rdi + 9]  ; Load byte at offset
+    /// and     al, 1                    ; Mask to lower bit only
+    /// ```
+    ///
+    /// <https://godbolt.org/z/7xxrP348P>
+    ///
+    /// This optimization was retained after careful benchmarking (see PR #13788),
+    /// where the single instruction difference on hot paths justified keeping
+    /// the unsafe implementation.
     #[expect(clippy::inline_always)]
     #[inline(always)] // So `shift` is statically known
     unsafe fn read_bool(&self, shift: usize) -> bool {

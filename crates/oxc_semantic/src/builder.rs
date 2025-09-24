@@ -5,12 +5,12 @@ use std::{
     mem,
 };
 
-use oxc_allocator::Address;
-use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
+#[cfg(feature = "cfg")]
 use oxc_cfg::{
     ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
     IterationInstructionKind, ReturnInstructionKind,
@@ -38,10 +38,19 @@ use crate::{
     unresolved_stack::UnresolvedReferencesStack,
 };
 
+#[cfg(feature = "cfg")]
 macro_rules! control_flow {
     ($self:ident, |$cfg:tt| $body:expr) => {
         if let Some($cfg) = &mut $self.cfg { $body } else { Default::default() }
     };
+}
+
+#[cfg(not(feature = "cfg"))]
+macro_rules! control_flow {
+    ($self:ident, |$cfg:tt| $body:expr) => {{
+        let _ = $self; // Suppress unused variable warning
+        ()
+    }};
 }
 
 /// Semantic Builder
@@ -66,8 +75,9 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_node_id: NodeId,
     pub(crate) current_node_flags: NodeFlags,
     pub(crate) current_scope_id: ScopeId,
-    /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
-    pub(crate) function_stack: Stack<NodeId>,
+    /// `NodeId` of current `Function` (not including arrow functions).
+    /// When not in a function, is `NodeId` of `Program`.
+    pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
@@ -89,10 +99,15 @@ pub struct SemanticBuilder<'a> {
     /// See: [`crate::checker::check`]
     check_syntax_error: bool,
 
+    #[cfg(feature = "cfg")]
     pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
+    #[cfg(not(feature = "cfg"))]
+    #[allow(unused)]
+    pub(crate) cfg: (),
 
     pub(crate) class_table_builder: ClassTableBuilder<'a>,
 
+    #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
 }
 
@@ -121,7 +136,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_flags: NodeFlags::empty(),
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
-            function_stack: Stack::with_capacity(16),
+            current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
@@ -133,8 +148,12 @@ impl<'a> SemanticBuilder<'a> {
             stats: None,
             excess_capacity: 0.0,
             check_syntax_error: false,
+            #[cfg(feature = "cfg")]
             cfg: None,
+            #[cfg(not(feature = "cfg"))]
+            cfg: (),
             class_table_builder: ClassTableBuilder::new(),
+            #[cfg(feature = "cfg")]
             ast_node_records: Vec::new(),
         }
     }
@@ -163,8 +182,14 @@ impl<'a> SemanticBuilder<'a> {
     ///
     /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     #[must_use]
+    #[cfg(feature = "cfg")]
     pub fn with_cfg(mut self, cfg: bool) -> Self {
         self.cfg = if cfg { Some(ControlFlowGraphBuilder::default()) } else { None };
+        self
+    }
+
+    #[cfg(not(feature = "cfg"))]
+    pub fn with_cfg(self, _cfg: bool) -> Self {
         self
     }
 
@@ -214,54 +239,48 @@ impl<'a> SemanticBuilder<'a> {
         if self.build_jsdoc {
             self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
         }
-        if self.source_type.is_typescript_definition() {
-            let scope_id = self.scoping.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
-            program.scope_id.set(Some(scope_id));
+
+        // Use counts of nodes, scopes, symbols, and references to pre-allocate sufficient capacity
+        // in `AstNodes`, `ScopeTree` and `SymbolTable`.
+        //
+        // This means that as we traverse the AST and fill up these structures with data,
+        // they never need to grow and reallocate - which is an expensive operation as it
+        // involves copying all the memory from the old allocation to the new one.
+        // For large source files, these structures are very large, so growth is very costly
+        // as it involves copying massive chunks of memory.
+        // Avoiding this growth produces up to 30% perf boost on our benchmarks.
+        //
+        // If user did not provide existing `Stats`, calculate them by visiting AST.
+        #[cfg_attr(not(debug_assertions), expect(unused_variables))]
+        let (stats, check_stats) = if let Some(stats) = self.stats {
+            (stats, None)
         } else {
-            // Use counts of nodes, scopes, symbols, and references to pre-allocate sufficient capacity
-            // in `AstNodes`, `ScopeTree` and `SymbolTable`.
-            //
-            // This means that as we traverse the AST and fill up these structures with data,
-            // they never need to grow and reallocate - which is an expensive operation as it
-            // involves copying all the memory from the old allocation to the new one.
-            // For large source files, these structures are very large, so growth is very costly
-            // as it involves copying massive chunks of memory.
-            // Avoiding this growth produces up to 30% perf boost on our benchmarks.
-            //
-            // If user did not provide existing `Stats`, calculate them by visiting AST.
-            #[cfg_attr(not(debug_assertions), expect(unused_variables))]
-            let (stats, check_stats) = if let Some(stats) = self.stats {
-                (stats, None)
-            } else {
-                let stats = Stats::count(program);
-                let stats_with_excess = stats.increase_by(self.excess_capacity);
-                (stats_with_excess, Some(stats))
-            };
-            self.nodes.reserve(stats.nodes as usize);
-            self.scoping.reserve(
-                stats.symbols as usize,
-                stats.references as usize,
-                stats.scopes as usize,
+            let stats = Stats::count(program);
+            let stats_with_excess = stats.increase_by(self.excess_capacity);
+            (stats_with_excess, Some(stats))
+        };
+        self.nodes.reserve(stats.nodes as usize);
+        self.scoping.reserve(
+            stats.symbols as usize,
+            stats.references as usize,
+            stats.scopes as usize,
+        );
+
+        // Visit AST to generate scopes tree etc
+        self.visit_program(program);
+
+        // Check that estimated counts accurately (unless in release mode)
+        #[cfg(debug_assertions)]
+        if let Some(stats) = check_stats {
+            #[expect(clippy::cast_possible_truncation)]
+            let actual_stats = Stats::new(
+                self.nodes.len() as u32,
+                self.scoping.scopes_len() as u32,
+                self.scoping.symbols_len() as u32,
+                self.scoping.references.len() as u32,
             );
-
-            // Visit AST to generate scopes tree etc
-            self.visit_program(program);
-
-            // Check that estimated counts accurately (unless in release mode)
-            #[cfg(debug_assertions)]
-            if let Some(stats) = check_stats {
-                #[expect(clippy::cast_possible_truncation)]
-                let actual_stats = Stats::new(
-                    self.nodes.len() as u32,
-                    self.scoping.scopes_len() as u32,
-                    self.scoping.symbols_len() as u32,
-                    self.scoping.references.len() as u32,
-                );
-                stats.assert_accurate(actual_stats);
-            }
+            stats.assert_accurate(actual_stats);
         }
-
-        let comments = self.alloc(&program.comments);
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
         if self.check_syntax_error && !self.source_type.is_typescript() {
@@ -273,17 +292,23 @@ impl<'a> SemanticBuilder<'a> {
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
+        #[cfg(debug_assertions)]
+        self.unused_labels.assert_empty();
+
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
-            comments,
+            comments: &program.comments,
             irregular_whitespaces: [].into(),
             nodes: self.nodes,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
             jsdoc,
             unused_labels: self.unused_labels.labels,
+            #[cfg(feature = "cfg")]
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
+            #[cfg(not(feature = "cfg"))]
+            cfg: (),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -317,11 +342,13 @@ impl<'a> SemanticBuilder<'a> {
         self.record_ast_node();
     }
 
+    #[inline]
     fn pop_ast_node(&mut self) {
         self.current_node_id = self.nodes.parent_id(self.current_node_id);
     }
 
     #[inline]
+    #[cfg(feature = "cfg")]
     fn record_ast_nodes(&mut self) {
         if self.cfg.is_some() {
             self.ast_node_records.push(NodeId::DUMMY);
@@ -329,6 +356,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[inline]
+    #[cfg(feature = "cfg")]
     fn retrieve_recorded_ast_node(&mut self) -> Option<NodeId> {
         if self.cfg.is_some() {
             Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
@@ -338,18 +366,22 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[inline]
+    #[cfg(feature = "cfg")]
     fn record_ast_node(&mut self) {
         // The `self.cfg.is_some()` check here could be removed, since `ast_node_records` is empty
         // if CFG is disabled. But benchmarks showed removing the extra check is a perf regression.
         // <https://github.com/oxc-project/oxc/pull/4273>
-        if self.cfg.is_some() {
-            if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == NodeId::DUMMY {
-                    *record = self.current_node_id;
-                }
-            }
+        if self.cfg.is_some()
+            && let Some(record) = self.ast_node_records.last_mut()
+            && *record == NodeId::DUMMY
+        {
+            *record = self.current_node_id;
         }
     }
+
+    #[inline]
+    #[cfg(not(feature = "cfg"))]
+    fn record_ast_node(&mut self) {}
 
     #[inline]
     pub(crate) fn current_scope_flags(&self) -> ScopeFlags {
@@ -357,14 +389,9 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Is the current scope in strict mode?
+    #[inline]
     pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
-    }
-
-    pub(crate) fn set_function_node_flags(&mut self, flags: NodeFlags) {
-        if let Some(current_function) = self.function_stack.last() {
-            *self.nodes.get_node_mut(*current_function).flags_mut() |= flags;
-        }
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
@@ -606,6 +633,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_program(&mut self, program: &Program<'a>) {
         let kind = AstKind::Program(self.alloc(program));
         /* cfg */
+        #[cfg(feature = "cfg")]
         let error_harness = control_flow!(self, |cfg| {
             let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
             let _program_basic_block = cfg.new_basic_block_normal();
@@ -613,7 +641,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg - must be above directives as directives are in cfg */
 
-        // Don't call `enter_node` here as `Program` is a special case - node has no `parent_id`.
+        // Don't call `enter_node` here as `Program` is a special case - node has itself as `parent_id`.
         // Inline the specific logic for `Program` here instead.
         // This avoids `Nodes::add_node` having to handle the special case.
         // We can also skip calling `self.enter_kind`, `self.record_ast_node`
@@ -658,6 +686,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // as scope depth must remain >= 1.
 
         self.leave_node(kind);
+
+        // Check `current_function_node_id` has been reset to as it was at start
+        debug_assert!(self.current_function_node_id == NodeId::ROOT);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -665,6 +696,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let node_id = self.current_node_id;
         /* cfg */
 
@@ -683,6 +715,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_class(&mut self, class: &Class<'a>) {
         let kind = AstKind::Class(self.alloc(class));
         self.enter_node(kind);
+        self.current_node_flags |= NodeFlags::Class;
+        if class.is_declaration() {
+            class.bind(self);
+        }
 
         self.visit_decorators(&class.decorators);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
@@ -709,6 +745,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+        self.current_node_flags -= NodeFlags::Class;
+        self.class_table_builder.pop_class();
     }
 
     fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
@@ -750,6 +788,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let node_id = self.current_node_id;
         /* cfg */
 
@@ -770,6 +809,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (before_do_while_stmt_graph_ix, start_body_graph_ix) = control_flow!(self, |cfg| {
             let before_do_while_stmt_graph_ix = cfg.current_node_ix;
             let start_body_graph_ix = cfg.new_basic_block_normal();
@@ -781,6 +821,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg - condition basic block */
+        #[cfg(feature = "cfg")]
         let (after_body_graph_ix, start_of_condition_graph_ix) = control_flow!(self, |cfg| {
             let after_body_graph_ix = cfg.current_node_ix;
             let start_of_condition_graph_ix = cfg.new_basic_block_normal();
@@ -788,8 +829,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
@@ -830,6 +873,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&expr.left);
 
         /* cfg  */
+        #[cfg(feature = "cfg")]
         let (left_expr_end_ix, right_expr_start_ix) = control_flow!(self, |cfg| {
             let left_expr_end_ix = cfg.current_node_ix;
             let right_expr_start_ix = cfg.new_basic_block_normal();
@@ -872,6 +916,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_assignment_target(&expr.left);
 
         /* cfg  */
+        #[cfg(feature = "cfg")]
         let cfg_ixs = control_flow!(self, |cfg| {
             if expr.operator.is_logical() {
                 let target_end_ix = cfg.current_node_ix;
@@ -906,6 +951,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
+        #[cfg(feature = "cfg")]
         let (before_conditional_graph_ix, start_of_condition_graph_ix) =
             control_flow!(self, |cfg| {
                 let before_conditional_graph_ix = cfg.current_node_ix;
@@ -914,11 +960,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         self.record_ast_nodes();
         self.visit_expression(&expr.test);
+        #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (after_condition_graph_ix, before_consequent_expr_graph_ix) =
             control_flow!(self, |cfg| {
                 cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
@@ -932,6 +981,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&expr.consequent);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (after_consequent_expr_graph_ix, start_alternate_graph_ix) =
             control_flow!(self, |cfg| {
                 let after_consequent_expr_graph_ix = cfg.current_node_ix;
@@ -977,6 +1027,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_for_statement_init(init);
         }
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (before_for_graph_ix, test_graph_ix) = control_flow!(self, |cfg| {
             let before_for_graph_ix = cfg.current_node_ix;
             let test_graph_ix = cfg.new_basic_block_normal();
@@ -985,8 +1036,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         if let Some(test) = &stmt.test {
+            #[cfg(feature = "cfg")]
             self.record_ast_nodes();
             self.visit_expression(test);
+            #[cfg(feature = "cfg")]
             let test_node_id = self.retrieve_recorded_ast_node();
 
             /* cfg */
@@ -995,6 +1048,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (after_test_graph_ix, update_graph_ix) =
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
@@ -1004,6 +1058,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let before_body_graph_ix = control_flow!(self, |cfg| {
             let before_body_graph_ix = cfg.new_basic_block_normal();
             cfg.ctx(None).default().allow_break().allow_continue();
@@ -1042,15 +1097,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         self.record_ast_nodes();
         self.visit_expression(&stmt.right);
+        #[cfg(feature = "cfg")]
         let right_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
             control_flow!(self, |cfg| {
                 let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
@@ -1101,15 +1160,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         self.record_ast_nodes();
         self.visit_expression(&stmt.right);
+        #[cfg(feature = "cfg")]
         let right_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
             control_flow!(self, |cfg| {
                 let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
@@ -1156,15 +1219,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
+        #[cfg(feature = "cfg")]
         let (before_if_stmt_graph_ix, start_of_condition_graph_ix) =
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let (after_test_graph_ix, before_consequent_stmt_graph_ix) = control_flow!(self, |cfg| {
             cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
             (cfg.current_node_ix, cfg.new_basic_block_normal())
@@ -1174,9 +1241,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.consequent);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let after_consequent_stmt_graph_ix = control_flow!(self, |cfg| cfg.current_node_ix);
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         let else_graph_ix = if let Some(alternate) = &stmt.alternate {
             /* cfg */
             let else_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
@@ -1188,6 +1257,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         } else {
             None
         };
+
+        #[cfg(not(feature = "cfg"))]
+        if let Some(alternate) = &stmt.alternate {
+            self.visit_statement(alternate);
+        }
 
         /* cfg - bb after if statement joins consequent and alternate */
         control_flow!(self, |cfg| {
@@ -1216,8 +1290,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.unused_labels.add(stmt.label.name.as_str(), self.current_node_id);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let label = &stmt.label.name;
         control_flow!(self, |cfg| {
             let ctx = cfg.ctx(Some(label.as_str())).default().allow_break();
@@ -1241,6 +1317,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        self.unused_labels.mark_unused();
         self.leave_node(kind);
     }
 
@@ -1249,15 +1326,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let node_id = self.current_node_id;
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         let ret_kind = if let Some(arg) = &stmt.argument {
             self.visit_expression(arg);
             ReturnInstructionKind::NotImplicitUndefined
         } else {
             ReturnInstructionKind::ImplicitUndefined
         };
+
+        #[cfg(not(feature = "cfg"))]
+        if let Some(arg) = &stmt.argument {
+            self.visit_expression(arg);
+        }
 
         /* cfg */
         control_flow!(self, |cfg| {
@@ -1276,18 +1360,23 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let discriminant_graph_ix = control_flow!(self, |cfg| {
             let discriminant_graph_ix = cfg.current_node_ix;
             cfg.ctx(None).default().allow_break();
             discriminant_graph_ix
         });
+        #[cfg(feature = "cfg")]
         let mut switch_case_graph_spans = vec![];
+        #[cfg(feature = "cfg")]
         let mut have_default_case = false;
         /* cfg */
 
         for case in &stmt.cases {
+            #[cfg(feature = "cfg")]
             let before_case_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
             self.visit_switch_case(case);
+            #[cfg(feature = "cfg")]
             if case.is_default_case() {
                 have_default_case = true;
             }
@@ -1348,8 +1437,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         if let Some(expr) = &case.test {
+            #[cfg(feature = "cfg")]
             self.record_ast_nodes();
             self.visit_expression(expr);
+            #[cfg(feature = "cfg")]
             let test_node_id = self.retrieve_recorded_ast_node();
             control_flow!(self, |cfg| cfg.append_condition_to(cfg.current_node_ix, test_node_id));
         }
@@ -1372,6 +1463,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let node_id = self.current_node_id;
         /* cfg */
 
@@ -1390,6 +1482,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         let (
             before_try_statement_graph_ix,
             error_harness,
@@ -1414,9 +1507,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_block_statement(&stmt.block);
 
         /* cfg */
+        #[cfg(feature = "cfg")]
         let after_try_block_graph_ix = control_flow!(self, |cfg| cfg.current_node_ix);
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         let catch_block_end_ix = if let Some(handler) = &stmt.handler {
             /* cfg */
             control_flow!(self, |cfg| {
@@ -1443,6 +1538,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             None
         };
 
+        #[cfg(not(feature = "cfg"))]
+        if let Some(handler) = &stmt.handler {
+            self.visit_catch_clause(handler);
+        }
+
+        #[cfg(feature = "cfg")]
         let finally_block_end_ix = if let Some(finalizer) = &stmt.finalizer {
             /* cfg */
             control_flow!(self, |cfg| {
@@ -1469,6 +1570,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             None
         };
 
+        #[cfg(not(feature = "cfg"))]
+        if let Some(finalizer) = &stmt.finalizer {
+            self.visit_block_statement(finalizer);
+        }
+
         /* cfg */
         control_flow!(self, |cfg| {
             let after_try_statement_block_ix = cfg.new_basic_block_normal();
@@ -1477,20 +1583,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 before_try_block_graph_ix,
                 EdgeType::Normal,
             );
-            if let Some(catch_block_end_ix) = catch_block_end_ix {
-                if finally_block_end_ix.is_none() {
-                    cfg.add_edge(
-                        after_try_block_graph_ix,
-                        after_try_statement_block_ix,
-                        EdgeType::Normal,
-                    );
+            if let Some(catch_block_end_ix) = catch_block_end_ix
+                && finally_block_end_ix.is_none()
+            {
+                cfg.add_edge(
+                    after_try_block_graph_ix,
+                    after_try_statement_block_ix,
+                    EdgeType::Normal,
+                );
 
-                    cfg.add_edge(
-                        catch_block_end_ix,
-                        after_try_statement_block_ix,
-                        EdgeType::Normal,
-                    );
-                }
+                cfg.add_edge(catch_block_end_ix, after_try_statement_block_ix, EdgeType::Normal);
             }
             if let Some(finally_block_end_ix) = finally_block_end_ix {
                 if catch_block_end_ix.is_some() {
@@ -1522,15 +1624,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
+        #[cfg(feature = "cfg")]
         let (before_while_stmt_graph_ix, condition_graph_ix) =
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
+        #[cfg(feature = "cfg")]
         self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        #[cfg(feature = "cfg")]
         let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg - body basic block */
+        #[cfg(feature = "cfg")]
         let body_graph_ix = control_flow!(self, |cfg| {
             cfg.append_condition_to(condition_graph_ix, test_node_id);
             let body_graph_ix = cfg.new_basic_block_normal();
@@ -1566,6 +1672,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
+        #[cfg(feature = "cfg")]
         let (before_with_stmt_graph_ix, condition_graph_ix) =
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
@@ -1573,6 +1680,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&stmt.object);
 
         /* cfg - body basic block */
+        #[cfg(feature = "cfg")]
         let body_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
         /* cfg */
 
@@ -1594,6 +1702,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         /* cfg */
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
+        #[cfg(feature = "cfg")]
         let (before_function_graph_ix, error_harness, function_graph_ix) =
             control_flow!(self, |cfg| {
                 let before_function_graph_ix = cfg.current_node_ix;
@@ -1605,10 +1716,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
-        // We add a new basic block to the cfg before entering the node
-        // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+
+        let parent_function_node_id = self.current_function_node_id;
+        self.current_function_node_id = self.current_node_id;
+
+        if func.is_declaration() {
+            func.bind(self);
+        }
+
         self.enter_scope(
             {
                 let mut flags = flags;
@@ -1685,10 +1802,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.leave_scope();
         self.leave_node(kind);
+
+        self.current_function_node_id = parent_function_node_id;
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         /* cfg */
+        // We add a new basic block to the cfg before entering the node
+        // so that the correct cfg_ix is associated with the ast node.
+        #[cfg(feature = "cfg")]
         let (current_node_ix, error_harness, function_graph_ix) = control_flow!(self, |cfg| {
             let current_node_ix = cfg.current_node_ix;
             cfg.push_finalization_stack();
@@ -1699,8 +1821,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        // We add a new basic block to the cfg before entering the node
-        // so that the correct cfg_ix is associated with the ast node.
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
         self.enter_scope(
@@ -1764,8 +1884,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
@@ -1793,8 +1913,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
-        let kind = AstKind::SimpleAssignmentTarget(self.alloc(it));
-        self.enter_node(kind);
         // Except that the read-write flags has been set in visit_assignment_expression
         // and visit_update_expression, this is always a write-only reference here.
         if !self.current_reference_flags.is_write() {
@@ -1821,7 +1939,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 self.visit_member_expression(it.to_member_expression());
             }
         }
-        self.leave_node(kind);
     }
 
     fn visit_assignment_target_property_identifier(
@@ -1955,21 +2072,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
             }
-            AstKind::Function(func) => {
-                self.function_stack.push(self.current_node_id);
-                if func.is_declaration() {
-                    func.bind(self);
-                }
-            }
-            AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.push(self.current_node_id);
-            }
-            AstKind::Class(class) => {
-                self.current_node_flags |= NodeFlags::Class;
-                if class.is_declaration() {
-                    class.bind(self);
-                }
-            }
+
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
                     body,
@@ -2038,9 +2141,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
-            AstKind::LabeledStatement(stmt) => {
-                self.unused_labels.add(stmt.label.name.as_str());
-            }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
                 if let Some(label) = &label {
@@ -2048,7 +2148,10 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
-                self.set_function_node_flags(NodeFlags::HasYield);
+                // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
+                // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
+                *self.nodes.get_node_mut(self.current_function_node_id).flags_mut() |=
+                    NodeFlags::HasYield;
             }
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.optional && call_expr.callee.is_specific_id("eval") {
@@ -2063,13 +2166,6 @@ impl<'a> SemanticBuilder<'a> {
 
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Class(_) => {
-                self.current_node_flags -= NodeFlags::Class;
-                self.class_table_builder.pop_class();
-            }
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                self.function_stack.pop();
-            }
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
@@ -2077,7 +2173,6 @@ impl<'a> SemanticBuilder<'a> {
                 // Clear the reference flags that may have been set when entering the node.
                 self.current_reference_flags = ReferenceFlags::empty();
             }
-            AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
     }

@@ -1,0 +1,5 @@
+formatter_misc Summary:
+AST Parsed     : 49/49 (100.00%)
+Positive Passed: 48/49 (97.96%)
+Expect to Parse: tasks/coverage/misc/pass/oxc-11487.cjs
+Cannot use `await` as an identifier in an async context

@@ -10,7 +10,6 @@ fn es_target() {
     use std::fmt::Write;
 
     let cases = [
-        ("es5", "() => {}"),
         ("es6", "a ** b"),
         ("es2015", "a ** b"),
         ("es2016", "async function foo() {}"),

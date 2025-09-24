@@ -1,7 +1,8 @@
 use std::iter::FusedIterator;
 
 use oxc_allocator::{Address, GetAddress};
-use oxc_ast::{AstKind, ast::Program};
+use oxc_ast::{AstKind, AstType, ast::Program};
+#[cfg(feature = "cfg")]
 use oxc_cfg::BlockNodeId;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_span::{GetSpan, Span};
@@ -9,6 +10,8 @@ use oxc_syntax::{
     node::{NodeFlags, NodeId},
     scope::ScopeId,
 };
+
+use crate::ast_types_bitset::AstTypesBitset;
 
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]
@@ -21,6 +24,7 @@ pub struct AstNode<'a> {
     scope_id: ScopeId,
 
     /// Associated `BasicBlockId` in CFG (initialized by control_flow)
+    #[cfg(feature = "cfg")]
     cfg_id: BlockNodeId,
 
     flags: NodeFlags,
@@ -28,6 +32,7 @@ pub struct AstNode<'a> {
 
 impl<'a> AstNode<'a> {
     #[inline]
+    #[cfg(feature = "cfg")]
     pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
@@ -36,6 +41,17 @@ impl<'a> AstNode<'a> {
         id: NodeId,
     ) -> Self {
         Self { id, kind, scope_id, cfg_id, flags }
+    }
+
+    #[cfg(not(feature = "cfg"))]
+    pub(crate) fn new(
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        _cfg_id: (),
+        flags: NodeFlags,
+        id: NodeId,
+    ) -> Self {
+        Self { id, kind, scope_id, flags }
     }
 
     /// This node's unique identifier.
@@ -48,6 +64,7 @@ impl<'a> AstNode<'a> {
     ///
     /// See [oxc_cfg::ControlFlowGraph] for more information.
     #[inline]
+    #[cfg(feature = "cfg")]
     pub fn cfg_id(&self) -> BlockNodeId {
         self.cfg_id
     }
@@ -98,10 +115,13 @@ impl GetAddress for AstNode<'_> {
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug, Default)]
 pub struct AstNodes<'a> {
-    program: Option<&'a Program<'a>>,
     nodes: IndexVec<NodeId, AstNode<'a>>,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
+    /// Stores a set of bits of a fixed size, where each bit represents a single [`AstKind`]. If the bit is set (1),
+    /// then the AST contains at least one node of that kind. If the bit is not set (0), then the AST does not contain
+    /// any nodes of that kind.
+    node_kinds_set: AstTypesBitset,
 }
 
 impl<'a> AstNodes<'a> {
@@ -124,7 +144,7 @@ impl<'a> AstNodes<'a> {
 
     /// Walk up the AST, iterating over each parent [`NodeId`].
     ///
-    /// The first node produced by this iterator is the node pointed to by `node_id`.
+    /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
     pub fn ancestor_ids(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + Clone + '_ {
@@ -133,7 +153,7 @@ impl<'a> AstNodes<'a> {
 
     /// Walk up the AST, iterating over each parent [`AstKind`].
     ///
-    /// The first node produced by this iterator is the node pointed to by `node_id`.
+    /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
     pub fn ancestor_kinds(
@@ -145,7 +165,7 @@ impl<'a> AstNodes<'a> {
 
     /// Walk up the AST, iterating over each parent [`AstNode`].
     ///
-    /// The first node produced by this iterator is the node pointed to by `node_id`.
+    /// The first node produced by this iterator is the parent of `node_id`.
     /// The last node will always be [`AstKind::Program`].
     #[inline]
     pub fn ancestors(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
@@ -185,12 +205,15 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Get the [`Program`] that's also the root of the AST.
-    ///
-    /// Returns [`None`] if root node isn't set. This will never happen if you
-    /// are obtaining an [`AstNodes`] that has already been constructed.
     #[inline]
-    pub fn program(&self) -> Option<&'a Program<'a>> {
-        self.program
+    pub fn program(&self) -> &'a Program<'a> {
+        if let Some(node) = self.nodes.first()
+            && let AstKind::Program(program) = node.kind
+        {
+            return program;
+        }
+
+        unreachable!();
     }
 
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
@@ -199,6 +222,7 @@ impl<'a> AstNodes<'a> {
     /// [`Program`]: oxc_ast::ast::Program
     /// [`add_program_node`]: AstNodes::add_program_node
     #[inline]
+    #[cfg(feature = "cfg")]
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
@@ -210,6 +234,24 @@ impl<'a> AstNodes<'a> {
         let node_id = self.parent_ids.push(parent_node_id);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
         self.nodes.push(node);
+        self.node_kinds_set.set(kind.ty());
+        node_id
+    }
+
+    #[inline]
+    #[cfg(not(feature = "cfg"))]
+    pub fn add_node(
+        &mut self,
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        parent_node_id: NodeId,
+        _cfg_id: (),
+        flags: NodeFlags,
+    ) -> NodeId {
+        let node_id = self.parent_ids.push(parent_node_id);
+        let node = AstNode::new(kind, scope_id, (), flags, node_id);
+        self.nodes.push(node);
+        self.node_kinds_set.set(kind.ty());
         node_id
     }
 
@@ -217,7 +259,8 @@ impl<'a> AstNodes<'a> {
     ///
     /// # Panics
     ///
-    /// Panics if this is not the first node being added to the AST
+    /// Panics if this is not the first node being added to the AST.
+    #[cfg(feature = "cfg")]
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
@@ -226,20 +269,108 @@ impl<'a> AstNodes<'a> {
         flags: NodeFlags,
     ) -> NodeId {
         assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
-        let AstKind::Program(program) = kind else {
-            panic!("Program node must be of kind `AstKind::Program`.");
-        };
-        self.program = Some(program);
-        let node_id = self.parent_ids.push(NodeId::ROOT);
-        let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
-        self.nodes.push(node);
-        node_id
+        debug_assert!(
+            matches!(kind, AstKind::Program(_)),
+            "Program node must be of kind `AstKind::Program`"
+        );
+        self.parent_ids.push(NodeId::ROOT);
+        self.nodes.push(AstNode::new(kind, scope_id, cfg_id, flags, NodeId::ROOT));
+        self.node_kinds_set.set(AstType::Program);
+        NodeId::ROOT
+    }
+
+    #[cfg(not(feature = "cfg"))]
+    pub fn add_program_node(
+        &mut self,
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        _cfg_id: (),
+        flags: NodeFlags,
+    ) -> NodeId {
+        assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
+        debug_assert!(
+            matches!(kind, AstKind::Program(_)),
+            "Program node must be of kind `AstKind::Program`"
+        );
+        self.parent_ids.push(NodeId::ROOT);
+        self.nodes.push(AstNode::new(kind, scope_id, (), flags, NodeId::ROOT));
+        self.node_kinds_set.set(AstType::Program);
+        NodeId::ROOT
     }
 
     /// Reserve space for at least `additional` more nodes.
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
+    }
+
+    /// Checks if the AST contains any nodes of the given types.
+    ///
+    /// ## Example
+    /// ```
+    /// # fn get_nodes<'a>() -> AstNodes<'a> { AstNodes::default() }
+    ///
+    /// use oxc_ast::AstType;
+    /// use oxc_semantic::{AstNodes, AstTypesBitset};
+    ///
+    /// let for_stmt = AstTypesBitset::from_types(&[AstType::ForStatement]);
+    /// let import_export_decl = AstTypesBitset::from_types(&[
+    ///   AstType::ImportDeclaration,
+    ///   AstType::ExportNamedDeclaration,
+    /// ]);
+    ///
+    /// let nodes: AstNodes = get_nodes();
+    /// // `true` if there is a `for` loop anywhere in the AST
+    /// nodes.contains_any(&for_stmt);
+    /// // `true` if there is at least one import OR one export in the AST
+    /// nodes.contains_any(&import_export_decl);
+    /// ```
+    pub fn contains_any(&self, bitset: &AstTypesBitset) -> bool {
+        self.node_kinds_set.intersects(bitset)
+    }
+
+    /// Checks if the AST contains all of the given types.
+    ///
+    /// ## Example
+    /// ```
+    /// # fn get_nodes<'a>() -> AstNodes<'a> { AstNodes::default() }
+    ///
+    /// use oxc_ast::AstType;
+    /// use oxc_semantic::{AstNodes, AstTypesBitset};
+    ///
+    /// let for_stmt = AstTypesBitset::from_types(&[AstType::ForStatement]);
+    /// let import_export_decl = AstTypesBitset::from_types(&[
+    ///   AstType::ImportDeclaration,
+    ///   AstType::ExportNamedDeclaration,
+    /// ]);
+    ///
+    /// let nodes: AstNodes = get_nodes();
+    /// // `true` if there is a `for` loop anywhere in the AST
+    /// nodes.contains_all(&for_stmt);
+    /// // `true` if there is at least one import AND one export in the AST
+    /// nodes.contains_all(&import_export_decl);
+    /// ```
+    pub fn contains_all(&self, bitset: &AstTypesBitset) -> bool {
+        self.node_kinds_set.contains(bitset)
+    }
+
+    /// Checks if the AST contains a node of the given type.
+    ///
+    /// ## Example
+    /// ```
+    /// # fn get_nodes<'a>() -> AstNodes<'a> { AstNodes::default() }
+    ///
+    /// use oxc_ast::AstType;
+    /// use oxc_semantic::{AstNodes, AstTypesBitset};
+    ///
+    /// let nodes: AstNodes = get_nodes();
+    /// // `true` if there is a `for` loop anywhere in the AST
+    /// nodes.contains(AstType::ForStatement);
+    /// // `true` if there is an `ImportDeclaration` anywhere in the AST
+    /// nodes.contains(AstType::ImportDeclaration);
+    /// ```
+    pub fn contains(&self, ty: AstType) -> bool {
+        self.node_kinds_set.has(ty)
     }
 }
 
@@ -257,13 +388,13 @@ impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
 /// Yields `NodeId` of each AST node. The last node yielded is `Program`.
 #[derive(Debug, Clone)]
 pub struct AstNodeIdAncestorsIter<'n> {
-    next_node_id: Option<NodeId>,
+    current_node_id: NodeId,
     parent_ids: &'n IndexSlice<NodeId, [NodeId]>,
 }
 
 impl<'n> AstNodeIdAncestorsIter<'n> {
     fn new(node_id: NodeId, nodes: &'n AstNodes<'_>) -> Self {
-        Self { next_node_id: Some(node_id), parent_ids: nodes.parent_ids.as_slice() }
+        Self { current_node_id: node_id, parent_ids: nodes.parent_ids.as_slice() }
     }
 }
 
@@ -271,14 +402,13 @@ impl Iterator for AstNodeIdAncestorsIter<'_> {
     type Item = NodeId;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(node_id) = self.next_node_id {
+        if self.current_node_id == NodeId::ROOT {
             // `Program`'s parent is itself, so next node is `None` if this node is `Program`
-            self.next_node_id =
-                if node_id == NodeId::ROOT { None } else { Some(self.parent_ids[node_id]) };
-            Some(node_id)
-        } else {
-            None
+            return None;
         }
+
+        self.current_node_id = self.parent_ids[self.current_node_id];
+        Some(self.current_node_id)
     }
 }
 

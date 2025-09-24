@@ -30,9 +30,15 @@ enum TypeOptions {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers use of [`Math.min()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/min)
-    /// and [`Math.max()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max) instead of
-    /// ternary expressions when performing simple comparisons for more concise, easier to understand, and less prone to errors.
+    /// Prefers use of `Math.min()` and `Math.max()` instead of ternary
+    /// expressions when performing simple comparisons.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using `Math.min()` and `Math.max()` for simple comparisons is more
+    /// concise, easier to understand, and less prone to errors than ternary
+    /// expressions. They clearly express the intent to find the minimum or
+    /// maximum value.
     ///
     /// ### Examples
     ///

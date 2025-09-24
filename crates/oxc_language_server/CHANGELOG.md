@@ -4,6 +4,132 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- a21ff54 language_server: Introduce `ServerFormatter` (#13700) (Sysix)
+
+### 🐛 Bug Fixes
+
+- b8790c2 language_server: Output correct position for parser & semantic errors (#14010) (Sysix)
+
+### 🚜 Refactor
+
+- 0c93f33 language_server: Use minimal text edit for `ServerFormatter` (#13960) (Sysix)
+- 823cb57 langauge_server: Move `Backend` into own file (#13955) (Sysix)
+- dc700f5 language_server: Introduce `LSPFileSystem` (#13731) (Sysix)
+- 873e231 language_server: Move `needs_linter_restart` to `ServerLinter` (#13834) (Sysix)
+
+### 🧪 Testing
+
+- b807b6f language_server: Skip formatter test on windows (#13986) (Sysix)
+- 2600858 language_server: Add Tester for ServerFormatter (#13969) (Sysix)
+- 37aadf0 language_server: Add `test_and_snapshot_multiple_file` (#13966) (Sysix)
+
+
+## [1.16.0] - 2025-09-16
+
+### 🚜 Refactor
+
+- 137896a language_server: Split options for linting and formatting (#13627) (Sysix)
+
+
+## [1.15.0] - 2025-09-11
+
+### 🐛 Bug Fixes
+
+- fb9d0f4 language_server: Don't resend diagnostic on save, when `typeAware` is disabled and run is onType (#13604) (YongSeok Jang (장용석))
+- b677376 language_server: Include the diagnostic of the other linter (#13490) (Sysix)
+- 5990f17 linter: Change `typescript/no-confusing-void-expression` to pedantic (#13473) (Boshen)
+
+### 🚜 Refactor
+
+- 671e0fd language_server: Only store one instance of a diagnostic (#13514) (Sysix)
+
+
+## [1.14.0] - 2025-08-30
+
+### 🐛 Bug Fixes
+
+- 902b39b language_server: Split run logic for `oxlint` and `tsgolint` (#13332) (Sysix)
+- 2a910c5 language_server: Disable tsgolint test on big endian (#13313) (camc314)
+
+### 🚜 Refactor
+
+- 6431033 linter: Move ignore logic to `LintIgnoreMatcher` (#13222) (Sysix)
+
+### 🧪 Testing
+
+- 33e0e8b language_server: Dont run tsgolint related test on big-edian (#13342) (Sysix)
+
+
+## [1.13.0] - 2025-08-26
+
+### 🐛 Bug Fixes
+
+- 648e939 linter: Parse `ignorePatterns` with gitignore syntax (#13221) (Sysix)
+
+
+## [1.12.0] - 2025-08-17
+
+### 🚀 Features
+
+- aecacae linter: Support `ignorePatterns` for nested configs (#12210) (Sysix)
+
+### 🐛 Bug Fixes
+
+- b0558a4 linter: Prevent unsound use of `Allocator` across threads (#13032) (overlookmotel)
+
+### 🚜 Refactor
+
+- b638371 language_server: Do not check twice for supported extension (#13130) (Sysix)
+- 6c5b8be linter: Create `AllocatorPool` in `Runtime::new` (#13106) (overlookmotel)
+
+
+
+
+## [1.11.0] - 2025-08-07
+
+### 🚜 Refactor
+
+- 9b9249d oxc_language_server: Remove unnecessary globset (#12861) (shulaoda)
+
+
+## [1.10.0] - 2025-08-06
+
+### 🚀 Features
+
+- 5475075 vscode/language_server: Add `tsConfigPath` option (#12484) (Sysix)
+
+### 🚜 Refactor
+
+- c0e224a linter: Store `ExternalRuleId` in `OxlintOverrides` not raw names (#12502) (camc314)
+
+### 🎨 Styling
+
+- c15da81 codegen, formatter, linter, minifier, transformer: Re-order imports (#12725) (Copilot)
+
+
+
+
+## [1.7.0] - 2025-07-16
+
+### 🚀 Features
+
+- d387729 linter: JS custom rules config (#12160) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1920c6b language_server: Respect the root `.oxlintrc.json` file for `ignorePatterns` (#12171) (Sysix)
+- 853d2bc linter, language_server: Correctly identify usage of `import` plugin (#12157) (overlookmotel)
+
+### 🚜 Refactor
+
+- 6e54645 language_server: Store `LintService` instead of `Linter` (#12016) (Sysix)
+- 113cf8c linter: Move `LintServiceOptions.paths` to `LintService.with_paths` (#12015) (Sysix)
+
+
 ## [1.6.0] - 2025-07-07
 
 ### 🚀 Features

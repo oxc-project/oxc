@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    [
+      "styled-components",
+      {
+        "minify": true,
+        "ssr": false,
+        "displayName": false,
+        "transpileTemplateLiterals": false
+      }
+    ]
+  ]
+}

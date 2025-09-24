@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression, NewExpression},
@@ -210,19 +209,14 @@ fn is_unary_negation(node: &AstNode) -> bool {
 }
 
 fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&'a AstNode<'b>> {
-    for (_, parent) in
-        ctx.nodes().ancestors(node.id()).tuple_windows::<(&AstNode<'b>, &AstNode<'b>)>()
-    {
-        if let AstKind::Argument(_)
-        | AstKind::ParenthesizedExpression(_)
-        | AstKind::ChainExpression(_) = parent.kind()
-        {
-            continue;
-        }
-
-        return Some(parent);
-    }
-    None
+    ctx.nodes().ancestors(node.id()).find(|parent| {
+        !matches!(
+            parent.kind(),
+            AstKind::Argument(_)
+                | AstKind::ParenthesizedExpression(_)
+                | AstKind::ChainExpression(_)
+        )
+    })
 }
 
 /// Remove `!!` from `expr` if present.

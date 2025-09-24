@@ -1175,7 +1175,7 @@ export interface TSTypeReference extends Span {
   typeArguments: TSTypeParameterInstantiation | null;
 }
 
-export type TSTypeName = IdentifierReference | ThisExpression | TSQualifiedName;
+export type TSTypeName = IdentifierReference | TSQualifiedName | ThisExpression;
 
 export interface TSQualifiedName extends Span {
   type: 'TSQualifiedName';
@@ -1351,8 +1351,16 @@ export interface TSImportType extends Span {
   type: 'TSImportType';
   argument: TSType;
   options: ObjectExpression | null;
-  qualifier: TSTypeName | null;
+  qualifier: TSImportTypeQualifier | null;
   typeArguments: TSTypeParameterInstantiation | null;
+}
+
+export type TSImportTypeQualifier = IdentifierName | TSImportTypeQualifiedName;
+
+export interface TSImportTypeQualifiedName extends Span {
+  type: 'TSQualifiedName';
+  left: TSImportTypeQualifier;
+  right: IdentifierName;
 }
 
 export interface TSFunctionType extends Span {
@@ -1684,6 +1692,7 @@ export type Node =
   | TSInferType
   | TSTypeQuery
   | TSImportType
+  | TSImportTypeQualifiedName
   | TSFunctionType
   | TSConstructorType
   | TSMappedType

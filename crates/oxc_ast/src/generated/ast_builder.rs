@@ -364,7 +364,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build an [`Expression::ArrowFunctionExpression`] with `scope_id` and `pure`.
+    /// Build an [`Expression::ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains an [`ArrowFunctionExpression`] that will be stored in the memory arena.
     ///
@@ -378,8 +378,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn expression_arrow_function_with_scope_id_and_pure<T1, T2, T3, T4>(
+    pub fn expression_arrow_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -390,6 +391,7 @@ impl<'a> AstBuilder<'a> {
         body: T4,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -398,7 +400,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         Expression::ArrowFunctionExpression(
-            self.alloc_arrow_function_expression_with_scope_id_and_pure(
+            self.alloc_arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
                 expression,
                 r#async,
@@ -408,6 +410,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
         )
     }
@@ -723,7 +726,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build an [`Expression::FunctionExpression`] with `scope_id` and `pure`.
+    /// Build an [`Expression::FunctionExpression`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
@@ -741,8 +744,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn expression_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn expression_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -757,6 +761,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -765,7 +770,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
-        Expression::FunctionExpression(self.alloc_function_with_scope_id_and_pure(
+        Expression::FunctionExpression(self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
             id,
@@ -779,6 +784,7 @@ impl<'a> AstBuilder<'a> {
             body,
             scope_id,
             pure,
+            pife,
         ))
     }
 
@@ -2745,12 +2751,15 @@ impl<'a> AstBuilder<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn assignment_target_pattern_array_assignment_target(
+    pub fn assignment_target_pattern_array_assignment_target<T1>(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> AssignmentTargetPattern<'a> {
+        rest: T1,
+    ) -> AssignmentTargetPattern<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         AssignmentTargetPattern::ArrayAssignmentTarget(
             self.alloc_array_assignment_target(span, elements, rest),
         )
@@ -2765,12 +2774,15 @@ impl<'a> AstBuilder<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn assignment_target_pattern_object_assignment_target(
+    pub fn assignment_target_pattern_object_assignment_target<T1>(
         self,
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> AssignmentTargetPattern<'a> {
+        rest: T1,
+    ) -> AssignmentTargetPattern<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         AssignmentTargetPattern::ObjectAssignmentTarget(
             self.alloc_object_assignment_target(span, properties, rest),
         )
@@ -2786,13 +2798,16 @@ impl<'a> AstBuilder<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn array_assignment_target(
+    pub fn array_assignment_target<T1>(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> ArrayAssignmentTarget<'a> {
-        ArrayAssignmentTarget { span, elements, rest }
+        rest: T1,
+    ) -> ArrayAssignmentTarget<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
+        ArrayAssignmentTarget { span, elements, rest: rest.into_in(self.allocator) }
     }
 
     /// Build an [`ArrayAssignmentTarget`], and store it in the memory arena.
@@ -2805,12 +2820,15 @@ impl<'a> AstBuilder<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn alloc_array_assignment_target(
+    pub fn alloc_array_assignment_target<T1>(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> Box<'a, ArrayAssignmentTarget<'a>> {
+        rest: T1,
+    ) -> Box<'a, ArrayAssignmentTarget<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         Box::new_in(self.array_assignment_target(span, elements, rest), self.allocator)
     }
 
@@ -2824,13 +2842,16 @@ impl<'a> AstBuilder<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn object_assignment_target(
+    pub fn object_assignment_target<T1>(
         self,
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> ObjectAssignmentTarget<'a> {
-        ObjectAssignmentTarget { span, properties, rest }
+        rest: T1,
+    ) -> ObjectAssignmentTarget<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
+        ObjectAssignmentTarget { span, properties, rest: rest.into_in(self.allocator) }
     }
 
     /// Build an [`ObjectAssignmentTarget`], and store it in the memory arena.
@@ -2843,16 +2864,22 @@ impl<'a> AstBuilder<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn alloc_object_assignment_target(
+    pub fn alloc_object_assignment_target<T1>(
         self,
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
-        rest: Option<AssignmentTargetRest<'a>>,
-    ) -> Box<'a, ObjectAssignmentTarget<'a>> {
+        rest: T1,
+    ) -> Box<'a, ObjectAssignmentTarget<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AssignmentTargetRest<'a>>>>,
+    {
         Box::new_in(self.object_assignment_target(span, properties, rest), self.allocator)
     }
 
     /// Build an [`AssignmentTargetRest`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_assignment_target_rest`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -2864,6 +2891,23 @@ impl<'a> AstBuilder<'a> {
         target: AssignmentTarget<'a>,
     ) -> AssignmentTargetRest<'a> {
         AssignmentTargetRest { span, target }
+    }
+
+    /// Build an [`AssignmentTargetRest`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::assignment_target_rest`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `target`
+    #[inline]
+    pub fn alloc_assignment_target_rest(
+        self,
+        span: Span,
+        target: AssignmentTarget<'a>,
+    ) -> Box<'a, AssignmentTargetRest<'a>> {
+        Box::new_in(self.assignment_target_rest(span, target), self.allocator)
     }
 
     /// Build an [`AssignmentTargetMaybeDefault::AssignmentTargetWithDefault`].
@@ -3876,7 +3920,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build a [`Declaration::FunctionDeclaration`] with `scope_id` and `pure`.
+    /// Build a [`Declaration::FunctionDeclaration`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
@@ -3894,8 +3938,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn declaration_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn declaration_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -3910,6 +3955,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Declaration<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -3918,7 +3964,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
-        Declaration::FunctionDeclaration(self.alloc_function_with_scope_id_and_pure(
+        Declaration::FunctionDeclaration(self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
             id,
@@ -3932,6 +3978,7 @@ impl<'a> AstBuilder<'a> {
             body,
             scope_id,
             pure,
+            pife,
         ))
     }
 
@@ -5736,6 +5783,7 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
             pure: Default::default(),
+            pife: Default::default(),
         }
     }
 
@@ -5796,10 +5844,10 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Function`] with `scope_id` and `pure`.
+    /// Build a [`Function`] with `scope_id` and `pure` and `pife`.
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_function_with_scope_id_and_pure`] instead.
+    /// use [`AstBuilder::alloc_function_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5815,8 +5863,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5831,6 +5880,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Function<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5853,13 +5903,14 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
             pure,
+            pife,
         }
     }
 
-    /// Build a [`Function`] with `scope_id` and `pure`, and store it in the memory arena.
+    /// Build a [`Function`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id_and_pure`] instead.
+    /// If you want a stack-allocated node, use [`AstBuilder::function_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -5875,8 +5926,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn alloc_function_with_scope_id_and_pure<T1, T2, T3, T4, T5>(
+    pub fn alloc_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4, T5>(
         self,
         span: Span,
         r#type: FunctionType,
@@ -5891,6 +5943,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Box<'a, Function<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -5900,7 +5953,7 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Box::new_in(
-            self.function_with_scope_id_and_pure(
+            self.function_with_scope_id_and_pure_and_pife(
                 span,
                 r#type,
                 id,
@@ -5914,6 +5967,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
             self.allocator,
         )
@@ -6067,6 +6121,7 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Default::default(),
             pure: Default::default(),
+            pife: Default::default(),
         }
     }
 
@@ -6114,10 +6169,10 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`.
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_arrow_function_expression_with_scope_id_and_pure`] instead.
+    /// use [`AstBuilder::alloc_arrow_function_expression_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -6129,8 +6184,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
+    pub fn arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -6141,6 +6197,7 @@ impl<'a> AstBuilder<'a> {
         body: T4,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> ArrowFunctionExpression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -6158,13 +6215,14 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator),
             scope_id: Cell::new(Some(scope_id)),
             pure,
+            pife,
         }
     }
 
-    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure`, and store it in the memory arena.
+    /// Build an [`ArrowFunctionExpression`] with `scope_id` and `pure` and `pife`, and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id_and_pure`] instead.
+    /// If you want a stack-allocated node, use [`AstBuilder::arrow_function_expression_with_scope_id_and_pure_and_pife`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -6176,8 +6234,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn alloc_arrow_function_expression_with_scope_id_and_pure<T1, T2, T3, T4>(
+    pub fn alloc_arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
         expression: bool,
@@ -6188,6 +6247,7 @@ impl<'a> AstBuilder<'a> {
         body: T4,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> Box<'a, ArrowFunctionExpression<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -6196,7 +6256,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         Box::new_in(
-            self.arrow_function_expression_with_scope_id_and_pure(
+            self.arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
                 expression,
                 r#async,
@@ -6206,6 +6266,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
             self.allocator,
         )
@@ -7120,20 +7181,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
     /// * `declaration`
     #[inline]
     pub fn module_declaration_export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ModuleDeclaration<'a> {
-        ModuleDeclaration::ExportDefaultDeclaration(self.alloc_export_default_declaration(
-            span,
-            exported,
-            declaration,
-        ))
+        ModuleDeclaration::ExportDefaultDeclaration(
+            self.alloc_export_default_declaration(span, declaration),
+        )
     }
 
     /// Build a [`ModuleDeclaration::ExportNamedDeclaration`].
@@ -7421,9 +7478,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn import_declaration_specifier_import_specifier(
         self,
@@ -7483,9 +7540,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn import_specifier(
         self,
@@ -7504,9 +7561,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `imported`
-    /// * `local`: The name of the imported symbol.
-    /// * `import_kind`
+    /// * `imported`: Imported symbol.
+    /// * `local`: Binding for local symbol.
+    /// * `import_kind`: Value or type.
     #[inline]
     pub fn alloc_import_specifier(
         self,
@@ -7593,16 +7650,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
+    /// * `keyword`
     /// * `with_entries`
     #[inline]
     pub fn with_clause(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        keyword: WithClauseKeyword,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
-        WithClause { span, attributes_keyword, with_entries }
+        WithClause { span, keyword, with_entries }
     }
 
     /// Build a [`WithClause`], and store it in the memory arena.
@@ -7612,16 +7669,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `attributes_keyword`
+    /// * `keyword`
     /// * `with_entries`
     #[inline]
     pub fn alloc_with_clause(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        keyword: WithClauseKeyword,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> Box<'a, WithClause<'a>> {
-        Box::new_in(self.with_clause(span, attributes_keyword, with_entries), self.allocator)
+        Box::new_in(self.with_clause(span, keyword, with_entries), self.allocator)
     }
 
     /// Build an [`ImportAttribute`].
@@ -7778,16 +7835,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
     /// * `declaration`
     #[inline]
     pub fn export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration { span, exported, declaration }
+        ExportDefaultDeclaration { span, declaration }
     }
 
     /// Build an [`ExportDefaultDeclaration`], and store it in the memory arena.
@@ -7797,16 +7852,14 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `exported`
     /// * `declaration`
     #[inline]
     pub fn alloc_export_default_declaration(
         self,
         span: Span,
-        exported: ModuleExportName<'a>,
         declaration: ExportDefaultDeclarationKind<'a>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        Box::new_in(self.export_default_declaration(span, exported, declaration), self.allocator)
+        Box::new_in(self.export_default_declaration(span, declaration), self.allocator)
     }
 
     /// Build an [`ExportAllDeclaration`].
@@ -7941,7 +7994,7 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
-    /// Build an [`ExportDefaultDeclarationKind::FunctionDeclaration`] with `scope_id` and `pure`.
+    /// Build an [`ExportDefaultDeclarationKind::FunctionDeclaration`] with `scope_id` and `pure` and `pife`.
     ///
     /// This node contains a [`Function`] that will be stored in the memory arena.
     ///
@@ -7959,8 +8012,9 @@ impl<'a> AstBuilder<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
+    /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn export_default_declaration_kind_function_declaration_with_scope_id_and_pure<
+    pub fn export_default_declaration_kind_function_declaration_with_scope_id_and_pure_and_pife<
         T1,
         T2,
         T3,
@@ -7981,6 +8035,7 @@ impl<'a> AstBuilder<'a> {
         body: T5,
         scope_id: ScopeId,
         pure: bool,
+        pife: bool,
     ) -> ExportDefaultDeclarationKind<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
@@ -7990,7 +8045,7 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         ExportDefaultDeclarationKind::FunctionDeclaration(
-            self.alloc_function_with_scope_id_and_pure(
+            self.alloc_function_with_scope_id_and_pure_and_pife(
                 span,
                 r#type,
                 id,
@@ -8004,6 +8059,7 @@ impl<'a> AstBuilder<'a> {
                 body,
                 scope_id,
                 pure,
+                pife,
             ),
         )
     }
@@ -10422,7 +10478,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> TSType<'a>
     where
@@ -11746,6 +11802,17 @@ impl<'a> AstBuilder<'a> {
         right: IdentifierName<'a>,
     ) -> TSTypeName<'a> {
         TSTypeName::QualifiedName(self.alloc_ts_qualified_name(span, left, right))
+    }
+
+    /// Build a [`TSTypeName::ThisExpression`].
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    #[inline]
+    pub fn ts_type_name_this_expression(self, span: Span) -> TSTypeName<'a> {
+        TSTypeName::ThisExpression(self.alloc_this_expression(span))
     }
 
     /// Build a [`TSQualifiedName`].
@@ -13590,7 +13657,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> TSTypeQueryExprName<'a>
     where
@@ -13623,7 +13690,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> TSImportType<'a>
     where
@@ -13656,7 +13723,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: TSType<'a>,
         options: T1,
-        qualifier: Option<TSTypeName<'a>>,
+        qualifier: Option<TSImportTypeQualifier<'a>>,
         type_arguments: T2,
     ) -> Box<'a, TSImportType<'a>>
     where
@@ -13667,6 +13734,83 @@ impl<'a> AstBuilder<'a> {
             self.ts_import_type(span, argument, options, qualifier, type_arguments),
             self.allocator,
         )
+    }
+
+    /// Build a [`TSImportTypeQualifier::Identifier`].
+    ///
+    /// This node contains an [`IdentifierName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[inline]
+    pub fn ts_import_type_qualifier_identifier<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> TSImportTypeQualifier<'a>
+    where
+        A1: Into<Atom<'a>>,
+    {
+        TSImportTypeQualifier::Identifier(self.alloc_identifier_name(span, name))
+    }
+
+    /// Build a [`TSImportTypeQualifier::QualifiedName`].
+    ///
+    /// This node contains a [`TSImportTypeQualifiedName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn ts_import_type_qualifier_qualified_name(
+        self,
+        span: Span,
+        left: TSImportTypeQualifier<'a>,
+        right: IdentifierName<'a>,
+    ) -> TSImportTypeQualifier<'a> {
+        TSImportTypeQualifier::QualifiedName(
+            self.alloc_ts_import_type_qualified_name(span, left, right),
+        )
+    }
+
+    /// Build a [`TSImportTypeQualifiedName`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ts_import_type_qualified_name`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn ts_import_type_qualified_name(
+        self,
+        span: Span,
+        left: TSImportTypeQualifier<'a>,
+        right: IdentifierName<'a>,
+    ) -> TSImportTypeQualifiedName<'a> {
+        TSImportTypeQualifiedName { span, left, right }
+    }
+
+    /// Build a [`TSImportTypeQualifiedName`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ts_import_type_qualified_name`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn alloc_ts_import_type_qualified_name(
+        self,
+        span: Span,
+        left: TSImportTypeQualifier<'a>,
+        right: IdentifierName<'a>,
+    ) -> Box<'a, TSImportTypeQualifiedName<'a>> {
+        Box::new_in(self.ts_import_type_qualified_name(span, left, right), self.allocator)
     }
 
     /// Build a [`TSFunctionType`].

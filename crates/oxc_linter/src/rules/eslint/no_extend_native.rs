@@ -143,11 +143,11 @@ fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
-        if let AstKind::CallExpression(call_expr) = parent.kind() {
-            if is_define_property_call(call_expr) {
-                return Some(parent);
-            }
+    for parent in ctx.nodes().ancestors(node.id()) {
+        if let AstKind::CallExpression(call_expr) = parent.kind()
+            && is_define_property_call(call_expr)
+        {
+            return Some(parent);
         }
     }
     None
@@ -180,7 +180,7 @@ fn get_property_assignment<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    for parent in ctx.nodes().ancestors(node.id()).skip(1) {
+    for parent in ctx.nodes().ancestors(node.id()) {
         match parent.kind() {
             AstKind::AssignmentExpression(assignment_expr)
                 if assignment_expr.left.span().contains_inclusive(node.span()) =>
@@ -196,9 +196,7 @@ fn get_property_assignment<'a>(
             }
             AstKind::ComputedMemberExpression(computed_expr)
                 if computed_expr.object.span().contains_inclusive(node.span()) => {}
-            AstKind::StaticMemberExpression(_)
-            | AstKind::SimpleAssignmentTarget(_)
-            | AstKind::AssignmentTarget(_) => {}
+            AstKind::StaticMemberExpression(_) | AstKind::PrivateFieldExpression(_) => {}
             _ => return None,
         }
     }

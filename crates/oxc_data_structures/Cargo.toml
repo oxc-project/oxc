@@ -1,6 +1,6 @@
 [package]
 name = "oxc_data_structures"
-version = "0.76.0"
+version = "0.92.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -23,14 +23,14 @@ doctest = true
 
 [dependencies]
 ropey = { workspace = true, optional = true }
-rustversion = { workspace = true, optional = true }
 
 [features]
 default = []
-all = ["assert_unchecked", "code_buffer", "inline_string", "pointer_ext", "rope", "stack"]
+all = ["assert_unchecked", "box_macros", "code_buffer", "inline_string", "rope", "slice_iter", "stack"]
 assert_unchecked = []
+box_macros = []
 code_buffer = ["assert_unchecked"]
 inline_string = ["assert_unchecked"]
-pointer_ext = ["dep:rustversion"]
 rope = ["dep:ropey"]
-stack = ["pointer_ext"]
+slice_iter = ["assert_unchecked"]
+stack = []

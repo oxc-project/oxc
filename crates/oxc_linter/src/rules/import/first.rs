@@ -110,7 +110,7 @@ impl Rule for First {
         let mut non_import_count = 0;
         let mut any_relative = false;
 
-        let program = ctx.nodes().program().unwrap();
+        let program = ctx.nodes().program();
 
         for statement in &program.body {
             match statement {
@@ -128,7 +128,8 @@ impl Rule for First {
                         }
                     }
                     TSModuleReference::IdentifierReference(_)
-                    | TSModuleReference::QualifiedName(_) => {}
+                    | TSModuleReference::QualifiedName(_)
+                    | TSModuleReference::ThisExpression(_) => {}
                 },
                 Statement::ImportDeclaration(decl) => {
                     if matches!(self.absolute_first, AbsoluteFirst::AbsoluteFirst) {
@@ -177,7 +178,7 @@ fn test() {
         ),
         // covers TSImportEqualsDeclaration (original rule support it, but with no test cases)
         (
-            r"import { x } from './foo'; 
+            r"import { x } from './foo';
             import F3 = require('mod');
             export { x, y }",
             None,

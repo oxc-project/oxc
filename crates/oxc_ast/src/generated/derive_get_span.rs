@@ -1817,6 +1817,7 @@ impl GetSpan for TSTypeName<'_> {
         match self {
             Self::IdentifierReference(it) => GetSpan::span(&**it),
             Self::QualifiedName(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -2013,11 +2014,28 @@ impl GetSpan for TSTypeQueryExprName<'_> {
             Self::TSImportType(it) => GetSpan::span(&**it),
             Self::IdentifierReference(it) => GetSpan::span(&**it),
             Self::QualifiedName(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
         }
     }
 }
 
 impl GetSpan for TSImportType<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for TSImportTypeQualifier<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::QualifiedName(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
+impl GetSpan for TSImportTypeQualifiedName<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -2086,6 +2104,7 @@ impl GetSpan for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => GetSpan::span(&**it),
             Self::IdentifierReference(it) => GetSpan::span(&**it),
             Self::QualifiedName(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
         }
     }
 }

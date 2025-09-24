@@ -13,7 +13,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = &mut ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator, options).dead_code_elimination(program);
+        Compressor::new(&allocator).dead_code_elimination(program, options);
     }
     Codegen::new().build(program).code
 }
@@ -26,7 +26,7 @@ fn test(source_text: &str, expected: &str) {
     let source_text = source_text.cow_replace("false", f);
 
     let source_type = SourceType::default();
-    let result = run(&source_text, source_type, Some(CompressOptions::default()));
+    let result = run(&source_text, source_type, Some(CompressOptions::dce()));
     let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
@@ -62,8 +62,8 @@ fn dce_if_statement() {
         "if (xxx) foo; else bar",
     );
     test(
-        "if (xxx) { foo } else if (false) { var a; var b; } else if (false) { var c; var d; }",
-        "if (xxx) foo; else if (0) var a, b; else if (0) var c, d;",
+        "if (xxx) { foo } else if (false) { var a; var b; } else if (false) { var c; var d; } f(a,b,c,d)",
+        "if (xxx) foo; else if (0) var a, b; else if (0) var c, d; f(a,b,c,d)",
     );
 
     test("if (!false) { foo }", "foo");
@@ -86,18 +86,18 @@ fn dce_if_statement() {
     // Shadowed `undefined` as a variable should not be erased.
     // This is a rollup test.
     // <https://github.com/rollup/rollup/blob/master/test/function/samples/allow-undefined-as-parameter/main.js>
-    test_same("function foo(undefined) { if (!undefined) throw Error('') }");
+    test_same("function foo(undefined) { if (!undefined) throw Error('') } foo()");
 
-    test("function foo() { if (undefined) { bar } }", "function foo() { }");
-    test("function foo() { { bar } }", "function foo() { bar }");
+    test("function foo() { if (undefined) { bar } } foo()", "function foo() { } foo()");
+    test("function foo() { { bar } } foo()", "function foo() { bar } foo()");
 
     test("if (true) { foo; } if (true) { foo; }", "foo; foo;");
-    test("if (true) { foo; return } foo; if (true) { bar; return } bar;", "{ foo; return }");
+    test("if (true) { foo; return } foo; if (true) { bar; return } bar;", "foo; return");
 
     // nested expression
     test(
-        "const a = { fn: function() { if (true) { foo; } } }",
-        "const a = { fn: function() { foo; } }",
+        "const a = { fn: function() { if (true) { foo; } } } bar(a)",
+        "const a = { fn: function() { foo; } } bar(a)",
     );
 
     // parenthesized
@@ -107,6 +107,18 @@ fn dce_if_statement() {
     test("if (typeof 1 !== 'number') { REMOVE; }", "");
     test("if (typeof false !== 'boolean') { REMOVE; }", "");
     test("if (typeof 1 === 'string') { REMOVE; }", "");
+
+    // Complicated
+    test(
+        "if (unknown)
+            for (var x = 1; x-- > 0; )
+                if (foo++, false) foo++;
+                else 'Side effect free code to be dropped';
+            else throw new Error();",
+        "if (unknown) {
+            for (var x = 1; x-- > 0;) if (foo++, false);
+           } else throw new Error();",
+    );
 }
 
 #[test]
@@ -126,8 +138,8 @@ fn dce_conditional_expression() {
     test("!!false ? foo : bar;", "bar");
     test("!!true ? foo : bar;", "foo");
 
-    test("const foo = true ? A : B", "const foo = A");
-    test("const foo = false ? A : B", "const foo = B");
+    test("const foo = true ? A : B", "A");
+    test("const foo = false ? A : B", "B");
 }
 
 #[test]
@@ -135,52 +147,63 @@ fn dce_logical_expression() {
     test("false && bar()", "");
     test("true && bar()", "bar()");
 
-    test("const foo = false && bar()", "const foo = false");
-    test("const foo = true && bar()", "const foo = bar()");
+    test("var foo = false && bar(); baz(foo)", "baz(false)");
+    test("var foo = true && bar(); baz(foo)", "var foo = bar(); baz(foo)");
+
+    test("foo = false && bar()", "foo = false");
+    test("foo = true && bar()", "foo = bar()");
+
+    test(
+        "const x = 'keep'; const y = 'remove'; foo(x || y), foo(y && x)",
+        "const x = 'keep'; foo(x), foo(x);",
+    );
 }
 
 #[test]
 fn dce_var_hoisting() {
     test(
         "function f() {
+          KEEP();
           return () => {
             var x;
           }
           REMOVE;
-          function KEEP() {}
+          function KEEP() { FOO }
           REMOVE;
-        }",
+        } f()",
         "function f() {
-          return () => {
-            var x;
-          }
-          function KEEP() {}
-        }",
+          KEEP();
+          return () => { }
+          function KEEP() { FOO }
+        } f()",
     );
     test(
         "function f() {
+          KEEP();
           return function g() {
             var x;
           }
           REMOVE;
           function KEEP() {}
           REMOVE;
-        }",
+        } f()",
         "function f() {
-          return function g() {
-            var x;
-          }
+          KEEP();
+          return function g() {}
           function KEEP() {}
-        }",
+        } f()",
     );
 }
 
 #[test]
 fn pure_comment_for_pure_global_constructors() {
-    test("var x = new WeakSet", "var x = /* @__PURE__ */ new WeakSet();\n");
-    test("var x = new WeakSet(null)", "var x = /* @__PURE__ */ new WeakSet(null);\n");
-    test("var x = new WeakSet(undefined)", "var x = /* @__PURE__ */ new WeakSet(void 0);\n");
-    test("var x = new WeakSet([])", "var x = /* @__PURE__ */ new WeakSet([]);\n");
+    test("var x = new WeakSet; foo(x)", "var x = /* @__PURE__ */ new WeakSet();\nfoo(x)");
+    test("var x = new WeakSet(null); foo(x)", "var x = /* @__PURE__ */ new WeakSet(null);\nfoo(x)");
+    test(
+        "var x = new WeakSet(undefined); foo(x)",
+        "var x = /* @__PURE__ */ new WeakSet(void 0);\nfoo(x)",
+    );
+    test("var x = new WeakSet([]); foo(x)", "var x = /* @__PURE__ */ new WeakSet([]);\nfoo(x)");
 }
 
 #[test]
@@ -201,16 +224,14 @@ fn dce_from_terser() {
             if (x) {
                 y();
             }
-        }",
+        } f()",
         "function f() {
             a();
             b();
             x = 10;
-            return;
-        }",
+        } f()",
     );
 
-    // NOTE: `if (x)` is changed to `if (true)` because const inlining is not implemented yet.
     test(
         r#"function f() {
             g();
@@ -247,9 +268,81 @@ fn dce_from_terser() {
         }
         console.log(foo, bar, Baz);
         ",
+        "console.log(foo, bar, Baz);",
+    );
+}
+
+#[test]
+fn dce_iterations() {
+    test(
         "
-        if (0) var qux;
-        console.log(foo, bar, Baz);
+var a1 = 'a1'
+var a2 = 'a2'
+var a3 = 'a3'
+var a4 = 'a4'
+var a5 = 'a5'
+var a6 = 'a6'
+var a7 = 'a7'
+var a8 = 'a8'
+var a9 = 'a9'
+var a10 = 'a10'
+var a11 = 'a11'
+var a12 = 'a12'
+var a13 = 'a13'
+var a14 = 'a14'
+var a15 = 'a15'
+var a16 = 'a16'
+var a17 = 'a17'
+var a18 = 'a18'
+var a19 = 'a19'
+var a20 = 'a20'
+var arr = [
+  a1,
+  a2,
+  a3,
+  a4,
+  a5,
+  a6,
+  a7,
+  a8,
+  a9,
+  a10,
+  a11,
+  a12,
+  a13,
+  a14,
+  a15,
+  a16,
+  a17,
+  a18,
+  a19,
+  a20
+]
+console.log(arr)
+        ",
+        "
+console.log([
+  'a1',
+  'a2',
+  'a3',
+  'a4',
+  'a5',
+  'a6',
+  'a7',
+  'a8',
+  'a9',
+  'a10',
+  'a11',
+  'a12',
+  'a13',
+  'a14',
+  'a15',
+  'a16',
+  'a17',
+  'a18',
+  'a19',
+  'a20'
+])
         ",
     );
 }

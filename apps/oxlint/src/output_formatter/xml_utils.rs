@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 
 /// <https://github.com/tafia/quick-xml/blob/6e34a730853fe295d68dc28460153f08a5a12955/src/escapei.rs#L84-L86>
-pub fn xml_escape(raw: &str) -> Cow<str> {
+pub fn xml_escape(raw: &str) -> Cow<'_, str> {
     xml_escape_impl(raw, |ch| matches!(ch, b'<' | b'>' | b'&' | b'\'' | b'\"'))
 }
 
-fn xml_escape_impl<F: Fn(u8) -> bool>(raw: &str, escape_chars: F) -> Cow<str> {
+fn xml_escape_impl<F: Fn(u8) -> bool>(raw: &str, escape_chars: F) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     let mut escaped = None;
     let mut iter = bytes.iter();

@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
+use oxc_data_structures::code_buffer::{DEFAULT_INDENT_WIDTH, IndentChar};
+
 /// Codegen Options.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
     ///
@@ -17,7 +19,7 @@ pub struct CodegenOptions {
     ///
     /// At present, only some leading comments are preserved.
     ///
-    /// Default is [CodegenOptions::default].
+    /// Default is [CommentOptions::default].
     pub comments: CommentOptions,
 
     /// Enable sourcemap.
@@ -26,6 +28,35 @@ pub struct CodegenOptions {
     ///
     /// Default is `None` - no sourcemap is produced.
     pub source_map_path: Option<PathBuf>,
+
+    /// Indentation character.
+    ///
+    /// Default is [`IndentChar::Tab`].
+    pub indent_char: IndentChar,
+
+    /// Number of characters per indentation level.
+    ///
+    /// Default is `1`.
+    pub indent_width: usize,
+
+    /// Initial indentation level for generated code.
+    ///
+    /// Default is `0`.
+    pub initial_indent: u32,
+}
+
+impl Default for CodegenOptions {
+    fn default() -> Self {
+        Self {
+            single_quote: false,
+            minify: false,
+            comments: CommentOptions::default(),
+            source_map_path: None,
+            indent_char: IndentChar::default(),
+            indent_width: DEFAULT_INDENT_WIDTH,
+            initial_indent: 0,
+        }
+    }
 }
 
 impl CodegenOptions {
@@ -36,6 +67,9 @@ impl CodegenOptions {
             minify: true,
             comments: CommentOptions::disabled(),
             source_map_path: None,
+            indent_char: IndentChar::default(),
+            indent_width: DEFAULT_INDENT_WIDTH,
+            initial_indent: 0,
         }
     }
 
@@ -92,7 +126,7 @@ pub struct CommentOptions {
     /// * starts with `//!` or `/*!`.
     /// * contains `/* @license */` or `/* @preserve */`
     ///
-    /// Default is [LegalComment::Inline].
+    /// Default is [`LegalComment::Inline`].
     pub legal: LegalComment,
 }
 

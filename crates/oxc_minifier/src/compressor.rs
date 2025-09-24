@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_semantic::{Scoping, SemanticBuilder};
@@ -7,50 +5,58 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     CompressOptions,
-    ctx::MinifierState,
-    peephole::{
-        DeadCodeElimination, LatePeepholeOptimizations, Normalize, NormalizeOptions,
-        PeepholeOptimizations,
-    },
+    peephole::{DeadCodeElimination, Normalize, NormalizeOptions, PeepholeOptimizations},
+    state::MinifierState,
 };
 
 pub struct Compressor<'a> {
     allocator: &'a Allocator,
-    options: Rc<CompressOptions>,
 }
 
 impl<'a> Compressor<'a> {
-    pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { allocator, options: Rc::new(options) }
+    pub fn new(allocator: &'a Allocator) -> Self {
+        Self { allocator }
     }
 
-    pub fn build(self, program: &mut Program<'a>) {
+    pub fn build(self, program: &mut Program<'a>, options: CompressOptions) {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
-        self.build_with_scoping(scoping, program);
+        self.build_with_scoping(program, scoping, options);
     }
 
-    pub fn build_with_scoping(self, scoping: Scoping, program: &mut Program<'a>) {
-        let state = MinifierState::new(Rc::clone(&self.options));
+    /// Returns total number of iterations ran.
+    pub fn build_with_scoping(
+        self,
+        program: &mut Program<'a>,
+        scoping: Scoping,
+        options: CompressOptions,
+    ) -> u8 {
+        let max_iterations = options.max_iterations;
+        let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
             NormalizeOptions { convert_while_to_fors: true, convert_const_to_let: true };
         Normalize::new(normalize_options).build(program, &mut ctx);
-        PeepholeOptimizations::new(self.options.target, self.options.keep_names)
-            .run_in_loop(program, &mut ctx);
-        LatePeepholeOptimizations::new(self.options.target).build(program, &mut ctx);
+        PeepholeOptimizations::new(max_iterations).run_in_loop(program, &mut ctx)
     }
 
-    pub fn dead_code_elimination(self, program: &mut Program<'a>) {
+    pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
-        self.dead_code_elimination_with_scoping(scoping, program);
+        self.dead_code_elimination_with_scoping(program, scoping, options)
     }
 
-    pub fn dead_code_elimination_with_scoping(self, scoping: Scoping, program: &mut Program<'a>) {
-        let state = MinifierState::new(Rc::clone(&self.options));
+    /// Returns total number of iterations ran.
+    pub fn dead_code_elimination_with_scoping(
+        self,
+        program: &mut Program<'a>,
+        scoping: Scoping,
+        options: CompressOptions,
+    ) -> u8 {
+        let max_iterations = options.max_iterations;
+        let state = MinifierState::new(program.source_type, options);
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options =
             NormalizeOptions { convert_while_to_fors: false, convert_const_to_let: false };
         Normalize::new(normalize_options).build(program, &mut ctx);
-        DeadCodeElimination::new().build(program, &mut ctx);
+        DeadCodeElimination::new(max_iterations).run_in_loop(program, &mut ctx)
     }
 }

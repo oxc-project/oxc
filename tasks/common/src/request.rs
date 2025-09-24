@@ -3,14 +3,14 @@ use std::time::Duration;
 use ureq::{Agent, Proxy};
 
 /// detect proxy from environment variable in following order:
-/// ALL_PROXY | all_proxy | HTTPS_PROXY | https_proxy | HTTP_PROXY | http_proxy
+/// HTTPS_PROXY | https_proxy | HTTP_PROXY | http_proxy | ALL_PROXY | all_proxy
 fn detect_proxy() -> Option<Proxy> {
     for env in ["HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy", "ALL_PROXY", "all_proxy"]
     {
-        if let Ok(env) = std::env::var(env) {
-            if let Ok(proxy) = Proxy::new(&env) {
-                return Some(proxy);
-            }
+        if let Ok(env) = std::env::var(env)
+            && let Ok(proxy) = Proxy::new(&env)
+        {
+            return Some(proxy);
         }
     }
     None

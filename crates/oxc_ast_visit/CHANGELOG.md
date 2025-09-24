@@ -4,6 +4,111 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+
+
+
+
+
+
+
+
+## [0.83.0] - 2025-08-29
+
+### 🚀 Features
+
+- bb10c88 ast_visit: Add `Utf8ToUtf16Converter::convert_program` method (#13341) (overlookmotel)
+- 59d2c08 ast_visit: `Utf8ToUtf16` translate back from UTF-16 to UTF-8 (#13340) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 1cdc420 ast_visit: Correct and expand comments in `Utf8ToUtf16Converter` (#13310) (overlookmotel)
+
+### 🚜 Refactor
+
+- cd5a9ca ast_visit: `Utf8ToUtf16` record end offset of multi-byte chars (#13339) (overlookmotel)
+
+
+
+
+
+## [0.82.0] - 2025-08-12
+
+### 💥 BREAKING CHANGES
+
+- 128b527 data_structures: [**BREAKING**] Remove `PointerExt` trait (#12903) (overlookmotel)
+
+### 🚜 Refactor
+
+- c072e01 all: Add missing lifetimes in function return types (#12895) (overlookmotel)
+
+
+## [0.81.0] - 2025-08-06
+
+### 💥 BREAKING CHANGES
+
+- 2cc1001 ast: [**BREAKING**] Remove `ExportDefaultDeclaration` `exported` field (#12808) (overlookmotel)
+- 50b91ac ast: [**BREAKING**] Remove `IdentifierReference` from `qualifier` field of `TSImportType` (#12799) (camc314)
+
+
+## [0.80.0] - 2025-08-03
+
+### 💥 BREAKING CHANGES
+
+- cd93174 ast: [**BREAKING**] Introduce `WithClauseKeyword` (#12741) (overlookmotel)
+
+### 📚 Documentation
+
+- de1de35 rust: Add comprehensive README.md documentation for all Rust crates (#12706) (Copilot)
+
+
+
+## [0.79.0] - 2025-07-30
+
+### 🚜 Refactor
+
+- a696227 linter: Remove AstKind for SimpleAssignmentTarget (#12401) (Tyler Earls)
+
+
+
+
+
+## [0.77.1] - 2025-07-16
+
+### 🚀 Features
+
+- 9b14fbc ast: Add `ThisExpression` to `TSTypeName` (#12156) (Boshen)
+
+### 🚜 Refactor
+
+- ee761de ast: Remove `AstKind` for `AssignmentTarget` (#12252) (Tyler Earls)
+- c025868 ast: Remove `AstKind` for `TSFunctionType` (#12287) (camc314)
+
+
+## [0.77.0] - 2025-07-12
+
+### 🚜 Refactor
+
+- 8814c53 ast: Remove `AstKind` for `PropertyKey` (#12108) (camchenry)
+
+
 ## [0.76.0] - 2025-07-08
 
 ### 🚜 Refactor

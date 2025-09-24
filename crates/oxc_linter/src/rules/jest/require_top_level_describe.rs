@@ -48,6 +48,14 @@ impl Default for RequireTopLevelDescribe {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Requires test cases and hooks to be inside a top-level `describe` block.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Having tests and hooks organized within `describe` blocks provides better
+    /// structure and grouping for test suites. It makes test output more readable
+    /// and helps with test organization, especially in larger codebases.
+    ///
     /// This rule triggers a warning if a test case (`test` and `it`) or a hook
     /// (`beforeAll`, `beforeEach`, `afterEach`, `afterAll`) is not located in a
     /// top-level `describe` block.
@@ -124,7 +132,7 @@ impl Rule for RequireTopLevelDescribe {
     fn run_once(&self, ctx: &LintContext) {
         let mut describe_contexts: FxHashMap<ScopeId, usize> = FxHashMap::default();
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
-        possibles_jest_nodes.sort_by_key(|n| n.node.id());
+        possibles_jest_nodes.sort_unstable_by_key(|n| n.node.id());
 
         for possible_jest_node in &possibles_jest_nodes {
             self.run(possible_jest_node, &mut describe_contexts, ctx);

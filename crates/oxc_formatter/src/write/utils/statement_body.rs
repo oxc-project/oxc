@@ -8,6 +8,7 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
+    write::FormatWrite,
 };
 
 pub struct FormatStatementBody<'a, 'b> {
@@ -32,7 +33,12 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
             write!(f, empty)
-        } else if matches!(self.body.as_ref(), Statement::BlockStatement(_)) || self.force_space {
+        } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
+            write!(f, [space()]);
+            // Use `write` instead of `format` to avoid printing leading comments of the block.
+            // Those comments should be printed inside the block statement.
+            block.write(f)
+        } else if self.force_space {
             write!(f, [space(), self.body])
         } else {
             write!(f, [indent(&format_args!(soft_line_break_or_space(), &self.body))])

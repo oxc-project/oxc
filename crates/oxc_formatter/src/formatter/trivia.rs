@@ -1,19 +1,71 @@
-//! Provides builders for comments and skipped token trivia.
-
+//! High-level comment formatting interface for the on-demand comment system.
+//!
+//! This module provides the formatting implementations that work with the cursor-based
+//! comment tracking system in [`crate::formatter::comments`]. It handles the actual
+//! rendering of comments with proper spacing, line breaks, and indentation.
+//!
+//! ## Integration with Comment Architecture
+//!
+//! This module is the "formatting layer" of our on-demand comment system:
+//!
+//! 1. **AST formatting code calls** the format functions in this module
+//! 2. **These functions query** the comment system for relevant comments
+//! 3. **Comments are formatted** with appropriate spacing and breaks
+//! 4. **The cursor is advanced** to mark comments as processed
+//!
+//! ## Comment Formatting Implementation
+//!
+//! ### Leading Comment Formatting ([`FormatLeadingComments`])
+//! ```rust,ignore
+//! // In AST node formatting:
+//! write!(f, [format_leading_comments(node.span)])?;
+//! write!(f, [node])?;
+//! ```
+//!
+//! **Implementation**:
+//! 1. Calls `comments_before(node.span.start)` to get unprinted leading comments
+//! 2. Formats each comment with spacing based on line breaks in original source
+//! 3. Advances cursor by calling `increment_printed_count()` for each comment
+//! 4. Handles special cases like JSDoc comment "nestling"
+//!
+//! ### Trailing Comment Formatting ([`FormatTrailingComments`])
+//! ```rust,ignore
+//! // In AST node formatting:
+//! write!(f, [node])?;
+//! write!(f, [format_trailing_comments(enclosing, preceding, following)])?;
+//! ```
+//!
+//! **Implementation**:
+//! 1. Calls `get_trailing_comments()` with node context to determine ownership
+//! 2. Uses line suffixes to prevent comments from interfering with code layout
+//! 3. Handles complex spacing rules for different comment types
+//! 4. Advances cursor after processing each comment
+//!
+//! ### Dangling Comment Formatting ([`FormatDanglingComments`])
+//! ```rust,ignore
+//! // In container node formatting:
+//! write!(f, [
+//!     "{",
+//!     format_dangling_comments(container.span).with_block_indent(),
+//!     "}"
+//! ])?;
+//! ```
+//!
+//! **Implementation**:
+//! 1. Calls `comments_between()` to find internal comments not owned by children
+//! 2. Applies indentation based on container type (block, soft, none)
+//! 3. Preserves comment relationships and spacing
+//! 4. Advances cursor for processed comments
 use oxc_ast::{
-    Comment, CommentKind,
+    Comment, CommentContent, CommentKind,
     ast::{CallExpression, NewExpression},
 };
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::comment_node;
 
-use crate::{
-    formatter::comments::{is_alignable_comment, is_end_of_line_comment, is_own_line_comment},
-    generated::ast_nodes::SiblingNode,
-    write,
-};
+use crate::{generated::ast_nodes::SiblingNode, write};
 
-use super::{Argument, Arguments, GroupId, SyntaxToken, prelude::*};
+use super::{Argument, Arguments, GroupId, SourceText, SyntaxToken, prelude::*};
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -28,16 +80,18 @@ use super::{Argument, Arguments, GroupId, SyntaxToken, prelude::*};
 /// There isn't much documentation about this behavior, but it is mentioned on the JSDoc repo
 /// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>. Prettier also
 /// implements the same behavior: <https://github.com/prettier/prettier/pull/13445/files#diff-3d5eaa2a1593372823589e6e55e7ca905f7c64203ecada0aa4b3b0cdddd5c3ddR160-R178>
-fn should_nestle_adjacent_doc_comments(first_comment: &Comment, second_comment: &Comment) -> bool {
-    false
-    // let first = first_comment.piece();
-    // let second = second_comment.piece();
-
-    // first.has_newline()
-    // && second.has_newline()
-    // && (second.text_range().start()).sub(first.text_range().end()) == TextSize::from(0)
-    // && is_doc_comment(first)
-    // && is_doc_comment(second)
+#[expect(clippy::suspicious_operation_groupings)]
+// `current.span.end == next.span.start` is correct, which checks whether the next comment starts exactly where the current comment ends.
+fn should_nestle_adjacent_doc_comments(
+    current: &Comment,
+    next: &Comment,
+    source_text: SourceText,
+) -> bool {
+    matches!(current.content, CommentContent::Jsdoc)
+        && matches!(next.content, CommentContent::Jsdoc)
+        && current.span.end == next.span.start
+        && source_text.contains_newline(current.span)
+        && source_text.contains_newline(next.span)
 }
 
 /// Formats the leading comments of `node`
@@ -60,32 +114,33 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
         ) -> FormatResult<()> {
             let mut leading_comments_iter = comments.into_iter().peekable();
             while let Some(comment) = leading_comments_iter.next() {
-                f.context_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count();
                 write!(f, comment)?;
 
                 match comment.kind {
-                    CommentKind::Block => {
-                        match get_lines_after(comment.span.end, f.source_text()) {
-                            0 => {
-                                let should_nestle =
-                                    leading_comments_iter.peek().is_some_and(|next_comment| {
-                                        // should_nestle_adjacent_doc_comments(comment, next_comment)
-                                        false
-                                    });
+                    CommentKind::Block => match f.source_text().lines_after(comment.span.end) {
+                        0 => {
+                            let should_nestle =
+                                leading_comments_iter.peek().is_some_and(|next_comment| {
+                                    should_nestle_adjacent_doc_comments(
+                                        comment,
+                                        next_comment,
+                                        f.source_text(),
+                                    )
+                                });
 
-                                write!(f, [maybe_space(!should_nestle)])?;
-                            }
-                            1 => {
-                                if get_lines_before(comment.span.start, f) == 0 {
-                                    write!(f, [soft_line_break_or_space()])?;
-                                } else {
-                                    write!(f, [hard_line_break()])?;
-                                }
-                            }
-                            _ => write!(f, [empty_line()])?,
+                            write!(f, [maybe_space(!should_nestle)])?;
                         }
-                    }
-                    CommentKind::Line => match get_lines_after(comment.span.end, f.source_text()) {
+                        1 => {
+                            if f.source_text().get_lines_before(comment.span, f.comments()) == 0 {
+                                write!(f, [soft_line_break_or_space()])?;
+                            } else {
+                                write!(f, [hard_line_break()])?;
+                            }
+                        }
+                        _ => write!(f, [empty_line()])?,
+                    },
+                    CommentKind::Line => match f.source_text().lines_after(comment.span.end) {
                         0 | 1 => write!(f, [hard_line_break()])?,
                         _ => write!(f, [empty_line()])?,
                     },
@@ -97,13 +152,7 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 
         match self {
             Self::Node(span) => {
-                let source_text = f.context().source_text();
-                let leading_comments = f
-                    .context()
-                    .comments()
-                    .unprinted_comments()
-                    .iter()
-                    .take_while(|comment| comment.span.end <= span.start);
+                let leading_comments = f.context().comments().comments_before(span.start);
                 format_leading_comments_impl(leading_comments, f)
             }
             Self::Comments(comments) => format_leading_comments_impl(*comments, f),
@@ -138,14 +187,13 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
             let mut previous_comment: Option<&Comment> = None;
 
             for comment in comments {
-                f.context_mut().increment_printed_count();
+                f.context_mut().comments_mut().increment_printed_count();
 
-                let lines_before = get_lines_before(comment.span.start, f);
+                let lines_before = f.source_text().get_lines_before(comment.span, f.comments());
                 total_lines_before += lines_before;
 
                 let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                    // should_nestle_adjacent_doc_comments(previous_comment, comment)
-                    false
+                    should_nestle_adjacent_doc_comments(previous_comment, comment, f.source_text())
                 });
 
                 // This allows comments at the end of nested structures:
@@ -193,6 +241,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
                 } else {
                     let content =
                         format_with(|f| write!(f, [maybe_space(!should_nestle), comment]));
+
                     if comment.is_line() {
                         write!(f, [line_suffix(&content), expand_parent()])?;
                     } else {
@@ -208,91 +257,13 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
 
         match self {
             Self::Node((enclosing_node, preceding_node, following_node)) => {
-                // The preceding_node is the callee of the call expression or new expression, let following node to print it.
-                // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L726-L741
-                if matches!(enclosing_node, SiblingNode::CallExpression(CallExpression { callee, ..}) | SiblingNode::NewExpression(NewExpression { callee, ..}) if callee.span().contains_inclusive(preceding_node.span()))
-                {
-                    return Ok(());
-                }
-
-                let comments = f.context().comments().unprinted_comments();
-                if comments.is_empty() {
-                    return Ok(());
-                }
-
-                let preceding_span = preceding_node.span();
-
-                // All of the comments before this node are printed already.
-                debug_assert!(
-                    comments.first().is_none_or(|comment| comment.span.end > preceding_span.start)
+                let comments = f.context().comments().get_trailing_comments(
+                    enclosing_node,
+                    preceding_node,
+                    *following_node,
                 );
 
-                let source_text = f.context().source_text();
-
-                let Some(following_node) = following_node else {
-                    let enclosing_span = enclosing_node.span();
-                    let trailing_comments = comments
-                        .iter()
-                        .take_while(|comment| comment.span.end <= enclosing_span.end);
-                    return format_trailing_comments_impl(trailing_comments, f);
-                };
-
-                let following_span = following_node.span();
-                let mut comment_index = 0;
-                while let Some(comment) = comments.get(comment_index) {
-                    // Check if the comment is before the following node's span
-                    if comment.span.end > following_span.start {
-                        break;
-                    }
-
-                    if is_own_line_comment(comment, source_text) {
-                        // TODO: describe the logic here
-                        // Reached an own line comment, which means it is the leading comment for the next node.
-                        break;
-                    } else if is_end_of_line_comment(comment, source_text) {
-                        // Should be a leading comment of following node.
-                        // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
-                        if matches!(
-                            enclosing_node,
-                            SiblingNode::VariableDeclarator(_)
-                                | SiblingNode::AssignmentExpression(_)
-                                | SiblingNode::TSTypeAliasDeclaration(_)
-                        ) && (comment.is_block()
-                            || matches!(
-                                following_node,
-                                SiblingNode::ObjectExpression(_)
-                                    | SiblingNode::ArrayExpression(_)
-                                    | SiblingNode::TSTypeLiteral(_)
-                                    | SiblingNode::TemplateLiteral(_)
-                                    | SiblingNode::TaggedTemplateExpression(_)
-                            ))
-                        {
-                            return Ok(());
-                        }
-                        return format_trailing_comments_impl(&comments[..=comment_index], f);
-                    }
-
-                    comment_index += 1;
-                }
-
-                if comment_index == 0 {
-                    // No comments to print
-                    return Ok(());
-                }
-
-                let mut gap_end = following_span.start;
-                for cur_index in (0..comment_index).rev() {
-                    let comment = &comments[cur_index];
-                    let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
-                    if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
-                        gap_end = comment.span.start;
-                    } else {
-                        // If there is a non-whitespace character, we stop here
-                        return format_trailing_comments_impl(&comments[..=cur_index], f);
-                    }
-                }
-
-                Ok(())
+                format_trailing_comments_impl(comments, f)
             }
             Self::Comments(comments) => format_trailing_comments_impl(*comments, f),
         }
@@ -389,11 +360,14 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                 let mut previous_comment: Option<&Comment> = None;
 
                 for comment in comments {
-                    f.context_mut().increment_printed_count();
+                    f.context_mut().comments_mut().increment_printed_count();
 
                     let should_nestle = previous_comment.is_some_and(|previous_comment| {
-                        // should_nestle_adjacent_doc_comments(previous_comment, comment)
-                        false
+                        should_nestle_adjacent_doc_comments(
+                            previous_comment,
+                            comment,
+                            f.source_text(),
+                        )
                     });
 
                     write!(
@@ -434,11 +408,7 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
             FormatDanglingComments::Node { span, indent } => {
                 let source_text = f.context().source_text();
                 format_dangling_comments_impl(
-                    f.context()
-                        .comments()
-                        .unprinted_comments()
-                        .iter()
-                        .take_while(|comment| span.contains_inclusive(comment.span)),
+                    f.context().comments().comments_before(span.end),
                     *indent,
                     f,
                 )
@@ -447,74 +417,6 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
                 format_dangling_comments_impl(*comments, *indent, f)
             }
         }
-    }
-}
-
-/// Formats a token without its skipped token trivia
-///
-/// ## Warning
-/// It's your responsibility to format any skipped trivia.
-pub const fn format_trimmed_token(token: &SyntaxToken) -> FormatTrimmedToken {
-    FormatTrimmedToken { token }
-}
-
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
-pub struct FormatTrimmedToken<'a> {
-    token: &'a SyntaxToken,
-}
-
-// impl<C> Format<C> for FormatTrimmedToken<'_>
-// where
-// C: CstFormatContext<Language>,
-// {
-// fn fmt(&self, f: &mut Formatter<C>) -> FormatResult<()> {
-// let trimmed_range = self.token.text_trimmed_range();
-// located_token_text(self.token, trimmed_range).fmt(f)
-// }
-// }
-
-/// Formats the skipped token trivia of a removed token and marks the token as tracked.
-pub const fn format_removed(span: Span) -> FormatRemoved {
-    FormatRemoved { span }
-}
-
-/// Formats the trivia of a token that is present in the source text but should be omitted in the
-/// formatted output.
-pub struct FormatRemoved {
-    span: Span,
-}
-
-impl Format<'_> for FormatRemoved {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        f.state_mut().track_token(self.span);
-        write!(f, format_skipped_token_trivia(self.span))
-    }
-}
-
-/// Print out a `token` from the original source with a different `content`.
-///
-/// This will print the skipped token trivia that belong to `token` to `content`;
-/// `token` is then marked as consumed by the formatter.
-pub fn format_replaced<'content, 'ast>(
-    span: Span,
-    content: &'content impl Format<'ast>,
-) -> FormatReplaced<'content, 'ast> {
-    FormatReplaced { span, content: Argument::new(content) }
-}
-
-/// Formats a token's skipped token trivia but uses the provided content instead
-/// of the token in the formatted output.
-#[derive(Copy, Clone)]
-pub struct FormatReplaced<'content, 'ast> {
-    span: Span,
-    content: Argument<'content, 'ast>,
-}
-
-impl<'ast> Format<'ast> for FormatReplaced<'_, 'ast> {
-    fn fmt(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
-        f.state_mut().track_token(self.span);
-        write!(f, format_skipped_token_trivia(self.span))?;
-        f.write_fmt(Arguments::from(&self.content))
     }
 }
 
@@ -559,155 +461,10 @@ impl<'ast> Format<'ast> for FormatOnlyIfBreaks<'_, 'ast> {
         Ok(())
     }
 }
-
-/// Formats the skipped token trivia of `token`.
-pub const fn format_skipped_token_trivia(span: Span) -> FormatSkippedTokenTrivia {
-    FormatSkippedTokenTrivia { span }
-}
-
-/// Formats the skipped token trivia of `token`.
-pub struct FormatSkippedTokenTrivia {
-    span: Span,
-}
-
-impl FormatSkippedTokenTrivia {
-    #[cold]
-    fn fmt_skipped(&self, f: &mut Formatter) -> FormatResult<()> {
-        todo!()
-        // Lines/spaces before the next token/comment
-        // let (mut lines, mut spaces) = match self.token.prev_token() {
-        // Some(token) => {
-        // let mut lines = 0u32;
-        // let mut spaces = 0u32;
-        // for piece in token.trailing_trivia().pieces().rev() {
-        // if piece.is_whitespace() {
-        // spaces += 1;
-        // } else if piece.is_newline() {
-        // spaces = 0;
-        // lines += 1;
-        // } else {
-        // break;
-        // }
-        // }
-
-        // (lines, spaces)
-        // }
-        // None => (0, 0),
-        // };
-
-        // // The comments between the last skipped token trivia and the token
-        // let mut dangling_comments = Vec::new();
-        // let mut skipped_range: Option<TextRange> = None;
-
-        // // Iterate over the remaining pieces to find the full range from the first to the last skipped token trivia.
-        // // Extract the comments between the last skipped token trivia and the token.
-        // for piece in self.token.leading_trivia().pieces() {
-        // if piece.is_whitespace() {
-        // spaces += 1;
-        // continue;
-        // }
-
-        // if piece.is_newline() {
-        // lines += 1;
-        // spaces = 0;
-        // } else if let Some(comment) = piece.as_comments() {
-        // let source_comment = SourceComment {
-        // kind: Context::Style::get_comment_kind(&comment),
-        // lines_before: lines,
-        // lines_after: 0,
-        // // piece: comment,
-        // #[cfg(debug_assertions)]
-        // formatted: Cell::new(true),
-        // };
-
-        // dangling_comments.push(source_comment);
-
-        // lines = 0;
-        // spaces = 0;
-        // } else if piece.is_skipped() {
-        // skipped_range = Some(match skipped_range {
-        // Some(range) => range.cover(piece.text_range()),
-        // None => {
-        // if dangling_comments.is_empty() {
-        // match lines {
-        // 0 if spaces == 0 => {
-        // // Token had no space to previous token nor any preceding comment. Keep it that way
-        // }
-        // 0 => write!(f, [space()])?,
-        // _ => write!(f, [hard_line_break()])?,
-        // };
-        // } else {
-        // match lines {
-        // 0 => write!(f, [space()])?,
-        // 1 => write!(f, [hard_line_break()])?,
-        // _ => write!(f, [empty_line()])?,
-        // };
-        // }
-
-        // piece.text_range()
-        // }
-        // });
-
-        // lines = 0;
-        // spaces = 0;
-        // dangling_comments.clear();
-        // }
-        // }
-
-        // let skipped_range =
-        // skipped_range.unwrap_or_else(|| TextRange::empty(self.token.text_range().start()));
-
-        // f.write_element(FormatElement::Tag(Tag::StartVerbatim(VerbatimKind::Verbatim {
-        // length: skipped_range.len(),
-        // })))?;
-        // write!(f, [located_token_text(self.token, skipped_range)])?;
-        // f.write_element(FormatElement::Tag(Tag::EndVerbatim))?;
-
-        // // Write whitespace separator between skipped/last comment and token
-        // if dangling_comments.is_empty() {
-        // match lines {
-        // 0 if spaces == 0 => {
-        // // Don't write a space if there was non in the source document
-        // Ok(())
-        // }
-        // 0 => write!(f, [space()]),
-        // _ => write!(f, [hard_line_break()]),
-        // }
-        // } else {
-        // match dangling_comments.first().unwrap().lines_before {
-        // 0 => write!(f, [space()])?,
-        // 1 => write!(f, [hard_line_break()])?,
-        // _ => write!(f, [empty_line()])?,
-        // }
-
-        // write!(
-        // f,
-        // [FormatDanglingComments::Comments {
-        // comments: &dangling_comments,
-        // indent: DanglingIndentMode::None
-        // }]
-        // )?;
-
-        // match lines {
-        // 0 => write!(f, [space()]),
-        // _ => write!(f, [hard_line_break()]),
-        // }
-        // }
-    }
-}
-
-impl Format<'_> for FormatSkippedTokenTrivia {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        // TODO: Unsupported yet
-        // if f.comments().has_skipped(self.span) { self.fmt_skipped(f) } else { Ok(()) }
-        Ok(())
-    }
-}
-
 impl<'a> Format<'a> for Comment {
     #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let source_text = self.span.source_text(f.source_text());
+        let source_text = f.source_text().text_for(&self.span).trim_end();
         if is_alignable_comment(source_text) {
             let mut source_offset = self.span.start;
 
@@ -734,4 +491,43 @@ impl<'a> Format<'a> for Comment {
             write!(f, [dynamic_text(source_text)])
         }
     }
+}
+
+/// Returns `true` if `comment` is a multi line block comment where each line
+/// starts with a star (`*`). These comments can be formatted to always have
+/// the leading stars line up in a column.
+///
+/// # Examples
+///
+/// ```rs,ignore
+/// assert!(is_alignable_comment(&parse_comment(r#"
+///     /**
+///      * Multiline doc comment
+///      */
+/// "#)));
+///
+/// assert!(is_alignable_comment(&parse_comment(r#"
+///     /*
+///      * Single star
+///      */
+/// "#)));
+///
+///
+/// // Non indentable-comments
+/// assert!(!is_alignable_comment(&parse_comment(r#"/** has no line break */"#)));
+///
+/// assert!(!is_alignable_comment(&parse_comment(r#"
+/// /*
+///  *
+///  this line doesn't start with a star
+///  */
+/// "#)));
+/// ```
+pub fn is_alignable_comment(source_text: &str) -> bool {
+    if !source_text.contains('\n') {
+        return false;
+    }
+    source_text.lines().enumerate().all(|(index, line)| {
+        if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
+    })
 }

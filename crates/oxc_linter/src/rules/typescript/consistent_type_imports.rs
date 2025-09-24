@@ -122,6 +122,83 @@ declare_oxc_lint!(
     /// ```ts
     /// import type { Foo } from 'Foo';
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// ```json
+    /// {
+    ///     "typescript/consistent-type-imports": [
+    ///         "error",
+    ///         {
+    ///             "prefer": "type-imports",
+    ///             "fixStyle": "separate-type-imports",
+    ///             "disallowTypeAnnotations": true
+    ///         }
+    ///     ]
+    /// }
+    /// ```
+    ///
+    /// - `prefer`: Control whether to enforce type imports or value imports
+    ///   - `"type-imports"` (default): Will enforce that you always use `import type Foo from '...'` except referenced by metadata of decorators
+    ///   - `"no-type-imports"`: Will enforce that you always use `import Foo from '...'`
+    ///
+    /// - `fixStyle`: Determines how type imports are added when auto-fixing
+    ///   - `"separate-type-imports"` (default): Will add the type keyword after the import keyword `import type { A } from '...'`
+    ///   - `"inline-type-imports"`: Will inline the type keyword `import { type A } from '...'` (only available in TypeScript 4.5+)
+    ///
+    /// - `disallowTypeAnnotations`: Disallow using `import()` in type annotations
+    ///   - `true` (default): Disallows using `import()` in type annotations like `type T = import('foo')`
+    ///   - `false`: Allows `import()` type annotations
+    ///
+    /// #### Examples with `"prefer": "type-imports"` (default)
+    ///
+    /// Examples of **incorrect** code:
+    /// ```ts
+    /// import { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```ts
+    /// import type { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// #### Examples with `"prefer": "no-type-imports"`
+    ///
+    /// Examples of **incorrect** code:
+    /// ```ts
+    /// import type { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code:
+    /// ```ts
+    /// import { Foo } from 'foo';
+    /// let foo: Foo;
+    /// ```
+    ///
+    /// #### Examples with `"fixStyle": "inline-type-imports"`
+    ///
+    /// When fixing type imports, this option will use inline `type` modifiers:
+    /// ```ts
+    /// // Before fixing
+    /// import { A, B } from 'foo';
+    /// type T = A;
+    /// const b = B;
+    ///
+    /// // After fixing
+    /// import { type A, B } from 'foo';
+    /// type T = A;
+    /// const b = B;
+    /// ```
+    ///
+    /// #### Examples with `"disallowTypeAnnotations": false`
+    ///
+    /// When set to `false`, allows `import()` type annotations:
+    /// ```ts
+    /// type T = import('foo').Bar;
+    /// ```
     ConsistentTypeImports,
     typescript,
     style,
@@ -470,69 +547,68 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
 
     let mut fixes_remove_type_namespace_specifier = fixer.new_fix_with_capacity(0);
 
-    if let Some(namespace_specifier) = namespace_specifier {
-        if type_names.iter().contains(&namespace_specifier.local.name.as_str()) {
-            // import Foo, * as Type from 'foo'
-            // import DefType, * as Type from 'foo'
-            // import DefType, * as Type from 'foo'
-            let comma = try_find_char(ctx.source_range(import_decl.span), ',')?;
+    if let Some(namespace_specifier) = namespace_specifier
+        && type_names.iter().contains(&namespace_specifier.local.name.as_str())
+    {
+        // import Foo, * as Type from 'foo'
+        // import DefType, * as Type from 'foo'
+        // import DefType, * as Type from 'foo'
+        let comma = try_find_char(ctx.source_range(import_decl.span), ',')?;
 
-            // import Def, * as Ns from 'foo'
-            //           ^^^^^^^^^ remove
-            fixes_remove_type_namespace_specifier.push(fixer.delete(&Span::new(
-                import_decl.span.start + comma,
-                namespace_specifier.span().end,
-            )));
+        // import Def, * as Ns from 'foo'
+        //           ^^^^^^^^^ remove
+        fixes_remove_type_namespace_specifier.push(
+            fixer
+                .delete(&Span::new(import_decl.span.start + comma, namespace_specifier.span().end)),
+        );
 
-            // import type * as Ns from 'foo'
-            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ insert
+        // import type * as Ns from 'foo'
+        // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ insert
+        rule_fixes.push(fixer.insert_text_before(
+            *import_decl,
+            format!(
+                "import type {} from {};\n",
+                ctx.source_range(namespace_specifier.span()),
+                ctx.source_range(import_decl.source.span)
+            ),
+        ));
+    }
+
+    if let Some(default_specifier) = default_specifier
+        && type_names.iter().contains(&default_specifier.local.name.as_str())
+    {
+        if type_names.len() == import_decl.specifiers.as_ref().map_or(0, |s| s.len()) {
+            // import type Type from 'foo'
+            //        ^^^^^ insert
+            rule_fixes
+                .push(fixer.insert_text_after(&Span::sized(import_decl.span().start, 6), " type"));
+        } else {
+            let import_text = ctx.source_range(import_decl.span);
+            // import Type, { Foo } from 'foo'
+            //let import_text = ctx.source_range(import_decl.span);
+            let comma = try_find_char(import_text, ',')?;
+            // import Type , { ... } from 'foo'
+            //        ^^^^^ pick
+            let default_text = ctx.source_range(Span::new(
+                default_specifier.span.start,
+                import_decl.span().start + comma,
+            ));
             rule_fixes.push(fixer.insert_text_before(
                 *import_decl,
                 format!(
-                    "import type {} from {};\n",
-                    ctx.source_range(namespace_specifier.span()),
+                    "import type {default_text} from {};\n",
                     ctx.source_range(import_decl.source.span)
                 ),
             ));
-        }
-    }
-
-    if let Some(default_specifier) = default_specifier {
-        if type_names.iter().contains(&default_specifier.local.name.as_str()) {
-            if type_names.len() == import_decl.specifiers.as_ref().map_or(0, |s| s.len()) {
-                // import type Type from 'foo'
-                //        ^^^^^ insert
-                rule_fixes.push(
-                    fixer.insert_text_after(&Span::sized(import_decl.span().start, 6), " type"),
-                );
-            } else {
-                let import_text = ctx.source_range(import_decl.span);
-                // import Type, { Foo } from 'foo'
-                //let import_text = ctx.source_range(import_decl.span);
-                let comma = try_find_char(import_text, ',')?;
-                // import Type , { ... } from 'foo'
-                //        ^^^^^ pick
-                let default_text = ctx.source_range(Span::new(
+            // + 1 to skip the comma
+            if let Some(after_token) =
+                find_first_non_white_space(&import_text[(comma + 1) as usize..])
+            {
+                let after_token = comma as usize + 1 + after_token.0;
+                rule_fixes.push(fixer.delete_range(Span::new(
                     default_specifier.span.start,
-                    import_decl.span().start + comma,
-                ));
-                rule_fixes.push(fixer.insert_text_before(
-                    *import_decl,
-                    format!(
-                        "import type {default_text} from {};\n",
-                        ctx.source_range(import_decl.source.span)
-                    ),
-                ));
-                // + 1 to skip the comma
-                if let Some(after_token) =
-                    find_first_non_white_space(&import_text[(comma + 1) as usize..])
-                {
-                    let after_token = comma as usize + 1 + after_token.0;
-                    rule_fixes.push(fixer.delete_range(Span::new(
-                        default_specifier.span.start,
-                        import_decl.span().start + after_token as u32,
-                    )));
-                }
+                    import_decl.span().start + after_token as u32,
+                )));
             }
         }
     }
@@ -576,7 +652,7 @@ fn get_type_only_named_import<'a>(
     ctx: &LintContext<'a>,
     source: &str,
 ) -> Option<&'a ImportDeclaration<'a>> {
-    let program = ctx.nodes().program().unwrap();
+    let program = ctx.nodes().program();
 
     for stmt in &program.body {
         let Statement::ImportDeclaration(import_decl) = stmt else {
@@ -771,15 +847,12 @@ fn fix_inline_type_import_declaration<'a>(
     };
 
     for specifier in specifiers {
-        if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier {
-            if type_names.iter().contains(&specifier.local.name.as_str()) {
-                rule_fixes.push(
-                    fixer.replace(
-                        specifier.span,
-                        format!("type {}", ctx.source_range(specifier.span)),
-                    ),
-                );
-            }
+        if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier
+            && type_names.iter().contains(&specifier.local.name.as_str())
+        {
+            rule_fixes.push(
+                fixer.replace(specifier.span, format!("type {}", ctx.source_range(specifier.span))),
+            );
         }
     }
 
@@ -800,56 +873,50 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
     //                                             ^^^^ add
     rule_fixes.push(fixer.replace(Span::sized(import_decl.span.start, 6), "import type"));
 
-    if is_default_import {
-        if let Ok(_opening_brace_token) = try_find_char(import_source, '{') {
-            // `import foo, {} from 'foo'`
-            // `import foo, { bar } from 'foo'`
-            let comma_token = try_find_char(import_source, ',')?;
-            let closing_brace_token = try_find_char(import_source, '}')?;
-            let base = import_decl.span.start;
-            // import foo, {} from 'foo'
-            //           ^^^^ delete
-            rule_fixes.push(
-                fixer.delete(&Span::new(base + comma_token, base + (closing_brace_token + 1))),
-            );
-            if import_decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.len() > 1) {
-                // import type {} from 'asdf'
-                let Some(specifiers_text) =
-                    import_source.get(((comma_token + 1) as usize)..closing_brace_token as usize)
-                else {
-                    return fixer_error(format!(
-                        "Invalid slice for {}[{}..{}]",
-                        import_source,
-                        comma_token + 1,
-                        closing_brace_token
-                    ));
-                };
-
-                rule_fixes.push(fixer.insert_text_after(
-                    *import_decl,
-                    format!(
-                        "\nimport type {} from {}",
-                        specifiers_text,
-                        ctx.source_range(import_decl.source.span)
-                    ),
+    if is_default_import && let Ok(_opening_brace_token) = try_find_char(import_source, '{') {
+        // `import foo, {} from 'foo'`
+        // `import foo, { bar } from 'foo'`
+        let comma_token = try_find_char(import_source, ',')?;
+        let closing_brace_token = try_find_char(import_source, '}')?;
+        let base = import_decl.span.start;
+        // import foo, {} from 'foo'
+        //           ^^^^ delete
+        rule_fixes
+            .push(fixer.delete(&Span::new(base + comma_token, base + (closing_brace_token + 1))));
+        if import_decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.len() > 1) {
+            // import type {} from 'asdf'
+            let Some(specifiers_text) =
+                import_source.get(((comma_token + 1) as usize)..closing_brace_token as usize)
+            else {
+                return fixer_error(format!(
+                    "Invalid slice for {}[{}..{}]",
+                    import_source,
+                    comma_token + 1,
+                    closing_brace_token
                 ));
-            }
+            };
+
+            rule_fixes.push(fixer.insert_text_after(
+                *import_decl,
+                format!(
+                    "\nimport type {} from {}",
+                    specifiers_text,
+                    ctx.source_range(import_decl.source.span)
+                ),
+            ));
         }
     }
 
     if let Some(specifiers) = &import_decl.specifiers {
         for specifier in specifiers {
-            if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier {
-                if specifier.import_kind.is_type() {
-                    // import { type    A } from 'foo.js'
-                    //          ^^^^^^^^ delete
-                    rule_fixes.push(
-                        fixer.delete(&Span::new(
-                            specifier.span.start,
-                            specifier.imported.span().start,
-                        )),
-                    );
-                }
+            if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier
+                && specifier.import_kind.is_type()
+            {
+                // import { type    A } from 'foo.js'
+                //          ^^^^^^^^ delete
+                rule_fixes.push(
+                    fixer.delete(&Span::new(specifier.span.start, specifier.imported.span().start)),
+                );
             }
         }
     }

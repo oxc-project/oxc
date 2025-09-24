@@ -38,9 +38,12 @@ impl<'a> ParserImpl<'a> {
             let span = self.start_span();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
+            let Expression::Identifier(ident) = &expr else {
+                return self.unexpected();
+            };
             return Some(self.parse_simple_arrow_function_expression(
                 span,
-                expr,
+                ident,
                 /* async */ true,
                 allow_return_type_in_arrow_function,
             ));
@@ -192,53 +195,39 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> bool {
-        let checkpoint = self.checkpoint();
-        self.bump(Kind::Async);
-        // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
-        // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-        if !self.cur_token().is_on_new_line() && self.cur_kind().is_binding_identifier() {
-            // Arrow before newline is checked in `parse_simple_arrow_function_expression`
-            self.bump_any();
-            if self.at(Kind::Arrow) {
-                self.rewind(checkpoint);
-                return true;
+        // Use lookahead to avoid checkpoint/rewind
+        self.lookahead(|parser| {
+            parser.bump(Kind::Async);
+            // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
+            // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
+            if !parser.cur_token().is_on_new_line() && parser.cur_kind().is_binding_identifier() {
+                // Arrow before newline is checked in `parse_simple_arrow_function_expression`
+                parser.bump_any();
+                parser.at(Kind::Arrow)
+            } else {
+                false
             }
-        }
-        self.rewind(checkpoint);
-        false
+        })
     }
 
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
         span: u32,
-        ident: Expression<'a>,
+        ident: &IdentifierReference<'a>,
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let has_await = self.ctx.has_await();
-        self.ctx = self.ctx.union_await_if(r#async);
-
-        let params = {
-            let ident = match ident {
-                Expression::Identifier(ident) => {
-                    let ident = ident.unbox();
-                    self.ast.alloc_binding_identifier(ident.span, ident.name)
-                }
-                _ => return self.unexpected(),
-            };
-            let params_span = self.end_span(ident.span.start);
-            let ident = BindingPatternKind::BindingIdentifier(ident);
-            let pattern = self.ast.binding_pattern(ident, NONE, false);
-            let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
-            self.ast.alloc_formal_parameters(
-                params_span,
-                FormalParameterKind::ArrowFormalParameters,
-                self.ast.vec1(formal_parameter),
-                NONE,
-            )
-        };
-
-        self.ctx = self.ctx.and_await(has_await);
+        let binding_identifier = BindingPatternKind::BindingIdentifier(
+            self.ast.alloc_binding_identifier(ident.span, ident.name),
+        );
+        let pattern = self.ast.binding_pattern(binding_identifier, NONE, false);
+        let formal_parameter = self.ast.plain_formal_parameter(ident.span, pattern);
+        let params = self.ast.alloc_formal_parameters(
+            ident.span,
+            FormalParameterKind::ArrowFormalParameters,
+            self.ast.vec1(formal_parameter),
+            NONE,
+        );
 
         if self.cur_token().is_on_new_line() {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
@@ -344,7 +333,7 @@ impl<'a> ParserImpl<'a> {
             return None;
         }
 
-        let checkpoint = self.checkpoint();
+        let checkpoint = self.checkpoint_with_error_recovery();
 
         let head = self.parse_parenthesized_arrow_function_head();
         if self.has_fatal_error() {

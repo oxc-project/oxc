@@ -317,7 +317,9 @@ mod tests {
                 r"/\u{1F}/",
                 r"/\u{1F}/g",
                 r"new RegExp('\\u{20}', 'u')",
+                r"new RegExp('\\u{20}', `u`)",
                 r"new RegExp('\\u{1F}')",
+                r"new RegExp(`\\u{1F}`)",
                 r"new RegExp('\\u{1F}', 'g')",
                 r"new RegExp('\\u{1F}', flags)", // unknown flags, we assume no 'u'
                 // https://github.com/oxc-project/oxc/issues/6136
@@ -347,6 +349,8 @@ mod tests {
                 r"/\u{1F}/u",
                 r"/\u{1F}/ugi",
                 r"new RegExp('\\u{1F}', 'u')",
+                r"new RegExp(`\\u{1F}`, 'u')",
+                r"new RegExp('\\u{1F}', `u`)",
                 r"new RegExp('\\u{1F}', 'ugi')",
                 // https://github.com/oxc-project/oxc/issues/6136
                 r"/\u{0a}/u",
@@ -359,6 +363,14 @@ mod tests {
                 r"/\x1f\2/",
                 r"/\x1f\0/",
                 r"/\x1f\0\2/",
+                // globalThis
+                "var regex = new globalThis.RegExp('\\x1f\\x1e')",
+                "var regex = globalThis.RegExp('\\x1f')",
+                // inner expressions (parentheses and type expressions)
+                "RegExp(('\\x1f'))",
+                "new RegExp(('\\x1f'))",
+                "new RegExp((('\\x1f')))",
+                "new RegExp('\\x1f' as string)",
             ],
         )
         .test_and_snapshot();

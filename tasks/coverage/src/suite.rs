@@ -83,44 +83,55 @@ pub trait Suite<T: Case> {
     fn skip_test_path(&self, _path: &Path) -> bool {
         false
     }
+    fn skip_test_crawl(&self) -> bool {
+        false
+    }
 
     fn save_test_cases(&mut self, cases: Vec<T>);
     fn save_extra_test_cases(&mut self) {}
 
     fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
         let test_path = workspace_root();
-        let cases_path = test_path.join(self.get_test_root());
 
-        let get_paths = || {
-            let filter = args.filter.as_ref();
-            WalkDir::new(&cases_path)
-                .into_iter()
-                .filter_map(Result::ok)
-                .filter(|e| !e.file_type().is_dir())
-                .filter(|e| e.file_name() != ".DS_Store")
-                .map(|e| e.path().to_owned())
-                .filter(|path| !self.skip_test_path(path))
-                .filter(|path| filter.is_none_or(|query| path.to_string_lossy().contains(query)))
-                .collect::<Vec<_>>()
+        let paths = if self.skip_test_crawl() {
+            vec![]
+        } else {
+            let cases_path = test_path.join(self.get_test_root());
+
+            let get_paths = || {
+                let filter = args.filter.as_ref();
+                WalkDir::new(&cases_path)
+                    .into_iter()
+                    .filter_map(Result::ok)
+                    .filter(|e| !e.file_type().is_dir())
+                    .filter(|e| e.file_name() != ".DS_Store")
+                    .map(|e| e.path().to_owned())
+                    .filter(|path| !self.skip_test_path(path))
+                    .filter(|path| {
+                        filter.is_none_or(|query| path.to_string_lossy().contains(query))
+                    })
+                    .collect::<Vec<_>>()
+            };
+
+            let mut paths = get_paths();
+
+            // Initialize git submodule if it is empty and no filter is provided
+            if paths.is_empty() && args.filter.is_none() {
+                println!("-------------------------------------------------------");
+                println!("git submodule is empty for {name}");
+                println!("Running `just submodules` to clone the submodules");
+                println!("This may take a while.");
+                println!("-------------------------------------------------------");
+                Command::new("just")
+                    .args(["submodules"])
+                    .stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit())
+                    .output()
+                    .expect("failed to execute `just submodules`");
+                paths = get_paths();
+            }
+            paths
         };
-
-        let mut paths = get_paths();
-
-        // Initialize git submodule if it is empty and no filter is provided
-        if paths.is_empty() && args.filter.is_none() {
-            println!("-------------------------------------------------------");
-            println!("git submodule is empty for {name}");
-            println!("Running `just submodules` to clone the submodules");
-            println!("This may take a while.");
-            println!("-------------------------------------------------------");
-            Command::new("just")
-                .args(["submodules"])
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .output()
-                .expect("failed to execute `just submodules`");
-            paths = get_paths();
-        }
 
         // read all files, run the tests and save them
         let cases = paths
@@ -157,7 +168,7 @@ pub trait Suite<T: Case> {
     fn get_test_cases_mut(&mut self) -> &mut Vec<T>;
     fn get_test_cases(&self) -> &Vec<T>;
 
-    fn coverage_report(&self) -> CoverageReport<T> {
+    fn coverage_report(&self) -> CoverageReport<'_, T> {
         let tests = self.get_test_cases();
 
         let (negatives, positives): (Vec<_>, Vec<_>) =
@@ -318,7 +329,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn run(&mut self);
 
     /// Async version of run
-    #[expect(clippy::unused_async)]
     async fn run_async(&mut self) {}
 
     fn parse(&self, code: &str, source_type: SourceType) -> Result<(), (String, bool)> {

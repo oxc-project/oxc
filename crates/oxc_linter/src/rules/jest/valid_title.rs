@@ -180,10 +180,7 @@ impl ValidTitle {
                 );
             }
             Argument::TemplateLiteral(template_literal) => {
-                if !template_literal.is_no_substitution_template() {
-                    return;
-                }
-                if let Some(quasi) = template_literal.quasi() {
+                if let Some(quasi) = template_literal.single_quasi() {
                     validate_title(
                         quasi.as_str(),
                         template_literal.span,
@@ -356,35 +353,35 @@ fn validate_title(
         return;
     };
 
-    if let Some((regex, message)) = valid_title.must_match_patterns.get(&jest_fn_name) {
-        if !regex.is_match(title) {
-            let raw_pattern = regex.as_str();
-            let message = match message.as_ref() {
-                Some(message) => message.as_str(),
-                None => &format!("{un_prefixed_name} should match {raw_pattern}"),
-            };
-            ctx.diagnostic(valid_title_diagnostic(
-                message,
-                "Make sure the title matches the `mustMatch` of your config file",
-                span,
-            ));
-        }
+    if let Some((regex, message)) = valid_title.must_match_patterns.get(&jest_fn_name)
+        && !regex.is_match(title)
+    {
+        let raw_pattern = regex.as_str();
+        let message = match message.as_ref() {
+            Some(message) => message.as_str(),
+            None => &format!("{un_prefixed_name} should match {raw_pattern}"),
+        };
+        ctx.diagnostic(valid_title_diagnostic(
+            message,
+            "Make sure the title matches the `mustMatch` of your config file",
+            span,
+        ));
     }
 
-    if let Some((regex, message)) = valid_title.must_not_match_patterns.get(&jest_fn_name) {
-        if regex.is_match(title) {
-            let raw_pattern = regex.as_str();
-            let message = match message.as_ref() {
-                Some(message) => message.as_str(),
-                None => &format!("{un_prefixed_name} should not match {raw_pattern}"),
-            };
+    if let Some((regex, message)) = valid_title.must_not_match_patterns.get(&jest_fn_name)
+        && regex.is_match(title)
+    {
+        let raw_pattern = regex.as_str();
+        let message = match message.as_ref() {
+            Some(message) => message.as_str(),
+            None => &format!("{un_prefixed_name} should not match {raw_pattern}"),
+        };
 
-            ctx.diagnostic(valid_title_diagnostic(
-                message,
-                "Make sure the title not matches the `mustNotMatch` of your config file",
-                span,
-            ));
-        }
+        ctx.diagnostic(valid_title_diagnostic(
+            message,
+            "Make sure the title not matches the `mustNotMatch` of your config file",
+            span,
+        ));
     }
 }
 

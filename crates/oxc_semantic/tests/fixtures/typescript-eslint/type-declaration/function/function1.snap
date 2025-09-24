@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "children": [],
             "flags": "ScopeFlags(StrictMode)",
             "id": 3,
-            "node": "TSTypeAliasDeclaration",
+            "node": "TSFunctionType",
             "symbols": []
           }
         ],
@@ -42,13 +42,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
-            "node_id": 12
+            "node_id": 13
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "T",
-            "node_id": 15
+            "node_id": 16
           }
         ]
       },

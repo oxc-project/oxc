@@ -34,9 +34,7 @@ use serde::Deserialize;
 use oxc_allocator::{Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{
-    BoundNames, ToJsString, is_global_reference::WithoutGlobalReferenceInformation,
-};
+use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
@@ -326,6 +324,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<SpreadPair<'a>> {
         let rest = object_assignment_target.rest.take()?;
+        let rest_target = rest.unbox().target;
         let mut all_primitives = true;
         let keys =
             ctx.ast.vec_from_iter(object_assignment_target.properties.iter_mut().filter_map(|e| {
@@ -347,7 +346,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 }
             }));
         Some(SpreadPair {
-            lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest.target),
+            lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest_target),
             keys,
             has_no_properties: object_assignment_target.is_empty(),
             all_primitives,
@@ -561,9 +560,24 @@ impl<'a> ObjectRestSpread<'a, '_> {
     // Transform `(...x) => {}`.
     fn transform_arrow(arrow: &mut ArrowFunctionExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = arrow.scope_id();
-        let mut replaced = false;
         for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
+                // `({ ...args }) => { args }`
+                if arrow.expression {
+                    arrow.expression = false;
+
+                    debug_assert!(arrow.body.statements.len() == 1);
+
+                    let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
+                    else {
+                        unreachable!(
+                            "`arrow.expression` is true, which means it has only one ExpressionStatement."
+                        );
+                    };
+                    let return_stmt =
+                        ctx.ast.statement_return(stmt.span, Some(stmt.unbox().expression));
+                    arrow.body.statements.push(return_stmt);
+                }
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
                     &mut param.pattern,
@@ -571,11 +585,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                     scope_id,
                     ctx,
                 );
-                replaced = true;
             }
-        }
-        if replaced && arrow.expression {
-            arrow.expression = false;
         }
     }
 

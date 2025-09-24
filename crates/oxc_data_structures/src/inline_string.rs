@@ -41,12 +41,12 @@ impl<const CAPACITY: usize, Len: UnsignedInt> InlineString<CAPACITY, Len> {
     const ASSERTS: () = {
         assert!(CAPACITY <= Len::MAX_USIZE, "`CAPACITY` is too large for `Len`");
         assert!(
-            (CAPACITY + size_of::<Len>()) % size_of::<usize>() == 0,
+            (CAPACITY + size_of::<Len>()).is_multiple_of(size_of::<usize>()),
             "`CAPACITY + size_of::<Len>()` is not a multiple of `size_of::<usize>()`"
         );
     };
 
-    /// Create empty [`InlineString`].
+    /// Create an empty [`InlineString`].
     #[inline]
     pub fn new() -> Self {
         const { Self::ASSERTS };

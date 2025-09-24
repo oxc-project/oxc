@@ -1,13 +1,16 @@
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
+use oxc_ecmascript::{
+    constant_evaluation::{ConstantEvaluation, ConstantValue},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_span::GetSpan;
 use oxc_traverse::Ancestor;
 
 use crate::{ctx::Ctx, keep_var::KeepVar};
 
-use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
+use super::PeepholeOptimizations;
 
 /// Remove Dead Code from the AST.
 ///
@@ -16,119 +19,11 @@ use super::{LatePeepholeOptimizations, PeepholeOptimizations, State};
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
 impl<'a> PeepholeOptimizations {
-    pub fn remove_dead_code_exit_statement(
-        &self,
-        stmt: &mut Statement<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
-        if let Some(new_stmt) = match stmt {
-            Statement::BlockStatement(s) => Self::try_optimize_block(s, ctx),
-            Statement::IfStatement(s) => Self::try_fold_if(s, state, ctx),
-            Statement::ForStatement(s) => self.try_fold_for(s, state, ctx),
-            Statement::TryStatement(s) => Self::try_fold_try(s, ctx),
-            Statement::LabeledStatement(s) => Self::try_fold_labeled(s, ctx),
-            _ => None,
-        } {
-            *stmt = new_stmt;
-            state.changed = true;
-        }
-
-        self.try_fold_expression_stmt(stmt, state, ctx);
-    }
-
-    pub fn remove_dead_code_exit_expression(
-        &self,
-        expr: &mut Expression<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
-        if let Some(folded_expr) = match expr {
-            Expression::ConditionalExpression(e) => {
-                self.try_fold_conditional_expression(e, state, ctx)
-            }
-            Expression::SequenceExpression(sequence_expression) => {
-                self.try_fold_sequence_expression(sequence_expression, state, ctx)
-            }
-            _ => None,
-        } {
-            *expr = folded_expr;
-            state.changed = true;
-        }
-    }
-
-    /// Removes dead code thats comes after `return`, `throw`, `continue` and `break` statements.
-    pub fn remove_dead_code_exit_statements(
-        &self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
-        // Remove code after `return` and `throw` statements
-        let mut index = None;
-        'outer: for (i, stmt) in stmts.iter().enumerate() {
-            if stmt.is_jump_statement() {
-                index.replace(i);
-                break;
-            }
-            // Double check block statements folded by if statements above
-            if let Statement::BlockStatement(block_stmt) = stmt {
-                for stmt in &block_stmt.body {
-                    if stmt.is_jump_statement() {
-                        index.replace(i);
-                        break 'outer;
-                    }
-                }
-            }
-        }
-
-        let Some(index) = index else { return };
-        if index == stmts.len() - 1 {
-            return;
-        }
-
-        let mut keep_var = KeepVar::new(ctx.ast);
-
-        for stmt in stmts.iter().skip(index + 1) {
-            keep_var.visit_statement(stmt);
-        }
-
-        let mut i = 0;
-        let len = stmts.len();
-        stmts.retain(|s| {
-            i += 1;
-            if i - 1 <= index {
-                return true;
-            }
-            // Keep module syntax and function declaration
-            if s.is_module_declaration()
-                || matches!(s.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
-            {
-                return true;
-            }
-            false
-        });
-
-        let all_hoisted = keep_var.all_hoisted();
-        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
-            stmts.push(stmt);
-            if !all_hoisted {
-                state.changed = true;
-            }
-        }
-
-        if stmts.len() != len {
-            state.changed = true;
-        }
-    }
-
     /// Remove block from single line blocks
     /// `{ block } -> block`
-    fn try_optimize_block(
-        stmt: &mut BlockStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
-        match stmt.body.len() {
+    pub fn try_optimize_block(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::BlockStatement(s) = stmt else { return };
+        match s.body.len() {
             0 => {
                 let parent = ctx.parent();
                 if parent.is_while_statement()
@@ -140,48 +35,37 @@ impl<'a> PeepholeOptimizations {
                     || parent.is_program()
                 {
                     // Remove the block if it is empty and the parent is a block statement.
-                    return Some(ctx.ast.statement_empty(stmt.span));
+                    *stmt = ctx.ast.statement_empty(s.span);
+                    ctx.state.changed = true;
                 }
-                None
             }
             1 => {
-                let s = &stmt.body[0];
-                if matches!(s, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
-                    || matches!(s, Statement::ClassDeclaration(_))
-                    || matches!(s, Statement::FunctionDeclaration(_))
+                let first = &s.body[0];
+                if matches!(first, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
+                    || matches!(first, Statement::ClassDeclaration(_))
+                    || matches!(first, Statement::FunctionDeclaration(_))
                 {
-                    return None;
+                    return;
                 }
-                Some(stmt.body.remove(0))
+                *stmt = s.body.remove(0);
+                ctx.state.changed = true;
             }
-            _ => None,
+            _ => {}
         }
     }
 
-    fn try_fold_if(
-        if_stmt: &mut IfStatement<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
+    pub fn try_fold_if(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::IfStatement(if_stmt) = stmt else { return };
         // Descend and remove `else` blocks first.
         match &mut if_stmt.alternate {
-            Some(Statement::IfStatement(alternate)) => {
-                if let Some(new_stmt) = Self::try_fold_if(alternate, state, ctx) {
-                    if matches!(new_stmt, Statement::EmptyStatement(_)) {
-                        if_stmt.alternate = None;
-                    } else {
-                        if_stmt.alternate = Some(new_stmt);
-                    }
-                    state.changed = true;
-                }
+            Some(Statement::IfStatement(_)) => {
+                Self::try_fold_if(if_stmt.alternate.as_mut().unwrap(), ctx);
             }
             Some(Statement::BlockStatement(s)) if s.body.is_empty() => {
                 if_stmt.alternate = None;
-                state.changed = true;
             }
             Some(Statement::EmptyStatement(_)) => {
                 if_stmt.alternate = None;
-                state.changed = true;
             }
             _ => {}
         }
@@ -206,7 +90,9 @@ impl<'a> PeepholeOptimizations {
             } else {
                 keep_var.visit_statement(&if_stmt.consequent);
             }
-            let var_stmt = keep_var.get_variable_declaration_statement();
+            let var_stmt = keep_var
+                .get_variable_declaration_statement()
+                .and_then(|stmt| Self::remove_unused_variable_declaration(stmt, ctx));
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {
                 if boolean {
@@ -214,7 +100,7 @@ impl<'a> PeepholeOptimizations {
                 } else {
                     if_stmt.consequent = var_stmt;
                 }
-                return None;
+                return;
             }
             if test_has_side_effects {
                 if !has_var_stmt {
@@ -224,57 +110,50 @@ impl<'a> PeepholeOptimizations {
                         if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
                     }
                 }
-                return Some(ctx.ast.statement_if(
-                    if_stmt.span,
-                    if_stmt.test.take_in(ctx.ast),
-                    if_stmt.consequent.take_in(ctx.ast),
-                    if_stmt.alternate.as_mut().map(|alternate| alternate.take_in(ctx.ast)),
-                ));
+                return;
             }
-            return Some(if boolean {
+            *stmt = if boolean {
                 if_stmt.consequent.take_in(ctx.ast)
+            } else if let Some(alternate) = if_stmt.alternate.take() {
+                alternate
             } else {
-                if_stmt.alternate.as_mut().map_or_else(
-                    || ctx.ast.statement_empty(if_stmt.span),
-                    |alternate| alternate.take_in(ctx.ast),
-                )
-            });
+                ctx.ast.statement_empty(if_stmt.span)
+            };
+            ctx.state.changed = true;
         }
-        None
     }
 
-    fn try_fold_for(
-        &self,
-        for_stmt: &mut ForStatement<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
-        if let Some(init) = &mut for_stmt.init {
-            if let Some(init) = init.as_expression_mut() {
-                if self.remove_unused_expression(init, state, ctx) {
-                    for_stmt.init = None;
-                    state.changed = true;
-                }
-            }
+    pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::ForStatement(for_stmt) = stmt else { return };
+        if let Some(init) = &mut for_stmt.init
+            && let Some(init) = init.as_expression_mut()
+            && Self::remove_unused_expression(init, ctx)
+        {
+            for_stmt.init = None;
+            ctx.state.changed = true;
         }
-        if let Some(update) = &mut for_stmt.update {
-            if self.remove_unused_expression(update, state, ctx) {
-                for_stmt.update = None;
-                state.changed = true;
-            }
+        if let Some(update) = &mut for_stmt.update
+            && Self::remove_unused_expression(update, ctx)
+        {
+            for_stmt.update = None;
+            ctx.state.changed = true;
         }
 
         let test_boolean =
             for_stmt.test.as_ref().and_then(|test| test.evaluate_value_to_boolean(ctx));
         if for_stmt.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx)) {
-            return None;
+            return;
         }
         match test_boolean {
-            Some(false) => match &mut for_stmt.init {
-                Some(ForStatementInit::VariableDeclaration(var_init)) => {
+            Some(false) => match &for_stmt.init {
+                Some(ForStatementInit::VariableDeclaration(_)) => {
                     let mut keep_var = KeepVar::new(ctx.ast);
                     keep_var.visit_statement(&for_stmt.body);
                     let mut var_decl = keep_var.get_variable_declaration();
+                    let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init
+                    else {
+                        return;
+                    };
                     if var_init.kind.is_var() {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
@@ -284,28 +163,29 @@ impl<'a> PeepholeOptimizations {
                             var_decl = Some(var_init.take_in_box(ctx.ast));
                         }
                     }
-                    Some(var_decl.map_or_else(
+                    *stmt = var_decl.map_or_else(
                         || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
-                    ))
+                    );
+                    ctx.state.changed = true;
                 }
                 None => {
                     let mut keep_var = KeepVar::new(ctx.ast);
                     keep_var.visit_statement(&for_stmt.body);
-                    Some(keep_var.get_variable_declaration().map_or_else(
+                    *stmt = keep_var.get_variable_declaration().map_or_else(
                         || ctx.ast.statement_empty(for_stmt.span),
                         Statement::VariableDeclaration,
-                    ))
+                    );
+                    ctx.state.changed = true;
                 }
-                _ => None,
+                _ => {}
             },
             Some(true) => {
                 // Remove the test expression.
                 for_stmt.test = None;
-                state.changed = true;
-                None
+                ctx.state.changed = true;
             }
-            None => None,
+            None => {}
         }
     }
 
@@ -314,10 +194,8 @@ impl<'a> PeepholeOptimizations {
     /// ```js
     /// a: break a;
     /// ```
-    fn try_fold_labeled(
-        s: &mut LabeledStatement<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Statement<'a>> {
+    pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::LabeledStatement(s) = stmt else { return };
         let id = s.label.name.as_str();
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
@@ -326,169 +204,244 @@ impl<'a> PeepholeOptimizations {
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
             Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
             Statement::EmptyStatement(_) => {
-                return Some(ctx.ast.statement_empty(s.span))
+                *stmt = ctx.ast.statement_empty(s.span);
+                ctx.state.changed = true;
+                return;
             }
-            _ => return None,
+            _ => return
         }
         let mut var = KeepVar::new(ctx.ast);
         var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
-        var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span)).into()
+        *stmt = var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span));
+        ctx.state.changed = true;
     }
 
-    fn try_fold_expression_stmt(
-        &self,
-        stmt: &mut Statement<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) {
+    pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
-        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
-            if *body.expression() {
-                return;
-            }
+        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1)
+            && *body.expression()
+        {
+            return;
         }
 
-        if self.remove_unused_expression(&mut expr_stmt.expression, state, ctx) {
+        if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
             *stmt = ctx.ast.statement_empty(expr_stmt.span);
-            state.changed = true;
+            ctx.state.changed = true;
         }
     }
 
-    fn try_fold_try(s: &mut TryStatement<'a>, ctx: &mut Ctx<'a, '_>) -> Option<Statement<'a>> {
-        if let Some(handler) = &mut s.handler {
-            if s.block.body.is_empty() {
-                let mut var = KeepVar::new(ctx.ast);
-                var.visit_block_statement(&handler.body);
-                handler.body.body.clear();
-                if let Some(var_decl) = var.get_variable_declaration_statement() {
-                    handler.body.body.push(var_decl);
-                }
+    pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Statement::TryStatement(s) = stmt else { return };
+        if let Some(handler) = &s.handler
+            && s.block.body.is_empty()
+        {
+            let mut var = KeepVar::new(ctx.ast);
+            var.visit_block_statement(&handler.body);
+            let Some(handler) = &mut s.handler else { return };
+            handler.body.body.clear();
+            if let Some(var_decl) = var.get_variable_declaration_statement() {
+                handler.body.body.push(var_decl);
             }
         }
 
-        if let Some(finalizer) = &s.finalizer {
-            if finalizer.body.is_empty() && s.handler.is_some() {
-                s.finalizer = None;
-            }
+        if let Some(finalizer) = &s.finalizer
+            && finalizer.body.is_empty()
+            && s.handler.is_some()
+        {
+            s.finalizer = None;
         }
 
         if s.block.body.is_empty()
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
-            if let Some(finalizer) = &mut s.finalizer {
+            *stmt = if let Some(finalizer) = &mut s.finalizer {
                 let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
                 std::mem::swap(&mut **finalizer, &mut block);
-                Some(Statement::BlockStatement(ctx.ast.alloc(block)))
+                Statement::BlockStatement(ctx.ast.alloc(block))
             } else {
-                Some(ctx.ast.statement_empty(s.span))
-            }
-        } else {
-            None
+                ctx.ast.statement_empty(s.span)
+            };
+            ctx.state.changed = true;
         }
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
-    fn try_fold_conditional_expression(
-        &self,
-        expr: &mut ConditionalExpression<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        expr.test.evaluate_value_to_boolean(ctx).map(|v| {
-            if expr.test.may_have_side_effects(ctx) {
-                // "(a, true) ? b : c" => "a, b"
-                let exprs = ctx.ast.vec_from_array([
-                    {
-                        let mut test = expr.test.take_in(ctx.ast);
-                        self.remove_unused_expression(&mut test, state, ctx);
-                        test
-                    },
-                    if v {
-                        expr.consequent.take_in(ctx.ast)
-                    } else {
-                        expr.alternate.take_in(ctx.ast)
-                    },
-                ]);
-                ctx.ast.expression_sequence(expr.span, exprs)
+    pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::ConditionalExpression(e) = expr else { return };
+        let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
+        ctx.state.changed = true;
+        *expr = if e.test.may_have_side_effects(ctx) {
+            // "(a, true) ? b : c" => "a, b"
+            let exprs = ctx.ast.vec_from_array([
+                {
+                    let mut test = e.test.take_in(ctx.ast);
+                    Self::remove_unused_expression(&mut test, ctx);
+                    test
+                },
+                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) },
+            ]);
+            ctx.ast.expression_sequence(e.span, exprs)
+        } else {
+            let result_expr =
+                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) };
+            let should_keep_as_sequence_expr = Self::should_keep_indirect_access(&result_expr, ctx);
+            // "(1 ? a.b : 0)()" => "(0, a.b)()"
+            if should_keep_as_sequence_expr {
+                ctx.ast.expression_sequence(
+                    e.span,
+                    ctx.ast.vec_from_array([
+                        ctx.ast.expression_numeric_literal(e.span, 0.0, None, NumberBase::Decimal),
+                        result_expr,
+                    ]),
+                )
             } else {
-                let result_expr = if v {
-                    expr.consequent.take_in(ctx.ast)
-                } else {
-                    expr.alternate.take_in(ctx.ast)
-                };
-
-                let should_keep_as_sequence_expr =
-                    Self::should_keep_indirect_access(&result_expr, ctx);
-                // "(1 ? a.b : 0)()" => "(0, a.b)()"
-                if should_keep_as_sequence_expr {
-                    ctx.ast.expression_sequence(
-                        expr.span,
-                        ctx.ast.vec_from_array([
-                            ctx.ast.expression_numeric_literal(
-                                expr.span,
-                                0.0,
-                                None,
-                                NumberBase::Decimal,
-                            ),
-                            result_expr,
-                        ]),
-                    )
-                } else {
-                    result_expr
-                }
+                result_expr
             }
-        })
+        };
     }
 
-    fn try_fold_sequence_expression(
-        &self,
-        sequence_expr: &mut SequenceExpression<'a>,
-        state: &mut State,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> Option<Expression<'a>> {
-        let should_keep_as_sequence_expr = sequence_expr
+    pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::SequenceExpression(e) = expr else { return };
+        let should_keep_as_sequence_expr = e
             .expressions
             .last()
             .is_some_and(|last_expr| Self::should_keep_indirect_access(last_expr, ctx));
         if should_keep_as_sequence_expr
-            && sequence_expr.expressions.len() == 2
-            && sequence_expr.expressions.first().unwrap().is_number_0()
+            && e.expressions.len() == 2
+            && e.expressions.first().unwrap().is_number_0()
         {
-            return None;
+            return;
         }
-
-        let old_len = sequence_expr.expressions.len();
+        let old_len = e.expressions.len();
         let mut i = 0;
-        sequence_expr.expressions.retain_mut(|e| {
+        e.expressions.retain_mut(|e| {
             i += 1;
             if should_keep_as_sequence_expr && i == old_len - 1 {
-                if self.remove_unused_expression(e, state, ctx) {
+                if Self::remove_unused_expression(e, ctx) {
                     *e = ctx.ast.expression_numeric_literal(
                         e.span(),
                         0.0,
                         None,
                         NumberBase::Decimal,
                     );
-                    state.changed = true;
+                    ctx.state.changed = true;
                 }
                 return true;
             }
             if i == old_len {
                 return true;
             }
-            !self.remove_unused_expression(e, state, ctx)
+            !Self::remove_unused_expression(e, ctx)
         });
-        if sequence_expr.expressions.len() == 1 {
-            return Some(sequence_expr.expressions.pop().unwrap());
+        if e.expressions.len() != old_len {
+            ctx.state.changed = true;
         }
+        if e.expressions.len() == 1 {
+            *expr = e.expressions.pop().unwrap();
+            ctx.state.changed = true;
+        }
+    }
 
-        if sequence_expr.expressions.len() != old_len {
-            state.changed = true;
+    pub fn keep_track_of_pure_functions(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+        match stmt {
+            Statement::FunctionDeclaration(f) => {
+                if let Some(body) = &f.body {
+                    Self::try_save_pure_function(
+                        f.id.as_ref(),
+                        &f.params,
+                        body,
+                        f.r#async,
+                        f.generator,
+                        ctx,
+                    );
+                }
+            }
+            Statement::VariableDeclaration(decl) => {
+                for d in &decl.declarations {
+                    if let BindingPatternKind::BindingIdentifier(id) = &d.id.kind {
+                        match &d.init {
+                            Some(Expression::ArrowFunctionExpression(a)) => {
+                                Self::try_save_pure_function(
+                                    Some(id),
+                                    &a.params,
+                                    &a.body,
+                                    a.r#async,
+                                    false,
+                                    ctx,
+                                );
+                            }
+                            Some(Expression::FunctionExpression(f)) => {
+                                if let Some(body) = &f.body {
+                                    Self::try_save_pure_function(
+                                        Some(id),
+                                        &f.params,
+                                        body,
+                                        f.r#async,
+                                        f.generator,
+                                        ctx,
+                                    );
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
-        None
+    }
+
+    fn try_save_pure_function(
+        id: Option<&BindingIdentifier<'a>>,
+        params: &FormalParameters<'a>,
+        body: &FunctionBody<'a>,
+        r#async: bool,
+        generator: bool,
+        ctx: &mut Ctx<'a, '_>,
+    ) {
+        if r#async || generator {
+            return;
+        }
+        // `function foo({}) {} foo(null)` is runtime type error.
+        if !params.items.iter().all(|pat| pat.pattern.kind.is_binding_identifier()) {
+            return;
+        }
+        if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {
+            return;
+        }
+        let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
+        if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
+            ctx.state.pure_functions.insert(
+                symbol_id,
+                if body.is_empty() { Some(ConstantValue::Undefined) } else { None },
+            );
+        }
+    }
+
+    pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+        let Expression::CallExpression(e) = expr else { return };
+        if let Expression::Identifier(ident) = &e.callee {
+            let reference_id = ident.reference_id();
+            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                && matches!(
+                    ctx.state.pure_functions.get(&symbol_id),
+                    Some(Some(ConstantValue::Undefined))
+                )
+            {
+                let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
+                if exprs.is_empty() {
+                    *expr = ctx.ast.void_0(e.span);
+                    ctx.state.changed = true;
+                    return;
+                }
+                exprs.push(ctx.ast.void_0(e.span));
+                *expr = ctx.ast.expression_sequence(e.span, exprs);
+                ctx.state.changed = true;
+            }
+        }
     }
 
     /// Whether the indirect access should be kept.
@@ -496,10 +449,7 @@ impl<'a> PeepholeOptimizations {
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
-    pub fn should_keep_indirect_access(
-        access_value: &Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
-    ) -> bool {
+    pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {
@@ -538,9 +488,7 @@ impl<'a> PeepholeOptimizations {
             _ => false,
         }
     }
-}
 
-impl<'a> LatePeepholeOptimizations {
     pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut Ctx<'a, '_>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
@@ -560,7 +508,17 @@ impl<'a> LatePeepholeOptimizations {
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeRemoveDeadCodeTest.java>
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use crate::{
+        CompressOptions, CompressOptionsUnused,
+        tester::{default_options, test, test_options, test_same, test_same_options},
+    };
+
+    #[track_caller]
+    fn test_unused(source_text: &str, expected: &str) {
+        let options =
+            CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() };
+        test_options(source_text, expected, &options);
+    }
 
     #[test]
     fn test_fold_block() {
@@ -611,7 +569,7 @@ mod test {
         test("a: { break a; }", "");
 
         test("a: { break a; console.log('unreachable'); }", "");
-        test("a: { break a; var x = 1; } x = 2;", "var x; x = 2;");
+        test("a: { break a; var x = 1; } x = 2;", "var x = 2;");
 
         test("b: { var x = 1; } x = 2;", "b: var x = 1; x = 2;");
         test("a: b: { var x = 1; } x = 2;", "a: b: var x = 1; x = 2;");
@@ -679,6 +637,8 @@ mod test {
         test("if (foo) {} else {}", "foo");
         test("if (false) {}", "");
         test("if (true) {}", "");
+        test("if (false) { var a; console.log(a) }", "if (0) var a");
+        test_unused("if (false) { var a; console.log(a) }", "");
     }
 
     #[test]
@@ -718,6 +678,9 @@ mod test {
         test("while(true) { continue a; unreachable;}", "for(;;) continue a");
         test("while(true) { throw a; unreachable;}", "for(;;) throw a");
         test("while(true) { return a; unreachable;}", "for(;;) return a");
+
+        test("(function () { return; var a })()", "(function () { return; var a })()");
+        test_unused("(function () { return; var a })()", "");
     }
 
     #[test]
@@ -766,5 +729,35 @@ mod test {
     #[test]
     fn remove_constant_value() {
         test("const foo = false; if (foo) { console.log('foo') }", "const foo = !1;");
+    }
+
+    #[test]
+    fn remove_empty_function() {
+        let options = CompressOptions::smallest();
+        test_options("function foo() {} foo()", "", &options);
+        test_options("function foo() {} foo(); foo()", "", &options);
+        test_options("var foo = () => {}; foo()", "", &options);
+        test_options("var foo = () => {}; foo(a)", "a", &options);
+        test_options("var foo = () => {}; foo(a, b)", "a, b", &options);
+        test_options("var foo = () => {}; foo(...a, b)", "[...a], b", &options);
+        test_options("var foo = () => {}; foo(...a, ...b)", "[...a], [...b]", &options);
+        test_options("var foo = () => {}; x = foo()", "x = void 0", &options);
+        test_options("var foo = () => {}; x = foo(a(), b())", "x = (a(), b(), void 0)", &options);
+        test_options("var foo = function () {}; foo()", "", &options);
+
+        test_same_options("function foo({}) {} foo()", &options);
+        test_options("var foo = ({}) => {}; foo()", "(({}) => {})()", &options);
+        test_options("var foo = function ({}) {}; foo()", "(function ({}) {})()", &options);
+
+        test_same_options("async function foo({}) {} foo()", &options);
+        test_options("var foo = async ({}) => {}; foo()", "(async ({}) => {})()", &options);
+        test_options(
+            "var foo = async function ({}) {}; foo()",
+            "(async function ({}) {})()",
+            &options,
+        );
+
+        test_same_options("function* foo({}) {} foo()", &options);
+        test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
     }
 }

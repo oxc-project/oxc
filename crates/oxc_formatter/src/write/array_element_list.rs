@@ -46,31 +46,34 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                 let mut filler = f.fill();
 
                 // Using format_separated is valid in this case as can_print_fill does not allow holes
-                for (element, formatted) in self.elements.iter().zip(
-                    FormatSeparatedIter::new(self.elements.iter(), ",")
-                        .with_trailing_separator(trailing_separator)
-                        .with_group_id(self.group_id),
-                ) {
+                for element in FormatSeparatedIter::new(self.elements.iter(), ",")
+                    .with_trailing_separator(trailing_separator)
+                    .with_group_id(self.group_id)
+                {
                     filler.entry(
                         &format_once(|f| {
-                            if get_lines_before(element.span().start, f) > 1 {
+                            if f.source_text().get_lines_before(element.span(), f.comments()) > 1 {
                                 write!(f, empty_line())
                             } else if f
                                 .comments()
-                                .has_leading_own_line_comments(element.span().start)
+                                .has_leading_own_line_comment(element.span().start)
                             {
                                 write!(f, hard_line_break())
                             } else {
                                 write!(f, soft_line_break_or_space())
                             }
                         }),
-                        &formatted,
+                        &element,
                     );
                 }
 
                 filler.finish()
             }
-            ArrayLayout::OnePerLine => write_array_node(self.elements, f),
+            ArrayLayout::OnePerLine => write_array_node(
+                self.elements.len(),
+                self.elements.iter().map(|e| if e.is_elision() { None } else { Some(e) }),
+                f,
+            ),
         }
     }
 }
@@ -118,7 +121,7 @@ pub fn can_concisely_print_array_list(
     let source_text = f.source_text();
     let comments = f.comments();
 
-    let mut comments_iter = comments.filter_comments_in_span(array_expression_span);
+    let mut comments_iter = comments.comments_before_iter(array_expression_span.end);
 
     for item in list {
         match item {
@@ -149,9 +152,12 @@ pub fn can_concisely_print_array_list(
     // ]
     // ```
 
-    !comments
-        .filter_comments_in_span(array_expression_span)
-        .any(|comment| comments.is_trailing_line_comment(comment))
+    let source_text = f.source_text();
+    !comments.comments_before_iter(array_expression_span.end).any(|comment| {
+        comment.is_line()
+            && !source_text.is_own_line_comment(comment)
+            && source_text.is_end_of_line_comment(comment)
+    })
 }
 
 // ```js

@@ -175,7 +175,7 @@ impl<'a> AstBuilder<'a> {
         body: FunctionBody<'a>,
         scope_id: ScopeId,
     ) -> Box<'a, Function<'a>> {
-        self.alloc_function_with_scope_id_and_pure(
+        self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
             id,
@@ -188,6 +188,7 @@ impl<'a> AstBuilder<'a> {
             NONE,
             Some(body),
             scope_id,
+            false,
             false,
         )
     }
@@ -216,7 +217,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
-        self.alloc_function_with_scope_id_and_pure(
+        self.alloc_function_with_scope_id_and_pure_and_pife(
             span,
             r#type,
             id,
@@ -229,6 +230,7 @@ impl<'a> AstBuilder<'a> {
             return_type,
             body,
             scope_id,
+            false,
             false,
         )
     }

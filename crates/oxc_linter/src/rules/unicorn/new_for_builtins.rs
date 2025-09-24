@@ -71,12 +71,11 @@ impl Rule for NewForBuiltins {
                 if ENFORCE_NEW_FOR_BUILTINS.contains(builtin_name) {
                     if builtin_name == "Object" {
                         let parent_kind = ctx.nodes().parent_kind(node.id());
-                        if let AstKind::BinaryExpression(bin_expr) = parent_kind {
-                            if bin_expr.operator == BinaryOperator::StrictEquality
-                                || bin_expr.operator == BinaryOperator::StrictInequality
-                            {
-                                return;
-                            }
+                        if let AstKind::BinaryExpression(bin_expr) = parent_kind
+                            && (bin_expr.operator == BinaryOperator::StrictEquality
+                                || bin_expr.operator == BinaryOperator::StrictInequality)
+                        {
+                            return;
                         }
                     }
 

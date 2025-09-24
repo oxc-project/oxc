@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::modifiers::Modifier;
+use crate::modifiers::{Modifier, ModifierKind};
 
 #[inline]
 fn ts_error<C, M>(code: C, message: M) -> OxcDiagnostic
@@ -307,6 +307,11 @@ pub fn optional_accessor_property(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn constructor_accessor(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Classes may not have a field named 'constructor'").with_label(span)
+}
+
+#[cold]
 pub fn optional_definite_property(span: Span) -> OxcDiagnostic {
     // NOTE: could not find an error code when tsc parses this; its parser panics.
     OxcDiagnostic::error("A property cannot be both optional and definite.")
@@ -410,6 +415,11 @@ pub fn ts_arrow_function_this_parameter(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn ts_empty_type_parameter_list(span: Span) -> OxcDiagnostic {
     ts_error("1098", "Type parameter list cannot be empty.").with_label(span)
+}
+
+#[cold]
+pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
+    ts_error("1099", "Type argument list cannot be empty.").with_label(span)
 }
 
 #[cold]
@@ -537,6 +547,20 @@ pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn modifier_only_on_property_declaration_or_index_signature(
+    modifier: &Modifier,
+) -> OxcDiagnostic {
+    ts_error(
+        "1024",
+        format!(
+            "'{}' modifier can only appear on a property declaration or index signature.",
+            modifier.kind
+        ),
+    )
+    .with_label(modifier.span)
+}
+
+#[cold]
 pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1028", "Accessibility modifier already seen.")
         .with_label(modifier.span)
@@ -544,10 +568,35 @@ pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic
 }
 
 #[cold]
+pub fn modifier_must_precede_other_modifier(
+    modifier: &Modifier,
+    other_modifier: ModifierKind,
+) -> OxcDiagnostic {
+    ts_error(
+        "1029",
+        format!("'{}' modifier must precede '{}' modifier.", modifier.kind, other_modifier),
+    )
+    .with_label(modifier.span)
+}
+
+#[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span)
         .with_help("Remove the duplicate modifier.")
+}
+
+pub fn cannot_appear_on_class_elements(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error(
+        "1031",
+        format!("'{}' modifier cannot appear on class elements of this kind.", modifier.kind),
+    )
+    .with_label(modifier.span)
+}
+
+pub fn cannot_appear_on_a_type_member(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1070", format!("'{}' modifier cannot appear on a type member.", modifier.kind))
+        .with_label(modifier.span)
 }
 
 #[cold]

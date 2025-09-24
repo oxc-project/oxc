@@ -1,11 +1,13 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
 };
-use oxc_ecmascript::{ToBoolean, is_global_reference::WithoutGlobalReferenceInformation};
-use oxc_semantic::{AstNode, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
+use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
+use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
@@ -145,16 +147,11 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
 
 impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
     fn is_constant(&self, _in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
-        if let Expression::Identifier(ident) = &self.callee {
-            if ident.name == "Boolean"
-                && self
-                    .arguments
-                    .iter()
-                    .next()
-                    .is_none_or(|first| first.is_constant(true, semantic))
-            {
-                return semantic.is_reference_to_global_variable(ident);
-            }
+        if let Expression::Identifier(ident) = &self.callee
+            && ident.name == "Boolean"
+            && self.arguments.iter().next().is_none_or(|first| first.is_constant(true, semantic))
+        {
+            return semantic.is_reference_to_global_variable(ident);
         }
         false
     }
@@ -241,7 +238,6 @@ pub fn outermost_paren_parent<'a, 'b>(
     semantic
         .nodes()
         .ancestors(node.id())
-        .skip(1)
         .find(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
 }
 
@@ -253,7 +249,6 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
     semantic
         .nodes()
         .ancestors(node.id())
-        .skip(1)
         .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
         .nth(n)
 }
@@ -261,10 +256,10 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 /// Iterate over parents of `node`, skipping nodes that are also ignored by
 /// [`Expression::get_inner_expression`].
 pub fn iter_outer_expressions<'a, 's>(
-    semantic: &'s Semantic<'a>,
+    nodes: &'s AstNodes<'a>,
     node_id: NodeId,
 ) -> impl Iterator<Item = AstKind<'a>> + 's {
-    semantic.nodes().ancestor_kinds(node_id).skip(1).filter(|parent| {
+    nodes.ancestor_kinds(node_id).filter(|parent| {
         !matches!(
             parent,
             AstKind::ParenthesizedExpression(_)
@@ -310,9 +305,7 @@ pub fn extract_regex_flags<'a>(
     }
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
-        Argument::TemplateLiteral(template) if template.is_no_substitution_template() => {
-            template.quasi().expect("no-substitution templates always have a quasi")
-        }
+        Argument::TemplateLiteral(template) => template.single_quasi()?,
         _ => return None,
     };
     let mut flags = RegExpFlags::empty();
@@ -330,16 +323,16 @@ pub fn is_method_call<'a>(
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
 ) -> bool {
-    if let Some(min_arg_count) = min_arg_count {
-        if call_expr.arguments.len() < min_arg_count {
-            return false;
-        }
+    if let Some(min_arg_count) = min_arg_count
+        && call_expr.arguments.len() < min_arg_count
+    {
+        return false;
     }
 
-    if let Some(max_arg_count) = max_arg_count {
-        if call_expr.arguments.len() > max_arg_count {
-            return false;
-        }
+    if let Some(max_arg_count) = max_arg_count
+        && call_expr.arguments.len() > max_arg_count
+    {
+        return false;
     }
 
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
@@ -373,15 +366,15 @@ pub fn is_new_expression<'a>(
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
 ) -> bool {
-    if let Some(min_arg_count) = min_arg_count {
-        if new_expr.arguments.len() < min_arg_count {
-            return false;
-        }
+    if let Some(min_arg_count) = min_arg_count
+        && new_expr.arguments.len() < min_arg_count
+    {
+        return false;
     }
-    if let Some(max_arg_count) = max_arg_count {
-        if new_expr.arguments.len() > max_arg_count {
-            return false;
-        }
+    if let Some(max_arg_count) = max_arg_count
+        && new_expr.arguments.len() > max_arg_count
+    {
+        return false;
     }
 
     let Expression::Identifier(ident) = new_expr.callee.without_parentheses() else {
@@ -518,6 +511,14 @@ pub fn get_preceding_indent_str(source_text: &str, span: Span) -> Option<&str> {
 }
 
 pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
+    could_be_error_impl(ctx, expr, &mut FxHashSet::default())
+}
+
+fn could_be_error_impl(
+    ctx: &LintContext,
+    expr: &Expression,
+    visited: &mut FxHashSet<SymbolId>,
+) -> bool {
     match expr.get_inner_expression() {
         Expression::NewExpression(_)
         | Expression::AwaitExpression(_)
@@ -531,42 +532,54 @@ pub fn could_be_error(ctx: &LintContext, expr: &Expression) -> bool {
         Expression::AssignmentExpression(expr) => {
             if matches!(expr.operator, AssignmentOperator::Assign | AssignmentOperator::LogicalAnd)
             {
-                return could_be_error(ctx, &expr.right);
+                return could_be_error_impl(ctx, &expr.right, visited);
             }
 
             if matches!(
                 expr.operator,
                 AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
             ) {
-                return expr.left.get_expression().is_none_or(|expr| could_be_error(ctx, expr))
-                    || could_be_error(ctx, &expr.right);
+                return expr
+                    .left
+                    .get_expression()
+                    .is_none_or(|expr| could_be_error_impl(ctx, expr, visited))
+                    || could_be_error_impl(ctx, &expr.right, visited);
             }
 
             false
         }
         Expression::SequenceExpression(expr) => {
-            expr.expressions.last().is_some_and(|expr| could_be_error(ctx, expr))
+            expr.expressions.last().is_some_and(|expr| could_be_error_impl(ctx, expr, visited))
         }
         Expression::LogicalExpression(expr) => {
             if matches!(expr.operator, LogicalOperator::And) {
-                return could_be_error(ctx, &expr.right);
+                return could_be_error_impl(ctx, &expr.right, visited);
             }
 
-            could_be_error(ctx, &expr.left) || could_be_error(ctx, &expr.right)
+            could_be_error_impl(ctx, &expr.left, visited)
+                || could_be_error_impl(ctx, &expr.right, visited)
         }
         Expression::ConditionalExpression(expr) => {
-            could_be_error(ctx, &expr.consequent) || could_be_error(ctx, &expr.alternate)
+            could_be_error_impl(ctx, &expr.consequent, visited)
+                || could_be_error_impl(ctx, &expr.alternate, visited)
         }
         Expression::Identifier(ident) => {
             let reference = ctx.scoping().get_reference(ident.reference_id());
             let Some(symbol_id) = reference.symbol_id() else {
                 return true;
             };
+
+            // Check if we've already visited this symbol to prevent infinite recursion
+            // Return true (could be error) when we encounter a circular reference since we can't determine the type
+            if !visited.insert(symbol_id) {
+                return true;
+            }
+
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
                     if let Some(init) = &decl.init {
-                        could_be_error(ctx, init)
+                        could_be_error_impl(ctx, init, visited)
                     } else {
                         // TODO: warn about throwing undefined
                         false
@@ -661,7 +674,7 @@ pub fn is_default_this_binding<'a>(
                 current_node = parent;
             }
             AstKind::ReturnStatement(_) => {
-                let upper_func = semantic.nodes().ancestors(parent.id()).skip(1).find(|node| {
+                let upper_func = semantic.nodes().ancestors(parent.id()).find(|node| {
                     matches!(
                         node.kind(),
                         AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
@@ -727,12 +740,11 @@ pub fn is_default_this_binding<'a>(
                         .is_some_and(|name| name == "apply" || name == "bind" || name == "call")
                 {
                     let node = outermost_paren_parent(parent, semantic).unwrap();
-                    if let AstKind::CallExpression(call_expr) = node.kind() {
-                        if let Some(arg) =
+                    if let AstKind::CallExpression(call_expr) = node.kind()
+                        && let Some(arg) =
                             call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                        {
-                            return arg.is_null_or_undefined();
-                        }
+                    {
+                        return arg.is_null_or_undefined();
                     }
                 }
                 return true;
@@ -792,10 +804,11 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
         PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
         PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.is_empty() && template.quasis.len() == 1 {
-                if let Some(cooked) = &template.quasis[0].value.cooked {
-                    return Some(Cow::Borrowed(cooked.as_str()));
-                }
+            if template.expressions.is_empty()
+                && template.quasis.len() == 1
+                && let Some(cooked) = &template.quasis[0].value.cooked
+            {
+                return Some(Cow::Borrowed(cooked.as_str()));
             }
 
             None

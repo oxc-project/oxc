@@ -193,3 +193,39 @@ describe('ramda', async () => {
     expect(Ramda.add(1, 2)).toBe(3);
   });
 });
+
+describe('axios', async () => {
+  const modules = await getModules('axios/dist/', 'axios.js', 'cjs');
+  test.each(modules)(info, ({ module: Axios }) => {
+    expect(Axios.create).toBeDefined();
+    expect(Axios.defaults).toBeDefined();
+    expect(typeof Axios.get).toBe('function');
+  });
+});
+
+describe('classnames', async () => {
+  const modules = await getModules('classnames/', 'index.js', 'cjs');
+  test.each(modules)(info, ({ module: classNames }) => {
+    expect(classNames('foo', 'bar')).toBe('foo bar');
+    expect(classNames('foo', { bar: true, baz: false })).toBe('foo bar');
+    expect(classNames({ 'foo-bar': true })).toBe('foo-bar');
+  });
+});
+
+describe('ms', async () => {
+  const modules = await getModules('ms/', 'index.js', 'cjs');
+  test.each(modules)(info, ({ module: ms }) => {
+    expect(ms('2 days')).toBe(172800000);
+    expect(ms('1d')).toBe(86400000);
+    expect(ms('10h')).toBe(36000000);
+    expect(ms(60000)).toBe('1m');
+  });
+});
+
+describe('qs', async () => {
+  const modules = await getModules('qs/dist/', 'qs.js', 'cjs');
+  test.each(modules)(info, ({ module: qs }) => {
+    expect(qs.parse('foo=bar&baz=qux')).toEqual({ foo: 'bar', baz: 'qux' });
+    expect(qs.stringify({ foo: 'bar', baz: 'qux' })).toBe('foo=bar&baz=qux');
+  });
+});

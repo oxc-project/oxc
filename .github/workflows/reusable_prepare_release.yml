@@ -26,12 +26,12 @@ jobs:
       pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
       version: ${{ steps.run.outputs.VERSION }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
         with:
           cache-key: warm
           tools: cargo-release-oxc
@@ -49,6 +49,23 @@ jobs:
             cat ./target/OXC_CHANGELOG
             echo EOF
           } >> $GITHUB_OUTPUT
+
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+        if: ${{ inputs.name == 'crates' || inputs.name == 'oxlint' }}
+
+      # Run NAPI-RS build, because NAPI-RS uses version from `package.json` in the bindings file,
+      # which is committed to the repo. The version has just been bumped in previous step.
+      # We don't use the compiled `.node` binary, so only do a development build, as it's faster.
+      - name: Rebuild NAPI packages bindings
+        if: ${{ inputs.name == 'crates' }}
+        run: |
+          pnpm --filter oxc-minify run build-dev
+          pnpm --filter oxc-parser run build-dev
+          pnpm --filter oxc-transform run build-dev
+
+      - name: Rebuild Oxlint NAPI bindings
+        if: ${{ inputs.name == 'oxlint' }}
+        run: pnpm --filter oxlint run build-dev
 
       # update `Cargo.lock`
       - run: cargo check

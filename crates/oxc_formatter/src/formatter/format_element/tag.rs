@@ -259,7 +259,8 @@ impl PartialEq for LabelId {
 }
 
 impl LabelId {
-    pub fn of<T: Label>(label: &T) -> Self {
+    #[expect(clippy::needless_pass_by_value)] // The `Label` trait is unnecessary, would refactor it later.
+    pub fn of<T: Label>(label: T) -> Self {
         Self {
             value: label.id(),
             #[cfg(debug_assertions)]

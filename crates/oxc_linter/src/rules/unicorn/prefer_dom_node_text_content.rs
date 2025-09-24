@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::AssignmentTarget};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -70,9 +70,13 @@ impl Rule for PreferDomNodeTextContent {
                 ) && (matches!(grand_parent_node.kind(), AstKind::ObjectPattern(_))
                     || matches!(
                         grand_parent_node.kind(),
-                        AstKind::ObjectAssignmentTarget(_)
-                            | AstKind::SimpleAssignmentTarget(_)
-                            | AstKind::AssignmentTarget(_)
+                        AstKind::IdentifierReference(_)
+                            | AstKind::ObjectAssignmentTarget(_)
+                            | AstKind::AssignmentTargetPropertyIdentifier(_)
+                            | AstKind::ArrayAssignmentTarget(_)
+                            | AstKind::ComputedMemberExpression(_)
+                            | AstKind::StaticMemberExpression(_)
+                            | AstKind::PrivateFieldExpression(_)
                     ))
                 {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
@@ -84,7 +88,7 @@ impl Rule for PreferDomNodeTextContent {
                     return;
                 }
 
-                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
+                let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id());
 
                 let Some(mut parent_node_kind) = ancestor_kinds.next() else { return };
                 if matches!(parent_node_kind, AstKind::AssignmentTargetPropertyIdentifier(_)) {
@@ -93,15 +97,14 @@ impl Rule for PreferDomNodeTextContent {
                 }
                 let Some(grand_parent_node_kind) = ancestor_kinds.next() else { return };
 
-                if matches!(
-                    parent_node_kind,
-                    AstKind::ObjectAssignmentTarget(_)
-                        | AstKind::AssignmentTarget(_)
-                        | AstKind::SimpleAssignmentTarget(_)
-                ) && matches!(
-                    grand_parent_node_kind,
-                    AstKind::AssignmentTarget(AssignmentTarget::ObjectAssignmentTarget(_))
-                ) {
+                if matches!(parent_node_kind, AstKind::ObjectAssignmentTarget(_))
+                    && matches!(
+                        grand_parent_node_kind,
+                        AstKind::ExpressionStatement(_)
+                            | AstKind::AssignmentExpression(_)
+                            | AstKind::ObjectAssignmentTarget(_)
+                    )
+                {
                     ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
                 }
             }

@@ -1890,6 +1890,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // Remaining variants do not contain scopes:
                 // `IdentifierReference`
                 // `QualifiedName`
+                // `ThisExpression`
             }
         }
     }
@@ -1903,6 +1904,16 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+    }
+
+    #[inline(always)]
+    fn visit_ts_import_type_qualifier(&mut self, it: &TSImportTypeQualifier<'a>) {
+        // Enum does not contain a scope. Halt traversal.
+    }
+
+    #[inline(always)]
+    fn visit_ts_import_type_qualified_name(&mut self, it: &TSImportTypeQualifiedName<'a>) {
+        // Struct does not contain a scope. Halt traversal.
     }
 
     #[inline]

@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "1.6.0",
+  "version": "1.17.0",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -114,7 +114,16 @@
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
+          "description": "Path to oxlint configuration. Keep it empty to enable nested configuration."
+        },
+        "oxc.tsConfigPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "scope": "resource",
+          "default": null,
+          "description": "Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin."
         },
         "oxc.unusedDisableDirectives": {
           "type": "string",
@@ -132,11 +141,23 @@
           "default": "allow",
           "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
         },
+        "oxc.typeAware": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "Enable type-aware linting."
+        },
         "oxc.flags": {
           "type": "object",
           "scope": "resource",
           "default": {},
           "description": "Specific Oxlint flags to pass to the language server."
+        },
+        "oxc.fmt.experimental": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "Enable experimental formatting support. This feature is experimental and might not work as expected."
         }
       }
     },
@@ -163,17 +184,25 @@
       }
     ]
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "The Extension will always use the Language Server shipped with the Extension.",
+      "restrictedConfigurations": [
+        "oxc.path.server"
+      ]
+    }
+  },
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
-    "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap",
+    "compile": "rolldown -c rolldown.config.ts",
     "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
     "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
-    "lint": "npx oxlint --tsconfig=tsconfig.json",
-    "test": "esbuild tests/*.spec.ts --bundle --outdir=out --external:vscode --format=cjs --platform=node --target=node16 --sourcemap && vscode-test",
+    "test": "cross-env TEST=true pnpm run compile && vscode-test",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
@@ -183,11 +212,11 @@
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
-    "cross-env": "^7.0.3",
-    "esbuild": "^0.25.0",
+    "cross-env": "^10.0.0",
     "ovsx": "^0.10.0",
-    "oxlint": "^1.0.0",
-    "typescript": "^5.4.5"
+    "rolldown": "1.0.0-beta.38",
+    "tinyglobby": "^0.2.15",
+    "typescript": "catalog:"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

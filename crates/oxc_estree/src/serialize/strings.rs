@@ -1,6 +1,6 @@
 use std::{num::NonZeroU64, slice};
 
-use oxc_data_structures::{code_buffer::CodeBuffer, pointer_ext::PointerExt};
+use oxc_data_structures::{code_buffer::CodeBuffer, slice_iter::SliceIter};
 
 use super::{ESTree, Serializer};
 
@@ -279,13 +279,13 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
                     escape = T::get_escape_for_byte(byte);
                     // Consume bytes before this one.
                     // SAFETY: `found_byte_index < 8` and there are at least 8 bytes remaining in `iter`
-                    unsafe { advance_unchecked(&mut iter, found_byte_index) };
+                    unsafe { iter.advance_unchecked(found_byte_index) };
                     break 'inner;
                 }
 
                 // Consume the whole batch.
                 // SAFETY: There are at least `BATCH_SIZE` bytes remaining in `iter`.
-                unsafe { advance_unchecked(&mut iter, 8) };
+                unsafe { iter.advance_unchecked(8) };
 
                 // Go round `'inner` loop again to continue searching
             } else {
@@ -296,7 +296,7 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
                     if escape != Escape::__ {
                         // Consume bytes before this one.
                         // SAFETY: `i` is an index of `iter`, so cannot be out of bounds.
-                        unsafe { advance_unchecked(&mut iter, i) };
+                        unsafe { iter.advance_unchecked(i) };
                         break 'inner;
                     }
                 }
@@ -326,15 +326,15 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
                 // an ASCII character, so must also be on a UTF-8 character boundary, and in bounds.
                 // `chunk_start_ptr` is after a previous byte so must be `<= current_ptr`.
                 unsafe {
-                    let current_ptr = iter.as_slice().as_ptr();
-                    let len = current_ptr.offset_from_usize(chunk_start_ptr);
+                    let current_ptr = iter.ptr();
+                    let len = current_ptr.offset_from_unsigned(chunk_start_ptr);
                     let chunk = slice::from_raw_parts(chunk_start_ptr, len);
                     buffer.print_bytes_unchecked(chunk);
                 }
 
                 // Consume the lossy replacement character.
                 // SAFETY: Lossy replacement character is 3 bytes.
-                unsafe { advance_unchecked(&mut iter, 3) };
+                unsafe { iter.advance_unchecked(3) };
 
                 let hex = iter.as_slice().get(..4).unwrap();
                 if hex == b"fffd" {
@@ -343,12 +343,12 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
 
                     // Consume `fffd`.
                     // SAFETY: We know next 4 bytes are `fffd`.
-                    unsafe { advance_unchecked(&mut iter, 4) };
+                    unsafe { iter.advance_unchecked(4) };
 
                     // Set `chunk_start_ptr` to after `\u{FFFD}fffd`.
                     // That's a complete UTF-8 sequence, so `chunk_start_ptr` is definitely
                     // left on a UTF-8 character boundary.
-                    chunk_start_ptr = iter.as_slice().as_ptr();
+                    chunk_start_ptr = iter.ptr();
                 } else {
                     // This is an escaped lone surrogate.
                     // Next 4 bytes should be code point encoded as 4 x hex bytes.
@@ -360,32 +360,32 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
                     // Print `\u`. Leave the hex bytes to be printed in next batch.
                     // After lossy replacement character is definitely a UTF-8 boundary.
                     buffer.print_str("\\u");
-                    chunk_start_ptr = iter.as_slice().as_ptr();
+                    chunk_start_ptr = iter.ptr();
 
                     // SAFETY: `iter.as_slice().get(..4).unwrap()` above would have panicked
                     // if there weren't at least 4 bytes remaining in `iter`.
                     // We haven't checked that the 4 following bytes are ASCII, but it doesn't matter
                     // whether `iter` is left on a UTF-8 char boundary or not.
-                    unsafe { advance_unchecked(&mut iter, 4) }
+                    unsafe { iter.advance_unchecked(4) }
                 }
             } else {
                 // Some other unicode character starting with 0xEF.
                 // Consume it and continue the loop.
                 // SAFETY: `0xEF` is always 1st byte in a 3-byte UTF-8 character.
-                unsafe { advance_unchecked(&mut iter, 3) };
+                unsafe { iter.advance_unchecked(3) };
             }
             continue;
         }
 
         // Print the chunk up to before the character which requires escaping.
-        let current_ptr = iter.as_slice().as_ptr();
+        let current_ptr = iter.ptr();
         // SAFETY: `escape` is only non-zero for ASCII bytes, except `Escape::LO` which is handled above.
         // Therefore `current_ptr` must be on an ASCII byte.
         // `chunk_start_ptr` is start of string originally, and is only updated to be after
         // an ASCII character, so must also be on a UTF-8 character boundary, and in bounds.
         // `chunk_start_ptr` is after a previous byte so must be `<= current_ptr`.
         unsafe {
-            let len = current_ptr.offset_from_usize(chunk_start_ptr);
+            let len = current_ptr.offset_from_unsigned(chunk_start_ptr);
             let chunk = slice::from_raw_parts(chunk_start_ptr, len);
             buffer.print_bytes_unchecked(chunk);
         }
@@ -393,43 +393,25 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
         write_char_escape(escape, byte, buffer);
 
         // SAFETY: `'inner` loop above ensures `iter` is not at end of string
-        unsafe { advance_unchecked(&mut iter, 1) };
+        unsafe { iter.advance_unchecked(1) };
 
         // Set `chunk_start_ptr` to be after this character.
         // `escape` is only non-zero for ASCII bytes, except `Escape::LO` which is handled above.
         // We just consumed that ASCII byte, so `chunk_start_ptr` must be on a UTF-8 char boundary.
-        chunk_start_ptr = iter.as_slice().as_ptr();
+        chunk_start_ptr = iter.ptr();
     }
 
     // Print last chunk.
-    // SAFETY: Adding `len` to `ptr` cannot be out of bounds.
-    let end_ptr = unsafe { iter.as_slice().as_ptr().add(iter.as_slice().len()) };
     // SAFETY: `chunk_start_ptr` is start of string originally, and is only updated to be after
     // an ASCII character, so must be on a UTF-8 character boundary, and in bounds.
-    // `chunk_start_ptr` is after a previous byte so must be `<= end_ptr`.
+    // `chunk_start_ptr` is after a previous byte so must be `<= iter.end_ptr()`.
     unsafe {
-        let len = end_ptr.offset_from_usize(chunk_start_ptr);
+        let len = iter.end_ptr().offset_from_unsigned(chunk_start_ptr);
         let chunk = slice::from_raw_parts(chunk_start_ptr, len);
         buffer.print_bytes_unchecked(chunk);
     }
 
     buffer.print_ascii_byte(b'"');
-}
-
-/// Advance bytes iterator by `count` bytes.
-///
-/// # SAFETY
-/// Caller must ensure there are at least `count` bytes remaining in `iter`.
-#[inline]
-unsafe fn advance_unchecked(iter: &mut slice::Iter<u8>, count: usize) {
-    // Compiler boils this down to just adding `count` to `iter`'s pointer.
-    // SAFETY: Caller guarantees there are at least `count` bytes remaining in `iter`.
-    unsafe {
-        let new_ptr = iter.as_slice().as_ptr().add(count);
-        let new_len = iter.as_slice().len() - count;
-        let slice = slice::from_raw_parts(new_ptr, new_len);
-        *iter = slice.iter();
-    };
 }
 
 /// Write escape sequence to `buffer`.
@@ -483,7 +465,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -495,7 +477,7 @@ mod tests {
         let cases = [(String::new(), r#""""#), ("foobar".to_string(), r#""foobar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             input.to_string().serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -507,7 +489,7 @@ mod tests {
         let cases = [("", r#""""#), ("a", r#""a""#), ("abc", r#""abc""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             JsonSafeString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -530,7 +512,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new(false);
+            let mut serializer = CompactTSSerializer::default();
             LoneSurrogatesString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

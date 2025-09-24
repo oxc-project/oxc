@@ -24,12 +24,12 @@ oxc_minifier = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+oxc_tasks_common = { workspace = true }
 oxc_transformer_plugins = { workspace = true }
 
-flate2 = { workspace = true }
-oxc_tasks_common = { workspace = true }
-
 cow-utils = { workspace = true }
+flate2 = { workspace = true }
 humansize = { workspace = true }
+pico-args = { workspace = true }
 rustc-hash = { workspace = true }
 similar-asserts = { workspace = true }

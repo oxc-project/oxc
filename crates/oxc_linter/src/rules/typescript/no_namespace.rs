@@ -157,7 +157,9 @@ impl Rule for NoNamespace {
             return;
         }
 
-        if self.allow_declarations && is_declaration(node, ctx) {
+        if self.allow_declarations
+            && (declaration.declare || is_any_ancestor_declaration(node, ctx))
+        {
             return;
         }
 
@@ -185,7 +187,7 @@ impl Rule for NoNamespace {
     }
 }
 
-fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
     ctx.nodes()
         .ancestors(node.id())
         .any(|node| node.kind().as_ts_module_declaration().is_some_and(|decl| decl.declare))

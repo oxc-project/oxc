@@ -1,38 +1,80 @@
-use oxc_allocator::{Address, GetAddress};
+use oxc_allocator::Vec;
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use super::FormatWrite;
 use crate::{
-    formatter::{Buffer, FormatResult, Formatter, prelude::*, trivia::DanglingIndentMode},
+    format_args,
+    formatter::{
+        Buffer, FormatResult, Formatter,
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
+    },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        f.join_nodes_with_hardline()
+            .entries(
+                self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
+            )
+            .finish()
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
-        if is_empty_block(self, f) {
-            if f.context().comments().has_dangling_comments(self.span) {
-                write!(f, format_dangling_comments(self.span).with_block_indent())?;
+
+        let comments_before_catch_clause = if let AstNodes::CatchClause(catch) = self.parent {
+            f.context().get_cached_element(&catch.span)
+        } else {
+            None
+        };
+
+        let has_comment_before_catch_clause = comments_before_catch_clause.is_some();
+        // See reason in `[AstNode<'a, CatchClause<'a>>::write]`
+        let formatted_comments_before_catch_clause = format_once(|f| {
+            if let Some(comments) = comments_before_catch_clause {
+                f.write_element(comments)
+            } else {
+                Ok(())
+            }
+        });
+
+        if is_empty_block(&self.body, f) {
+            // `if (a) /* comment */ {}`
+            // should be formatted like:
+            // `if (a) { /* comment */ }`
+            //
+            // Some comments are not inside the block, but we need to print them inside the block.
+            if has_comment_before_catch_clause
+                || f.context().comments().has_comment_before(self.span.end)
+            {
+                write!(
+                    f,
+                    block_indent(&format_args!(
+                        &formatted_comments_before_catch_clause,
+                        format_dangling_comments(self.span)
+                    ))
+                )?;
             } else if is_non_collapsible(self.parent) {
                 write!(f, hard_line_break())?;
             }
         } else {
-            write!(f, block_indent(&self.body()))?;
+            write!(
+                f,
+                block_indent(&format_args!(&formatted_comments_before_catch_clause, self.body()))
+            )?;
         }
         write!(f, "}")
     }
 }
 
-fn is_empty_block(block: &BlockStatement<'_>, f: &Formatter<'_, '_>) -> bool {
-    block.body.is_empty()
-        || block.body.iter().all(|s| {
-            matches!(s, Statement::EmptyStatement(_))
-            // TODO: it seems removing `has_comments` doesn't break anything, needs to check further
-            // && !f.comments().has_comments(s.span())
-            // && !f.comments().is_suppressed(s.span())
-        })
+pub fn is_empty_block(block: &[Statement<'_>], f: &Formatter<'_, '_>) -> bool {
+    block.is_empty() || block.iter().all(|s| matches!(s, Statement::EmptyStatement(_)))
 }
 
 /// Formatting of curly braces for an:

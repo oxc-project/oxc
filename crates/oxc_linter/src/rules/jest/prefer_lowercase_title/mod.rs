@@ -20,12 +20,23 @@ fn prefer_lowercase_title_diagnostic(title: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct PreferLowercaseTitleConfig {
     allowed_prefixes: Vec<CompactStr>,
     ignore: Vec<CompactStr>,
     ignore_top_level_describe: bool,
     lowercase_first_character_only: bool,
+}
+
+impl Default for PreferLowercaseTitleConfig {
+    fn default() -> Self {
+        Self {
+            allowed_prefixes: Vec::new(),
+            ignore: Vec::new(),
+            ignore_top_level_describe: false,
+            lowercase_first_character_only: true,
+        }
+    }
 }
 
 impl std::ops::Deref for PreferLowercaseTitle {
@@ -238,7 +249,7 @@ impl Rule for PreferLowercaseTitle {
         if let Argument::StringLiteral(string_expr) = arg {
             self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
         } else if let Argument::TemplateLiteral(template_expr) = arg {
-            let Some(template_string) = template_expr.quasi() else {
+            let Some(template_string) = template_expr.single_quasi() else {
                 return;
             };
             self.lint_string(ctx, template_string.as_str(), template_expr.span);

@@ -82,13 +82,13 @@ impl Rule for PreferAwaitToThen {
             return;
         }
 
+        if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ReturnStatement(_)) {
+            return;
+        }
+
         if !self.strict {
             // Already inside a yield or await
-            if ctx
-                .nodes()
-                .ancestor_ids(node.id())
-                .any(|node_id| is_inside_yield_or_await(ctx.nodes().get_node(node_id)))
-            {
+            if ctx.nodes().ancestors(node.id()).any(is_inside_yield_or_await) {
                 return;
             }
         }
@@ -138,6 +138,9 @@ fn test() {
             Some(serde_json::json!({ "strict": false })),
         ),
         ("const { promise, resolve } = Promise.withResolvers()", None),
+        ("function x () { return Promise.all() } ", None),
+        ("function foo() { return hey.then(x => x) }", None),
+        ("async function foo() { return thing().then(x => x) }", None),
     ];
 
     let fail = vec![

@@ -3,13 +3,14 @@ use crate::{
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
+    utils::is_jsx_fragment,
 };
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
         JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, JSXElementName, JSXExpression,
-        JSXFragment, JSXMemberExpressionObject, JSXOpeningElement,
+        JSXFragment,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -253,16 +254,15 @@ fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext)
     }
 
     // Not safe to fix `<Eeee><>foo</></Eeee>` because `Eeee` might require its children be a ReactElement.
-    if let AstKind::JSXElement(el) = parent {
-        if !el
+    if let AstKind::JSXElement(el) = parent
+        && !el
             .opening_element
             .name
             .get_identifier_name()
             .is_some_and(|ident| ident.chars().all(char::is_lowercase))
-            && !is_jsx_fragment(&el.opening_element)
-        {
-            return false;
-        }
+        && !is_jsx_fragment(&el.opening_element)
+    {
+        return false;
     }
 
     true
@@ -304,10 +304,10 @@ fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
 }
 
 fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
-    if let AstKind::JSXElement(elem) = ctx.nodes().parent_kind(node.id()) {
-        if is_html_element(&elem.opening_element.name) {
-            return true;
-        }
+    if let AstKind::JSXElement(elem) = ctx.nodes().parent_kind(node.id())
+        && is_html_element(&elem.opening_element.name)
+    {
+        return true;
     }
 
     false
@@ -319,22 +319,6 @@ fn is_html_element(elem_name: &JSXElementName) -> bool {
     };
 
     ident.name.starts_with(char::is_lowercase)
-}
-
-fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
-    match &elem.name {
-        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
-        JSXElementName::MemberExpression(mem_expr) => {
-            if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
-                ident.name == "React" && mem_expr.property.name == "Fragment"
-            } else {
-                false
-            }
-        }
-        JSXElementName::NamespacedName(_)
-        | JSXElementName::Identifier(_)
-        | JSXElementName::ThisExpression(_) => false,
-    }
 }
 
 fn has_less_than_two_children(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -> bool {

@@ -1,4 +1,16 @@
 #![expect(clippy::print_stdout)]
+//! # AST Visitor Example
+//!
+//! This example demonstrates how to use the visitor pattern to traverse and analyze
+//! an AST. It counts different types of nodes (functions, classes, TypeScript imports).
+//!
+//! ## Usage
+//!
+//! Create a `test.js` file and run:
+//! ```bash
+//! cargo run -p oxc_parser --example visitor [filename]
+//! ```
+
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
@@ -13,6 +25,7 @@ use oxc_syntax::scope::ScopeFlags;
 // run `cargo run -p oxc_parser --example visitor`
 // or `cargo watch -x "run -p oxc_parser --example visitor"`
 
+/// Demonstrate AST traversal using the visitor pattern
 fn main() -> std::io::Result<()> {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
@@ -21,6 +34,7 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
+    // Report any parsing errors
     for error in ret.errors {
         let error = error.with_source_code(source_text.clone());
         println!("{error:?}");
@@ -28,6 +42,7 @@ fn main() -> std::io::Result<()> {
 
     let program = ret.program;
 
+    // Use visitor to count different AST node types
     let mut ast_pass = CountASTNodes::default();
     ast_pass.visit_program(&program);
     println!("{ast_pass:?}");
@@ -35,6 +50,7 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+/// A visitor that counts different types of AST nodes
 #[derive(Debug, Default)]
 struct CountASTNodes {
     functions: usize,

@@ -1,17 +1,18 @@
 {
   "name": "oxc-transform",
-  "version": "0.76.0",
+  "version": "0.92.0",
+  "type": "module",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
-    "build-dev": "napi build --platform",
-    "build-test": "pnpm run build",
+    "build-dev": "napi build --esm --platform",
+    "build-test": "pnpm run build-dev",
     "build": "pnpm run build-dev --features allocator --release",
-    "postbuild-dev": "node patch.mjs",
+    "postbuild-dev": "node scripts/patch.js",
     "test": "tsc && vitest run --dir ./test"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "description": "Oxc Transformer Node API",
   "keywords": [
@@ -24,7 +25,7 @@
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oxc-project/oxc.git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
     "directory": "napi/transform"
   },
   "funding": {
@@ -34,7 +35,7 @@
     "index.d.ts",
     "index.js",
     "browser.js",
-    "webcontainer-fallback.js"
+    "webcontainer-fallback.cjs"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

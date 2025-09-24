@@ -206,14 +206,14 @@ impl Rule for BanTsComment {
                             ));
                         }
 
-                        if let DirectiveConfig::DescriptionFormat(Some(re)) = config {
-                            if !re.is_match(description) {
-                                ctx.diagnostic(comment_description_not_match_pattern(
-                                    directive,
-                                    re.as_str(),
-                                    comm.content_span(),
-                                ));
-                            }
+                        if let DirectiveConfig::DescriptionFormat(Some(re)) = config
+                            && !re.is_match(description)
+                        {
+                            ctx.diagnostic(comment_description_not_match_pattern(
+                                directive,
+                                re.as_str(),
+                                comm.content_span(),
+                            ));
                         }
                     }
                 }

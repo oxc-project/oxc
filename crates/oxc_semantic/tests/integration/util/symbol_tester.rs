@@ -195,16 +195,12 @@ impl<'a> SymbolTester<'a> {
     /// some criteria established by a predicate.
     pub fn has_number_of_references_where<F>(mut self, ref_count: usize, filter: F) -> Self
     where
-        F: FnMut(&Reference) -> bool,
+        F: Fn(&Reference) -> bool,
     {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
-                let refs = {
-                    self.semantic.scoping().get_resolved_reference_ids(symbol_id).iter().map(
-                        |&reference_id| self.semantic.scoping().get_reference(reference_id).clone(),
-                    )
-                };
-                let num_accepted = refs.filter(filter).count();
+                let refs = self.semantic.scoping().get_resolved_references(symbol_id);
+                let num_accepted = refs.filter(|reference| filter(reference)).count();
                 if num_accepted == ref_count {
                     Ok(symbol_id)
                 } else {

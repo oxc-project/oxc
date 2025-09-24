@@ -201,7 +201,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::TemplateLiteral(left_template_lit),
             Expression::StringLiteral(right_string_lit),
         ) => {
-            let Some(template_str) = left_template_lit.quasi() else {
+            let Some(template_str) = left_template_lit.single_quasi() else {
                 return false;
             };
 
@@ -211,7 +211,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::StringLiteral(left_string_lit),
             Expression::TemplateLiteral(right_template_lit),
         ) => {
-            let Some(template_str) = right_template_lit.quasi() else {
+            let Some(template_str) = right_template_lit.single_quasi() else {
                 return false;
             };
 

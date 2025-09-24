@@ -1,0 +1,61 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(valid-define-emits): `defineEmits` is referencing locally declared variables.
+   ╭─[valid_define_emits.tsx:5:12]
+ 4 │                     const def = { notify: null }
+ 5 │                     defineEmits(def)
+   ·                     ────────────────
+ 6 │                   </script>
+   ╰────
+  help: inline the variable or import it from another module.
+
+  ⚠ eslint-plugin-vue(valid-define-emits): `defineEmits` has both a type-only emit and an argument.
+   ╭─[valid_define_emits.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineEmits<(e: 'notify')=>void>({ submit: null })
+   ·                     ──────────────────────────────────────────────────
+ 5 │                   </script>
+   ╰────
+  help: remove the argument for better type inference.
+
+  ⚠ eslint-plugin-vue(valid-define-emits): `defineEmits` has been called multiple times.
+   ╭─[valid_define_emits.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineEmits({ notify: null })
+   ·                     ──────────────┬──────────────
+   ·                                   ╰── `defineEmits` is called here too
+ 5 │                     defineEmits({ submit: null })
+   ·                     ──────────────┬──────────────
+   ·                                   ╰── `defineEmits` is called here
+ 6 │                   </script>
+   ╰────
+  help: combine all events into a single `defineEmits` call.
+
+  ⚠ eslint-plugin-vue(valid-define-emits): Custom events are defined in both `defineEmits` and `export default {}`.
+    ╭─[valid_define_emits.tsx:9:18]
+  8 │                     /* ✗ BAD */
+  9 │                     defineEmits({ submit: null })
+    ·                     ─────────────────────────────
+ 10 │                   </script>
+    ╰────
+  help: Remove `export default`.
+
+  ⚠ eslint-plugin-vue(valid-define-emits): Custom events are defined in both `defineEmits` and `export default {}`.
+   ╭─[valid_define_emits.tsx:6:21]
+ 5 │                       <script setup lang='ts'>
+ 6 │ ╭─▶                     defineEmits<{
+ 7 │ │                         (e: 'change'): void
+ 8 │ ╰─▶                     }>();
+ 9 │                       </script>
+   ╰────
+  help: Remove `export default`.
+
+  ⚠ eslint-plugin-vue(valid-define-emits): Custom events are not defined.
+   ╭─[valid_define_emits.tsx:4:12]
+ 3 │                     /* ✗ BAD */
+ 4 │                     defineEmits()
+   ·                     ─────────────
+ 5 │                   </script>
+   ╰────
+  help: Define at least one event in `defineEmits`.

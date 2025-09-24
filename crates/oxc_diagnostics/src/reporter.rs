@@ -101,7 +101,7 @@ pub struct Info {
     pub rule_id: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct InfoPosition {
     pub line: usize,
     pub column: usize,
@@ -116,36 +116,37 @@ impl Info {
         let mut severity = Severity::Warning;
         let rule_id = diagnostic.code().map(|code| code.to_string());
 
-        if let Some(mut labels) = diagnostic.labels() {
-            if let Some(source) = diagnostic.source_code() {
-                if let Some(label) = labels.next() {
-                    if let Ok(span_content) = source.read_span(label.inner(), 0, 0) {
-                        start.line = span_content.line() + 1;
-                        start.column = span_content.column() + 1;
+        if let Some(mut labels) = diagnostic.labels()
+            && let Some(source) = diagnostic.source_code()
+            && let Some(label) = labels.next()
+            && let Ok(span_content) = source.read_span(label.inner(), 0, 0)
+        {
+            start.line = span_content.line() + 1;
+            start.column = span_content.column() + 1;
 
-                        let end_offset = label.inner().offset() + label.inner().len();
+            let end_offset = label.inner().offset() + label.inner().len();
 
-                        if let Ok(span_content) =
-                            source.read_span(&SourceSpan::from((end_offset, 0)), 0, 0)
-                        {
-                            end.line = span_content.line() + 1;
-                            end.column = span_content.column() + 1;
-                        }
+            if let Ok(span_content) = source.read_span(&SourceSpan::from((end_offset, 0)), 0, 0) {
+                end.line = span_content.line() + 1;
+                end.column = span_content.column() + 1;
+            }
 
-                        if let Some(name) = span_content.name() {
-                            filename = name.to_string();
-                        }
-                        if matches!(diagnostic.severity(), Some(Severity::Error)) {
-                            severity = Severity::Error;
-                        }
-                        let msg = diagnostic.to_string();
+            if let Some(name) = span_content.name() {
+                filename = name.to_string();
+            }
+            if matches!(diagnostic.severity(), Some(Severity::Error)) {
+                severity = Severity::Error;
+            }
 
-                        // Our messages usually comes with `eslint(rule): message`
-                        message = msg
-                            .split_once(':')
-                            .map_or_else(|| msg.to_string(), |(_, msg)| msg.trim().to_string());
-                    }
-                }
+            message = diagnostic.to_string();
+            // Our messages usually are in format `eslint(rule): message`.
+            // Trim off before the colon.
+            if let Some((_, msg)) = message.split_once(':') {
+                // Equivalent to `message = msg.trim().to_string()`, but operates in place
+                let msg = msg.trim();
+                let start = msg.as_ptr() as usize - message.as_str().as_ptr() as usize;
+                message.truncate(start + msg.len());
+                message.replace_range(..start, "");
             }
         }
 

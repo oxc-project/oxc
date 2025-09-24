@@ -11,12 +11,12 @@
 
 mod generated {
     pub mod ast_nodes;
-    pub mod format;
-    pub mod format_write;
+    mod format;
 }
 mod formatter;
 mod options;
 mod parentheses;
+mod service;
 mod utils;
 mod write;
 
@@ -34,10 +34,13 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use write::FormatWrite;
 
 pub use crate::options::*;
+pub use crate::service::source_type::get_supported_source_type;
 use crate::{
-    formatter::FormatContext,
+    formatter::{FormatContext, Formatted, format_element::document::Document},
     generated::ast_nodes::{AstNode, AstNodes},
 };
+
+use self::formatter::prelude::tag::Label;
 
 pub struct Formatter<'a> {
     allocator: &'a Allocator,
@@ -50,19 +53,47 @@ impl<'a> Formatter<'a> {
         Self { allocator, source_text: "", options }
     }
 
+    /// Formats the given AST `Program` and returns the IR before printing.
+    pub fn doc(mut self, program: &'a Program<'a>) -> Document<'a> {
+        let formatted = self.format(program);
+        formatted.into_document()
+    }
+
+    /// Formats the given AST `Program` and returns the formatted string.
     pub fn build(mut self, program: &Program<'a>) -> String {
+        let formatted = self.format(program);
+        formatted.print().unwrap().into_code()
+    }
+
+    fn format(mut self, program: &'a Program<'a>) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
 
         let source_text = program.source_text;
         self.source_text = source_text;
         let context = FormatContext::new(program, self.allocator, self.options);
-        let formatted = formatter::format(
+        formatter::format(
             program,
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
         )
-        .unwrap();
-        formatted.print().unwrap().into_code()
+        .unwrap()
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub(crate) enum JsLabels {
+    MemberChain,
+}
+
+impl Label for JsLabels {
+    fn id(&self) -> u64 {
+        *self as u64
+    }
+
+    fn debug_name(&self) -> &'static str {
+        match self {
+            Self::MemberChain => "MemberChain",
+        }
     }
 }

@@ -57,7 +57,7 @@ impl Rule for MissingThrow {
 
 impl MissingThrow {
     fn has_missing_throw<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-        let mut node_ancestors = ctx.nodes().ancestor_ids(node.id()).skip(1);
+        let mut node_ancestors = ctx.nodes().ancestor_ids(node.id());
 
         let Some(node_id) = node_ancestors.next() else {
             return false;

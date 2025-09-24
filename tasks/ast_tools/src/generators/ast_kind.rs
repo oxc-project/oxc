@@ -26,12 +26,29 @@ use super::define_generator;
 /// Structs to omit creating an `AstKind` for.
 ///
 /// Apart from this list, every struct with `#[ast(visit)]` attr gets an `AstKind`.
-const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "TSFunctionType", "Span"];
+///
+/// `BindingPattern` and `Span` are special cases:
+///
+/// * `Span` we don't want to have an `AstKind` because it's not an AST node.
+///   Once we have `NodeId` stored in AST types, it won't need to be visited.
+///   So then it won't get an `AstKind` automatically, and can be removed from this blacklist.
+///
+/// * `BindingPattern` we intend to change into an enum.
+///   <https://github.com/oxc-project/oxc/issues/11489#issuecomment-2946791520>
+///
+/// These 2 should continue to be blacklisted for now.
+///
+/// See also: <https://github.com/oxc-project/oxc/issues/11490>
+const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
 
 /// Enums to create an `AstKind` for.
 ///
 /// Apart from this list, enums don't have `AstKind`s.
-const ENUMS_WHITE_LIST: &[&str] = &["Argument", "AssignmentTarget", "SimpleAssignmentTarget"];
+///
+/// Ideally we don't want any enums to have `AstKind`s.
+/// We are working towards removing all the items from this list.
+/// <https://github.com/oxc-project/oxc/issues/11490>
+const ENUMS_WHITE_LIST: &[&str] = &["Argument"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;
@@ -132,6 +149,8 @@ impl Generator for AstKindGenerator {
             next_index += 1;
         }
 
+        let ast_type_max = number_lit(next_index - 1);
+
         let output = quote! {
             #![expect(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
 
@@ -144,6 +163,10 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             use crate::ast::*;
+
+            ///@@line_break
+            /// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
+            pub const AST_TYPE_MAX: u8 = #ast_type_max;
 
             ///@@line_break
             #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

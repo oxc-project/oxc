@@ -4,26 +4,33 @@ use std::{
 };
 
 use itertools::Itertools;
-use oxc_resolver::{ResolveOptions, Resolver};
-use rustc_hash::FxHashMap;
+use oxc_resolver::Resolver;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
-    AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
+    AllowWarnDeny, ExternalPluginStore, LintConfig, LintFilter, LintFilterKind, Oxlintrc,
+    RuleCategory, RuleEnum,
     config::{
         ESLintRule, LintPlugins, OxlintOverrides, OxlintRules, overrides::OxlintOverride,
         plugins::BuiltinLintPlugins,
     },
     external_linter::ExternalLinter,
+    external_plugin_store::{ExternalRuleId, ExternalRuleLookupError},
     rules::RULES,
 };
 
-use super::{Config, categories::OxlintCategories};
+use super::{
+    Config,
+    categories::OxlintCategories,
+    config_store::{ResolvedOxlintOverride, ResolvedOxlintOverrideRules, ResolvedOxlintOverrides},
+};
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
 pub struct ConfigStoreBuilder {
     pub(super) rules: FxHashMap<RuleEnum, AllowWarnDeny>,
+    pub(super) external_rules: FxHashMap<ExternalRuleId, AllowWarnDeny>,
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
@@ -47,11 +54,12 @@ impl ConfigStoreBuilder {
     pub fn empty() -> Self {
         let config = LintConfig::default();
         let rules = FxHashMap::default();
+        let external_rules = FxHashMap::default();
         let categories: OxlintCategories = OxlintCategories::default();
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
 
-        Self { rules, config, categories, overrides, extended_paths }
+        Self { rules, external_rules, config, categories, overrides, extended_paths }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -64,8 +72,9 @@ impl ConfigStoreBuilder {
         let overrides = OxlintOverrides::default();
         let categories: OxlintCategories = OxlintCategories::default();
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
+        let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, config, categories, overrides, extended_paths }
+        Self { rules, external_rules, config, categories, overrides, extended_paths }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -90,6 +99,7 @@ impl ConfigStoreBuilder {
         start_empty: bool,
         oxlintrc: Oxlintrc,
         external_linter: Option<&ExternalLinter>,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn resolve_oxlintrc_config(
@@ -138,23 +148,39 @@ impl ConfigStoreBuilder {
 
         let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
-        if let Some(plugins) = oxlintrc.plugins.as_ref() {
-            if !plugins.external.is_empty() {
-                let Some(external_linter) = external_linter else {
-                    return Err(ConfigBuilderError::NoExternalLinterConfigured);
-                };
-                let resolver = oxc_resolver::Resolver::new(ResolveOptions::default());
-                #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let oxlintrc_dir_path = oxlintrc.path.parent().unwrap();
+        // Collect external plugins from both base config and overrides
+        let mut external_plugins = FxHashSet::default();
 
-                for plugin_specifier in &plugins.external {
-                    Self::load_external_plugin(
-                        oxlintrc_dir_path,
-                        plugin_specifier,
-                        external_linter,
-                        &resolver,
-                    )?;
-                }
+        if let Some(base_plugins) = oxlintrc.plugins.as_ref() {
+            external_plugins.extend(base_plugins.external.iter().cloned());
+        }
+
+        for r#override in &oxlintrc.overrides {
+            if let Some(override_plugins) = &r#override.plugins {
+                external_plugins.extend(override_plugins.external.iter().cloned());
+            }
+        }
+
+        if !external_plugins.is_empty() {
+            let Some(external_linter) = external_linter else {
+                #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let plugin_specifier = external_plugins.iter().next().unwrap().clone();
+                return Err(ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier });
+            };
+
+            let resolver = Resolver::default();
+
+            #[expect(clippy::missing_panics_doc, reason = "oxlintrc.path is always a file path")]
+            let oxlintrc_dir = oxlintrc.path.parent().unwrap();
+
+            for plugin_specifier in &external_plugins {
+                Self::load_external_plugin(
+                    oxlintrc_dir,
+                    plugin_specifier,
+                    external_linter,
+                    &resolver,
+                    external_plugin_store,
+                )?;
             }
         }
         let plugins = oxlintrc.plugins.unwrap_or_default();
@@ -179,8 +205,14 @@ impl ConfigStoreBuilder {
             path: Some(oxlintrc.path),
         };
 
-        let mut builder =
-            Self { rules, config, categories, overrides: oxlintrc.overrides, extended_paths };
+        let mut builder = Self {
+            rules,
+            external_rules: FxHashMap::default(),
+            config,
+            categories,
+            overrides: oxlintrc.overrides,
+            extended_paths,
+        };
 
         for filter in oxlintrc.categories.filters() {
             builder = builder.with_filter(&filter);
@@ -189,7 +221,15 @@ impl ConfigStoreBuilder {
         {
             let all_rules = builder.get_all_rules();
 
-            oxlintrc.rules.override_rules(&mut builder.rules, &all_rules);
+            oxlintrc
+                .rules
+                .override_rules(
+                    &mut builder.rules,
+                    &mut builder.external_rules,
+                    &all_rules,
+                    external_plugin_store,
+                )
+                .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
         }
 
         Ok(builder)
@@ -288,11 +328,19 @@ impl ConfigStoreBuilder {
     /// re-configured, while those that are not are added. Affects rules where `query` returns
     /// `true`.
     fn get_all_rules(&self) -> Vec<RuleEnum> {
-        if self.config.plugins.builtin.is_all() {
+        self.get_all_rules_for_plugins(None)
+    }
+
+    fn get_all_rules_for_plugins(&self, override_plugins: Option<&LintPlugins>) -> Vec<RuleEnum> {
+        let mut builtin_plugins = if let Some(override_plugins) = override_plugins {
+            self.config.plugins.builtin | override_plugins.builtin
+        } else {
+            self.config.plugins.builtin
+        };
+
+        if builtin_plugins.is_all() {
             RULES.clone()
         } else {
-            let mut builtin_plugins = self.plugins().builtin;
-
             // we need to include some jest rules when vitest is enabled, see [`VITEST_COMPATIBLE_JEST_RULES`]
             if builtin_plugins.contains(BuiltinLintPlugins::VITEST) {
                 builtin_plugins = builtin_plugins.union(BuiltinLintPlugins::JEST);
@@ -327,7 +375,13 @@ impl ConfigStoreBuilder {
         }
     }
 
-    pub fn build(self) -> Config {
+    /// Builds a [`Config`] from the current state of the builder.
+    /// # Errors
+    /// Returns [`ConfigBuilderError::UnknownRules`] if there are rules that could not be matched.
+    pub fn build(
+        mut self,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> Result<Config, ConfigBuilderError> {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
@@ -338,7 +392,10 @@ impl ConfigStoreBuilder {
             plugins = plugins.union(BuiltinLintPlugins::JEST);
         }
 
-        // TODO: js rules filteing
+        let overrides = std::mem::take(&mut self.overrides);
+        let resolved_overrides = self
+            .resolve_overrides(overrides, external_plugin_store)
+            .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
 
         let mut rules: Vec<_> = self
             .rules
@@ -346,11 +403,58 @@ impl ConfigStoreBuilder {
             .filter(|(r, _)| plugins.contains(r.plugin_name().into()))
             .collect();
         rules.sort_unstable_by_key(|(r, _)| r.id());
-        Config::new(rules, self.categories, self.config, self.overrides)
+
+        let mut external_rules: Vec<_> = self.external_rules.into_iter().collect();
+        external_rules.sort_unstable_by_key(|(r, _)| *r);
+
+        Ok(Config::new(rules, external_rules, self.categories, self.config, resolved_overrides))
+    }
+
+    fn resolve_overrides(
+        &self,
+        overrides: OxlintOverrides,
+        external_plugin_store: &ExternalPluginStore,
+    ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
+        let resolved = overrides
+            .into_iter()
+            .map(|override_config| {
+                let mut builtin_rules = Vec::new();
+                let mut external_rules = Vec::new();
+                let mut rules_map = FxHashMap::default();
+                let mut external_rules_map = FxHashMap::default();
+
+                let all_rules = self.get_all_rules_for_plugins(override_config.plugins.as_ref());
+
+                // Resolve rules for this override
+                override_config.rules.override_rules(
+                    &mut rules_map,
+                    &mut external_rules_map,
+                    &all_rules,
+                    external_plugin_store,
+                )?;
+
+                // Convert to vectors
+                builtin_rules.extend(rules_map.into_iter());
+                external_rules.extend(external_rules_map.into_iter());
+
+                Ok(ResolvedOxlintOverride {
+                    files: override_config.files,
+                    env: override_config.env,
+                    globals: override_config.globals,
+                    plugins: override_config.plugins,
+                    rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(ResolvedOxlintOverrides::new(resolved))
     }
 
     /// Warn for all correctness rules in the given set of plugins.
-    fn warn_correctness(plugins: BuiltinLintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
+    fn warn_correctness(mut plugins: BuiltinLintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
+        if plugins.contains(BuiltinLintPlugins::VITEST) {
+            plugins = plugins.union(BuiltinLintPlugins::JEST);
+        }
         RULES
             .iter()
             .filter(|rule| {
@@ -378,7 +482,7 @@ impl ConfigStoreBuilder {
         let new_rules = self
             .rules
             .iter()
-            .sorted_by_key(|(r, _)| (r.plugin_name(), r.name()))
+            .sorted_unstable_by_key(|(r, _)| (r.plugin_name(), r.name()))
             .map(|(r, severity)| ESLintRule {
                 plugin_name: r.plugin_name().to_string(),
                 rule_name: r.name().to_string(),
@@ -393,22 +497,12 @@ impl ConfigStoreBuilder {
         serde_json::to_string_pretty(&oxlintrc).unwrap()
     }
 
-    #[cfg(any(not(feature = "oxlint2"), feature = "disable_oxlint2"))]
-    fn load_external_plugin(
-        _oxlintrc_dir_path: &Path,
-        _plugin_specifier: &str,
-        _external_linter: &ExternalLinter,
-        _resolver: &Resolver,
-    ) -> Result<(), ConfigBuilderError> {
-        unreachable!()
-    }
-
-    #[cfg(all(feature = "oxlint2", not(feature = "disable_oxlint2")))]
     fn load_external_plugin(
         oxlintrc_dir_path: &Path,
         plugin_specifier: &str,
         external_linter: &ExternalLinter,
         resolver: &Resolver,
+        external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<(), ConfigBuilderError> {
         use crate::PluginLoadResult;
 
@@ -421,16 +515,25 @@ impl ConfigStoreBuilder {
         // TODO: We should support paths which are not valid UTF-8. How?
         let plugin_path = resolved.full_path().to_str().unwrap().to_string();
 
-        let result = tokio::task::block_in_place(move || {
-            tokio::runtime::Handle::current().block_on((external_linter.load_plugin)(plugin_path))
-        })
-        .map_err(|e| ConfigBuilderError::PluginLoadFailed {
-            plugin_specifier: plugin_specifier.to_string(),
-            error: e.to_string(),
-        })?;
+        if external_plugin_store.is_plugin_registered(&plugin_path) {
+            return Ok(());
+        }
+
+        let result = {
+            let plugin_path = plugin_path.clone();
+            (external_linter.load_plugin)(plugin_path).map_err(|e| {
+                ConfigBuilderError::PluginLoadFailed {
+                    plugin_specifier: plugin_specifier.to_string(),
+                    error: e.to_string(),
+                }
+            })
+        }?;
 
         match result {
-            PluginLoadResult::Success => Ok(()),
+            PluginLoadResult::Success { name, offset, rule_names } => {
+                external_plugin_store.register_plugin(plugin_path, name, offset, rule_names);
+                Ok(())
+            }
             PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
                 error: e,
@@ -444,15 +547,6 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
         CompactStr::from(rule_name)
     } else {
         format_compact_str!("{plugin_name}/{rule_name}")
-    }
-}
-
-impl TryFrom<Oxlintrc> for ConfigStoreBuilder {
-    type Error = ConfigBuilderError;
-
-    #[inline]
-    fn try_from(oxlintrc: Oxlintrc) -> Result<Self, Self::Error> {
-        Self::from_oxlintrc(false, oxlintrc, None)
     }
 }
 
@@ -481,7 +575,10 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
         error: String,
     },
-    NoExternalLinterConfigured,
+    ExternalRuleLookupError(ExternalRuleLookupError),
+    NoExternalLinterConfigured {
+        plugin_specifier: String,
+    },
 }
 
 impl Display for ConfigBuilderError {
@@ -502,13 +599,17 @@ impl Display for ConfigBuilderError {
                 write!(f, "invalid config file {file}: {reason}")
             }
             ConfigBuilderError::PluginLoadFailed { plugin_specifier, error } => {
-                write!(f, "Failed to load external plugin: {plugin_specifier}\n  {error}")?;
+                write!(f, "Failed to load JS plugin: {plugin_specifier}\n  {error}")?;
                 Ok(())
             }
-            ConfigBuilderError::NoExternalLinterConfigured => {
-                f.write_str("Failed to load external plugin because no external linter was configured. This means the Oxlint binary was executed directly rather than via napi bindings.")?;
+            ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier } => {
+                write!(
+                    f,
+                    "`plugins` config contains '{plugin_specifier}'. JS plugins are not supported without `--js-plugins` CLI option. Note: JS plugin support is experimental.",
+                )?;
                 Ok(())
             }
+            ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
         }
     }
 }
@@ -666,8 +767,11 @@ mod test {
         let mut desired_plugins = LintPlugins::default();
         desired_plugins.builtin.set(BuiltinLintPlugins::TYPESCRIPT, false);
 
-        let linter =
-            ConfigStoreBuilder::default().with_builtin_plugins(desired_plugins.builtin).build();
+        let external_plugin_store = ExternalPluginStore::default();
+        let linter = ConfigStoreBuilder::default()
+            .with_builtin_plugins(desired_plugins.builtin)
+            .build(&external_plugin_store)
+            .unwrap();
         for (rule, _) in linter.base.rules.iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
@@ -743,7 +847,11 @@ mod test {
         "#,
         )
         .unwrap();
-        let builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None).unwrap();
+        let builder = {
+            let mut external_plugin_store = ExternalPluginStore::default();
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
+                .unwrap()
+        };
         for (rule, severity) in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();
@@ -912,14 +1020,18 @@ mod test {
 
     #[test]
     fn test_extends_invalid() {
-        let invalid_config = ConfigStoreBuilder::from_oxlintrc(
-            true,
-            Oxlintrc::from_file(&PathBuf::from(
-                "fixtures/extends_config/extends_invalid_config.json",
-            ))
-            .unwrap(),
-            None,
-        );
+        let invalid_config = {
+            let mut external_plugin_store = ExternalPluginStore::default();
+            ConfigStoreBuilder::from_oxlintrc(
+                true,
+                Oxlintrc::from_file(&PathBuf::from(
+                    "fixtures/extends_config/extends_invalid_config.json",
+                ))
+                .unwrap(),
+                None,
+                &mut external_plugin_store,
+            )
+        };
         let err = invalid_config.unwrap_err();
         assert!(matches!(err, ConfigBuilderError::InvalidConfigFile { .. }));
         if let ConfigBuilderError::InvalidConfigFile { file, reason } = err {
@@ -1072,18 +1184,28 @@ mod test {
     }
 
     fn config_store_from_path(path: &str) -> Config {
+        let mut external_plugin_store = ExternalPluginStore::default();
         ConfigStoreBuilder::from_oxlintrc(
             true,
             Oxlintrc::from_file(&PathBuf::from(path)).unwrap(),
             None,
+            &mut external_plugin_store,
         )
         .unwrap()
-        .build()
+        .build(&external_plugin_store)
+        .unwrap()
     }
 
     fn config_store_from_str(s: &str) -> Config {
-        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap(), None)
-            .unwrap()
-            .build()
+        let mut external_plugin_store = ExternalPluginStore::default();
+        ConfigStoreBuilder::from_oxlintrc(
+            true,
+            serde_json::from_str(s).unwrap(),
+            None,
+            &mut external_plugin_store,
+        )
+        .unwrap()
+        .build(&external_plugin_store)
+        .unwrap()
     }
 }

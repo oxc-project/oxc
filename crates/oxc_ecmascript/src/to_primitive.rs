@@ -1,8 +1,8 @@
 use oxc_ast::ast::*;
 
 use crate::{
+    GlobalContext,
     constant_evaluation::{DetermineValueType, ValueType},
-    is_global_reference::IsGlobalReference,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -47,12 +47,12 @@ impl ToPrimitiveResult {
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-toprimitive>
 pub trait ToPrimitive<'a> {
-    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToPrimitiveResult;
+    fn to_primitive(&self, ctx: &impl GlobalContext<'a>) -> ToPrimitiveResult;
 }
 
 impl<'a> ToPrimitive<'a> for Expression<'a> {
-    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToPrimitiveResult {
-        match self.value_type(is_global_reference) {
+    fn to_primitive(&self, ctx: &impl GlobalContext<'a>) -> ToPrimitiveResult {
+        match self.value_type(ctx) {
             ValueType::Undefined => ToPrimitiveResult::Undefined,
             ValueType::Null => ToPrimitiveResult::Null,
             ValueType::Number => ToPrimitiveResult::Number,
@@ -92,12 +92,9 @@ pub fn maybe_object_with_to_primitive_related_properties_overridden(
             PropertyKey::StringLiteral(str) => {
                 matches!(str.value.as_str(), "toString" | "valueOf")
             }
-            PropertyKey::TemplateLiteral(temp) => {
-                !temp.is_no_substitution_template()
-                    || temp
-                        .quasi()
-                        .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf"))
-            }
+            PropertyKey::TemplateLiteral(temp) => temp
+                .single_quasi()
+                .is_some_and(|val| matches!(val.as_str(), "toString" | "valueOf")),
             _ => true,
         },
         ObjectPropertyKind::SpreadProperty(e) => match &e.argument {

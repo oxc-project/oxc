@@ -140,14 +140,12 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             if self.at(Kind::Dot) {
                 // `type something = intrinsic. ...`
-                let intrinsic_ident = self.ast.alloc_identifier_reference(
+                let left_name = self.ast.ts_type_name_identifier_reference(
                     intrinsic_token.span(),
                     self.token_source(&intrinsic_token),
                 );
-                let type_name = self.parse_ts_qualified_type_name(
-                    intrinsic_token.start(),
-                    TSTypeName::IdentifierReference(intrinsic_ident),
-                );
+                let type_name =
+                    self.parse_ts_qualified_type_name(intrinsic_token.start(), left_name);
                 let type_parameters = self.parse_type_arguments_of_type_reference();
                 self.ast.ts_type_type_reference(
                     self.end_span(intrinsic_token.start()),
@@ -203,6 +201,9 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::interface_implements(implements_kw_span));
         }
         for extend in &extends {
+            if self.fatal_error.is_some() {
+                break;
+            }
             if !extend.expression.is_entity_name_expression() {
                 self.error(diagnostics::interface_extend(extend.span));
             }
@@ -240,8 +241,25 @@ impl<'a> ParserImpl<'a> {
         }
 
         let modifiers = self.parse_modifiers(
-            /* permit_const_as_modifier */ false,
+            /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ false,
+        );
+
+        if self.is_index_signature() {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::READONLY,
+                diagnostics::cannot_appear_on_an_index_signature,
+            );
+            return TSSignature::TSIndexSignature(
+                self.parse_index_signature_declaration(span, &modifiers),
+            );
+        }
+
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::READONLY,
+            diagnostics::cannot_appear_on_a_type_member,
         );
 
         if self.parse_contextual_modifier(Kind::Get) {
@@ -250,12 +268,6 @@ impl<'a> ParserImpl<'a> {
 
         if self.parse_contextual_modifier(Kind::Set) {
             return self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Set);
-        }
-
-        if self.is_index_signature() {
-            return TSSignature::TSIndexSignature(
-                self.parse_index_signature_declaration(span, &modifiers),
-            );
         }
 
         self.parse_property_or_method_signature(span, &modifiers)
@@ -418,15 +430,16 @@ impl<'a> ParserImpl<'a> {
             }
         }
         match kind {
-            Kind::Global | Kind::Module | Kind::Namespace => {
-                let decl = self.parse_ts_module_declaration(start_span, modifiers);
-                Declaration::TSModuleDeclaration(decl)
-            }
-            Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
-            Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
-            Kind::Interface => {
+            Kind::Var | Kind::Let | Kind::Const => {
+                let kind = self.get_variable_declaration_kind();
                 self.bump_any();
-                self.parse_ts_interface_declaration(start_span, modifiers)
+                let decl = self.parse_variable_declaration(
+                    start_span,
+                    kind,
+                    VariableDeclarationParent::Statement,
+                    modifiers,
+                );
+                Declaration::VariableDeclaration(decl)
             }
             Kind::Class => {
                 let decl = self.parse_class_declaration(start_span, modifiers, decorators);
@@ -450,16 +463,15 @@ impl<'a> ParserImpl<'a> {
                 }
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start_span)
             }
-            kind if kind.is_variable_declaration() => {
-                let kind = self.get_variable_declaration_kind();
+            Kind::Global | Kind::Module | Kind::Namespace if self.is_ts => {
+                let decl = self.parse_ts_module_declaration(start_span, modifiers);
+                Declaration::TSModuleDeclaration(decl)
+            }
+            Kind::Type if self.is_ts => self.parse_ts_type_alias_declaration(start_span, modifiers),
+            Kind::Enum if self.is_ts => self.parse_ts_enum_declaration(start_span, modifiers),
+            Kind::Interface if self.is_ts => {
                 self.bump_any();
-                let decl = self.parse_variable_declaration(
-                    start_span,
-                    kind,
-                    VariableDeclarationParent::Statement,
-                    modifiers,
-                );
-                Declaration::VariableDeclaration(decl)
+                self.parse_ts_interface_declaration(start_span, modifiers)
             }
             _ if self.at_function_with_async() => {
                 let declare = modifiers.contains(ModifierKind::Declare);
@@ -549,14 +561,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
         let span = self.start_span();
-        self.parse_class_element_modifiers(true);
-
-        let this_span = self.start_span();
         self.bump_any();
-        let this = self.end_span(this_span);
+        let this_span = self.end_span(span);
 
         let type_annotation = self.parse_ts_type_annotation();
-        self.ast.ts_this_parameter(self.end_span(span), this, type_annotation)
+        self.ast.ts_this_parameter(self.end_span(span), this_span, type_annotation)
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {

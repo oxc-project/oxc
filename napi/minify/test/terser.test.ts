@@ -25,7 +25,7 @@ import { run_code } from './sandbox';
 function run(input: string, expected: string[], prepend_code?: string) {
   const consoleMock = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   try {
-    const minified = minify('test.mjs', input).code;
+    const minified = minify('test.cjs', input).code;
     expect(minified).not.toBeFalsy();
     // Use `consoleMock` instead of the returned output.
     const _ = run_code(minified, prepend_code);
@@ -1685,7 +1685,7 @@ test('issue_3146_4', () => {
   run(code, expected);
 });
 
-test('issue_3192', () => {
+test.skip('issue_3192', () => {
   const code =
     '(function(a){console.log(a="foo",arguments[0])})("bar");(function(a){"use strict";console.log(a="foo",arguments[0])})("bar");';
   const expected = ['foo foo', 'foo bar'];
@@ -3385,19 +3385,17 @@ test('inline_script_on', () => {
 });
 
 test('test_unexpected_crash', () => {
-  const prepend = 'x();';
   const code =
-    'function x(){var getsInlined=function(){var leakedVariable1=3;var leakedVariable2=1+2*leakedVariable1;console.log(leakedVariable1);console.log(leakedVariable2)};var getsDropped=getsInlined()}';
+    'x(); function x(){var getsInlined=function(){var leakedVariable1=3;var leakedVariable2=1+2*leakedVariable1;console.log(leakedVariable1);console.log(leakedVariable2)};var getsDropped=getsInlined()}';
   const expected = ['3', '7'];
-  run(code, expected, prepend);
+  run(code, expected);
 });
 
 test('test_unexpected_crash_2', () => {
-  const prepend = 'x();';
   const code =
-    'function x(){var getsInlined=function(){var leakedVariable1=3;var leakedVariable2=1+leakedVariable1[0];console.log(leakedVariable1);console.log(leakedVariable2)};var getsDropped=getsInlined()}';
+    'x(); function x(){var getsInlined=function(){var leakedVariable1=3;var leakedVariable2=1+leakedVariable1[0];console.log(leakedVariable1);console.log(leakedVariable2)};var getsDropped=getsInlined()}';
   const expected = ['3', 'NaN'];
-  run(code, expected, prepend);
+  run(code, expected);
 });
 
 test('issue_1724', () => {

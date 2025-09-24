@@ -1,5 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::{AstKind, ast::AssignmentTarget};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -54,24 +54,22 @@ fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Opti
 
 impl Rule for NoUnreadableArrayDestructuring {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ArrayPattern(array_pattern) = node.kind() {
-            if is_unreadable_array_destructuring(
+        if let AstKind::ArrayPattern(array_pattern) = node.kind()
+            && is_unreadable_array_destructuring(
                 &array_pattern.elements,
                 array_pattern.rest.as_ref(),
-            ) {
-                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
-            }
+            )
+        {
+            ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
         }
 
-        if let AstKind::AssignmentTarget(AssignmentTarget::ArrayAssignmentTarget(array_pattern)) =
-            node.kind()
-        {
-            if is_unreadable_array_destructuring(
+        if let AstKind::ArrayAssignmentTarget(array_pattern) = node.kind()
+            && is_unreadable_array_destructuring(
                 &array_pattern.elements,
                 array_pattern.rest.as_ref(),
-            ) {
-                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
-            }
+            )
+        {
+            ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
         }
     }
 }

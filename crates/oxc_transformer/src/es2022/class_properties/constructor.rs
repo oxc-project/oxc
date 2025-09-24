@@ -303,7 +303,7 @@ impl<'a> ClassProperties<'a, '_> {
         let body = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, body_exprs));
 
         // `(..._args) => (super(..._args), <inits>, this)`
-        let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure(
+        let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
             SPAN,
             true,
             false,
@@ -320,6 +320,7 @@ impl<'a> ClassProperties<'a, '_> {
             NONE,
             ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), body),
             super_func_scope_id,
+            false,
             false,
         );
 
@@ -366,7 +367,7 @@ impl<'a> ClassProperties<'a, '_> {
         // `<inits>; return this;`
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
-        let super_func = ctx.ast.expression_function_with_scope_id_and_pure(
+        let super_func = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
             FunctionType::FunctionExpression,
             None,
@@ -384,6 +385,7 @@ impl<'a> ClassProperties<'a, '_> {
             NONE,
             Some(ctx.ast.alloc_function_body(SPAN, directives, body_stmts)),
             super_func_scope_id,
+            false,
             false,
         );
 
@@ -497,16 +499,16 @@ impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
     // `#[inline]` to make hot path for all other expressions as cheap as possible.
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        if let Expression::CallExpression(call_expr) = expr {
-            if call_expr.callee.is_super() {
-                // Walk `CallExpression`'s arguments here rather than falling through to `walk_expression`
-                // below to avoid infinite loop as `super()` gets visited over and over
-                self.visit_arguments(&mut call_expr.arguments);
+        if let Expression::CallExpression(call_expr) = expr
+            && call_expr.callee.is_super()
+        {
+            // Walk `CallExpression`'s arguments here rather than falling through to `walk_expression`
+            // below to avoid infinite loop as `super()` gets visited over and over
+            self.visit_arguments(&mut call_expr.arguments);
 
-                let span = call_expr.span;
-                self.wrap_super(expr, span);
-                return;
-            }
+            let span = call_expr.span;
+            self.wrap_super(expr, span);
+            return;
         }
 
         walk_mut::walk_expression(self, expr);
@@ -618,34 +620,33 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
             for (index, stmt) in body_stmts.iter_mut().enumerate() {
                 // If statement is standalone `super()`, insert inits after `super()`.
                 // We can avoid a `_super` function for this common case.
-                if let Statement::ExpressionStatement(expr_stmt) = stmt {
-                    if let Expression::CallExpression(call_expr) = &mut expr_stmt.expression {
-                        if let Expression::Super(super_) = &call_expr.callee {
-                            let span = super_.span;
+                if let Statement::ExpressionStatement(expr_stmt) = stmt
+                    && let Expression::CallExpression(call_expr) = &mut expr_stmt.expression
+                    && let Expression::Super(super_) = &call_expr.callee
+                {
+                    let span = super_.span;
 
-                            // Visit arguments in `super(x, y, z)` call.
-                            // Required to handle edge case `super(self = super())`.
-                            self.visit_arguments(&mut call_expr.arguments);
+                    // Visit arguments in `super(x, y, z)` call.
+                    // Required to handle edge case `super(self = super())`.
+                    self.visit_arguments(&mut call_expr.arguments);
 
-                            // Found `super()` as top-level statement
-                            if self.super_binding.is_none() {
-                                // This is the first `super()` found
-                                // (and no further `super()` calls within `super()` call's arguments).
-                                // So can just insert initializers after it - no need for `_super` function.
-                                let insert_location =
-                                    InstanceInitsInsertLocation::ExistingConstructor(index + 1);
-                                return (self.constructor_scope_id, insert_location);
-                            }
-
-                            // `super()` was previously found in nested position before this.
-                            // So we do need a `_super` function.
-                            // But we don't need to look any further for any other `super()` calls,
-                            // because calling `super()` after this would be an immediate error.
-                            self.replace_super(call_expr, span);
-
-                            break 'outer;
-                        }
+                    // Found `super()` as top-level statement
+                    if self.super_binding.is_none() {
+                        // This is the first `super()` found
+                        // (and no further `super()` calls within `super()` call's arguments).
+                        // So can just insert initializers after it - no need for `_super` function.
+                        let insert_location =
+                            InstanceInitsInsertLocation::ExistingConstructor(index + 1);
+                        return (self.constructor_scope_id, insert_location);
                     }
+
+                    // `super()` was previously found in nested position before this.
+                    // So we do need a `_super` function.
+                    // But we don't need to look any further for any other `super()` calls,
+                    // because calling `super()` after this would be an immediate error.
+                    self.replace_super(call_expr, span);
+
+                    break 'outer;
                 }
 
                 // Traverse statement looking for `super()` deeper in the statement
@@ -786,10 +787,10 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
 
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
         let reference_id = ident.reference_id();
-        if let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id() {
-            if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {
-                ident.name = *new_name;
-            }
+        if let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id()
+            && let Some(new_name) = self.clashing_symbols.get(&symbol_id)
+        {
+            ident.name = *new_name;
         }
     }
 }

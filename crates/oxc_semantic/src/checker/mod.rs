@@ -5,13 +5,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
+use crate::builder::SemanticBuilder;
+
 mod javascript;
 mod typescript;
-
 use javascript as js;
 use typescript as ts;
 
-use crate::builder::SemanticBuilder;
+pub use javascript::is_function_part_of_if_statement;
 
 pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
     match kind {
@@ -136,10 +137,10 @@ pub fn check_unresolved_exports(ctx: &SemanticBuilder<'_>) {
         for reference_id in reference_ids {
             let reference = ctx.scoping.get_reference(*reference_id);
             let node = ctx.nodes.get_node(reference.node_id());
-            if node.flags().has_export_specifier() {
-                if let AstKind::IdentifierReference(ident) = node.kind() {
-                    ctx.errors.borrow_mut().push(undefined_export(&ident.name, ident.span));
-                }
+            if node.flags().has_export_specifier()
+                && let AstKind::IdentifierReference(ident) = node.kind()
+            {
+                ctx.errors.borrow_mut().push(undefined_export(&ident.name, ident.span));
             }
         }
     }

@@ -125,5 +125,42 @@ mod test {
         let settings = OxlintSettings::default();
         assert!(settings.jsx_a11y.polymorphic_prop_name.is_none());
         assert!(settings.jsx_a11y.components.is_empty());
+        assert!(settings.jsx_a11y.attributes.is_empty());
+    }
+
+    #[test]
+    fn test_parse_jsx_a11y_attributes() {
+        let settings = OxlintSettings::deserialize(&serde_json::json!({
+            "jsx-a11y": {
+                "attributes": {
+                    "for": ["htmlFor", "for"],
+                    "class": ["className"]
+                }
+            }
+        }))
+        .unwrap();
+
+        let for_attrs = &settings.jsx_a11y.attributes["for"];
+        assert_eq!(for_attrs.len(), 2);
+        assert_eq!(for_attrs[0], "htmlFor");
+        assert_eq!(for_attrs[1], "for");
+
+        let class_attrs = &settings.jsx_a11y.attributes["class"];
+        assert_eq!(class_attrs.len(), 1);
+        assert_eq!(class_attrs[0], "className");
+
+        assert_eq!(settings.jsx_a11y.attributes.get("nonexistent"), None);
+    }
+
+    #[test]
+    fn test_parse_jsx_a11y_attributes_empty() {
+        let settings = OxlintSettings::deserialize(&serde_json::json!({
+            "jsx-a11y": {
+                "attributes": {}
+            }
+        }))
+        .unwrap();
+
+        assert!(settings.jsx_a11y.attributes.is_empty());
     }
 }

@@ -8,6 +8,7 @@ mod prop_name;
 
 // Abstract Operations
 mod array_join;
+mod is_less_than;
 mod string_char_at;
 mod string_char_code_at;
 mod string_index_of;
@@ -28,12 +29,13 @@ mod to_string;
 mod to_integer_index;
 
 pub mod constant_evaluation;
-pub mod is_global_reference;
+mod global_context;
 pub mod side_effects;
 
 pub use self::{
     array_join::ArrayJoin,
     bound_names::BoundNames,
+    global_context::{GlobalContext, WithoutGlobalReferenceInformation},
     is_simple_parameter_list::IsSimpleParameterList,
     private_bound_identifiers::PrivateBoundIdentifiers,
     prop_name::PropName,
@@ -46,7 +48,7 @@ pub use self::{
     string_to_number::StringToNumber,
     to_big_int::ToBigInt,
     to_boolean::ToBoolean,
-    to_int_32::ToInt32,
+    to_int_32::{ToInt32, ToUint32},
     to_integer_index::ToIntegerIndex,
     to_number::ToNumber,
     to_primitive::ToPrimitive,

@@ -16,6 +16,7 @@ pub enum CliRunResult {
     PrintConfigResult,
     ConfigFileInitFailed,
     ConfigFileInitSucceeded,
+    TsGoLintError,
 }
 
 impl Termination for CliRunResult {
@@ -35,7 +36,8 @@ impl Termination for CliRunResult {
             | Self::InvalidOptionTsConfig
             | Self::InvalidOptionSeverityWithoutFilter
             | Self::InvalidOptionSeverityWithoutPluginName
-            | Self::InvalidOptionSeverityWithoutRuleName => ExitCode::FAILURE,
+            | Self::InvalidOptionSeverityWithoutRuleName
+            | Self::TsGoLintError => ExitCode::FAILURE,
         }
     }
 }

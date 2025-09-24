@@ -1,0 +1,16 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-debugger": "error"
+  },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "rules": {
+        "typescript/no-floating-promises": "warn"
+      }
+    }
+  ]
+}

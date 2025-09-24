@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["apps/*", "crates/*", "napi/*", "tasks/*"]
-exclude = ["tasks/lint_rules", "tasks/e2e"]
+exclude = ["tasks/lint_rules", "tasks/e2e", "tasks/mcp"]
 
 [workspace.package]
 authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
@@ -13,9 +13,9 @@ repository = "https://github.com/oxc-project/oxc"
 description = "A collection of JavaScript tools written in Rust."
 
 edition = "2024"
-# MSRV Policy N-2 (12 weeks) starting from v1.87.0
+# MSRV Policy N-2 (12 weeks).
 # Balance between the core contributors enjoying the latest version of rustc, while waiting for dependents to catch up.
-rust-version = "1.86.0"
+rust-version = "1.88.0"
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
 [workspace.lints.rust]
@@ -96,40 +96,40 @@ unused_peekable = "warn"
 too_long_first_doc_paragraph = "warn"
 suspicious_operation_groupings = "warn"
 redundant_clone = "warn"
+zero_sized_map_values = "allow" # FIXME https://github.com/rust-lang/rust-clippy/issues/15429 - False positive with serde skip_serializing
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
-cargo_common_metadata = "allow" # FIXME
-doc_lazy_continuation = "allow" # FIXME
-ignore_without_reason = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.76.0", path = "crates/oxc" }
-oxc_allocator = { version = "0.76.0", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.76.0", path = "crates/oxc_ast" }
-oxc_ast_macros = { version = "0.76.0", path = "crates/oxc_ast_macros" }
-oxc_ast_visit = { version = "0.76.0", path = "crates/oxc_ast_visit" }
-oxc_cfg = { version = "0.76.0", path = "crates/oxc_cfg" }
-oxc_codegen = { version = "0.76.0", path = "crates/oxc_codegen" }
-oxc_data_structures = { version = "0.76.0", path = "crates/oxc_data_structures" }
-oxc_diagnostics = { version = "0.76.0", path = "crates/oxc_diagnostics" }
-oxc_ecmascript = { version = "0.76.0", path = "crates/oxc_ecmascript" }
-oxc_estree = { version = "0.76.0", path = "crates/oxc_estree" }
-oxc_isolated_declarations = { version = "0.76.0", path = "crates/oxc_isolated_declarations" }
-oxc_mangler = { version = "0.76.0", path = "crates/oxc_mangler" }
-oxc_minifier = { version = "0.76.0", path = "crates/oxc_minifier" }
-oxc_napi = { version = "0.76.0", path = "crates/oxc_napi" }
-oxc_parser = { version = "0.76.0", path = "crates/oxc_parser", features = ["regular_expression"] }
-oxc_parser_napi = { version = "0.76.0", path = "napi/parser" }
-oxc_regular_expression = { version = "0.76.0", path = "crates/oxc_regular_expression" }
-oxc_semantic = { version = "0.76.0", path = "crates/oxc_semantic" }
-oxc_span = { version = "0.76.0", path = "crates/oxc_span" }
-oxc_syntax = { version = "0.76.0", path = "crates/oxc_syntax" }
-oxc_transform_napi = { version = "0.76.0", path = "napi/transform" }
-oxc_transformer = { version = "0.76.0", path = "crates/oxc_transformer" }
-oxc_transformer_plugins = { version = "0.76.0", path = "crates/oxc_transformer_plugins" }
-oxc_traverse = { version = "0.76.0", path = "crates/oxc_traverse" }
+oxc = { version = "0.92.0", path = "crates/oxc" }
+oxc_allocator = { version = "0.92.0", path = "crates/oxc_allocator" }
+oxc_ast = { version = "0.92.0", path = "crates/oxc_ast" }
+oxc_ast_macros = { version = "0.92.0", path = "crates/oxc_ast_macros" }
+oxc_ast_visit = { version = "0.92.0", path = "crates/oxc_ast_visit" }
+oxc_cfg = { version = "0.92.0", path = "crates/oxc_cfg" }
+oxc_codegen = { version = "0.92.0", path = "crates/oxc_codegen" }
+oxc_compat = { version = "0.92.0", path = "crates/oxc_compat" }
+oxc_data_structures = { version = "0.92.0", path = "crates/oxc_data_structures" }
+oxc_diagnostics = { version = "0.92.0", path = "crates/oxc_diagnostics" }
+oxc_ecmascript = { version = "0.92.0", path = "crates/oxc_ecmascript" }
+oxc_estree = { version = "0.92.0", path = "crates/oxc_estree" }
+oxc_isolated_declarations = { version = "0.92.0", path = "crates/oxc_isolated_declarations" }
+oxc_mangler = { version = "0.92.0", path = "crates/oxc_mangler" }
+oxc_minifier = { version = "0.92.0", path = "crates/oxc_minifier" }
+oxc_minify_napi = { version = "0.92.0", path = "napi/minify" }
+oxc_napi = { version = "0.92.0", path = "crates/oxc_napi" }
+oxc_parser = { version = "0.92.0", path = "crates/oxc_parser", features = ["regular_expression"] }
+oxc_parser_napi = { version = "0.92.0", path = "napi/parser" }
+oxc_regular_expression = { version = "0.92.0", path = "crates/oxc_regular_expression" }
+oxc_semantic = { version = "0.92.0", path = "crates/oxc_semantic" }
+oxc_span = { version = "0.92.0", path = "crates/oxc_span" }
+oxc_syntax = { version = "0.92.0", path = "crates/oxc_syntax" }
+oxc_transform_napi = { version = "0.92.0", path = "napi/transform" }
+oxc_transformer = { version = "0.92.0", path = "crates/oxc_transformer" }
+oxc_transformer_plugins = { version = "0.92.0", path = "crates/oxc_transformer_plugins" }
+oxc_traverse = { version = "0.92.0", path = "crates/oxc_traverse" }
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" }
@@ -140,16 +140,15 @@ oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 oxlint = { path = "apps/oxlint" }
 
 # Relaxed version so the user can decide which version to use.
-napi = { version = "3.0.0-beta", features = ["tokio_rt"] }
-napi-build = "2.2.1"
-napi-derive = "3.0.0-beta"
+napi = { version = "3", features = ["tokio_rt"] }
+napi-build = "2"
+napi-derive = "3"
 
 # Relaxed version so the user can decide which version to use.
 indexmap = "2"
 proc-macro2 = "1"
 quote = "1"
 rustc-hash = "2"
-rustversion = "1"
 serde = "1"
 serde_json = "1"
 syn = { version = "2", default-features = false }
@@ -157,15 +156,16 @@ unicode-id-start = "1"
 
 #
 javascript-globals = "1"
+json-strip-comments = "3"
 oxc-browserslist = "2"
 oxc_index = "3"
 oxc_resolver = "11"
-oxc_sourcemap = "3"
+oxc_sourcemap = "4"
 
 #
 allocator-api2 = "=0.2.21"
 base64 = "0.22.1"
-bitflags = "2.9.1"
+bitflags = "2.9.4"
 bpaf = "0.9.20"
 # `bumpalo` must be pinned to exactly version 3.19.0.
 # `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
@@ -173,51 +173,47 @@ bpaf = "0.9.20"
 # This is a temporary situation - we'll replace `bumpalo` with our own allocator.
 bumpalo = "=3.19.0"
 compact_str = "0.9.0"
-console = "0.16.0"
+console = "0.16.1"
 constcat = "0.6.1"
 convert_case = "0.8.0"
 cow-utils = "0.1.3"
-criterion2 = { version = "3.0.0", default-features = false }
+criterion2 = { version = "3.0.2", default-features = false }
+dragonbox_ecma = "0.0.5"
 encoding_rs = "0.8.35"
 encoding_rs_io = "0.1.7"
 env_logger = { version = "0.11.8", default-features = false }
-fast-glob = "0.4.5"
-fixedbitset = "0.5.7"
+fast-glob = "1.0.0"
 flate2 = "1.1.2"
 futures = "0.3.31"
-globset = "0.4.16"
 handlebars = "6.3.2"
-hashbrown = { version = "0.15.4", default-features = false }
+hashbrown = { version = "0.16.0", default-features = false }
 humansize = "2.1.3"
 icu_segmenter = "2.0.0"
 ignore = "0.4.23"
-insta = "1.43.1"
+insta = "1.43.2"
 itertools = "0.14.0"
 itoa = "1.0.15"
-json-strip-comments = "1.0.4"
 language-tags = "0.3.2"
 lazy-regex = "3.4.1"
-lazy_static = "1.5.0"
-log = "0.4.27"
+log = "0.4.28"
 markdown = "1.0.0"
-memchr = "2.7.4"
-miette = { package = "oxc-miette", version = "2.3.0", features = ["fancy-no-syscall"] }
-mimalloc-safe = "0.1.53"
+memchr = "2.7.5"
+miette = { package = "oxc-miette", version = "2.5.0", features = ["fancy-no-syscall"] }
+mimalloc-safe = "0.1.54"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
-papaya = "0.2.1"
-percent-encoding = "2.3.1"
+papaya = "0.2.3"
+percent-encoding = "2.3.2"
 petgraph = { version = "0.8.2", default-features = false }
-phf = "0.12.0"
-phf_codegen = "0.12.0"
+phf = "0.13.1"
+phf_codegen = "0.13.1"
 pico-args = "0.5.0"
-prettyplease = "0.2.33"
+prettyplease = "0.2.37"
 project-root = "0.2.2"
-rayon = "1.10.0"
+rayon = "1.11.0"
 ropey = "1.6.1"
-rust-lapper = "1.1.0"
-ryu-js = "1.0.2"
+rust-lapper = "1.2.0"
 saphyr = "0.0.6"
 schemars = { package = "oxc-schemars", version = "0.8.25" }
 self_cell = "1.2.0"
@@ -226,16 +222,16 @@ sha1 = "0.10.6"
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] }
 similar = "2.7.0"
 similar-asserts = "1.7.0"
-smallvec = "1.15.1"
-tempfile = "3.20.0"
-tokio = { version = "1.45.1", default-features = false }
-tower-lsp-server = "0.22.0"
-tracing-subscriber = "0.3.19"
-ureq = { version = "3.0.11", default-features = false }
+smallvec = { version = "1.15.1", features = ["union"] }
+tempfile = "3.22.0"
+tokio = { version = "1.47.1", default-features = false }
+tower-lsp-server = "0.22.1"
+tracing-subscriber = "0.3.20"
+ureq = { version = "3.1.2", default-features = false }
 walkdir = "2.5.0"
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "lazy_static"]
+ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi", "prettyplease"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

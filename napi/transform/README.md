@@ -6,9 +6,9 @@ This is alpha software and may yield incorrect results, feel free to [submit a b
 
 ```javascript
 import assert from 'assert';
-import oxc from 'oxc-transform';
+import { transform } from 'oxc-transform';
 
-const { code, declaration, errors } = oxc.transform(
+const { code, declaration, errors } = transform(
   'test.ts',
   'class A<T> {}',
   {
@@ -17,6 +17,7 @@ const { code, declaration, errors } = oxc.transform(
     },
   },
 );
+// or `await transformAsync(filename, code, options)`
 
 assert.equal(code, 'class A {}\n');
 assert.equal(declaration, 'declare class A<T> {}\n');
@@ -31,9 +32,9 @@ Conforms to TypeScript compiler's `--isolatedDeclarations` `.d.ts` emit.
 
 ```javascript
 import assert from 'assert';
-import oxc from 'oxc-transform';
+import { isolatedDeclaration } from 'oxc-transform';
 
-const { map, code, errors } = oxc.isolatedDeclaration('test.ts', 'class A {}');
+const { map, code, errors } = isolatedDeclaration('test.ts', 'class A {}');
 
 assert.equal(code, 'declare class A {}\n');
 assert(errors.length == 0);

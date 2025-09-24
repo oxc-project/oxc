@@ -1,19 +1,14 @@
-#[cfg(test)]
-use crate::cli::{LintRunner, lint_command};
-#[cfg(test)]
-use crate::runner::Runner;
-#[cfg(test)]
-use cow_utils::CowUtils;
-#[cfg(test)]
-use lazy_regex::Regex;
-#[cfg(test)]
 use std::{env, path::PathBuf};
-#[cfg(test)]
+
+use cow_utils::CowUtils;
+use lazy_regex::Regex;
+
+use crate::cli::{CliRunner, lint_command};
+
 pub struct Tester {
     cwd: PathBuf,
 }
 
-#[cfg(test)]
 impl Tester {
     pub fn new() -> Self {
         let cwd = env::current_dir().unwrap();
@@ -37,7 +32,31 @@ impl Tester {
 
         let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         let mut output = Vec::new();
-        let _ = LintRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+        let _ = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+    }
+
+    pub fn test_fix(file: &str, before: &str, after: &str) {
+        use std::fs;
+        #[expect(clippy::disallowed_methods)]
+        let content_original = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        assert_eq!(content_original, before);
+
+        Tester::new().test(&["--fix", file]);
+
+        #[expect(clippy::disallowed_methods)]
+        let new_content = fs::read_to_string(file).unwrap().replace("\r\n", "\n");
+        assert_eq!(new_content, after);
+
+        Tester::new().test(&["--fix", file]);
+
+        // File should not be modified if no fix is applied.
+        let modified_before: std::time::SystemTime =
+            fs::metadata(file).unwrap().modified().unwrap();
+        let modified_after = fs::metadata(file).unwrap().modified().unwrap();
+        assert_eq!(modified_before, modified_after);
+
+        // Write the file back.
+        fs::write(file, before).unwrap();
     }
 
     pub fn test_and_snapshot(&self, args: &[&str]) {
@@ -59,7 +78,7 @@ impl Tester {
                 format!("working directory: {}\n", relative_dir.to_str().unwrap()).as_bytes(),
             );
             output.extend_from_slice(b"----------\n");
-            let result = LintRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
+            let result = CliRunner::new(options, None).with_cwd(self.cwd.clone()).run(&mut output);
 
             output.extend_from_slice(b"----------\n");
             output.extend_from_slice(format!("CLI result: {result:?}\n").as_bytes());
@@ -74,7 +93,7 @@ impl Tester {
         settings.set_snapshot_suffix("oxlint");
 
         let output_string = &String::from_utf8(output).unwrap();
-        let regex = Regex::new(r"\d+ms").unwrap();
+        let regex = Regex::new(r"\d+(?:\.\d+)?s|\d+ms").unwrap();
         let output_string = regex.replace_all(output_string, "<variable>ms").into_owned();
         let regex = Regex::new(r#""start_time": \d+\.\d+"#).unwrap();
         let output_string = regex.replace_all(&output_string, r#""start_time": <variable>"#);

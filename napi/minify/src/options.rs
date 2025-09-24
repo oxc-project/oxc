@@ -1,10 +1,8 @@
-use std::str::FromStr;
-
 use napi::Either;
 use napi_derive::napi;
 
+use oxc_compat::EngineTargets;
 use oxc_minifier::TreeShakeOptions;
-use oxc_syntax::es_target::ESTarget;
 
 #[napi(object)]
 pub struct CompressOptions {
@@ -12,19 +10,15 @@ pub struct CompressOptions {
     ///
     /// Set `esnext` to enable all target highering.
     ///
-    /// e.g.
+    /// Example:
     ///
-    /// * catch optional binding when >= es2019
-    /// * `??` operator >= es2020
+    /// * `'es2015'`
+    /// * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
     ///
     /// @default 'esnext'
-    #[napi(
-        ts_type = "'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'"
-    )]
-    pub target: Option<String>,
-
-    /// Keep function / class names.
-    pub keep_names: Option<CompressOptionsKeepNames>,
+    ///
+    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    pub target: Option<Either<String, Vec<String>>>,
 
     /// Pass true to discard calls to `console.*`.
     ///
@@ -35,12 +29,15 @@ pub struct CompressOptions {
     ///
     /// @default true
     pub drop_debugger: Option<bool>,
-}
 
-impl Default for CompressOptions {
-    fn default() -> Self {
-        Self { target: None, keep_names: None, drop_console: None, drop_debugger: Some(true) }
-    }
+    /// Drop unreferenced functions and variables.
+    ///
+    /// Simple direct variable assignments do not count as references unless set to "keep_assign".
+    #[napi(ts_type = "true | false | 'keep_assign'")]
+    pub unused: Option<String>,
+
+    /// Keep function / class names.
+    pub keep_names: Option<CompressOptionsKeepNames>,
 }
 
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
@@ -48,16 +45,21 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
     fn try_from(o: &CompressOptions) -> Result<Self, Self::Error> {
         let default = oxc_minifier::CompressOptions::default();
         Ok(oxc_minifier::CompressOptions {
-            target: o
-                .target
-                .as_ref()
-                .map(|s| ESTarget::from_str(s))
-                .transpose()?
-                .unwrap_or(default.target),
+            target: match &o.target {
+                Some(Either::A(s)) => EngineTargets::from_target(s)?,
+                Some(Either::B(list)) => EngineTargets::from_target_list(list)?,
+                _ => default.target,
+            },
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
+            // TODO
+            join_vars: true,
+            sequences: true,
+            // TODO
+            unused: oxc_minifier::CompressOptionsUnused::Keep,
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
+            max_iterations: None,
         })
     }
 }
@@ -165,6 +167,9 @@ impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
 #[napi(object)]
 #[derive(Default)]
 pub struct MinifyOptions {
+    /// Use when minifying an ES6 module.
+    pub module: Option<bool>,
+
     pub compress: Option<Either<bool, CompressOptions>>,
 
     pub mangle: Option<Either<bool, MangleOptions>>,

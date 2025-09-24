@@ -15,16 +15,16 @@ export interface CompressOptions {
    *
    * Set `esnext` to enable all target highering.
    *
-   * e.g.
+   * Example:
    *
-   * * catch optional binding when >= es2019
-   * * `??` operator >= es2020
+   * * `'es2015'`
+   * * `['es2020', 'chrome58', 'edge16', 'firefox57', 'node12', 'safari11']`
    *
    * @default 'esnext'
+   *
+   * @see [esbuild#target](https://esbuild.github.io/api/#target)
    */
-  target?: 'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'
-  /** Keep function / class names. */
-  keepNames?: CompressOptionsKeepNames
+  target?: string | Array<string>
   /**
    * Pass true to discard calls to `console.*`.
    *
@@ -37,6 +37,14 @@ export interface CompressOptions {
    * @default true
    */
   dropDebugger?: boolean
+  /**
+   * Drop unreferenced functions and variables.
+   *
+   * Simple direct variable assignments do not count as references unless set to "keep_assign".
+   */
+  unused?: true | false | 'keep_assign'
+  /** Keep function / class names. */
+  keepNames?: CompressOptionsKeepNames
 }
 
 export interface CompressOptionsKeepNames {
@@ -94,6 +102,8 @@ export interface MangleOptionsKeepNames {
 export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
 
 export interface MinifyOptions {
+  /** Use when minifying an ES6 module. */
+  module?: boolean
   compress?: boolean | CompressOptions
   mangle?: boolean | MangleOptions
   codegen?: boolean | CodegenOptions

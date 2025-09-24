@@ -447,3 +447,38 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
         }
     }
 }
+
+/// Converter for [`ParenthesizedExpression`].
+///
+/// In raw transfer, do not produce a `ParenthesizedExpression` node in AST if `preserveParens` is false.
+///
+/// Not useful in `oxc-parser`, as can use parser option `preserve_parens`.
+/// Required for `oxlint` plugins where we run parser with `preserve_parens` set to `true`,
+/// to preserve them on Rust side, but need to remove them on JS side.
+///
+/// ESTree implementation is unchanged from the auto-generated version.
+#[ast_meta]
+#[estree(raw_deser = "
+    let node = DESER[Expression](POS_OFFSET.expression);
+    if (preserveParens) {
+        node = {
+            type: 'ParenthesizedExpression',
+            expression: node,
+            start: DESER[u32]( POS_OFFSET.span.start ),
+            end: DESER[u32]( POS_OFFSET.span.end ),
+        };
+    }
+    node
+")]
+pub struct ParenthesizedExpressionConverter<'a, 'b>(pub &'b ParenthesizedExpression<'a>);
+
+impl ESTree for ParenthesizedExpressionConverter<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let paren_expr = self.0;
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
+        state.serialize_field("expression", &paren_expr.expression);
+        state.serialize_span(paren_expr.span);
+        state.end();
+    }
+}

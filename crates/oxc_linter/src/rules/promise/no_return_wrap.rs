@@ -52,7 +52,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// It is unnecessary to use `Promise.resolve` and Promise.reject` for converting raw values
+    /// It is unnecessary to use `Promise.resolve` and `Promise.reject` for converting raw values
     /// to promises in the return statements of `then` and `catch` callbacks. Using these
     /// operations to convert raw values to promises is unnecessary as simply returning the raw
     /// value for the success case and throwing the raw error value in the failure case have the
@@ -151,7 +151,7 @@ impl Rule for NoReturnWrap {
             return;
         };
 
-        if !inside_promise_cb(node, ctx) {
+        if is_promise(call_expr).is_none() && !inside_promise_cb(node, ctx) {
             return;
         }
 
@@ -232,10 +232,10 @@ fn check_arrow_cb_arg<'a>(
             check_first_return_statement(ctx, &arrow_expr.body, allow_reject);
         }
 
-        if let Statement::ReturnStatement(r) = only_stmt {
-            if let Some(Expression::CallExpression(returned_call_expr)) = &r.argument {
-                check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
-            }
+        if let Statement::ReturnStatement(r) = only_stmt
+            && let Some(Expression::CallExpression(returned_call_expr)) = &r.argument
+        {
+            check_for_resolve_reject(ctx, allow_reject, returned_call_expr);
         }
 
         let Statement::ExpressionStatement(expr_stmt) = only_stmt else {

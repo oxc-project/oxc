@@ -49,67 +49,82 @@ export declare class Oxc {
 }
 
 export interface OxcCodegenOptions {
-  indentation?: number
-  enableTypescript?: boolean
-  enableSourcemap?: boolean
+  normal: boolean
+  jsdoc: boolean
+  annotation: boolean
+  legal: boolean
 }
 
 export interface OxcCompressOptions {
-  booleans: boolean
-  dropDebugger: boolean
-  dropConsole: boolean
-  evaluate: boolean
-  joinVars: boolean
-  loops: boolean
-  typeofs: boolean
+
 }
 
 export interface OxcControlFlowOptions {
   verbose?: boolean
 }
 
+export interface OxcDefineOptions {
+  /** Map of variable name to value for replacement */
+  define: Record<string, string>
+}
+
+export interface OxcInjectOptions {
+  /** Map of variable name to module source or [source, specifier] */
+  inject: Record<string, string | [string, string]>
+}
+
+export interface OxcIsolatedDeclarationsOptions {
+  stripInternal: boolean
+}
+
 export interface OxcLinterOptions {
   config?: string
 }
 
-export interface OxcMinifierOptions {
-  whitespace?: boolean
-  mangle?: boolean
-  compress?: boolean
-  compressOptions?: OxcCompressOptions
+export interface OxcMangleOptions {
+  topLevel: boolean
+  keepNames: boolean
 }
 
 export interface OxcOptions {
-  run?: OxcRunOptions
-  parser?: OxcParserOptions
+  run: OxcRunOptions
+  parser: OxcParserOptions
   linter?: OxcLinterOptions
   transformer?: OxcTransformerOptions
+  isolatedDeclarations?: OxcIsolatedDeclarationsOptions
   codegen?: OxcCodegenOptions
-  minifier?: OxcMinifierOptions
+  compress?: OxcCompressOptions
+  mangle?: OxcMangleOptions
   controlFlow?: OxcControlFlowOptions
+  inject?: OxcInjectOptions
+  define?: OxcDefineOptions
 }
 
 export interface OxcParserOptions {
-  allowReturnOutsideFunction?: boolean
-  preserveParens?: boolean
-  allowV8Intrinsics?: boolean
-  sourceType?: string
-  sourceFilename?: string
+  extension: string
+  allowReturnOutsideFunction: boolean
+  preserveParens: boolean
+  allowV8Intrinsics: boolean
+  semanticErrors: boolean
 }
 
 export interface OxcRunOptions {
-  syntax?: boolean
-  lint?: boolean
-  format?: boolean
-  formatterFormat?: boolean
-  formatterIr?: boolean
-  transform?: boolean
-  typeCheck?: boolean
-  scope?: boolean
-  symbol?: boolean
+  lint: boolean
+  formatter: boolean
+  formatterIr: boolean
+  transform: boolean
+  isolatedDeclarations: boolean
+  whitespace: boolean
+  compress: boolean
+  mangle: boolean
+  scope: boolean
+  symbol: boolean
+  cfg: boolean
 }
 
 export interface OxcTransformerOptions {
   target?: string
-  isolatedDeclarations?: boolean
+  useDefineForClassFields: boolean
+  experimentalDecorators: boolean
+  emitDecoratorMetadata: boolean
 }

@@ -15,6 +15,7 @@ mod r#box;
 mod cell;
 mod r#enum;
 mod option;
+mod pointer;
 mod primitive;
 mod r#struct;
 mod r#type;
@@ -23,6 +24,7 @@ pub use r#box::BoxDef;
 pub use cell::CellDef;
 pub use r#enum::{Discriminant, EnumDef, VariantDef};
 pub use option::OptionDef;
+pub use pointer::{PointerDef, PointerKind};
 pub use primitive::PrimitiveDef;
 pub use r#struct::{FieldDef, StructDef};
 pub use r#type::TypeDef;
@@ -130,6 +132,8 @@ pub struct Containers {
     pub vec_id: Option<TypeId>,
     /// [`TypeId`] of `Cell` containing this type, if it exists in AST
     pub cell_id: Option<TypeId>,
+    /// [`TypeId`] of `NonNull` containing this type, if it exists in AST
+    pub non_null_id: Option<TypeId>,
 }
 
 /// Visibility of a struct / enum / struct field.
@@ -139,4 +143,62 @@ pub enum Visibility {
     /// `pub(crate)` or `pub(super)`
     Restricted,
     Private,
+}
+
+/// Reference to a [`StructDef`] or [`EnumDef`].
+#[derive(Clone, Copy)]
+pub enum StructOrEnum<'s> {
+    Struct(&'s StructDef),
+    Enum(&'s EnumDef),
+}
+
+impl Def for StructOrEnum<'_> {
+    /// Get [`TypeId`] for type.
+    fn id(&self) -> TypeId {
+        match self {
+            Self::Struct(struct_def) => struct_def.id(),
+            Self::Enum(enum_def) => enum_def.id(),
+        }
+    }
+
+    /// Get type name.
+    fn name(&self) -> &str {
+        match self {
+            Self::Struct(struct_def) => struct_def.name(),
+            Self::Enum(enum_def) => enum_def.name(),
+        }
+    }
+
+    /// Get all traits which have derives generated for this type.
+    fn generated_derives(&self) -> Derives {
+        match self {
+            Self::Struct(struct_def) => struct_def.generated_derives(),
+            Self::Enum(enum_def) => enum_def.generated_derives(),
+        }
+    }
+
+    /// Get if type has a lifetime.
+    fn has_lifetime(&self, schema: &Schema) -> bool {
+        match self {
+            Self::Struct(struct_def) => struct_def.has_lifetime(schema),
+            Self::Enum(enum_def) => enum_def.has_lifetime(schema),
+        }
+    }
+
+    /// Get type signature (including lifetimes).
+    /// Lifetimes are anonymous (`'_`) if `anon` is true.
+    fn ty_with_lifetime(&self, schema: &Schema, anon: bool) -> TokenStream {
+        match self {
+            Self::Struct(struct_def) => struct_def.ty_with_lifetime(schema, anon),
+            Self::Enum(enum_def) => enum_def.ty_with_lifetime(schema, anon),
+        }
+    }
+
+    /// Get inner type, if type has one.
+    ///
+    /// Structs and enums don't have a single inner type, so returns `None`.
+    #[expect(unused_variables)]
+    fn maybe_inner_type<'s>(&self, schema: &'s Schema) -> Option<&'s TypeDef> {
+        None
+    }
 }

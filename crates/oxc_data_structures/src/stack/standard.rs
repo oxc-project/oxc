@@ -334,6 +334,25 @@ impl<T> Stack<T> {
         unsafe { self.cursor.read() }
     }
 
+    /// Clear the stack, removing all values.
+    ///
+    /// Note that this method has no effect on the allocated capacity
+    /// of the stack.
+    #[inline]
+    pub fn clear(&mut self) {
+        if self.is_empty() {
+            return;
+        }
+
+        debug_assert!(self.end > self.start);
+
+        // SAFETY: Checked above that stack is not empty, so stack is allocated.
+        // Stack contains `self.len()` initialized entries, starting at `self.start`
+        unsafe { self.drop_contents() };
+        // Move cursor back to start. This is equivalent to setting len to 0
+        self.cursor = self.start;
+    }
+
     /// Get number of entries on stack.
     #[inline]
     pub fn len(&self) -> usize {
@@ -586,6 +605,20 @@ mod tests {
         assert_len_cap_last!(stack, 2, 4, Some(&21));
         *stack.last_mut().unwrap() = 22;
         assert_len_cap_last!(stack, 2, 4, Some(&22));
+    }
+
+    #[test]
+    fn clear() {
+        let mut stack = Stack::<u64>::new();
+        assert_len_cap_last!(stack, 0, 0, None);
+
+        stack.clear();
+        assert_len_cap_last!(stack, 0, 0, None);
+
+        stack.push(10);
+        assert_len_cap_last!(stack, 1, 4, Some(&10));
+        stack.clear();
+        assert_len_cap_last!(stack, 0, 4, None);
     }
 
     #[test]

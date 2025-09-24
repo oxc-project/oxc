@@ -104,7 +104,7 @@ impl Rule for NoIdenticalTitle {
                 })
                 .collect::<Vec<(Span, JestFnKind, NodeId)>>();
             // After being sorted by parent_id, the span with the same parent will be placed nearby.
-            kind_and_spans.sort_by(|a, b| a.2.cmp(&b.2));
+            kind_and_spans.sort_unstable_by(|a, b| a.2.cmp(&b.2));
 
             // Skip the first element, for `describe('foo'); describe('foo');`, we only need to check the second one.
             for i in 1..kind_and_spans.len() {
@@ -149,9 +149,9 @@ fn filter_and_process_jest_result<'a>(
         Some(Argument::StringLiteral(string_lit)) => {
             Some((string_lit.span, &string_lit.value, kind, parent_id))
         }
-        Some(Argument::TemplateLiteral(template_lit)) => {
-            template_lit.quasi().map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id))
-        }
+        Some(Argument::TemplateLiteral(template_lit)) => template_lit
+            .single_quasi()
+            .map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id)),
         _ => None,
     }
 }

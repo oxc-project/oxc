@@ -92,12 +92,11 @@ impl Rule for NoDuplicates {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        let loaded_modules = module_record.loaded_modules.read().unwrap();
         let groups = module_record
             .requested_modules
             .iter()
             .map(|(source, requested_modules)| {
-                let resolved_absolute_path = loaded_modules.get(source).map_or_else(
+                let resolved_absolute_path = module_record.get_loaded_module(source).map_or_else(
                     || source.to_string(),
                     |module| module.resolved_absolute_path.to_string_lossy().to_string(),
                 );
@@ -154,13 +153,13 @@ impl Rule for NoDuplicates {
 }
 
 fn check_duplicates(ctx: &LintContext, requested_modules: Option<&Vec<&RequestedModule>>) {
-    if let Some(requested_modules) = requested_modules {
-        if requested_modules.len() > 1 {
-            let mut labels = requested_modules.iter().map(|m| m.span);
-            let first = labels.next().unwrap(); // we know there is at least one
-            let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
-            ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
-        }
+    if let Some(requested_modules) = requested_modules
+        && requested_modules.len() > 1
+    {
+        let mut labels = requested_modules.iter().map(|m| m.span);
+        let first = labels.next().unwrap(); // we know there is at least one
+        let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
+        ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
     }
 }
 

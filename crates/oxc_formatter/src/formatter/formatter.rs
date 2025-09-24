@@ -7,7 +7,7 @@ use crate::options::FormatOptions;
 
 use super::{
     Arguments, Buffer, Comments, FormatContext, FormatState, FormatStateSnapshot, GroupId,
-    VecBuffer,
+    SourceText, VecBuffer,
     buffer::BufferSnapshot,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
     prelude::*,
@@ -49,15 +49,15 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         self.state_mut().context_mut()
     }
 
-    /// Returns the source text.
+    /// Returns the source text wrapper.
     #[inline]
-    pub fn source_text(&self) -> &'ast str {
+    pub fn source_text(&self) -> SourceText<'ast> {
         self.context().source_text()
     }
 
     /// Returns the comments from the context.
     #[inline]
-    pub fn comments(&self) -> &Comments {
+    pub fn comments(&self) -> &Comments<'_> {
         self.context().comments()
     }
 

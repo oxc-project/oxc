@@ -1,11 +1,9 @@
 use std::{borrow::Cow, ops::Deref};
 
 use bitflags::bitflags;
+
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
-
-#[cfg(feature = "language_server")]
-use crate::service::offset_to_position::SpanPositionMessage;
 
 bitflags! {
     /// Flags describing an automatic code fix.
@@ -281,7 +279,7 @@ impl<'a> Deref for RuleFix<'a> {
 /// A completed, normalized fix ready to be applied to the source code.
 ///
 /// Used internally by this module. Lint rules should use [`RuleFix`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
@@ -289,13 +287,6 @@ pub struct Fix<'a> {
     /// editors via code actions.
     pub message: Option<Cow<'a, str>>,
     pub span: Span,
-}
-
-#[cfg(feature = "language_server")]
-#[derive(Debug)]
-pub struct FixWithPosition<'a> {
-    pub content: Cow<'a, str>,
-    pub span: SpanPositionMessage<'a>,
 }
 
 impl<'new> CloneIn<'new> for Fix<'_> {
@@ -343,7 +334,7 @@ impl<'a> Fix<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PossibleFixes<'a> {
     None,
     Single(Fix<'a>),
@@ -389,14 +380,6 @@ impl PossibleFixes<'_> {
             }
         }
     }
-}
-
-#[cfg(feature = "language_server")]
-#[derive(Debug)]
-pub enum PossibleFixesWithPosition<'a> {
-    None,
-    Single(FixWithPosition<'a>),
-    Multiple(Vec<FixWithPosition<'a>>),
 }
 
 // NOTE (@DonIsaac): having these variants is effectively the same as interning
@@ -549,7 +532,7 @@ impl<'a> CompositeFix<'a> {
     /// 3. contains negative ranges (span.start > span.end)
     ///
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L147-L179>
-    fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
+    pub fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
         let mut fixes = fixes;
         if fixes.is_empty() {
             // Do nothing
@@ -565,9 +548,14 @@ impl<'a> CompositeFix<'a> {
         let end = fixes[fixes.len() - 1].span.end;
         let mut last_pos = start;
         let mut output = String::new();
+        let mut merged_fix_message = None;
 
         for fix in fixes {
-            let Fix { content, span, .. } = fix;
+            let Fix { content, span, message } = fix;
+            if let Some(message) = message {
+                merged_fix_message.get_or_insert(message);
+            }
+
             // negative range or overlapping ranges is invalid
             if span.start > span.end {
                 debug_assert!(false, "Negative range is invalid: {span:?}");
@@ -600,19 +588,18 @@ impl<'a> CompositeFix<'a> {
 
         output.push_str(after);
         output.shrink_to_fit();
-        Fix::new(output, Span::new(start, end))
+
+        let mut fix = Fix::new(output, Span::new(start, end));
+        if let Some(message) = merged_fix_message {
+            fix = fix.with_message(message);
+        }
+        fix
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-
-    impl PartialEq for Fix<'_> {
-        fn eq(&self, other: &Self) -> bool {
-            self.span == other.span && self.content == other.content
-        }
-    }
 
     impl Clone for CompositeFix<'_> {
         fn clone(&self) -> Self {

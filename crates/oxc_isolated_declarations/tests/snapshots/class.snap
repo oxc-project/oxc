@@ -21,17 +21,29 @@ export declare abstract class Qux {
 	baz(): void;
 }
 export declare class Baz {
-	/** Just a comment */
+	/**
+	* Just a comment
+	*/
 	readonly prop1 = "some string";
-	/** Just a comment */
+	/**
+	* Just a comment
+	*/
 	prop2: string;
-	/** Just a comment */
+	/**
+	* Just a comment
+	*/
 	private prop3;
-	/** Just a comment */
+	/**
+	* Just a comment
+	*/
 	private prop4;
-	/** Just a comment */
+	/**
+	* Just a comment
+	*/
 	private static prop5;
-	/** Just a comment */
+	/**
+	* Just a comment
+	*/
 	private static prop6;
 }
 export declare class Boo {
@@ -64,26 +76,70 @@ export declare class ConstructorOverloadsClass {
 	constructor(a: number);
 	constructor(a: string);
 }
+export declare class ClassParameterProperties {
+	readonly b: string;
+	constructor(a: number, b: string);
+}
+export declare class PrivateConstructorWithParameterProperties {
+	readonly bar: string;
+	private constructor();
+}
+export declare class ProtectedConstructorWithParameterProperties {
+	foo: string;
+	private readonly bar;
+	protected baz: boolean;
+	readonly qux: string;
+	protected constructor(foo: string, bar: number, baz: boolean, qux: string);
+}
+export declare class PrivateConstructorMixedParameterProperties {
+	publicProp: string;
+	private privateProp;
+	protected protectedProp: boolean;
+	readonly readonlyProp: string;
+	readonly publicReadonlyProp: number;
+	private readonly privateReadonlyProp;
+	private constructor();
+}
+export declare class PrivateConstructorWithOverloads {
+	private constructor();
+	private constructor();
+	private constructor();
+}
+export declare class PrivateConstructorWithOptionalParameters {
+	publicOptional?: boolean | undefined;
+	private privateOptional?;
+	readonly readonlyOptional?: number | undefined;
+	private constructor();
+}
+export declare class PrivateConstructorWithRestParameters {
+	private constructor();
+}
+export declare class PrivateConstructorWithDefaultParameters {
+	prop1: string;
+	private prop2;
+	readonly prop3: boolean;
+	private constructor();
+}
 
 
 ==================== Errors ====================
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[69:14]
- 68 |   public get badGetter() {
- 69 |     return {[('x')]: 1};
+    ,-[81:14]
+ 80 |   public get badGetter() {
+ 81 |     return {[('x')]: 1};
     :              ^^^^^
- 70 |   }
+ 82 |   }
     `----
 
   x TS9011: Parameter must have an explicit type annotation with
   | --isolatedDeclarations.
-    ,-[67:14]
- 66 | export class PublicMethodClass {
- 67 |   public bad(a): void {}
+    ,-[79:14]
+ 78 | export class PublicMethodClass {
+ 79 |   public bad(a): void {}
     :              ^
- 68 |   public get badGetter() {
+ 80 |   public get badGetter() {
     `----
 
 

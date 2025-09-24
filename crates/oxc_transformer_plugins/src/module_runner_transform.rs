@@ -38,12 +38,12 @@
 //! There are few problems to integrate this transform into the main transformer:
 //!
 //! 1. In Vite, it will collect import deps and dynamic import deps during the transform process, and return them
-//! at the end of function. We can do this, but how to pass them into the js side?
+//!    at the end of function. We can do this, but how to pass them into the js side?
 //!
 //! 2. In case other plugins will insert imports/exports, we must transform them in `exit_program`, but it will pose
-//! another problem: how to transform identifiers which refer to imports? We must collect some information from imports,
-//! but it is already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifiers,
-//! dynamic imports, and import meta.
+//!    another problem: how to transform identifiers which refer to imports? We must collect some information from imports,
+//!    but it is already at the end of the visitor. To solve this, we may introduce a new visitor to transform identifiers,
+//!    dynamic imports, and import meta.
 
 use std::iter;
 
@@ -550,7 +550,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
+        let ExportDefaultDeclaration { span, declaration } = export.unbox();
         let expr = match declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {
@@ -629,7 +629,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
         let symbol_id = symbol_id.get().unwrap();
         // Do not need to insert if there no identifiers that point to this symbol
-        if !ctx.scoping().get_resolved_reference_ids(symbol_id).is_empty() {
+        if !ctx.scoping().symbol_is_unused(symbol_id) {
             self.import_bindings.insert(symbol_id, (binding.clone(), Some(key)));
         }
 
@@ -738,7 +738,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), ctx.ast.vec1(statement));
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
-        ctx.ast.expression_function_with_scope_id_and_pure(
+        ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
             r#type,
             None,
@@ -751,6 +751,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             NONE,
             Some(body),
             scope_id,
+            false,
             false,
         )
     }
@@ -1927,9 +1928,9 @@ Object.defineProperty(__vite_ssr_exports__, 'default', {
                return __vite_ssr_export_default__;
        }
 });
-const __vite_ssr_export_default__ = function getRandom() {
+const __vite_ssr_export_default__ = (function getRandom() {
   return Math.random();
-};
+});
 ",
         );
 

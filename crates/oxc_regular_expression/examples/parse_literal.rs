@@ -1,8 +1,19 @@
 #![expect(clippy::print_stdout)]
+//! # Regular Expression Literal Parsing Example
+//!
+//! This example demonstrates parsing regular expression literals with various
+//! patterns and flags to validate and analyze regex syntax.
+//!
+//! ## Usage
+//!
+//! ```bash
+//! cargo run -p oxc_regular_expression --example parse_literal
+//! ```
 
 use oxc_allocator::Allocator;
 use oxc_regular_expression::{LiteralParser, Options};
 
+/// Test various regular expression patterns and demonstrate parsing results
 fn main() {
     let allocator = Allocator::default();
 

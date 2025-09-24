@@ -1,4 +1,4 @@
-use oxc_codegen::CodegenOptions;
+use oxc_codegen::{CodegenOptions, IndentChar};
 
 use crate::tester::{
     test, test_minify, test_minify_same, test_options, test_same, test_with_parse_options,
@@ -225,6 +225,16 @@ fn assignment() {
     test_minify("({ [0]: x } = foo);", "({[0]:x}=foo);");
     test_minify("({ a: x } = foo);", "({a:x}=foo);");
     test_minify("({ [a.b]: x } = foo);", "({[a.b]:x}=foo);");
+
+    test_minify(r#"({"my-key": value} = obj);"#, r#"({"my-key":value}=obj);"#);
+    test_minify(
+        r#"({["computed"]: a, "literal": b} = obj);"#,
+        r#"({["computed"]:a,"literal":b}=obj);"#,
+    );
+    test_minify(r#"let {"test-key": testKey} = obj;"#, r#"let{"test-key":testKey}=obj;"#);
+
+    test_minify(r#"({ "test-key": key });"#, r#"({"test-key":key});"#);
+    test_minify(r#"(class { "test-key" = key });"#, r#"(class{"test-key"=key});"#);
 }
 
 #[test]
@@ -251,7 +261,7 @@ fn r#yield() {
 fn arrow() {
     test_minify("x => a, b", "x=>a,b;");
     test_minify("x => (a, b)", "x=>(a,b);");
-    test_minify("x => (a => b)", "x=>a=>b;");
+    test_minify("x => (a => b)", "x=>(a=>b);");
     test_minify("x => y => a, b", "x=>y=>a,b;");
     test_minify("x => y => (a = b)", "x=>y=>a=b;");
     test_minify("x => y => z => a = b, c", "x=>y=>z=>a=b,c;");
@@ -382,6 +392,14 @@ fn vite_special_comments() {
     );
 }
 
+#[test]
+fn import_phase() {
+    test_minify("import.defer('foo')", "import.defer(`foo`);");
+    test_minify("import.source('foo')", "import.source(`foo`);");
+    test("import.defer('foo')", "import.defer(\"foo\");\n");
+    test("import.source('foo')", "import.source(\"foo\");\n");
+}
+
 // <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md#semantics>
 #[test]
 fn pure_comment() {
@@ -413,6 +431,18 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ a?.b();\n");
     test_same("true && /* @__PURE__ */ noEffect();\n");
     test_same("false || /* @__PURE__ */ noEffect();\n");
+}
+
+#[test]
+fn pife() {
+    test_same("foo((() => 0));\n");
+    test_minify_same("foo((()=>0));");
+    test_same("(() => 0)();\n");
+    test_minify_same("(()=>0)();");
+    test_same("foo((function() {\n\treturn 0;\n}));\n");
+    test_minify_same("foo((function(){return0}));");
+    test_same("(function() {\n\treturn 0;\n})();\n");
+    test_minify_same("(function(){return0})();");
 }
 
 // followup from https://github.com/oxc-project/oxc/pull/6422
@@ -591,5 +621,55 @@ fn v8_intrinsics() {
         "const p = %DebugPrint('hi')",
         "const p = %DebugPrint(\"hi\");\n",
         parse_opts,
+    );
+}
+
+#[test]
+fn indentation() {
+    // Test default - tabs with width 1
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n\tif (nested) {\n\t\tconsole.log(\"test\");\n\t}\n}\n",
+        CodegenOptions::default(),
+    );
+
+    // Test tabs with width 2
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n\t\tif (nested) {\n\t\t\t\tconsole.log(\"test\");\n\t\t}\n}\n",
+        CodegenOptions {
+            indent_char: IndentChar::Tab,
+            indent_width: 2,
+            ..CodegenOptions::default()
+        },
+    );
+
+    // Test spaces with width 2
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n  if (nested) {\n    console.log(\"test\");\n  }\n}\n",
+        CodegenOptions {
+            indent_char: IndentChar::Space,
+            indent_width: 2,
+            ..CodegenOptions::default()
+        },
+    );
+
+    // Test spaces with width 4
+    test_options(
+        "if (true) {\nif (nested) {\nconsole.log('test');\n}\n}",
+        "if (true) {\n    if (nested) {\n        console.log(\"test\");\n    }\n}\n",
+        CodegenOptions {
+            indent_char: IndentChar::Space,
+            indent_width: 4,
+            ..CodegenOptions::default()
+        },
+    );
+
+    // Test initial indent with 1
+    test_options(
+        "let foo = 1;",
+        "\tlet foo = 1;\n",
+        CodegenOptions { initial_indent: 1, ..CodegenOptions::default() },
     );
 }

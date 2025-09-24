@@ -53,6 +53,12 @@ impl<'a> ScopeTree<'a> {
         scope.references.contains_key(name)
     }
 
+    /// Check if the current scope has a value reference for the given name.
+    pub fn has_value_reference(&self, name: &str) -> bool {
+        let scope = self.levels.last().unwrap();
+        scope.references.get(name).iter().any(|flags| flags.contains(KindFlags::Value))
+    }
+
     fn add_binding(&mut self, name: Atom<'a>, flags: KindFlags) {
         let scope = self.levels.last_mut().unwrap();
         scope.bindings.insert(name, flags);
@@ -114,12 +120,13 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     // `typeof Value` or `typeof Value<Parameters>`
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         if let Some(type_name) = ty.expr_name.as_ts_type_name() {
-            let ident = TSTypeName::get_identifier_reference(type_name);
-            self.add_reference(ident.name, KindFlags::Value);
-            // `typeof Type<Parameters>`
-            //              ^^^^^^^^^^^
-            if let Some(type_parameters) = &ty.type_arguments {
-                self.visit_ts_type_parameter_instantiation(type_parameters);
+            if let Some(ident) = TSTypeName::get_identifier_reference(type_name) {
+                self.add_reference(ident.name, KindFlags::Value);
+                // `typeof Type<Parameters>`
+                //              ^^^^^^^^^^^
+                if let Some(type_parameters) = &ty.type_arguments {
+                    self.visit_ts_type_parameter_instantiation(type_parameters);
+                }
             }
         } else {
             walk_ts_type_query(self, ty);

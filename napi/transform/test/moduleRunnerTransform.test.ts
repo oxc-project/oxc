@@ -32,7 +32,7 @@ describe('moduleRunnerTransform', () => {
 
     expect(map).toMatchInlineSnapshot(`
       {
-        "mappings": "AAAA;;;;;;;AAAO,MAAM,IAAI",
+        "mappings": ";;;;;;;AAAO,MAAM,IAAI",
         "names": [],
         "sources": [
           "index.js",

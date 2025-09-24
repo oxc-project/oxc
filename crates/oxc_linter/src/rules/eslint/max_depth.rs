@@ -115,7 +115,7 @@ declare_oxc_lint!(
 impl Rule for MaxDepth {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if should_count(node, ctx.nodes()) {
-            let depth = ctx
+            let depth = 1 + ctx
                 .nodes()
                 .ancestors(node.id())
                 .take_while(|node| !should_stop(node))

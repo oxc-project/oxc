@@ -21,7 +21,7 @@ const PACKAGES = [
   'babel-plugin-transform-private-methods',
   'babel-plugin-transform-private-property-in-object',
   'babel-plugin-transform-logical-assignment-operators',
-  'babel-plugin-proposal-explicit-resource-management',
+  'babel-plugin-transform-explicit-resource-management',
 ];
 const FILTER_OUT_PRESETS = ['env'];
 const FILTER_OUT_PLUGINS = [
@@ -49,15 +49,16 @@ const EXTERNAL_HELPERS_VERSION = '7.100.0';
 
 for (const packageName of PACKAGES) {
   const dirPath = pathJoin(PACKAGES_PATH, packageName, 'test/fixtures');
+  // oxlint-disable-next-line no-await-in-loop
   await updateDir(dirPath, {}, false);
 }
 
 /**
  * Update fixtures in directory, and its sub-directories.
  * @param {string} dirPath - Path to directory containing fixtures
- * @param {Object} options - Transform options from parent directory
+ * @param {object} options - Transform options from parent directory
  * @param {boolean} hasChangedOptions - `true` if transform options from parent directory have changed
- * @returns {undefined}
+ * @returns {Promise<undefined>}
  */
 async function updateDir(dirPath, options, hasChangedOptions) {
   if (IGNORED_FIXTURES.some(p => dirPath.endsWith(p))) {
@@ -110,6 +111,7 @@ async function updateDir(dirPath, options, hasChangedOptions) {
   // Process subfolders
   for (const filename of dirFiles) {
     const path = pathJoin(dirPath, filename);
+    // oxlint-disable-next-line no-await-in-loop
     await updateDir(path, options, hasChangedOptions);
   }
 }
@@ -179,10 +181,10 @@ function ensureAllClassPluginsEnabled(options) {
 }
 
 /**
- * Transform input with Babel and save to output file.
+ * Transform input with Babel.
  * @param {string} inputPath - Path of input file
- * @param {Object} options - Transform options
- * @returns {undefined}
+ * @param {object} options - Transform options
+ * @returns {Promise<string>}
  */
 async function transform(inputPath, options) {
   options = {
@@ -243,7 +245,7 @@ function getName(stringOrArray) {
 /**
  * Backup file.
  * @param {string} path - Original path
- * @returns {undefined}
+ * @returns {Promise<undefined>}
  */
 async function backupFile(path) {
   const ext = extname(path),
