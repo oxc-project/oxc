@@ -1,3 +1,5 @@
+import type { RuleMeta } from './types.ts';
+
 // Diagnostic in form passed by user to `Context#report()`
 interface Diagnostic {
   message: string;
@@ -64,6 +66,8 @@ interface InternalContext {
   filePath: string;
   // Options
   options: unknown[];
+  // Rule metadata
+  meta: RuleMeta;
 }
 
 /**
@@ -80,12 +84,13 @@ export class Context {
    * @class
    * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
    */
-  constructor(fullRuleName: string) {
+  constructor(fullRuleName: string, meta: RuleMeta) {
     this.#internal = {
       id: fullRuleName,
       filePath: '',
       ruleIndex: -1,
       options: [],
+      meta,
     };
   }
 

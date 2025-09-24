@@ -1,7 +1,7 @@
 import { Context } from './context.js';
 import { getErrorMessage } from './utils.js';
 
-import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from './types.ts';
+import type { AfterHook, BeforeHook, RuleMeta, Visitor, VisitorWithHooks } from './types.ts';
 
 const ObjectKeys = Object.keys;
 
@@ -21,10 +21,12 @@ export interface Plugin {
 export type Rule = CreateRule | CreateOnceRule;
 
 interface CreateRule {
+  meta?: RuleMeta;
   create: (context: Context) => Visitor;
 }
 
 export interface CreateOnceRule {
+  meta?: RuleMeta;
   create?: (context: Context) => Visitor;
   createOnce: (context: Context) => VisitorWithHooks;
 }
@@ -65,6 +67,9 @@ interface PluginDetails {
   // Names of rules within this plugin, in same order as in `registeredRules`
   ruleNames: string[];
 }
+
+// Default rule metadata, used if `rule.meta` property is empty.
+const emptyRuleMeta: RuleMeta = {};
 
 /**
  * Load a plugin.
@@ -113,7 +118,20 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
 
-    const context = new Context(`${pluginName}/${ruleName}`);
+    // Validate `rule.meta` and convert to object with standardized shape
+    // (all properties defined with default values if not supplied)
+    let ruleMeta = rule.meta;
+    if (ruleMeta == null) {
+      ruleMeta = emptyRuleMeta;
+    } else {
+      if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
+      // TODO: Validate and conform individual properties of `meta` once they're supported
+      ruleMeta = emptyRuleMeta;
+    }
+
+    // Create `Context` object for rule. This will be re-used for every file.
+    // It's updated with file-specific data before linting each file with `setupContextForFile`.
+    const context = new Context(`${pluginName}/${ruleName}`, ruleMeta);
 
     let ruleAndContext;
     if ('createOnce' in rule) {
