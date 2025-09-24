@@ -2,7 +2,7 @@ use std::iter::{self, repeat_with};
 
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
 use oxc_allocator::{Allocator, BitSet, Vec};
@@ -10,7 +10,7 @@ use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_index::Idx;
 use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::Atom;
+use oxc_span::{Atom, CompactStr};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -54,6 +54,13 @@ impl TempAllocator<'_> {
             TempAllocator::Borrowed(allocator) => allocator,
         }
     }
+}
+
+pub struct ManglerReturn {
+    pub scoping: Scoping,
+    /// A vector where each element corresponds to a class in declaration order.
+    /// Each element is a mapping from original private member names to their mangled names.
+    pub class_private_mappings: std::vec::Vec<FxHashMap<String, CompactStr>>,
 }
 
 /// # Name Mangler / Symbol Minification
@@ -257,11 +264,12 @@ impl<'t> Mangler<'t> {
     /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
-    pub fn build(self, program: &Program<'_>) -> Scoping {
+    pub fn build(self, program: &Program<'_>) -> ManglerReturn {
         let mut semantic =
             SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
+        let class_private_mappings = Self::collect_private_members_from_semantic(&semantic);
         self.build_with_semantic(&mut semantic, program);
-        semantic.into_scoping()
+        ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
 
     /// # Panics
@@ -547,6 +555,36 @@ impl<'t> Mangler<'t> {
     ) -> (FxHashSet<&'a str>, FxHashSet<SymbolId>) {
         let ids = collect_name_symbols(keep_names, scoping, nodes);
         (ids.iter().map(|id| scoping.symbol_name(*id)).collect(), ids)
+    }
+
+    /// Collects and generates mangled names for private members using semantic information
+    /// Returns a Vec where each element corresponds to a class in declaration order
+    fn collect_private_members_from_semantic(
+        semantic: &Semantic<'_>,
+    ) -> std::vec::Vec<FxHashMap<String, CompactStr>> {
+        let classes = semantic.classes();
+        classes
+            .elements
+            .iter()
+            .map(|class_elements| {
+                assert!(u32::try_from(class_elements.len()).is_ok(), "too many class elements");
+                class_elements
+                    .iter()
+                    .filter_map(|element| {
+                        if element.is_private { Some(element.name.to_string()) } else { None }
+                    })
+                    .enumerate()
+                    .map(|(i, name)| {
+                        #[expect(
+                            clippy::cast_possible_truncation,
+                            reason = "checked above with assert"
+                        )]
+                        let mangled = CompactStr::new(base54(i as u32).as_str());
+                        (name, mangled)
+                    })
+                    .collect::<FxHashMap<_, _>>()
+            })
+            .collect()
     }
 }
 
