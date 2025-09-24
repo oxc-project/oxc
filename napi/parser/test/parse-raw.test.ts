@@ -5,7 +5,7 @@ import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
-import { parseAsync, parseSync } from '../index.mjs';
+import { parseAsync, parseSync, type TSTypeAliasDeclaration, type VariableDeclaration } from '../src-js/index.js';
 
 import {
   ACORN_TEST262_DIR_PATH,
@@ -26,7 +26,7 @@ import {
   TS_ESTREE_DIR_PATH,
   TS_SHORT_DIR_PATH,
   TS_SNAPSHOT_PATH,
-} from './parse-raw-common.mjs';
+} from './parse-raw-common.js';
 
 const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
   ? [describe, it]
@@ -35,7 +35,7 @@ const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
 // Worker pool for running test cases.
 // Vitest provides parallelism across test files, but not across cases within a single test file.
 // So we run each case in a worker to achieve parallelism.
-const pool = new Tinypool({ filename: new URL('./parse-raw-worker.mjs', import.meta.url).href });
+const pool = new Tinypool({ filename: new URL('./parse-raw-worker.js', import.meta.url).href });
 
 let runCase;
 
@@ -46,7 +46,7 @@ async function runCaseInWorker(type, props) {
   // If test failed in worker, run it again in main thread with Vitest's `expect`,
   // to get a nice diff and stack trace
   if (!success) {
-    if (!runCase) ({ runCase } = await import('./parse-raw-worker.mjs'));
+    if (!runCase) ({ runCase } = await import('./parse-raw-worker.js'));
 
     type |= TEST_TYPE_PRETTY;
     await runCase({ type, props }, expect);
@@ -263,4 +263,54 @@ it.concurrent('checks semantic', async () => {
   // @ts-ignore
   ret = parseSync('test.js', code, { experimentalRawTransfer: true, showSemanticErrors: true });
   expect(ret.errors.length).toBe(1);
+});
+
+describe.concurrent('`preserveParens` option', () => {
+  describe.concurrent('should not include parens when false', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = (1 + 2);';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: false });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = (1 + 2); type T = (string);';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: false });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSStringKeyword');
+    });
+  });
+
+  describe.concurrent('should include parens when true', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = (1 + 2);';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: true });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = (1 + 2); type T = (string);';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: true });
+      expect(ret.errors.length).toBe(0);
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSParenthesizedType');
+    });
+  });
 });

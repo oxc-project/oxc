@@ -3,7 +3,7 @@ import { ConfigurationTarget, workspace } from 'vscode';
 import { WorkspaceConfig } from '../client/WorkspaceConfig.js';
 import { WORKSPACE_FOLDER } from './test-helpers.js';
 
-const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives', 'typeAware'];
+const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives', 'typeAware', 'fmt.experimental'];
 
 suite('WorkspaceConfig', () => {
   setup(async () => {
@@ -35,6 +35,7 @@ suite('WorkspaceConfig', () => {
     strictEqual(config.unusedDisableDirectives, 'allow');
     strictEqual(config.typeAware, false);
     deepStrictEqual(config.flags, {});
+    strictEqual(config.formattingExperimental, false);
   });
 
   test('configPath defaults to null when using nested configs and configPath is empty', async () => {
@@ -69,6 +70,7 @@ suite('WorkspaceConfig', () => {
       config.updateUnusedDisableDirectives('deny'),
       config.updateTypeAware(true),
       config.updateFlags({ test: 'value' }),
+      config.updateFormattingExperimental(true),
     ]);
 
     const wsConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
@@ -79,5 +81,6 @@ suite('WorkspaceConfig', () => {
     strictEqual(wsConfig.get('unusedDisableDirectives'), 'deny');
     strictEqual(wsConfig.get('typeAware'), true);
     deepStrictEqual(wsConfig.get('flags'), { test: 'value' });
+    strictEqual(wsConfig.get('fmt.experimental'), true);
   });
 });

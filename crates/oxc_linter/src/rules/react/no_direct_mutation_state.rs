@@ -92,14 +92,13 @@ impl Rule for NoDirectMutationState {
                     return;
                 }
 
-                if let Some(assignment) = assignment_expr.left.as_simple_assignment_target() {
-                    if let Some(outer_member_expression) = get_outer_member_expression(assignment) {
-                        if is_state_member_expression(outer_member_expression) {
-                            ctx.diagnostic(no_direct_mutation_state_diagnostic(
-                                assignment_expr.left.span(),
-                            ));
-                        }
-                    }
+                if let Some(assignment) = assignment_expr.left.as_simple_assignment_target()
+                    && let Some(outer_member_expression) = get_outer_member_expression(assignment)
+                    && is_state_member_expression(outer_member_expression)
+                {
+                    ctx.diagnostic(no_direct_mutation_state_diagnostic(
+                        assignment_expr.left.span(),
+                    ));
                 }
             }
 
@@ -110,10 +109,9 @@ impl Rule for NoDirectMutationState {
 
                 if let Some(outer_member_expression) =
                     get_outer_member_expression(&update_expr.argument)
+                    && is_state_member_expression(outer_member_expression)
                 {
-                    if is_state_member_expression(outer_member_expression) {
-                        ctx.diagnostic(no_direct_mutation_state_diagnostic(update_expr.span));
-                    }
+                    ctx.diagnostic(no_direct_mutation_state_diagnostic(update_expr.span));
                 }
             }
 
@@ -148,12 +146,12 @@ fn get_outer_member_expression<'a, 'b>(
                     return Some(node);
                 }
 
-                if let Some(object) = get_static_member_expression_obj(&node.object) {
-                    if !object.property.name.is_empty() {
-                        node = object;
+                if let Some(object) = get_static_member_expression_obj(&node.object)
+                    && !object.property.name.is_empty()
+                {
+                    node = object;
 
-                        continue;
-                    }
+                    continue;
                 }
 
                 return Some(node);
@@ -180,10 +178,10 @@ fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'
     let mut is_component = false;
 
     for parent in ctx.nodes().ancestors(node.id()) {
-        if let AstKind::MethodDefinition(method_def) = parent.kind() {
-            if method_def.kind == MethodDefinitionKind::Constructor {
-                is_constructor = true;
-            }
+        if let AstKind::MethodDefinition(method_def) = parent.kind()
+            && method_def.kind == MethodDefinitionKind::Constructor
+        {
+            is_constructor = true;
         }
 
         if matches!(parent.kind(), AstKind::CallExpression(_)) {

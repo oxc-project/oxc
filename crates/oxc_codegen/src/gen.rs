@@ -945,10 +945,11 @@ impl Gen for ImportAttribute<'_> {
 impl Gen for ExportNamedDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        if let Some(Declaration::FunctionDeclaration(func)) = &self.declaration {
-            if func.pure && p.options.print_annotation_comment() {
-                p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
-            }
+        if let Some(Declaration::FunctionDeclaration(func)) = &self.declaration
+            && func.pure
+            && p.options.print_annotation_comment()
+        {
+            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
         p.add_source_mapping(self.span);
         p.print_indent();
@@ -1092,10 +1093,11 @@ impl Gen for ExportAllDeclaration<'_> {
 impl Gen for ExportDefaultDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &self.declaration {
-            if func.pure && p.options.print_annotation_comment() {
-                p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
-            }
+        if let ExportDefaultDeclarationKind::FunctionDeclaration(func) = &self.declaration
+            && func.pure
+            && p.options.print_annotation_comment()
+        {
+            p.print_str(NO_SIDE_EFFECTS_NEW_LINE_COMMENT);
         }
         p.add_source_mapping(self.span);
         p.print_indent();
@@ -1586,10 +1588,10 @@ impl Gen for ObjectProperty<'_> {
         if let PropertyKey::StaticIdentifier(key) = &self.key {
             if key.name == "__proto__" {
                 shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses() {
-                if key.name == p.get_identifier_reference_name(ident) {
-                    shorthand = true;
-                }
+            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
+                && key.name == p.get_identifier_reference_name(ident)
+            {
+                shorthand = true;
             }
         }
 
@@ -1597,27 +1599,25 @@ impl Gen for ObjectProperty<'_> {
 
         // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
         // "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
-        if !computed {
-            if let Some(Expression::NumericLiteral(n)) = self.key.as_expression() {
-                if n.value.is_sign_negative() || n.value.is_infinite() {
-                    computed = true;
-                }
-            }
+        if !computed
+            && let Some(Expression::NumericLiteral(n)) = self.key.as_expression()
+            && (n.value.is_sign_negative() || n.value.is_infinite())
+        {
+            computed = true;
         }
 
-        if computed {
-            p.print_ascii_byte(b'[');
-        }
         if !shorthand {
+            if computed {
+                p.print_ascii_byte(b'[');
+            }
             self.key.print(p, ctx);
-        }
-        if computed {
-            p.print_ascii_byte(b']');
-        }
-        if !shorthand {
+            if computed {
+                p.print_ascii_byte(b']');
+            }
             p.print_colon();
             p.print_soft_space();
         }
+
         self.value.print_expr(p, Precedence::Comma, Context::empty());
     }
 }
@@ -1996,6 +1996,15 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
                 PropertyKey::PrivateIdentifier(ident) => {
                     ident.print(p, ctx);
                 }
+                PropertyKey::StringLiteral(s) => {
+                    if self.computed {
+                        p.print_ascii_byte(b'[');
+                    }
+                    p.print_string_literal(s, /* allow_backtick */ false);
+                    if self.computed {
+                        p.print_ascii_byte(b']');
+                    }
+                }
                 key => {
                     if self.computed {
                         p.print_ascii_byte(b'[');
@@ -2048,6 +2057,7 @@ impl GenExpr for ImportExpression<'_> {
             p.add_source_mapping(self.span);
             p.print_str("import");
             if let Some(phase) = self.phase {
+                p.print_ascii_byte(b'.');
                 p.print_str(phase.as_str());
             }
             p.print_ascii_byte(b'(');
@@ -2254,6 +2264,7 @@ impl Gen for Class<'_> {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
+            p.enter_class();
             p.print_decorators(&self.decorators, ctx);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -2285,6 +2296,7 @@ impl Gen for Class<'_> {
             p.print_soft_space();
             self.body.print(p, ctx);
             p.needs_semicolon = false;
+            p.exit_class();
         });
     }
 }
@@ -2737,9 +2749,20 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        let name = if let Some(class_index) = p.current_class_index()
+            && let Some(mangled) = &p
+                .private_member_mappings
+                .as_ref()
+                .and_then(|m| m[class_index].get(self.name.as_str()))
+        {
+            (*mangled).clone()
+        } else {
+            self.name.into_compact_str()
+        };
+
         p.print_ascii_byte(b'#');
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_str(name.as_str());
     }
 }
 
@@ -2791,10 +2814,6 @@ impl Gen for ObjectPattern<'_> {
 
 impl Gen for BindingProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.computed {
-            p.print_ascii_byte(b'[');
-        }
-
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
             match &self.value.kind {
@@ -2806,10 +2825,9 @@ impl Gen for BindingProperty<'_> {
                 BindingPatternKind::AssignmentPattern(assignment_pattern) => {
                     if let BindingPatternKind::BindingIdentifier(ident) =
                         &assignment_pattern.left.kind
+                        && key.name == p.get_binding_identifier_name(ident)
                     {
-                        if key.name == p.get_binding_identifier_name(ident) {
-                            shorthand = true;
-                        }
+                        shorthand = true;
                     }
                 }
                 _ => {}
@@ -2817,15 +2835,17 @@ impl Gen for BindingProperty<'_> {
         }
 
         if !shorthand {
+            if self.computed {
+                p.print_ascii_byte(b'[');
+            }
             self.key.print(p, ctx);
-        }
-        if self.computed {
-            p.print_ascii_byte(b']');
-        }
-        if !shorthand {
+            if self.computed {
+                p.print_ascii_byte(b']');
+            }
             p.print_colon();
             p.print_soft_space();
         }
+
         self.value.print(p, ctx);
     }
 }
@@ -3198,12 +3218,12 @@ impl Gen for TSTemplateLiteralType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("`");
         for (index, item) in self.quasis.iter().enumerate() {
-            if index != 0 {
-                if let Some(types) = self.types.get(index - 1) {
-                    p.print_str("${");
-                    types.print(p, ctx);
-                    p.print_str("}");
-                }
+            if index != 0
+                && let Some(types) = self.types.get(index - 1)
+            {
+                p.print_str("${");
+                types.print(p, ctx);
+                p.print_str("}");
             }
             p.print_str(item.value.raw.as_str());
         }

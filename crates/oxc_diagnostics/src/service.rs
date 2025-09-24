@@ -157,6 +157,7 @@ impl DiagnosticService {
         let mut errors_count: usize = 0;
 
         while let Ok((path, diagnostics)) = self.receiver.recv() {
+            let mut is_minified = false;
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
@@ -175,7 +176,7 @@ impl DiagnosticService {
                     }
                 }
 
-                if self.silent {
+                if self.silent || is_minified {
                     continue;
                 }
 
@@ -195,7 +196,8 @@ impl DiagnosticService {
                                 .or_else(Self::check_for_writer_error)
                                 .unwrap();
                         }
-                        break;
+                        is_minified = true;
+                        continue;
                     }
 
                     writer
@@ -296,7 +298,7 @@ fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
 }
 
 /// On Windows, rewrites the wide path prefix `\\?\C:` to `C:`
-/// Source: https://stackoverflow.com/a/70970317
+/// Source: <https://stackoverflow.com/a/70970317>
 #[inline]
 #[cfg(windows)]
 fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {

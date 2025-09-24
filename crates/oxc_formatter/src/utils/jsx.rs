@@ -156,7 +156,7 @@ pub fn is_whitespace_jsx_expression<'a>(
 ) -> bool {
     match &child.expression {
         JSXExpression::StringLiteral(literal) => {
-            matches!(literal.value.as_str(), " ") && !comments.has_comments_in_span(child.span)
+            matches!(literal.value.as_str(), " ") && !comments.has_comment_in_span(child.span)
         }
         _ => false,
     }

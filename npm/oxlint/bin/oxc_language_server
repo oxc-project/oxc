@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "fs";
+import { spawnSync, execSync } from "child_process";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+
 const isMusl = () => {
   let musl = false;
   if (process.platform === "linux") {
@@ -17,7 +23,6 @@ const isMusl = () => {
 const isFileMusl = (f) => f.includes("libc.musl-") || f.includes("ld-musl-");
 
 const isMuslFromFilesystem = () => {
-  const { readFileSync } = require("fs");
   try {
     return readFileSync("/usr/bin/ldd", "utf-8").includes("musl");
   } catch {
@@ -46,8 +51,7 @@ const isMuslFromReport = () => {
 
 const isMuslFromChildProcess = () => {
   try {
-    return require("child_process")
-      .execSync("ldd --version", { encoding: "utf8" })
+    return execSync("ldd --version", { encoding: "utf8" })
       .includes("musl");
   } catch (e) {
     // If we reach this case, we don't know if the system is musl or not, so is better to just fallback to false
@@ -95,7 +99,7 @@ const PLATFORMS = {
 let binPath = PLATFORMS[platform]?.[arch]?.[isMusl() ? "musl" : "gnu"];
 
 if (binPath) {
-  const result = require("child_process").spawnSync(
+  const result = spawnSync(
     require.resolve(binPath),
     process.argv.slice(2),
     {

@@ -35,7 +35,5 @@ This approach is significantly faster than using the system allocator for AST op
 - `track_allocations` - Count allocations and reallocations.
   For internal use only. The APIs provided by this feature are sketchy at best, and possibly
   undefined behavior. Do not enable this feature under any circumstances in production code.
-- `disable_fixed_size` - Disables `fixed_size` feature.
-  Purpose is to prevent `--all-features` enabling fixed sized allocators.
 - `disable_track_allocations` - Disables `track_allocations` feature.
   Purpose is to prevent `--all-features` enabling allocation tracking.

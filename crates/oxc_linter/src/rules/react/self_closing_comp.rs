@@ -120,10 +120,8 @@ impl Rule for SelfClosingComp {
         );
 
         let mut is_dom_comp = false;
-        if !is_comp {
-            if let Some(tag_name) = jsx_el.opening_element.name.get_identifier_name() {
-                is_dom_comp = HTML_TAG.contains(tag_name.as_str());
-            }
+        if !is_comp && let Some(tag_name) = jsx_el.opening_element.name.get_identifier_name() {
+            is_dom_comp = HTML_TAG.contains(tag_name.as_str());
         }
 
         if self.html && is_dom_comp || self.component && !is_dom_comp {

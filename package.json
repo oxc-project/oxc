@@ -1,21 +1,18 @@
 {
   "name": "oxc",
   "private": true,
-  "packageManager": "pnpm@10.15.1",
-  "volta": {
-    "node": "22.14.0"
-  },
+  "packageManager": "pnpm@10.17.0",
   "scripts": {
-    "build": "pnpm --workspace-concurrency=1 --filter './napi/*' build",
-    "build-dev": "pnpm --workspace-concurrency=1 --filter './napi/*' build-dev",
-    "build-test": "pnpm --workspace-concurrency=1 --filter './napi/*' build-test",
-    "test": "pnpm --workspace-concurrency=1 --filter './napi/*' test",
+    "build": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build",
+    "build-dev": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build-dev",
+    "build-test": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build-test",
+    "test": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' test",
     "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.5.0",
-    "oxlint-tsgolint": "0.1.6",
+    "oxlint-tsgolint": "0.2.0",
     "oxlint": "^1.12.0",
     "typescript": "catalog:",
     "vitest": "catalog:"

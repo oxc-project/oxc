@@ -28,6 +28,7 @@ pub struct RuleTableRow {
 
     pub turned_on_by_default: bool,
     pub autofix: RuleFixMeta,
+    pub is_tsgolint_rule: bool,
 }
 
 impl Default for RuleTable {
@@ -65,6 +66,7 @@ impl RuleTable {
                     category: rule.category(),
                     turned_on_by_default: default_rules.contains(name),
                     autofix: rule.fix(),
+                    is_tsgolint_rule: rule.is_tsgolint_rule(),
                 }
             })
             .collect::<Vec<_>>();

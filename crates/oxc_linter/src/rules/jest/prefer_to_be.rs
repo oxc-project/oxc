@@ -190,10 +190,10 @@ impl PreferToBe {
     fn should_use_tobe(first_matcher_arg: &Expression) -> bool {
         let mut expr = first_matcher_arg;
 
-        if let Expression::UnaryExpression(unary_expr) = expr {
-            if unary_expr.operator.as_str() == "-" {
-                expr = &unary_expr.argument;
-            }
+        if let Expression::UnaryExpression(unary_expr) = expr
+            && unary_expr.operator.as_str() == "-"
+        {
+            expr = &unary_expr.argument;
         }
 
         if matches!(expr, Expression::RegExpLiteral(_)) {

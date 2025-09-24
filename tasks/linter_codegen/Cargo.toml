@@ -16,4 +16,5 @@ doctest = false
 [dependencies]
 convert_case = { workspace = true }
 project-root = { workspace = true }
+rustc-hash = { workspace = true }
 syn = { workspace = true, features = ["full", "visit", "parsing"] }

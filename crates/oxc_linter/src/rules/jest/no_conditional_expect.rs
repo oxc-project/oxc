@@ -154,10 +154,10 @@ fn check_parents<'a>(
                 return in_conditional;
             }
 
-            if let Some(member_expr) = call_expr.callee.as_member_expression() {
-                if member_expr.static_property_name() == Some("catch") {
-                    return check_parents(parent_node, visited, InConditional(true), ctx);
-                }
+            if let Some(member_expr) = call_expr.callee.as_member_expression()
+                && member_expr.static_property_name() == Some("catch")
+            {
+                return check_parents(parent_node, visited, InConditional(true), ctx);
             }
         }
         AstKind::CatchClause(_)

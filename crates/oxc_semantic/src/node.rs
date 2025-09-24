@@ -2,6 +2,7 @@ use std::iter::FusedIterator;
 
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{AstKind, AstType, ast::Program};
+#[cfg(feature = "cfg")]
 use oxc_cfg::BlockNodeId;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_span::{GetSpan, Span};
@@ -23,6 +24,7 @@ pub struct AstNode<'a> {
     scope_id: ScopeId,
 
     /// Associated `BasicBlockId` in CFG (initialized by control_flow)
+    #[cfg(feature = "cfg")]
     cfg_id: BlockNodeId,
 
     flags: NodeFlags,
@@ -30,6 +32,7 @@ pub struct AstNode<'a> {
 
 impl<'a> AstNode<'a> {
     #[inline]
+    #[cfg(feature = "cfg")]
     pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
@@ -38,6 +41,17 @@ impl<'a> AstNode<'a> {
         id: NodeId,
     ) -> Self {
         Self { id, kind, scope_id, cfg_id, flags }
+    }
+
+    #[cfg(not(feature = "cfg"))]
+    pub(crate) fn new(
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        _cfg_id: (),
+        flags: NodeFlags,
+        id: NodeId,
+    ) -> Self {
+        Self { id, kind, scope_id, flags }
     }
 
     /// This node's unique identifier.
@@ -50,6 +64,7 @@ impl<'a> AstNode<'a> {
     ///
     /// See [oxc_cfg::ControlFlowGraph] for more information.
     #[inline]
+    #[cfg(feature = "cfg")]
     pub fn cfg_id(&self) -> BlockNodeId {
         self.cfg_id
     }
@@ -192,10 +207,10 @@ impl<'a> AstNodes<'a> {
     /// Get the [`Program`] that's also the root of the AST.
     #[inline]
     pub fn program(&self) -> &'a Program<'a> {
-        if let Some(node) = self.nodes.first() {
-            if let AstKind::Program(program) = node.kind {
-                return program;
-            }
+        if let Some(node) = self.nodes.first()
+            && let AstKind::Program(program) = node.kind
+        {
+            return program;
         }
 
         unreachable!();
@@ -207,6 +222,7 @@ impl<'a> AstNodes<'a> {
     /// [`Program`]: oxc_ast::ast::Program
     /// [`add_program_node`]: AstNodes::add_program_node
     #[inline]
+    #[cfg(feature = "cfg")]
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
@@ -222,11 +238,29 @@ impl<'a> AstNodes<'a> {
         node_id
     }
 
+    #[inline]
+    #[cfg(not(feature = "cfg"))]
+    pub fn add_node(
+        &mut self,
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        parent_node_id: NodeId,
+        _cfg_id: (),
+        flags: NodeFlags,
+    ) -> NodeId {
+        let node_id = self.parent_ids.push(parent_node_id);
+        let node = AstNode::new(kind, scope_id, (), flags, node_id);
+        self.nodes.push(node);
+        self.node_kinds_set.set(kind.ty());
+        node_id
+    }
+
     /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
     ///
     /// # Panics
     ///
     /// Panics if this is not the first node being added to the AST.
+    #[cfg(feature = "cfg")]
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
@@ -241,6 +275,25 @@ impl<'a> AstNodes<'a> {
         );
         self.parent_ids.push(NodeId::ROOT);
         self.nodes.push(AstNode::new(kind, scope_id, cfg_id, flags, NodeId::ROOT));
+        self.node_kinds_set.set(AstType::Program);
+        NodeId::ROOT
+    }
+
+    #[cfg(not(feature = "cfg"))]
+    pub fn add_program_node(
+        &mut self,
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        _cfg_id: (),
+        flags: NodeFlags,
+    ) -> NodeId {
+        assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
+        debug_assert!(
+            matches!(kind, AstKind::Program(_)),
+            "Program node must be of kind `AstKind::Program`"
+        );
+        self.parent_ids.push(NodeId::ROOT);
+        self.nodes.push(AstNode::new(kind, scope_id, (), flags, NodeId::ROOT));
         self.node_kinds_set.set(AstType::Program);
         NodeId::ROOT
     }

@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 49/49 (100.00%)
-Positive Passed: 33/49 (67.35%)
+Positive Passed: 31/49 (63.27%)
 semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -27,6 +27,175 @@ semantic Error: tasks/coverage/misc/pass/oxc-1289.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["infer", "target", "type"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/misc/pass/oxc-13284.js
+Scope children mismatch:
+after transform: ScopeId(133): [ScopeId(134), ScopeId(136), ScopeId(141), ScopeId(142), ScopeId(143), ScopeId(144)]
+rebuilt        : ScopeId(134): [ScopeId(135), ScopeId(137), ScopeId(138), ScopeId(139), ScopeId(143), ScopeId(144), ScopeId(145), ScopeId(146)]
+Scope parent mismatch:
+after transform: ScopeId(137): Some(ScopeId(136))
+rebuilt        : ScopeId(137): Some(ScopeId(134))
+Scope parent mismatch:
+after transform: ScopeId(139): Some(ScopeId(136))
+rebuilt        : ScopeId(138): Some(ScopeId(134))
+Scope children mismatch:
+after transform: ScopeId(136): [ScopeId(137), ScopeId(138), ScopeId(139), ScopeId(140), ScopeId(398)]
+rebuilt        : ScopeId(139): [ScopeId(140), ScopeId(141), ScopeId(142)]
+Scope children mismatch:
+after transform: ScopeId(400): [ScopeId(148), ScopeId(152), ScopeId(153), ScopeId(159)]
+rebuilt        : ScopeId(151): [ScopeId(152), ScopeId(153), ScopeId(157), ScopeId(158), ScopeId(165)]
+Scope parent mismatch:
+after transform: ScopeId(149): Some(ScopeId(148))
+rebuilt        : ScopeId(152): Some(ScopeId(151))
+Scope children mismatch:
+after transform: ScopeId(148): [ScopeId(149), ScopeId(150), ScopeId(151), ScopeId(401)]
+rebuilt        : ScopeId(153): [ScopeId(154), ScopeId(155), ScopeId(156)]
+Scope children mismatch:
+after transform: ScopeId(154): [ScopeId(155)]
+rebuilt        : ScopeId(159): [ScopeId(160), ScopeId(161)]
+Scope parent mismatch:
+after transform: ScopeId(156): Some(ScopeId(155))
+rebuilt        : ScopeId(160): Some(ScopeId(159))
+Scope children mismatch:
+after transform: ScopeId(155): [ScopeId(156), ScopeId(157), ScopeId(158), ScopeId(402)]
+rebuilt        : ScopeId(161): [ScopeId(162), ScopeId(163), ScopeId(164)]
+Scope children mismatch:
+after transform: ScopeId(176): [ScopeId(177), ScopeId(181), ScopeId(182), ScopeId(187)]
+rebuilt        : ScopeId(168): [ScopeId(169), ScopeId(170), ScopeId(174), ScopeId(175), ScopeId(181)]
+Scope parent mismatch:
+after transform: ScopeId(178): Some(ScopeId(177))
+rebuilt        : ScopeId(169): Some(ScopeId(168))
+Scope children mismatch:
+after transform: ScopeId(177): [ScopeId(178), ScopeId(179), ScopeId(180), ScopeId(405)]
+rebuilt        : ScopeId(170): [ScopeId(171), ScopeId(172), ScopeId(173)]
+Scope children mismatch:
+after transform: ScopeId(190): [ScopeId(191), ScopeId(195), ScopeId(196), ScopeId(202)]
+rebuilt        : ScopeId(184): [ScopeId(185), ScopeId(186), ScopeId(190), ScopeId(191), ScopeId(198)]
+Scope parent mismatch:
+after transform: ScopeId(192): Some(ScopeId(191))
+rebuilt        : ScopeId(185): Some(ScopeId(184))
+Scope children mismatch:
+after transform: ScopeId(191): [ScopeId(192), ScopeId(193), ScopeId(194), ScopeId(407)]
+rebuilt        : ScopeId(186): [ScopeId(187), ScopeId(188), ScopeId(189)]
+Scope children mismatch:
+after transform: ScopeId(197): [ScopeId(198)]
+rebuilt        : ScopeId(192): [ScopeId(193), ScopeId(194)]
+Scope parent mismatch:
+after transform: ScopeId(199): Some(ScopeId(198))
+rebuilt        : ScopeId(193): Some(ScopeId(192))
+Scope children mismatch:
+after transform: ScopeId(198): [ScopeId(199), ScopeId(200), ScopeId(201), ScopeId(408)]
+rebuilt        : ScopeId(194): [ScopeId(195), ScopeId(196), ScopeId(197)]
+Scope children mismatch:
+after transform: ScopeId(205): [ScopeId(206), ScopeId(210), ScopeId(211), ScopeId(216)]
+rebuilt        : ScopeId(201): [ScopeId(202), ScopeId(203), ScopeId(207), ScopeId(208), ScopeId(214)]
+Scope parent mismatch:
+after transform: ScopeId(207): Some(ScopeId(206))
+rebuilt        : ScopeId(202): Some(ScopeId(201))
+Scope children mismatch:
+after transform: ScopeId(206): [ScopeId(207), ScopeId(208), ScopeId(209), ScopeId(409)]
+rebuilt        : ScopeId(203): [ScopeId(204), ScopeId(205), ScopeId(206)]
+Scope children mismatch:
+after transform: ScopeId(168): [ScopeId(169)]
+rebuilt        : ScopeId(224): [ScopeId(225), ScopeId(226)]
+Scope parent mismatch:
+after transform: ScopeId(170): Some(ScopeId(169))
+rebuilt        : ScopeId(225): Some(ScopeId(224))
+Scope children mismatch:
+after transform: ScopeId(169): [ScopeId(170), ScopeId(171), ScopeId(172), ScopeId(404)]
+rebuilt        : ScopeId(226): [ScopeId(227), ScopeId(228), ScopeId(229)]
+Scope children mismatch:
+after transform: ScopeId(219): [ScopeId(220), ScopeId(224), ScopeId(225), ScopeId(231)]
+rebuilt        : ScopeId(233): [ScopeId(234), ScopeId(235), ScopeId(239), ScopeId(240), ScopeId(247)]
+Scope parent mismatch:
+after transform: ScopeId(221): Some(ScopeId(220))
+rebuilt        : ScopeId(234): Some(ScopeId(233))
+Scope children mismatch:
+after transform: ScopeId(220): [ScopeId(221), ScopeId(222), ScopeId(223), ScopeId(411)]
+rebuilt        : ScopeId(235): [ScopeId(236), ScopeId(237), ScopeId(238)]
+Scope children mismatch:
+after transform: ScopeId(226): [ScopeId(227)]
+rebuilt        : ScopeId(241): [ScopeId(242), ScopeId(243)]
+Scope parent mismatch:
+after transform: ScopeId(228): Some(ScopeId(227))
+rebuilt        : ScopeId(242): Some(ScopeId(241))
+Scope children mismatch:
+after transform: ScopeId(227): [ScopeId(228), ScopeId(229), ScopeId(230), ScopeId(412)]
+rebuilt        : ScopeId(243): [ScopeId(244), ScopeId(245), ScopeId(246)]
+Scope children mismatch:
+after transform: ScopeId(266): [ScopeId(267), ScopeId(338), ScopeId(342), ScopeId(343), ScopeId(344), ScopeId(332)]
+rebuilt        : ScopeId(282): [ScopeId(283), ScopeId(349), ScopeId(355), ScopeId(356), ScopeId(360), ScopeId(361), ScopeId(362)]
+Scope parent mismatch:
+after transform: ScopeId(339): Some(ScopeId(338))
+rebuilt        : ScopeId(355): Some(ScopeId(282))
+Scope children mismatch:
+after transform: ScopeId(338): [ScopeId(339), ScopeId(340), ScopeId(341), ScopeId(414)]
+rebuilt        : ScopeId(356): [ScopeId(357), ScopeId(358), ScopeId(359)]
+Scope children mismatch:
+after transform: ScopeId(348): [ScopeId(349), ScopeId(355), ScopeId(358)]
+rebuilt        : ScopeId(367): [ScopeId(368), ScopeId(374), ScopeId(377), ScopeId(379)]
+Scope children mismatch:
+after transform: ScopeId(358): [ScopeId(359), ScopeId(363)]
+rebuilt        : ScopeId(377): [ScopeId(378)]
+Scope parent mismatch:
+after transform: ScopeId(359): Some(ScopeId(358))
+rebuilt        : ScopeId(379): Some(ScopeId(367))
+Scope children mismatch:
+after transform: ScopeId(359): [ScopeId(360), ScopeId(362)]
+rebuilt        : ScopeId(379): [ScopeId(380)]
+Scope children mismatch:
+after transform: ScopeId(365): [ScopeId(366), ScopeId(372), ScopeId(375)]
+rebuilt        : ScopeId(382): [ScopeId(383), ScopeId(389), ScopeId(392), ScopeId(394)]
+Scope children mismatch:
+after transform: ScopeId(375): [ScopeId(376), ScopeId(380)]
+rebuilt        : ScopeId(392): [ScopeId(393)]
+Scope parent mismatch:
+after transform: ScopeId(376): Some(ScopeId(375))
+rebuilt        : ScopeId(394): Some(ScopeId(382))
+Scope children mismatch:
+after transform: ScopeId(376): [ScopeId(377), ScopeId(379)]
+rebuilt        : ScopeId(394): [ScopeId(395)]
+Scope children mismatch:
+after transform: ScopeId(381): [ScopeId(382), ScopeId(388), ScopeId(391)]
+rebuilt        : ScopeId(396): [ScopeId(397), ScopeId(403), ScopeId(406), ScopeId(408)]
+Scope children mismatch:
+after transform: ScopeId(391): [ScopeId(392), ScopeId(396)]
+rebuilt        : ScopeId(406): [ScopeId(407)]
+Scope parent mismatch:
+after transform: ScopeId(392): Some(ScopeId(391))
+rebuilt        : ScopeId(408): Some(ScopeId(396))
+Scope children mismatch:
+after transform: ScopeId(392): [ScopeId(393), ScopeId(395)]
+rebuilt        : ScopeId(408): [ScopeId(409)]
+Symbol reference IDs mismatch for "_decorateMetadata":
+after transform: SymbolId(166): [ReferenceId(68), ReferenceId(72), ReferenceId(76), ReferenceId(80), ReferenceId(84), ReferenceId(85), ReferenceId(86), ReferenceId(90), ReferenceId(91), ReferenceId(92), ReferenceId(106), ReferenceId(108), ReferenceId(110), ReferenceId(111), ReferenceId(112), ReferenceId(120), ReferenceId(122), ReferenceId(124), ReferenceId(125), ReferenceId(126), ReferenceId(134), ReferenceId(136), ReferenceId(138), ReferenceId(139), ReferenceId(140), ReferenceId(148), ReferenceId(150), ReferenceId(152), ReferenceId(153), ReferenceId(154), ReferenceId(162), ReferenceId(166), ReferenceId(170), ReferenceId(171), ReferenceId(172), ReferenceId(182), ReferenceId(184), ReferenceId(186), ReferenceId(187), ReferenceId(188), ReferenceId(196), ReferenceId(200), ReferenceId(204), ReferenceId(205), ReferenceId(206), ReferenceId(216), ReferenceId(218), ReferenceId(220), ReferenceId(221), ReferenceId(222), ReferenceId(230), ReferenceId(234), ReferenceId(238), ReferenceId(239), ReferenceId(240), ReferenceId(250), ReferenceId(252), ReferenceId(254), ReferenceId(255), ReferenceId(256), ReferenceId(264), ReferenceId(268), ReferenceId(272), ReferenceId(273), ReferenceId(274), ReferenceId(284), ReferenceId(286), ReferenceId(288), ReferenceId(289), ReferenceId(290), ReferenceId(395), ReferenceId(399), ReferenceId(403), ReferenceId(404), ReferenceId(405), ReferenceId(415), ReferenceId(419), ReferenceId(423), ReferenceId(427), ReferenceId(431), ReferenceId(432), ReferenceId(433), ReferenceId(437), ReferenceId(438), ReferenceId(439), ReferenceId(445), ReferenceId(446), ReferenceId(447), ReferenceId(449), ReferenceId(450), ReferenceId(451), ReferenceId(453), ReferenceId(454), ReferenceId(455), ReferenceId(459), ReferenceId(460), ReferenceId(461), ReferenceId(463), ReferenceId(464), ReferenceId(465), ReferenceId(467), ReferenceId(468), ReferenceId(469), ReferenceId(473), ReferenceId(474), ReferenceId(475), ReferenceId(477), ReferenceId(478), ReferenceId(479), ReferenceId(481), ReferenceId(482), ReferenceId(483)]
+rebuilt        : SymbolId(3): [ReferenceId(63), ReferenceId(67), ReferenceId(71), ReferenceId(75), ReferenceId(79), ReferenceId(81), ReferenceId(82), ReferenceId(85), ReferenceId(87), ReferenceId(88), ReferenceId(113), ReferenceId(117), ReferenceId(121), ReferenceId(123), ReferenceId(124), ReferenceId(139), ReferenceId(143), ReferenceId(147), ReferenceId(149), ReferenceId(150), ReferenceId(165), ReferenceId(169), ReferenceId(173), ReferenceId(175), ReferenceId(176), ReferenceId(258), ReferenceId(265), ReferenceId(272), ReferenceId(274), ReferenceId(275), ReferenceId(331), ReferenceId(335), ReferenceId(339), ReferenceId(341), ReferenceId(342), ReferenceId(351), ReferenceId(355), ReferenceId(359), ReferenceId(363), ReferenceId(367), ReferenceId(369), ReferenceId(370), ReferenceId(373), ReferenceId(375), ReferenceId(376), ReferenceId(380), ReferenceId(382), ReferenceId(383), ReferenceId(386), ReferenceId(388), ReferenceId(389), ReferenceId(393), ReferenceId(395), ReferenceId(396)]
+Symbol span mismatch for "Inner5":
+after transform: SymbolId(57): Span { start: 4573, end: 4579 }
+rebuilt        : SymbolId(69): Span { start: 0, end: 0 }
+Symbol span mismatch for "Inner5":
+after transform: SymbolId(164): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(70): Span { start: 4573, end: 4579 }
+Symbol span mismatch for "Inner4":
+after transform: SymbolId(126): Span { start: 12166, end: 12172 }
+rebuilt        : SymbolId(164): Span { start: 0, end: 0 }
+Symbol span mismatch for "Inner4":
+after transform: SymbolId(195): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(165): Span { start: 12166, end: 12172 }
+Unresolved reference IDs mismatch for "Object":
+after transform: [ReferenceId(67), ReferenceId(71), ReferenceId(75), ReferenceId(79), ReferenceId(105), ReferenceId(107), ReferenceId(119), ReferenceId(121), ReferenceId(133), ReferenceId(135), ReferenceId(147), ReferenceId(149), ReferenceId(161), ReferenceId(165), ReferenceId(181), ReferenceId(183), ReferenceId(195), ReferenceId(199), ReferenceId(215), ReferenceId(217), ReferenceId(229), ReferenceId(233), ReferenceId(249), ReferenceId(251), ReferenceId(263), ReferenceId(267), ReferenceId(283), ReferenceId(285), ReferenceId(394), ReferenceId(398), ReferenceId(414), ReferenceId(418), ReferenceId(422), ReferenceId(426)]
+rebuilt        : [ReferenceId(64), ReferenceId(68), ReferenceId(72), ReferenceId(76), ReferenceId(114), ReferenceId(118), ReferenceId(140), ReferenceId(144), ReferenceId(166), ReferenceId(170), ReferenceId(259), ReferenceId(266), ReferenceId(332), ReferenceId(336), ReferenceId(352), ReferenceId(356), ReferenceId(360), ReferenceId(364)]
+Unresolved reference IDs mismatch for "Function":
+after transform: [ReferenceId(83), ReferenceId(89), ReferenceId(109), ReferenceId(123), ReferenceId(137), ReferenceId(151), ReferenceId(169), ReferenceId(185), ReferenceId(203), ReferenceId(219), ReferenceId(237), ReferenceId(253), ReferenceId(271), ReferenceId(287), ReferenceId(402), ReferenceId(430), ReferenceId(436), ReferenceId(444), ReferenceId(448), ReferenceId(452), ReferenceId(458), ReferenceId(462), ReferenceId(466), ReferenceId(472), ReferenceId(476), ReferenceId(480)]
+rebuilt        : [ReferenceId(80), ReferenceId(86), ReferenceId(122), ReferenceId(148), ReferenceId(174), ReferenceId(273), ReferenceId(340), ReferenceId(368), ReferenceId(374), ReferenceId(381), ReferenceId(387), ReferenceId(394)]
+
+semantic Error: tasks/coverage/misc/pass/oxc-13284.ts
+Symbol reference IDs mismatch for "_super":
+after transform: SymbolId(13): [ReferenceId(8)]
+rebuilt        : SymbolId(4): []
+Unresolved references mismatch:
+after transform: ["Super", "super"]
+rebuilt        : ["Super"]
 
 semantic Error: tasks/coverage/misc/pass/oxc-2087.ts
 Scope children mismatch:

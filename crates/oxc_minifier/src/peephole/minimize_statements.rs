@@ -59,7 +59,9 @@ impl<'a> PeepholeOptimizations {
                 break;
             }
         }
-        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+        if let Some(stmt) = keep_var.get_variable_declaration_statement()
+            && let Some(stmt) = Self::remove_unused_variable_declaration(stmt, ctx)
+        {
             stmts.push(stmt);
         }
 
@@ -96,10 +98,10 @@ impl<'a> PeepholeOptimizations {
                     let prev_stmt = &stmts[prev_index];
                     match prev_stmt {
                         Statement::ExpressionStatement(_) => {
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last() {
-                                if last_return.argument.is_none() {
-                                    break 'return_loop;
-                                }
+                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
+                                && last_return.argument.is_none()
+                            {
+                                break 'return_loop;
                             }
                             ctx.state.changed = true;
                             // "a(); return b;" => "return a(), b;"
@@ -155,11 +157,11 @@ impl<'a> PeepholeOptimizations {
                                 .unwrap_or_else(|| ctx.ast.void_0(right_span));
 
                             // "if (!a) return b; return c;" => "return a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
-                                if unary_expr.operator.is_not() {
-                                    prev_if.test = unary_expr.argument.take_in(ctx.ast);
-                                    std::mem::swap(&mut left, &mut right);
-                                }
+                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
+                                && unary_expr.operator.is_not()
+                            {
+                                prev_if.test = unary_expr.argument.take_in(ctx.ast);
+                                std::mem::swap(&mut left, &mut right);
                             }
 
                             let argument = if let Expression::SequenceExpression(sequence_expr) =
@@ -245,11 +247,11 @@ impl<'a> PeepholeOptimizations {
                             let mut right = last_throw.unbox().argument;
 
                             // "if (!a) throw b; throw c;" => "throw a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
-                                if unary_expr.operator.is_not() {
-                                    prev_if.test = unary_expr.argument.take_in(ctx.ast);
-                                    std::mem::swap(&mut left, &mut right);
-                                }
+                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
+                                && unary_expr.operator.is_not()
+                            {
+                                prev_if.test = unary_expr.argument.take_in(ctx.ast);
+                                std::mem::swap(&mut left, &mut right);
                             }
 
                             let argument = if let Expression::SequenceExpression(sequence_expr) =
@@ -382,8 +384,12 @@ impl<'a> PeepholeOptimizations {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
-            let changed =
-                Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx);
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                first_decl_init,
+                result,
+                ctx,
+                false,
+            );
             if changed {
                 ctx.state.changed = true;
             }
@@ -397,26 +403,26 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last() {
-            if var_decl.kind == prev_var_decl.kind {
-                ctx.state.changed = true;
-            }
+        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last()
+            && var_decl.kind == prev_var_decl.kind
+        {
+            ctx.state.changed = true;
         }
         let VariableDeclaration { span, kind, declarations, declare } = var_decl.unbox();
         for mut decl in declarations {
             if Self::should_remove_unused_declarator(&decl, ctx) {
                 ctx.state.changed = true;
-                if let Some(init) = decl.init.take() {
-                    if init.may_have_side_effects(ctx) {
-                        result.push(ctx.ast.statement_expression(init.span(), init));
-                    }
+                if let Some(init) = decl.init.take()
+                    && init.may_have_side_effects(ctx)
+                {
+                    result.push(ctx.ast.statement_expression(init.span(), init));
                 }
             } else {
-                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
-                    if kind == prev_var_decl.kind {
-                        prev_var_decl.declarations.push(decl);
-                        continue;
-                    }
+                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
+                    && kind == prev_var_decl.kind
+                {
+                    prev_var_decl.declarations.push(decl);
+                    continue;
                 }
                 let decls = ctx.ast.vec1(decl);
                 let new_decl = ctx.ast.alloc_variable_declaration(span, kind, decls, declare);
@@ -431,20 +437,24 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut expr_stmt.expression, result, ctx);
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut expr_stmt.expression,
+            result,
+            ctx,
+            false,
+        );
         if changed {
             ctx.state.changed = true;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut expr_stmt.expression;
-                expr_stmt.expression = Self::join_sequence(a, b, ctx);
-                result.pop();
-                ctx.state.changed = true;
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut expr_stmt.expression;
+            expr_stmt.expression = Self::join_sequence(a, b, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         // "var a; a = b();" => "var a = b();"
         match &mut expr_stmt.expression {
@@ -520,7 +530,10 @@ impl<'a> PeepholeOptimizations {
                 break;
             };
             if kind.name == id.name {
-                if decl.init.is_none() {
+                if decl.init.is_none()
+                    && (decl.kind == VariableDeclarationKind::Var
+                        || assign_expr.right.is_literal_value(true, ctx))
+                {
                     // "var a; a = b();" => "var a = b();"
                     decl.init = Some(assign_expr.right.take_in(ctx.ast));
                     return true;
@@ -530,6 +543,8 @@ impl<'a> PeepholeOptimizations {
                 //   This is not possible as we need to consider cases when `c()` accesses `a`
                 // - "var a = 1; a = b();" => "var a = b();"
                 //   This is not possible as we need to consider cases when `b()` accesses `a`
+                // - "let a; a = foo(a);" => "let a = foo(a);"
+                //   This is not possible as TDZ error would be introduced
                 break;
             }
             // should not move assignment above variables with initializer to keep the execution order
@@ -555,19 +570,20 @@ impl<'a> PeepholeOptimizations {
             &mut switch_stmt.discriminant,
             result,
             ctx,
+            false,
         );
         if changed {
             ctx.state.changed = true;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut switch_stmt.discriminant;
-                switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
-                result.pop();
-                ctx.state.changed = true;
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut switch_stmt.discriminant;
+            switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         result.push(Statement::SwitchStatement(switch_stmt));
     }
@@ -581,7 +597,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> ControlFlow<()> {
         let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx);
+            Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
         if changed {
             ctx.state.changed = true;
         }
@@ -598,48 +614,42 @@ impl<'a> PeepholeOptimizations {
 
             if if_stmt.consequent.is_jump_statement() {
                 // Absorb a previous if statement
-                if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut() {
-                    if prev_if_stmt.alternate.is_none()
-                        && Self::jump_stmts_look_the_same(
-                            &prev_if_stmt.consequent,
-                            &if_stmt.consequent,
-                        )
-                    {
-                        // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
-                        // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
-                        // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
-                        // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                        if_stmt.test = Self::join_with_left_associative_op(
-                            if_stmt.test.span(),
-                            LogicalOperator::Or,
-                            prev_if_stmt.test.take_in(ctx.ast),
-                            if_stmt.test.take_in(ctx.ast),
-                            ctx,
-                        );
-                        result.pop();
-                        ctx.state.changed = true;
-                    }
+                if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
+                    && prev_if_stmt.alternate.is_none()
+                    && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
+                {
+                    // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
+                    // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
+                    // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
+                    // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
+                    if_stmt.test = Self::join_with_left_associative_op(
+                        if_stmt.test.span(),
+                        LogicalOperator::Or,
+                        prev_if_stmt.test.take_in(ctx.ast),
+                        if_stmt.test.take_in(ctx.ast),
+                        ctx,
+                    );
+                    result.pop();
+                    ctx.state.changed = true;
                 }
 
                 let mut optimize_implicit_jump = false;
                 // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
                 // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                if ctx.ancestors().nth(1).is_some_and(Ancestor::is_for_statement) {
-                    if let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent {
-                        if continue_stmt.label.is_none() {
-                            optimize_implicit_jump = true;
-                        }
-                    }
+                if ctx.ancestors().nth(1).is_some_and(Ancestor::is_for_statement)
+                    && let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent
+                    && continue_stmt.label.is_none()
+                {
+                    optimize_implicit_jump = true;
                 }
 
                 // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
                 // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
-                if ctx.parent().is_function_body() {
-                    if let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent {
-                        if return_stmt.argument.is_none() {
-                            optimize_implicit_jump = true;
-                        }
-                    }
+                if ctx.parent().is_function_body()
+                    && let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent
+                    && return_stmt.argument.is_none()
+                {
+                    optimize_implicit_jump = true;
                 }
                 if optimize_implicit_jump {
                     // Don't do this transformation if the branch condition could
@@ -656,10 +666,10 @@ impl<'a> PeepholeOptimizations {
                     //   if (a(() => b)) { let b; }
                     //
                     let mut can_move_branch_condition_outside_scope = true;
-                    if let Some(alternate) = &if_stmt.alternate {
-                        if Self::statement_cares_about_scope(alternate) {
-                            can_move_branch_condition_outside_scope = false;
-                        }
+                    if let Some(alternate) = &if_stmt.alternate
+                        && Self::statement_cares_about_scope(alternate)
+                    {
+                        can_move_branch_condition_outside_scope = false;
                     }
                     if let Some(stmts) = stmts.get(i + 1..) {
                         for stmt in stmts {
@@ -708,18 +718,17 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                     result.push(Statement::IfStatement(if_stmt));
                     loop {
-                        if let Some(Statement::IfStatement(if_stmt)) = result.last_mut() {
-                            if if_stmt.consequent.is_jump_statement() {
-                                if let Some(stmt) = if_stmt.alternate.take() {
-                                    if let Statement::BlockStatement(block_stmt) = stmt {
-                                        Self::handle_block(result, block_stmt, ctx);
-                                    } else {
-                                        result.push(stmt);
-                                        ctx.state.changed = true;
-                                    }
-                                    continue;
-                                }
+                        if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                            && if_stmt.consequent.is_jump_statement()
+                            && let Some(stmt) = if_stmt.alternate.take()
+                        {
+                            if let Statement::BlockStatement(block_stmt) = stmt {
+                                Self::handle_block(result, block_stmt, ctx);
+                            } else {
+                                result.push(stmt);
+                                ctx.state.changed = true;
                             }
+                            continue;
                         }
                         break;
                     }
@@ -740,8 +749,12 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
-            let changed =
-                Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx);
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                ret_argument_expr,
+                result,
+                ctx,
+                false,
+            );
             if changed {
                 ctx.state.changed = true;
             }
@@ -771,15 +784,14 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                if let Some(argument) = &mut ret_stmt.argument {
-                    let a = &mut prev_expr_stmt.expression;
-                    *argument = Self::join_sequence(a, argument, ctx);
-                    result.pop();
-                    ctx.state.changed = true;
-                }
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+            && let Some(argument) = &mut ret_stmt.argument
+        {
+            let a = &mut prev_expr_stmt.expression;
+            *argument = Self::join_sequence(a, argument, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         result.push(Statement::ReturnStatement(ret_stmt));
         *is_control_flow_dead = true;
@@ -792,20 +804,24 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
-        let changed =
-            Self::substitute_single_use_symbol_in_statement(&mut throw_stmt.argument, result, ctx);
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut throw_stmt.argument,
+            result,
+            ctx,
+            false,
+        );
         if changed {
             ctx.state.changed = true;
         }
 
-        if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut throw_stmt.argument;
-                throw_stmt.argument = Self::join_sequence(a, b, ctx);
-                result.pop();
-                ctx.state.changed = true;
-            }
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            let a = &mut prev_expr_stmt.expression;
+            let b = &mut throw_stmt.argument;
+            throw_stmt.argument = Self::join_sequence(a, b, ctx);
+            result.pop();
+            ctx.state.changed = true;
         }
         result.push(Statement::ThrowStatement(throw_stmt));
         *is_control_flow_dead = true;
@@ -817,6 +833,35 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        if let Some(init) = &mut for_stmt.init {
+            match init {
+                ForStatementInit::VariableDeclaration(var_decl) => {
+                    if let Some(first_decl) = var_decl.declarations.first_mut()
+                        && let Some(first_decl_init) = first_decl.init.as_mut()
+                    {
+                        let is_block_scoped_decl = !first_decl.kind.is_var();
+                        let changed = Self::substitute_single_use_symbol_in_statement(
+                            first_decl_init,
+                            result,
+                            ctx,
+                            is_block_scoped_decl,
+                        );
+                        if changed {
+                            ctx.state.changed = true;
+                        }
+                    }
+                }
+                match_expression!(ForStatementInit) => {
+                    let init = init.to_expression_mut();
+                    let changed =
+                        Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
+                    if changed {
+                        ctx.state.changed = true;
+                    }
+                }
+            }
+        }
+
         if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain(|decl| {
@@ -851,16 +896,15 @@ impl<'a> PeepholeOptimizations {
                 }
                 Some(Statement::VariableDeclaration(prev_var_decl)) => {
                     if let Some(init) = &mut for_stmt.init {
-                        if prev_var_decl.kind.is_var() {
-                            if let ForStatementInit::VariableDeclaration(var_decl) = init {
-                                if var_decl.kind.is_var() {
-                                    var_decl
-                                        .declarations
-                                        .splice(0..0, prev_var_decl.declarations.drain(..));
-                                    result.pop();
-                                    ctx.state.changed = true;
-                                }
-                            }
+                        if prev_var_decl.kind.is_var()
+                            && let ForStatementInit::VariableDeclaration(var_decl) = init
+                            && var_decl.kind.is_var()
+                        {
+                            var_decl
+                                .declarations
+                                .splice(0..0, prev_var_decl.declarations.drain(..));
+                            result.pop();
+                            ctx.state.changed = true;
                         }
                     } else if prev_var_decl.kind.is_var() {
                         let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
@@ -883,6 +927,23 @@ impl<'a> PeepholeOptimizations {
 
         ctx: &mut Ctx<'a, '_>,
     ) {
+        // Annex B.3.5 allows initializers in non-strict mode
+        // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
+        // That is evaluated before the right hand side is evaluated. So, in that case, skip the single use substitution.
+        if !matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if var_decl.has_init())
+        {
+            let is_block_scoped_decl = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+            let changed = Self::substitute_single_use_symbol_in_statement(
+                &mut for_in_stmt.right,
+                result,
+                ctx,
+                is_block_scoped_decl,
+            );
+            if changed {
+                ctx.state.changed = true;
+            }
+        }
+
         if ctx.options().sequences {
             match result.last_mut() {
                 // "a; for (var b in c) d" => "for (var b in a, c) d"
@@ -927,21 +988,17 @@ impl<'a> PeepholeOptimizations {
                                 None
                             }
                         };
-                        if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
-                            if let BindingPatternKind::BindingIdentifier(decl_id) =
+                        if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
+                            && let BindingPatternKind::BindingIdentifier(decl_id) =
                                 &prev_var_decl_item.id.kind
-                            {
-                                if id.name == decl_id.name {
-                                    let Some(Statement::VariableDeclaration(prev_var_decl)) =
-                                        result.pop()
-                                    else {
-                                        unreachable!()
-                                    };
-                                    for_in_stmt.left =
-                                        ForStatementLeft::VariableDeclaration(prev_var_decl);
-                                    ctx.state.changed = true;
-                                }
-                            }
+                            && id.name == decl_id.name
+                        {
+                            let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
+                            else {
+                                unreachable!()
+                            };
+                            for_in_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
+                            ctx.state.changed = true;
                         }
                     }
                 }
@@ -956,33 +1013,40 @@ impl<'a> PeepholeOptimizations {
         result: &mut Vec<'a, Statement<'a>>,
         ctx: &mut Ctx<'a, '_>,
     ) {
+        let is_block_scoped_decl = matches!(&for_of_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+        let changed = Self::substitute_single_use_symbol_in_statement(
+            &mut for_of_stmt.right,
+            result,
+            ctx,
+            is_block_scoped_decl,
+        );
+        if changed {
+            ctx.state.changed = true;
+        }
+
         // "var a; for (a of b) c" => "for (var a of b) c"
-        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
-            if let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left {
-                let prev_var_decl_no_init_item = {
-                    if prev_var_decl.kind.is_var()
-                        && prev_var_decl.declarations.len() == 1
-                        && prev_var_decl.declarations[0].init.is_none()
-                    {
-                        Some(&prev_var_decl.declarations[0])
-                    } else {
-                        None
-                    }
-                };
-                if let Some(prev_var_decl_item) = prev_var_decl_no_init_item {
-                    if let BindingPatternKind::BindingIdentifier(decl_id) =
-                        &prev_var_decl_item.id.kind
-                    {
-                        if id.name == decl_id.name {
-                            let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop()
-                            else {
-                                unreachable!()
-                            };
-                            for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
-                            ctx.state.changed = true;
-                        }
-                    }
+        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
+            && let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left
+        {
+            let prev_var_decl_no_init_item = {
+                if prev_var_decl.kind.is_var()
+                    && prev_var_decl.declarations.len() == 1
+                    && prev_var_decl.declarations[0].init.is_none()
+                {
+                    Some(&prev_var_decl.declarations[0])
+                } else {
+                    None
                 }
+            };
+            if let Some(prev_var_decl_item) = prev_var_decl_no_init_item
+                && let BindingPatternKind::BindingIdentifier(decl_id) = &prev_var_decl_item.id.kind
+                && id.name == decl_id.name
+            {
+                let Some(Statement::VariableDeclaration(prev_var_decl)) = result.pop() else {
+                    unreachable!()
+                };
+                for_of_stmt.left = ForStatementLeft::VariableDeclaration(prev_var_decl);
+                ctx.state.changed = true;
             }
         }
         result.push(Statement::ForOfStatement(for_of_stmt));
@@ -1045,6 +1109,7 @@ impl<'a> PeepholeOptimizations {
         expr_in_stmt: &mut Expression<'a>,
         stmts: &mut Vec<'a, Statement<'a>>,
         ctx: &Ctx<'a, '_>,
+        non_scoped_literal_only: bool,
     ) -> bool {
         // TODO: we should skip this compression when direct eval exists
         //       because the code inside eval may reference the variable
@@ -1082,6 +1147,9 @@ impl<'a> PeepholeOptimizations {
                         || symbol_value.read_references_count > 1
                         || symbol_value.write_references_count > 0
                     {
+                        return true;
+                    }
+                    if non_scoped_literal_only && !prev_decl_init.is_literal_value(false, ctx) {
                         return true;
                     }
                     let replaced = Self::substitute_single_use_symbol_in_expression(
@@ -1520,6 +1588,17 @@ impl<'a> PeepholeOptimizations {
                                         ctx,
                                     )
                                 {
+                                    if prop.shorthand && prop.key.is_specific_id("__proto__") {
+                                        // { __proto__ } -> { ['__proto__']: value }
+                                        prop.computed = true;
+                                        prop.key =
+                                            PropertyKey::from(ctx.ast.expression_string_literal(
+                                                prop.key.span(),
+                                                "__proto__",
+                                                None,
+                                            ));
+                                    }
+                                    prop.shorthand = false;
                                     return Some(changed);
                                 }
                             }
@@ -1645,5 +1724,32 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::tester::test;
+
+    #[test]
+    fn test_for_variable_declaration() {
+        test(
+            "function _() { var x; for (var i = 0; i < 10; i++) console.log(i) }",
+            "function _() { for (var x, i = 0; i < 10; i++) console.log(i) }",
+        );
+        test(
+            "function _() { var x = 1; for (var i = 0; i < 10; i++) console.log(i) }",
+            "function _() { for (var x = 1, i = 0; i < 10; i++) console.log(i) }",
+        );
+        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
+        test(
+            "function _() { var x = function () { return console.log(j), 1 }; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+            "function _() { for (var x = function () { return console.log(j), 1 }, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+        );
+        // this is fine because `let j` inside the block cannot be referenced from `var i = j`
+        test(
+            "function _() { var x = j; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+            "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
+        );
     }
 }

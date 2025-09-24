@@ -65,29 +65,17 @@ pub struct MessageWithPosition<'a> {
     pub fixes: PossibleFixesWithPosition<'a>,
 }
 
-impl From<OxcDiagnostic> for MessageWithPosition<'_> {
-    fn from(from: OxcDiagnostic) -> Self {
-        Self {
-            message: from.message.clone(),
-            labels: None,
-            help: from.help.clone(),
-            severity: from.severity,
-            code: from.code.clone(),
-            url: from.url.clone(),
-            fixes: PossibleFixesWithPosition::None,
-        }
-    }
-}
-
 // clippy: the source field is checked and assumed to be less than 4GB, and
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
-pub fn message_to_message_with_position<'a>(
-    message: &Message<'a>,
+pub fn oxc_diagnostic_to_message_with_position<'a>(
+    diagnostic: OxcDiagnostic,
     source_text: &str,
     rope: &Rope,
 ) -> MessageWithPosition<'a> {
-    let labels = message.error.labels.as_ref().map(|labels| {
+    let inner = diagnostic.inner_owned();
+
+    let labels = inner.labels.as_ref().map(|labels| {
         labels
             .iter()
             .map(|labeled_span| {
@@ -103,22 +91,33 @@ pub fn message_to_message_with_position<'a>(
     });
 
     MessageWithPosition {
-        message: message.error.message.clone(),
-        severity: message.error.severity,
-        help: message.error.help.clone(),
-        url: message.error.url.clone(),
-        code: message.error.code.clone(),
+        message: inner.message,
+        severity: inner.severity,
+        help: inner.help,
+        url: inner.url,
+        code: inner.code,
         labels,
-        fixes: match &message.fixes {
-            PossibleFixes::None => PossibleFixesWithPosition::None,
-            PossibleFixes::Single(fix) => {
-                PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
-            }
-            PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
-                fixes.iter().map(|fix| fix_to_fix_with_position(fix, rope, source_text)).collect(),
-            ),
-        },
+        fixes: PossibleFixesWithPosition::None,
     }
+}
+
+pub fn message_to_message_with_position<'a>(
+    message: Message<'a>,
+    source_text: &str,
+    rope: &Rope,
+) -> MessageWithPosition<'a> {
+    let mut result = oxc_diagnostic_to_message_with_position(message.error, source_text, rope);
+    result.fixes = match &message.fixes {
+        PossibleFixes::None => PossibleFixesWithPosition::None,
+        PossibleFixes::Single(fix) => {
+            PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
+        }
+        PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
+            fixes.iter().map(|fix| fix_to_fix_with_position(fix, rope, source_text)).collect(),
+        ),
+    };
+
+    result
 }
 
 #[derive(Debug)]

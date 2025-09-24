@@ -51,13 +51,12 @@ impl NoUnusedVars {
         if let AstKind::ForOfStatement(ForOfStatement { span, .. })
         | AstKind::ForInStatement(ForInStatement { span, .. }) =
             symbol.nodes().parent_kind(parent.id())
+            && span.contains_inclusive(symbol.span())
         {
-            if span.contains_inclusive(symbol.span()) {
-                if let Some(new_name) = self.get_unused_var_name(symbol) {
-                    return symbol.rename(&new_name).dangerously();
-                }
-                return fixer.noop();
+            if let Some(new_name) = self.get_unused_var_name(symbol) {
+                return symbol.rename(&new_name).dangerously();
             }
+            return fixer.noop();
         }
 
         // `true` even if references aren't considered a usage.

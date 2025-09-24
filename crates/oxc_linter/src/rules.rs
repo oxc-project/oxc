@@ -42,6 +42,7 @@ pub(crate) mod eslint {
     pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
+    pub mod class_methods_use_this;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
@@ -114,6 +115,7 @@ pub(crate) mod eslint {
     pub mod no_lonely_if;
     pub mod no_loss_of_precision;
     pub mod no_magic_numbers;
+    pub mod no_misleading_character_class;
     pub mod no_multi_assign;
     pub mod no_multi_str;
     pub mod no_negated_condition;
@@ -159,6 +161,7 @@ pub(crate) mod eslint {
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
+    pub mod no_useless_computed_key;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
     pub mod no_useless_escape;
@@ -176,6 +179,7 @@ pub(crate) mod eslint {
     pub mod prefer_rest_params;
     pub mod prefer_spread;
     pub mod prefer_template;
+    pub mod preserve_caught_error;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -397,6 +401,7 @@ pub(crate) mod unicorn {
     pub mod no_array_for_each;
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
+    pub mod no_array_reverse;
     pub mod no_await_expression_member;
     pub mod no_await_in_promise_methods;
     pub mod no_console_spaces;
@@ -623,13 +628,20 @@ pub(crate) mod node {
 }
 
 pub(crate) mod vue {
+    pub mod define_emits_declaration;
+    pub mod define_props_declaration;
+    pub mod no_multiple_slot_args;
+    pub mod no_required_prop_with_default;
+    pub mod require_typed_ref;
     pub mod valid_define_emits;
+    pub mod valid_define_props;
 }
 
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::arrow_body_style,
     eslint::block_scoped_var,
+    eslint::class_methods_use_this,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
@@ -650,6 +662,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_useless_computed_key,
     eslint::no_unassigned_vars,
     eslint::no_extra_bind,
     eslint::no_alert,
@@ -710,6 +723,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_label_var,
     eslint::no_loss_of_precision,
     eslint::no_magic_numbers,
+    eslint::no_misleading_character_class,
     eslint::no_negated_condition,
     eslint::no_multi_str,
     eslint::no_new_func,
@@ -764,6 +778,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::prefer_object_spread,
     eslint::prefer_rest_params,
     eslint::prefer_spread,
+    eslint::preserve_caught_error,
     eslint::radix,
     eslint::require_await,
     eslint::require_yield,
@@ -1102,6 +1117,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_array_reverse,
     unicorn::no_instanceof_builtins,
     unicorn::no_array_method_this_argument,
     unicorn::no_unnecessary_array_flat_depth,
@@ -1200,5 +1216,11 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    vue::define_emits_declaration,
+    vue::define_props_declaration,
+    vue::no_multiple_slot_args,
+    vue::no_required_prop_with_default,
+    vue::require_typed_ref,
     vue::valid_define_emits,
+    vue::valid_define_props,
 }

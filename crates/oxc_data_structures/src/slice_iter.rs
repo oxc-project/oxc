@@ -64,6 +64,14 @@ pub trait SliceIter<'slice, T>: ExactSizeIterator + AsRef<[T]> + Sealed {
     /// Iterator must contain at least `count` more items.
     unsafe fn advance_unchecked(&mut self, count: usize);
 
+    /// Advance iterator to end.
+    #[inline(always)]
+    fn advance_to_end(&mut self) {
+        // This function boils down to just setting the current pointer to the end - 2 instructions.
+        // https://godbolt.org/z/EceneefEe
+        self.advance(self.len());
+    }
+
     /// Get pointer to next item in the iterator.
     ///
     /// Pointer is only valid to read an item from if iterator is not empty.
@@ -356,6 +364,39 @@ mod test_iter {
     }
 
     #[test]
+    fn advance_to_end() {
+        let arr = [11, 22, 33];
+
+        let mut iter = arr.iter();
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let mut iter = arr.iter();
+        assert_eq!(iter.next(), Some(&11));
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let mut iter = arr.iter();
+        assert_eq!(iter.next(), Some(&11));
+        assert_eq!(iter.next(), Some(&22));
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let mut iter = arr.iter();
+        assert_eq!(iter.next(), Some(&11));
+        assert_eq!(iter.next(), Some(&22));
+        assert_eq!(iter.next(), Some(&33));
+        assert_eq!(iter.next(), None);
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let empty_arr: [u32; 0] = [];
+        let mut iter = empty_arr.iter();
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
     fn ptr() {
         let slice = [11u32, 22, 33];
         let start_addr = slice.as_ptr() as usize;
@@ -511,6 +552,39 @@ mod test_iter_mut {
             iter.advance_unchecked(3);
             assert_eq!(iter.next(), None);
         }
+    }
+
+    #[test]
+    fn advance_to_end() {
+        let mut arr = [11, 22, 33];
+
+        let mut iter = arr.iter_mut();
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let mut iter = arr.iter_mut();
+        assert_eq!(iter.next(), Some(&mut 11));
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let mut iter = arr.iter_mut();
+        assert_eq!(iter.next(), Some(&mut 11));
+        assert_eq!(iter.next(), Some(&mut 22));
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let mut iter = arr.iter_mut();
+        assert_eq!(iter.next(), Some(&mut 11));
+        assert_eq!(iter.next(), Some(&mut 22));
+        assert_eq!(iter.next(), Some(&mut 33));
+        assert_eq!(iter.next(), None);
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
+
+        let mut empty_arr: [u32; 0] = [];
+        let mut iter = empty_arr.iter_mut();
+        iter.advance_to_end();
+        assert_eq!(iter.next(), None);
     }
 
     #[test]

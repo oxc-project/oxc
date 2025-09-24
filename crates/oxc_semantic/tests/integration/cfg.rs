@@ -1,3 +1,5 @@
+#![cfg(feature = "cfg")]
+
 use std::fs;
 
 use oxc_span::SourceType;

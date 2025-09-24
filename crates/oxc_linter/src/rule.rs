@@ -67,13 +67,12 @@ pub trait Rule: Sized + Default + fmt::Debug {
 }
 
 pub trait RuleRunner: Rule {
-    /// `AstType`s that rule acts on
-    const NODE_TYPES: &AstTypesBitset;
-    /// `true` if codegen can't figure out what node types rule acts on
-    const ANY_NODE_TYPE: bool;
+    /// `AstType`s that this rule acts on, or `None` if the codegen
+    /// can't figure it out and the linter should call `run` on every node.
+    const NODE_TYPES: Option<&AstTypesBitset>;
 
-    fn types_info(&self) -> (&'static AstTypesBitset, bool) {
-        (Self::NODE_TYPES, Self::ANY_NODE_TYPE)
+    fn types_info(&self) -> Option<&'static AstTypesBitset> {
+        Self::NODE_TYPES
     }
 }
 
@@ -347,20 +346,45 @@ mod test {
         assert_rule_runs_on_node_types(&eslint::no_debugger::NoDebugger, &[DebuggerStatement]);
         assert_rule_runs_on_node_types(&eslint::no_with::NoWith, &[WithStatement]);
         assert_rule_runs_on_node_types(
+            &eslint::arrow_body_style::ArrowBodyStyle::default(),
+            &[ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::no_else_return::NoElseReturn::default(),
+            &[IfStatement],
+        );
+        assert_rule_runs_on_node_types(
+            &eslint::max_params::MaxParams::default(),
+            &[Function, ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &import::no_dynamic_require::NoDynamicRequire::default(),
+            &[ImportExpression, CallExpression],
+        );
+        assert_rule_runs_on_node_types(
             &jest::prefer_jest_mocked::PreferJestMocked,
             &[TSAsExpression, TSTypeAssertion],
         );
+        assert_rule_runs_on_node_types(&jest::prefer_spy_on::PreferSpyOn, &[AssignmentExpression]);
         assert_rule_runs_on_node_types(
             &jsx_a11y::anchor_is_valid::AnchorIsValid::default(),
             &[JSXElement],
+        );
+        assert_rule_runs_on_node_types(
+            &jsx_a11y::aria_activedescendant_has_tabindex::AriaActivedescendantHasTabindex,
+            &[JSXOpeningElement],
         );
         assert_rule_runs_on_node_types(
             &nextjs::no_head_element::NoHeadElement,
             &[JSXOpeningElement],
         );
         assert_rule_runs_on_node_types(
-            &unicorn::explicit_length_check::ExplicitLengthCheck::default(),
-            &[StaticMemberExpression],
+            &nextjs::google_font_display::GoogleFontDisplay,
+            &[JSXOpeningElement],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::consistent_assert::ConsistentAssert,
+            &[ImportDeclaration],
         );
     }
 
@@ -368,8 +392,9 @@ mod test {
         rule: &R,
         node_types: &[oxc_ast::AstType],
     ) {
-        let (types, _) = rule.types_info();
-        assert!(!R::ANY_NODE_TYPE, "{} should not have ANY_NODE_TYPE set to true", R::NAME);
+        let types = rule.types_info();
+        assert!(types.is_some(), "{}: NODE_TYPES is None", R::NAME);
+        let types = types.unwrap();
         for node_type in node_types {
             assert!(
                 types.has(*node_type),

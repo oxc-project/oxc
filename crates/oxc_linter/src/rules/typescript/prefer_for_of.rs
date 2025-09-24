@@ -244,10 +244,10 @@ fn prevents_for_of_array_access(
     }
 
     // Check for direct assignment: arr[i] = value
-    if let AstKind::AssignmentExpression(assign_expr) = grand_parent.kind() {
-        if assign_expr.left.span() == parent.span() {
-            return true;
-        }
+    if let AstKind::AssignmentExpression(assign_expr) = grand_parent.kind()
+        && assign_expr.left.span() == parent.span()
+    {
+        return true;
     }
 
     // Check if arr[i] is a direct element in destructuring

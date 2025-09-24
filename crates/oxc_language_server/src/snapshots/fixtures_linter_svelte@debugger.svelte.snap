@@ -1,7 +1,10 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-input_file: crates/oxc_language_server/fixtures/linter/svelte/debugger.svelte
 ---
+########## 
+file: fixtures/linter/svelte/debugger.svelte
+----------
+
 code: "eslint(no-unassigned-vars)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unassigned-vars.html"
 message: "'title' is always 'undefined' because it's never assigned.\nhelp: Variable declared without assignment. Either assign a value or remove the declaration."

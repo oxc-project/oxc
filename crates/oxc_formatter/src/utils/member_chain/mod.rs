@@ -6,7 +6,7 @@ use std::iter;
 
 use crate::{
     JsLabels, best_fitting,
-    formatter::{Buffer, Format, FormatResult, Formatter, prelude::*},
+    formatter::{Buffer, Format, FormatResult, Formatter, SourceText, prelude::*},
     generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         call_expression::is_test_call_expression,
@@ -35,7 +35,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         f: &Formatter<'_, 'a>,
     ) -> Self {
         let parent = &call_expression.parent;
-        let mut chain_members = chain_members_iter(call_expression).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
@@ -73,7 +73,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
         let has_comment = first_group.members().first().is_some_and(|member| {
             matches!(member, ChainMember::StaticMember(expression)
-                if f.context().comments().has_comments_between(
+                if f.context().comments().has_comment_in_range(
                     expression.object().span().end,
                     expression.property().span.start
                 )
@@ -178,14 +178,14 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.head.members().iter().chain(self.tail.members())
     }
 
-    fn has_comments(&self, f: &Formatter<'_, 'a>) -> bool {
+    fn has_comment(&self, f: &Formatter<'_, 'a>) -> bool {
         let comments = f.comments();
 
         for member in self.members() {
             if matches!(
                 member,
                 ChainMember::StaticMember(member)
-                    if comments.has_comments_between(member.object().span().end, member.property().span.start)
+                    if comments.has_comment_in_range(member.object().span().end, member.property().span.start)
             ) {
                 return true;
             }
@@ -197,7 +197,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
 impl<'a> Format<'a> for MemberChain<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let has_comments = self.has_comments(f);
+        let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
             f.join().entries(iter::once(&self.head).chain(self.tail.iter())).finish()
         });
@@ -207,7 +207,7 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         let has_new_line_or_comment_between =
             self.tail.iter().any(MemberChainGroup::needs_empty_line);
 
-        if self.tail.len() <= 1 && !has_comments && !has_new_line_or_comment_between {
+        if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line])
             } else if is_test_call_expression(self.root) && self.head.members().len() >= 2 {
@@ -232,7 +232,7 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
         let format_expanded = format_with(|f| write!(f, [self.head, indent(&group(&format_tail))]));
 
         let format_content = format_with(|f| {
-            if has_comments || has_new_line_or_comment_between || self.groups_should_break(f) {
+            if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)])
             } else {
                 write!(f, [best_fitting!(format_one_line, format_expanded)])
@@ -378,6 +378,7 @@ fn has_short_name(name: &Atom, tab_width: u8) -> bool {
 
 fn chain_members_iter<'a, 'b>(
     root: &'b AstNode<'a, CallExpression<'a>>,
+    f: &Formatter<'_, 'a>,
 ) -> impl Iterator<Item = ChainMember<'a, 'b>> {
     let mut is_root = true;
     let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
@@ -409,6 +410,16 @@ fn chain_members_iter<'a, 'b>(
         }
 
         let expression = next.take()?;
+
+        if f.comments().get_type_cast_comment_index(expression.span()).is_some()
+            || f.comments()
+                .printed_comments()
+                .last()
+                .is_some_and(|c| f.comments().is_type_cast_comment(c))
+                && f.source_text().next_non_whitespace_byte_is(expression.span().end, b')')
+        {
+            return ChainMember::Node(expression).into();
+        }
 
         let member = match expression.as_ast_nodes() {
             AstNodes::CallExpression(expr) => {

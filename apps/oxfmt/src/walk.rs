@@ -2,56 +2,8 @@ use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
 
 use ignore::overrides::Override;
 
+use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
-
-// Additional extensions from linguist-languages, which Prettier also supports
-// - https://github.com/ikatyang-collab/linguist-languages/blob/d1dc347c7ced0f5b42dd66c7d1c4274f64a3eb6b/data/JavaScript.js
-// No special extensions for TypeScript
-// - https://github.com/ikatyang-collab/linguist-languages/blob/d1dc347c7ced0f5b42dd66c7d1c4274f64a3eb6b/data/TypeScript.js
-const ADDITIONAL_JS_EXTENSIONS: &[&str] = &[
-    "_js",
-    "bones",
-    "es",
-    "es6",
-    "frag",
-    "gs",
-    "jake",
-    "javascript",
-    "jsb",
-    "jscad",
-    "jsfl",
-    "jslib",
-    "jsm",
-    "jspre",
-    "jss",
-    "njs",
-    "pac",
-    "sjs",
-    "ssjs",
-    "xsjs",
-    "xsjslib",
-];
-
-fn is_supported_source_type(path: &std::path::Path) -> Option<SourceType> {
-    let extension = path.extension()?.to_string_lossy();
-
-    // Standard extensions, also supported by `oxc_span::VALID_EXTENSIONS`
-    if let Ok(source_type) = SourceType::from_extension(&extension) {
-        return Some(source_type);
-    }
-    // Additional extensions from linguist-languages, which Prettier also supports
-    if ADDITIONAL_JS_EXTENSIONS.contains(&extension.as_ref()) {
-        return Some(SourceType::default());
-    }
-    // `Jakefile` has no extension but is a valid JS file defined by linguist-languages
-    if path.file_name() == Some(OsStr::new("Jakefile")) {
-        return Some(SourceType::default());
-    }
-
-    None
-}
-
-// ---
 
 pub struct Walk {
     inner: ignore::WalkParallel,
@@ -63,40 +15,34 @@ pub struct WalkEntry {
 }
 
 struct WalkBuilder {
-    sender: mpsc::Sender<Vec<WalkEntry>>,
+    sender: mpsc::Sender<WalkEntry>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
-        Box::new(WalkCollector { entries: vec![], sender: self.sender.clone() })
+        Box::new(WalkVisitor { sender: self.sender.clone() })
     }
 }
 
-struct WalkCollector {
-    entries: Vec<WalkEntry>,
-    sender: mpsc::Sender<Vec<WalkEntry>>,
+struct WalkVisitor {
+    sender: mpsc::Sender<WalkEntry>,
 }
 
-impl Drop for WalkCollector {
-    fn drop(&mut self) {
-        let entries = std::mem::take(&mut self.entries);
-        self.sender.send(entries).unwrap();
-    }
-}
-
-impl ignore::ParallelVisitor for WalkCollector {
+impl ignore::ParallelVisitor for WalkVisitor {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
                 // Skip if we can't get file type or if it's a directory
-                if let Some(file_type) = entry.file_type() {
-                    if !file_type.is_dir() {
-                        if let Some(source_type) = is_supported_source_type(entry.path()) {
-                            self.entries.push(WalkEntry {
-                                path: entry.path().as_os_str().into(),
-                                source_type,
-                            });
-                        }
+                if let Some(file_type) = entry.file_type()
+                    && !file_type.is_dir()
+                    && let Some(source_type) = get_supported_source_type(entry.path())
+                {
+                    let walk_entry =
+                        WalkEntry { path: entry.path().as_os_str().into(), source_type };
+                    // Send each entry immediately through the channel
+                    // If send fails, the receiver has been dropped, so stop walking
+                    if self.sender.send(walk_entry).is_err() {
+                        return ignore::WalkState::Quit;
                     }
                 }
                 ignore::WalkState::Continue
@@ -105,6 +51,7 @@ impl ignore::ParallelVisitor for WalkCollector {
         }
     }
 }
+
 impl Walk {
     /// Will not canonicalize paths.
     /// # Panics
@@ -134,11 +81,17 @@ impl Walk {
         Self { inner }
     }
 
-    pub fn entries(self) -> Vec<WalkEntry> {
-        let (sender, receiver) = mpsc::channel::<Vec<WalkEntry>>();
-        let mut builder = WalkBuilder { sender };
-        self.inner.visit(&mut builder);
-        drop(builder);
-        receiver.into_iter().flatten().collect()
+    /// Stream entries through a channel as they are discovered
+    pub fn stream_entries(self) -> mpsc::Receiver<WalkEntry> {
+        let (sender, receiver) = mpsc::channel::<WalkEntry>();
+
+        // Spawn the walk operation in a separate thread
+        rayon::spawn(move || {
+            let mut builder = WalkBuilder { sender };
+            self.inner.visit(&mut builder);
+            // Channel will be closed when builder is dropped
+        });
+
+        receiver
     }
 }

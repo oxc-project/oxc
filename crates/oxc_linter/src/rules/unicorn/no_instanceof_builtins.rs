@@ -158,31 +158,31 @@ impl Rule for NoInstanceofBuiltins {
         let mut use_error_is_error = false;
         let mut strategy = Strategy::Loose;
 
-        if let Value::Array(arr) = value {
-            if let Some(Value::Object(map)) = arr.first() {
-                if let Some(Value::Array(inc)) = map.get("include") {
-                    for v in inc {
-                        if let Value::String(s) = v {
-                            include.push(s.clone());
-                        }
+        if let Value::Array(arr) = value
+            && let Some(Value::Object(map)) = arr.first()
+        {
+            if let Some(Value::Array(inc)) = map.get("include") {
+                for v in inc {
+                    if let Value::String(s) = v {
+                        include.push(s.clone());
                     }
                 }
-                if let Some(Value::Array(exc)) = map.get("exclude") {
-                    for v in exc {
-                        if let Value::String(s) = v {
-                            exclude.push(s.clone());
-                        }
+            }
+            if let Some(Value::Array(exc)) = map.get("exclude") {
+                for v in exc {
+                    if let Value::String(s) = v {
+                        exclude.push(s.clone());
                     }
                 }
-                if let Some(Value::Bool(b)) = map.get("useErrorIsError") {
-                    use_error_is_error = *b;
-                }
-                if let Some(Value::String(b)) = map.get("strategy") {
-                    match b.as_str() {
-                        "strict" => strategy = Strategy::Strict,
-                        "loose" => strategy = Strategy::Loose,
-                        _ => {}
-                    }
+            }
+            if let Some(Value::Bool(b)) = map.get("useErrorIsError") {
+                use_error_is_error = *b;
+            }
+            if let Some(Value::String(b)) = map.get("strategy") {
+                match b.as_str() {
+                    "strict" => strategy = Strategy::Strict,
+                    "loose" => strategy = Strategy::Loose,
+                    _ => {}
                 }
             }
         }

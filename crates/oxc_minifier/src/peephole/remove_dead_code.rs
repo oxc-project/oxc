@@ -90,7 +90,9 @@ impl<'a> PeepholeOptimizations {
             } else {
                 keep_var.visit_statement(&if_stmt.consequent);
             }
-            let var_stmt = keep_var.get_variable_declaration_statement();
+            let var_stmt = keep_var
+                .get_variable_declaration_statement()
+                .and_then(|stmt| Self::remove_unused_variable_declaration(stmt, ctx));
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {
                 if boolean {
@@ -123,19 +125,18 @@ impl<'a> PeepholeOptimizations {
 
     pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::ForStatement(for_stmt) = stmt else { return };
-        if let Some(init) = &mut for_stmt.init {
-            if let Some(init) = init.as_expression_mut() {
-                if Self::remove_unused_expression(init, ctx) {
-                    for_stmt.init = None;
-                    ctx.state.changed = true;
-                }
-            }
+        if let Some(init) = &mut for_stmt.init
+            && let Some(init) = init.as_expression_mut()
+            && Self::remove_unused_expression(init, ctx)
+        {
+            for_stmt.init = None;
+            ctx.state.changed = true;
         }
-        if let Some(update) = &mut for_stmt.update {
-            if Self::remove_unused_expression(update, ctx) {
-                for_stmt.update = None;
-                ctx.state.changed = true;
-            }
+        if let Some(update) = &mut for_stmt.update
+            && Self::remove_unused_expression(update, ctx)
+        {
+            for_stmt.update = None;
+            ctx.state.changed = true;
         }
 
         let test_boolean =
@@ -220,10 +221,10 @@ impl<'a> PeepholeOptimizations {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
-        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1) {
-            if *body.expression() {
-                return;
-            }
+        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1)
+            && *body.expression()
+        {
+            return;
         }
 
         if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
@@ -234,22 +235,23 @@ impl<'a> PeepholeOptimizations {
 
     pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::TryStatement(s) = stmt else { return };
-        if let Some(handler) = &s.handler {
-            if s.block.body.is_empty() {
-                let mut var = KeepVar::new(ctx.ast);
-                var.visit_block_statement(&handler.body);
-                let Some(handler) = &mut s.handler else { return };
-                handler.body.body.clear();
-                if let Some(var_decl) = var.get_variable_declaration_statement() {
-                    handler.body.body.push(var_decl);
-                }
+        if let Some(handler) = &s.handler
+            && s.block.body.is_empty()
+        {
+            let mut var = KeepVar::new(ctx.ast);
+            var.visit_block_statement(&handler.body);
+            let Some(handler) = &mut s.handler else { return };
+            handler.body.body.clear();
+            if let Some(var_decl) = var.get_variable_declaration_statement() {
+                handler.body.body.push(var_decl);
             }
         }
 
-        if let Some(finalizer) = &s.finalizer {
-            if finalizer.body.is_empty() && s.handler.is_some() {
-                s.finalizer = None;
-            }
+        if let Some(finalizer) = &s.finalizer
+            && finalizer.body.is_empty()
+            && s.handler.is_some()
+        {
+            s.finalizer = None;
         }
 
         if s.block.body.is_empty()
@@ -423,22 +425,21 @@ impl<'a> PeepholeOptimizations {
         let Expression::CallExpression(e) = expr else { return };
         if let Expression::Identifier(ident) = &e.callee {
             let reference_id = ident.reference_id();
-            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
-                if matches!(
+            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                && matches!(
                     ctx.state.pure_functions.get(&symbol_id),
                     Some(Some(ConstantValue::Undefined))
-                ) {
-                    let mut exprs =
-                        Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
-                    if exprs.is_empty() {
-                        *expr = ctx.ast.void_0(e.span);
-                        ctx.state.changed = true;
-                        return;
-                    }
-                    exprs.push(ctx.ast.void_0(e.span));
-                    *expr = ctx.ast.expression_sequence(e.span, exprs);
+                )
+            {
+                let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
+                if exprs.is_empty() {
+                    *expr = ctx.ast.void_0(e.span);
                     ctx.state.changed = true;
+                    return;
                 }
+                exprs.push(ctx.ast.void_0(e.span));
+                *expr = ctx.ast.expression_sequence(e.span, exprs);
+                ctx.state.changed = true;
             }
         }
     }
@@ -508,9 +509,16 @@ impl<'a> PeepholeOptimizations {
 #[cfg(test)]
 mod test {
     use crate::{
-        CompressOptions,
-        tester::{test, test_options, test_same, test_same_options},
+        CompressOptions, CompressOptionsUnused,
+        tester::{default_options, test, test_options, test_same, test_same_options},
     };
+
+    #[track_caller]
+    fn test_unused(source_text: &str, expected: &str) {
+        let options =
+            CompressOptions { unused: CompressOptionsUnused::Remove, ..default_options() };
+        test_options(source_text, expected, &options);
+    }
 
     #[test]
     fn test_fold_block() {
@@ -629,6 +637,8 @@ mod test {
         test("if (foo) {} else {}", "foo");
         test("if (false) {}", "");
         test("if (true) {}", "");
+        test("if (false) { var a; console.log(a) }", "if (0) var a");
+        test_unused("if (false) { var a; console.log(a) }", "");
     }
 
     #[test]
@@ -668,6 +678,9 @@ mod test {
         test("while(true) { continue a; unreachable;}", "for(;;) continue a");
         test("while(true) { throw a; unreachable;}", "for(;;) throw a");
         test("while(true) { return a; unreachable;}", "for(;;) return a");
+
+        test("(function () { return; var a })()", "(function () { return; var a })()");
+        test_unused("(function () { return; var a })()", "");
     }
 
     #[test]

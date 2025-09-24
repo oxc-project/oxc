@@ -174,29 +174,28 @@ impl Rule for AltText {
         let name = &get_element_type(ctx, jsx_el);
 
         // <img>
-        if let Some(custom_tags) = &self.img {
-            if name == "img" || custom_tags.iter().any(|i| i == name) {
-                img_rule(jsx_el, ctx);
-                return;
-            }
+        if let Some(custom_tags) = &self.img
+            && (name == "img" || custom_tags.iter().any(|i| i == name))
+        {
+            img_rule(jsx_el, ctx);
+            return;
         }
 
         // <object>
-        if let Some(custom_tags) = &self.object {
-            if name == "object" || custom_tags.iter().any(|i| i == name) {
-                if let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id()) {
-                    object_rule(jsx_el, parent, ctx);
-                    return;
-                }
-            }
+        if let Some(custom_tags) = &self.object
+            && (name == "object" || custom_tags.iter().any(|i| i == name))
+            && let AstKind::JSXElement(parent) = ctx.nodes().parent_kind(node.id())
+        {
+            object_rule(jsx_el, parent, ctx);
+            return;
         }
 
         // <area>
-        if let Some(custom_tags) = &self.area {
-            if name == "area" || custom_tags.iter().any(|i| i == name) {
-                area_rule(jsx_el, ctx);
-                return;
-            }
+        if let Some(custom_tags) = &self.area
+            && (name == "area" || custom_tags.iter().any(|i| i == name))
+        {
+            area_rule(jsx_el, ctx);
+            return;
         }
 
         // <input type="image">

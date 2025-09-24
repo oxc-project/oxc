@@ -147,16 +147,11 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
 
 impl<'a> IsConstant<'a, '_> for CallExpression<'a> {
     fn is_constant(&self, _in_boolean_position: bool, semantic: &Semantic<'a>) -> bool {
-        if let Expression::Identifier(ident) = &self.callee {
-            if ident.name == "Boolean"
-                && self
-                    .arguments
-                    .iter()
-                    .next()
-                    .is_none_or(|first| first.is_constant(true, semantic))
-            {
-                return semantic.is_reference_to_global_variable(ident);
-            }
+        if let Expression::Identifier(ident) = &self.callee
+            && ident.name == "Boolean"
+            && self.arguments.iter().next().is_none_or(|first| first.is_constant(true, semantic))
+        {
+            return semantic.is_reference_to_global_variable(ident);
         }
         false
     }
@@ -328,16 +323,16 @@ pub fn is_method_call<'a>(
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
 ) -> bool {
-    if let Some(min_arg_count) = min_arg_count {
-        if call_expr.arguments.len() < min_arg_count {
-            return false;
-        }
+    if let Some(min_arg_count) = min_arg_count
+        && call_expr.arguments.len() < min_arg_count
+    {
+        return false;
     }
 
-    if let Some(max_arg_count) = max_arg_count {
-        if call_expr.arguments.len() > max_arg_count {
-            return false;
-        }
+    if let Some(max_arg_count) = max_arg_count
+        && call_expr.arguments.len() > max_arg_count
+    {
+        return false;
     }
 
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
@@ -371,15 +366,15 @@ pub fn is_new_expression<'a>(
     min_arg_count: Option<usize>,
     max_arg_count: Option<usize>,
 ) -> bool {
-    if let Some(min_arg_count) = min_arg_count {
-        if new_expr.arguments.len() < min_arg_count {
-            return false;
-        }
+    if let Some(min_arg_count) = min_arg_count
+        && new_expr.arguments.len() < min_arg_count
+    {
+        return false;
     }
-    if let Some(max_arg_count) = max_arg_count {
-        if new_expr.arguments.len() > max_arg_count {
-            return false;
-        }
+    if let Some(max_arg_count) = max_arg_count
+        && new_expr.arguments.len() > max_arg_count
+    {
+        return false;
     }
 
     let Expression::Identifier(ident) = new_expr.callee.without_parentheses() else {
@@ -745,12 +740,11 @@ pub fn is_default_this_binding<'a>(
                         .is_some_and(|name| name == "apply" || name == "bind" || name == "call")
                 {
                     let node = outermost_paren_parent(parent, semantic).unwrap();
-                    if let AstKind::CallExpression(call_expr) = node.kind() {
-                        if let Some(arg) =
+                    if let AstKind::CallExpression(call_expr) = node.kind()
+                        && let Some(arg) =
                             call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                        {
-                            return arg.is_null_or_undefined();
-                        }
+                    {
+                        return arg.is_null_or_undefined();
                     }
                 }
                 return true;
@@ -810,10 +804,11 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
         PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
         PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.is_empty() && template.quasis.len() == 1 {
-                if let Some(cooked) = &template.quasis[0].value.cooked {
-                    return Some(Cow::Borrowed(cooked.as_str()));
-                }
+            if template.expressions.is_empty()
+                && template.quasis.len() == 1
+                && let Some(cooked) = &template.quasis[0].value.cooked
+            {
+                return Some(Cow::Borrowed(cooked.as_str()));
             }
 
             None

@@ -39,7 +39,13 @@ import { Statement } from '@oxc-project/types';
 
 ### Visitor
 
-[oxc-walker](https://www.npmjs.com/package/oxc-walker) or [estree-walker](https://www.npmjs.com/package/estree-walker) can be used.
+An AST visitor is provided. See example below.
+
+This package also exports visitor keys which can be used with any other ESTree walker.
+
+```js
+import { visitorKeys } from 'oxc-parser';
+```
 
 ### Fast Mode
 
@@ -93,15 +99,15 @@ export interface EcmaScriptModule {
 ## API
 
 ```javascript
-import oxc from 'oxc-parser';
+import { parseSync, Visitor } from 'oxc-parser';
 
 const code = 'const url: String = /* 🤨 */ import.meta.url;';
 
 // File extension is used to determine which dialect to parse source as.
 const filename = 'test.tsx';
 
-const result = oxc.parseSync(filename, code);
-// or `await oxc.parseAsync(filename, code)`
+const result = parseSync(filename, code);
+// or `await parseAsync(filename, code)`
 
 // An array of errors, if any.
 console.log(result.errors);
@@ -111,6 +117,26 @@ console.log(result.program, result.comments);
 
 // ESM information - imports, exports, `import.meta`s.
 console.log(result.module);
+
+// Visit the AST
+const visitations = [];
+
+const visitor = new Visitor({
+  VariableDeclaration(decl) {
+    visitations.push(`enter ${decl.kind}`);
+  },
+  'VariableDeclaration:exit'(decl) {
+    visitations.push(`exit ${decl.kind}`);
+  },
+  Identifier(ident) {
+    visitations.push(ident.name);
+  },
+});
+
+visitor.visit(result.program);
+
+// Logs: [ 'enter const', 'url', 'String', 'import', 'meta', 'url', 'exit const' ]
+console.log(visitations);
 ```
 
 ### Options

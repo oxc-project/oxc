@@ -86,13 +86,13 @@ impl PreferCalledWith {
             return;
         }
 
-        if let Some(matcher_property) = jest_fn_call.matcher() {
-            if let Some(matcher_name) = matcher_property.name() {
-                if matcher_name == "toBeCalled" {
-                    ctx.diagnostic(use_to_be_called_with(matcher_property.span));
-                } else if matcher_name == "toHaveBeenCalled" {
-                    ctx.diagnostic(use_have_been_called_with(matcher_property.span));
-                }
+        if let Some(matcher_property) = jest_fn_call.matcher()
+            && let Some(matcher_name) = matcher_property.name()
+        {
+            if matcher_name == "toBeCalled" {
+                ctx.diagnostic(use_to_be_called_with(matcher_property.span));
+            } else if matcher_name == "toHaveBeenCalled" {
+                ctx.diagnostic(use_have_been_called_with(matcher_property.span));
             }
         }
     }

@@ -4,6 +4,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::{Box, TakeIn};
 use oxc_ast::ast::*;
+use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
@@ -13,7 +14,6 @@ use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
 use oxc_span::SPAN;
-use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::Ancestor;
 
 use crate::ctx::Ctx;
@@ -68,7 +68,7 @@ impl<'a> PeepholeOptimizations {
         object: &Expression<'a>,
         ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        if ctx.options().target < ESTarget::ES2016 {
+        if !ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
             return None;
         }
         if !Self::validate_global_reference(object, "Math", ctx)
@@ -208,10 +208,10 @@ impl<'a> PeepholeOptimizations {
         ctx: &Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
-        if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent() {
-            if parent_member.property().name.as_str() == "concat" {
-                return None;
-            }
+        if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
+            && parent_member.property().name.as_str() == "concat"
+        {
+            return None;
         }
 
         let object = match callee {
@@ -267,7 +267,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::StringLiteral(base_str) => {
-                if ctx.state.options.target < ESTarget::ES2015
+                if !ctx.supports_feature(ESFeature::ES2015TemplateLiterals)
                     || args.is_empty()
                     || !args.iter().all(Argument::is_expression)
                 {
@@ -395,20 +395,19 @@ impl<'a> PeepholeOptimizations {
                         return;
                     }
                     Expression::BigIntLiteral(b) => {
-                        if !b.is_negative() {
-                            if let Some(integer_index) =
+                        if !b.is_negative()
+                            && let Some(integer_index) =
                                 b.to_big_int(ctx).and_then(ToIntegerIndex::to_integer_index)
-                            {
-                                let span = member.span;
-                                if let Some(replacement) = Self::try_fold_integer_index_access(
-                                    &mut member.object,
-                                    integer_index,
-                                    span,
-                                    ctx,
-                                ) {
-                                    ctx.state.changed = true;
-                                    *node = replacement;
-                                }
+                        {
+                            let span = member.span;
+                            if let Some(replacement) = Self::try_fold_integer_index_access(
+                                &mut member.object,
+                                integer_index,
+                                span,
+                                ctx,
+                            ) {
+                                ctx.state.changed = true;
+                                *node = replacement;
                             }
                         }
                         return;
@@ -509,27 +508,27 @@ impl<'a> PeepholeOptimizations {
             "NEGATIVE_INFINITY" => num(span, f64::NEG_INFINITY),
             "NaN" => num(span, f64::NAN),
             "MAX_SAFE_INTEGER" => {
-                if ctx.options().target < ESTarget::ES2016 {
-                    num(span, 2.0f64.powi(53) - 1.0)
-                } else {
+                if ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
                     // 2**53 - 1
                     pow_with_expr(span, 2.0, 53.0, BinaryOperator::Subtraction, 1.0)
+                } else {
+                    num(span, 2.0f64.powi(53) - 1.0)
                 }
             }
             "MIN_SAFE_INTEGER" => {
-                if ctx.options().target < ESTarget::ES2016 {
-                    num(span, -(2.0f64.powi(53) - 1.0))
-                } else {
+                if ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
                     // -(2**53 - 1)
                     ctx.ast.expression_unary(
                         span,
                         UnaryOperator::UnaryNegation,
                         pow_with_expr(SPAN, 2.0, 53.0, BinaryOperator::Subtraction, 1.0),
                     )
+                } else {
+                    num(span, -(2.0f64.powi(53) - 1.0))
                 }
             }
             "EPSILON" => {
-                if ctx.options().target < ESTarget::ES2016 {
+                if !ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
                     return None;
                 }
                 // 2**-52
@@ -601,18 +600,7 @@ impl<'a> PeepholeOptimizations {
 /// Port from: <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/PeepholeReplaceKnownMethodsTest.java>
 #[cfg(test)]
 mod test {
-    use oxc_syntax::es_target::ESTarget;
-
-    use crate::{
-        CompressOptions,
-        tester::{test, test_options, test_same},
-    };
-
-    #[track_caller]
-    fn test_es2015(code: &str, expected: &str) {
-        let options = CompressOptions { target: ESTarget::ES2015, ..CompressOptions::default() };
-        test_options(code, expected, &options);
-    }
+    use crate::tester::{test, test_same, test_target};
 
     #[track_caller]
     fn test_value(code: &str, expected: &str) {
@@ -1600,7 +1588,7 @@ mod test {
         test_same("v = Math.pow(...a, 1)");
         test_same("v = Math.pow(1, ...a)");
         test_same("v = Math.pow(1, 2, 3)");
-        test_es2015("v = Math.pow(2, 3)", "v = Math.pow(2, 3)");
+        test_target("v = Math.pow(2, 3)", "v = Math.pow(2, 3)", "chrome51");
         test_same("v = Unknown.pow(1, 2)");
     }
 
@@ -1643,9 +1631,9 @@ mod test {
         test_same("Number.MIN_SAFE_INTEGER = 1");
         test_same("Number.EPSILON = 1");
 
-        test_es2015("v = Number.MAX_SAFE_INTEGER", "v = 9007199254740991");
-        test_es2015("v = Number.MIN_SAFE_INTEGER", "v = -9007199254740991");
-        test_es2015("v = Number.EPSILON", "v = Number.EPSILON");
+        test_target("v = Number.MAX_SAFE_INTEGER", "v = 9007199254740991", "chrome51");
+        test_target("v = Number.MIN_SAFE_INTEGER", "v = -9007199254740991", "chrome51");
+        test_target("v = Number.EPSILON", "v = Number.EPSILON", "chrome51");
     }
 
     #[test]

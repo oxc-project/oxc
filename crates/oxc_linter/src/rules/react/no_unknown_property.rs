@@ -480,7 +480,7 @@ impl Rule for NoUnknownProperty {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(el) = &node.kind() else {
+        let AstKind::JSXOpeningElement(el) = node.kind() else {
             return;
         };
         let JSXElementName::Identifier(ident) = &el.name else {

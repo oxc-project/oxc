@@ -18,7 +18,8 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodeIterator},
     utils::{
-        call_expression::is_test_each_pattern, expression::FormatExpressionWithoutTrailingComments,
+        call_expression::is_test_each_pattern,
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     },
     write,
 };
@@ -245,7 +246,7 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
             TemplateExpression::Expression(e) => {
                 let leading_comments = f.context().comments().comments_before(e.span().start);
                 FormatLeadingComments::Comments(leading_comments).fmt(f)?;
-                FormatExpressionWithoutTrailingComments(e).fmt(f)?;
+                FormatNodeWithoutTrailingComments(e).fmt(f)?;
                 let trailing_comments =
                     f.context().comments().comments_before_character(e.span().start, b'}');
                 has_comment_in_expression =
@@ -339,18 +340,9 @@ impl<'a> TemplateExpression<'a, '_> {
                     Expression::ConditionalExpression(_)
                         | Expression::ArrowFunctionExpression(_)
                         | Expression::FunctionExpression(_)
-                )
-                // TODO: improve this
-                || f.source_text()[..e.span().start as usize]
-                    .chars()
-                    .rev()
-                    .take_while(|c| *c != '{')
-                    .any(is_line_terminator)
-                    || f.source_text()[e.span().end as usize..]
-                        .chars()
-                        .take_while(|c| *c != '}')
-                        .any(is_line_terminator)
-                    || e.span().source_text(f.source_text()).chars().any(is_line_terminator)
+                ) || f.source_text().has_newline_before(e.span().start)
+                    || f.source_text().has_newline_after(e.span().end)
+                    || f.source_text().contains_newline(e.span())
             }
             TemplateExpression::TSType(t) => {
                 matches!(

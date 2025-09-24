@@ -93,7 +93,7 @@ impl<'a> ConstructorParser<'a> {
             (false, false)
         };
 
-        let pattern_text = if matches!(self.pattern_text, r#""""# | "''") {
+        let pattern_text = if matches!(self.pattern_text, r#""""# | "''" | "``") {
             r#""(?:)""#
         } else {
             self.pattern_text

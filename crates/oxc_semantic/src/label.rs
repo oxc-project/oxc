@@ -33,10 +33,10 @@ impl<'a> UnusedLabels<'a> {
             "mark_unused called with empty label stack - this indicates mismatched add/mark_unused calls"
         );
 
-        if let Some(scope) = self.stack.pop() {
-            if !scope.used {
-                self.labels.push(scope.node_id);
-            }
+        if let Some(scope) = self.stack.pop()
+            && !scope.used
+        {
+            self.labels.push(scope.node_id);
         }
     }
 

@@ -66,10 +66,10 @@ fn is_global_this_ref_or_global_window<'a>(
     ctx: &LintContext<'a>,
     expr: &Expression<'a>,
 ) -> bool {
-    if let Expression::ThisExpression(_) = expr {
-        if ctx.scoping().scope_flags(scope_id).is_top() {
-            return true;
-        }
+    if let Expression::ThisExpression(_) = expr
+        && ctx.scoping().scope_flags(scope_id).is_top()
+    {
+        return true;
     }
 
     let Some(ident) = expr.get_identifier_reference() else {

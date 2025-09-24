@@ -112,10 +112,10 @@ fn check_unicorn_prefer_spread(call_expr: &CallExpression, ctx: &LintContext) {
                 return;
             }
 
-            if let Expression::Identifier(ident) = member_expr_obj {
-                if IGNORED_SLICE_CALLEE.contains(&ident.name.as_str()) {
-                    return;
-                }
+            if let Expression::Identifier(ident) = member_expr_obj
+                && IGNORED_SLICE_CALLEE.contains(&ident.name.as_str())
+            {
+                return;
             }
 
             if let Some(first_arg) = call_expr.arguments.first() {
@@ -212,10 +212,10 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
                 let symbol_table = ctx.scoping();
                 let node = ctx.nodes().get_node(symbol_table.symbol_declaration(symbol_id));
 
-                if let AstKind::VariableDeclarator(variable_declarator) = node.kind() {
-                    if let Some(ref_expr) = &variable_declarator.init {
-                        return is_not_array(ref_expr, ctx);
-                    }
+                if let AstKind::VariableDeclarator(variable_declarator) = node.kind()
+                    && let Some(ref_expr) = &variable_declarator.init
+                {
+                    return is_not_array(ref_expr, ctx);
                 }
             }
 

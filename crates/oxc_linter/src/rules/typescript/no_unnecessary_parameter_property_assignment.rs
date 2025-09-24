@@ -199,10 +199,10 @@ fn get_assignments_inside_expression<'a>(
 
             if let Some(function_body) = function_body {
                 for statement in &function_body.statements {
-                    if let Statement::ExpressionStatement(expr) = statement {
-                        if let Expression::AssignmentExpression(assignment) = &expr.expression {
-                            assignments.push(assignment);
-                        }
+                    if let Statement::ExpressionStatement(expr) = statement
+                        && let Expression::AssignmentExpression(assignment) = &expr.expression
+                    {
+                        assignments.push(assignment);
                     }
                 }
             }

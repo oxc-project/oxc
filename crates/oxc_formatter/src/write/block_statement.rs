@@ -34,7 +34,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
             None
         };
 
-        let has_comments_before_catch_clause = comments_before_catch_clause.is_some();
+        let has_comment_before_catch_clause = comments_before_catch_clause.is_some();
         // See reason in `[AstNode<'a, CatchClause<'a>>::write]`
         let formatted_comments_before_catch_clause = format_once(|f| {
             if let Some(comments) = comments_before_catch_clause {
@@ -50,8 +50,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
             // `if (a) { /* comment */ }`
             //
             // Some comments are not inside the block, but we need to print them inside the block.
-            if has_comments_before_catch_clause
-                || f.context().comments().has_comments_before(self.span.end)
+            if has_comment_before_catch_clause
+                || f.context().comments().has_comment_before(self.span.end)
             {
                 write!(
                     f,

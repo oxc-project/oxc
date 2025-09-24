@@ -1,13 +1,12 @@
+use crate::ctx::Ctx;
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
+use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue},
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{ContentEq, GetSpan};
-use oxc_syntax::es_target::ESTarget;
-
-use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
 
@@ -62,28 +61,28 @@ impl<'a> PeepholeOptimizations {
             }
             Expression::Identifier(id) => {
                 // "a ? a : b" => "a || b"
-                if let Expression::Identifier(id2) = &expr.consequent {
-                    if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
-                            expr.span,
-                            LogicalOperator::Or,
-                            expr.test.take_in(ctx.ast),
-                            expr.alternate.take_in(ctx.ast),
-                            ctx,
-                        ));
-                    }
+                if let Expression::Identifier(id2) = &expr.consequent
+                    && id.name == id2.name
+                {
+                    return Some(Self::join_with_left_associative_op(
+                        expr.span,
+                        LogicalOperator::Or,
+                        expr.test.take_in(ctx.ast),
+                        expr.alternate.take_in(ctx.ast),
+                        ctx,
+                    ));
                 }
                 // "a ? b : a" => "a && b"
-                if let Expression::Identifier(id2) = &expr.alternate {
-                    if id.name == id2.name {
-                        return Some(Self::join_with_left_associative_op(
-                            expr.span,
-                            LogicalOperator::And,
-                            expr.test.take_in(ctx.ast),
-                            expr.consequent.take_in(ctx.ast),
-                            ctx,
-                        ));
-                    }
+                if let Expression::Identifier(id2) = &expr.alternate
+                    && id.name == id2.name
+                {
+                    return Some(Self::join_with_left_associative_op(
+                        expr.span,
+                        LogicalOperator::And,
+                        expr.test.take_in(ctx.ast),
+                        expr.consequent.take_in(ctx.ast),
+                        ctx,
+                    ));
                 }
             }
             // `x != y ? b : c` -> `x == y ? c : b`
@@ -105,119 +104,117 @@ impl<'a> PeepholeOptimizations {
         }
 
         // "a ? b ? c : d : d" => "a && b ? c : d"
-        if let Expression::ConditionalExpression(consequent) = &mut expr.consequent {
-            if ctx.expr_eq(&consequent.alternate, &expr.alternate) {
-                return Some(ctx.ast.expression_conditional(
-                    expr.span,
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        expr.test.take_in(ctx.ast),
-                        consequent.test.take_in(ctx.ast),
-                        ctx,
-                    ),
-                    consequent.consequent.take_in(ctx.ast),
-                    consequent.alternate.take_in(ctx.ast),
-                ));
-            }
+        if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
+            && ctx.expr_eq(&consequent.alternate, &expr.alternate)
+        {
+            return Some(ctx.ast.expression_conditional(
+                expr.span,
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::And,
+                    expr.test.take_in(ctx.ast),
+                    consequent.test.take_in(ctx.ast),
+                    ctx,
+                ),
+                consequent.consequent.take_in(ctx.ast),
+                consequent.alternate.take_in(ctx.ast),
+            ));
         }
 
         // "a ? b : c ? b : d" => "a || c ? b : d"
-        if let Expression::ConditionalExpression(alternate) = &mut expr.alternate {
-            if ctx.expr_eq(&alternate.consequent, &expr.consequent) {
-                return Some(ctx.ast.expression_conditional(
-                    expr.span,
+        if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
+            && ctx.expr_eq(&alternate.consequent, &expr.consequent)
+        {
+            return Some(ctx.ast.expression_conditional(
+                expr.span,
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::Or,
+                    expr.test.take_in(ctx.ast),
+                    alternate.test.take_in(ctx.ast),
+                    ctx,
+                ),
+                expr.consequent.take_in(ctx.ast),
+                alternate.alternate.take_in(ctx.ast),
+            ));
+        }
+
+        // "a ? c : (b, c)" => "(a || b), c"
+        if let Expression::SequenceExpression(alternate) = &mut expr.alternate
+            && alternate.expressions.len() == 2
+            && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
+        {
+            return Some(ctx.ast.expression_sequence(
+                expr.span,
+                ctx.ast.vec_from_array([
                     Self::join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::Or,
                         expr.test.take_in(ctx.ast),
-                        alternate.test.take_in(ctx.ast),
+                        alternate.expressions[0].take_in(ctx.ast),
                         ctx,
                     ),
                     expr.consequent.take_in(ctx.ast),
-                    alternate.alternate.take_in(ctx.ast),
-                ));
-            }
-        }
-
-        // "a ? c : (b, c)" => "(a || b), c"
-        if let Expression::SequenceExpression(alternate) = &mut expr.alternate {
-            if alternate.expressions.len() == 2
-                && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
-            {
-                return Some(ctx.ast.expression_sequence(
-                    expr.span,
-                    ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
-                            expr.test.span(),
-                            LogicalOperator::Or,
-                            expr.test.take_in(ctx.ast),
-                            alternate.expressions[0].take_in(ctx.ast),
-                            ctx,
-                        ),
-                        expr.consequent.take_in(ctx.ast),
-                    ]),
-                ));
-            }
+                ]),
+            ));
         }
 
         // "a ? (b, c) : c" => "(a && b), c"
-        if let Expression::SequenceExpression(consequent) = &mut expr.consequent {
-            if consequent.expressions.len() == 2
-                && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
-            {
-                return Some(ctx.ast.expression_sequence(
-                    expr.span,
-                    ctx.ast.vec_from_array([
-                        Self::join_with_left_associative_op(
-                            expr.test.span(),
-                            LogicalOperator::And,
-                            expr.test.take_in(ctx.ast),
-                            consequent.expressions[0].take_in(ctx.ast),
-                            ctx,
-                        ),
-                        expr.alternate.take_in(ctx.ast),
-                    ]),
-                ));
-            }
-        }
-
-        // "a ? b || c : c" => "(a && b) || c"
-        if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent {
-            if logical_expr.operator.is_or() && ctx.expr_eq(&logical_expr.right, &expr.alternate) {
-                return Some(ctx.ast.expression_logical(
-                    expr.span,
+        if let Expression::SequenceExpression(consequent) = &mut expr.consequent
+            && consequent.expressions.len() == 2
+            && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
+        {
+            return Some(ctx.ast.expression_sequence(
+                expr.span,
+                ctx.ast.vec_from_array([
                     Self::join_with_left_associative_op(
                         expr.test.span(),
                         LogicalOperator::And,
                         expr.test.take_in(ctx.ast),
-                        logical_expr.left.take_in(ctx.ast),
+                        consequent.expressions[0].take_in(ctx.ast),
                         ctx,
                     ),
-                    LogicalOperator::Or,
                     expr.alternate.take_in(ctx.ast),
-                ));
-            }
+                ]),
+            ));
+        }
+
+        // "a ? b || c : c" => "(a && b) || c"
+        if let Expression::LogicalExpression(logical_expr) = &mut expr.consequent
+            && logical_expr.operator.is_or()
+            && ctx.expr_eq(&logical_expr.right, &expr.alternate)
+        {
+            return Some(ctx.ast.expression_logical(
+                expr.span,
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::And,
+                    expr.test.take_in(ctx.ast),
+                    logical_expr.left.take_in(ctx.ast),
+                    ctx,
+                ),
+                LogicalOperator::Or,
+                expr.alternate.take_in(ctx.ast),
+            ));
         }
 
         // "a ? c : b && c" => "(a || b) && c"
-        if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate {
-            if logical_expr.operator == LogicalOperator::And
-                && ctx.expr_eq(&logical_expr.right, &expr.consequent)
-            {
-                return Some(ctx.ast.expression_logical(
-                    expr.span,
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        expr.test.take_in(ctx.ast),
-                        logical_expr.left.take_in(ctx.ast),
-                        ctx,
-                    ),
-                    LogicalOperator::And,
-                    expr.consequent.take_in(ctx.ast),
-                ));
-            }
+        if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
+            && logical_expr.operator == LogicalOperator::And
+            && ctx.expr_eq(&logical_expr.right, &expr.consequent)
+        {
+            return Some(ctx.ast.expression_logical(
+                expr.span,
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::Or,
+                    expr.test.take_in(ctx.ast),
+                    logical_expr.left.take_in(ctx.ast),
+                    ctx,
+                ),
+                LogicalOperator::And,
+                expr.consequent.take_in(ctx.ast),
+            ));
         }
 
         // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
@@ -299,70 +296,73 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Try using the "??" or "?." operators
-        if ctx.options().target >= ESTarget::ES2020 {
-            if let Expression::BinaryExpression(test_binary) = &mut expr.test {
-                if let Some(is_negate) = match test_binary.operator {
-                    BinaryOperator::Inequality => Some(true),
-                    BinaryOperator::Equality => Some(false),
-                    _ => None,
-                } {
-                    // a == null / a != null / (a = foo) == null / (a = foo) != null
-                    let value_expr_with_id_name = if test_binary.left.is_null() {
-                        if let Some(id) = Self::extract_id_or_assign_to_id(&test_binary.right)
-                            .filter(|id| !ctx.is_global_reference(id))
-                        {
-                            Some((id.name, &mut test_binary.right))
-                        } else {
-                            None
-                        }
-                    } else if test_binary.right.is_null() {
-                        if let Some(id) = Self::extract_id_or_assign_to_id(&test_binary.left)
-                            .filter(|id| !ctx.is_global_reference(id))
-                        {
-                            Some((id.name, &mut test_binary.left))
-                        } else {
-                            None
-                        }
-                    } else {
-                        None
-                    };
-                    if let Some((target_id_name, value_expr)) = value_expr_with_id_name {
-                        // `a == null ? b : a` -> `a ?? b`
-                        // `a != null ? a : b` -> `a ?? b`
-                        // `(a = foo) == null ? b : a` -> `(a = foo) ?? b`
-                        // `(a = foo) != null ? a : b` -> `(a = foo) ?? b`
-                        let maybe_same_id_expr =
+        if (ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator)
+            || ctx.supports_feature(ESFeature::ES2020OptionalChaining))
+            && let Expression::BinaryExpression(test_binary) = &mut expr.test
+            && let Some(is_negate) = match test_binary.operator {
+                BinaryOperator::Inequality => Some(true),
+                BinaryOperator::Equality => Some(false),
+                _ => None,
+            }
+        {
+            // a == null / a != null / (a = foo) == null / (a = foo) != null
+            let value_expr_with_id_name = if test_binary.left.is_null() {
+                if let Some(id) = Self::extract_id_or_assign_to_id(&test_binary.right)
+                    .filter(|id| !ctx.is_global_reference(id))
+                {
+                    Some((id.name, &mut test_binary.right))
+                } else {
+                    None
+                }
+            } else if test_binary.right.is_null() {
+                if let Some(id) = Self::extract_id_or_assign_to_id(&test_binary.left)
+                    .filter(|id| !ctx.is_global_reference(id))
+                {
+                    Some((id.name, &mut test_binary.left))
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+            if let Some((target_id_name, value_expr)) = value_expr_with_id_name {
+                if ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator) {
+                    // `a == null ? b : a` -> `a ?? b`
+                    // `a != null ? a : b` -> `a ?? b`
+                    // `(a = foo) == null ? b : a` -> `(a = foo) ?? b`
+                    // `(a = foo) != null ? a : b` -> `(a = foo) ?? b`
+                    let maybe_same_id_expr =
+                        if is_negate { &mut expr.consequent } else { &mut expr.alternate };
+                    if maybe_same_id_expr.is_specific_id(&target_id_name) {
+                        return Some(ctx.ast.expression_logical(
+                            expr.span,
+                            value_expr.take_in(ctx.ast),
+                            LogicalOperator::Coalesce,
+                            if is_negate {
+                                expr.alternate.take_in(ctx.ast)
+                            } else {
+                                expr.consequent.take_in(ctx.ast)
+                            },
+                        ));
+                    }
+                }
+                if ctx.supports_feature(ESFeature::ES2020OptionalChaining) {
+                    // "a == null ? undefined : a.b.c[d](e)" => "a?.b.c[d](e)"
+                    // "a != null ? a.b.c[d](e) : undefined" => "a?.b.c[d](e)"
+                    // "(a = foo) == null ? undefined : a.b.c[d](e)" => "(a = foo)?.b.c[d](e)"
+                    // "(a = foo) != null ? a.b.c[d](e) : undefined" => "(a = foo)?.b.c[d](e)"
+                    let maybe_undefined_expr =
+                        if is_negate { &expr.alternate } else { &expr.consequent };
+                    if ctx.is_expression_undefined(maybe_undefined_expr) {
+                        let expr_to_inject_optional_chaining =
                             if is_negate { &mut expr.consequent } else { &mut expr.alternate };
-                        if maybe_same_id_expr.is_specific_id(&target_id_name) {
-                            return Some(ctx.ast.expression_logical(
-                                expr.span,
-                                value_expr.take_in(ctx.ast),
-                                LogicalOperator::Coalesce,
-                                if is_negate {
-                                    expr.alternate.take_in(ctx.ast)
-                                } else {
-                                    expr.consequent.take_in(ctx.ast)
-                                },
-                            ));
-                        }
-
-                        // "a == null ? undefined : a.b.c[d](e)" => "a?.b.c[d](e)"
-                        // "a != null ? a.b.c[d](e) : undefined" => "a?.b.c[d](e)"
-                        // "(a = foo) == null ? undefined : a.b.c[d](e)" => "(a = foo)?.b.c[d](e)"
-                        // "(a = foo) != null ? a.b.c[d](e) : undefined" => "(a = foo)?.b.c[d](e)"
-                        let maybe_undefined_expr =
-                            if is_negate { &expr.alternate } else { &expr.consequent };
-                        if ctx.is_expression_undefined(maybe_undefined_expr) {
-                            let expr_to_inject_optional_chaining =
-                                if is_negate { &mut expr.consequent } else { &mut expr.alternate };
-                            if Self::inject_optional_chaining_if_matched(
-                                &target_id_name,
-                                value_expr,
-                                expr_to_inject_optional_chaining,
-                                ctx,
-                            ) {
-                                return Some(expr_to_inject_optional_chaining.take_in(ctx.ast));
-                            }
+                        if Self::inject_optional_chaining_if_matched(
+                            &target_id_name,
+                            value_expr,
+                            expr_to_inject_optional_chaining,
+                            ctx,
+                        ) {
+                            return Some(expr_to_inject_optional_chaining.take_in(ctx.ast));
                         }
                     }
                 }
@@ -590,18 +590,7 @@ impl<'a> PeepholeOptimizations {
 
 #[cfg(test)]
 mod test {
-    use oxc_syntax::es_target::ESTarget;
-
-    use crate::{
-        CompressOptions,
-        tester::{test, test_options, test_same},
-    };
-
-    fn test_es2019(source_text: &str, expected: &str) {
-        let target = ESTarget::ES2019;
-        let options = CompressOptions { target, ..CompressOptions::default() };
-        test_options(source_text, expected, &options);
-    }
+    use crate::tester::{test, test_same, test_target};
 
     #[test]
     fn test_minimize_expr_condition() {
@@ -663,7 +652,7 @@ mod test {
         test("var a; a != null ? a : b", "var a; a ?? b");
         test("var a; (a = _a) != null ? a : b", "var a; (a = _a) ?? b");
         test("v = a != null ? a : b", "v = a == null ? b : a"); // accessing global `a` may have a getter with side effects
-        test_es2019("var a; v = a != null ? a : b", "var a; v = a == null ? b : a");
+        test_target("var a; v = a != null ? a : b", "var a; v = a == null ? b : a", "chrome79");
         test("var a; v = a != null ? a.b.c[d](e) : undefined", "var a; v = a?.b.c[d](e)");
         test(
             "var a; v = (a = _a) != null ? a.b.c[d](e) : undefined",
@@ -674,9 +663,10 @@ mod test {
             "var a, undefined = 1; v = a != null ? a.b.c[d](e) : undefined",
             "var a; v = a == null ? 1 : a.b.c[d](e)",
         );
-        test_es2019(
+        test_target(
             "var a; v = a != null ? a.b.c[d](e) : undefined",
             "var a; v = a == null ? void 0 : a.b.c[d](e)",
+            "chrome79",
         );
         test("v = cmp !== 0 ? cmp : (bar, cmp);", "v = (cmp === 0 && bar, cmp);");
         test("v = cmp === 0 ? cmp : (bar, cmp);", "v = (cmp === 0 || bar, cmp);");

@@ -11,7 +11,7 @@
 //! - [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! - [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 #![expect(
-    missing_docs, // TODO: document individual struct fields  
+    missing_docs, // TODO: document individual struct fields
     clippy::enum_variant_names,
 )]
 
@@ -403,6 +403,7 @@ pub struct TSIntersectionType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(via = TSParenthesizedTypeConverter)]
 pub struct TSParenthesizedType<'a> {
     pub span: Span,
     pub type_annotation: TSType<'a>,
@@ -1744,6 +1745,7 @@ pub struct JSDocNonNullableType<'a> {
     pub postfix: bool,
 }
 
+/// `type T = (?)`
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]

@@ -3,7 +3,7 @@ commit: 41d96516
 parser_babel Summary:
 AST Parsed     : 2407/2423 (99.34%)
 Positive Passed: 2385/2423 (98.43%)
-Negative Passed: 1649/1755 (93.96%)
+Negative Passed: 1665/1755 (94.87%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -157,38 +157,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-new/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-new-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-superclass/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-superclass-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-tsx/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-tsx-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-import/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-import-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref-babel-7/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts
 
@@ -2201,7 +2169,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/436/input.js:2:1]
  1 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unexpected token
@@ -2214,7 +2182,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/438/input.js:3:1]
  2 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unexpected token
@@ -2227,7 +2195,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/440/input.js:3:1]
  2 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unterminated regular expression
@@ -2260,7 +2228,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/444/input.js:3:3]
  2 │ */]
-   ·   ─
+   ·    ─
    ╰────
 
   × Unexpected token
@@ -11206,7 +11174,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0156/input.js:3:1]
  2 │ ]
-   · ─
+   ·  ─
    ╰────
 
   × Unterminated regular expression
@@ -11239,7 +11207,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0160/input.js:3:3]
  2 │ */]
-   ·   ─
+   ·    ─
    ╰────
 
   × Unexpected token
@@ -12902,6 +12870,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  9 │   readonly *[e?.e]?() { }
    ╰────
 
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:3:9]
+ 2 │     not_constructor(
+ 3 │         readonly r,
+   ·         ────────
+ 4 │         public pu: number,
+   ╰────
+
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:4:9]
  3 │         readonly r,
@@ -12934,6 +12910,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │         // Also works on AssignmentPattern
    ╰────
 
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:16]
+ 6 │         private pi?: number,
+ 7 │         public readonly pur,
+   ·                ────────
+ 8 │         // Also works on AssignmentPattern
+   ╰────
+
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:9:9]
+  8 │         // Also works on AssignmentPattern
+  9 │         readonly x = 0,
+    ·         ────────
+ 10 │         public y?: number = 0) {}
+    ╰────
+
   × TS(1090): 'public' modifier cannot appear on a parameter.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:10:9]
   9 │         readonly x = 0,
@@ -12942,38 +12934,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  11 │ }
     ╰────
 
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:3:9]
- 2 │     not_constructor(
- 3 │         readonly r,
-   ·         ──────────
- 4 │         public pu: number,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:4:9]
- 3 │         readonly r,
- 4 │         public pu: number,
-   ·         ─────────────────
- 5 │         protected po?,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:5:9]
- 4 │         public pu: number,
- 5 │         protected po?,
-   ·         ─────────────
- 6 │         private pi?: number,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:6:9]
- 5 │         protected po?,
- 6 │         private pi?: number,
-   ·         ───────────────────
- 7 │         public readonly pur,
-   ╰────
-
   × A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
  6 │         private pi?: number,
@@ -12981,30 +12941,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
    ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
- 6 │         private pi?: number,
- 7 │         public readonly pur,
-   ·         ───────────────────
- 8 │         // Also works on AssignmentPattern
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:9:9]
-  8 │         // Also works on AssignmentPattern
-  9 │         readonly x = 0,
-    ·         ──────────────
- 10 │         public y?: number = 0) {}
-    ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:10:9]
-  9 │         readonly x = 0,
- 10 │         public y?: number = 0) {}
-    ·         ─────────────────────
- 11 │ }
-    ╰────
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-private/input.ts:2:3]
@@ -13190,6 +13126,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ──
    ╰────
 
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:2:3]
+ 1 │ function foo(
+ 2 │   readonly r,
+   ·   ────────
+ 3 │   public pu: number,
+   ╰────
+
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:3:3]
  2 │   readonly r,
@@ -13222,6 +13166,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │   readonly x = 0,
    ╰────
 
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:10]
+ 5 │   private pi?: number,
+ 6 │   public readonly pur,
+   ·          ────────
+ 7 │   readonly x = 0,
+   ╰────
+
+  × TS(1090): 'readonly' modifier cannot appear on a parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:7:3]
+ 6 │   public readonly pur,
+ 7 │   readonly x = 0,
+   ·   ────────
+ 8 │   public y?: number = 0
+   ╰────
+
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:8:3]
  7 │   readonly x = 0,
@@ -13230,68 +13190,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  9 │ ) {}
    ╰────
 
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:2:3]
- 1 │ function foo(
- 2 │   readonly r,
-   ·   ──────────
- 3 │   public pu: number,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:3:3]
- 2 │   readonly r,
- 3 │   public pu: number,
-   ·   ─────────────────
- 4 │   protected po?,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:4:3]
- 3 │   public pu: number,
- 4 │   protected po?,
-   ·   ─────────────
- 5 │   private pi?: number,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:5:3]
- 4 │   protected po?,
- 5 │   private pi?: number,
-   ·   ───────────────────
- 6 │   public readonly pur,
-   ╰────
-
   × A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
  5 │   private pi?: number,
  6 │   public readonly pur,
    ·   ───────────────────
  7 │   readonly x = 0,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
- 5 │   private pi?: number,
- 6 │   public readonly pur,
-   ·   ───────────────────
- 7 │   readonly x = 0,
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:7:3]
- 6 │   public readonly pur,
- 7 │   readonly x = 0,
-   ·   ──────────────
- 8 │   public y?: number = 0
-   ╰────
-
-  × A parameter property is only allowed in a constructor implementation.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:8:3]
- 7 │   readonly x = 0,
- 8 │   public y?: number = 0
-   ·   ─────────────────────
- 9 │ ) {}
    ╰────
 
   × A required parameter cannot follow an optional parameter.
@@ -14201,6 +14105,102 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call-optional-chain-invalid/input.ts:1:2]
  1 │ f?.<string>[1];
    ·  ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function/input.ts:1:4]
+ 1 │ foo<>()
+   ·    ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-function-babel-7/input.ts:1:4]
+ 1 │ foo<>()
+   ·    ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends/input.ts:1:22]
+ 1 │ interface A extends B<> {}
+   ·                      ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-extends-babel-7/input.ts:1:22]
+ 1 │ interface A extends B<> {}
+   ·                      ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements/input.ts:1:21]
+ 1 │ class A implements B<> {}
+   ·                     ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-interface-implements-babel-7/input.ts:1:21]
+ 1 │ class A implements B<> {}
+   ·                     ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-new/input.ts:1:6]
+ 1 │ new A<>();
+   ·      ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-new-babel-7/input.ts:1:6]
+ 1 │ new A<>();
+   ·      ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-superclass/input.ts:1:18]
+ 1 │ class A extends B<> {}
+   ·                  ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-superclass-babel-7/input.ts:1:18]
+ 1 │ class A extends B<> {}
+   ·                  ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-tsx/input.ts:1:14]
+ 1 │ var a = <Comp<>></Comp>
+   ·              ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-tsx-babel-7/input.ts:1:14]
+ 1 │ var a = <Comp<>></Comp>
+   ·              ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-import/input.ts:1:18]
+ 1 │ let a: import("")<>;
+   ·                  ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-import-babel-7/input.ts:1:18]
+ 1 │ let a: import("")<>;
+   ·                  ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref/input.ts:1:11]
+ 1 │ let a: Foo<>;
+   ·           ──
+   ╰────
+
+  × TS(1099): Type argument list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/empty-type-ref-babel-7/input.ts:1:11]
+ 1 │ let a: Foo<>;
+   ·           ──
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

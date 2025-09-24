@@ -32,9 +32,6 @@
 //!   For internal use only. The APIs provided by this feature are sketchy at best, and possibly
 //!   undefined behavior. Do not enable this feature under any circumstances in production code.
 //!
-//! * `disable_fixed_size` - Disables `fixed_size` feature.
-//!   Purpose is to prevent `--all-features` enabling fixed sized allocators.
-//!
 //! * `disable_track_allocations` - Disables `track_allocations` feature.
 //!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
@@ -53,6 +50,8 @@ mod convert;
 #[cfg(feature = "from_raw_parts")]
 mod from_raw_parts;
 pub mod hash_map;
+#[cfg(feature = "pool")]
+mod pool;
 mod string_builder;
 mod take_in;
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
@@ -69,128 +68,18 @@ pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
+#[cfg(feature = "pool")]
+pub use pool::*;
 pub use string_builder::StringBuilder;
 pub use take_in::{Dummy, TakeIn};
 pub use vec::Vec;
 
-// Fixed size allocators are only supported on 64-bit little-endian platforms at present
-
-#[cfg(all(
-    feature = "pool",
-    not(all(
-        feature = "fixed_size",
-        not(feature = "disable_fixed_size"),
-        target_pointer_width = "64",
-        target_endian = "little"
-    ))
-))]
-mod pool;
-
-#[cfg(all(
-    feature = "pool",
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
-mod pool_fixed_size;
-#[cfg(all(
-    feature = "pool",
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
-use pool_fixed_size as pool;
-// Import here so `generated/assert_layouts.rs` can access it.
-// Add `debug_assertions` here because `assert_layouts` is only loaded in debug mode,
-// so this is required to avoid unused vars lint warning in release mode.
-#[cfg(all(
-    debug_assertions,
-    feature = "pool",
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
-use pool_fixed_size::FixedSizeAllocatorMetadata;
-// Export so can be used in `napi/oxlint2`
-#[cfg(all(
-    feature = "pool",
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
-pub use pool_fixed_size::free_fixed_size_allocator;
-
-#[cfg(feature = "pool")]
-pub use pool::{AllocatorGuard, AllocatorPool};
-
-// Dummy implementations of interfaces from `pool_fixed_size`, just to stop clippy complaining.
-// Seems to be necessary due to feature unification.
-#[cfg(all(
-    feature = "pool",
-    not(all(
-        feature = "fixed_size",
-        not(feature = "disable_fixed_size"),
-        target_pointer_width = "64",
-        target_endian = "little"
-    ))
-))]
-#[allow(missing_docs, clippy::missing_safety_doc, clippy::unused_self, clippy::allow_attributes)]
-mod dummies {
-    use std::{ptr::NonNull, sync::atomic::AtomicBool};
-
-    use super::Allocator;
-
-    #[doc(hidden)]
-    pub struct FixedSizeAllocatorMetadata {
-        pub id: u32,
-        pub alloc_ptr: NonNull<u8>,
-        pub is_double_owned: AtomicBool,
-    }
-
-    #[doc(hidden)]
-    pub unsafe fn free_fixed_size_allocator(_metadata_ptr: NonNull<FixedSizeAllocatorMetadata>) {
-        unreachable!();
-    }
-
-    #[doc(hidden)]
-    impl Allocator {
-        pub unsafe fn fixed_size_metadata_ptr(&self) -> NonNull<FixedSizeAllocatorMetadata> {
-            unreachable!();
-        }
-    }
-}
-#[cfg(all(
-    feature = "pool",
-    not(all(
-        feature = "fixed_size",
-        not(feature = "disable_fixed_size"),
-        target_pointer_width = "64",
-        target_endian = "little"
-    ))
-))]
-pub use dummies::*;
-
-#[cfg(all(
-    feature = "pool",
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
+// Fixed size allocators are only supported on 64-bit little-endian platforms at present.
+//
+// Note: Importing the `fixed_size_constants` module would cause a compilation error on 32-bit systems.
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
 mod generated {
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    mod assert_layouts;
     pub mod fixed_size_constants;
 }
-#[cfg(all(
-    feature = "pool",
-    feature = "fixed_size",
-    not(feature = "disable_fixed_size"),
-    target_pointer_width = "64",
-    target_endian = "little"
-))]
-use generated::fixed_size_constants;

@@ -1,6 +1,6 @@
 [package]
 name = "oxc_minifier"
-version = "0.87.0"
+version = "0.92.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -25,6 +25,8 @@ oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true }
 oxc_codegen = { workspace = true }
+oxc_compat = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["stack"] }
 oxc_ecmascript = { workspace = true }
 oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }

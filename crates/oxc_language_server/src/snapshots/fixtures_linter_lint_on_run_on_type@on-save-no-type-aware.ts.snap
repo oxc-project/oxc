@@ -1,0 +1,7 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+---
+########## 
+file: fixtures/linter/lint_on_run/on_type/on-save-no-type-aware.ts
+----------
+File is ignored

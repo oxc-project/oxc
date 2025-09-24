@@ -6,19 +6,19 @@ use oxc_span::GetSpan;
 use crate::{
     format_args,
     formatter::{
-        Buffer, Comments, Format, FormatError, FormatResult, Formatter,
+        Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
         buffer::RemoveSoftLinesBuffer,
-        comments::has_new_line_backward,
         prelude::*,
         trivia::{FormatLeadingComments, format_trailing_comments},
-        write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
     utils::assignment_like::AssignmentLikeLayout,
     write,
-    write::parameter_list::has_only_simple_parameters,
+    write::function::FormatContentWithCacheMode,
 };
+
+use super::parameters::has_only_simple_parameters;
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
@@ -31,7 +31,7 @@ pub struct FormatJsArrowFunctionExpressionOptions {
     pub assignment_layout: Option<AssignmentLikeLayout>,
     pub call_arg_layout: Option<GroupedCallArgumentLayout>,
     // Determine whether the signature and body should be cached.
-    pub cache_mode: FunctionBodyCacheMode,
+    pub cache_mode: FunctionCacheMode,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -54,7 +54,7 @@ impl GroupedCallArgumentLayout {
 }
 
 #[derive(Default, Debug, Clone, Copy)]
-pub enum FunctionBodyCacheMode {
+pub enum FunctionCacheMode {
     /// Format the body without caching it or retrieving it from the cache.
     #[default]
     NoCache,
@@ -130,7 +130,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                 let arrow_expression = arrow.get_expression();
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
-                    return if f.context().comments().has_comments_before(sequence.span().start) {
+                    return if f.context().comments().has_comment_before(sequence.span().start) {
                         write!(
                             f,
                             [group(&format_args!(
@@ -299,32 +299,28 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut should_break = false;
 
         loop {
-            if current.expression() {
-                if let Some(AstNodes::ExpressionStatement(expr_stmt)) =
+            if current.expression()
+                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                {
-                    if let AstNodes::ArrowFunctionExpression(next) =
-                        &expr_stmt.expression().as_ast_nodes()
-                    {
-                        if matches!(
-                            options.call_arg_layout,
-                            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                        ) {
-                            should_break = should_break || Self::should_break_chain(current);
+                && let AstNodes::ArrowFunctionExpression(next) =
+                    &expr_stmt.expression().as_ast_nodes()
+                && matches!(
+                    options.call_arg_layout,
+                    None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+                )
+            {
+                should_break = should_break || Self::should_break_chain(current);
 
-                            should_break = should_break || Self::should_break_chain(next);
+                should_break = should_break || Self::should_break_chain(next);
 
-                            if head.is_none() {
-                                head = Some(current);
-                            } else {
-                                middle.push(current);
-                            }
-
-                            current = next;
-                            continue;
-                        }
-                    }
+                if head.is_none() {
+                    head = Some(current);
+                } else {
+                    middle.push(current);
                 }
+
+                current = next;
+                continue;
             }
             break match head {
                 None => ArrowFunctionLayout::Single(current),
@@ -363,7 +359,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
             return true;
         }
 
-        let has_parameters = parameters.items.is_empty();
+        let has_parameters = !parameters.items.is_empty();
         let has_type_and_parameters = arrow.return_type.is_some() && has_parameters;
         has_type_and_parameters || has_rest_object_or_array_parameter(parameters)
     }
@@ -398,10 +394,10 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 pub fn is_multiline_template_starting_on_same_line(
     start: u32,
     template: &TemplateLiteral,
-    source_text: &str,
+    source_text: SourceText,
 ) -> bool {
-    template.quasis.iter().any(|quasi| quasi.value.raw.contains('\n'))
-        && !has_new_line_backward(&source_text[..start as usize])
+    template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
+        && !source_text.has_newline_before(start)
 }
 
 struct ArrowChain<'a, 'b> {
@@ -497,7 +493,11 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // This tracks that state and is used to prevent the insertion of
         // additional indents under `format_arrow_signatures`, then also to
         // add the outer indent under `format_inner`.
-        let has_initial_indent = is_callee || is_assignment_rhs;
+        let has_initial_indent = is_callee
+            || self
+                .options
+                .assignment_layout
+                .is_some_and(|layout| layout != AssignmentLikeLayout::BreakAfterOperator);
 
         let format_arrow_signatures = format_with(|f| {
             let join_signatures = format_with(|f| {
@@ -509,7 +509,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // comments manually, since they won't have their own
                     // Format node to handle it.
                     let should_format_comments = !is_first_in_chain
-                        && f.context().comments().has_comments_before(arrow.span.start);
+                        && f.context().comments().has_comment_before(arrow.span.start);
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
@@ -583,7 +583,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
-                if f.context().comments().has_comments_before(sequence.span().start) {
+                if f.context().comments().has_comment_before(sequence.span().start) {
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(
@@ -854,50 +854,32 @@ fn format_signature<'a, 'b>(
     arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
     is_first_or_last_call_argument: bool,
     is_first_in_chain: bool,
-    cache_mode: FunctionBodyCacheMode,
+    cache_mode: FunctionCacheMode,
 ) -> impl Format<'a> + 'b {
     format_with(move |f| {
-        let formatted_async_token =
-            format_with(|f| if arrow.r#async() { write!(f, ["async", space()]) } else { Ok(()) });
-
-        let formatted_parameters =
-            format_with(|f| write!(f, [arrow.type_parameters(), arrow.params()]));
-
-        let format_return_type = format_with(|f| write!(f, arrow.return_type()));
-
-        let signatures = format_once(|f| {
-            write!(
-                f,
-                [group(&format_args!(
-                    maybe_space(!is_first_in_chain),
-                    formatted_async_token,
-                    group(&formatted_parameters),
-                    group(&format_return_type)
-                ))]
-            )
+        let content = format_once(|f| {
+            group(&format_args!(
+                maybe_space(!is_first_in_chain),
+                arrow.r#async().then_some("async "),
+                arrow.type_parameters(),
+                arrow.params(),
+                format_once(|f| {
+                    let needs_space = arrow.return_type.as_ref().is_some_and(|return_type| {
+                        f.context().comments().has_comment_before(return_type.span.start)
+                    });
+                    maybe_space(needs_space).fmt(f)
+                }),
+                group(&arrow.return_type())
+            ))
+            .fmt(f)
         });
-
-        // The [`call_arguments`] will format the argument that can be grouped in different ways until
-        // find the best layout. So we have to cache the parameters because it never be broken.
-        let cached_signature = format_once(|f| {
-            if matches!(cache_mode, FunctionBodyCacheMode::NoCache) {
-                signatures.fmt(f)
-            } else if let Some(grouped) = f.context().get_cached_element(&arrow.params.span) {
-                f.write_element(grouped)
-            } else {
-                if let Ok(Some(grouped)) = f.intern(&signatures) {
-                    f.context_mut().cache_element(&arrow.params.span, grouped.clone());
-                    f.write_element(grouped.clone());
-                }
-                Ok(())
-            }
-        });
+        let format_head = FormatContentWithCacheMode::new(arrow.params.span, content, cache_mode);
 
         if is_first_or_last_call_argument {
             let mut buffer = RemoveSoftLinesBuffer::new(f);
             let mut recording = buffer.start_recording();
 
-            write!(recording, cached_signature)?;
+            write!(recording, format_head)?;
 
             if recording.stop().will_break() {
                 return Err(FormatError::PoorLayout);
@@ -911,7 +893,7 @@ fn format_signature<'a, 'b>(
                     // line and can't break pre-emptively without also causing
                     // the parent (i.e., this ArrowChain) to break first.
                     (!is_first_in_chain).then_some(soft_line_break_or_space()),
-                    cached_signature
+                    format_head
                 ]
             )?;
         }
@@ -934,39 +916,20 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
     pub expression: bool,
 
     /// If the body should be cached or if the formatter should try to retrieve it from the cache.
-    pub mode: FunctionBodyCacheMode,
-}
-
-impl<'a> FormatMaybeCachedFunctionBody<'a, '_> {
-    fn format(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.expression {
-            if let AstNodes::ExpressionStatement(s) =
-                &self.body.statements().first().unwrap().as_ast_nodes()
-            {
-                return s.expression().fmt(f);
-            }
-        }
-        self.body.fmt(f)
-    }
+    pub mode: FunctionCacheMode,
 }
 
 impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self.mode {
-            FunctionBodyCacheMode::NoCache => self.format(f),
-            FunctionBodyCacheMode::Cache => {
-                if let Some(cached) = f.context().get_cached_element(&self.body.span) {
-                    f.write_element(cached)
-                } else {
-                    match f.intern(&format_once(|f| self.format(f)))? {
-                        Some(interned) => {
-                            f.context_mut().cache_element(&self.body.span, interned.clone());
-                            f.write_element(interned)
-                        }
-                        None => Ok(()),
-                    }
-                }
+        let content = format_once(|f| {
+            if self.expression
+                && let AstNodes::ExpressionStatement(s) =
+                    &self.body.statements().first().unwrap().as_ast_nodes()
+            {
+                return s.expression().fmt(f);
             }
-        }
+            self.body.fmt(f)
+        });
+        FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f)
     }
 }

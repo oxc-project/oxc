@@ -4,6 +4,71 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.92.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- f4d6790 parser: Forbid accessors named `constructor` (#14017) (Don Isaac)
+
+
+## [0.91.0] - 2025-09-22
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 035ea19 parser: Optimize `parse_simple_arrow_function_expression` (#13965) (Ulrich Stark)
+
+### 💼 Other
+
+- fb347da crates: V0.91.0 (#13961) (Boshen)
+
+
+## [0.91.0] - 2025-09-21
+
+### 🚀 Features
+
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f067159 parser: Forbid readonly in parser instead of semantic (#13905) (Ulrich Stark)
+
+
+## [0.90.0] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- 00e4477 parser: Update ident reference check in jsx (#13819) (camc314)
+
+### 📚 Documentation
+
+- 3a03b85 parser: Improve docs for `Token::read_bool` (#13873) (overlookmotel)
+- 5d4e4f0 parser: Document is_on_new_line and read_bool performance characteristics (#13867) (Boshen)
+
+### ⚡ Performance
+
+- ca4a081 parser: Cache redundant token operations in hot paths (#13775) (Boshen)
+
+
+
+## [0.88.0] - 2025-09-15
+
+### 🚀 Features
+
+- db33196 parser: Adds typescript rule for empty argument list (#13730) (Karan Kiri)
+
+### 🐛 Bug Fixes
+
+- f795d69 parser: Improve diagnostics around modifier checks (#13526) (Ulrich Stark)
+
+
 ## [0.87.0] - 2025-09-08
 
 ### 🐛 Bug Fixes

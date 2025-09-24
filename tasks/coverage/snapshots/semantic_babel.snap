@@ -2,7 +2,7 @@ commit: 41d96516
 
 semantic_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2007/2423 (82.83%)
+Positive Passed: 2006/2423 (82.79%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -462,6 +462,11 @@ Multiple constructor implementations are not allowed.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare/input.ts
 Identifier `x` has already been declared
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer/input.ts
+Unresolved references mismatch:
+after transform: ["a"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-extends/input.ts
 Unresolved references mismatch:

@@ -3,9 +3,7 @@ use std::{borrow::Cow, num::NonZeroUsize};
 use cow_utils::CowUtils;
 use oxc_span::Span;
 
-use crate::formatter::{
-    Format, FormatResult, Formatter, SyntaxToken, prelude::*, trivia::format_replaced,
-};
+use crate::formatter::{Format, FormatResult, Formatter, SyntaxToken, prelude::*};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NumberFormatOptions {
@@ -41,11 +39,7 @@ pub struct CleanedNumberLiteralText<'a> {
 
 impl<'a> Format<'a> for CleanedNumberLiteralText<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_replaced(
-            self.span,
-            &syntax_token_cow_slice(format_trimmed_number(self.text, self.options), self.span),
-        )
-        .fmt(f)
+        syntax_token_cow_slice(format_trimmed_number(self.text, self.options), self.span).fmt(f)
     }
 }
 

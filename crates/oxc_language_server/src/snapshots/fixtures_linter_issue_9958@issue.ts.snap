@@ -1,7 +1,10 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-input_file: crates/oxc_language_server/fixtures/linter/issue_9958/issue.ts
 ---
+########## 
+file: fixtures/linter/issue_9958/issue.ts
+----------
+
 code: "eslint(no-extra-boolean-cast)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-extra-boolean-cast.html"
 message: "Redundant double negation\nhelp: Remove the double negation as it will already be coerced to a boolean"
@@ -28,7 +31,7 @@ related_information[1].location.range: Range { start: Position { line: 11, chara
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Delete this code."), code: "", range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } } })
+fixed: None
 
 
 code: "None"

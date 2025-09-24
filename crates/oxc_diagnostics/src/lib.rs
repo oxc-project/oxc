@@ -91,7 +91,7 @@ impl DerefMut for OxcDiagnostic {
     }
 }
 
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct OxcCode {
     pub scope: Option<Cow<'static, str>>,
     pub number: Option<Cow<'static, str>>,
@@ -337,5 +337,10 @@ impl OxcDiagnostic {
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
     pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
         Error::from(self).with_source_code(code)
+    }
+
+    /// Consumes the diagnostic and returns the inner owned data.
+    pub fn inner_owned(self) -> OxcDiagnosticInner {
+        *self.inner
     }
 }

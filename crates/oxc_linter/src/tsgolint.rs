@@ -1,6 +1,9 @@
 use std::{
+    borrow::Cow,
+    collections::BTreeSet,
     ffi::OsStr,
     io::{ErrorKind, Read, Write},
+    mem,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -76,8 +79,7 @@ impl TsGoLintState {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         let json_input = self.json_input(paths, &mut resolved_configs);
-
-        if json_input.files.is_empty() {
+        if json_input.configs.is_empty() {
             return Ok(());
         }
 
@@ -383,7 +385,7 @@ impl TsGoLintState {
 
                                             let mut message_with_position: MessageWithPosition<'_> =
                                                 message_to_message_with_position(
-                                                    &Message::from_tsgo_lint_diagnostic(
+                                                    Message::from_tsgo_lint_diagnostic(
                                                         tsgolint_diagnostic,
                                                         &source_text,
                                                     ),
@@ -469,32 +471,41 @@ impl TsGoLintState {
         &self,
         paths: &[Arc<OsStr>],
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
-    ) -> TsGoLintInput {
-        TsGoLintInput {
-            files: paths
-                .iter()
-                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
-                .map(|path| TsGoLintInputFile {
-                    file_path: path.to_string_lossy().to_string(),
-                    rules: {
-                        let path_buf = PathBuf::from(path);
-                        let resolved_config = resolved_configs
-                            .entry(path_buf.clone())
-                            .or_insert_with(|| self.config_store.resolve(&path_buf));
+    ) -> Payload {
+        let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
 
-                        // Collect the rules that are enabled for this file
-                        resolved_config
-                            .rules
-                            .iter()
-                            .filter_map(|(rule, status)| {
-                                if status.is_warn_deny() && rule.is_tsgolint_rule() {
-                                    Some(rule.name().to_string())
-                                } else {
-                                    None
-                                }
-                            })
-                            .collect()
-                    },
+        for path in paths {
+            if SourceType::from_path(Path::new(path)).is_ok() {
+                let path_buf = PathBuf::from(path);
+                let file_path = path.to_string_lossy().to_string();
+
+                let resolved_config = resolved_configs
+                    .entry(path_buf.clone())
+                    .or_insert_with(|| self.config_store.resolve(&path_buf));
+
+                let rules: BTreeSet<Rule> = resolved_config
+                    .rules
+                    .iter()
+                    .filter_map(|(rule, status)| {
+                        if status.is_warn_deny() && rule.is_tsgolint_rule() {
+                            Some(Rule { name: rule.name().to_string() })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                config_groups.entry(rules).or_default().push(file_path);
+            }
+        }
+
+        Payload {
+            version: 2,
+            configs: config_groups
+                .into_iter()
+                .map(|(rules, file_paths)| Config {
+                    file_paths,
+                    rules: rules.into_iter().collect(),
                 })
                 .collect(),
         }
@@ -505,26 +516,35 @@ impl TsGoLintState {
 ///
 /// ```json
 /// {
-///   "files": [
+///   "configs": [
 ///     {
-///       "file_path": "/absolute/path/to/file.ts",
-///       "rules": ["rule-1", "another-rule"]
+///       "file_paths": ["/absolute/path/to/file.ts", "/another/file.ts"],
+///       "rules": [
+///         { "name": "rule-1" },
+///         { "name": "another-rule" },
+///       ]
 ///     }
 ///   ]
 /// }
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TsGoLintInput {
-    pub files: Vec<TsGoLintInputFile>,
+pub struct Payload {
+    pub version: i32,
+    pub configs: Vec<Config>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TsGoLintInputFile {
+pub struct Config {
     /// Absolute path to the file to lint
-    pub file_path: String,
+    pub file_paths: Vec<String>,
     /// List of rules to apply to this file
     /// Example: `["no-floating-promises"]`
-    pub rules: Vec<String>,
+    pub rules: Vec<Rule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq, PartialOrd, Ord)]
+pub struct Rule {
+    pub name: String,
 }
 
 /// Represents the raw output binary data from `tsgolint`.
@@ -580,16 +600,16 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 #[cfg(feature = "language_server")]
 impl Message<'_> {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
+    fn from_tsgo_lint_diagnostic(mut val: TsGoLintDiagnostic, source_text: &str) -> Self {
         let mut fixes =
             Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
 
         if !val.fixes.is_empty() {
-            let fix_vec = val
-                .fixes
-                .iter()
+            let fix_vec = mem::take(&mut val.fixes);
+            let fix_vec = fix_vec
+                .into_iter()
                 .map(|fix| crate::fixer::Fix {
-                    content: fix.text.clone().into(),
+                    content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
                 })
@@ -598,19 +618,31 @@ impl Message<'_> {
             fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
         }
 
-        for suggestion in &val.suggestions {
+        let suggestions = mem::take(&mut val.suggestions);
+        fixes.extend(suggestions.into_iter().map(|mut suggestion| {
+            let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
             let fix_vec = suggestion
                 .fixes
-                .iter()
-                .map(|fix| crate::fixer::Fix {
-                    content: fix.text.clone().into(),
-                    span: Span::new(fix.range.pos, fix.range.end),
-                    message: Some(suggestion.message.description.clone().into()),
+                .into_iter()
+                .enumerate()
+                .map(|(i, fix)| {
+                    // Don't clone the message description on last turn of loop
+                    let message = if i < last_fix_index {
+                        suggestion.message.description.clone()
+                    } else {
+                        mem::take(&mut suggestion.message.description)
+                    };
+
+                    crate::fixer::Fix {
+                        content: Cow::Owned(fix.text),
+                        span: Span::new(fix.range.pos, fix.range.end),
+                        message: Some(Cow::Owned(message)),
+                    }
                 })
                 .collect();
 
-            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
-        }
+            CompositeFix::merge_fixes(fix_vec, source_text)
+        }));
 
         let possible_fix = if fixes.is_empty() {
             PossibleFixes::None
@@ -774,21 +806,6 @@ mod test {
         fixer::{Message, PossibleFixes},
         tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintDiagnostic},
     };
-
-    /// Implements `PartialEq` for `PossibleFixes` to enable equality assertions in tests.
-    /// In production a `PossibleFix` can not be equal.
-    impl PartialEq for PossibleFixes<'_> {
-        fn eq(&self, other: &Self) -> bool {
-            match (self, other) {
-                (Self::None, Self::None) => true,
-                (Self::Single(fix1), Self::Single(fix2)) => fix1 == fix2,
-                (Self::Multiple(fixes1), Self::Multiple(fixes2)) => {
-                    fixes1.iter().zip(fixes2.iter()).all(|(f1, f2)| f1 == f2)
-                }
-                _ => false,
-            }
-        }
-    }
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {

@@ -818,9 +818,11 @@ impl<'a> ParserImpl<'a> {
             let (params, _) =
                 self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
             self.expect(Kind::RAngle);
-            return Some(
-                self.ast.alloc_ts_type_parameter_instantiation(self.end_span(span), params),
-            );
+            let span = self.end_span(span);
+            if params.is_empty() {
+                self.error(diagnostics::ts_empty_type_argument_list(span));
+            }
+            return Some(self.ast.alloc_ts_type_parameter_instantiation(span, params));
         }
         None
     }
@@ -834,9 +836,11 @@ impl<'a> ParserImpl<'a> {
             let (params, _) =
                 self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
             self.expect(Kind::RAngle);
-            return Some(
-                self.ast.alloc_ts_type_parameter_instantiation(self.end_span(span), params),
-            );
+            let span = self.end_span(span);
+            if params.is_empty() {
+                self.error(diagnostics::ts_empty_type_argument_list(span));
+            }
+            return Some(self.ast.alloc_ts_type_parameter_instantiation(span, params));
         }
         None
     }
@@ -859,7 +863,11 @@ impl<'a> ParserImpl<'a> {
         if !self.can_follow_type_arguments_in_expr() {
             return self.unexpected();
         }
-        self.ast.alloc_ts_type_parameter_instantiation(self.end_span(span), params)
+        let span = self.end_span(span);
+        if params.is_empty() {
+            self.error(diagnostics::ts_empty_type_argument_list(span));
+        }
+        self.ast.alloc_ts_type_parameter_instantiation(span, params)
     }
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {
@@ -1112,11 +1120,11 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) =
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
-        if kind == CallOrConstructorSignature::Constructor {
-            if let Some(this_param) = &this_param {
-                // interface Foo { new(this: number): Foo }
-                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
-            }
+        if kind == CallOrConstructorSignature::Constructor
+            && let Some(this_param) = &this_param
+        {
+            // interface Foo { new(this: number): Foo }
+            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
         }
         let return_type = self.parse_ts_return_type_annotation();
         self.parse_type_member_semicolon();
@@ -1149,12 +1157,12 @@ impl<'a> ParserImpl<'a> {
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
         let return_type = self.parse_ts_return_type_annotation();
         self.parse_type_member_semicolon();
-        if kind == TSMethodSignatureKind::Set {
-            if let Some(return_type) = return_type.as_ref() {
-                self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
-                    return_type.span,
-                ));
-            }
+        if kind == TSMethodSignatureKind::Set
+            && let Some(return_type) = return_type.as_ref()
+        {
+            self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
+                return_type.span,
+            ));
         }
         self.ast.ts_signature_method_signature(
             self.end_span(span),

@@ -240,14 +240,13 @@ impl NoAsyncEndpointHandlers {
                     AstKind::Function(f) => self.check_function(ctx, registered_at, id_name, f),
                     AstKind::VariableDeclarator(decl) => {
                         if let Some(init) = &decl.init {
-                            if let Expression::Identifier(id) = &init {
-                                if decl
+                            if let Expression::Identifier(id) = &init
+                                && decl
                                     .id
                                     .get_identifier_name()
                                     .is_some_and(|declared| declared == id.name)
-                                {
-                                    return;
-                                }
+                            {
+                                return;
                             }
                             self.check_endpoint_expr(ctx, id_name, registered_at, init, visited);
                         }

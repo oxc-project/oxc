@@ -17,6 +17,7 @@ extend-exclude = [
   "crates/oxc_syntax/src/xml_entities.rs",
   "pnpm-lock.yaml",
   "tasks/coverage/babel",
+  "tasks/coverage/node-compat-table",
   "tasks/coverage/test262",
   "tasks/coverage/typescript",
   "tasks/coverage/snapshots",

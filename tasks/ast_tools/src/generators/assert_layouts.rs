@@ -226,7 +226,7 @@ fn calculate_layout_for_struct(
             // to fill in the gap between `span` and the `u128` field.
             let offset = layout.size;
             assert!(
-                offset % field_layout.align == 0,
+                offset.is_multiple_of(field_layout.align),
                 "Incorrect alignment for struct fields in `{struct_name}`"
             );
 
@@ -684,9 +684,20 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
         #[cfg(target_pointer_width = "64")]
         const _: () = { #assertions_64 };
 
+        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
+        //
+        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
+        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/issues/13694
+        //
+        // At present 32-bit layouts aren't relied on by any code, so it's fine if they're incorrect for now.
+        // However, raw transfer will be supported on WASM32 in future, and layout calculations are correct
+        // for WASM32 at present. So keep these assertions for WASM, to ensure changes to AST or this codegen
+        // don't break anything.
         ///@@line_break
         #[cfg(target_pointer_width = "32")]
-        const _: () = { #assertions_32 };
+        const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
+            #assertions_32
+        };
 
         ///@@line_break
         #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

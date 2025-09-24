@@ -23,6 +23,7 @@ use pico_args::Arguments;
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let no_semi = args.contains("--no-semi");
+    let show_ir = args.contains("--ir");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     // Read source file
@@ -34,9 +35,12 @@ fn main() -> Result<(), String> {
     // Parse the source code
     let ret = Parser::new(&allocator, &source_text, source_type)
         .with_options(ParseOptions {
-            preserve_parens: false,
+            parse_regular_expression: false,
+            // Enable all syntax features
             allow_v8_intrinsics: true,
-            ..ParseOptions::default()
+            allow_return_outside_function: true,
+            // `oxc_formatter` expects this to be false
+            preserve_parens: false,
         })
         .parse();
 
@@ -54,9 +58,19 @@ fn main() -> Result<(), String> {
         semicolons,
         ..Default::default()
     };
-    let code = Formatter::new(&allocator, options).build(&ret.program);
 
-    println!("{code}");
+    let formatter = Formatter::new(&allocator, options);
+    if show_ir {
+        let doc = formatter.doc(&ret.program);
+        println!("[");
+        for el in doc.iter() {
+            println!("  {el:?},");
+        }
+        println!("]");
+    } else {
+        let code = formatter.build(&ret.program);
+        println!("{code}");
+    }
 
     Ok(())
 }

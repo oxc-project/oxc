@@ -33,13 +33,16 @@ pub fn format() -> CliRunResult {
     }
     let args = args.collect::<Vec<_>>();
 
+    // Parse command line arguments
     let command = match format_command().run_inner(&*args) {
         Ok(cmd) => cmd,
         Err(e) => {
             e.print_message(100);
             return if e.exit_code() == 0 {
-                CliRunResult::FormatSucceeded
+                // e.g. `-V` and `--help`
+                CliRunResult::None
             } else {
+                // e.g. Unknown options
                 CliRunResult::InvalidOptionConfig
             };
         }

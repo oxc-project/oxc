@@ -74,12 +74,11 @@ declare_oxc_lint!(
 
 impl Rule for NoCaller {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::StaticMemberExpression(expr) = node.kind() {
-            if (expr.property.name == "callee" || expr.property.name == "caller")
-                && expr.object.is_specific_id("arguments")
-            {
-                ctx.diagnostic(no_caller_diagnostic(expr.property.span, &expr.property.name));
-            }
+        if let AstKind::StaticMemberExpression(expr) = node.kind()
+            && (expr.property.name == "callee" || expr.property.name == "caller")
+            && expr.object.is_specific_id("arguments")
+        {
+            ctx.diagnostic(no_caller_diagnostic(expr.property.span, &expr.property.name));
         }
     }
 }

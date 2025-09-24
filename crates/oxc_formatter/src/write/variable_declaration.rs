@@ -31,6 +31,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             _ => true,
         };
 
+        if self.declare() {
+            write!(f, ["declare", space()])?;
+        }
+
         write!(
             f,
             group(&format_args!(
@@ -38,7 +42,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
                 space(),
                 self.declarations(),
                 MaybeOptionalSemicolon(semicolon)
-            ),)
+            ))
         )
     }
 }
@@ -68,7 +72,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
         // `VariableDeclaration` always has at least one declarator.
         let first_declarator = declarators.next().unwrap();
 
-        if length == 1 && !f.comments().has_comments_before(first_declarator.span().start) {
+        if length == 1 && !f.comments().has_comment_before(first_declarator.span().start) {
             return write!(f, first_declarator);
         }
 

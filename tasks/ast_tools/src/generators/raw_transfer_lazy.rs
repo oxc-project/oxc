@@ -37,15 +37,15 @@ impl Generator for RawTransferLazyGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/constructors.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/constructors.js"),
                 code: constructors,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/walk.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/walk.js"),
                 code: walkers,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/types.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/types.js"),
                 code: node_type_ids_map,
             },
         ]
@@ -157,8 +157,8 @@ fn generate(
     let constructors = &state.constructors;
     #[rustfmt::skip]
     let constructors = format!("
-        import {{ TOKEN, constructorError }} from '../../raw-transfer/lazy-common.mjs';
-        import {{ NodeArray }} from '../../raw-transfer/node-array.mjs';
+        import {{ constructorError, TOKEN }} from '../../src-js/raw-transfer/lazy-common.js';
+        import {{ NodeArray }} from '../../src-js/raw-transfer/node-array.js';
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -173,7 +173,7 @@ fn generate(
     let walked_constructor_names = &state.walked_constructor_names;
     #[rustfmt::skip]
     let walkers = format!("
-        import {{ {walked_constructor_names} }} from './constructors.mjs';
+        import {{ {walked_constructor_names} }} from './constructors.js';
 
         export {{ walkProgram }};
 

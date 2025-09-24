@@ -108,13 +108,11 @@ impl Rule for NoBarrelFile {
             // the own module is counted as well
             total += 1;
 
-            if let Some(remote_module) =
-                module_record.loaded_modules.read().unwrap().get(module_request.name())
+            if let Some(remote_module) = module_record.get_loaded_module(module_request.name())
+                && let Some(count) = count_loaded_modules(&remote_module)
             {
-                if let Some(count) = count_loaded_modules(remote_module) {
-                    total += count;
-                    labels.push(module_request.span.label(format!("{count} modules")));
-                }
+                total += count;
+                labels.push(module_request.span.label(format!("{count} modules")));
             }
         }
 
@@ -130,7 +128,7 @@ impl Rule for NoBarrelFile {
 }
 
 fn count_loaded_modules(module_record: &ModuleRecord) -> Option<usize> {
-    if module_record.loaded_modules.read().unwrap().is_empty() {
+    if module_record.loaded_modules().is_empty() {
         return None;
     }
     Some(

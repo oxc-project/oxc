@@ -1,4 +1,48 @@
-//! ECMAScript Minifier
+//! # Oxc Minifier
+//!
+//! High-performance JavaScript/TypeScript minifier focused on maximum compression.
+//!
+//! ## Overview
+//!
+//! The Oxc minifier applies a comprehensive set of optimizations to JavaScript code
+//! to achieve the smallest possible output while maintaining correctness. It draws
+//! inspiration from industry-leading minifiers like Closure Compiler, Terser, esbuild,
+//! and SWC.
+//!
+//! ## Features
+//!
+//! - **Maximum Compression**: Fixed-point iteration ensures all optimization opportunities are found
+//! - **Comprehensive Optimizations**: 17+ transformation passes and growing
+//! - **100% Correct**: Extensive testing with test262, Babel, and TypeScript test suites
+//! - **Fast**: Efficient algorithms and arena allocation for performance
+//!
+//! ## Example
+//!
+//! ```rust
+//! use oxc_minifier::{Minifier, MinifierOptions};
+//! use oxc_allocator::Allocator;
+//! use oxc_parser::Parser;
+//! use oxc_span::SourceType;
+//!
+//! let allocator = Allocator::default();
+//! let source_text = "const x = 1 + 1; console.log(x);";
+//! let source_type = SourceType::mjs();
+//! let ret = Parser::new(&allocator, source_text, source_type).parse();
+//! let mut program = ret.program;
+//!
+//! let options = MinifierOptions::default();
+//! let minifier = Minifier::new(options);
+//! let result = minifier.minify(&allocator, &mut program);
+//! ```
+//!
+//! ## Architecture
+//!
+//! The minifier consists of:
+//! - **Compressor**: Orchestrates the optimization pipeline
+//! - **Peephole Optimizations**: Individual transformation passes
+//! - **Mangler**: Variable renaming for size reduction
+//!
+//! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
 mod compressor;
 mod ctx;

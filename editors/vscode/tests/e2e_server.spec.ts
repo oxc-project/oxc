@@ -35,6 +35,8 @@ teardown(async () => {
   await workspace.getConfiguration('oxc').update('flags', undefined);
   await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
   await workspace.getConfiguration('oxc').update('typeAware', undefined);
+  await workspace.getConfiguration('oxc').update('fmt.experimental', undefined);
+  await workspace.getConfiguration('editor').update('defaultFormatter', undefined);
   await workspace.saveAll();
 });
 
@@ -320,5 +322,20 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].range.start.character, 18);
     strictEqual(diagnostics[0].range.end.line, 1);
     strictEqual(diagnostics[0].range.end.character, 30);
+  });
+
+  test('formats code with `oxc.fmt.experimental`', async () => {
+    await workspace.getConfiguration('oxc').update('fmt.experimental', true);
+    await workspace.getConfiguration('editor').update('defaultFormatter', 'oxc.oxc-vscode');
+    await loadFixture('formatting');
+    const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'formatting.ts');
+
+    const document = await workspace.openTextDocument(fileUri);
+    await window.showTextDocument(document);
+    await commands.executeCommand('editor.action.formatDocument');
+    await workspace.saveAll();
+    const content = await workspace.fs.readFile(fileUri);
+
+    strictEqual(content.toString(), "class X {\n  foo() {\n    return 42;\n  }\n}\n");
   });
 });

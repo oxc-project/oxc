@@ -225,6 +225,16 @@ fn assignment() {
     test_minify("({ [0]: x } = foo);", "({[0]:x}=foo);");
     test_minify("({ a: x } = foo);", "({a:x}=foo);");
     test_minify("({ [a.b]: x } = foo);", "({[a.b]:x}=foo);");
+
+    test_minify(r#"({"my-key": value} = obj);"#, r#"({"my-key":value}=obj);"#);
+    test_minify(
+        r#"({["computed"]: a, "literal": b} = obj);"#,
+        r#"({["computed"]:a,"literal":b}=obj);"#,
+    );
+    test_minify(r#"let {"test-key": testKey} = obj;"#, r#"let{"test-key":testKey}=obj;"#);
+
+    test_minify(r#"({ "test-key": key });"#, r#"({"test-key":key});"#);
+    test_minify(r#"(class { "test-key" = key });"#, r#"(class{"test-key"=key});"#);
 }
 
 #[test]
@@ -380,6 +390,14 @@ fn vite_special_comments() {
         "import(/* @vite-ignore */ module1Url).then((module1) => {\nself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL)})",
         "import(\n\t/* @vite-ignore */\n\tmodule1Url\n).then((module1) => {\n\tself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL);\n});\n",
     );
+}
+
+#[test]
+fn import_phase() {
+    test_minify("import.defer('foo')", "import.defer(`foo`);");
+    test_minify("import.source('foo')", "import.source(`foo`);");
+    test("import.defer('foo')", "import.defer(\"foo\");\n");
+    test("import.source('foo')", "import.source(\"foo\");\n");
 }
 
 // <https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/pure-notation-spec.md#semantics>

@@ -152,13 +152,10 @@ impl Rule for ForbidElements {
         match &value {
             Value::Array(configs) => {
                 for config in configs {
-                    if let Value::Object(obj) = config {
-                        if let Some(forbid_value) = obj.get("forbid") {
-                            add_configuration_forbid_from_object(
-                                &mut forbid_elements,
-                                forbid_value,
-                            );
-                        }
+                    if let Value::Object(obj) = config
+                        && let Some(forbid_value) = obj.get("forbid")
+                    {
+                        add_configuration_forbid_from_object(&mut forbid_elements, forbid_value);
                     }
                 }
             }
@@ -203,7 +200,7 @@ fn add_configuration_forbid_from_object(
                 if let Some(element_name) = object.get("element").and_then(|el| el.as_str()) {
                     forbid_elements.insert(
                         CompactStr::new(element_name),
-                        object.get("message").and_then(|el| (el.as_str())).map(CompactStr::new),
+                        object.get("message").and_then(|el| el.as_str()).map(CompactStr::new),
                     );
                 }
             }

@@ -76,21 +76,20 @@ impl Rule for NoAwaitInPromiseMethods {
         };
 
         for element in &first_argument_array_expr.elements {
-            if let Some(element_expr) = element.as_expression() {
-                if let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
-                {
-                    let property_name = call_expr
-                        .callee
-                        .get_member_expr()
-                        .expect("callee is a member expression")
-                        .static_property_name()
-                        .expect("callee is a static property");
+            if let Some(element_expr) = element.as_expression()
+                && let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
+            {
+                let property_name = call_expr
+                    .callee
+                    .get_member_expr()
+                    .expect("callee is a member expression")
+                    .static_property_name()
+                    .expect("callee is a static property");
 
-                    ctx.diagnostic(no_await_in_promise_methods_diagnostic(
-                        Span::sized(await_expr.span.start, 5),
-                        property_name,
-                    ));
-                }
+                ctx.diagnostic(no_await_in_promise_methods_diagnostic(
+                    Span::sized(await_expr.span.start, 5),
+                    property_name,
+                ));
             }
         }
     }

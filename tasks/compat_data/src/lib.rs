@@ -71,7 +71,7 @@ pub fn generate() {
         }
     };
 
-    generate_file("crates/oxc_transformer/src/options/es_features.rs", code);
+    generate_file("crates/oxc_compat/src/es_features.rs", code);
 }
 
 fn generate_file(file: &str, token_stream: proc_macro2::TokenStream) {

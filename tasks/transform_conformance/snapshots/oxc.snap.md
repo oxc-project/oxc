@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 186/309
+Passed: 188/316
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -39,7 +39,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# babel-plugin-transform-class-properties (23/29)
+# babel-plugin-transform-class-properties (24/31)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -52,6 +52,11 @@ x Output mismatch
 * static-super-tagged-template/input.js
 x Output mismatch
 
+* typescript/declare-computed-keys/input.ts
+Symbol reference IDs mismatch for "KEY1":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+rebuilt        : SymbolId(1): []
+
 * typescript/optional-call/input.ts
 Symbol reference IDs mismatch for "X":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(16)]
@@ -63,7 +68,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (5/27)
+# babel-plugin-transform-typescript (6/28)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
@@ -539,7 +544,32 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (6/81)
+# legacy-decorators (6/85)
+* oxc/class-without-name-with-decorated_class/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["dec"]
+rebuilt        : ScopeId(0): ["_default", "dec"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_default"]
+rebuilt        : ScopeId(1): []
+Symbol flags mismatch for "_default":
+after transform: SymbolId(1): SymbolFlags(Class)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+Symbol scope ID mismatch for "_default":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+
+* oxc/class-without-name-with-decorated_element/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["dec"]
+rebuilt        : ScopeId(0): ["_default", "dec"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_default"]
+rebuilt        : ScopeId(1): []
+Symbol scope ID mismatch for "_default":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
@@ -561,6 +591,14 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Example":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
+
+* oxc/metadata/class-and-method-decorators/input.ts
+Symbol span mismatch for "Problem":
+after transform: SymbolId(4): Span { start: 90, end: 97 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "Problem":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 90, end: 97 }
 
 * oxc/metadata/enum-types/input.ts
 Bindings mismatch:
@@ -726,6 +764,53 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
 rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
+
+* oxc/metadata/private-in-expression-in-decorator/input.ts
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+Bindings mismatch:
+after transform: ScopeId(1): ["Cls"]
+rebuilt        : ScopeId(1): []
+Bindings mismatch:
+after transform: ScopeId(3): ["Cls2"]
+rebuilt        : ScopeId(4): []
+Symbol reference IDs mismatch for "dec":
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
+Symbol span mismatch for "Cls":
+after transform: SymbolId(4): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(1): Span { start: 46, end: 49 }
+Symbol scope ID mismatch for "Cls":
+after transform: SymbolId(4): ScopeId(1)
+rebuilt        : SymbolId(1): ScopeId(0)
+Symbol reference IDs mismatch for "Cls":
+after transform: SymbolId(4): []
+rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(7)]
+Symbol span mismatch for "Cls2":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(2): Span { start: 116, end: 120 }
+Symbol scope ID mismatch for "Cls2":
+after transform: SymbolId(5): ScopeId(3)
+rebuilt        : SymbolId(2): ScopeId(0)
+Symbol reference IDs mismatch for "Cls2":
+after transform: SymbolId(5): []
+rebuilt        : SymbolId(2): [ReferenceId(11), ReferenceId(17)]
+Reference symbol mismatch for "Cls":
+after transform: SymbolId(1) "Cls"
+rebuilt        : SymbolId(1) "Cls"
+Reference symbol mismatch for "Cls":
+after transform: SymbolId(1) "Cls"
+rebuilt        : SymbolId(1) "Cls"
+Reference symbol mismatch for "Cls2":
+after transform: SymbolId(2) "Cls2"
+rebuilt        : SymbolId(2) "Cls2"
+Reference symbol mismatch for "Cls2":
+after transform: SymbolId(2) "Cls2"
+rebuilt        : SymbolId(2) "Cls2"
+Unresolved reference IDs mismatch for "babelHelpers":
+after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
+rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
 
 * oxc/metadata/this/input.ts
 Symbol span mismatch for "Example":
