@@ -60,6 +60,7 @@ language-tags = { workspace = true }
 lazy-regex = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
+papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rust-lapper = { workspace = true }

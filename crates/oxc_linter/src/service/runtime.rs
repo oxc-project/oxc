@@ -2,6 +2,7 @@ use std::{
     borrow::Cow,
     ffi::OsStr,
     fs,
+    hash::BuildHasherDefault,
     mem::take,
     path::{Path, PathBuf},
     sync::{Arc, mpsc},
@@ -10,7 +11,7 @@ use std::{
 use indexmap::IndexSet;
 use rayon::iter::ParallelDrainRange;
 use rayon::{Scope, iter::IntoParallelRefIterator, prelude::ParallelIterator};
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
@@ -36,6 +37,9 @@ use crate::{
 
 use super::LintServiceOptions;
 
+type ModulesByPath =
+    papaya::HashMap<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>, BuildHasherDefault<FxHasher>>;
+
 pub struct Runtime {
     cwd: Box<Path>,
     /// All paths to lint
@@ -46,6 +50,15 @@ pub struct Runtime {
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
 
     allocator_pool: AllocatorPool,
+
+    /// The module graph keyed by module paths. It is looked up when populating `loaded_modules`.
+    /// The values are module records of sections (check the docs of `ProcessedModule.section_module_records`)
+    /// Its entries are kept across groups because modules discovered in former groups could be referenced by modules in latter groups.
+    ///
+    /// `ModuleRecord` is a cyclic data structure.
+    /// To make sure all `ModuleRecord` gets dropped after `Runtime` is dropped,
+    /// `modules_by_path` must own `ModuleRecord` with `Arc`, all other references must use `Weak<ModuleRecord>`.
+    modules_by_path: ModulesByPath,
 }
 
 /// Output of `Runtime::process_path`
@@ -285,6 +298,10 @@ impl Runtime {
             linter,
             resolver,
             file_system: Box::new(OsFileSystem),
+            modules_by_path: papaya::HashMap::builder()
+                .hasher(BuildHasherDefault::default())
+                .resize_mode(papaya::ResizeMode::Blocking)
+                .build(),
         }
     }
 
@@ -297,6 +314,7 @@ impl Runtime {
     }
 
     pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &mut Self {
+        self.modules_by_path.pin().reserve(paths.len());
         self.paths = paths.into_iter().collect();
         self
     }
@@ -422,15 +440,6 @@ impl Runtime {
         // Set self to immutable reference so it can be shared among spawned tasks.
         let me: &Self = self;
 
-        // The module graph keyed by module paths. It is looked up when populating `loaded_modules`.
-        // The values are module records of sections (check the docs of `ProcessedModule.section_module_records`)
-        // Its entries are kept across groups because modules discovered in former groups could be referenced by modules in latter groups.
-        let mut modules_by_path =
-            FxHashMap::<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>>::with_capacity_and_hasher(
-                me.paths.len(),
-                FxBuildHasher,
-            );
-
         // `encountered_paths` prevents duplicated processing.
         // It is a superset of keys of `modules_by_path` as it also contains paths that are queued to process.
         let mut encountered_paths =
@@ -517,7 +526,7 @@ impl Runtime {
                 }
 
                 // Populate this module to `modules_by_path`
-                modules_by_path.insert(
+                self.modules_by_path.pin().insert(
                     Arc::clone(&path),
                     processed_module
                         .section_module_records
@@ -558,7 +567,8 @@ impl Runtime {
                 if requested_module_paths.is_empty() {
                     return;
                 }
-                let records = &modules_by_path[&path];
+                let modules_by_path = self.modules_by_path.pin();
+                let records = modules_by_path.get(&path).unwrap();
                 assert_eq!(
                     records.len(), requested_module_paths.len(),
                     "This is an internal logic error. Please file an issue at https://github.com/oxc-project/oxc/issues",
@@ -566,15 +576,15 @@ impl Runtime {
                 for (record, requested_module_paths) in
                     records.iter().zip(requested_module_paths.into_iter())
                 {
-                    let mut loaded_modules = record.loaded_modules.write().unwrap();
+                    let mut loaded_modules = record.write_loaded_modules();
                     for request in requested_module_paths {
                         // TODO: revise how to store multiple sections in loaded_modules
                         let Some(dep_module_record) =
-                            modules_by_path[&request.resolved_requested_path].last()
+                            modules_by_path.get(&request.resolved_requested_path).unwrap().last()
                         else {
                             continue;
                         };
-                        loaded_modules.insert(request.specifier, Arc::clone(dep_module_record));
+                        loaded_modules.insert(request.specifier, Arc::downgrade(dep_module_record));
                     }
                 }
             });
