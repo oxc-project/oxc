@@ -36,9 +36,7 @@ impl CurlyType {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct Curly {
-    pub config: CurlyConfig,
-}
+pub struct Curly(CurlyConfig);
 
 #[derive(Debug, Clone)]
 pub struct CurlyConfig {
@@ -277,14 +275,38 @@ declare_oxc_lint!(
     fix
 );
 
+impl Rule for Curly {
+    fn from_configuration(value: Value) -> Self {
+        let curly_type =
+            value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
+
+        let consistent =
+            value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
+
+        Self(CurlyConfig { curly_type, consistent })
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::IfStatement(stmt) => self.run_for_if_statement(stmt, ctx),
+            AstKind::ForStatement(stmt) => self.run_for_loop("for", &stmt.body, ctx),
+            AstKind::ForInStatement(stmt) => self.run_for_loop("for-in", &stmt.body, ctx),
+            AstKind::ForOfStatement(stmt) => self.run_for_loop("for-of", &stmt.body, ctx),
+            AstKind::WhileStatement(stmt) => self.run_for_loop("while", &stmt.body, ctx),
+            AstKind::DoWhileStatement(stmt) => self.run_for_loop("do", &stmt.body, ctx),
+            _ => {}
+        }
+    }
+}
+
 impl<'a> Curly {
     fn run_for_if_statement(&self, stmt: &'a IfStatement<'a>, ctx: &LintContext<'a>) {
-        let branches = get_if_branches_from_statement(stmt, &self.config.curly_type, ctx);
+        let branches = get_if_branches_from_statement(stmt, &self.0.curly_type, ctx);
         let does_any_branch_need_braces =
             branches.iter().any(|b| b.should_have_braces.unwrap_or(b.has_braces));
 
         for branch in &branches {
-            let should_have_braces = if self.config.consistent {
+            let should_have_braces = if self.0.consistent {
                 Some(does_any_branch_need_braces)
             } else {
                 branch.should_have_braces
@@ -302,32 +324,8 @@ impl<'a> Curly {
 
     fn run_for_loop(&self, keyword: &str, body: &Statement<'a>, ctx: &LintContext<'a>) {
         let has_braces = has_braces(body);
-        let should_have_braces = should_have_braces(&self.config.curly_type, body, ctx);
+        let should_have_braces = should_have_braces(&self.0.curly_type, body, ctx);
         report_if_needed(ctx, body, keyword, has_braces, should_have_braces);
-    }
-}
-
-impl Rule for Curly {
-    fn from_configuration(value: Value) -> Self {
-        let curly_type =
-            value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
-
-        let consistent =
-            value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
-
-        Self { config: CurlyConfig { curly_type, consistent } }
-    }
-
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::IfStatement(stmt) => self.run_for_if_statement(stmt, ctx),
-            AstKind::ForStatement(stmt) => self.run_for_loop("for", &stmt.body, ctx),
-            AstKind::ForInStatement(stmt) => self.run_for_loop("for-in", &stmt.body, ctx),
-            AstKind::ForOfStatement(stmt) => self.run_for_loop("for-of", &stmt.body, ctx),
-            AstKind::WhileStatement(stmt) => self.run_for_loop("while", &stmt.body, ctx),
-            AstKind::DoWhileStatement(stmt) => self.run_for_loop("do", &stmt.body, ctx),
-            _ => {}
-        }
     }
 }
 
@@ -389,10 +387,10 @@ fn should_have_braces<'a>(
 ) -> Option<bool> {
     let braces_necessary = are_braces_necessary(body, ctx);
 
-    if let Statement::BlockStatement(block) = body {
-        if block.body.len() != 1 || braces_necessary {
-            return Some(true);
-        }
+    if let Statement::BlockStatement(block) = body
+        && (block.body.len() != 1 || braces_necessary)
+    {
+        return Some(true);
     }
 
     match curly_type {
