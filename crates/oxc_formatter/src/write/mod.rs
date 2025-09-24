@@ -26,6 +26,7 @@ mod sequence_expression;
 mod switch_statement;
 mod template;
 mod try_statement;
+mod tuple_type;
 mod type_parameters;
 mod union_type;
 mod utils;
@@ -45,7 +46,7 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
-    best_fitting, format_args,
+    Expand, best_fitting, format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
         prelude::*,
@@ -1243,19 +1244,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSArrayType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexedAccessType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, [self.object_type(), "[", self.index_type(), "]"])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "[")?;
-        for (i, ty) in self.element_types().iter().enumerate() {
-            if i != 0 {
-                write!(f, [",", space()])?;
-            }
-            write!(f, ty)?;
-        }
-        write!(f, "]")
     }
 }
 

@@ -1,4 +1,4 @@
-ts compatibility: 467/573 (81.50%)
+ts compatibility: 473/573 (82.55%)
 
 # Failed
 
@@ -14,7 +14,6 @@ ts compatibility: 467/573 (81.50%)
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/arrow/16067.ts | 💥💥 | 95.92% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/as/as.ts | 💥 | 96.18% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
 | typescript/assignment/issue-10848.tsx | 💥 | 63.86% |
 | typescript/assignment/issue-10850.ts | 💥 | 50.00% |
@@ -91,14 +90,10 @@ ts compatibility: 467/573 (81.50%)
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 29.17% |
 | typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
-| typescript/rest-type/infer-type.ts | 💥 | 64.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
-| typescript/tuple/dangling-comments.ts | 💥💥💥 | 21.28% |
 | typescript/tuple/trailing-comma-for-empty-tuples.ts | 💥💥💥 | 16.67% |
-| typescript/tuple/trailing-comma-trailing-rest.ts | 💥💥💥 | 0.00% |
-| typescript/tuple/trailing-comma.ts | 💥💥💥 | 61.54% |
-| typescript/tuple/tuple.ts | 💥💥💥 | 0.00% |
+| typescript/tuple/tuple.ts | 💥💥💥 | 87.50% |
 | typescript/type-alias/conditional.ts | 💥 | 38.10% |
 | typescript/type-alias/issue-9874.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
@@ -108,5 +103,4 @@ ts compatibility: 467/573 (81.50%)
 | typescript/union/inlining.ts | 💥 | 79.70% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 38.30% |
-| typescript/union/consistent-with-flow/within-tuple.ts | 💥 | 17.50% |
 | typescript/union/single-type/single-type.ts | 💥 | 66.67% |
