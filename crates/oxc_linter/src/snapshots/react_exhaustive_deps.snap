@@ -3073,6 +3073,24 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Either include it or remove the dependency array.
 
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): Functions returned from `useEffectEvent` must not be included in the dependency array.
+   ╭─[exhaustive_deps.tsx:7:15]
+ 6 │             onStuff();
+ 7 │           }, [onStuff]);
+   ·               ───────
+ 8 │           React.useEffect(() => {
+   ╰────
+  help: Remove the dependency from the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): Functions returned from `useEffectEvent` must not be included in the dependency array.
+    ╭─[exhaustive_deps.tsx:10:15]
+  9 │             onStuff();
+ 10 │           }, [onStuff]);
+    ·               ───────
+ 11 │         }
+    ╰────
+  help: Remove the dependency from the dependency array.
+
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
  5 │             const someNumber: typeof state = 2;
