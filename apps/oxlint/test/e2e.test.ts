@@ -154,8 +154,8 @@ describe('oxlint CLI', () => {
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
 
-  it('should support `defineRule` + `definePlugin`', async () => {
-    const { stdout, exitCode } = await runOxlint('test/fixtures/define');
+  it('should support `defineRule`', async () => {
+    const { stdout, exitCode } = await runOxlint('test/fixtures/defineRule');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });

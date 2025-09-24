@@ -896,7 +896,7 @@ Found 0 warnings and 42 errors.
 Finished in Xms on 2 files using X threads."
 `;
 
-exports[`oxlint CLI > should support \`defineRule\` + \`definePlugin\` 1`] = `
+exports[`oxlint CLI > should support \`defineRule\` 1`] = `
 "
   x define-rule-plugin(create): create body:
   | this === rule: true

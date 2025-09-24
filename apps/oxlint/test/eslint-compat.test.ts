@@ -24,8 +24,8 @@ function normalizeOutput(output: string): string {
 }
 
 describe('ESLint compatibility', () => {
-  it('`defineRule` + `definePlugin` should work', async () => {
-    const { stdout, exitCode } = await runEslint('test/fixtures/define');
+  it('`defineRule` should work', async () => {
+    const { stdout, exitCode } = await runEslint('test/fixtures/defineRule');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
   });
