@@ -22,7 +22,7 @@ interface CreateRule {
   create: (context: Context) => Visitor;
 }
 
-interface CreateOnceRule {
+export interface CreateOnceRule {
   create?: (context: Context) => Visitor;
   createOnce: (context: Context) => VisitorWithHooks;
 }

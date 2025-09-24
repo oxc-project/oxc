@@ -1,5 +1,6 @@
 import type { Context } from './plugins/context.ts';
-import type { Plugin, Rule } from './plugins/load.ts';
+import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
+import type { BeforeHook, Visitor } from './plugins/types.ts';
 
 const { defineProperty, getPrototypeOf, setPrototypeOf } = Object;
 
@@ -17,7 +18,48 @@ export function defineRule(rule: Rule): Rule {
   if (!('createOnce' in rule)) return rule;
   if ('create' in rule) throw new Error('Rules must define only `create` or `createOnce` methods, not both');
 
-  // Run `createOnce` with empty context object.
+  // Add `create` function to `rule`
+  let context: Context = null, visitor: Visitor, beforeHook: BeforeHook | null;
+
+  rule.create = (eslintContext) => {
+    // Lazily call `createOnce` on first invocation of `create`
+    if (context === null) {
+      ({ context, visitor, beforeHook } = createContextAndVisitor(rule));
+    }
+
+    // Copy properties from ESLint's context object to `context`.
+    // ESLint's context object is an object of form `{ id, options, report }`, with all other properties
+    // and methods on another object which is its prototype.
+    defineProperty(context, 'id', { value: eslintContext.id });
+    defineProperty(context, 'options', { value: eslintContext.options });
+    defineProperty(context, 'report', { value: eslintContext.report });
+    setPrototypeOf(context, getPrototypeOf(eslintContext));
+
+    // If `before` hook returns `false`, skip traversal by returning an empty object as visitor
+    if (beforeHook !== null) {
+      const shouldRun = beforeHook();
+      if (shouldRun === false) return {};
+    }
+
+    // Return same visitor each time
+    return visitor;
+  };
+
+  return rule;
+}
+
+/**
+ * Call `createOnce` method of rule, and return `Context`, `Visitor`, and `beforeHook` (if any).
+ *
+ * @param rule - Rule with `createOnce` method
+ * @returns Object with `context`, `visitor`, and `beforeHook` properties
+ */
+function createContextAndVisitor(rule: CreateOnceRule): {
+  context: Context;
+  visitor: Visitor;
+  beforeHook: BeforeHook | null;
+} {
+  // Call `createOnce` with empty context object.
   // Really, `context` should be an instance of `Context`, which would throw error on accessing e.g. `id`
   // in body of `createOnce`. But any such bugs should have been caught when testing the rule in Oxlint,
   // so should be OK to take this shortcut.
@@ -27,7 +69,7 @@ export function defineRule(rule: Rule): Rule {
     report: { value: dummyReport, enumerable: true, configurable: true },
   });
 
-  let { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context as Context);
+  let { before: beforeHook, after: afterHook, ...visitor } = rule.createOnce(context);
 
   if (beforeHook === void 0) {
     beforeHook = null;
@@ -40,33 +82,13 @@ export function defineRule(rule: Rule): Rule {
     if (typeof afterHook !== 'function') throw new Error('`after` property of visitor must be a function if defined');
 
     const programExit = visitor['Program:exit'];
-    visitor['Program:exit'] = programExit
-      ? (node) => {
+    visitor['Program:exit'] = programExit == null
+      ? (_node) => afterHook()
+      : (node) => {
         programExit(node);
         afterHook();
-      }
-      : (_node) => afterHook();
+      };
   }
 
-  // Create `create` function
-  rule.create = (eslintContext) => {
-    // Copy properties from ESLint's context object to `context`.
-    // ESLint's context object is an object of form `{ id, options, report }`, with all other properties
-    // and methods on another object which is its prototype.
-    defineProperty(context, 'id', { value: eslintContext.id });
-    defineProperty(context, 'options', { value: eslintContext.options });
-    defineProperty(context, 'report', { value: eslintContext.report });
-    setPrototypeOf(context, getPrototypeOf(eslintContext));
-
-    // If `before` hook returns `false`, skip rest of traversal by returning an empty object as visitor
-    if (beforeHook !== null) {
-      const shouldRun = beforeHook();
-      if (shouldRun === false) return {};
-    }
-
-    // Return same visitor each time
-    return visitor;
-  };
-
-  return rule;
+  return { context, visitor, beforeHook };
 }

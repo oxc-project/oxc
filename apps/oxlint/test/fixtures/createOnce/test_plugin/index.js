@@ -8,8 +8,11 @@ const relativePath = sep === '/'
   ? path => path.slice(PARENT_DIR_PATH_LEN)
   : path => path.slice(PARENT_DIR_PATH_LEN).replace(/\\/g, '/');
 
+let createOnceCallCount = 0;
 const alwaysRunRule = {
   createOnce(context) {
+    createOnceCallCount++;
+
     const topLevelThis = this;
 
     // Check that these APIs throw here
@@ -21,6 +24,7 @@ const alwaysRunRule = {
 
     return {
       before() {
+        context.report({ message: `createOnce: call count: ${createOnceCallCount}`, node: SPAN });
         context.report({ message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`, node: SPAN });
         context.report({ message: `createOnce: id: ${idError?.message}`, node: SPAN });
         context.report({ message: `createOnce: filename: ${filenameError?.message}`, node: SPAN });

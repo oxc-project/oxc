@@ -35,8 +35,11 @@ const createRule = defineRule({
 
 // This aims to test that `createOnce` is called once only, and `before` hook is called once per file.
 // i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` adds to the rule.
+let createOnceCallCount = 0;
 const createOnceRule = defineRule({
   createOnce(context) {
+    createOnceCallCount++;
+
     // `fileNum` should be different for each file.
     // `identNum` should start at 1 for each file.
     let fileNum = 0, identNum;
@@ -54,6 +57,7 @@ const createOnceRule = defineRule({
 
         context.report({
           message: 'before hook:\n'
+            + `createOnce call count: ${createOnceCallCount}\n`
             + `this === rule: ${topLevelThis === createOnceRule}\n`
             + `filename: ${relativePath(context.filename)}`,
           node: SPAN,
