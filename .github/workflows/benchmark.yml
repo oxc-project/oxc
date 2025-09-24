@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    paths:
+    paths: &paths
       - "crates/**/*.rs"
       - "tasks/benchmark/**/*.rs"
       - "tasks/common/**/*.rs"
@@ -22,42 +22,47 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "crates/**/*.rs"
-      - "tasks/benchmark/**/*.rs"
-      - "tasks/common/**/*.rs"
-      - "Cargo.lock"
-      - "rust-toolchain.toml"
-      - ".github/workflows/benchmark.yml"
+    paths: *paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
+  determine-matrix:
+    name: Determine Benchmark
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Determine affected components
+        id: set-matrix
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MATRIX=$(node .github/scripts/generate-benchmark-matrix.js)
+          echo "Matrix: $MATRIX"
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
   benchmark:
+    needs: determine-matrix
+    if: needs.determine-matrix.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
-        component:
-          - lexer
-          - parser
-          - transformer
-          - semantic
-          - minifier
-          - codegen
-          - formatter
-          - linter
-
+        component: ${{ fromJSON(needs.determine-matrix.outputs.matrix) }}
     name: Bench ${{ matrix.component }}
     steps:
-      - name: Checkout Branch
-        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
         with:
@@ -68,11 +73,12 @@ jobs:
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
+          MATRIX_COMPONENT: ${{ matrix.component }}
         run: |
-          cargo build --release -p oxc_benchmark --bench ${{ matrix.component }} \
-            --no-default-features --features ${{ matrix.component }} --features codspeed
+          cargo build --release -p oxc_benchmark --bench ${MATRIX_COMPONENT} \
+            --no-default-features --features ${MATRIX_COMPONENT} --features codspeed
           mkdir -p target/codspeed/instrumentation/oxc_benchmark
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/instrumentation/oxc_benchmark
+          mv target/release/deps/${MATRIX_COMPONENT}-* target/codspeed/instrumentation/oxc_benchmark
           rm target/codspeed/instrumentation/oxc_benchmark/*.d
 
       - name: Run benchmark
