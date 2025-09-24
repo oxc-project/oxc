@@ -1374,22 +1374,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let assignment_like = format_with(|f| {
-            write!(
-                f,
-                [self.id(), self.type_parameters(), space(), "=", space(), self.type_annotation()]
-            )
-        });
-        write!(
-            f,
-            [
-                self.declare().then_some("declare "),
-                "type",
-                space(),
-                group(&assignment_like),
-                OptionalSemicolon
-            ]
-        )
+        write!(f, [AssignmentLike::TSTypeAliasDeclaration(self), OptionalSemicolon])
     }
 }
 
@@ -1529,7 +1514,7 @@ impl GetSpan for FormatTSSignature<'_, '_> {
 
 impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.signature.fmt(f)?;
+        write!(f, [group(&self.signature)])?;
 
         match f.options().semicolons {
             Semicolons::Always => {

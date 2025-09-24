@@ -1,4 +1,4 @@
-ts compatibility: 495/573 (86.39%)
+ts compatibility: 504/573 (87.96%)
 
 # Failed
 
@@ -15,8 +15,6 @@ ts compatibility: 495/573 (86.39%)
 | typescript/arrow/16067.ts | 💥💥 | 95.92% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/expression-statement.ts | 💥 | 75.00% |
-| typescript/assignment/issue-10848.tsx | 💥 | 63.86% |
-| typescript/assignment/issue-10850.ts | 💥 | 50.00% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
@@ -29,8 +27,6 @@ ts compatibility: 495/573 (86.39%)
 | typescript/comments/location.ts | 💥 | 95.00% |
 | typescript/comments/method_types.ts | 💥 | 79.49% |
 | typescript/comments/type-parameters.ts | 💥 | 65.52% |
-| typescript/comments/type_literals.ts | 💥 | 68.97% |
-| typescript/comments/union.ts | 💥 | 83.33% |
 | typescript/compiler/anyIsAssignableToObject.ts | 💥 | 75.00% |
 | typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
@@ -57,7 +53,7 @@ ts compatibility: 495/573 (86.39%)
 | typescript/interface/ignore.ts | 💥💥 | 88.26% |
 | typescript/interface2/comments-declare.ts | 💥 | 66.67% |
 | typescript/interface2/comments.ts | 💥 | 78.87% |
-| typescript/intersection/intersection-parens.ts | 💥💥 | 72.25% |
+| typescript/intersection/intersection-parens.ts | 💥💥 | 80.85% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/method/issue-10352-consistency.ts | 💥 | 63.64% |
@@ -66,19 +62,14 @@ ts compatibility: 495/573 (86.39%)
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
-| typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 29.17% |
-| typescript/prettier-ignore/prettier-ignore-parenthesized-type.ts | 💥 | 0.00% |
+| typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 44.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/lhs.ts | 💥✨ | 35.00% |
-| typescript/tuple/trailing-comma-for-empty-tuples.ts | 💥💥💥 | 16.67% |
 | typescript/tuple/tuple.ts | 💥💥💥 | 87.50% |
-| typescript/type-alias/conditional.ts | 💥 | 47.62% |
-| typescript/type-alias/issue-9874.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 73.68% |
-| typescript/union/inlining.ts | 💥 | 79.70% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
-| typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 38.30% |
-| typescript/union/single-type/single-type.ts | 💥 | 66.67% |
+| typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 60.00% |
+| typescript/union/single-type/single-type.ts | 💥 | 0.00% |

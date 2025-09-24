@@ -8,6 +8,7 @@ pub mod object;
 pub mod string_utils;
 pub mod suppressed;
 pub mod typecast;
+pub mod typescript;
 
 use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::CallExpression};

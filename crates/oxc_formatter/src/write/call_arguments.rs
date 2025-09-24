@@ -299,11 +299,14 @@ fn should_group_last_argument(
     match last.and_then(|arg| arg.as_expression()) {
         Some(last) => {
             let penultimate = iter.next_back();
-            if let Some(penultimate) = &penultimate {
-                // TODO: check if both last and penultimate are same kind of expression.
-                // if penultimate.syntax().kind() == last.syntax().kind() {
-                //     return Ok(false);
-                // }
+            if let Some(penultimate) = &penultimate
+                && matches!(
+                    (penultimate, last),
+                    (Argument::ObjectExpression(_), Expression::ObjectExpression(_))
+                        | (Argument::ArrayExpression(_), Expression::ArrayExpression(_))
+                )
+            {
+                return false;
             }
 
             let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
