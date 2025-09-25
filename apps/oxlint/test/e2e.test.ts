@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { execa } from 'execa';
 
 const PACKAGE_ROOT_PATH = dirname(import.meta.dirname);
-const ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, '../../../');
+const ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, '../../');
 const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'dist/cli.js');
 const ROOT_URL = new URL('../../../', import.meta.url).href;
 const FIXTURES_URL = new URL('./fixtures/', import.meta.url).href;
