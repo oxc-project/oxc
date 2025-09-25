@@ -161,7 +161,7 @@ fn build_event_handler_prop_regex(handler_prop_prefix: &str) -> Option<Regex> {
     if prop_prefix_pattern.is_empty() {
         return None;
     }
-    let regex = RegexBuilder::new(format!(r"^(({prop_prefix_pattern})[A-Z].*|ref)$").as_str())
+    let regex = RegexBuilder::new(format!(r"^({prop_prefix_pattern})[A-Z].*$").as_str())
         .build()
         .expect("Failed to compile regex for event handler prop prefixes");
     Some(regex)
@@ -325,6 +325,7 @@ impl Rule for JsxHandlerNames {
 
         let prop_is_event_handler = self.match_event_handler_props_name(prop_key);
         let is_handler_name_correct = handler_name.as_ref().map_or(Some(false), |name| {
+            // if the event handler is a property of "props", the handler name can also start with the prop prefix.
             if is_props_handler && self.match_event_handler_props_name(name).unwrap_or(false) {
                 return Some(true);
             }
