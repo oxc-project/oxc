@@ -25,7 +25,6 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
-mod lint_runner;
 #[cfg(feature = "language_server")]
 mod lsp;
 mod module_graph_visitor;
@@ -49,6 +48,11 @@ mod generated {
 #[cfg(test)]
 mod tester;
 
+mod lint_runner;
+
+pub use crate::disable_directives::{
+    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+};
 pub use crate::{
     config::{
         BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
@@ -62,7 +66,7 @@ pub use crate::{
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    lint_runner::{LintRunner, LintRunnerBuilder},
+    lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -81,7 +85,10 @@ use crate::{
 };
 
 #[cfg(feature = "language_server")]
-pub use crate::lsp::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
+pub use crate::lsp::{
+    FixWithPosition, MessageWithPosition, PossibleFixesWithPosition,
+    oxc_diagnostic_to_message_with_position,
+};
 
 #[cfg(target_pointer_width = "64")]
 #[test]
@@ -117,8 +124,7 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
-        self.options.report_unused_directive = report_config;
+    pub fn with_report_unused_directives(self, _report_config: Option<AllowWarnDeny>) -> Self {
         self
     }
 
@@ -146,7 +152,22 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message<'a>> {
+        self.run_with_disable_directives(path, context_sub_hosts, allocator).0
+    }
+
+    /// Same as `run` but also returns the disable directives for the file
+    ///
+    /// # Panics
+    /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
+    pub fn run_with_disable_directives<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+    ) -> (Vec<Message<'a>>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+
+        let has_context = !context_sub_hosts.is_empty();
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
@@ -310,11 +331,7 @@ impl Linter {
 
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
-            if let Some(severity) = self.options.report_unused_directive
-                && severity.is_warn_deny()
-            {
-                ctx_host.report_unused_directives(severity.into());
-            }
+            // Report unused directives is now handled differently with type-aware linting
 
             // no next `<script>` block found, the complete file is finished linting
             if !ctx_host.next_sub_host() {
@@ -327,7 +344,10 @@ impl Linter {
             }
         }
 
-        ctx_host.take_diagnostics()
+        let disable_directives =
+            if has_context { Some(ctx_host.disable_directives().clone()) } else { None };
+
+        (ctx_host.take_diagnostics(), disable_directives)
     }
 
     fn run_external_rules<'a>(

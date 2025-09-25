@@ -30,6 +30,7 @@ oxc_linter = { workspace = true, features = ["language_server"] }
 oxc_parser = { workspace = true }
 
 #
+dashmap = { workspace = true }
 env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
