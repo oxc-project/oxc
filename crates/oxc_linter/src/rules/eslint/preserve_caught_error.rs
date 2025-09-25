@@ -29,13 +29,14 @@ fn missing_catch_parameter_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename_all = "camelCase")]
-#[serde(rename_all = "camelCase")]
-struct ConfigElement0 {
+#[serde(rename_all = "camelCase", default)]
+struct PreserveCaughtErrorOptions {
+    /// When set to `true`, requires that catch clauses always have a parameter.
     require_catch_parameter: bool,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct PreserveCaughtError(ConfigElement0);
+pub struct PreserveCaughtError(PreserveCaughtErrorOptions);
 
 struct ThrowFinder<'a, 'ctx> {
     catch_param: &'a BindingPattern<'a>,
@@ -162,7 +163,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     pending,
-    config = ConfigElement0,
+    config = PreserveCaughtErrorOptions,
 );
 impl PreserveCaughtError {
     fn check_try_statement<'a>(&self, try_stmt: &'a TryStatement<'a>, ctx: &LintContext<'a>) {
