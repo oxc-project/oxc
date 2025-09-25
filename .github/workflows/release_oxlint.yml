@@ -232,10 +232,8 @@ jobs:
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
           draft: false
-          files: oxlint-*
           name: oxlint v${{ needs.check.outputs.version }}
           tag_name: oxlint_v${{ needs.check.outputs.version }}
-          fail_on_unmatched_files: true
           target_commitish: ${{ github.sha }}
 
       - name: wait 3 minutes for smoke test
