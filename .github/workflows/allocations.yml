@@ -1,0 +1,46 @@
+name: Allocations
+
+permissions: {}
+
+# Define paths as YAML anchor to reuse between pull_request and push
+x-paths: &paths
+  - ".github/workflows/allocations.yml"
+  - "crates/oxc_ast/**"
+  - "crates/oxc_data_structures/**"
+  - "crates/oxc_parser/**"
+  - "crates/oxc_minifier/**"
+  - "crates/oxc_mangler/**"
+  - "crates/oxc_allocator/**"
+  - "tasks/track_memory_allocations/**"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths: *paths
+  push:
+    branches:
+      - main
+    paths: *paths
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  allocs:
+    name: Allocations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
+        with:
+          cache-key: allocs
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Check allocations
+        run: |
+          cargo allocs
+          git diff --exit-code ||
+          (echo 'Allocations have changed. Run the `cargo allocs` command to update the allocation snapshot, otherwise please fix the regression.' && exit 1)

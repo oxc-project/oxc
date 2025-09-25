@@ -1,0 +1,53 @@
+name: Test NAPI
+
+permissions: {}
+
+# Define paths-ignore as YAML anchor to reuse between pull_request and push
+x-paths-ignore: &paths-ignore
+  - "crates/oxc_linter/**"
+  - "crates/oxc_language_server/**"
+  - "editors/**"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore: *paths-ignore
+  push:
+    branches:
+      - main
+    paths-ignore: *paths-ignore
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  test-napi:
+    name: Test NAPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: ./.github/actions/clone-submodules
+        with:
+          babel: false
+          prettier: false
+      - name: Run tests in workspace
+        env:
+          RUN_RAW_TESTS: "true"
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm run build-test
+          pnpm run test
+      - name: Run e2e tests
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run test
+        working-directory: tasks/e2e
+      - run: |
+          git diff --exit-code # Must commit everything
