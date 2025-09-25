@@ -105,6 +105,12 @@ impl<'a> Formatted<'a> {
     }
 }
 
+impl<'a> Formatted<'a> {
+    pub fn apply_transform(&mut self, transform: impl FnOnce(&Document<'a>) -> Document<'a>) {
+        self.document = transform(&self.document);
+    }
+}
+
 impl Formatted<'_> {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
