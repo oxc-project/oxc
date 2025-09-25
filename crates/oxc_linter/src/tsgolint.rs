@@ -775,16 +775,23 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         ));
     }
 
-    // executing a sub command in windows, needs a `cmd` or `ps1` extension.
-    // `cmd` is the most compatible one with older systems
-    let file = if cfg!(windows) { "tsgolint.CMD" } else { "tsgolint" };
+    // Executing a sub-command in Windows needs a `cmd` or `ps1` extension.
+    // Since `cmd` is the most compatible one with older systems, we use that one first,
+    // then check for `exe` which is also common. Bun, for example, does not create a `cmd`
+    // file but still produces an `exe` file (https://github.com/oxc-project/oxc/issues/13784).
+    #[cfg(windows)]
+    let files = &["tsgolint.CMD", "tsgolint.exe"];
+    #[cfg(not(windows))]
+    let files = &["tsgolint"];
 
     // Move upwards until we find a `package.json`, then look at `node_modules/.bin/tsgolint`
     let mut current_dir = cwd.to_path_buf();
     loop {
-        let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
-        if node_modules_bin.exists() {
-            return Ok(node_modules_bin);
+        for file in files {
+            let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
+            if node_modules_bin.exists() {
+                return Ok(node_modules_bin);
+            }
         }
 
         // If we reach the root directory, stop searching
