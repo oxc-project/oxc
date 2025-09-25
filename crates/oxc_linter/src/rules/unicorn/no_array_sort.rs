@@ -54,7 +54,7 @@ declare_oxc_lint!(
     ///
     /// `{ type: boolean, default: true }`
     ///
-    /// This rule allow `array.sort()` as an expression statement by default,
+    /// This rule allows `array.sort()` as an expression statement by default,
     /// Pass allowExpressionStatement: false to forbid `Array#sort()` even it's an expression statement.
     ///
     /// Examples of **incorrect** code for this rule with the `{ "allowExpressionStatement": false }` option:
