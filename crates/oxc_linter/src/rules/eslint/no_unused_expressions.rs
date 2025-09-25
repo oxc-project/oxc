@@ -5,24 +5,30 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow unused expressions")
-        .with_help("Consider removing this expression")
+    OxcDiagnostic::warn("Expected expression to be used")
+        .with_help("Consider using this expression or removing it")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedExpressions(Box<NoUnusedExpressionsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUnusedExpressionsConfig {
+    /// When set to `true`, allows short circuit evaluations in expressions.
     allow_short_circuit: bool,
+    /// When set to `true`, allows ternary operators in expressions.
     allow_ternary: bool,
+    /// When set to `true`, allows tagged template literals in expressions.
     allow_tagged_templates: bool,
+    /// When set to `true`, enforces the rule for unused JSX expressions also.
     enforce_for_jsx: bool,
 }
 
@@ -50,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoUnusedExpressions,
     eslint,
-    restriction
+    correctness,
+    config = NoUnusedExpressionsConfig,
 );
 
 impl Rule for NoUnusedExpressions {

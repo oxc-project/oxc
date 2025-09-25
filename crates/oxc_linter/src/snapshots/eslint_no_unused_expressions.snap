@@ -1,290 +1,290 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ 0
    · ─
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a
    · ─
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ f(), 0
    · ──────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:2]
  1 │ {0}
    ·  ─
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ []
    · ──
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a && b();
    · ─────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a() || false
    · ────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a || (b = c)
    · ────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a ? b() || (c = d) : e
    · ──────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ `untagged template literal`
    · ───────────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ tag`tagged template literal`
    · ────────────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a && b()
    · ────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a ? b() : c()
    · ─────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a || b
    · ──────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a() && b
    · ────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a ? b : 0
    · ─────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ a ? b : c()
    · ───────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ foo.bar;
    · ────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ !a
    · ──
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ +a
    · ──
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:23]
  1 │ "directive one"; f(); "directive two";
    ·                       ────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:39]
  1 │ function foo() {"directive one"; f(); "directive two"; }
    ·                                       ────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:10]
  1 │ if (0) { "not a directive"; f(); }
    ·          ──────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:34]
  1 │ function foo() { var foo = true; "use strict"; }
    ·                                  ─────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:35]
  1 │ var foo = () => { var foo = true; "use strict"; }
    ·                                   ─────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ `untagged template literal`
    · ───────────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ `untagged template literal`
    · ───────────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ tag`tagged template literal`
    · ────────────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ obj?.foo
    · ────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ obj?.foo.bar
    · ────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ obj?.foo().bar
    · ──────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ <div />
    · ───────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ <></>
    · ─────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:20]
  1 │ class C { static { 'use strict'; } }
    ·                    ─────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ class C { static {
  2 │             'foo'
    ·             ─────
  3 │             'bar'
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:3:4]
  2 │             'foo'
  3 │             'bar'
    ·             ─────
  4 │              } }
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:11]
  1 │ 
  2 │             if (0) 0;
    ·                    ──
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             f(0), {};
    ·             ─────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             a, b();
    ·             ───────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │     
  2 │ ╭─▶             a() &&
@@ -293,167 +293,167 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶               };
  6 │                       
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             a?.b;
    ·             ─────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             (a?.b).c;
    ·             ─────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             a?.['b'];
    ·             ─────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             (a?.['b']).c;
    ·             ─────────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             a?.b()?.c;
    ·             ──────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             (a?.b()).c;
    ·             ───────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             one[2]?.[3][4];
    ·             ───────────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:2:4]
  1 │ 
  2 │             one.two?.three.four;
    ·             ────────────────────
  3 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:4:6]
  3 │               const foo = true;
  4 │               'use strict';
    ·               ─────────────
  5 │             }
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:6:6]
  5 │ 
  6 │               'use strict';
    ·               ─────────────
  7 │             }
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:5:6]
  4 │ 
  5 │               'use strict';
    ·               ─────────────
  6 │             }
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ foo && foo?.bar;
    · ────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ foo ? foo?.bar : bar.baz;
    · ─────────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:3:4]
  2 │             class Foo<T> {}
  3 │             Foo<string>;
    ·             ────────────
  4 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ Map<string, string>;
    · ────────────────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:3:4]
  2 │             declare const foo: number | undefined;
  3 │             foo;
    ·             ────
  4 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:3:4]
  2 │             declare const foo: number | undefined;
  3 │             foo as any;
    ·             ───────────
  4 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:3:4]
  2 │             declare const foo: number | undefined;
  3 │             foo!;
    ·             ─────
  4 │                   
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it
 
-  ⚠ eslint(no-unused-expressions): Disallow unused expressions
+  ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:36]
  1 │ const _func = (value: number) => { value + 1; }
    ·                                    ──────────
    ╰────
-  help: Consider removing this expression
+  help: Consider using this expression or removing it

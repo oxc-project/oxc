@@ -13,6 +13,13 @@ working directory:
    `----
   help: Remove the debugger statement
 
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+   ,-[fixtures/linter/nan.js:1:1]
+ 1 | 123 == NaN;
+   : ^^^^^^^^^^^
+   `----
+  help: Consider using this expression or removing it
+
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/use-isnan.html\eslint(use-isnan)]8;;\: Requires calls to isNaN() when checking for NaN
    ,-[fixtures/linter/nan.js:1:8]
  1 | 123 == NaN;
@@ -20,8 +27,8 @@ working directory:
    `----
   help: Use the isNaN function to compare with NaN.
 
-Found 2 warnings and 0 errors.
-Finished in <variable>ms on 2 files with 88 rules using 1 threads.
+Found 3 warnings and 0 errors.
+Finished in <variable>ms on 2 files with 89 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
