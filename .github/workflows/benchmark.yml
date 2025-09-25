@@ -57,28 +57,34 @@ jobs:
     if: needs.determine-matrix.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        component: ${{ fromJSON(needs.determine-matrix.outputs.matrix) }}
+        include: ${{ fromJSON(needs.determine-matrix.outputs.matrix) }}
     name: Bench ${{ matrix.component }}
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
+      - uses: oxc-project/setup-rust@5e7ddbacb109aa3e6ed4391afc589c7f6ba090d7 # v1.0.4
         with:
-          cache-key: benchmark-${{ matrix.component }}
+          cache-key: benchmark-${{ matrix.feature }}
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
-          MATRIX_COMPONENT: ${{ matrix.component }}
         run: |
-          cargo build --release -p oxc_benchmark --bench ${MATRIX_COMPONENT} \
-            --no-default-features --features ${MATRIX_COMPONENT} --features codspeed
+          if [ "${{ matrix.component }}" = "linter" ]; then
+            cargo build --release -p oxc_benchmark --bench linter \
+              --no-default-features --features ${{ matrix.feature }} --features codspeed
+          else
+            cargo build --release -p oxc_benchmark \
+              --bench lexer --bench parser --bench transformer --bench semantic \
+              --bench minifier --bench codegen --bench formatter \
+              --no-default-features --features ${{ matrix.feature }} --features codspeed
+          fi
           mkdir -p target/codspeed/instrumentation/oxc_benchmark
-          mv target/release/deps/${MATRIX_COMPONENT}-* target/codspeed/instrumentation/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/instrumentation/oxc_benchmark
           rm target/codspeed/instrumentation/oxc_benchmark/*.d
 
       - name: Run benchmark
@@ -87,4 +93,4 @@ jobs:
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
           mode: instrumentation
-          run: cargo codspeed run
+          run: cargo codspeed run ${{ matrix.component }}
