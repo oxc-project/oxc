@@ -1,0 +1,10 @@
+{
+    "plugins": ["./test_plugin"],
+    "categories": {
+      "correctness": "off"
+    },
+    "rules": {
+        "fixes-plugin/fixes": "error"
+    },
+    "ignorePatterns": ["test_plugin/**"]
+}

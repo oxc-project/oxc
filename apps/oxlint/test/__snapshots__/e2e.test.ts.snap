@@ -1,5 +1,28 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`oxlint CLI > should apply fixes when \`--fix\` is enabled 1`] = `
+"Found 0 warnings and 0 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should apply fixes when \`--fix\` is enabled 2`] = `
+"
+
+let daddy = 1;
+let abacus = 2;
+let magic = 3;
+let damned = 4;
+let elephant = 5;
+let feck = 6;
+let numpty = 7;
+let dangermouse = 8;
+let granular = 9;
+let cowabunga = 10;
+
+
+"
+`;
+
 exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
 "
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
@@ -441,6 +464,106 @@ exports[`oxlint CLI > should load a custom plugin with various import styles 1`]
    \`----
 
 Found 1 warning and 6 errors.
+Finished in Xms on 1 file using X threads."
+`;
+
+exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
+"
+  x fixes-plugin(fixes): Remove debugger statement
+   ,-[index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   \`----
+
+  x fixes-plugin(fixes): Replace "a" with "daddy"
+   ,-[index.js:3:5]
+ 2 | 
+ 3 | let a = 1;
+   :     ^
+ 4 | let b = 2;
+   \`----
+
+  x fixes-plugin(fixes): Replace "b" with "abacus"
+   ,-[index.js:4:5]
+ 3 | let a = 1;
+ 4 | let b = 2;
+   :     ^
+ 5 | let c = 3;
+   \`----
+
+  x fixes-plugin(fixes): Prefix "c" with "magi"
+   ,-[index.js:5:5]
+ 4 | let b = 2;
+ 5 | let c = 3;
+   :     ^
+ 6 | let d = 4;
+   \`----
+
+  x fixes-plugin(fixes): Prefix "d" with "damne"
+   ,-[index.js:6:5]
+ 5 | let c = 3;
+ 6 | let d = 4;
+   :     ^
+ 7 | let e = 5;
+   \`----
+
+  x fixes-plugin(fixes): Postfix "e" with "lephant"
+   ,-[index.js:7:5]
+ 6 | let d = 4;
+ 7 | let e = 5;
+   :     ^
+ 8 | let f = 6;
+   \`----
+
+  x fixes-plugin(fixes): Postfix "f" with "eck"
+   ,-[index.js:8:5]
+ 7 | let e = 5;
+ 8 | let f = 6;
+   :     ^
+ 9 | let g = 7;
+   \`----
+
+  x fixes-plugin(fixes): Replace "g" with "numpty"
+    ,-[index.js:9:5]
+  8 | let f = 6;
+  9 | let g = 7;
+    :     ^
+ 10 | let h = 8;
+    \`----
+
+  x fixes-plugin(fixes): Replace "h" with "dangermouse"
+    ,-[index.js:10:5]
+  9 | let g = 7;
+ 10 | let h = 8;
+    :     ^
+ 11 | let i = 9;
+    \`----
+
+  x fixes-plugin(fixes): Replace "i" with "granular"
+    ,-[index.js:11:5]
+ 10 | let h = 8;
+ 11 | let i = 9;
+    :     ^
+ 12 | let j = 10;
+    \`----
+
+  x fixes-plugin(fixes): Replace "j" with "cowabunga"
+    ,-[index.js:12:5]
+ 11 | let i = 9;
+ 12 | let j = 10;
+    :     ^
+ 13 | 
+    \`----
+
+  x fixes-plugin(fixes): Remove debugger statement
+    ,-[index.js:14:1]
+ 13 | 
+ 14 | debugger;
+    : ^^^^^^^^^
+    \`----
+
+Found 0 warnings and 12 errors.
 Finished in Xms on 1 file using X threads."
 `;
 

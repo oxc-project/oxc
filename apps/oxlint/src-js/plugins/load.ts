@@ -69,7 +69,9 @@ interface PluginDetails {
 }
 
 // Default rule metadata, used if `rule.meta` property is empty.
-const emptyRuleMeta: RuleMeta = {};
+const emptyRuleMeta: RuleMeta = {
+  fixable: null,
+};
 
 /**
  * Load a plugin.
@@ -125,8 +127,15 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
       ruleMeta = emptyRuleMeta;
     } else {
       if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
-      // TODO: Validate and conform individual properties of `meta` once they're supported
-      ruleMeta = emptyRuleMeta;
+
+      let { fixable } = ruleMeta;
+      if (fixable === void 0) {
+        fixable = null;
+      } else if (fixable !== 'code' && fixable !== 'whitespace') {
+        throw new TypeError('Invalid `meta.fixable`');
+      }
+
+      ruleMeta = { fixable };
     }
 
     // Create `Context` object for rule. This will be re-used for every file.

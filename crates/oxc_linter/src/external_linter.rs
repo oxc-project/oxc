@@ -31,6 +31,14 @@ pub struct LintFileResult {
     pub message: String,
     pub start: u32,
     pub end: u32,
+    pub fixes: Option<Vec<JsFix>>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JsFix {
+    pub range: [u32; 2],
+    pub text: String,
 }
 
 #[derive(Clone)]

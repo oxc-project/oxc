@@ -1,13 +1,17 @@
+import { getFixes } from './fix.js';
+
+import type { Fix, FixFn } from './fix.ts';
 import type { RuleMeta } from './types.ts';
 
 // Diagnostic in form passed by user to `Context#report()`
-interface Diagnostic {
+export interface Diagnostic {
   message: string;
   node: {
     start: number;
     end: number;
     [key: string]: unknown;
   };
+  fix?: FixFn;
 }
 
 // Diagnostic in form sent to Rust
@@ -16,6 +20,7 @@ interface DiagnosticReport {
   start: number;
   end: number;
   ruleIndex: number;
+  fixes: Fix[] | null;
 }
 
 // Diagnostics array. Reused for every file.
@@ -57,7 +62,7 @@ let getInternal: (context: Context, actionDescription: string) => InternalContex
 
 // Internal data within `Context` that don't want to expose to plugins.
 // Stored as `#internal` property of `Context`.
-interface InternalContext {
+export interface InternalContext {
   // Full rule name, including plugin name e.g. `my-plugin/my-rule`.
   id: string;
   // Index into `ruleIds` sent from Rust
@@ -120,14 +125,16 @@ export class Context {
    * @param diagnostic - Diagnostic object
    */
   report(diagnostic: Diagnostic): void {
-    const { ruleIndex } = getInternal(this, 'report errors');
+    const internal = getInternal(this, 'report errors');
+
     // TODO: Validate `diagnostic`
     const { node } = diagnostic;
     diagnostics.push({
       message: diagnostic.message,
       start: node.start,
       end: node.end,
-      ruleIndex,
+      ruleIndex: internal.ruleIndex,
+      fixes: getFixes(diagnostic, internal),
     });
   }
 

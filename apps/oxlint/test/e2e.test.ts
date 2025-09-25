@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { dirname, join as pathJoin } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -18,6 +19,10 @@ async function runOxlintWithoutPlugins(cwd: string, args: string[] = []) {
 
 async function runOxlint(cwd: string, args: string[] = []) {
   return await runOxlintWithoutPlugins(cwd, ['--js-plugins', ...args]);
+}
+
+async function runOxlintWithFixes(cwd: string, args: string[] = []) {
+  return await runOxlintWithoutPlugins(cwd, ['--js-plugins', '--fix', ...args]);
 }
 
 function normalizeOutput(output: string): string {
@@ -182,5 +187,42 @@ describe('oxlint CLI', () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_disable_directives');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  it('should not apply fixes when `--fix` is disabled', async () => {
+    const fixtureFilePath = pathJoin(PACKAGE_ROOT_PATH, 'test/fixtures/fixes/index.js');
+    const codeBefore = fs.readFileSync(fixtureFilePath, 'utf8');
+
+    let error = true;
+    try {
+      const { stdout, exitCode } = await runOxlint('test/fixtures/fixes');
+      expect(exitCode).toBe(1);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+      error = false;
+    } finally {
+      const codeAfter = fs.readFileSync(fixtureFilePath, 'utf8');
+      if (codeAfter !== codeBefore) {
+        fs.writeFileSync(fixtureFilePath, codeBefore);
+        // oxlint-disable-next-line no-unsafe-finally
+        if (!error) throw new Error('Test modified fixture file');
+      }
+    }
+  });
+
+  it('should apply fixes when `--fix` is enabled', async () => {
+    const fixtureFilePath = pathJoin(PACKAGE_ROOT_PATH, 'test/fixtures/fixes/index.js');
+    const codeBefore = fs.readFileSync(fixtureFilePath, 'utf8');
+
+    let error = true;
+    try {
+      const { stdout, exitCode } = await runOxlintWithFixes('test/fixtures/fixes');
+      expect(exitCode).toBe(0);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+      error = false;
+    } finally {
+      const codeAfter = fs.readFileSync(fixtureFilePath, 'utf8');
+      fs.writeFileSync(fixtureFilePath, codeBefore);
+      if (!error) expect(codeAfter).toMatchSnapshot();
+    }
   });
 });
