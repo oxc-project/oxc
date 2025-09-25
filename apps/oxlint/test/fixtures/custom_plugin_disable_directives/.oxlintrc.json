@@ -1,9 +1,9 @@
 {
-  "plugins": ["./test_plugin"],
+  "plugins": ["./plugin.js"],
   "categories": { "correctness": "off" },
   "rules": {
     "test-plugin/no-var": "error",
     "no-debugger": "error"
   },
-  "ignorePatterns": ["test_plugin/**"]
+  "ignorePatterns": ["**/*", "!files/**"]
 }

@@ -1,5 +1,5 @@
-import { dirname, sep } from 'node:path';
-import { definePlugin, defineRule } from '../../../../dist/index.js';
+import { sep } from 'node:path';
+import { definePlugin, defineRule } from '../../../dist/index.js';
 
 // `loc` field is required for ESLint.
 // TODO: Remove this workaround when AST nodes have a `loc` field.
@@ -12,11 +12,11 @@ const SPAN = {
   },
 };
 
-const PARENT_DIR_PATH_LEN = dirname(import.meta.dirname).length + 1;
+const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
 const relativePath = sep === '/'
-  ? path => path.slice(PARENT_DIR_PATH_LEN)
-  : path => path.slice(PARENT_DIR_PATH_LEN).replace(/\\/g, '/');
+  ? path => path.slice(DIR_PATH_LEN)
+  : path => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
 const createRule = defineRule({
   create(context) {

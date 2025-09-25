@@ -1,5 +1,6 @@
 {
     "plugins": [
-        "./test_plugin"
-    ]
+        "./plugin.js"
+    ],
+    "ignorePatterns": ["**/*", "!files/**"]
 }

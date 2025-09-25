@@ -1,7 +1,8 @@
 {
-  "plugins": ["./test_plugin"],
+  "plugins": ["./plugin.js"],
   "categories": { "correctness": "off" },
   "rules": {
     "basic-custom-plugin/unknown-rule": "error"
-  }
+  },
+  "ignorePatterns": ["**/*", "!files/**"]
 }

@@ -1,10 +1,10 @@
-import testPlugin from './test_plugin/index.js';
+import plugin from './plugin.js';
 
 export default [
   {
     files: ["files/*.js"],
     plugins: {
-      "define-plugin-and-rule-plugin": testPlugin,
+      "define-plugin-and-rule-plugin": plugin,
     },
     rules: {
       "define-plugin-and-rule-plugin/create": "error",

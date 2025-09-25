@@ -1,15 +1,15 @@
 {
   "rules": {
-    "no-debugger": "off",
+    "no-debugger": "off"
   },
   "overrides": [
     {
       "files": ["*.js"],
-      "plugins": ["./test_plugin"],
+      "plugins": ["./plugin.js"],
       "rules": {
         "basic-custom-plugin/missing": "error"
       }
     }
   ],
-  "ignorePatterns": ["test_plugin/**"]
+  "ignorePatterns": ["**/*", "!files/**"]
 }

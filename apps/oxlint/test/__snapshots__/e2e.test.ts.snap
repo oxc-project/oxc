@@ -26,7 +26,7 @@ let cowabunga = 10;
 exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
 "
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
  2 | // £
@@ -34,14 +34,14 @@ exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
   help: Remove the debugger statement
 
   x utf16-plugin(no-debugger): Debugger at 0-9
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
  2 | // £
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:3:1]
+   ,-[files/index.js:3:1]
  2 | // £
  3 | debugger;
    : ^^^^^^^^^
@@ -50,7 +50,7 @@ exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
   help: Remove the debugger statement
 
   x utf16-plugin(no-debugger): Debugger at 15-24
-   ,-[index.js:3:1]
+   ,-[files/index.js:3:1]
  2 | // £
  3 | debugger;
    : ^^^^^^^^^
@@ -58,7 +58,7 @@ exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:6:3]
+   ,-[files/index.js:6:3]
  5 | {
  6 |   debugger;
    :   ^^^^^^^^^
@@ -67,7 +67,7 @@ exports[`oxlint CLI > should have UTF-16 spans in AST 1`] = `
   help: Remove the debugger statement
 
   x utf16-plugin(no-debugger): Debugger at 35-44
-   ,-[index.js:6:3]
+   ,-[files/index.js:6:3]
  5 | {
  6 |   debugger;
    :   ^^^^^^^^^
@@ -81,7 +81,7 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should lint a directory with errors with JS plugins enabled 1`] = `
 "
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
@@ -94,7 +94,7 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should lint a directory with errors without JS plugins enabled 1`] = `
 "
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
@@ -117,13 +117,13 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should load a custom plugin 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
@@ -136,13 +136,13 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should load a custom plugin when configured in overrides 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
@@ -421,44 +421,44 @@ Finished in Xms on 20 files using X threads."
 exports[`oxlint CLI > should load a custom plugin with various import styles 1`] = `
 "
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
   help: Remove the debugger statement
 
   x plugin1(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   x plugin2(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   x plugin3(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   x plugin4(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   x plugin5(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   x plugin6(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
@@ -470,14 +470,14 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
 "
   x fixes-plugin(fixes): Remove debugger statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
  2 | 
    \`----
 
   x fixes-plugin(fixes): Replace "a" with "daddy"
-   ,-[index.js:3:5]
+   ,-[files/index.js:3:5]
  2 | 
  3 | let a = 1;
    :     ^
@@ -485,7 +485,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
    \`----
 
   x fixes-plugin(fixes): Replace "b" with "abacus"
-   ,-[index.js:4:5]
+   ,-[files/index.js:4:5]
  3 | let a = 1;
  4 | let b = 2;
    :     ^
@@ -493,7 +493,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
    \`----
 
   x fixes-plugin(fixes): Prefix "c" with "magi"
-   ,-[index.js:5:5]
+   ,-[files/index.js:5:5]
  4 | let b = 2;
  5 | let c = 3;
    :     ^
@@ -501,7 +501,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
    \`----
 
   x fixes-plugin(fixes): Prefix "d" with "damne"
-   ,-[index.js:6:5]
+   ,-[files/index.js:6:5]
  5 | let c = 3;
  6 | let d = 4;
    :     ^
@@ -509,7 +509,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
    \`----
 
   x fixes-plugin(fixes): Postfix "e" with "lephant"
-   ,-[index.js:7:5]
+   ,-[files/index.js:7:5]
  6 | let d = 4;
  7 | let e = 5;
    :     ^
@@ -517,7 +517,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
    \`----
 
   x fixes-plugin(fixes): Postfix "f" with "eck"
-   ,-[index.js:8:5]
+   ,-[files/index.js:8:5]
  7 | let e = 5;
  8 | let f = 6;
    :     ^
@@ -525,7 +525,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
    \`----
 
   x fixes-plugin(fixes): Replace "g" with "numpty"
-    ,-[index.js:9:5]
+    ,-[files/index.js:9:5]
   8 | let f = 6;
   9 | let g = 7;
     :     ^
@@ -533,7 +533,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
     \`----
 
   x fixes-plugin(fixes): Replace "h" with "dangermouse"
-    ,-[index.js:10:5]
+    ,-[files/index.js:10:5]
   9 | let g = 7;
  10 | let h = 8;
     :     ^
@@ -541,7 +541,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
     \`----
 
   x fixes-plugin(fixes): Replace "i" with "granular"
-    ,-[index.js:11:5]
+    ,-[files/index.js:11:5]
  10 | let h = 8;
  11 | let i = 9;
     :     ^
@@ -549,7 +549,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
     \`----
 
   x fixes-plugin(fixes): Replace "j" with "cowabunga"
-    ,-[index.js:12:5]
+    ,-[files/index.js:12:5]
  11 | let i = 9;
  12 | let j = 10;
     :     ^
@@ -557,7 +557,7 @@ exports[`oxlint CLI > should not apply fixes when \`--fix\` is disabled 1`] = `
     \`----
 
   x fixes-plugin(fixes): Remove debugger statement
-    ,-[index.js:14:1]
+    ,-[files/index.js:14:1]
  13 | 
  14 | debugger;
     : ^^^^^^^^^
@@ -599,7 +599,7 @@ exports[`oxlint CLI > should receive ESTree-compatible AST 1`] = `
   | * TSUnionType:exit: (types: TSStringKeyword, TSNumberKeyword)
   | * TSTypeAliasDeclaration:exit: (typeAnnotation: TSUnionType)
   | * Program:exit
-    ,-[index.ts:2:1]
+    ,-[files/index.ts:2:1]
   1 |     // All \`Identifier\`s
   2 | ,-> let a = { x: y };
   3 | |   
@@ -669,33 +669,33 @@ exports[`oxlint CLI > should report an error if a a rule is not found within a c
 exports[`oxlint CLI > should report an error if a custom plugin in config but JS plugins are not enabled 1`] = `
 "Failed to parse configuration file.
 
-  x \`plugins\` config contains './test_plugin'. JS plugins are not supported without \`--js-plugins\` CLI option. Note: JS plugin support is experimental.
+  x \`plugins\` config contains './plugin.js'. JS plugins are not supported without \`--js-plugins\` CLI option. Note: JS plugin support is experimental.
 "
 `;
 
 exports[`oxlint CLI > should report an error if a custom plugin is missing 1`] = `
 "Failed to parse configuration file.
 
-  x Failed to load JS plugin: ./test_plugin
-  |   Cannot find module './test_plugin'
+  x Failed to load JS plugin: ./plugin.js
+  |   Cannot find module './plugin.js'
 "
 `;
 
 exports[`oxlint CLI > should report an error if a custom plugin throws an error during import 1`] = `
 "Failed to parse configuration file.
 
-  x Failed to load JS plugin: ./test_plugin
+  x Failed to load JS plugin: ./plugin.js
   |   Error: whoops!
-  |     at <root>/apps/oxlint/test/fixtures/custom_plugin_import_error/test_plugin/index.js:1:7
+  |     at <root>/apps/oxlint/test/fixtures/custom_plugin_import_error/plugin.js:1:7
 "
 `;
 
 exports[`oxlint CLI > should report an error if a custom plugin throws an error during linting > in \`after\` hook 1`] = `
 "
   x Error running JS plugin.
-  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_after_hook_error/index.js
+  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_after_hook_error/files/index.js
   | Error: Whoops!
-  |     at after (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_after_hook_error/test_plugin/index.js:10:19)
+  |     at after (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_after_hook_error/plugin.js:10:19)
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
@@ -704,9 +704,9 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should report an error if a custom plugin throws an error during linting > in \`before\` hook 1`] = `
 "
   x Error running JS plugin.
-  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_before_hook_error/index.js
+  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_before_hook_error/files/index.js
   | Error: Whoops!
-  |     at before (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_before_hook_error/test_plugin/index.js:10:19)
+  |     at before (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_before_hook_error/plugin.js:10:19)
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
@@ -715,9 +715,9 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should report an error if a custom plugin throws an error during linting > in \`create\` method 1`] = `
 "
   x Error running JS plugin.
-  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_create_error/index.js
+  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_create_error/files/index.js
   | Error: Whoops!
-  |     at Object.create (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_create_error/test_plugin/index.js:8:15)
+  |     at Object.create (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_create_error/plugin.js:8:15)
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
@@ -726,19 +726,19 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should report an error if a custom plugin throws an error during linting > in \`createOnce\` method 1`] = `
 "Failed to parse configuration file.
 
-  x Failed to load JS plugin: ./test_plugin
+  x Failed to load JS plugin: ./plugin.js
   |   Error: Whoops!
-  |     at Object.createOnce (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_createOnce_error/test_plugin/index.js:8:15)
+  |     at Object.createOnce (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_createOnce_error/plugin.js:8:15)
 "
 `;
 
 exports[`oxlint CLI > should report an error if a custom plugin throws an error during linting > in \`fix\` function 1`] = `
 "
   x Error running JS plugin.
-  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_fix_error/index.js
+  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_fix_error/files/index.js
   | Error: Whoops!
-  |     at Object.fix (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_fix_error/test_plugin/index.js:14:23)
-  |     at Identifier (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_fix_error/test_plugin/index.js:10:21)
+  |     at Object.fix (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_fix_error/plugin.js:14:23)
+  |     at Identifier (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_fix_error/plugin.js:10:21)
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
@@ -747,9 +747,9 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should report an error if a custom plugin throws an error during linting > in visit function 1`] = `
 "
   x Error running JS plugin.
-  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_visit_error/index.js
+  | File path: <root>/oxc/apps/oxlint/test/fixtures/custom_plugin_lint_visit_error/files/index.js
   | Error: Whoops!
-  |     at Identifier (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_visit_error/test_plugin/index.js:10:19)
+  |     at Identifier (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_visit_error/plugin.js:10:19)
 
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads."
@@ -765,13 +765,13 @@ exports[`oxlint CLI > should report an error if a rule is not found within a cus
 exports[`oxlint CLI > should report the correct severity when using a custom plugin 1`] = `
 "
   ! basic-custom-plugin(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    \`----
@@ -784,14 +784,14 @@ Finished in Xms on 1 file using X threads."
 exports[`oxlint CLI > should respect disable directives for custom plugin rules 1`] = `
 "
   x test-plugin(no-var): Use let or const instead of var
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | var shouldError = 1;
    : ^^^^^^^^^^^^^^^^^^^^
  2 | 
    \`----
 
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-    ,-[index.js:10:1]
+    ,-[files/index.js:10:1]
   9 | // should trigger an error
  10 | debugger;
     : ^^^^^^^^^
@@ -800,7 +800,7 @@ exports[`oxlint CLI > should respect disable directives for custom plugin rules 
   help: Remove the debugger statement
 
   x test-plugin(no-var): Use let or const instead of var
-    ,-[index.js:16:1]
+    ,-[files/index.js:16:1]
  15 | /* oxlint-disable-next-line test-plugin */ // \`test-plugin\` should be \`test-plugin/no-var\`
  16 | var incorrectlyDisabled = 4;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -808,7 +808,7 @@ exports[`oxlint CLI > should respect disable directives for custom plugin rules 
     \`----
 
   x test-plugin(no-var): Use let or const instead of var
-    ,-[index.js:19:1]
+    ,-[files/index.js:19:1]
  18 | /* oxlint-disable-next-line no-var */ // \`no-var\` should be \`test-plugin/no-var\`
  19 | var anotherIncorrectlyDisabled = 4;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -816,7 +816,7 @@ exports[`oxlint CLI > should respect disable directives for custom plugin rules 
     \`----
 
   x test-plugin(no-var): Use let or const instead of var
-    ,-[index.js:22:1]
+    ,-[files/index.js:22:1]
  21 | // This var should trigger an error again
  22 | var shouldErrorAgain = 3;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1870,21 +1870,21 @@ Finished in Xms on 2 files using X threads."
 exports[`oxlint CLI > should work with multiple rules 1`] = `
 "
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
  2 | 
    \`----
 
   x basic-custom-plugin(no-debugger-2): Unexpected Debugger Statement
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
  2 | 
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\\eslint(no-debugger)]8;;\\: \`debugger\` statement is not allowed
-   ,-[index.js:1:1]
+   ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
  2 | 
@@ -1892,14 +1892,14 @@ exports[`oxlint CLI > should work with multiple rules 1`] = `
   help: Remove the debugger statement
 
   x basic-custom-plugin(no-identifiers-named-foo): Unexpected Identifier named foo
-   ,-[index.js:3:1]
+   ,-[files/index.js:3:1]
  2 | 
  3 | foo;
    : ^^^
    \`----
 
   ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\\eslint(no-unused-expressions)]8;;\\: Expected expression to be used
-   ,-[index.js:3:1]
+   ,-[files/index.js:3:1]
  2 | 
  3 | foo;
    : ^^^^

@@ -2,11 +2,11 @@
   "overrides": [
     {
       "files": ["*.js"],
-      "plugins": ["./test_plugin"],
+      "plugins": ["./plugin.js"],
       "rules": {
         "basic-custom-plugin/no-debugger": "error"
       }
     }
   ],
-  "ignorePatterns": ["test_plugin/**"]
+  "ignorePatterns": ["**/*", "!files/**"]
 }

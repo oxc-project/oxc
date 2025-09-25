@@ -236,7 +236,7 @@ describe('oxlint CLI', () => {
   });
 
   it('should not apply fixes when `--fix` is disabled', async () => {
-    const fixtureFilePath = pathJoin(PACKAGE_ROOT_PATH, 'test/fixtures/fixes/index.js');
+    const fixtureFilePath = pathJoin(PACKAGE_ROOT_PATH, 'test/fixtures/fixes/files/index.js');
     const codeBefore = fs.readFileSync(fixtureFilePath, 'utf8');
 
     let error = true;
@@ -256,7 +256,7 @@ describe('oxlint CLI', () => {
   });
 
   it('should apply fixes when `--fix` is enabled', async () => {
-    const fixtureFilePath = pathJoin(PACKAGE_ROOT_PATH, 'test/fixtures/fixes/index.js');
+    const fixtureFilePath = pathJoin(PACKAGE_ROOT_PATH, 'test/fixtures/fixes/files/index.js');
     const codeBefore = fs.readFileSync(fixtureFilePath, 'utf8');
 
     let error = true;

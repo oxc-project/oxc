@@ -1,5 +1,5 @@
-import { dirname, sep } from 'node:path';
-import { defineRule } from '../../../../dist/index.js';
+import { sep } from 'node:path';
+import { definePlugin } from '../../../dist/index.js';
 
 // `loc` field is required for ESLint.
 // TODO: Remove this workaround when AST nodes have a `loc` field.
@@ -12,13 +12,13 @@ const SPAN = {
   },
 };
 
-const PARENT_DIR_PATH_LEN = dirname(import.meta.dirname).length + 1;
+const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
 const relativePath = sep === '/'
-  ? path => path.slice(PARENT_DIR_PATH_LEN)
-  : path => path.slice(PARENT_DIR_PATH_LEN).replace(/\\/g, '/');
+  ? path => path.slice(DIR_PATH_LEN)
+  : path => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
-const createRule = defineRule({
+const createRule = {
   create(context) {
     context.report({ message: `create body:\nthis === rule: ${this === createRule}`, node: SPAN });
 
@@ -31,12 +31,13 @@ const createRule = defineRule({
       },
     };
   },
-});
+};
 
 // This aims to test that `createOnce` is called once only, and `before` hook is called once per file.
-// i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` adds to the rule.
+// i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` (via `definePlugin`)
+// adds to the rule.
 let createOnceCallCount = 0;
-const createOnceRule = defineRule({
+const createOnceRule = {
   createOnce(context) {
     createOnceCallCount++;
 
@@ -47,7 +48,7 @@ const createOnceRule = defineRule({
     // Therefore, collect all visits and check them in `after` hook of the 2nd file.
     const visits = [];
 
-    // `this` should be the rule object returned by `defineRule`
+    // `this` should be the rule object
     const topLevelThis = this;
 
     return {
@@ -102,10 +103,10 @@ const createOnceRule = defineRule({
       },
     };
   },
-});
+};
 
 // Tests that `before` hook returning `false` disables visiting AST for the file.
-const createOnceBeforeFalseRule = defineRule({
+const createOnceBeforeFalseRule = {
   createOnce(context) {
     return {
       before() {
@@ -134,11 +135,11 @@ const createOnceBeforeFalseRule = defineRule({
       },
     };
   },
-});
+};
 
 // These 3 rules test that `createOnce` without `before` and `after` hooks works correctly.
 
-const createOnceBeforeOnlyRule = defineRule({
+const createOnceBeforeOnlyRule = {
   createOnce(context) {
     return {
       before() {
@@ -157,9 +158,9 @@ const createOnceBeforeOnlyRule = defineRule({
       },
     };
   },
-});
+};
 
-const createOnceAfterOnlyRule = defineRule({
+const createOnceAfterOnlyRule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -178,9 +179,9 @@ const createOnceAfterOnlyRule = defineRule({
       },
     };
   },
-});
+};
 
-const createOnceNoHooksRule = defineRule({
+const createOnceNoHooksRule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -192,11 +193,11 @@ const createOnceNoHooksRule = defineRule({
       },
     };
   },
-});
+};
 
-export default {
+export default definePlugin({
   meta: {
-    name: "define-rule-plugin",
+    name: "define-plugin-plugin",
   },
   rules: {
     create: createRule,
@@ -206,4 +207,4 @@ export default {
     "create-once-after-only": createOnceAfterOnlyRule,
     "create-once-no-hooks": createOnceNoHooksRule,
   },
-};
+});

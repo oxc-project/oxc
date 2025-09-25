@@ -1,8 +1,8 @@
 {
-  "plugins": ["./test_plugin"],
+  "plugins": ["./plugin.js"],
   "categories": { "correctness": "off" },
   "rules": {
     "error-plugin/error": "error"
   },
-  "ignorePatterns": ["test_plugin/**"]
+  "ignorePatterns": ["**/*", "!files/**"]
 }

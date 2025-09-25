@@ -1,12 +1,12 @@
-import { dirname, sep } from 'node:path';
+import { sep } from 'node:path';
 
 const SPAN = { start: 0, end: 0 };
 
-const PARENT_DIR_PATH_LEN = dirname(import.meta.dirname).length + 1;
+const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
 const relativePath = sep === '/'
-  ? path => path.slice(PARENT_DIR_PATH_LEN)
-  : path => path.slice(PARENT_DIR_PATH_LEN).replace(/\\/g, '/');
+  ? path => path.slice(DIR_PATH_LEN)
+  : path => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
 const rule = {
   create(context) {

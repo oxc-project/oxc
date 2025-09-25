@@ -15,5 +15,5 @@
         "plugin5/no-debugger": "error",
         "plugin6/no-debugger": "error"
     },
-    "ignorePatterns": ["plugins/**", "node_modules/**"]
+    "ignorePatterns": ["**/*", "!files/**"]
 }

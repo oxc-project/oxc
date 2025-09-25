@@ -1,5 +1,5 @@
 {
-    "plugins": ["./test_plugin"],
+    "plugins": ["./plugin.js"],
     "categories": {"correctness": "off"},
     "rules": {
         "define-plugin-and-rule-plugin/create": "error",
@@ -9,5 +9,5 @@
         "define-plugin-and-rule-plugin/create-once-after-only": "error",
         "define-plugin-and-rule-plugin/create-once-no-hooks": "error"
     },
-    "ignorePatterns": ["test_plugin/**", "eslint.config.js"]
+    "ignorePatterns": ["**/*", "!files/**"]
 }

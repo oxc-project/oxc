@@ -1,7 +1,7 @@
 {
-    "plugins": ["./test_plugin"],
+    "plugins": ["./plugin.js"],
     "rules": {
         "utf16-plugin/no-debugger": "error"
     },
-    "ignorePatterns": ["test_plugin/**"]
+    "ignorePatterns": ["**/*", "!files/**"]
 }
