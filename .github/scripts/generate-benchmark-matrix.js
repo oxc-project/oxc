@@ -143,17 +143,30 @@ function checkGlobalChanges(changedFiles) {
 }
 
 /**
+ * Map component to its feature
+ * @param {string} component - Component name
+ * @returns {string} Feature name
+ */
+function getFeatureForComponent(component) {
+  if (component === 'linter') {
+    return 'linter';
+  }
+  return 'compiler';
+}
+
+/**
  * Get dependencies for a specific benchmark component
  * @param {string} component - Component name
  * @returns {string[]} Array of dependency names
  */
 function getComponentDependencies(component) {
+  const feature = getFeatureForComponent(component);
   const command =
-    `cargo tree -p oxc_benchmark --features ${component} --no-default-features -f "{lib}" -e normal --no-dedupe --prefix none 2>/dev/null | grep oxc | sort -u`;
+    `cargo tree -p oxc_benchmark --features ${feature} --no-default-features -f "{lib}" -e normal --no-dedupe --prefix none 2>/dev/null | grep oxc | sort -u`;
   const output = exec(command);
 
   if (!output) {
-    console.error(`Warning: Could not get dependencies for ${component}`);
+    console.error(`Warning: Could not get dependencies for ${component} (feature: ${feature})`);
     return [];
   }
 
@@ -195,20 +208,26 @@ function isComponentAffected(component, changedFiles) {
 
 /**
  * Determine which components are affected by changes
- * @returns {Promise<string[]>} Array of affected component names
+ * @returns {Promise<Array<{component: string, feature: string}>>} Array of affected component objects
  */
 async function determineAffectedComponents() {
   const changedFiles = await getChangedFiles();
 
   // Manual trigger - run all benchmarks
   if (changedFiles === null) {
-    return ALL_COMPONENTS;
+    return ALL_COMPONENTS.map(component => ({
+      component,
+      feature: getFeatureForComponent(component),
+    }));
   }
 
   // Check for global changes
   if (checkGlobalChanges(changedFiles)) {
     console.error('Global changes detected - will run all benchmarks');
-    return ALL_COMPONENTS;
+    return ALL_COMPONENTS.map(component => ({
+      component,
+      feature: getFeatureForComponent(component),
+    }));
   }
 
   // Check each component individually
@@ -217,14 +236,17 @@ async function determineAffectedComponents() {
   for (const component of ALL_COMPONENTS) {
     console.error(`\nChecking component: ${component}`);
     if (isComponentAffected(component, changedFiles)) {
-      affectedComponents.push(component);
+      affectedComponents.push({
+        component,
+        feature: getFeatureForComponent(component),
+      });
     }
   }
 
   if (affectedComponents.length === 0) {
     console.error('\nNo components were affected by the changes');
   } else {
-    console.error(`\nAffected components: ${affectedComponents.join(', ')}`);
+    console.error(`\nAffected components: ${affectedComponents.map(obj => obj.component).join(', ')}`);
   }
 
   return affectedComponents;
@@ -245,14 +267,19 @@ async function main() {
     if (affectedComponents.length === 0) {
       console.error('::notice title=No benchmarks to run::No components were affected by the changes');
     } else {
-      console.error(`::notice title=Running benchmarks::Affected components: ${affectedComponents.join(', ')}`);
+      const componentNames = affectedComponents.map(obj => obj.component).join(', ');
+      console.error(`::notice title=Running benchmarks::Affected components: ${componentNames}`);
     }
 
     process.exit(0);
   } catch (error) {
     console.error('Error generating benchmark matrix:', error);
     // On error, run all benchmarks as a fallback
-    console.log(JSON.stringify(ALL_COMPONENTS));
+    const fallbackMatrix = ALL_COMPONENTS.map(component => ({
+      component,
+      feature: getFeatureForComponent(component),
+    }));
+    console.log(JSON.stringify(fallbackMatrix));
     process.exit(0);
   }
 }
