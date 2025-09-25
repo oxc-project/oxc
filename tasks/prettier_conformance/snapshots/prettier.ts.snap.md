@@ -41,7 +41,7 @@ ts compatibility: 521/573 (90.92%)
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/interface/ignore.ts | 💥✨ | 40.09% |
-| typescript/intersection/intersection-parens.ts | 💥💥 | 80.85% |
+| typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/method/issue-10352-consistency.ts | 💥 | 63.64% |
@@ -49,10 +49,10 @@ ts compatibility: 521/573 (90.92%)
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
-| typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 44.00% |
+| typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 68.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 73.68% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
-| typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 60.00% |
+| typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 88.00% |
 | typescript/union/single-type/single-type.ts | 💥 | 0.00% |
