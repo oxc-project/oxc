@@ -5,6 +5,5 @@
     },
     "rules": {
         "estree-check/check": "error"
-    },
-    "ignorePatterns": ["**/*", "!files/**"]
+    }
 }

@@ -2,6 +2,5 @@
     "plugins": ["./plugin.js"],
     "rules": {
         "utf16-plugin/no-debugger": "error"
-    },
-    "ignorePatterns": ["**/*", "!files/**"]
+    }
 }

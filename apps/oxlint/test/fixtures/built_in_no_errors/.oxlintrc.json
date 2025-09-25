@@ -1,5 +1,4 @@
 {
   "categories": { "correctness": "off" },
-  "rules": { "no-debugger": "error" },
-  "ignorePatterns": ["**/*", "!files/**"]
+  "rules": { "no-debugger": "error" }
 }

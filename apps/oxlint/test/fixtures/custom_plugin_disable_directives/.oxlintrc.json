@@ -4,6 +4,5 @@
   "rules": {
     "test-plugin/no-var": "error",
     "no-debugger": "error"
-  },
-  "ignorePatterns": ["**/*", "!files/**"]
+  }
 }

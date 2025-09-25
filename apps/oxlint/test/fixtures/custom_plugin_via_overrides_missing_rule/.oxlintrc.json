@@ -10,6 +10,5 @@
         "basic-custom-plugin/missing": "error"
       }
     }
-  ],
-  "ignorePatterns": ["**/*", "!files/**"]
+  ]
 }

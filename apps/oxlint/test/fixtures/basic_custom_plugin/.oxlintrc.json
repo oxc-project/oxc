@@ -2,6 +2,5 @@
     "plugins": ["./plugin.js"],
     "rules": {
         "basic-custom-plugin/no-debugger": "error"
-    },
-    "ignorePatterns": ["**/*", "!files/**"]
+    }
 }

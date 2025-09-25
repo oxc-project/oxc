@@ -1,6 +1,5 @@
 {
     "plugins": [
         "./plugin.js"
-    ],
-    "ignorePatterns": ["**/*", "!files/**"]
+    ]
 }

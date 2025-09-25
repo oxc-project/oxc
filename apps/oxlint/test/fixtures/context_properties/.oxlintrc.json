@@ -3,6 +3,5 @@
     "categories": {"correctness": "off"},
     "rules": {
         "context-plugin/log-context": "error"
-    },
-    "ignorePatterns": ["**/*", "!files/**"]
+    }
 }

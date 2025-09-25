@@ -5,6 +5,5 @@
     },
     "rules": {
         "fixes-plugin/fixes": "error"
-    },
-    "ignorePatterns": ["**/*", "!files/**"]
+    }
 }

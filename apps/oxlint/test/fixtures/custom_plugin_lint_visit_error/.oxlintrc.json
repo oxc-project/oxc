@@ -3,6 +3,5 @@
   "categories": { "correctness": "off" },
   "rules": {
     "error-plugin/error": "error"
-  },
-  "ignorePatterns": ["**/*", "!files/**"]
+  }
 }

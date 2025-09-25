@@ -28,7 +28,7 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
 
   await testFixtureWithCommand({
     command: 'node',
-    args: [CLI_PATH, ...args],
+    args: [CLI_PATH, ...args, 'files'],
     fixtureName,
     snapshotName: options?.snapshotName ?? 'output',
     getExtraSnapshotData: options?.getExtraSnapshotData,
