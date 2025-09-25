@@ -8,7 +8,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
 use serde_json::Value;
 
@@ -193,7 +193,7 @@ impl MaxProps {
     }
 }
 
-fn get_type_argument_keys(ctx: &LintContext, type_argument: &TSType) -> FxHashSet<String> {
+fn get_type_argument_keys(ctx: &LintContext, type_argument: &TSType) -> FxHashSet<CompactStr> {
     match type_argument {
         // e.g defineProps<A | B>();
         TSType::TSUnionType(union_type) => {
@@ -222,7 +222,7 @@ fn get_type_argument_keys(ctx: &LintContext, type_argument: &TSType) -> FxHashSe
 fn collect_key_from_type_reference(
     ctx: &LintContext,
     type_ref: &TSTypeReference,
-) -> FxHashSet<String> {
+) -> FxHashSet<CompactStr> {
     let TSTypeName::IdentifierReference(ident_ref) = &type_ref.type_name else {
         return FxHashSet::default();
     };
@@ -243,15 +243,15 @@ fn collect_key_from_type_reference(
     collect_keys_from_signatures(&interface_body.body)
 }
 
-fn collect_keys_from_signatures(signatures: &Vec<TSSignature<'_>>) -> FxHashSet<String> {
+fn collect_keys_from_signatures(signatures: &Vec<TSSignature<'_>>) -> FxHashSet<CompactStr> {
     signatures
         .iter()
         .filter_map(|member| match member {
             TSSignature::TSPropertySignature(prop_signature) => {
-                prop_signature.key.static_name().map(|s| s.to_string())
+                prop_signature.key.static_name().map(CompactStr::from)
             }
             TSSignature::TSMethodSignature(method_signature) => {
-                method_signature.key.static_name().map(|s| s.to_string())
+                method_signature.key.static_name().map(CompactStr::from)
             }
             _ => None,
         })
