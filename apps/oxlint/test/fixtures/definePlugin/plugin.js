@@ -1,8 +1,7 @@
 import { sep } from 'node:path';
 import { definePlugin } from '../../../dist/index.js';
 
-// `loc` field is required for ESLint.
-// TODO: Remove this workaround when AST nodes have a `loc` field.
+// `loc` is required for ESLint
 const SPAN = {
   start: 0,
   end: 0,
@@ -26,7 +25,7 @@ const createRule = {
       Identifier(node) {
         context.report({
           message: `ident visit fn "${node.name}":\nfilename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
     };
@@ -72,7 +71,7 @@ const createOnceRule = {
           message: `ident visit fn "${node.name}":\n`
             + `identNum: ${identNum}\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
       after() {
@@ -123,7 +122,7 @@ const createOnceBeforeFalseRule = {
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
       after() {
@@ -153,7 +152,7 @@ const createOnceBeforeOnlyRule = {
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
     };
@@ -167,7 +166,7 @@ const createOnceAfterOnlyRule = {
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
       after() {
@@ -188,7 +187,7 @@ const createOnceNoHooksRule = {
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
     };

@@ -1,8 +1,7 @@
 import { sep } from 'node:path';
 import { defineRule } from '../../../dist/index.js';
 
-// `loc` field is required for ESLint.
-// TODO: Remove this workaround when AST nodes have a `loc` field.
+// `loc` is required for ESLint
 const SPAN = {
   start: 0,
   end: 0,
@@ -26,7 +25,7 @@ const createRule = defineRule({
       Identifier(node) {
         context.report({
           message: `ident visit fn "${node.name}":\nfilename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
     };
@@ -71,7 +70,7 @@ const createOnceRule = defineRule({
           message: `ident visit fn "${node.name}":\n`
             + `identNum: ${identNum}\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
       after() {
@@ -122,7 +121,7 @@ const createOnceBeforeFalseRule = defineRule({
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
       after() {
@@ -152,7 +151,7 @@ const createOnceBeforeOnlyRule = defineRule({
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
     };
@@ -166,7 +165,7 @@ const createOnceAfterOnlyRule = defineRule({
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
       after() {
@@ -187,7 +186,7 @@ const createOnceNoHooksRule = defineRule({
         context.report({
           message: `ident visit fn "${node.name}":\n`
             + `filename: ${relativePath(context.filename)}`,
-          node: { ...SPAN, ...node },
+          node,
         });
       },
     };
