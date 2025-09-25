@@ -11,7 +11,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Array#toSorted()` instead of `Array#sort()`.")
-        .with_help("Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.")
+        .with_help("`Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.")
         .with_label(span)
 }
 
