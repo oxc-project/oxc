@@ -1,10 +1,10 @@
-js compatibility: 662/699 (94.71%)
+js compatibility: 663/699 (94.85%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/comments/15661.js | 💥💥 | 55.81% |
+| js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/return-statement.js | 💥💥 | 98.85% |
@@ -20,7 +20,6 @@ js compatibility: 662/699 (94.71%)
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
