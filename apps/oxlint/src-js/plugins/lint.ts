@@ -6,7 +6,7 @@ import {
 } from '../generated/constants.js';
 import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
-import { assertIs } from './utils.js';
+import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // Lazy implementation
@@ -43,8 +43,40 @@ const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
 
-// Run rules on a file.
+/**
+ * Run rules on a file.
+ *
+ * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param bufferId - ID of buffer containing file data
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param ruleIds - IDs of rules to run on this file
+ * @returns JSON result
+ */
 export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
+  try {
+    lintFileImpl(filePath, bufferId, buffer, ruleIds);
+    return JSON.stringify({ Success: diagnostics });
+  } catch (err) {
+    return JSON.stringify({ Failure: getErrorMessage(err) });
+  } finally {
+    diagnostics.length = 0;
+  }
+}
+
+/**
+ * Run rules on a file.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param bufferId - ID of buffer containing file data
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param ruleIds - IDs of rules to run on this file
+ * @returns Diagnostics to send back to Rust
+ * @throws {Error} If any parameters are invalid
+ * @throws {*} If any rule throws
+ */
+function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -142,9 +174,4 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
     // Reset array, ready for next file
     afterHooks.length = 0;
   }
-
-  // Send diagnostics back to Rust
-  const ret = JSON.stringify(diagnostics);
-  diagnostics.length = 0;
-  return ret;
 }

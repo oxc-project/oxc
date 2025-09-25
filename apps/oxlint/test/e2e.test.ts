@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { execa } from 'execa';
 
 const PACKAGE_ROOT_PATH = dirname(import.meta.dirname);
+const ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, '../../../');
 const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'dist/cli.js');
 const ROOT_URL = new URL('../../../', import.meta.url).href;
 const FIXTURES_URL = new URL('./fixtures/', import.meta.url).href;
@@ -37,12 +38,19 @@ function normalizeOutput(output: string): string {
   // Remove lines from stack traces which are outside `fixtures` directory.
   // Replace path to repo root in stack traces with `<root>`.
   lines = lines.flatMap((line) => {
-    // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foor/bar.js:1:1`
-    // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foor/bar.js:1:1)`
-    const match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
+    // e.g. ` | at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
+    // e.g. ` | at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
+    let match = line.match(/^(\s*\|\s+at (?:.+?\()?)(.+)$/);
     if (match) {
       const [, premable, at] = match;
       return at.startsWith(FIXTURES_URL) ? [`${premable}<root>/${at.slice(ROOT_URL.length)}`] : [];
+    } else {
+      // e.g. ` | File path: /path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js`
+      match = line.match(/^(\s*\|\s+File path: )(.+)$/);
+      if (match) {
+        const [, premable, path] = match;
+        if (path.startsWith(ROOT_PATH)) return [`${premable}<root>/${path.slice(ROOT_PATH.length)}`];
+      }
     }
     return [line];
   });
@@ -127,6 +135,44 @@ describe('oxlint CLI', () => {
     const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_via_overrides_missing_rule');
     expect(exitCode).toBe(1);
     expect(normalizeOutput(stdout)).toMatchSnapshot();
+  });
+
+  describe('should report an error if a custom plugin throws an error during linting', () => {
+    it('in `create` method', async () => {
+      const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_lint_create_error');
+      expect(exitCode).toBe(1);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+    });
+
+    it('in `createOnce` method', async () => {
+      const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_lint_createOnce_error');
+      expect(exitCode).toBe(1);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+    });
+
+    it('in visit function', async () => {
+      const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_lint_visit_error');
+      expect(exitCode).toBe(1);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+    });
+
+    it('in `before` hook', async () => {
+      const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_lint_before_hook_error');
+      expect(exitCode).toBe(1);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+    });
+
+    it('in `after` hook', async () => {
+      const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_lint_after_hook_error');
+      expect(exitCode).toBe(1);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+    });
+
+    it('in `fix` function', async () => {
+      const { stdout, exitCode } = await runOxlint('test/fixtures/custom_plugin_lint_fix_error');
+      expect(exitCode).toBe(1);
+      expect(normalizeOutput(stdout)).toMatchSnapshot();
+    });
   });
 
   it('should report the correct severity when using a custom plugin', async () => {

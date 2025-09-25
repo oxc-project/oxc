@@ -443,10 +443,12 @@ impl Linter {
                             match CompositeFix::merge_fixes_fallible(fixes, source_text) {
                                 Ok(fix) => PossibleFixes::Single(fix),
                                 Err(err) => {
+                                    let path = path.to_string_lossy();
+                                    let message = format!(
+                                        "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
+                                    );
                                     ctx_host.push_diagnostic(Message::new(
-                                        OxcDiagnostic::error(format!(
-                                            "Plugin `{plugin_name}/{rule_name}` returned invalid fixes: {err}"
-                                        )),
+                                        OxcDiagnostic::error(message),
                                         PossibleFixes::None,
                                     ));
                                     PossibleFixes::None
@@ -466,8 +468,13 @@ impl Linter {
                     ));
                 }
             }
-            Err(_err) => {
-                // TODO: report diagnostic
+            Err(err) => {
+                let path = path.to_string_lossy();
+                let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
+                ctx_host.push_diagnostic(Message::new(
+                    OxcDiagnostic::error(message),
+                    PossibleFixes::None,
+                ));
             }
         }
     }

@@ -5,6 +5,7 @@ use napi::{
     bindgen_prelude::{FnArgs, Uint8Array},
     threadsafe_function::ThreadsafeFunctionCallMode,
 };
+use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
@@ -48,6 +49,13 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     })
 }
 
+/// Result returned by `lintFile` JS callback.
+#[derive(Clone, Debug, Deserialize)]
+pub enum LintFileReturnValue {
+    Success(Vec<LintFileResult>),
+    Failure(String),
+}
+
 /// Wrap `lintFile` JS callback as a normal Rust function.
 ///
 /// The returned function creates a `Uint8Array` referencing the memory of the given `Allocator`,
@@ -79,7 +87,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
                 let _ = match &result {
-                    Ok(r) => match serde_json::from_str::<Vec<LintFileResult>>(r) {
+                    Ok(r) => match serde_json::from_str::<LintFileReturnValue>(r) {
                         Ok(v) => tx.send(Ok(v)),
                         Err(_e) => tx.send(Err("Failed to deserialize lint result".to_string())),
                     },
@@ -90,14 +98,15 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             },
         );
 
-        if status != Status::Ok {
-            return Err(format!("Failed to schedule callback: {status:?}"));
-        }
+        assert!(status == Status::Ok, "Failed to schedule callback: {status:?}");
 
         match rx.recv() {
-            Ok(Ok(x)) => Ok(x),
-            Ok(Err(e)) => Err(format!("Callback reported error: {e}")),
-            Err(e) => Err(format!("Callback did not respond: {e}")),
+            Ok(Ok(x)) => match x {
+                LintFileReturnValue::Success(diagnostics) => Ok(diagnostics),
+                LintFileReturnValue::Failure(err) => Err(err),
+            },
+            Ok(Err(err)) => panic!("Callback reported error: {err}"),
+            Err(err) => panic!("Callback did not respond: {err}"),
         }
     })
 }
