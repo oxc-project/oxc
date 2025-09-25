@@ -30,16 +30,16 @@ const rule = {
     return {
       VariableDeclaration(node) {
         if (this !== undefined) context.report({ message: 'this !== undefined', node });
-      }
+      },
     };
   },
 };
 
 export default {
   meta: {
-    name: "context-plugin",
+    name: 'context-plugin',
   },
   rules: {
-    "log-context": rule,
+    'log-context': rule,
   },
 };

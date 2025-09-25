@@ -2,17 +2,17 @@ import plugin from './plugin.js';
 
 export default [
   {
-    files: ["files/*.js"],
+    files: ['files/*.js'],
     plugins: {
-      "define-plugin-plugin": plugin,
+      'define-plugin-plugin': plugin,
     },
     rules: {
-      "define-plugin-plugin/create": "error",
-      "define-plugin-plugin/create-once": "error",
-      "define-plugin-plugin/create-once-before-false": "error",
-      "define-plugin-plugin/create-once-before-only": "error",
-      "define-plugin-plugin/create-once-after-only": "error",
-      "define-plugin-plugin/create-once-no-hooks": "error",
+      'define-plugin-plugin/create': 'error',
+      'define-plugin-plugin/create-once': 'error',
+      'define-plugin-plugin/create-once-before-false': 'error',
+      'define-plugin-plugin/create-once-before-only': 'error',
+      'define-plugin-plugin/create-once-after-only': 'error',
+      'define-plugin-plugin/create-once-no-hooks': 'error',
     },
   },
 ];

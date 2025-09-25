@@ -1,9 +1,9 @@
 export default {
   meta: {
-    name: "utf16-plugin",
+    name: 'utf16-plugin',
   },
   rules: {
-    "no-debugger": {
+    'no-debugger': {
       create(context) {
         return {
           DebuggerStatement(debuggerStatement) {

@@ -1,6 +1,6 @@
 export default {
   meta: {
-    name: "error-plugin",
+    name: 'error-plugin',
   },
   rules: {
     error: {
@@ -8,10 +8,10 @@ export default {
         return {
           Identifier(node) {
             context.report({
-              message: "Identifier found",
+              message: 'Identifier found',
               node,
               fix() {
-                throw new Error("Whoops!");
+                throw new Error('Whoops!');
               },
             });
           },

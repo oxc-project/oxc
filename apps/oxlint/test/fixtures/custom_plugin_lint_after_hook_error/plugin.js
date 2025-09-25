@@ -1,13 +1,13 @@
 export default {
   meta: {
-    name: "error-plugin",
+    name: 'error-plugin',
   },
   rules: {
     error: {
       createOnce(_context) {
         return {
           after() {
-            throw new Error("Whoops!");
+            throw new Error('Whoops!');
           },
         };
       },

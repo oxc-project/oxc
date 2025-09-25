@@ -56,10 +56,10 @@ const createOnceRule = {
         identNum = 0;
 
         context.report({
-          message: 'before hook:\n'
-            + `createOnce call count: ${createOnceCallCount}\n`
-            + `this === rule: ${topLevelThis === createOnceRule}\n`
-            + `filename: ${relativePath(context.filename)}`,
+          message: 'before hook:\n' +
+            `createOnce call count: ${createOnceCallCount}\n` +
+            `this === rule: ${topLevelThis === createOnceRule}\n` +
+            `filename: ${relativePath(context.filename)}`,
           node: SPAN,
         });
       },
@@ -68,17 +68,17 @@ const createOnceRule = {
         visits.push({ fileNum, identNum });
 
         context.report({
-          message: `ident visit fn "${node.name}":\n`
-            + `identNum: ${identNum}\n`
-            + `filename: ${relativePath(context.filename)}`,
+          message: `ident visit fn "${node.name}":\n` +
+            `identNum: ${identNum}\n` +
+            `filename: ${relativePath(context.filename)}`,
           node,
         });
       },
       after() {
         context.report({
-          message: 'after hook:\n'
-            + `identNum: ${identNum}\n`
-            + `filename: ${relativePath(context.filename)}`,
+          message: 'after hook:\n' +
+            `identNum: ${identNum}\n` +
+            `filename: ${relativePath(context.filename)}`,
           node: SPAN,
         });
 
@@ -93,8 +93,8 @@ const createOnceRule = {
           ];
 
           if (
-            visits.length !== expectedVisits.length
-            || visits.some((v, i) => v.fileNum !== expectedVisits[i].fileNum || v.identNum !== expectedVisits[i].identNum)
+            visits.length !== expectedVisits.length ||
+            visits.some((v, i) => v.fileNum !== expectedVisits[i].fileNum || v.identNum !== expectedVisits[i].identNum)
           ) {
             context.report({ message: `Unexpected visits: ${JSON.stringify(visits)}`, node: SPAN });
           }
@@ -110,8 +110,8 @@ const createOnceBeforeFalseRule = {
     return {
       before() {
         context.report({
-          message: 'before hook:\n'
-            + `filename: ${relativePath(context.filename)}`,
+          message: 'before hook:\n' +
+            `filename: ${relativePath(context.filename)}`,
           node: SPAN,
         });
 
@@ -120,15 +120,15 @@ const createOnceBeforeFalseRule = {
       },
       Identifier(node) {
         context.report({
-          message: `ident visit fn "${node.name}":\n`
-            + `filename: ${relativePath(context.filename)}`,
+          message: `ident visit fn "${node.name}":\n` +
+            `filename: ${relativePath(context.filename)}`,
           node,
         });
       },
       after() {
         context.report({
-          message: 'after hook:\n'
-            + `filename: ${relativePath(context.filename)}`,
+          message: 'after hook:\n' +
+            `filename: ${relativePath(context.filename)}`,
           node: SPAN,
         });
       },
@@ -143,15 +143,15 @@ const createOnceBeforeOnlyRule = {
     return {
       before() {
         context.report({
-          message: 'before hook:\n'
-            + `filename: ${relativePath(context.filename)}`,
+          message: 'before hook:\n' +
+            `filename: ${relativePath(context.filename)}`,
           node: SPAN,
         });
       },
       Identifier(node) {
         context.report({
-          message: `ident visit fn "${node.name}":\n`
-            + `filename: ${relativePath(context.filename)}`,
+          message: `ident visit fn "${node.name}":\n` +
+            `filename: ${relativePath(context.filename)}`,
           node,
         });
       },
@@ -164,15 +164,15 @@ const createOnceAfterOnlyRule = {
     return {
       Identifier(node) {
         context.report({
-          message: `ident visit fn "${node.name}":\n`
-            + `filename: ${relativePath(context.filename)}`,
+          message: `ident visit fn "${node.name}":\n` +
+            `filename: ${relativePath(context.filename)}`,
           node,
         });
       },
       after() {
         context.report({
-          message: 'after hook:\n'
-            + `filename: ${relativePath(context.filename)}`,
+          message: 'after hook:\n' +
+            `filename: ${relativePath(context.filename)}`,
           node: SPAN,
         });
       },
@@ -185,8 +185,8 @@ const createOnceNoHooksRule = {
     return {
       Identifier(node) {
         context.report({
-          message: `ident visit fn "${node.name}":\n`
-            + `filename: ${relativePath(context.filename)}`,
+          message: `ident visit fn "${node.name}":\n` +
+            `filename: ${relativePath(context.filename)}`,
           node,
         });
       },
@@ -196,14 +196,14 @@ const createOnceNoHooksRule = {
 
 export default definePlugin({
   meta: {
-    name: "define-plugin-plugin",
+    name: 'define-plugin-plugin',
   },
   rules: {
     create: createRule,
-    "create-once": createOnceRule,
-    "create-once-before-false": createOnceBeforeFalseRule,
-    "create-once-before-only": createOnceBeforeOnlyRule,
-    "create-once-after-only": createOnceAfterOnlyRule,
-    "create-once-no-hooks": createOnceNoHooksRule,
+    'create-once': createOnceRule,
+    'create-once-before-false': createOnceBeforeFalseRule,
+    'create-once-before-only': createOnceBeforeOnlyRule,
+    'create-once-after-only': createOnceAfterOnlyRule,
+    'create-once-no-hooks': createOnceNoHooksRule,
   },
 });

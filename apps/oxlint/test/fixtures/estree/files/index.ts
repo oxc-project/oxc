@@ -1,3 +1,5 @@
+// dprint-ignore-file
+
 // All `Identifier`s
 let a = { x: y };
 

@@ -1,6 +1,6 @@
 {
-    "plugins": ["./plugin.js"],
-    "rules": {
-        "basic-custom-plugin/no-debugger": "warn"
-    }
+  "plugins": ["./plugin.js"],
+  "rules": {
+    "basic-custom-plugin/no-debugger": "warn"
+  }
 }

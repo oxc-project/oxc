@@ -34,18 +34,18 @@
   | * TSUnionType:exit: (types: TSStringKeyword, TSNumberKeyword)
   | * TSTypeAliasDeclaration:exit: (typeAnnotation: TSUnionType)
   | * Program:exit
-    ,-[files/index.ts:2:1]
-  1 |     // All `Identifier`s
-  2 | ,-> let a = { x: y };
-  3 | |   
-  4 | |   // No `ParenthesizedExpression`s in AST
-  5 | |   const b = (x * ((('str' + ((123))))));
-  6 | |   
-  7 | |   // TS syntax
-  8 | |   type T = string;
-  9 | |   
- 10 | |   // No `TSParenthesizedType`s in AST
- 11 | `-> type U = (((((string)) | ((number)))));
+    ,-[files/index.ts:4:1]
+  3 |     // All `Identifier`s
+  4 | ,-> let a = { x: y };
+  5 | |   
+  6 | |   // No `ParenthesizedExpression`s in AST
+  7 | |   const b = (x * ((('str' + ((123))))));
+  8 | |   
+  9 | |   // TS syntax
+ 10 | |   type T = string;
+ 11 | |   
+ 12 | |   // No `TSParenthesizedType`s in AST
+ 13 | `-> type U = (((((string)) | ((number)))));
     `----
 
 Found 0 warnings and 1 error.

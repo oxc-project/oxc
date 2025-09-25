@@ -1,38 +1,38 @@
 export default {
   meta: {
-    name: "basic-custom-plugin",
+    name: 'basic-custom-plugin',
   },
   rules: {
-    "no-debugger": {
+    'no-debugger': {
       create(context) {
         return {
           DebuggerStatement(debuggerStatement) {
             context.report({
-              message: "Unexpected Debugger Statement",
+              message: 'Unexpected Debugger Statement',
               node: debuggerStatement,
             });
           },
         };
       },
     },
-    "no-debugger-2": {
+    'no-debugger-2': {
       create(context) {
         return {
           DebuggerStatement(debuggerStatement) {
             context.report({
-              message: "Unexpected Debugger Statement",
+              message: 'Unexpected Debugger Statement',
               node: debuggerStatement,
             });
           },
         };
       },
     },
-    "no-identifiers-named-foo": {
+    'no-identifiers-named-foo': {
       create(context) {
         return {
           Identifier(ident) {
-            if (ident.name == "foo") {
-              context.report({ message: "Unexpected Identifier named foo", node: ident});
+            if (ident.name == 'foo') {
+              context.report({ message: 'Unexpected Identifier named foo', node: ident });
             }
           },
         };

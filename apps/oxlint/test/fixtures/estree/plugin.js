@@ -1,6 +1,6 @@
 export default {
   meta: {
-    name: "estree-check",
+    name: 'estree-check',
   },
   rules: {
     check: {

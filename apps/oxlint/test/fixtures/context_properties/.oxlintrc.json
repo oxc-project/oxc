@@ -1,7 +1,7 @@
 {
-    "plugins": ["./plugin.js"],
-    "categories": {"correctness": "off"},
-    "rules": {
-        "context-plugin/log-context": "error"
-    }
+  "plugins": ["./plugin.js"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "context-plugin/log-context": "error"
+  }
 }

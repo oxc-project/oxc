@@ -1,9 +1,9 @@
 {
-    "plugins": ["./plugin.js"],
-    "categories": {
-      "correctness": "off"
-    },
-    "rules": {
-        "fixes-plugin/fixes": "error"
-    }
+  "plugins": ["./plugin.js"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "fixes-plugin/fixes": "error"
+  }
 }

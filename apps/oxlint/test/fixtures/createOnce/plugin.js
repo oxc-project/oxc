@@ -117,14 +117,14 @@ const noHooksRule = {
 
 export default {
   meta: {
-    name: "create-once-plugin",
+    name: 'create-once-plugin',
   },
   rules: {
-    "always-run": alwaysRunRule,
-    "skip-run": skipRunRule,
-    "before-only": beforeOnlyRule,
-    "after-only": afterOnlyRule,
-    "no-hooks": noHooksRule,
+    'always-run': alwaysRunRule,
+    'skip-run': skipRunRule,
+    'before-only': beforeOnlyRule,
+    'after-only': afterOnlyRule,
+    'no-hooks': noHooksRule,
   },
 };
 
