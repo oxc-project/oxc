@@ -94,8 +94,7 @@ jobs:
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
-        with:
-          shared-key: release-${{ matrix.target }}
+        # Please do not set a cache for release builds; they are evicted before they can be re-used, yet they consume significant cache storage before eviction.
 
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
