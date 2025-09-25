@@ -98,6 +98,8 @@ impl<'a> Formatter<'a> {
 #[derive(Copy, Clone, Debug)]
 pub(crate) enum JsLabels {
     MemberChain,
+    /// For `ir_transform/sort_imports`
+    ImportDeclaration,
 }
 
 impl Label for JsLabels {
@@ -108,6 +110,7 @@ impl Label for JsLabels {
     fn debug_name(&self) -> &'static str {
         match self {
             Self::MemberChain => "MemberChain",
+            Self::ImportDeclaration => "ImportDeclaration",
         }
     }
 }
