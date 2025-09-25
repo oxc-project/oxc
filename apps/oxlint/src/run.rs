@@ -66,13 +66,10 @@ fn lint_impl(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> CliRunResu
     init_tracing();
     init_miette();
 
-    let mut args = std::env::args_os();
-    // If first arg is `node`, also skip script path (`node script.js ...`).
-    // Otherwise, just skip first arg (`oxlint ...`).
-    if args.next().is_some_and(|arg| arg == "node") {
-        args.next();
-    }
-    let args = args.collect::<Vec<_>>();
+    // 1st arg is path to NodeJS binary.
+    // 2nd arg is path to `oxlint/.bin/oxlint` (in released packages)
+    // or `apps/oxlint/dist/cli.js` (in development).
+    let args = std::env::args_os().skip(2).collect::<Vec<_>>();
 
     let cmd = crate::cli::lint_command();
     let command = match cmd.run_inner(&*args) {
