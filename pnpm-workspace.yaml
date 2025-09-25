@@ -19,6 +19,7 @@ verifyDepsBeforeRun: install
 # To reduce the risk of installing compromised packages.
 minimumReleaseAge: 1440 # 1 day
 minimumReleaseAgeExclude:
+  - '@oxc-project/*'
   - '@oxfmt/*'
   - '@oxlint-tsgolint/*'
   - '@oxlint/*'
