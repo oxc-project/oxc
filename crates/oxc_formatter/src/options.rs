@@ -62,6 +62,10 @@ pub struct FormatOptions {
     /// - `"start"`: Places the operator at the beginning of the next line.
     /// - `"end"`: Places the operator at the end of the current line (default).
     pub experimental_operator_position: OperatorPosition,
+
+    // TODO: `FormatOptions`? Split out as `TransformOptions`?
+    /// Sort import statements. By default disabled.
+    pub experimental_sort_imports: Option<SortImports>,
 }
 
 impl FormatOptions {
@@ -82,6 +86,7 @@ impl FormatOptions {
             attribute_position: AttributePosition::default(),
             expand: Expand::default(),
             experimental_operator_position: OperatorPosition::default(),
+            experimental_sort_imports: None,
         }
     }
 
@@ -106,7 +111,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Bracket same line: {}", self.bracket_same_line.value())?;
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
         writeln!(f, "Expand lists: {}", self.expand)?;
-        writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)
+        writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
+        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)
     }
 }
 
@@ -907,4 +913,14 @@ impl fmt::Display for OperatorPosition {
         };
         f.write_str(s)
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub struct SortImports {
+    /// Partition imports by newlines.
+    pub partition_by_newline: bool,
+    /// Partition imports by comments.
+    pub partition_by_comment: bool,
+    /// Sort side effects imports.
+    pub sort_side_effects: bool,
 }
