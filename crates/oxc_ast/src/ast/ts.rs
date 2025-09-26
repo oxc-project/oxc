@@ -44,7 +44,7 @@ use super::{inherit_variants, js::*, literal::*};
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(
     rename = "Identifier",
-    add_fields(name = This, decorators = EmptyArray, optional = False),
+    add_fields(decorators = EmptyArray, name = This, optional = False),
     field_order(decorators, name, optional, type_annotation, span),
 )]
 pub struct TSThisParameter<'a> {
