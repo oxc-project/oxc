@@ -26,7 +26,9 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
   const args = options?.args ?? [];
 
   await testFixtureWithCommand({
-    command: 'node',
+    // Use current NodeJS executable, rather than `node`, to avoid problems with a Node version manager
+    // installed on system resulting in using wrong NodeJS version
+    command: process.execPath,
     args: [CLI_PATH, ...args, 'files'],
     fixtureName,
     snapshotName: options?.snapshotName ?? 'output',
