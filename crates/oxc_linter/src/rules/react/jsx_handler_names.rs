@@ -142,12 +142,9 @@ fn build_event_handler_regex(handler_prefix: &str, handler_prop_prefix: &str) ->
     if prefix_pattern.is_empty() || prop_prefix_pattern.is_empty() {
         return None;
     }
-    let regex = RegexBuilder::new(
-        format!(r"^((props\.({prop_prefix_pattern}))|((.*\.)?({prefix_pattern})))[0-9]*[A-Z].*$")
-            .as_str(),
-    )
-    .build()
-    .expect("Failed to compile regex for event handler prefixes");
+    let regex = RegexBuilder::new(format!(r"^((.*\.)?({prefix_pattern}))[0-9]*[A-Z].*$").as_str())
+        .build()
+        .expect("Failed to compile regex for event handler prefixes");
     Some(regex)
 }
 
