@@ -19,7 +19,10 @@ export type Fix = { range: Range; text: string };
 type Range = [number, number];
 
 // Currently we only support `Node`s, but will add support for `Token`s later
-type NodeOrToken = Node;
+interface NodeOrToken {
+  start: number;
+  end: number;
+}
 
 // Fixer, passed as argument to `fix` function passed to `Context#report()`.
 //
