@@ -9,7 +9,7 @@ use oxc_diagnostics::Severity;
 
 use crate::LSP_MAX_INT;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
     pub fixed_content: PossibleFixContent,
@@ -23,8 +23,9 @@ pub struct FixedContent {
     pub range: Range,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum PossibleFixContent {
+    #[default]
     None,
     Single(FixedContent),
     Multiple(Vec<FixedContent>),

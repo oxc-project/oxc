@@ -52,13 +52,17 @@ impl ServerLinterDiagnostics {
     pub fn get_diagnostics(&self, path: &str) -> Option<Vec<DiagnosticReport>> {
         let mut reports = Vec::new();
         let mut found = false;
-        if let Some(Some(diagnostics)) = self.isolated_linter.pin().get(path) {
-            reports.extend(diagnostics.clone());
+        if let Some(entry) = self.isolated_linter.pin().get(path) {
             found = true;
+            if let Some(diagnostics) = entry {
+                reports.extend(diagnostics.clone());
+            }
         }
-        if let Some(Some(diagnostics)) = self.tsgo_linter.pin().get(path) {
-            reports.extend(diagnostics.clone());
+        if let Some(entry) = self.tsgo_linter.pin().get(path) {
             found = true;
+            if let Some(diagnostics) = entry {
+                reports.extend(diagnostics.clone());
+            }
         }
         if found { Some(reports) } else { None }
     }
@@ -69,9 +73,10 @@ impl ServerLinterDiagnostics {
     }
 
     pub fn get_cached_files_of_diagnostics(&self) -> Vec<String> {
-        let mut files = Vec::new();
         let isolated_files = self.isolated_linter.pin().keys().cloned().collect::<Vec<_>>();
         let tsgo_files = self.tsgo_linter.pin().keys().cloned().collect::<Vec<_>>();
+
+        let mut files = Vec::with_capacity(isolated_files.len() + tsgo_files.len());
         files.extend(isolated_files);
         files.extend(tsgo_files);
         files.dedup();
@@ -407,9 +412,11 @@ mod test {
     use std::path::{Path, PathBuf};
 
     use crate::{
+        ConcurrentHashMap,
         linter::{
+            error_with_position::DiagnosticReport,
             options::{LintOptions, Run, UnusedDisableDirectives},
-            server_linter::{ServerLinter, normalize_path},
+            server_linter::{ServerLinter, ServerLinterDiagnostics, normalize_path},
         },
         tester::{Tester, get_file_path},
     };
@@ -455,6 +462,45 @@ mod test {
         assert!(configs_dirs[2].ends_with("deep2"));
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
+    }
+
+    #[test]
+    fn test_get_diagnostics_found_and_none_entries() {
+        let key = "file:///test.js".to_string();
+
+        // Case 1: Both entries present, Some diagnostics
+        let diag = DiagnosticReport::default();
+        let diag_map = ConcurrentHashMap::default();
+        diag_map.pin().insert(key.clone(), Some(vec![diag.clone()]));
+        let tsgo_map = ConcurrentHashMap::default();
+        tsgo_map.pin().insert(key.clone(), Some(vec![diag]));
+
+        let server_diag = super::ServerLinterDiagnostics {
+            isolated_linter: std::sync::Arc::new(diag_map),
+            tsgo_linter: std::sync::Arc::new(tsgo_map),
+        };
+        let result = server_diag.get_diagnostics(&key);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().len(), 2);
+
+        // Case 2: Entry present, but value is None
+        let diag_map_none = ConcurrentHashMap::default();
+        diag_map_none.pin().insert(key.clone(), None);
+        let tsgo_map_none = ConcurrentHashMap::default();
+        tsgo_map_none.pin().insert(key.clone(), None);
+
+        let server_diag_none = ServerLinterDiagnostics {
+            isolated_linter: std::sync::Arc::new(diag_map_none),
+            tsgo_linter: std::sync::Arc::new(tsgo_map_none),
+        };
+        let result_none = server_diag_none.get_diagnostics(&key);
+        assert!(result_none.is_some());
+        assert_eq!(result_none.unwrap().len(), 0);
+
+        // Case 3: No entry at all
+        let server_diag_empty = ServerLinterDiagnostics::default();
+        let result_empty = server_diag_empty.get_diagnostics(&key);
+        assert!(result_empty.is_none());
     }
 
     #[test]

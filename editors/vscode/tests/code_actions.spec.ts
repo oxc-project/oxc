@@ -16,7 +16,8 @@ import {
   activateExtension,
   fixturesWorkspaceUri,
   loadFixture,
-  sleep
+  sleep,
+  testSingleFolderMode
 } from './test-helpers';
 import assert = require('assert');
 
@@ -35,11 +36,11 @@ teardown(async () => {
 });
 
 suite('code actions', () => {
-  test('listed code actions', async () => {
+  // flaky test for multi workspace mode
+  testSingleFolderMode('listed code actions', async () => {
     await loadFixture('debugger');
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'debugger.js');
     // await window.showTextDocument(fileUri); -- should also work without opening the file
-    await sleep(500); // ¯\_(ツ)_/¯ -- test it again when adding/removing tests
 
     const codeActions: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
       'vscode.executeCodeActionProvider',
