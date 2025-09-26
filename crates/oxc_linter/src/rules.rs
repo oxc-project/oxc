@@ -403,6 +403,7 @@ pub(crate) mod unicorn {
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
     pub mod no_array_reverse;
+    pub mod no_array_sort;
     pub mod no_await_expression_member;
     pub mod no_await_in_promise_methods;
     pub mod no_console_spaces;
@@ -1122,6 +1123,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_array_sort,
     unicorn::no_array_reverse,
     unicorn::no_instanceof_builtins,
     unicorn::no_array_method_this_argument,
