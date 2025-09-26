@@ -61,7 +61,7 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`
-    while semantic.jsdoc().get_all_by_node(current_node).is_none() {
+    while semantic.jsdoc().get_all_by_node(semantic.nodes(), current_node).is_none() {
         // Tie-breaker, otherwise every loop will end at `Program` node!
         // Maybe more checks should be added
         match current_node.kind() {

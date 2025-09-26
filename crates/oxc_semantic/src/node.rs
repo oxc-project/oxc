@@ -26,8 +26,6 @@ pub struct AstNode<'a> {
     /// Associated `BasicBlockId` in CFG (initialized by control_flow)
     #[cfg(feature = "cfg")]
     cfg_id: BlockNodeId,
-
-    flags: NodeFlags,
 }
 
 impl<'a> AstNode<'a> {
@@ -37,21 +35,14 @@ impl<'a> AstNode<'a> {
         kind: AstKind<'a>,
         scope_id: ScopeId,
         cfg_id: BlockNodeId,
-        flags: NodeFlags,
         id: NodeId,
     ) -> Self {
-        Self { id, kind, scope_id, cfg_id, flags }
+        Self { id, kind, scope_id, cfg_id }
     }
 
     #[cfg(not(feature = "cfg"))]
-    pub(crate) fn new(
-        kind: AstKind<'a>,
-        scope_id: ScopeId,
-        _cfg_id: (),
-        flags: NodeFlags,
-        id: NodeId,
-    ) -> Self {
-        Self { id, kind, scope_id, flags }
+    pub(crate) fn new(kind: AstKind<'a>, scope_id: ScopeId, _cfg_id: (), id: NodeId) -> Self {
+        Self { id, kind, scope_id }
     }
 
     /// This node's unique identifier.
@@ -84,18 +75,6 @@ impl<'a> AstNode<'a> {
     pub fn scope_id(&self) -> ScopeId {
         self.scope_id
     }
-
-    /// Flags providing additional information about the node.
-    #[inline]
-    pub fn flags(&self) -> NodeFlags {
-        self.flags
-    }
-
-    /// Get a mutable reference to this node's flags.
-    #[inline]
-    pub fn flags_mut(&mut self) -> &mut NodeFlags {
-        &mut self.flags
-    }
 }
 
 impl GetSpan for AstNode<'_> {
@@ -118,6 +97,8 @@ pub struct AstNodes<'a> {
     nodes: IndexVec<NodeId, AstNode<'a>>,
     /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, NodeId>,
+    /// `node` -> `flags`
+    flags: IndexVec<NodeId, NodeFlags>,
     /// Stores a set of bits of a fixed size, where each bit represents a single [`AstKind`]. If the bit is set (1),
     /// then the AST contains at least one node of that kind. If the bit is not set (0), then the AST does not contain
     /// any nodes of that kind.
@@ -204,6 +185,18 @@ impl<'a> AstNodes<'a> {
         &mut self.nodes[node_id]
     }
 
+    /// Get flags for a node.
+    #[inline]
+    pub fn flags(&self, node_id: NodeId) -> NodeFlags {
+        self.flags[node_id]
+    }
+
+    /// Get a mutable reference to a node's flags.
+    #[inline]
+    pub fn flags_mut(&mut self, node_id: NodeId) -> &mut NodeFlags {
+        &mut self.flags[node_id]
+    }
+
     /// Get the [`Program`] that's also the root of the AST.
     #[inline]
     pub fn program(&self) -> &'a Program<'a> {
@@ -232,8 +225,9 @@ impl<'a> AstNodes<'a> {
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(parent_node_id);
-        let node = AstNode::new(kind, scope_id, cfg_id, flags, node_id);
+        let node = AstNode::new(kind, scope_id, cfg_id, node_id);
         self.nodes.push(node);
+        self.flags.push(flags);
         self.node_kinds_set.set(kind.ty());
         node_id
     }
@@ -249,8 +243,9 @@ impl<'a> AstNodes<'a> {
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(parent_node_id);
-        let node = AstNode::new(kind, scope_id, (), flags, node_id);
+        let node = AstNode::new(kind, scope_id, (), node_id);
         self.nodes.push(node);
+        self.flags.push(flags);
         self.node_kinds_set.set(kind.ty());
         node_id
     }
@@ -274,7 +269,8 @@ impl<'a> AstNodes<'a> {
             "Program node must be of kind `AstKind::Program`"
         );
         self.parent_ids.push(NodeId::ROOT);
-        self.nodes.push(AstNode::new(kind, scope_id, cfg_id, flags, NodeId::ROOT));
+        self.nodes.push(AstNode::new(kind, scope_id, cfg_id, NodeId::ROOT));
+        self.flags.push(flags);
         self.node_kinds_set.set(AstType::Program);
         NodeId::ROOT
     }
@@ -293,7 +289,8 @@ impl<'a> AstNodes<'a> {
             "Program node must be of kind `AstKind::Program`"
         );
         self.parent_ids.push(NodeId::ROOT);
-        self.nodes.push(AstNode::new(kind, scope_id, (), flags, NodeId::ROOT));
+        self.nodes.push(AstNode::new(kind, scope_id, (), NodeId::ROOT));
+        self.flags.push(flags);
         self.node_kinds_set.set(AstType::Program);
         NodeId::ROOT
     }
@@ -302,6 +299,7 @@ impl<'a> AstNodes<'a> {
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
+        self.flags.reserve(additional);
     }
 
     /// Checks if the AST contains any nodes of the given types.

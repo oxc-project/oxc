@@ -136,8 +136,9 @@ pub fn check_unresolved_exports(ctx: &SemanticBuilder<'_>) {
     for reference_ids in ctx.unresolved_references.root().values() {
         for reference_id in reference_ids {
             let reference = ctx.scoping.get_reference(*reference_id);
-            let node = ctx.nodes.get_node(reference.node_id());
-            if node.flags().has_export_specifier()
+            let node_id = reference.node_id();
+            let node = ctx.nodes.get_node(node_id);
+            if ctx.nodes.flags(node_id).has_export_specifier()
                 && let AstKind::IdentifierReference(ident) = node.kind()
             {
                 ctx.errors.borrow_mut().push(undefined_export(&ident.name, ident.span));

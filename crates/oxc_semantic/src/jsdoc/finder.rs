@@ -2,7 +2,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_span::{GetSpan, Span};
 
-use crate::AstNode;
+use crate::{AstNode, AstNodes};
 
 use super::parser::JSDoc;
 
@@ -18,16 +18,24 @@ impl<'a> JSDocFinder<'a> {
         Self { attached, not_attached }
     }
 
-    pub fn get_one_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDoc<'a>> {
-        let jsdocs = self.get_all_by_node(node)?;
+    pub fn get_one_by_node<'b>(
+        &'b self,
+        nodes: &AstNodes<'a>,
+        node: &AstNode<'a>,
+    ) -> Option<JSDoc<'a>> {
+        let jsdocs = self.get_all_by_node(nodes, node)?;
 
         // If flagged, at least 1 JSDoc is attached
         // If multiple JSDocs are attached, return the last = nearest
         jsdocs.last().cloned()
     }
 
-    pub fn get_all_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDoc<'a>>> {
-        if !node.flags().has_jsdoc() {
+    pub fn get_all_by_node<'b>(
+        &'b self,
+        nodes: &AstNodes<'a>,
+        node: &AstNode<'a>,
+    ) -> Option<Vec<JSDoc<'a>>> {
+        if !nodes.flags(node.id()).has_jsdoc() {
             return None;
         }
 

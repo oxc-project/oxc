@@ -127,7 +127,7 @@ impl Rule for RequireParam {
             return;
         };
         // If no JSDoc is found, skip
-        let Some(jsdocs) = ctx.jsdoc().get_all_by_node(func_def_node) else {
+        let Some(jsdocs) = ctx.jsdoc().get_all_by_node(ctx.nodes(), func_def_node) else {
             return;
         };
 
