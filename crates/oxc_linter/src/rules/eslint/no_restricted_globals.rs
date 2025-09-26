@@ -87,7 +87,10 @@ impl Rule for NoRestrictedGlobals {
             };
 
             if ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str()) {
-                ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
+                let reference = ctx.scoping().get_reference(ident.reference_id());
+                if !reference.is_type() {
+                    ctx.diagnostic(no_restricted_globals(&ident.name, message, ident.span));
+                }
             }
         }
     }
@@ -99,6 +102,13 @@ fn test() {
     const CUSTOM_MESSAGE: &str = "Use bar instead.";
 
     let pass = vec![
+        (
+            "let a: Date;",
+            Some(
+                serde_json::json!([{ "name": "Date", "message": "Use helpers or date-fns instead", }]),
+            ),
+            None,
+        ),
         ("foo", None, None),
         ("foo", Some(serde_json::json!(["bar"])), None),
         ("var foo = 1;", Some(serde_json::json!(["foo"])), None),
