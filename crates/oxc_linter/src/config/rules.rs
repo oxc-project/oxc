@@ -12,7 +12,7 @@ use serde::{
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
-    AllowWarnDeny, BuiltinLintPlugins, ExternalPluginStore,
+    AllowWarnDeny, ExternalPluginStore, LintPlugins,
     external_plugin_store::{ExternalRuleId, ExternalRuleLookupError},
     rules::{RULES, RuleEnum},
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
@@ -87,7 +87,7 @@ impl OxlintRules {
                 let severity = rule_config.severity;
 
                 // TODO(camc314): remove the `plugin_name == "eslint"`
-                if plugin_name == "eslint" || !BuiltinLintPlugins::from(plugin_name).is_empty() {
+                if plugin_name == "eslint" || !LintPlugins::from(plugin_name).is_empty() {
                     let rule = rules_map.get(&plugin_name).copied().or_else(|| {
                         all_rules
                             .iter()

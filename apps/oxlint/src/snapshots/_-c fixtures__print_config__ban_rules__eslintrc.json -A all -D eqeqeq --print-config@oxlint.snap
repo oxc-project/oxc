@@ -11,6 +11,7 @@ working directory:
     "typescript",
     "oxc"
   ],
+  "jsPlugins": null,
   "categories": {},
   "rules": {
     "eqeqeq": [

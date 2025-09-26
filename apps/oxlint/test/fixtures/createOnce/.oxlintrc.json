@@ -1,5 +1,5 @@
 {
-  "plugins": ["./plugin.js"],
+  "jsPlugins": ["./plugin.js"],
   "categories": { "correctness": "off" },
   "rules": {
     "create-once-plugin/always-run": "error",

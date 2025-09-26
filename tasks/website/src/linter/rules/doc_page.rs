@@ -6,7 +6,7 @@ use std::{
     path::PathBuf,
 };
 
-use oxc_linter::{BuiltinLintPlugins, table::RuleTableRow};
+use oxc_linter::{LintPlugins, table::RuleTableRow};
 use schemars::{
     JsonSchema, SchemaGenerator,
     schema::{InstanceType, Schema, SchemaObject, SingleOrVec},
@@ -172,8 +172,8 @@ fn rule_source(rule: &RuleTableRow) -> String {
 /// - Example: `eslint` => true
 /// - Example: `jest` => false
 fn is_default_plugin(plugin: &str) -> bool {
-    let plugin = BuiltinLintPlugins::from(plugin);
-    BuiltinLintPlugins::default().contains(plugin)
+    let plugin = LintPlugins::from(plugin);
+    LintPlugins::default().contains(plugin)
 }
 
 /// Returns the normalized plugin name.
@@ -181,7 +181,7 @@ fn is_default_plugin(plugin: &str) -> bool {
 /// - Example: `eslint` -> `eslint`
 /// - Example: `jsx_a11y` -> `jsx-a11y`
 fn get_normalized_plugin_name(plugin: &str) -> &str {
-    BuiltinLintPlugins::from(plugin).into()
+    LintPlugins::from(plugin).into()
 }
 
 fn how_to_use(rule: &RuleTableRow) -> String {

@@ -15,8 +15,8 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 
 use crate::{
-    AllowWarnDeny, BuiltinLintPlugins, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService,
-    LintServiceOptions, Linter, Oxlintrc, RuleEnum,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
+    Linter, Oxlintrc, RuleEnum,
     external_plugin_store::ExternalPluginStore,
     fixer::{FixKind, Fixer},
     options::LintOptions,
@@ -306,37 +306,37 @@ impl Tester {
     }
 
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
-        self.plugins.builtin.set(BuiltinLintPlugins::IMPORT, yes);
+        self.plugins.set(LintPlugins::IMPORT, yes);
         self
     }
 
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.builtin.set(BuiltinLintPlugins::JEST, yes);
+        self.plugins.set(LintPlugins::JEST, yes);
         self
     }
 
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
-        self.plugins.builtin.set(BuiltinLintPlugins::VITEST, yes);
+        self.plugins.set(LintPlugins::VITEST, yes);
         self
     }
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.plugins.builtin.set(BuiltinLintPlugins::JSX_A11Y, yes);
+        self.plugins.set(LintPlugins::JSX_A11Y, yes);
         self
     }
 
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.plugins.builtin.set(BuiltinLintPlugins::NEXTJS, yes);
+        self.plugins.set(LintPlugins::NEXTJS, yes);
         self
     }
 
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.plugins.builtin.set(BuiltinLintPlugins::REACT_PERF, yes);
+        self.plugins.set(LintPlugins::REACT_PERF, yes);
         self
     }
 
     pub fn with_node_plugin(mut self, yes: bool) -> Self {
-        self.plugins.builtin.set(BuiltinLintPlugins::NODE, yes);
+        self.plugins.set(LintPlugins::NODE, yes);
         self
     }
 
@@ -518,9 +518,7 @@ impl Tester {
                         )
                         .unwrap()
                     })
-                    .with_builtin_plugins(
-                        self.plugins.builtin.union(BuiltinLintPlugins::from(self.plugin_name)),
-                    )
+                    .with_builtin_plugins(self.plugins | LintPlugins::from(self.plugin_name))
                     .with_rule(rule, AllowWarnDeny::Warn)
                     .build(&external_plugin_store)
                     .unwrap(),

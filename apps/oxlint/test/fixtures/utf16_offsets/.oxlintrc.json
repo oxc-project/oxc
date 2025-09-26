@@ -1,5 +1,5 @@
 {
-  "plugins": ["./plugin.js"],
+  "jsPlugins": ["./plugin.js"],
   "rules": {
     "utf16-plugin/no-debugger": "error"
   }

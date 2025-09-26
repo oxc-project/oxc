@@ -1,5 +1,5 @@
 {
-  "plugins": [
+  "jsPlugins": [
     "./plugins/test_plugin1.js",
     "./plugins/test_plugin2.cjs",
     "./plugins/test_plugin3.mjs",

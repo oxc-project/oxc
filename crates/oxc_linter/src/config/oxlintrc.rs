@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -64,6 +64,9 @@ use super::{
 #[non_exhaustive]
 pub struct Oxlintrc {
     pub plugins: Option<LintPlugins>,
+    /// JS plugins.
+    #[serde(rename = "jsPlugins")]
+    pub external_plugins: Option<FxHashSet<String>>,
     pub categories: OxlintCategories,
     /// Example
     ///
@@ -191,14 +194,24 @@ impl Oxlintrc {
         let mut overrides = self.overrides.clone();
         overrides.extend(other.overrides);
 
-        let plugins = if let Some(plugins) = &self.plugins {
-            Some(other.plugins.map_or_else(|| plugins.clone(), |p2| p2.union(plugins)))
-        } else {
-            other.plugins
+        let plugins = match (self.plugins, other.plugins) {
+            (Some(self_plugins), Some(other_plugins)) => Some(self_plugins | other_plugins),
+            (Some(self_plugins), None) => Some(self_plugins),
+            (None, other_plugins) => other_plugins,
+        };
+
+        let external_plugins = match (&self.external_plugins, &other.external_plugins) {
+            (Some(self_external), Some(other_external)) => {
+                Some(self_external.iter().chain(other_external).cloned().collect())
+            }
+            (Some(self_external), None) => Some(self_external.clone()),
+            (None, Some(other_external)) => Some(other_external.clone()),
+            (None, None) => None,
         };
 
         Oxlintrc {
             plugins,
+            external_plugins,
             categories,
             rules: OxlintRules::new(rules),
             settings,
@@ -220,7 +233,7 @@ fn is_json_ext(ext: &str) -> bool {
 mod test {
     use serde_json::json;
 
-    use crate::config::plugins::BuiltinLintPlugins;
+    use crate::config::plugins::LintPlugins;
 
     use super::*;
 
@@ -239,7 +252,7 @@ mod test {
     #[test]
     fn test_oxlintrc_de_plugins_empty_array() {
         let config: Oxlintrc = serde_json::from_value(json!({ "plugins": [] })).unwrap();
-        assert_eq!(config.plugins, Some(BuiltinLintPlugins::empty().into()));
+        assert_eq!(config.plugins, Some(LintPlugins::empty()));
     }
 
     #[test]
@@ -252,23 +265,17 @@ mod test {
     fn test_oxlintrc_specifying_plugins_will_override() {
         let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["react", "oxc"] }"#).unwrap();
 
-        assert_eq!(
-            config.plugins,
-            Some(BuiltinLintPlugins::REACT.union(BuiltinLintPlugins::OXC).into())
-        );
+        assert_eq!(config.plugins, Some(LintPlugins::REACT | LintPlugins::OXC));
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn"] }"#).unwrap();
-        assert_eq!(
-            config.plugins,
-            Some(BuiltinLintPlugins::TYPESCRIPT.union(BuiltinLintPlugins::UNICORN).into())
-        );
+        assert_eq!(config.plugins, Some(LintPlugins::TYPESCRIPT | LintPlugins::UNICORN));
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node", "regex", "vue"] }"#).unwrap();
-        assert_eq!(config.plugins, Some(BuiltinLintPlugins::all().into()));
+        assert_eq!(config.plugins, Some(LintPlugins::all()));
 
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "@typescript-eslint"] }"#).unwrap();
-        assert_eq!(config.plugins, Some(BuiltinLintPlugins::TYPESCRIPT.into()));
+        assert_eq!(config.plugins, Some(LintPlugins::TYPESCRIPT));
     }
 
     #[test]

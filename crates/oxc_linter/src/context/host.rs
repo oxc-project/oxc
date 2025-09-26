@@ -11,8 +11,8 @@ use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
 
 use crate::{
-    AllowWarnDeny, FrameworkFlags, LintPlugins,
-    config::LintConfig,
+    AllowWarnDeny, FrameworkFlags,
+    config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
@@ -223,8 +223,8 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub fn plugins(&self) -> &LintPlugins {
-        &self.config.plugins
+    pub fn plugins(&self) -> LintPlugins {
+        self.config.plugins
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used

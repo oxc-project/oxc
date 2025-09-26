@@ -50,8 +50,8 @@ mod tester;
 
 pub use crate::{
     config::{
-        BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
-        ESLintRule, LintIgnoreMatcher, LintPlugins, Oxlintrc, ResolvedLinterState,
+        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
+        LintPlugins, Oxlintrc, ResolvedLinterState,
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
