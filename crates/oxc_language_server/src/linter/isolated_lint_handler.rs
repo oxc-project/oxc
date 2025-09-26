@@ -72,7 +72,10 @@ impl IsolatedLintHandler {
         let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
 
-        if let Some(tsconfig_path) = &options.tsconfig_path {
+        if let Some(tsconfig_path) = &options.tsconfig_path
+            && tsconfig_path.is_file()
+        {
+            debug_assert!(tsconfig_path.is_absolute());
             lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
         }
 

@@ -156,10 +156,10 @@ impl ServerLinter {
             &IsolatedLintHandlerOptions {
                 use_cross_module,
                 root_path: root_path.to_path_buf(),
-                tsconfig_path: options
-                    .ts_config_path
-                    .as_ref()
-                    .map(|path| Path::new(path).to_path_buf()),
+                tsconfig_path: options.ts_config_path.as_ref().map(|path| {
+                    let path = Path::new(path).to_path_buf();
+                    if path.is_relative() { root_path.join(path) } else { path }
+                }),
             },
         );
 
