@@ -1,5 +1,8 @@
+import { join as pathJoin } from 'node:path';
 import { describe, it } from 'vitest';
 import { testFixtureWithCommand } from './utils.js';
+
+const ESLINT_PATH = pathJoin(import.meta.dirname, '../node_modules/.bin/eslint');
 
 /**
  * Run ESLint on a test fixture.
@@ -7,8 +10,8 @@ import { testFixtureWithCommand } from './utils.js';
  */
 async function testFixture(fixtureName: string): Promise<void> {
   await testFixtureWithCommand({
-    command: 'pnpx',
-    args: ['eslint'],
+    command: ESLINT_PATH,
+    args: [],
     fixtureName,
     snapshotName: 'eslint',
   });
