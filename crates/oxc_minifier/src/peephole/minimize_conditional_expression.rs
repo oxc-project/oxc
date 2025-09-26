@@ -713,4 +713,39 @@ mod test {
         // test("foo?.bar().baz", "(foo?.bar()).baz");  // This would be wrong!
         // test("obj?.method().prop", "(obj?.method()).prop");  // This would be wrong!
     }
+
+    #[test]
+    fn verify_github_issue_fix() {
+        // Integration test to verify the specific GitHub issue is fixed
+        // This test ensures that optional chaining expressions do not get
+        // incorrectly wrapped in parentheses during minification
+        
+        // Test cases based on the GitHub issue report
+        let test_cases = vec![
+            "foo?.bar().baz",
+            "this.el1?.getBoundingClientRect().height", 
+            "obj?.method().prop.subprop",
+            "a?.b?.c().d",
+        ];
+
+        for input in test_cases {
+            // Use test_same to ensure the minified output is semantically equivalent
+            test_same(input);
+        }
+    }
+
+    #[test]
+    fn test_legitimate_parentheses_preserved() {
+        // Ensure that we don't break cases where parentheses ARE legitimately needed
+        // These should preserve their existing parentheses for semantic correctness
+        
+        // Parentheses that change the meaning should be preserved
+        test_same("(a?.b).c"); // This breaks the optional chain intentionally
+        test_same("(a?.b)[c]"); // This breaks the optional chain intentionally  
+        test_same("(a?.b)()"); // This breaks the optional chain intentionally
+        
+        // Complex expressions where parentheses might be needed for precedence
+        test_same("(a?.b || c).d");
+        test_same("(a?.b && c).d");
+    }
 }
