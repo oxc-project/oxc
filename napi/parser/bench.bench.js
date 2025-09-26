@@ -19,7 +19,7 @@ let fixtureUrls = [
   'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx',
   'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx',
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
-  'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
+  'https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js',
 ];
 
 // For sharding in CI - specify single fixture to run benchmarks on

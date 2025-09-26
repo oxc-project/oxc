@@ -66,7 +66,7 @@ const benchFixtureUrls = [
   // Heavy with classes (554K)
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
   // ES5 (3.9M)
-  'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
+  'https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js',
 ];
 
 await mkdir(TARGET_DIR_PATH, { recursive: true });
