@@ -96,8 +96,10 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let has_empty_line =
-            self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
+        let has_empty_line = self
+            .iter()
+            .skip(1)
+            .any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
         if has_empty_line
             || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
                 && is_function_composition_args(self))

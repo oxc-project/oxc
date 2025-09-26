@@ -2,10 +2,6 @@ commit: 41d96516
 
 formatter_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2420/2423 (99.88%)
-Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/try-statement/input.js
-
-Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class/division/input.js
-
+Positive Passed: 2422/2423 (99.96%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules

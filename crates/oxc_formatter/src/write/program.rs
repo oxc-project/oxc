@@ -7,7 +7,7 @@ use oxc_syntax::identifier::{ZWNBSP, is_line_terminator};
 
 use crate::{
     Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator, format_args,
-    formatter::{prelude::*, separated::FormatSeparatedIter, trivia::FormatTrailingComments},
+    formatter::{prelude::*, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         call_expression::is_test_call_expression,
@@ -25,7 +25,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_trailing_comments = format_once(|f| {
             let comments = f.context().comments().comments_before(self.span.end);
-            FormatTrailingComments::Comments(comments).fmt(f)
+            write!(f, FormatTrailingComments::Comments(comments))
         });
 
         write!(
@@ -112,19 +112,8 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         // }
         //```
         // so we should keep an extra empty line after JsDirectiveList
-        let source_text = f.context().source_text();
-        let mut count = 0;
-        let mut source_text_chars = source_text.slice_from(last_directive.span.end).chars();
-        for char in source_text_chars.by_ref() {
-            if is_line_terminator(char) {
-                count += 1;
-            } else if !char.is_whitespace() {
-                break;
-            }
-        }
 
-        // Need an extra empty line if it has the following line and still has non-characters after whitespace.
-        let need_extra_empty_line = source_text_chars.next().is_some() && count > 1;
+        let need_extra_empty_line = f.source_text().lines_after(last_directive.span.end) > 1;
         write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() })
     }
 }

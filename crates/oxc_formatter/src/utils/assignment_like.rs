@@ -314,19 +314,19 @@ impl<'a> AssignmentLike<'a, '_> {
         }
 
         let right_expression = self.get_right_expression();
+        if let Some(expr) = right_expression {
+            if let Some(layout) = self.chain_formatting_layout(expr) {
+                return layout;
+            }
 
-        if let Some(layout) = right_expression.and_then(|expr| self.chain_formatting_layout(expr)) {
-            return layout;
-        }
-
-        if let Some(Expression::CallExpression(call_expression)) =
-            &right_expression.map(AsRef::as_ref)
-            && call_expression
-                .callee
-                .get_identifier_reference()
-                .is_some_and(|ident| ident.name == "require")
-        {
-            return AssignmentLikeLayout::NeverBreakAfterOperator;
+            if let Expression::CallExpression(call_expression) = expr.as_ref()
+                && call_expression
+                    .callee
+                    .get_identifier_reference()
+                    .is_some_and(|ident| ident.name == "require")
+            {
+                return AssignmentLikeLayout::NeverBreakAfterOperator;
+            }
         }
 
         if self.should_break_after_operator(right_expression, f) {
@@ -359,10 +359,8 @@ impl<'a> AssignmentLike<'a, '_> {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
-        let is_poorly_breakable = match &right_expression {
-            Some(expression) => is_poorly_breakable_member_or_call_chain(expression, f),
-            None => false,
-        };
+        let is_poorly_breakable =
+            right_expression.is_some_and(|expr| is_poorly_breakable_member_or_call_chain(expr, f));
 
         if is_poorly_breakable {
             return AssignmentLikeLayout::BreakAfterOperator;
@@ -581,17 +579,19 @@ fn should_break_after_operator<'a>(
 ) -> bool {
     let is_jsx = matches!(right.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_));
 
+    if is_jsx {
+        return false;
+    }
+
+    let comments = f.comments();
     let source_text = f.source_text();
-    for comment in f.comments().comments_before(right.span().start) {
-        if !is_jsx
-            && (source_text.lines_after(comment.span.end) > 0
-                || source_text.is_own_line_comment(comment))
-        {
+    for comment in comments.comments_before(right.span().start) {
+        if source_text.lines_after(comment.span.end) > 0 {
             return true;
         }
 
         // Needs to wrap a parenthesis for the node, so it won't break.
-        if f.comments().is_type_cast_comment(comment) {
+        if comments.is_type_cast_comment(comment) {
             return false;
         }
     }

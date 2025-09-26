@@ -83,6 +83,7 @@ use self::{
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     parameters::{ParameterLayout, ParameterList},
+    return_or_throw_statement::FormatAdjacentArgument,
     semicolon::OptionalSemicolon,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
     utils::{
@@ -659,7 +660,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.right.span().start);
         write!(
             f,
             [
@@ -683,7 +684,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.body.span().start);
+        let comments = f.context().comments().own_line_comments_before(self.right.span().start);
 
         let r#await = self.r#await();
         let left = self.left();
@@ -857,12 +858,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().own_line_comments_before(self.right.span().start);
+        let mut left = self.left().memoized();
+        left.inspect(f)?;
         write!(
             f,
             [
-                FormatLeadingComments::Comments(comments),
-                self.left(),
+                format_once(|f| {
+                    let comments =
+                        f.context().comments().own_line_comments_before(self.right.span().start);
+                    FormatLeadingComments::Comments(comments).fmt(f)
+                }),
+                left,
                 space(),
                 "=",
                 space(),
@@ -938,12 +944,9 @@ impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
 
 impl<'a> FormatWrite<'a> for AstNode<'a, YieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "yield")?;
-        if self.delegate() {
-            write!(f, "*")?;
-        }
+        write!(f, ["yield", self.delegate().then_some("*")])?;
         if let Some(argument) = &self.argument() {
-            write!(f, [space(), argument])?;
+            write!(f, [space(), FormatAdjacentArgument(argument)])?;
         }
         Ok(())
     }

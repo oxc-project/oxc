@@ -60,24 +60,36 @@ pub fn format_type_cast_comment_node<'a, T>(
 
         write!(f, [FormatLeadingComments::Comments(type_cast_comments)])?;
         f.context_mut().comments_mut().mark_as_handled_type_cast_comment();
-    } else {
-        let elements = f.elements().iter().rev();
-
         // If the printed cast comment is already handled, return early to avoid infinite recursion.
-        if !comments.is_already_handled_type_cast_comment()
-            && comments.printed_comments().last().is_some_and(|c| {
-                c.span.end <= span.start
-                    && source.all_bytes_match(c.span.end, span.start, |c| {
-                        c.is_ascii_whitespace() || c == b'('
-                    })
-                    && f.comments().is_type_cast_comment(c)
-            })
+    } else if !comments.is_already_handled_type_cast_comment()
+        && let Some(last_printed_comment) = comments.printed_comments().last()
+    {
+        if !last_printed_comment.span.end <= span.start
+            || !f.comments().is_type_cast_comment(last_printed_comment)
         {
-            f.context_mut().comments_mut().mark_as_handled_type_cast_comment();
-        } else {
-            // No typecast comment
             return Ok(false);
         }
+
+        let mut has_left_paren = false;
+        // Check whether there is only whitespace or left parenthesis between the comment and the node
+        for &byte in source.bytes_range(last_printed_comment.span.end, span.start) {
+            if !byte.is_ascii_whitespace() {
+                if byte == b'(' {
+                    has_left_paren = true;
+                } else {
+                    return Ok(false);
+                }
+            }
+        }
+
+        if !has_left_paren {
+            return Ok(false);
+        }
+
+        f.context_mut().comments_mut().mark_as_handled_type_cast_comment();
+    } else {
+        // No typecast comment
+        return Ok(false);
     }
 
     // https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/estree.js#L117-L120
