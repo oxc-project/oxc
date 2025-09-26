@@ -89,7 +89,8 @@ impl Rule for NoMultipleResolved {
         let resolve_findler =
             ResolveFinder::new(ctx.scoping(), resolve_symbol_id, reject_symbol_id);
         let mut multiple_resolved_checker = MultipleResolvedChecker::new(ctx, resolve_findler);
-        let Some(inline_executor_cfg_id) = next_new_function_node_id(ctx.cfg(), node.cfg_id())
+        let Some(inline_executor_cfg_id) =
+            next_new_function_node_id(ctx.cfg(), ctx.nodes().cfg_id(node.id()))
         else {
             return;
         };

@@ -1547,6 +1547,10 @@ impl RuleRunner for crate::rules::promise::no_callback_in_promise::NoCallbackInP
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::promise::no_multiple_resolved::NoMultipleResolved {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::promise::no_nesting::NoNesting {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
