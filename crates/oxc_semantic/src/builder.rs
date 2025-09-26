@@ -24,13 +24,14 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+#[cfg(feature = "linter")]
+use crate::jsdoc::JSDocBuilder;
 use crate::{
-    JSDocFinder, Semantic,
+    Semantic,
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
     diagnostics::redeclaration,
-    jsdoc::JSDocBuilder,
     label::UnusedLabels,
     node::AstNodes,
     scoping::{Bindings, Scoping},
@@ -89,7 +90,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) unresolved_references: UnresolvedReferencesStack<'a>,
 
     unused_labels: UnusedLabels<'a>,
-    build_jsdoc: bool,
+    #[cfg(feature = "linter")]
     jsdoc: JSDocBuilder<'a>,
     stats: Option<Stats>,
     excess_capacity: f64,
@@ -143,7 +144,7 @@ impl<'a> SemanticBuilder<'a> {
             scoping,
             unresolved_references: UnresolvedReferencesStack::new(),
             unused_labels: UnusedLabels::default(),
-            build_jsdoc: false,
+            #[cfg(feature = "linter")]
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
@@ -168,13 +169,6 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
-        self
-    }
-
-    /// Enable/disable JSDoc parsing.
-    #[must_use]
-    pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
-        self.build_jsdoc = yes;
         self
     }
 
@@ -236,7 +230,8 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
-        if self.build_jsdoc {
+        #[cfg(feature = "linter")]
+        {
             self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
         }
 
@@ -290,7 +285,8 @@ impl<'a> SemanticBuilder<'a> {
             self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
         );
 
-        let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
+        #[cfg(feature = "linter")]
+        let jsdoc = self.jsdoc.build();
 
         #[cfg(debug_assertions)]
         self.unused_labels.assert_empty();
@@ -303,6 +299,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
+            #[cfg(feature = "linter")]
             jsdoc,
             unused_labels: self.unused_labels.labels,
             #[cfg(feature = "cfg")]
@@ -327,8 +324,12 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
+        #[cfg(not(feature = "linter"))]
+        let flags = self.current_node_flags;
+        #[cfg(feature = "linter")]
         let mut flags = self.current_node_flags;
-        if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
+        #[cfg(feature = "linter")]
+        if self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
 
