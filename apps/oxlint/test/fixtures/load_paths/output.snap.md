@@ -46,7 +46,25 @@
    : ^^^^^^^^^
    `----
 
-Found 1 warning and 6 errors.
+  x plugin7(no-debugger): Unexpected Debugger Statement
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+
+  x plugin8(no-debugger): Unexpected Debugger Statement
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+
+  x plugin9(no-debugger): Unexpected Debugger Statement
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+
+Found 1 warning and 9 errors.
 Finished in Xms on 1 file using X threads.
 ```
 
