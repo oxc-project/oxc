@@ -1,15 +1,21 @@
 use std::iter::FusedIterator;
 
-use oxc_ast::{AstKind, AstType, ast::Program};
-#[cfg(feature = "cfg")]
-use oxc_cfg::BlockNodeId;
+use oxc_ast::{AstKind, ast::Program};
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     scope::ScopeId,
 };
 
+#[cfg(feature = "linter")]
+use oxc_ast::AstType;
+
+#[cfg(feature = "cfg")]
+use oxc_cfg::BlockNodeId;
+
 use super::AstNode;
+
+#[cfg(feature = "linter")]
 use crate::ast_types_bitset::AstTypesBitset;
 
 /// Untyped AST nodes flattened into an vec
@@ -26,6 +32,7 @@ pub struct AstNodes<'a> {
     /// Stores a set of bits of a fixed size, where each bit represents a single [`AstKind`]. If the bit is set (1),
     /// then the AST contains at least one node of that kind. If the bit is not set (0), then the AST does not contain
     /// any nodes of that kind.
+    #[cfg(feature = "linter")]
     node_kinds_set: AstTypesBitset,
 }
 
@@ -148,38 +155,21 @@ impl<'a> AstNodes<'a> {
     /// [`Program`]: oxc_ast::ast::Program
     /// [`add_program_node`]: AstNodes::add_program_node
     #[inline]
-    #[cfg(feature = "cfg")]
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
         scope_id: ScopeId,
         parent_node_id: NodeId,
-        cfg_id: BlockNodeId,
+        #[cfg(feature = "cfg")] cfg_id: BlockNodeId,
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(parent_node_id);
-        let node = AstNode::new(kind, scope_id, cfg_id, node_id);
+        let node = AstNode::new(kind, scope_id, node_id);
         self.nodes.push(node);
         self.flags.push(flags);
+        #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
-        self.node_kinds_set.set(kind.ty());
-        node_id
-    }
-
-    #[inline]
-    #[cfg(not(feature = "cfg"))]
-    pub fn add_node(
-        &mut self,
-        kind: AstKind<'a>,
-        scope_id: ScopeId,
-        parent_node_id: NodeId,
-        _cfg_id: (),
-        flags: NodeFlags,
-    ) -> NodeId {
-        let node_id = self.parent_ids.push(parent_node_id);
-        let node = AstNode::new(kind, scope_id, (), node_id);
-        self.nodes.push(node);
-        self.flags.push(flags);
+        #[cfg(feature = "linter")]
         self.node_kinds_set.set(kind.ty());
         node_id
     }
@@ -189,12 +179,11 @@ impl<'a> AstNodes<'a> {
     /// # Panics
     ///
     /// Panics if this is not the first node being added to the AST.
-    #[cfg(feature = "cfg")]
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
         scope_id: ScopeId,
-        cfg_id: BlockNodeId,
+        #[cfg(feature = "cfg")] cfg_id: BlockNodeId,
         flags: NodeFlags,
     ) -> NodeId {
         assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
@@ -203,29 +192,11 @@ impl<'a> AstNodes<'a> {
             "Program node must be of kind `AstKind::Program`"
         );
         self.parent_ids.push(NodeId::ROOT);
-        self.nodes.push(AstNode::new(kind, scope_id, cfg_id, NodeId::ROOT));
+        self.nodes.push(AstNode::new(kind, scope_id, NodeId::ROOT));
         self.flags.push(flags);
+        #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
-        self.node_kinds_set.set(AstType::Program);
-        NodeId::ROOT
-    }
-
-    #[cfg(not(feature = "cfg"))]
-    pub fn add_program_node(
-        &mut self,
-        kind: AstKind<'a>,
-        scope_id: ScopeId,
-        _cfg_id: (),
-        flags: NodeFlags,
-    ) -> NodeId {
-        assert!(self.parent_ids.is_empty(), "Program node must be the first node in the AST.");
-        debug_assert!(
-            matches!(kind, AstKind::Program(_)),
-            "Program node must be of kind `AstKind::Program`"
-        );
-        self.parent_ids.push(NodeId::ROOT);
-        self.nodes.push(AstNode::new(kind, scope_id, (), NodeId::ROOT));
-        self.flags.push(flags);
+        #[cfg(feature = "linter")]
         self.node_kinds_set.set(AstType::Program);
         NodeId::ROOT
     }
@@ -260,6 +231,7 @@ impl<'a> AstNodes<'a> {
     /// // `true` if there is at least one import OR one export in the AST
     /// nodes.contains_any(&import_export_decl);
     /// ```
+    #[cfg(feature = "linter")]
     pub fn contains_any(&self, bitset: &AstTypesBitset) -> bool {
         self.node_kinds_set.intersects(bitset)
     }
@@ -285,6 +257,7 @@ impl<'a> AstNodes<'a> {
     /// // `true` if there is at least one import AND one export in the AST
     /// nodes.contains_all(&import_export_decl);
     /// ```
+    #[cfg(feature = "linter")]
     pub fn contains_all(&self, bitset: &AstTypesBitset) -> bool {
         self.node_kinds_set.contains(bitset)
     }
@@ -304,6 +277,7 @@ impl<'a> AstNodes<'a> {
     /// // `true` if there is an `ImportDeclaration` anywhere in the AST
     /// nodes.contains(AstType::ImportDeclaration);
     /// ```
+    #[cfg(feature = "linter")]
     pub fn contains(&self, ty: AstType) -> bool {
         self.node_kinds_set.has(ty)
     }

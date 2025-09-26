@@ -4,8 +4,6 @@ pub use nodes::AstNodes;
 
 use oxc_allocator::{Address, GetAddress};
 use oxc_ast::AstKind;
-#[cfg(feature = "cfg")]
-use oxc_cfg::BlockNodeId;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{node::NodeId, scope::ScopeId};
 
@@ -21,19 +19,7 @@ pub struct AstNode<'a> {
 }
 
 impl<'a> AstNode<'a> {
-    #[inline]
-    #[cfg(feature = "cfg")]
-    pub(crate) fn new(
-        kind: AstKind<'a>,
-        scope_id: ScopeId,
-        _cfg_id: BlockNodeId,
-        id: NodeId,
-    ) -> Self {
-        Self { id, kind, scope_id }
-    }
-
-    #[cfg(not(feature = "cfg"))]
-    pub(crate) fn new(kind: AstKind<'a>, scope_id: ScopeId, _cfg_id: (), id: NodeId) -> Self {
+    pub(crate) fn new(kind: AstKind<'a>, scope_id: ScopeId, id: NodeId) -> Self {
         Self { id, kind, scope_id }
     }
 

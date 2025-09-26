@@ -46,4 +46,5 @@ serde_json = { workspace = true }
 [features]
 default = []
 cfg = ["dep:oxc_cfg"]
+linter = []
 serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]

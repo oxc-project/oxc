@@ -24,6 +24,7 @@ pub use oxc_syntax::{
 #[cfg(feature = "cfg")]
 pub mod dot;
 
+#[cfg(feature = "linter")]
 mod ast_types_bitset;
 mod binder;
 mod builder;
@@ -38,6 +39,7 @@ mod scoping;
 mod stats;
 mod unresolved_stack;
 
+#[cfg(feature = "linter")]
 pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;

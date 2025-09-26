@@ -336,6 +336,7 @@ impl<'a> SemanticBuilder<'a> {
             kind,
             self.current_scope_id,
             self.current_node_id,
+            #[cfg(feature = "cfg")]
             control_flow!(self, |cfg| cfg.current_node_ix),
             flags,
         );
@@ -649,6 +650,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_node_id = self.nodes.add_program_node(
             kind,
             self.current_scope_id,
+            #[cfg(feature = "cfg")]
             control_flow!(self, |cfg| cfg.current_node_ix),
             self.current_node_flags,
         );
