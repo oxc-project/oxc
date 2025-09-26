@@ -158,8 +158,7 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn can_insert_semicolon(&self) -> bool {
         let token = self.cur_token();
-        let kind = token.kind();
-        kind == Kind::Semicolon || kind == Kind::RCurly || kind.is_eof() || token.is_on_new_line()
+        matches!(token.kind(), Kind::Semicolon | Kind::RCurly | Kind::Eof) || token.is_on_new_line()
     }
 
     /// # Errors
@@ -324,22 +323,36 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>
     where
+        F: Fn(&mut Self) -> T,
+    {
+        self.expect(open);
+        let mut list = self.ast.vec();
+        while !self.at(close) && !self.has_fatal_error() {
+            list.push(f(self));
+        }
+        self.expect(close);
+        list
+    }
+
+    pub(crate) fn parse_normal_list_breakable<F, T>(
+        &mut self,
+        open: Kind,
+        close: Kind,
+        f: F,
+    ) -> Vec<'a, T>
+    where
         F: Fn(&mut Self) -> Option<T>,
     {
         self.expect(open);
         let mut list = self.ast.vec();
         loop {
-            let kind = self.cur_kind();
-            if kind == close || self.has_fatal_error() {
+            if self.at(close) || self.has_fatal_error() {
                 break;
             }
-            match f(self) {
-                Some(e) => {
-                    list.push(e);
-                }
-                None => {
-                    break;
-                }
+            if let Some(e) = f(self) {
+                list.push(e);
+            } else {
+                break;
             }
         }
         self.expect(close);
@@ -387,11 +400,7 @@ impl<'a> ParserImpl<'a> {
         let mut rest: Option<BindingRestElement<'a>> = None;
         let mut first = true;
         loop {
-            let kind = self.cur_kind();
-            if self.has_fatal_error() {
-                break;
-            }
-            if kind == close {
+            if self.at(close) || self.has_fatal_error() {
                 break;
             }
 
@@ -423,8 +432,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if self.at(Kind::Dot3) {
-                let r = self.parse_rest_element();
-                rest.replace(r);
+                rest.replace(self.parse_rest_element());
             } else {
                 list.push(parse_element(self));
             }

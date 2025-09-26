@@ -91,7 +91,8 @@ impl<'a> ParserImpl<'a> {
             Kind::Do => self.parse_do_while_statement(),
             Kind::While => self.parse_while_statement(),
             Kind::For => self.parse_for_statement(),
-            Kind::Break | Kind::Continue => self.parse_break_or_continue_statement(),
+            Kind::Continue => self.parse_continue_statement(),
+            Kind::Break => self.parse_break_statement(),
             Kind::With => self.parse_with_statement(),
             Kind::Switch => self.parse_switch_statement(),
             Kind::Throw => self.parse_throw_statement(),
@@ -206,13 +207,9 @@ impl<'a> ParserImpl<'a> {
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> Box<'a, BlockStatement<'a>> {
         let span = self.start_span();
-        self.expect(Kind::LCurly);
-        let mut body = self.ast.vec();
-        while !self.at(Kind::RCurly) && !self.has_fatal_error() {
-            let stmt = self.parse_statement_list_item(StatementContext::StatementList);
-            body.push(stmt);
-        }
-        self.expect(Kind::RCurly);
+        let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
+            p.parse_statement_list_item(StatementContext::StatementList)
+        });
         self.ast.alloc_block_statement(self.end_span(span), body)
     }
 
@@ -232,7 +229,7 @@ impl<'a> ParserImpl<'a> {
             start_span,
             kind,
             VariableDeclarationParent::Statement,
-            &Modifiers::empty(),
+            false,
         );
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
@@ -315,10 +312,25 @@ impl<'a> ParserImpl<'a> {
 
         // `for (const` | `for (var`
         match self.cur_kind() {
-            Kind::Const | Kind::Var => {
+            Kind::Const => {
                 let start_span = self.start_span();
-                return self
-                    .parse_variable_declaration_for_statement(span, start_span, None, r#await);
+                self.bump_any();
+                return self.parse_variable_declaration_for_statement(
+                    span,
+                    start_span,
+                    VariableDeclarationKind::Const,
+                    r#await,
+                );
+            }
+            Kind::Var => {
+                let start_span = self.start_span();
+                self.bump_any();
+                return self.parse_variable_declaration_for_statement(
+                    span,
+                    start_span,
+                    VariableDeclarationKind::Var,
+                    r#await,
+                );
             }
             Kind::Let => {
                 // `for (let`
@@ -330,7 +342,7 @@ impl<'a> ParserImpl<'a> {
                     return self.parse_variable_declaration_for_statement(
                         span,
                         start_span,
-                        Some(VariableDeclarationKind::Let),
+                        VariableDeclarationKind::Let,
                         r#await,
                     );
                 }
@@ -403,40 +415,25 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         start_span: u32,
-        decl_kind: Option<VariableDeclarationKind>,
+        decl_kind: VariableDeclarationKind,
         r#await: bool,
     ) -> Statement<'a> {
         let init_declaration = self.context(Context::empty(), Context::In, |p| {
-            let decl_ctx = VariableDeclarationParent::For;
-            let kind = if let Some(kind) = decl_kind {
-                kind
-            } else {
-                let kind = p.get_variable_declaration_kind();
-                p.bump_any();
-                kind
-            };
-            p.parse_variable_declaration(start_span, kind, decl_ctx, &Modifiers::empty())
+            p.parse_variable_declaration(
+                start_span,
+                decl_kind,
+                VariableDeclarationParent::For,
+                false,
+            )
         });
 
         self.parse_any_for_loop(span, init_declaration, r#await)
     }
 
     fn is_using_declaration(&mut self) -> bool {
-        self.lookahead(|p| {
-            p.is_next_token_binding_identifier_or_start_of_object_destructuring_on_same_line(false)
-        })
-    }
-
-    fn is_next_token_binding_identifier_or_start_of_object_destructuring_on_same_line(
-        &mut self,
-        disallow_of: bool,
-    ) -> bool {
-        self.bump_any();
-        if disallow_of && self.at(Kind::Of) {
-            return false;
-        }
-        (self.cur_kind().is_binding_identifier() || self.at(Kind::LCurly))
-            && !self.cur_token().is_on_new_line()
+        let token = self.lexer.peek_token();
+        let kind = token.kind();
+        (kind.is_binding_identifier() || kind == Kind::LCurly) && !token.is_on_new_line()
     }
 
     fn parse_using_declaration_for_statement(&mut self, span: u32, r#await: bool) -> Statement<'a> {
@@ -495,10 +492,10 @@ impl<'a> ParserImpl<'a> {
                 self.check_missing_initializer(d);
             }
         }
-        let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
-            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr))
-        } else {
+        let test = if matches!(self.cur_kind(), Kind::Semicolon | Kind::RParen) {
             None
+        } else {
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr))
         };
         self.expect(Kind::Semicolon);
         let update = if self.at(Kind::RParen) {
@@ -549,20 +546,23 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 14.8 Continue Statement
-    /// Section 14.9 Break Statement
-    fn parse_break_or_continue_statement(&mut self) -> Statement<'a> {
+    fn parse_continue_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
-        let kind = self.cur_kind();
-        self.bump_any(); // bump `break` or `continue`
+        self.bump_any(); // bump `continue`
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
         self.asi();
-        let end_span = self.end_span(span);
-        match kind {
-            Kind::Break => self.ast.statement_break(end_span, label),
-            Kind::Continue => self.ast.statement_continue(end_span, label),
-            _ => unreachable!(),
-        }
+        self.ast.statement_continue(self.end_span(span), label)
+    }
+
+    /// Section 14.9 Break Statement
+    fn parse_break_statement(&mut self) -> Statement<'a> {
+        let span = self.start_span();
+        self.bump_any(); // bump `break`
+        let label =
+            if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
+        self.asi();
+        self.ast.statement_break(self.end_span(span), label)
     }
 
     /// Section 14.10 Return Statement
@@ -604,7 +604,7 @@ impl<'a> ParserImpl<'a> {
         self.ast.statement_switch(self.end_span(span), discriminant, cases)
     }
 
-    pub(crate) fn parse_switch_case(&mut self) -> Option<SwitchCase<'a>> {
+    pub(crate) fn parse_switch_case(&mut self) -> SwitchCase<'a> {
         let span = self.start_span();
         let test = match self.cur_kind() {
             Kind::Default => {
@@ -626,7 +626,7 @@ impl<'a> ParserImpl<'a> {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
             consequent.push(stmt);
         }
-        Some(self.ast.switch_case(self.end_span(span), test, consequent))
+        self.ast.switch_case(self.end_span(span), test, consequent)
     }
 
     /// Section 14.14 Throw Statement
