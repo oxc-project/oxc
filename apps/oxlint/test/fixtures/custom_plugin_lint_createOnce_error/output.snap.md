@@ -12,4 +12,6 @@ Failed to parse configuration file.
 
 # stderr
 ```
+WARNING: JS plugins are experimental and not subject to semver.
+Breaking changes are possible while JS plugins support is under development.
 ```

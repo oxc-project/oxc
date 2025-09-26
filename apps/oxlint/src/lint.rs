@@ -238,13 +238,6 @@ impl CliRunner {
         let mut external_linter = self.external_linter;
         if external_plugin_store.is_empty() {
             external_linter = None;
-        } else {
-            #[expect(clippy::print_stderr)]
-            {
-                eprintln!(
-                    "WARNING: JS plugins are experimental and not subject to semver.\nBreaking changes are possible while JS plugins support is under development."
-                );
-            }
         }
 
         if let Some(basic_config_file) = oxlintrc_for_print {
