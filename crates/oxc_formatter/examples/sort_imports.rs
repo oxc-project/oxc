@@ -12,6 +12,9 @@ use pico_args::Arguments;
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let show_ir = args.contains("--ir");
+    let partition_by_newline = args.contains("--partition_by_newline");
+    let partition_by_comment = args.contains("--partition_by_comment");
+    let sort_side_effects = args.contains("--sort_side_effects");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     // Read source file
@@ -42,9 +45,9 @@ fn main() -> Result<(), String> {
     // Format the parsed code
     let options = FormatOptions {
         experimental_sort_imports: Some(SortImports {
-            partition_by_newline: true,
-            partition_by_comment: false,
-            sort_side_effects: true,
+            partition_by_newline,
+            partition_by_comment,
+            sort_side_effects,
         }),
         ..Default::default()
     };
@@ -61,6 +64,12 @@ fn main() -> Result<(), String> {
         let code = formatter.build(&ret.program);
         println!("{code}");
     }
+
+    println!("=======================");
+    println!(
+        "Formatted with {:#?}",
+        SortImports { partition_by_newline, partition_by_comment, sort_side_effects }
+    );
 
     Ok(())
 }
