@@ -681,4 +681,36 @@ mod test {
         test_same("x.y ? x.y : bar");
         test_same("x.y ? bar : x.y");
     }
+
+    #[test]
+    fn test_optional_chaining_parenthesis_issue() {
+        // This test reproduces the issue where optional chaining gets incorrect parentheses
+        // The core issue: `foo?.bar().baz` should NOT become `(foo?.bar()).baz`
+        // because that would break the optional chaining semantics
+        
+        // These should remain as they are - no parentheses should be added
+        test_same("foo?.bar().baz");
+        test_same("obj?.method().prop");
+        test_same("this.el1?.getBoundingClientRect().height");
+        
+        // Variable assignments should also preserve the chaining
+        test_same("let one = foo?.bar().baz");
+        test_same("const height = this.el1?.getBoundingClientRect().height");
+        
+        // More complex chains
+        test_same("a?.b?.c().d");
+        test_same("obj?.method()?.prop");
+        test_same("foo?.bar().baz.qux");
+        test_same("a?.b().c?.d().e");
+        
+        // Test the specific patterns from the GitHub issue to ensure
+        // they don't get incorrectly parenthesized
+        test_same("this.el1?.getBoundingClientRect().height");
+        test_same("this.el2?.getBoundingClientRect().height");
+        
+        // Should NOT turn into parenthesized versions that break optional chaining
+        // These patterns should be avoided:
+        // test("foo?.bar().baz", "(foo?.bar()).baz");  // This would be wrong!
+        // test("obj?.method().prop", "(obj?.method()).prop");  // This would be wrong!
+    }
 }

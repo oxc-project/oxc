@@ -2144,7 +2144,20 @@ impl GenExpr for AwaitExpression<'_> {
 
 impl GenExpr for ChainExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= Precedence::Postfix, |p| match &self.expression {
+        // For chain expressions, we should be more careful about wrapping to preserve
+        // optional chaining semantics. Wrapping a chain expression can break the chaining
+        // behavior, so we only wrap when absolutely necessary for semantic correctness.
+        //
+        // The key insight is that when a chain expression is the object of a member access
+        // or call, we should NOT wrap it because that would break the optional chaining.
+        // For example: `foo?.bar().baz` should NOT become `(foo?.bar()).baz`
+        //
+        // We only need to wrap when the precedence requires it AND it's not in a context
+        // where wrapping would break optional chaining semantics.
+        let should_wrap = precedence >= Precedence::Postfix 
+            && !ctx.intersects(Context::FORBID_CALL); // FORBID_CALL indicates member access context
+            
+        p.wrap(should_wrap, |p| match &self.expression {
             ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::TSNonNullExpression(expr) => expr.print_expr(p, precedence, ctx),
             ChainElement::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
