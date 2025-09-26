@@ -1,3 +1,4 @@
+// @ts-nocheck
 // dprint-ignore-file
 
 // All `Identifier`s
