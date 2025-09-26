@@ -10,7 +10,9 @@ const dummyOptions: unknown[] = [],
 /**
  * Define a plugin.
  *
- * Converts any rules with `createOnce` method to have an ESLint-compatible `create` method.
+ * If any of the plugin's rules use the Oxlint alternative `createOnce` API,
+ * add ESLint-compatible `create` methods to those rules, which delegate to `createOnce`.
+ * This makes the plugin compatible with ESLint.
  *
  * The `plugin` object passed in is mutated in-place.
  *
@@ -38,8 +40,9 @@ export function definePlugin(plugin: Plugin): Plugin {
 /**
  * Define a rule.
  *
- * If rules does not already have a `create` method, create an ESLint-compatible `create` method
- * which delegates to `createOnce`.
+ * If `rule` uses the Oxlint alternative `createOnce` API, add an ESLint-compatible
+ * `create` method to the rule, which delegates to `createOnce`.
+ * This makes the rule compatible with ESLint.
  *
  * The `rule` object passed in is mutated in-place.
  *
