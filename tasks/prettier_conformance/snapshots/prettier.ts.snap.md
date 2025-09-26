@@ -1,4 +1,4 @@
-ts compatibility: 528/573 (92.15%)
+ts compatibility: 529/573 (92.32%)
 
 # Failed
 
@@ -28,7 +28,6 @@ ts compatibility: 528/573 (92.15%)
 | typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
-| typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/definite/without-annotation.ts | 💥 | 83.33% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |

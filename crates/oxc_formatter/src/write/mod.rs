@@ -1405,7 +1405,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
         if self.computed() {
             write!(f, ["[", self.key(), "]"])?;
         } else {
-            write!(f, self.key())?;
+            format_property_key(self.key(), f)?;
         }
         if self.optional() {
             write!(f, "?")?;
