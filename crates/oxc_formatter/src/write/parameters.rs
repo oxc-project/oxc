@@ -43,8 +43,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
         let has_any_decorated_parameter =
             self.items.iter().any(|param| !param.decorators.is_empty());
 
-        let can_hug = should_hug_function_parameters(self, this_param, parentheses_not_needed, f)
-            && !has_any_decorated_parameter;
+        let can_hug = !has_any_decorated_parameter
+            && should_hug_function_parameters(self, this_param, parentheses_not_needed, f);
 
         let layout = if !self.has_parameter() && this_param.is_none() {
             ParameterLayout::NoParameters
@@ -77,13 +77,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             ParameterLayout::Default => {
                 write!(
                     f,
-                    soft_block_indent(&format_args!(
-                        &ParameterList::with_layout(self, this_param, layout),
-                        format_once(|f| {
-                            let comments = f.context().comments().comments_before(self.span.end);
-                            write!(f, [FormatTrailingComments::Comments(comments)])
-                        })
-                    ))
+                    soft_block_indent(&&ParameterList::with_layout(self, this_param, layout))
                 );
             }
         }
@@ -341,6 +335,11 @@ pub fn should_hug_function_parameters<'a>(
                     Expression::Identifier(_) => true,
                     _ => false,
                 }
+                && !f
+                    .comments()
+                    .comments_in_range(assignment.left.span().end, assignment.right.span().start)
+                    .iter()
+                    .any(|c| f.source_text().is_own_line_comment(c))
         }
         BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_) => true,
         BindingPatternKind::BindingIdentifier(_) => {
