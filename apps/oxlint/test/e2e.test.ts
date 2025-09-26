@@ -8,7 +8,6 @@ const CLI_PATH = pathJoin(PACKAGE_ROOT_PATH, 'dist/cli.js');
 // Options to pass to `testFixture`.
 interface TestOptions {
   // Arguments to pass to the CLI.
-  // Defaults to `['--js-plugins']`.
   args?: string[];
   // Name of the snapshot file.
   // Defaults to `output`.
@@ -24,7 +23,7 @@ interface TestOptions {
  * @param options - Options to customize the test (optional)
  */
 async function testFixture(fixtureName: string, options?: TestOptions): Promise<void> {
-  const args = options?.args ?? ['--js-plugins'];
+  const args = options?.args ?? [];
 
   await testFixtureWithCommand({
     command: 'node',
@@ -36,24 +35,16 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
 }
 
 describe('oxlint CLI', () => {
-  it('should lint a directory without errors without JS plugins enabled', async () => {
-    await testFixture('built_in_no_errors', { args: [], snapshotName: 'plugins_disabled' });
+  it('should lint a directory without errors', async () => {
+    await testFixture('built_in_no_errors', { args: [] });
   });
 
-  it('should lint a directory with errors without JS plugins enabled', async () => {
-    await testFixture('built_in_errors', { args: [], snapshotName: 'plugins_disabled' });
-  });
-
-  it('should lint a directory without errors with JS plugins enabled', async () => {
-    await testFixture('built_in_no_errors', { snapshotName: 'plugins_enabled' });
-  });
-
-  it('should lint a directory with errors with JS plugins enabled', async () => {
-    await testFixture('built_in_errors', { snapshotName: 'plugins_enabled' });
+  it('should lint a directory with errors', async () => {
+    await testFixture('built_in_errors', { args: [] });
   });
 
   it('should load a custom plugin', async () => {
-    await testFixture('basic_custom_plugin', { snapshotName: 'plugins_enabled' });
+    await testFixture('basic_custom_plugin');
   });
 
   it('should load a custom plugin with various import styles', async () => {
@@ -66,10 +57,6 @@ describe('oxlint CLI', () => {
 
   it('should load a custom plugin when configured in overrides', async () => {
     await testFixture('custom_plugin_via_overrides');
-  });
-
-  it('should report an error if a custom plugin in config but JS plugins are not enabled', async () => {
-    await testFixture('basic_custom_plugin', { args: [], snapshotName: 'plugins_disabled' });
   });
 
   it('should report an error if a custom plugin is missing', async () => {
@@ -171,7 +158,7 @@ describe('oxlint CLI', () => {
 
     try {
       await testFixture('fixes', {
-        args: ['--js-plugins', '--fix'],
+        args: ['--fix'],
         snapshotName: 'fixes_enabled',
         async getExtraSnapshotData() {
           const codeAfter = await fs.readFile(fixtureFilePath, 'utf8');
