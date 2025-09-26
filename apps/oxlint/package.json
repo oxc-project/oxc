@@ -4,6 +4,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": "dist/cli.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",
     "build-dev": "pnpm run build-napi && pnpm run build-js",
@@ -34,9 +35,13 @@
   "files": [
     "dist"
   ],
+  "dependencies": {
+    "@oxc-project/types": "workspace:^"
+  },
   "devDependencies": {
     "eslint": "^9.36.0",
     "execa": "^9.6.0",
+    "jiti": "^2.6.0",
     "tsdown": "0.15.1",
     "typescript": "catalog:",
     "vitest": "catalog:"

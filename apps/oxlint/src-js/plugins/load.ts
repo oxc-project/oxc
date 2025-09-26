@@ -20,7 +20,7 @@ export interface Plugin {
 // If `createOnce` method is present, `create` is ignored.
 export type Rule = CreateRule | CreateOnceRule;
 
-interface CreateRule {
+export interface CreateRule {
   meta?: RuleMeta;
   create: (context: Context) => Visitor;
 }
