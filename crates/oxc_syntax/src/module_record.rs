@@ -87,7 +87,7 @@ impl<'a> ModuleRecord<'a> {
 #[ast]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[generate_derive(ESTree)]
-#[estree(no_type, no_ts_def, field_order(name, span))]
+#[estree(no_type, no_ts_def)]
 pub struct NameSpan<'a> {
     /// Name
     #[estree(rename = "value")]
