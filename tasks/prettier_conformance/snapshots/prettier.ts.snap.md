@@ -1,4 +1,4 @@
-ts compatibility: 529/573 (92.32%)
+ts compatibility: 533/573 (93.02%)
 
 # Failed
 
@@ -20,7 +20,6 @@ ts compatibility: 529/573 (92.32%)
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/method_types.ts | 💥 | 84.62% |
-| typescript/comments/type-parameters.ts | 💥 | 65.52% |
 | typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
 | typescript/conditional-types/conditonal-types.ts | 💥✨ | 34.48% |
 | typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
@@ -31,12 +30,10 @@ ts compatibility: 529/573 (92.32%)
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
 | typescript/definite/without-annotation.ts | 💥 | 83.33% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
-| typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/interface/ignore.ts | 💥✨ | 40.09% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 80.85% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
-| typescript/method/issue-10352-consistency.ts | 💥 | 63.64% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
@@ -44,7 +41,6 @@ ts compatibility: 529/573 (92.32%)
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 44.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
-| typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 73.68% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/consistent-with-flow/prettier-ignore.ts | 💥 | 60.00% |
 | typescript/union/single-type/single-type.ts | 💥 | 0.00% |

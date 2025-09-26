@@ -6,8 +6,10 @@ use oxc_ast::{AstKind, ast::*};
 use crate::{
     format_args,
     formatter::{
-        Buffer, Format, FormatError, FormatResult, Formatter, GroupId, prelude::*,
+        Buffer, Format, FormatError, FormatResult, Formatter, GroupId,
+        prelude::*,
         separated::FormatSeparatedIter,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, TrailingSeparator},
@@ -116,7 +118,9 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
                     } else {
                         soft_block_indent(&params).fmt(f)
-                    }
+                    }?;
+
+                    format_dangling_comments(self.decl.span).with_soft_block_indent().fmt(f)
                 }), ">"))
                     .with_group_id(self.options.group_id)]
             )
@@ -130,14 +134,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
 
         if params.is_empty() {
             // This shouldn't happen in valid TypeScript code, but handle it gracefully
-            return write!(
-                f,
-                [&group(&format_args!(
-                    "<",
-                    format_dangling_comments(self.span).with_soft_block_indent(),
-                    ">"
-                ))]
-            );
+            let comments = f.context().comments().comments_before(self.span.end);
+            let indent = if comments.iter().any(|c| c.is_line()) {
+                DanglingIndentMode::Soft
+            } else {
+                DanglingIndentMode::None
+            };
+            return write!(f, ["<", FormatDanglingComments::Comments { comments, indent }, ">"]);
         }
 
         // Check if this is in the context of an arrow function variable
@@ -161,8 +164,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
                 .finish()
         });
 
-        let should_inline =
-            !is_arrow_function_vars && (params.is_empty() || first_arg_can_be_hugged);
+        let should_inline = !is_arrow_function_vars && first_arg_can_be_hugged;
 
         if should_inline {
             write!(f, ["<", format_params, ">"])
