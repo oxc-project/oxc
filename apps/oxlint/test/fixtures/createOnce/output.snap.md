@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x create-once-plugin(after-only): after hook: filename: files/1.js
    ,-[files/1.js:1:1]
  1 | let x;

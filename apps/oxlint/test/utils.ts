@@ -32,15 +32,16 @@ interface TestFixtureOptions {
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
   const fixtureDirPath = pathJoin(FIXTURES_DIR_PATH, options.fixtureName);
 
-  const { stdout, exitCode } = await execa(options.command, options.args, {
+  let { stdout, exitCode } = await execa(options.command, options.args, {
     cwd: fixtureDirPath,
     reject: false,
   });
 
   const snapshotPath = pathJoin(fixtureDirPath, `${options.snapshotName}.snap.md`);
 
-  const output = normalizeStdout(stdout);
-  let snapshot = `# Exit code\n${exitCode}\n\n# stdout\n\`\`\`\n${output}\n\`\`\`\n`;
+  stdout = normalizeStdout(stdout);
+  let snapshot = `# Exit code\n${exitCode}\n\n` +
+    `# stdout\n\`\`\`\n${stdout}\`\`\`\n`;
 
   if (options.getExtraSnapshotData) {
     const extraSnapshots = await options.getExtraSnapshotData(fixtureDirPath);
@@ -68,11 +69,16 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
  * - Remove timing + thread count info.
  * - Replace start of file paths with `<root>`.
  * - Remove irrelevant lines from stack traces.
+ * - Normalize line breaks.
  *
  * @param stdout Output from process
  * @returns Normalized output
  */
 function normalizeStdout(stdout: string): string {
+  // Normalize line breaks, and trim line breaks from start and end
+  stdout = stdout.replace(/\r\n?/g, '\n').replace(/^\n+/, '').replace(/\n+$/, '');
+  if (stdout === '') return '';
+
   let lines = stdout.split('\n');
 
   // Remove timing and thread count info which can vary between runs
@@ -102,5 +108,6 @@ function normalizeStdout(stdout: string): string {
     return [line];
   });
 
-  return lines.join('\n');
+  if (lines.length === 0) return '';
+  return lines.join('\n') + '\n';
 }

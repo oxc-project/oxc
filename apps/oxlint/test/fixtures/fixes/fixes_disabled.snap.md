@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x fixes-plugin(fixes): Remove debugger statement
    ,-[files/index.js:1:1]
  1 | debugger;

@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x Error running JS plugin.
   | File path: <root>/apps/oxlint/test/fixtures/custom_plugin_lint_after_hook_error/files/index.js
   | Error: Whoops!

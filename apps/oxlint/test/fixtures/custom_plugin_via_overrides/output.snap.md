@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x basic-custom-plugin(no-debugger): Unexpected Debugger Statement
    ,-[files/index.js:1:1]
  1 | debugger;

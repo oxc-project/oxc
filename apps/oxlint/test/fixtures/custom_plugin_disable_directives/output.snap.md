@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x test-plugin(no-var): Use let or const instead of var
    ,-[files/index.js:3:1]
  2 | 

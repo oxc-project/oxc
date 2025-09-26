@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
 <root>/apps/oxlint/test/fixtures/defineRule/files/1.js
   0:1  error  create body:
 this === rule: true                                                define-rule-plugin/create
@@ -89,5 +88,4 @@ filename: files/2.js                                        define-rule-plugin/c
 filename: files/2.js                                        define-rule-plugin/create-once-no-hooks
 
 ✖ 35 problems (35 errors, 0 warnings)
-
 ```

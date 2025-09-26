@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x define-plugin-plugin(create): create body:
   | this === rule: true
    ,-[files/1.js:1:1]

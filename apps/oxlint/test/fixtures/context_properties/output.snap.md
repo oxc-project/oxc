@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x context-plugin(log-context): id: context-plugin/log-context
    ,-[files/1.js:1:1]
  1 | let x;

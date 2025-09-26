@@ -3,7 +3,6 @@
 
 # stdout
 ```
-
   x estree-check(check): Visited nodes:
   | * Program
   | * VariableDeclaration: let
