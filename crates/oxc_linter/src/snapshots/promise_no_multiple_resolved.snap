@@ -1,0 +1,155 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 413
+---
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
+   ╭─[no_multiple_resolved.tsx:7:9]
+ 6 │ 
+ 7 │         resolve(value)
+   ·         ──────────────
+ 8 │     })
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 3.
+   ╭─[no_multiple_resolved.tsx:6:5]
+ 5 │ 
+ 6 │     resolve(value)
+   ·     ──────────────
+ 7 │ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 2.
+   ╭─[no_multiple_resolved.tsx:3:5]
+ 2 │     reject(error)
+ 3 │     resolve(value)
+   ·     ──────────────
+ 4 │ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
+    ╭─[no_multiple_resolved.tsx:12:9]
+ 11 │ 
+ 12 │         resolve(value)
+    ·         ──────────────
+ 13 │     })
+    ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 5.
+    ╭─[no_multiple_resolved.tsx:9:9]
+  8 │ 
+  9 │         resolve(value)
+    ·         ──────────────
+ 10 │     })
+    ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 4.
+    ╭─[no_multiple_resolved.tsx:9:9]
+  8 │ 
+  9 │         resolve(value)
+    ·         ──────────────
+ 10 │     })
+    ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 4.
+   ╭─[no_multiple_resolved.tsx:8:9]
+ 7 │         }
+ 8 │         resolve(value)
+   ·         ──────────────
+ 9 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 8.
+    ╭─[no_multiple_resolved.tsx:11:5]
+ 10 │ 
+ 11 │     resolve(value)
+    ·     ──────────────
+ 12 │ })
+    ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 3.
+   ╭─[no_multiple_resolved.tsx:8:9]
+ 7 │     if(bar) {
+ 8 │         resolve(value)
+   ·         ──────────────
+ 9 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 3.
+   ╭─[no_multiple_resolved.tsx:5:5]
+ 4 │     }
+ 5 │     resolve(value)
+   ·     ──────────────
+ 6 │ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
+   ╭─[no_multiple_resolved.tsx:7:5]
+ 6 │     }
+ 7 │     resolve(value)
+   ·     ──────────────
+ 8 │ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
+   ╭─[no_multiple_resolved.tsx:7:5]
+ 6 │     } while (error)
+ 7 │     reject()
+   ·     ────────
+ 8 │ })
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 3.
+   ╭─[no_multiple_resolved.tsx:5:9]
+ 4 │     } finally {
+ 5 │         resolve(value)
+   ·         ──────────────
+ 6 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
+   ╭─[no_multiple_resolved.tsx:7:9]
+ 6 │     } finally {
+ 7 │         resolve(value)
+   ·         ──────────────
+ 8 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 4.
+   ╭─[no_multiple_resolved.tsx:7:9]
+ 6 │     } catch (error) {
+ 7 │         reject(error);
+   ·         ─────────────
+ 8 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
+   ╭─[no_multiple_resolved.tsx:8:9]
+ 7 │     } catch (error) {
+ 8 │         reject(error);
+   ·         ─────────────
+ 9 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
+   ╭─[no_multiple_resolved.tsx:8:9]
+ 7 │     } catch (error) {
+ 8 │         reject(error);
+   ·         ─────────────
+ 9 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
+   ╭─[no_multiple_resolved.tsx:8:9]
+ 7 │     } catch (error) {
+ 8 │         reject(error);
+   ·         ─────────────
+ 9 │     }
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
+   ╭─[no_multiple_resolved.tsx:8:13]
+ 7 │         } catch (error) {
+ 8 │             reject(error);
+   ·             ─────────────
+ 9 │         }
+   ╰────
