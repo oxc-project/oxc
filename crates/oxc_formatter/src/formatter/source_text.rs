@@ -146,7 +146,7 @@ impl<'a> SourceText<'a> {
 
         // Should skip the leading comments of the node.
         if let Some(comment) = comments.first()
-            && comment.span.end < start
+            && comment.span.end <= start
         {
             start = comment.span.start;
         }
