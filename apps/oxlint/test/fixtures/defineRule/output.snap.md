@@ -261,3 +261,9 @@
 Found 0 warnings and 35 errors.
 Finished in Xms on 2 files using X threads.
 ```
+
+# stderr
+```
+WARNING: JS plugins are experimental and not subject to semver.
+Breaking changes are possible while JS plugins support is under development.
+```

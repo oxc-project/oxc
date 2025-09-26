@@ -32,7 +32,7 @@ interface TestFixtureOptions {
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
   const fixtureDirPath = pathJoin(FIXTURES_DIR_PATH, options.fixtureName);
 
-  let { stdout, exitCode } = await execa(options.command, options.args, {
+  let { stdout, stderr, exitCode } = await execa(options.command, options.args, {
     cwd: fixtureDirPath,
     reject: false,
   });
@@ -40,8 +40,10 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
   const snapshotPath = pathJoin(fixtureDirPath, `${options.snapshotName}.snap.md`);
 
   stdout = normalizeStdout(stdout);
+  stderr = normalizeStdout(stderr);
   let snapshot = `# Exit code\n${exitCode}\n\n` +
-    `# stdout\n\`\`\`\n${stdout}\`\`\`\n`;
+    `# stdout\n\`\`\`\n${stdout}\`\`\`\n\n` +
+    `# stderr\n\`\`\`\n${stderr}\`\`\`\n`;
 
   if (options.getExtraSnapshotData) {
     const extraSnapshots = await options.getExtraSnapshotData(fixtureDirPath);

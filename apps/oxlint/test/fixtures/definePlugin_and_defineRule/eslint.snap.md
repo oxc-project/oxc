@@ -89,3 +89,7 @@ filename: files/2.js                                        define-plugin-and-ru
 
 ✖ 35 problems (35 errors, 0 warnings)
 ```
+
+# stderr
+```
+```

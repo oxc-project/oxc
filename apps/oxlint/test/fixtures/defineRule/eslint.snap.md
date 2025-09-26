@@ -89,3 +89,7 @@ filename: files/2.js                                        define-rule-plugin/c
 
 ✖ 35 problems (35 errors, 0 warnings)
 ```
+
+# stderr
+```
+```

@@ -6,3 +6,7 @@
 Found 0 warnings and 0 errors.
 Finished in Xms on 1 file using X threads.
 ```
+
+# stderr
+```
+```

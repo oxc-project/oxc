@@ -239,7 +239,6 @@ impl CliRunner {
         if external_plugin_store.is_empty() {
             external_linter = None;
         } else {
-            #[cfg(not(any(test, feature = "force_test_reporter")))]
             #[expect(clippy::print_stderr)]
             {
                 eprintln!(

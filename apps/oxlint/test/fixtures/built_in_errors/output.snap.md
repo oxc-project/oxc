@@ -13,3 +13,7 @@
 Found 0 warnings and 1 error.
 Finished in Xms on 1 file using X threads.
 ```
+
+# stderr
+```
+```
