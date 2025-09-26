@@ -24,6 +24,11 @@ use crate::{
     options::Options,
 };
 
+/// A worker that manages the individual tools for a specific workspace
+/// and reports back the results to the [`Backend`](crate::backend::Backend).
+///
+/// Each worker is responsible for a specific root URI and configures the tools `cwd` to that root URI.
+/// The [`Backend`](crate::backend::Backend) is responsible to target the correct worker for a given file URI.
 pub struct WorkspaceWorker {
     root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
@@ -32,6 +37,9 @@ pub struct WorkspaceWorker {
 }
 
 impl WorkspaceWorker {
+    /// Create a new workspace worker.
+    /// This will not start any programs, use [`start_worker`](Self::start_worker) for that.
+    /// Depending on the client, we need to request the workspace configuration in `initialized.
     pub fn new(root_uri: Uri) -> Self {
         Self {
             root_uri,
@@ -41,10 +49,16 @@ impl WorkspaceWorker {
         }
     }
 
+    /// Get the root URI of the worker
     pub fn get_root_uri(&self) -> &Uri {
         &self.root_uri
     }
 
+    /// Check if the worker is responsible for the given URI
+    /// A worker is responsible for a URI if the URI is a file URI and is located within the root URI of the worker
+    /// e.g. root URI: file:///path/to/root
+    ///      responsible for: file:///path/to/root/file.js
+    ///      not responsible for: file:///path/to/other/file.js
     pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
         if let Some(path) = uri.to_file_path() {
             return path.starts_with(self.root_uri.to_file_path().unwrap());
@@ -52,6 +66,8 @@ impl WorkspaceWorker {
         false
     }
 
+    /// Start all programs (linter, formatter) for the worker.
+    /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: &Options) {
         *self.options.lock().await = Some(options.clone());
 
@@ -62,8 +78,9 @@ impl WorkspaceWorker {
         }
     }
 
-    // WARNING: start all programs (linter, formatter) before calling this function
-    // each program can tell us customized file watcher patterns
+    /// Initialize file system watchers for the workspace.
+    /// These watchers are used to watch for changes in the lint configuration files.
+    /// The returned watchers will be registered to the client.
     pub async fn init_watchers(&self) -> Vec<FileSystemWatcher> {
         let mut watchers = Vec::new();
 
@@ -91,6 +108,7 @@ impl WorkspaceWorker {
             return watchers;
         };
 
+        // Add watchers for all extended config paths of the current linter
         let Some(extended_paths) =
             self.server_linter.read().await.as_ref().map(|linter| linter.extended_paths.clone())
         else {
@@ -117,6 +135,7 @@ impl WorkspaceWorker {
         watchers
     }
 
+    /// Check if the worker needs to be initialized with options
     pub async fn needs_init_options(&self) -> bool {
         self.options.lock().await.is_none()
     }
@@ -125,6 +144,7 @@ impl WorkspaceWorker {
         self.server_formatter.read().await.is_some()
     }
 
+    /// Remove all diagnostics for the given URI
     pub async fn remove_diagnostics(&self, uri: &Uri) {
         let server_linter_guard = self.server_linter.read().await;
         let Some(server_linter) = server_linter_guard.as_ref() else {
@@ -133,6 +153,9 @@ impl WorkspaceWorker {
         server_linter.remove_diagnostics(uri);
     }
 
+    /// Refresh the server linter with the current options
+    /// This will recreate the linter and re-read the config files.
+    /// Call this when the options have changed and the linter needs to be updated.
     async fn refresh_server_linter(&self) {
         let options = self.options.lock().await;
         let default_options = Options::default();
@@ -142,6 +165,9 @@ impl WorkspaceWorker {
         *self.server_linter.write().await = Some(server_linter);
     }
 
+    /// Lint a file with the current linter
+    /// - If the file is not lintable, [`None`] is returned
+    /// - If the file is lintable, but no diagnostics are found, an empty vector is returned
     pub async fn lint_file(
         &self,
         uri: &Uri,
@@ -155,6 +181,9 @@ impl WorkspaceWorker {
         server_linter.run_single(uri, content, run_type).await
     }
 
+    /// Format a file with the current formatter
+    /// - If no formatter is active, [`None`] is returned
+    /// - If the formatter is active, but no changes are made, an empty vector is returned
     pub async fn format_file(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
         let Some(server_formatter) = &*self.server_formatter.read().await else {
             return None;
@@ -163,6 +192,8 @@ impl WorkspaceWorker {
         server_formatter.run_single(uri, content)
     }
 
+    /// Revalidate diagnostics for the given URIs
+    /// This will re-lint all opened files and return the new diagnostics
     async fn revalidate_diagnostics(
         &self,
         uris: Vec<Uri>,
@@ -174,6 +205,13 @@ impl WorkspaceWorker {
         server_linter.revalidate_diagnostics(uris).await
     }
 
+    /// Get all clear diagnostics for the current workspace
+    /// This should be called when:
+    /// - The linter is disabled (not currently implemented)
+    /// - The workspace is closed
+    /// - The server is shut down
+    ///
+    /// This will return a list of URIs that had diagnostics before, each with an empty diagnostics list
     pub async fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
         self.server_linter
             .read()
@@ -189,6 +227,9 @@ impl WorkspaceWorker {
             .unwrap_or_default()
     }
 
+    /// Get code actions or commands for the given range
+    /// It uses the [`ServerLinter`] cached diagnostics if available, otherwise it will lint the file
+    /// If `is_source_fix_all_oxc` is true, it will return a single code action that applies all fixes
     pub async fn get_code_actions_or_commands(
         &self,
         uri: &Uri,
@@ -290,6 +331,9 @@ impl WorkspaceWorker {
         text_edits
     }
 
+    /// Handle file changes that are watched by the client
+    /// At the moment, this only handles changes to lint configuration files
+    /// When a change is detected, the linter is refreshed and all diagnostics are revalidated
     pub async fn did_change_watched_files(
         &self,
         _file_event: &FileEvent,
@@ -303,6 +347,7 @@ impl WorkspaceWorker {
         Some(self.revalidate_diagnostics(files).await)
     }
 
+    /// Handle server configuration changes from the client
     pub async fn did_change_configuration(
         &self,
         changed_options: &Options,
