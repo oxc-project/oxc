@@ -225,7 +225,11 @@ impl<'a> Codegen<'a> {
         }
         program.print(&mut self, Context::default());
         let legal_comments = self.handle_eof_linked_or_external_comments(program);
-        let code = self.code.into_string();
+        // Running checker.ts prints
+        // dbg!(self.code.capacity()); // 2922154
+        let mut code = self.code.into_string();
+        code.shrink_to_fit();
+        // dbg!(code.capacity()); // 2383824
         let map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { code, map, legal_comments }
     }
