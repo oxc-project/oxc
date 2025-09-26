@@ -643,8 +643,9 @@ impl<'a> PeepholeOptimizations {
                 let mut optimize_implicit_jump = false;
                 // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
                 // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                if ctx.ancestors().nth(1).is_some_and(Ancestor::is_for_statement)
-                    && let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent
+                if ctx.ancestors().nth(1).is_some_and(|v| {
+                    v.is_for_statement() || v.is_for_in_statement() || v.is_for_of_statement()
+                }) && let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent
                     && continue_stmt.label.is_none()
                 {
                     optimize_implicit_jump = true;
@@ -1807,5 +1808,11 @@ mod test {
             "function _() { var x = j; for (var i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
             "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
         );
+    }
+    #[test]
+    fn test_for_continue_in_for() {
+        test("for( a of b ){ if(c) { continue; } d() }", "for ( a of b ) c || d();");
+        test("for( a in b ){ if(c) { continue; } d() }", "for ( a in b ) c || d();");
+        test("for( ; ; ){ if(c) { continue; } d() }", "for ( ; ; ) c || d();");
     }
 }
