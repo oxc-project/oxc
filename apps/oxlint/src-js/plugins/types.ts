@@ -11,7 +11,7 @@ export type { Visitor };
 
 // Hook function that runs before traversal.
 // If returns `false`, traversal is skipped for the rule.
-export type BeforeHook = () => boolean | undefined;
+export type BeforeHook = () => boolean | void;
 
 // Hook function that runs after traversal.
 export type AfterHook = () => void;

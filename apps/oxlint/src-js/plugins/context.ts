@@ -9,7 +9,6 @@ export interface Diagnostic {
   node: {
     start: number;
     end: number;
-    [key: string]: unknown;
   };
   fix?: FixFn;
 }
