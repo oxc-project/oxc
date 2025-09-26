@@ -96,7 +96,7 @@ fn main() -> std::io::Result<()> {
 
     let mut ast_nodes_by_block = FxHashMap::<_, Vec<_>>::default();
     for node in semantic.semantic.nodes() {
-        let block = node.cfg_id();
+        let block = semantic.semantic.nodes().cfg_id(node.id());
         let block_ix = cfg.graph.node_weight(block).unwrap();
         ast_nodes_by_block.entry(*block_ix).or_default().push(node);
     }

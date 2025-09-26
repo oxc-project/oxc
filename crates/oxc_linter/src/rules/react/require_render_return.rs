@@ -116,7 +116,7 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
     let cfg = ctx.cfg();
     let state = neighbors_filtered_by_edge_weight(
         cfg.graph(),
-        node.cfg_id(),
+        ctx.nodes().cfg_id(node.id()),
         &|edge| match edge {
             // We only care about normal edges having a return statement.
             EdgeType::Jump | EdgeType::Normal => None,

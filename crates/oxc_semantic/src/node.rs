@@ -22,10 +22,6 @@ pub struct AstNode<'a> {
 
     /// Associated Scope (initialized by binding)
     scope_id: ScopeId,
-
-    /// Associated `BasicBlockId` in CFG (initialized by control_flow)
-    #[cfg(feature = "cfg")]
-    cfg_id: BlockNodeId,
 }
 
 impl<'a> AstNode<'a> {
@@ -34,10 +30,10 @@ impl<'a> AstNode<'a> {
     pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
-        cfg_id: BlockNodeId,
+        _cfg_id: BlockNodeId,
         id: NodeId,
     ) -> Self {
-        Self { id, kind, scope_id, cfg_id }
+        Self { id, kind, scope_id }
     }
 
     #[cfg(not(feature = "cfg"))]
@@ -49,15 +45,6 @@ impl<'a> AstNode<'a> {
     #[inline]
     pub fn id(&self) -> NodeId {
         self.id
-    }
-
-    /// ID of the control flow graph node this node is in.
-    ///
-    /// See [oxc_cfg::ControlFlowGraph] for more information.
-    #[inline]
-    #[cfg(feature = "cfg")]
-    pub fn cfg_id(&self) -> BlockNodeId {
-        self.cfg_id
     }
 
     /// Access the underlying struct from [`oxc_ast`].
@@ -99,6 +86,9 @@ pub struct AstNodes<'a> {
     parent_ids: IndexVec<NodeId, NodeId>,
     /// `node` -> `flags`
     flags: IndexVec<NodeId, NodeFlags>,
+    /// `node` -> `cfg_id` (control flow graph node)
+    #[cfg(feature = "cfg")]
+    cfg_ids: IndexVec<NodeId, BlockNodeId>,
     /// Stores a set of bits of a fixed size, where each bit represents a single [`AstKind`]. If the bit is set (1),
     /// then the AST contains at least one node of that kind. If the bit is not set (0), then the AST does not contain
     /// any nodes of that kind.
@@ -197,6 +187,15 @@ impl<'a> AstNodes<'a> {
         &mut self.flags[node_id]
     }
 
+    /// ID of the control flow graph node this node is in.
+    ///
+    /// See [oxc_cfg::ControlFlowGraph] for more information.
+    #[inline]
+    #[cfg(feature = "cfg")]
+    pub fn cfg_id(&self, node_id: NodeId) -> BlockNodeId {
+        self.cfg_ids[node_id]
+    }
+
     /// Get the [`Program`] that's also the root of the AST.
     #[inline]
     pub fn program(&self) -> &'a Program<'a> {
@@ -228,6 +227,7 @@ impl<'a> AstNodes<'a> {
         let node = AstNode::new(kind, scope_id, cfg_id, node_id);
         self.nodes.push(node);
         self.flags.push(flags);
+        self.cfg_ids.push(cfg_id);
         self.node_kinds_set.set(kind.ty());
         node_id
     }
@@ -271,6 +271,7 @@ impl<'a> AstNodes<'a> {
         self.parent_ids.push(NodeId::ROOT);
         self.nodes.push(AstNode::new(kind, scope_id, cfg_id, NodeId::ROOT));
         self.flags.push(flags);
+        self.cfg_ids.push(cfg_id);
         self.node_kinds_set.set(AstType::Program);
         NodeId::ROOT
     }
@@ -300,6 +301,8 @@ impl<'a> AstNodes<'a> {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
         self.flags.reserve(additional);
+        #[cfg(feature = "cfg")]
+        self.cfg_ids.reserve(additional);
     }
 
     /// Checks if the AST contains any nodes of the given types.

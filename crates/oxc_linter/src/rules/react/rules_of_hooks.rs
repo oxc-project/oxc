@@ -275,8 +275,8 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        let node_cfg_id = node.cfg_id();
-        let func_cfg_id = parent_func.cfg_id();
+        let node_cfg_id = ctx.nodes().cfg_id(node.id());
+        let func_cfg_id = ctx.nodes().cfg_id(parent_func.id());
 
         // there is no branch between us and our parent function
         if node_cfg_id == func_cfg_id {
@@ -296,7 +296,7 @@ impl Rule for RulesOfHooks {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if has_conditional_path_accept_throw(cfg, parent_func, node) {
+        if has_conditional_path_accept_throw(ctx.nodes(), cfg, parent_func, node) {
             #[expect(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
@@ -304,12 +304,13 @@ impl Rule for RulesOfHooks {
 }
 
 fn has_conditional_path_accept_throw(
+    nodes: &AstNodes<'_>,
     cfg: &ControlFlowGraph,
     from: &AstNode<'_>,
     to: &AstNode<'_>,
 ) -> bool {
-    let from_graph_id = from.cfg_id();
-    let to_graph_id = to.cfg_id();
+    let from_graph_id = nodes.cfg_id(from.id());
+    let to_graph_id = nodes.cfg_id(to.id());
     let graph = cfg.graph();
     if graph
         .edges(to_graph_id)

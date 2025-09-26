@@ -75,7 +75,7 @@ impl Rule for NoThisBeforeSuper {
                     }
                 }
                 AstKind::Super(_) => {
-                    let basic_block_id = node.cfg_id();
+                    let basic_block_id = ctx.nodes().cfg_id(node.id());
                     if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) {
                         let has_this_or_super_in_args =
                             Self::contains_this_or_super_in_args(&call_expr.arguments);
@@ -92,7 +92,7 @@ impl Rule for NoThisBeforeSuper {
                     }
                 }
                 AstKind::ThisExpression(_) => {
-                    let basic_block_id = node.cfg_id();
+                    let basic_block_id = ctx.nodes().cfg_id(node.id());
                     if !basic_blocks_with_super_called.contains(&basic_block_id) {
                         basic_blocks_with_local_violations
                             .entry(basic_block_id)
@@ -109,7 +109,7 @@ impl Rule for NoThisBeforeSuper {
         for node in wanted_nodes {
             let output = Self::analyze(
                 cfg,
-                node.cfg_id(),
+                ctx.nodes().cfg_id(node.id()),
                 &basic_blocks_with_super_called,
                 &basic_blocks_with_local_violations,
                 false,
