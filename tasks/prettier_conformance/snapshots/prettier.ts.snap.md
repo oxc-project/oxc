@@ -1,4 +1,4 @@
-ts compatibility: 521/573 (90.92%)
+ts compatibility: 527/573 (91.97%)
 
 # Failed
 
@@ -19,11 +19,8 @@ ts compatibility: 521/573 (90.92%)
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
-| typescript/comments/16065.ts | 💥 | 63.64% |
-| typescript/comments/16207.ts | 💥 | 71.43% |
-| typescript/comments/16889.ts | 💥 | 62.61% |
 | typescript/comments/location.ts | 💥 | 95.00% |
-| typescript/comments/method_types.ts | 💥 | 79.49% |
+| typescript/comments/method_types.ts | 💥 | 84.62% |
 | typescript/comments/type-parameters.ts | 💥 | 65.52% |
 | typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
 | typescript/conditional-types/conditonal-types.ts | 💥✨ | 34.48% |
@@ -33,10 +30,7 @@ ts compatibility: 521/573 (90.92%)
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/custom/computedProperties/string.ts | 💥 | 73.33% |
-| typescript/decorators/comments.ts | 💥 | 60.00% |
-| typescript/decorators/decorators-comments.ts | 💥 | 65.71% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/without-annotation.ts | 💥 | 83.33% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
