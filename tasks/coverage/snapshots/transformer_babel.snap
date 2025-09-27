@@ -1,11 +1,37 @@
-commit: 4cc3d888
+commit: 41d96516
 
 transformer_babel Summary:
-AST Parsed     : 2440/2440 (100.00%)
-Positive Passed: 2437/2440 (99.88%)
+AST Parsed     : 2423/2423 (100.00%)
+Positive Passed: 2407/2423 (99.34%)
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowYieldOutsideFunction-true-2/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/47/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/48/input.js
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-as-identifier/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-var/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/declare-asserts-var-with-predicate/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function-rest-trailing-comma/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-babel-7/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/callable-class-ambient/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-after/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-before/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration/input.ts
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration-optional-pattern/input.ts
 
