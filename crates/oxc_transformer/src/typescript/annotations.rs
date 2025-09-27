@@ -183,14 +183,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
 
     fn enter_variable_declaration(
         &mut self,
-        decl: &mut VariableDeclaration<'a>,
+        _decl: &mut VariableDeclaration<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        // Remove the `declare` flag from variable declarations
-        // The declaration itself is kept for semantic analysis
-        if decl.declare {
-            decl.declare = false;
-        }
+        // Don't remove the declare flag here so we can check it in exit_statements
+        // We'll remove the flag later for declarations that are kept
     }
 
     fn enter_variable_declarator(
@@ -431,16 +428,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         // Remove TS specific statements
-        stmts.retain(|stmt| match stmt {
+        stmts.retain_mut(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
             match_declaration!(Statement) => {
-                let decl = stmt.to_declaration();
-                // Keep variable, function, and class declarations
-                // The `declare` flag has already been removed in their respective enter_* methods
+                let decl = stmt.to_declaration_mut();
                 match decl {
-                    Declaration::VariableDeclaration(_)
-                    | Declaration::FunctionDeclaration(_)
-                    | Declaration::ClassDeclaration(_) => true,
+                    Declaration::VariableDeclaration(var_decl) => {
+                        // Remove declare variable declarations entirely
+                        if var_decl.declare { false } else { true }
+                    }
+                    Declaration::FunctionDeclaration(func_decl) => {
+                        // Remove declare from functions but keep the declaration
+                        func_decl.declare = false;
+                        true
+                    }
+                    Declaration::ClassDeclaration(class_decl) => {
+                        // Remove declare from classes but keep the declaration
+                        class_decl.declare = false;
+                        true
+                    }
                     // Remove type-only declarations
                     _ => !decl.is_typescript_syntax(),
                 }
