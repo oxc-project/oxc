@@ -15,8 +15,8 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
-use oxc_parser::Parser;
+use oxc_formatter::{FormatOptions, Formatter};
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
 use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
@@ -240,18 +240,29 @@ impl TestRunner {
                 )
                 .unwrap();
 
-                let Some(actual) =
-                    Self::run_oxc_formatter(path, &source_text, format_options.clone())
-                else {
-                    // Skip the test if parsing failed
-                    if self.options.debug {
-                        println!("  => Skipped (parsing failed)");
+                // Determine SourceType with JSX support for files in jsx/ folders
+                let mut source_type = SourceType::from_path(path).unwrap();
+
+                // Check if path contains "jsx" in any parent folder
+                let path_str = path.to_string_lossy();
+                let in_jsx_folder = path_str.contains("/jsx/") || path_str.contains("\\jsx\\");
+
+                // Special case: jsx/expression-with-types needs TypeScript parsing
+                // This folder contains TypeScript type annotations in .js files
+                let needs_typescript_jsx = path_str.contains("/jsx/expression-with-types/");
+
+                if source_type.is_javascript() {
+                    if needs_typescript_jsx {
+                        // These specific files need TypeScript+JSX mode for type annotations
+                        source_type = SourceType::tsx();
+                    } else if in_jsx_folder {
+                        // Other JSX files just need JSX enabled
+                        source_type = source_type.with_jsx(true);
                     }
-                    continue;
-                };
+                }
 
                 let actual = Self::replace_escape_and_eol(
-                    &actual,
+                    &Self::run_oxc_formatter(&source_text, source_type, format_options.clone()),
                     expected.contains("LF>") || expected.contains("<CR"),
                 );
 
@@ -420,23 +431,22 @@ impl TestRunner {
     }
 
     fn run_oxc_formatter(
-        path: &Path,
         source_text: &str,
-        format_options: FormatOptions,
-    ) -> Option<String> {
+        source_type: SourceType,
+        formatter_options: FormatOptions,
+    ) -> String {
         let allocator = Allocator::default();
-
-        let source_type = SourceType::from_path(path).unwrap();
-        let source_type = enable_jsx_source_type(source_type);
-
+        let source_type = source_type.with_jsx(source_type.is_javascript());
         let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
+            .with_options(ParseOptions {
+                parse_regular_expression: false,
+                // Enable all syntax features
+                allow_v8_intrinsics: true,
+                allow_return_outside_function: true,
+                // `oxc_formatter` expects this to be false
+                preserve_parens: false,
+            })
             .parse();
-        if !ret.errors.is_empty() {
-            return None;
-        }
-
-        let formatted = Formatter::new(&allocator, format_options).build(&ret.program);
-        Some(formatted)
+        Formatter::new(&allocator, formatter_options).build(&ret.program)
     }
 }
