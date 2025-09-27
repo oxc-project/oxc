@@ -3,11 +3,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
-use crate::{
-    ParserImpl, StatementContext, diagnostics,
-    lexer::Kind,
-    modifiers::{ModifierFlags, Modifiers},
-};
+use crate::{ParserImpl, StatementContext, diagnostics, lexer::Kind};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
@@ -78,7 +74,7 @@ impl<'a> ParserImpl<'a> {
         start_span: u32,
         kind: VariableDeclarationKind,
         decl_parent: VariableDeclarationParent,
-        modifiers: &Modifiers<'a>,
+        declare: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
         let mut declarations = self.ast.vec();
         loop {
@@ -92,19 +88,7 @@ impl<'a> ParserImpl<'a> {
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
             self.asi();
         }
-
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE,
-            diagnostics::modifier_cannot_be_used_here,
-        );
-
-        self.ast.alloc_variable_declaration(
-            self.end_span(start_span),
-            kind,
-            declarations,
-            modifiers.contains_declare(),
-        )
+        self.ast.alloc_variable_declaration(self.end_span(start_span), kind, declarations, declare)
     }
 
     fn parse_variable_declarator(
@@ -181,28 +165,24 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
+        let kind = if is_await {
+            VariableDeclarationKind::AwaitUsing
+        } else {
+            VariableDeclarationKind::Using
+        };
 
         self.expect(Kind::Using);
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
+        let mut declarations = self.ast.vec();
         loop {
-            let declaration = self.parse_variable_declarator(
-                VariableDeclarationParent::Statement,
-                if is_await {
-                    VariableDeclarationKind::AwaitUsing
-                } else {
-                    VariableDeclarationKind::Using
-                },
-            );
+            let declaration =
+                self.parse_variable_declarator(VariableDeclarationParent::Statement, kind);
 
-            match declaration.id.kind {
-                BindingPatternKind::BindingIdentifier(_) => {}
-                _ => {
-                    self.error(diagnostics::invalid_identifier_in_using_declaration(
-                        declaration.id.span(),
-                    ));
-                }
+            if !matches!(declaration.id.kind, BindingPatternKind::BindingIdentifier(_)) {
+                self.error(diagnostics::invalid_identifier_in_using_declaration(
+                    declaration.id.span(),
+                ));
             }
 
             // Excluding `for` loops, an initializer is required in a UsingDeclaration.
@@ -218,11 +198,6 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        let kind = if is_await {
-            VariableDeclarationKind::AwaitUsing
-        } else {
-            VariableDeclarationKind::Using
-        };
         self.ast.variable_declaration(self.end_span(span), kind, declarations, false)
     }
 }

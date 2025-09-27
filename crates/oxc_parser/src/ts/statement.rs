@@ -220,9 +220,8 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_ts_interface_body(&mut self) -> Box<'a, TSInterfaceBody<'a>> {
         let span = self.start_span();
-        let body_list = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
-            Some(Self::parse_ts_type_signature(p))
-        });
+        let body_list =
+            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
         self.ast.alloc_ts_interface_body(self.end_span(span), body_list)
     }
 
@@ -433,11 +432,16 @@ impl<'a> ParserImpl<'a> {
             Kind::Var | Kind::Let | Kind::Const => {
                 let kind = self.get_variable_declaration_kind();
                 self.bump_any();
+                self.verify_modifiers(
+                    modifiers,
+                    ModifierFlags::DECLARE,
+                    diagnostics::modifier_cannot_be_used_here,
+                );
                 let decl = self.parse_variable_declaration(
                     start_span,
                     kind,
                     VariableDeclarationParent::Statement,
-                    modifiers,
+                    modifiers.contains_declare(),
                 );
                 Declaration::VariableDeclaration(decl)
             }
@@ -450,16 +454,13 @@ impl<'a> ParserImpl<'a> {
                 let token = self.cur_token();
                 let mut import_kind = ImportOrExportKind::Value;
                 let mut identifier = self.parse_binding_identifier();
-                if self.is_ts && token.kind() == Kind::Type {
-                    // `import type ...`
-                    if self.cur_kind().is_binding_identifier() {
-                        // `import type something ...`
-                        identifier = self.parse_binding_identifier();
-                        import_kind = ImportOrExportKind::Type;
-                    } else {
-                        // `import type = ...`
-                        import_kind = ImportOrExportKind::Value;
-                    }
+                if self.is_ts
+                    && token.kind() == Kind::Type
+                    && self.cur_kind().is_binding_identifier()
+                {
+                    // `import type something ...`
+                    identifier = self.parse_binding_identifier();
+                    import_kind = ImportOrExportKind::Type;
                 }
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start_span)
             }

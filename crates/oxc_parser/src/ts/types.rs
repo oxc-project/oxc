@@ -653,9 +653,8 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_type_literal(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        let member_list = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
-            Some(Self::parse_ts_type_signature(p))
-        });
+        let member_list =
+            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
         self.ast.ts_type_type_literal(self.end_span(span), member_list)
     }
 
