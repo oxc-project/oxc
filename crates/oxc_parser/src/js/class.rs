@@ -632,12 +632,14 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
+    #[cold]
     pub(crate) fn check_getter(&mut self, function: &Function<'a>) {
         if !function.params.items.is_empty() {
             self.error(diagnostics::getter_parameters(function.params.span));
         }
     }
 
+    #[cold]
     pub(crate) fn check_setter(&mut self, function: &Function<'a>) {
         if let Some(rest) = &function.params.rest {
             self.error(diagnostics::setter_with_rest_parameter(rest.span));
