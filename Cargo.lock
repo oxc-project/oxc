@@ -2376,7 +2376,6 @@ dependencies = [
  "oxc_index",
  "oxc_span",
  "phf",
- "rustc-hash",
  "serde",
  "unicode-id-start",
 ]

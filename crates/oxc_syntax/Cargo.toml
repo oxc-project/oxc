@@ -31,7 +31,6 @@ bitflags = { workspace = true }
 cow-utils = { workspace = true }
 nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
-rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
 
 dragonbox_ecma = { workspace = true, optional = true }
