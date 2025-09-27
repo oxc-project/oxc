@@ -127,6 +127,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                 let mut parent = self.parent;
                 loop {
                     match parent {
+                        AstNodes::Program(_) | AstNodes::ExpressionStatement(_) => return false,
                         AstNodes::ForOfStatement(stmt) => {
                             return stmt.left.span().contains_inclusive(self.span);
                         }
@@ -142,7 +143,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                                 .as_ref()
                                 .is_some_and(|init| init.span().contains_inclusive(self.span));
                         }
-                        AstNodes::Program(_) => break,
                         _ => parent = parent.parent(),
                     }
                 }
