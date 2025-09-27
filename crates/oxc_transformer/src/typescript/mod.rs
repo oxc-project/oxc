@@ -282,6 +282,18 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
         self.annotations.enter_jsx_fragment(elem, ctx);
     }
 
+    fn enter_variable_declaration(
+        &mut self,
+        decl: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_variable_declaration(decl, ctx);
+    }
+
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_function(func, ctx);
+    }
+
     fn enter_declaration(&mut self, node: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         self.module.enter_declaration(node, ctx);
     }

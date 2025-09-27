@@ -1,4 +1,4 @@
-ts compatibility: 521/573 (90.92%)
+ts compatibility: 506/573 (88.31%)
 
 # Failed
 
@@ -6,13 +6,22 @@ ts compatibility: 521/573 (90.92%)
 | :-------- | :--------------: | :---------: |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
+| jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/text-wrap/test.js | 💥 | 99.56% |
+| jsx/stateless-arrow-fn/test.js | 💥 | 95.32% |
+| jsx/text-wrap/test.js | 💥 | 98.68% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
+| typescript/argument-expansion/argument_expansion.ts | 💥 | 84.75% |
+| typescript/array/key.ts | 💥 | 75.00% |
+| typescript/arrow/16067.ts | 💥💥 | 93.88% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
+| typescript/as/as.ts | 💥 | 88.24% |
+| typescript/as/long-identifiers.ts | 💥 | 86.67% |
+| typescript/cast/generic-cast.ts | 💥 | 96.32% |
+| typescript/cast/hug-args.ts | 💥 | 47.06% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
@@ -40,6 +49,7 @@ ts compatibility: 521/573 (90.92%)
 | typescript/definite/without-annotation.ts | 💥 | 83.33% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/function-type/consistent.ts | 💥 | 70.83% |
+| typescript/functional-composition/pipe-function-calls.ts | 💥 | 82.76% |
 | typescript/interface/ignore.ts | 💥✨ | 40.09% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 80.85% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
@@ -50,6 +60,11 @@ ts compatibility: 521/573 (90.92%)
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 44.00% |
+| typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 83.87% |
+| typescript/satisfies-operators/hug-args.ts | 💥💥 | 0.00% |
+| typescript/satisfies-operators/satisfies.ts | 💥💥 | 95.45% |
+| typescript/ternaries/indent.ts | 💥 | 93.33% |
+| typescript/test-declarations/test_declarations.ts | 💥💥 | 40.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 73.68% |
