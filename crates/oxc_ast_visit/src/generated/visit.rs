@@ -4251,7 +4251,14 @@ pub mod walk {
     #[inline]
     pub fn walk_arguments<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Argument<'a>>) {
         for el in it {
-            visitor.visit_argument(el);
+            match el {
+                oxc_ast::ast::Argument::SpreadElement(spread) => {
+                    visitor.visit_spread_element(spread);
+                }
+                _ => {
+                    visitor.visit_expression(el.to_expression());
+                }
+            }
         }
     }
 
