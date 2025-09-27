@@ -1809,6 +1809,7 @@ mod test {
             "function _() { for (var x = j, i = 0; i < 10; i++) { let j = k; console.log(i, j, j) } }",
         );
     }
+
     #[test]
     fn test_for_continue_in_for() {
         test("for( a of b ){ if(c) { continue; } d() }", "for ( a of b ) c || d();");
