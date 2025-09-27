@@ -854,7 +854,7 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     }
 }
 
-impl<'a> Argument<'a> {
+impl Argument<'_> {
     /// Returns `true` if this argument is a spread element (like `...foo`).
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadElement(_))
