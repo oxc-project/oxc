@@ -435,7 +435,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
                 match decl {
                     Declaration::VariableDeclaration(var_decl) => {
                         // Remove declare variable declarations entirely
-                        if var_decl.declare { false } else { true }
+                        !var_decl.declare
                     }
                     Declaration::FunctionDeclaration(func_decl) => {
                         // Remove declare from functions but keep the declaration
