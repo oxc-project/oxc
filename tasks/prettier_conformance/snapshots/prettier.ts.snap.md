@@ -1,9 +1,10 @@
-ts compatibility: 507/573 (88.48%)
+ts compatibility: 506/573 (88.31%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
