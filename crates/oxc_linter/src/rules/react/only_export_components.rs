@@ -263,9 +263,11 @@ impl Rule for OnlyExportComponents {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let react_is_in_scope = ctx.semantic().nodes().iter().any(|node| {
-            matches!(node.kind(), AstKind::ImportDeclaration(import_decl) if import_decl.source.value == "react")
-        });
+        let react_is_in_scope = ctx
+            .module_record()
+            .import_entries
+            .iter()
+            .any(|entry| entry.module_request.name == "react");
         if self.check_js && !react_is_in_scope {
             return;
         }
@@ -349,27 +351,32 @@ impl OnlyExportComponents {
 
     fn analyze_exports(&self, ctx: &LintContext, react_hocs: &[&str]) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
+        let module_record = ctx.module_record();
+
+        let has_any_exports = !module_record.local_export_entries.is_empty()
+            || !module_record.star_export_entries.is_empty()
+            || !module_record.indirect_export_entries.is_empty();
+        if !has_any_exports {
+            return analysis;
+        }
+
+        analysis.has_exports = true;
 
         for node in ctx.semantic().nodes() {
             match node.kind() {
                 AstKind::ExportAllDeclaration(export_all) if export_all.export_kind.is_value() => {
-                    analysis.has_exports = true;
                     ctx.diagnostic(export_all_components_diagnostic(export_all.span));
                 }
                 AstKind::ExportDefaultDeclaration(export_default) => {
-                    analysis.has_exports = true;
                     let result = self.analyze_export_default(export_default, react_hocs);
-
                     if let Some(span) = result.anonymous_span {
                         ctx.diagnostic(anonymous_components_diagnostic(span));
                     }
-
                     analysis.merge(result);
                 }
                 AstKind::ExportNamedDeclaration(export_named)
                     if export_named.export_kind.is_value() =>
                 {
-                    analysis.has_exports = true;
                     let result = self.analyze_export_named(ctx, export_named, react_hocs);
                     analysis.merge(result);
                 }
