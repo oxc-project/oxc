@@ -10,7 +10,9 @@ const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
 // Type of `fix` function.
 // `fix` can return a single fix, an array of fixes, or any iterator that yields fixes.
 // e.g. `(function*() { yield fix1; yield fix2; })()`
-export type FixFn = (fixer: Fixer) => Fix | Array<Fix | null> | IterableIterator<Fix | null> | null;
+export type FixFn = (
+  fixer: Fixer,
+) => Fix | Array<Fix | null | undefined> | IterableIterator<Fix | null | undefined> | null | undefined;
 
 // Type of a fix, as returned by `fix` function.
 export type Fix = { range: Range; text: string };
@@ -106,10 +108,9 @@ export function getFixes(diagnostic: Diagnostic, internal: InternalContext): Fix
     // Check prototype instead of using `Array.isArray()`, to ensure it is a native `Array`,
     // not a subclass which may have overridden `toJSON()` in a way which could make `JSON.stringify()` throw
     if (getPrototypeOf(fixes) !== ArrayPrototype || hasOwn(fixes, 'toJSON')) {
-      fixes = ArrayFrom(fixes as IterableIterator<Fix>);
+      fixes = ArrayFrom(fixes);
       isCloned = true;
     }
-    assertIs<Array<Fix | null>>(fixes);
 
     const fixesLen = fixes.length;
     if (fixesLen === 0) return null;
