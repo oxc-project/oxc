@@ -278,9 +278,6 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
-        if self.check_syntax_error && !self.source_type.is_typescript() {
-            checker::check_unresolved_exports(&self);
-        }
         self.scoping.set_root_unresolved_references(
             self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
         );

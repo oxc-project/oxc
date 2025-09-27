@@ -1,9 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{DoWhileStatement, ForStatement, WhileStatement},
-};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::Span;
+use oxc_ast::{AstKind, ast::*};
 
 use crate::builder::SemanticBuilder;
 
@@ -16,8 +11,9 @@ pub use javascript::is_function_part_of_if_statement;
 
 pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
     match kind {
-        AstKind::Program(_) => {
+        AstKind::Program(program) => {
             js::check_duplicate_class_elements(ctx);
+            js::check_unresolved_exports(program, ctx);
         }
         AstKind::BindingIdentifier(ident) => {
             js::check_identifier(&ident.name, ident.span, ctx);
@@ -122,27 +118,5 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             ts::check_jsx_expression_container(container, ctx);
         }
         _ => {}
-    }
-}
-
-#[cold]
-fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1)
-}
-
-/// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
-/// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
-pub fn check_unresolved_exports(ctx: &SemanticBuilder<'_>) {
-    for reference_ids in ctx.unresolved_references.root().values() {
-        for reference_id in reference_ids {
-            let reference = ctx.scoping.get_reference(*reference_id);
-            let node_id = reference.node_id();
-            let node = ctx.nodes.get_node(node_id);
-            if ctx.nodes.flags(node_id).has_export_specifier()
-                && let AstKind::IdentifierReference(ident) = node.kind()
-            {
-                ctx.errors.borrow_mut().push(undefined_export(&ident.name, ident.span));
-            }
-        }
     }
 }
