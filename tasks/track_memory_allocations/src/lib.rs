@@ -107,8 +107,6 @@ struct AllocatorStats {
     arena_allocs: usize,
     /// Number of reallocations made by arena/bump allocator
     arena_reallocs: usize,
-    /// Number of bytes used in the arena/bump allocator
-    arena_bytes: usize,
 }
 
 #[test]
@@ -207,6 +205,7 @@ pub fn run() -> Result<(), io::Error> {
 }
 
 /// Record current allocation stats from both system allocator and arena allocator.
+#[cfg_attr(feature = "is_all_features", expect(unused))]
 fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let sys_allocs = NUM_ALLOC.get();
     let sys_reallocs = NUM_REALLOC.get();
@@ -214,9 +213,8 @@ fn record_stats(allocator: &Allocator) -> AllocatorStats {
     let (arena_allocs, arena_reallocs) = allocator.get_allocation_stats();
     #[cfg(feature = "is_all_features")]
     let (arena_allocs, arena_reallocs) = (0, 0);
-    let arena_bytes = allocator.used_bytes();
 
-    AllocatorStats { sys_allocs, sys_reallocs, arena_allocs, arena_reallocs, arena_bytes }
+    AllocatorStats { sys_allocs, sys_reallocs, arena_allocs, arena_reallocs }
 }
 
 /// Record current allocation stats since the last recorded stats in `prev`. This is useful
@@ -228,7 +226,6 @@ fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorS
         sys_reallocs: stats.sys_reallocs.saturating_sub(prev.sys_reallocs),
         arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
         arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
-        arena_bytes: stats.arena_bytes.saturating_sub(prev.arena_bytes),
     }
 }
 
@@ -241,14 +238,13 @@ fn format_table_row(
     width: usize,
 ) -> String {
     format!(
-        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$} | {:width$}\n\n",
+        "{:fixture_width$} | {:width$} || {:width$} | {:width$} || {:width$} | {:width$}\n\n",
         file_name,
         format_size(file_size, DECIMAL),
         stats.sys_allocs,
         stats.sys_reallocs,
         stats.arena_allocs,
         stats.arena_reallocs,
-        format_size(stats.arena_bytes, DECIMAL.decimal_places(3)),
         fixture_width = fixture_width,
         width = width
     )
