@@ -240,29 +240,12 @@ impl TestRunner {
                 )
                 .unwrap();
 
-                // Determine SourceType with JSX support for files in jsx/ folders
-                let mut source_type = SourceType::from_path(path).unwrap();
-
-                // Check if path contains "jsx" in any parent folder
-                let path_str = path.to_string_lossy();
-                let in_jsx_folder = path_str.contains("/jsx/") || path_str.contains("\\jsx\\");
-
-                // Special case: jsx/expression-with-types needs TypeScript parsing
-                // This folder contains TypeScript type annotations in .js files
-                let needs_typescript_jsx = path_str.contains("/jsx/expression-with-types/");
-
-                if source_type.is_javascript() {
-                    if needs_typescript_jsx {
-                        // These specific files need TypeScript+JSX mode for type annotations
-                        source_type = SourceType::tsx();
-                    } else if in_jsx_folder {
-                        // Other JSX files just need JSX enabled
-                        source_type = source_type.with_jsx(true);
-                    }
-                }
-
                 let actual = Self::replace_escape_and_eol(
-                    &Self::run_oxc_formatter(&source_text, source_type, format_options.clone()),
+                    &Self::run_oxc_formatter(
+                        &source_text,
+                        SourceType::from_path(path).unwrap(),
+                        format_options.clone(),
+                    ),
                     expected.contains("LF>") || expected.contains("<CR"),
                 );
 
