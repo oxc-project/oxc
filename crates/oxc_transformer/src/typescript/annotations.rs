@@ -217,18 +217,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        // Remove the `declare` flag from function declarations
-        // The declaration itself is kept for semantic analysis
-        func.declare = false;
+        // Remove TypeScript annotations from function declarations
+        // Note: declare flag is preserved for exit_statements to handle declaration removal
         func.type_parameters = None;
         func.return_type = None;
         func.this_param = None;
     }
 
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        // Remove the `declare` flag from class declarations
-        // The declaration itself is kept for semantic analysis
-        class.declare = false;
+        // Remove TypeScript annotations from class declarations
+        // Note: declare flag is preserved for exit_statements to handle declaration removal
         class.type_parameters = None;
         class.super_type_arguments = None;
         class.implements.clear();
@@ -429,14 +427,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
                         !var_decl.declare
                     }
                     Declaration::FunctionDeclaration(func_decl) => {
-                        // Remove declare from functions but keep the declaration
-                        func_decl.declare = false;
-                        true
+                        // Remove declare function declarations and function overload signatures entirely
+                        // Keep only function implementations (those with a body)
+                        !func_decl.declare && func_decl.body.is_some()
                     }
                     Declaration::ClassDeclaration(class_decl) => {
-                        // Remove declare from classes but keep the declaration
-                        class_decl.declare = false;
-                        true
+                        // Remove declare class declarations entirely
+                        !class_decl.declare
                     }
                     // Remove type-only declarations
                     _ => !decl.is_typescript_syntax(),
