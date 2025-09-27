@@ -589,7 +589,7 @@ impl<'t> Mangler<'t> {
 }
 
 fn is_special_name(name: &str) -> bool {
-    matches!(name, "exports" | "arguments")
+    matches!(name, "arguments")
 }
 
 #[derive(Debug)]

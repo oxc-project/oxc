@@ -35,7 +35,10 @@ fn mangler() {
         "function foo(a) { let { x } = y }",
         "var x; function foo(a) { ({ x } = y) }",
         "import { x } from 's'; export { x }",
-        "function _ (exports) { Object.defineProperty(exports, '__esModule', { value: true }) }",
+        "Object.defineProperty(exports, '__esModule', { value: true })",
+        "var exports = {}; Object.defineProperty(exports, '__esModule', { value: true })",
+        "function _(exports) { Object.defineProperty(exports, '__esModule', { value: true }) }",
+        "function _() { console.log(arguments) }",
         "function foo(foo_a, foo_b, foo_c) {}; function bar(bar_a, bar_b, bar_c) {}", // foo_a and bar_a can be reused
         "function _() { function foo() { var x; foo; } }", // x should not use the same name with foo
         "function _() { var x; function foo() { var y; function bar() { x } } }", // y should not shadow x
