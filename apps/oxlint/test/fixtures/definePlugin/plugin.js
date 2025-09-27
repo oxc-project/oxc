@@ -36,6 +36,7 @@ const createRule = {
 // i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` (via `definePlugin`)
 // adds to the rule.
 let createOnceCallCount = 0;
+
 const createOnceRule = {
   createOnce(context) {
     createOnceCallCount++;

@@ -35,6 +35,7 @@ const createRule = defineRule({
 // This aims to test that `createOnce` is called once only, and `before` hook is called once per file.
 // i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` adds to the rule.
 let createOnceCallCount = 0;
+
 const createOnceRule = defineRule({
   createOnce(context) {
     createOnceCallCount++;
