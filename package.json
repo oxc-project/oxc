@@ -16,6 +16,7 @@
     "oxlint": "^1.12.0",
     "oxlint-tsgolint": "0.2.0",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "publint": "catalog:"
   }
 }

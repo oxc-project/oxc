@@ -8,6 +8,7 @@
     "build-dev": "napi build --esm --platform",
     "build-test": "pnpm run build-dev",
     "build": "pnpm run build-dev --features allocator --release",
+    "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
     "test": "tsc && vitest run --dir ./test"
   },
@@ -42,8 +43,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "vitest": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "napi": {
     "binaryName": "minify",

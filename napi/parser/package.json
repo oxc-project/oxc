@@ -8,6 +8,7 @@
     "build-dev": "napi build --esm --platform --js bindings.js --dts index.d.ts --output-dir src-js",
     "build-test": "pnpm run build-dev --profile coverage",
     "build": "pnpm run build-dev --features allocator --release",
+    "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
