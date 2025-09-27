@@ -181,15 +181,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         expr.return_type = None;
     }
 
-    fn enter_variable_declaration(
-        &mut self,
-        _decl: &mut VariableDeclaration<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        // Don't remove the declare flag here so we can check it in exit_statements
-        // We'll remove the flag later for declarations that are kept
-    }
-
     fn enter_variable_declarator(
         &mut self,
         decl: &mut VariableDeclarator<'a>,
