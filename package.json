@@ -10,10 +10,11 @@
     "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "0.18.2",
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.5.0",
-    "oxlint-tsgolint": "0.2.0",
     "oxlint": "^1.12.0",
+    "oxlint-tsgolint": "0.2.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
