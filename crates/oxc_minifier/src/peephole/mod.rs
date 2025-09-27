@@ -17,9 +17,9 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
+use oxc_allocator::HashSet;
 use oxc_ast_visit::Visit;
 use oxc_semantic::ReferenceId;
-use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
@@ -116,12 +116,16 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         self.changed = ctx.state.changed;
         if self.changed {
             // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
+            let refs_before = HashSet::from_iter_in(
+                ctx.scoping().resolved_references().flatten().copied(),
+                ctx.ast.allocator,
+            );
+            let mut counter = ReferencesCounter::new_in(ctx.ast.allocator);
             counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
+            for reference_id in &refs_before {
+                if !counter.refs.contains(reference_id) {
+                    ctx.scoping_mut().delete_reference(*reference_id);
+                }
             }
         }
         debug_assert!(ctx.state.class_symbols_stack.is_exhausted());
@@ -365,7 +369,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        ctx.state.class_symbols_stack.push_class_scope();
+        ctx.state.class_symbols_stack.push_class_scope(ctx.ast.allocator);
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -451,12 +455,16 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
         self.changed = ctx.state.changed;
         if self.changed {
             // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
-            let mut counter = ReferencesCounter::default();
+            let refs_before = HashSet::from_iter_in(
+                ctx.scoping().resolved_references().flatten().copied(),
+                ctx.ast.allocator,
+            );
+            let mut counter = ReferencesCounter::new_in(ctx.ast.allocator);
             counter.visit_program(program);
-            for reference_id_to_remove in refs_before.difference(&counter.refs) {
-                ctx.scoping_mut().delete_reference(*reference_id_to_remove);
+            for reference_id in &refs_before {
+                if !counter.refs.contains(reference_id) {
+                    ctx.scoping_mut().delete_reference(*reference_id);
+                }
             }
         }
     }
@@ -534,12 +542,17 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     }
 }
 
-#[derive(Default)]
-struct ReferencesCounter {
-    refs: FxHashSet<ReferenceId>,
+struct ReferencesCounter<'a> {
+    refs: HashSet<'a, ReferenceId>,
 }
 
-impl<'a> Visit<'a> for ReferencesCounter {
+impl<'a> ReferencesCounter<'a> {
+    fn new_in(allocator: &'a oxc_allocator::Allocator) -> Self {
+        Self { refs: HashSet::new_in(allocator) }
+    }
+}
+
+impl<'a> Visit<'a> for ReferencesCounter<'a> {
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         let reference_id = it.reference_id();
         self.refs.insert(reference_id);
