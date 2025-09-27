@@ -690,6 +690,7 @@ impl Gen for Function<'_> {
         let n = p.code_len();
         let wrap = self.is_expression()
             && ((p.start_of_stmt == n || p.start_of_default_export == n) || self.pife);
+        let ctx = ctx.and_forbid_call(false);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -2263,6 +2264,7 @@ impl Gen for Class<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
+        let ctx = ctx.and_forbid_call(false);
         p.wrap(wrap, |p| {
             p.enter_class();
             p.print_decorators(&self.decorators, ctx);

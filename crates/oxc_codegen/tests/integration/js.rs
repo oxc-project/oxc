@@ -42,6 +42,14 @@ fn export_type() {
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
     test_minify("x in new Error()", "x in new Error;");
+    test(
+        "new function() { let a = foo?.bar().baz; return a; }();",
+        "new function() {\n\tlet a = foo?.bar().baz;\n\treturn a;\n}();\n",
+    );
+    test(
+        "new class { foo() { let a = foo?.bar().baz; return a; } }();",
+        "new class {\n\tfoo() {\n\t\tlet a = foo?.bar().baz;\n\t\treturn a;\n\t}\n}();\n",
+    );
 
     test("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);\n");
     test_minify("1000000000000000128.0.toFixed(0)", "0xde0b6b3a7640080.toFixed(0);");
