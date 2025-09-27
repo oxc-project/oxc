@@ -2,7 +2,7 @@ commit: 261630d6
 
 formatter_typescript Summary:
 AST Parsed     : 8816/8816 (100.00%)
-Positive Passed: 8797/8816 (99.78%)
+Positive Passed: 8796/8816 (99.77%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
@@ -33,6 +33,8 @@ Mismatch: tasks/coverage/typescript/tests/cases/compiler/unionSignaturesWithThis
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts
 Classes may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototypeClasses may not have a static property named prototype
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
+Unexpected token
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfAndAndOperator.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
