@@ -1,5 +1,5 @@
 {
-  "jsPlugins": ["./plugin.js"],
+  "jsPlugins": ["./plugin.ts"],
   "categories": { "correctness": "off" },
   "rules": {
     "define-plugin-and-rule-plugin/create": "error",

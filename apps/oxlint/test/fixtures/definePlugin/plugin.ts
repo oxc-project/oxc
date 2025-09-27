@@ -1,5 +1,6 @@
 import { sep } from 'node:path';
-import { definePlugin, defineRule } from '../../../dist/index.js';
+import { definePlugin } from '../../../dist/index.js';
+import type { Rule } from '../../../dist/index.js';
 
 // `loc` is required for ESLint
 const SPAN = {
@@ -14,10 +15,10 @@ const SPAN = {
 const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
 const relativePath = sep === '/'
-  ? path => path.slice(DIR_PATH_LEN)
-  : path => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
+  ? (path: string) => path.slice(DIR_PATH_LEN)
+  : (path: string) => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
-const createRule = defineRule({
+const createRule: Rule = {
   create(context) {
     context.report({ message: `create body:\nthis === rule: ${this === createRule}`, node: SPAN });
 
@@ -30,24 +31,26 @@ const createRule = defineRule({
       },
     };
   },
-});
+};
 
 // This aims to test that `createOnce` is called once only, and `before` hook is called once per file.
-// i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` adds to the rule.
+// i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` (via `definePlugin`)
+// adds to the rule.
 let createOnceCallCount = 0;
 
-const createOnceRule = defineRule({
+const createOnceRule: Rule = {
   createOnce(context) {
     createOnceCallCount++;
 
     // `fileNum` should be different for each file.
     // `identNum` should start at 1 for each file.
-    let fileNum = 0, identNum;
+    let fileNum = 0, identNum: number;
     // Note: Files are processed in unpredictable order, so `files/1.js` may be `fileNum` 1 or 2.
     // Therefore, collect all visits and check them in `after` hook of the 2nd file.
-    const visits = [];
+    const visits: { fileNum: number; identNum: number }[] = [];
 
-    // `this` should be the rule object returned by `defineRule`
+    // `this` should be the rule object
+    // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
     return {
@@ -102,10 +105,10 @@ const createOnceRule = defineRule({
       },
     };
   },
-});
+};
 
 // Tests that `before` hook returning `false` disables visiting AST for the file.
-const createOnceBeforeFalseRule = defineRule({
+const createOnceBeforeFalseRule: Rule = {
   createOnce(context) {
     return {
       before() {
@@ -134,11 +137,11 @@ const createOnceBeforeFalseRule = defineRule({
       },
     };
   },
-});
+};
 
 // These 3 rules test that `createOnce` without `before` and `after` hooks works correctly.
 
-const createOnceBeforeOnlyRule = defineRule({
+const createOnceBeforeOnlyRule: Rule = {
   createOnce(context) {
     return {
       before() {
@@ -157,9 +160,9 @@ const createOnceBeforeOnlyRule = defineRule({
       },
     };
   },
-});
+};
 
-const createOnceAfterOnlyRule = defineRule({
+const createOnceAfterOnlyRule: Rule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -178,9 +181,9 @@ const createOnceAfterOnlyRule = defineRule({
       },
     };
   },
-});
+};
 
-const createOnceNoHooksRule = defineRule({
+const createOnceNoHooksRule: Rule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -192,11 +195,11 @@ const createOnceNoHooksRule = defineRule({
       },
     };
   },
-});
+};
 
 export default definePlugin({
   meta: {
-    name: 'define-plugin-and-rule-plugin',
+    name: 'define-plugin-plugin',
   },
   rules: {
     create: createRule,
