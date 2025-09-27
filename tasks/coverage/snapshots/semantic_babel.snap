@@ -346,12 +346,12 @@ after transform: ["asserts"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-as-identifier/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["assertIsString"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["asserts"]
 rebuilt        : []
@@ -362,20 +362,20 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-var/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["assertIsString"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/declare-asserts-var-with-predicate/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["assertIsString"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/function-declaration/input.ts
 Unresolved references mismatch:
@@ -421,15 +421,12 @@ after transform: ["A", "Error"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C1", "C2", "C3", "C4", "C5"]
-rebuilt        : ScopeId(0): ["C1", "C3", "C4", "C5"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope children mismatch:
 after transform: ScopeId(6): [ScopeId(7)]
-rebuilt        : ScopeId(5): []
+rebuilt        : ScopeId(6): []
+Symbol flags mismatch for "C2":
+after transform: SymbolId(1): SymbolFlags(Class | Ambient)
+rebuilt        : SymbolId(1): SymbolFlags(Class)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts
 Scope children mismatch:
@@ -519,20 +516,20 @@ after transform: ["T", "X", "f"]
 rebuilt        : ["f"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/get-generic/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): []
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Symbol flags mismatch for "C":
+after transform: SymbolId(0): SymbolFlags(Class | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/get-generic-babel-7/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): []
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): []
+Symbol flags mismatch for "C":
+after transform: SymbolId(0): SymbolFlags(Class | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/implements/input.ts
 Unresolved references mismatch:
@@ -621,38 +618,44 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/const/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["x", "y"]
-rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "y":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/destructure/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["x", "y"]
-rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "y":
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["arguments", "eval"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["arguments", "eval"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(3), SymbolId(4)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function-rest-trailing-comma/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/interface/input.ts
 Scope children mismatch:
@@ -665,9 +668,9 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/let/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["x"]
-rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/pattern-parameters/input.ts
 Scope children mismatch:
@@ -688,9 +691,9 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/var/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["x"]
-rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments/input.ts
 Symbol span mismatch for "Test":
@@ -936,18 +939,42 @@ Unexpected token
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "M", "N", "_bar", "bar", "f", "foo", "x"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["C", "_bar", "bar", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "C":
+after transform: SymbolId(2): SymbolFlags(Class | Ambient)
+rebuilt        : SymbolId(1): SymbolFlags(Class)
+Symbol flags mismatch for "bar":
+after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable | Ambient)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "_bar":
+after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable | Ambient)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare-babel-7/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "M", "N", "_bar", "bar", "f", "foo", "x"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["C", "_bar", "bar", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "x":
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol flags mismatch for "C":
+after transform: SymbolId(2): SymbolFlags(Class | Ambient)
+rebuilt        : SymbolId(1): SymbolFlags(Class)
+Symbol flags mismatch for "bar":
+after transform: SymbolId(8): SymbolFlags(FunctionScopedVariable | Ambient)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "_bar":
+after transform: SymbolId(9): SymbolFlags(FunctionScopedVariable | Ambient)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
 Reference flags mismatch for "f":
@@ -967,10 +994,13 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type-declaration/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["a", "b"]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): ["b"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "b":
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-value-declaration/input.ts
 Bindings mismatch:
@@ -1019,20 +1049,20 @@ after transform: ["Generator"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["f"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-babel-7/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["f"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 A required parameter cannot follow an optional parameter.
@@ -1516,26 +1546,17 @@ after transform: ["A", "B", "C", "D", "E", "F", "G"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/callable-class/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch for "C":
 after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
-rebuilt        : SymbolId(0): SymbolFlags(Function)
-Symbol span mismatch for "C":
-after transform: SymbolId(0): Span { start: 14, end: 15 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "C":
-after transform: SymbolId(0): [Span { start: 14, end: 15 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : SymbolId(0): SymbolFlags(Class | Function)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/callable-class-ambient/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C"]
-rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol flags mismatch for "C":
+after transform: SymbolId(0): SymbolFlags(Class | Function | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(Class | Function)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/enum-block-scoped/input.ts
 Scope flags mismatch:
@@ -1554,20 +1575,20 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-after/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-before/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-after/input.ts
 Scope flags mismatch:
@@ -1645,32 +1666,20 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 29, end: 30 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 29, end: 30 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/function-type-before-declaration-optional-pattern/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol span mismatch for "f":
-after transform: SymbolId(0): Span { start: 9, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 32, end: 33 }
-Symbol redeclarations mismatch for "f":
-after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 32, end: 33 }]
-rebuilt        : SymbolId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["foo"]
-rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch for "foo":
+after transform: SymbolId(0): SymbolFlags(Class | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var-2/input.js
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -1788,12 +1797,15 @@ after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 21, end
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-ambient-class/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Something"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+Symbol flags mismatch for "Something":
+after transform: SymbolId(0): SymbolFlags(Class | Import | Ambient)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol span mismatch for "Something":
+after transform: SymbolId(0): Span { start: 7, end: 16 }
+rebuilt        : SymbolId(0): Span { start: 54, end: 63 }
+Symbol redeclarations mismatch for "Something":
+after transform: SymbolId(0): [Span { start: 7, end: 16 }, Span { start: 54, end: 63 }]
+rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
 Bindings mismatch:
