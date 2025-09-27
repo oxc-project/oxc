@@ -1,6 +1,4 @@
-use tower_lsp_server::lsp_types::{
-    CodeAction, CodeActionKind, Position, Range, TextEdit, Uri, WorkspaceEdit,
-};
+use tower_lsp_server::lsp_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 
 use crate::linter::error_with_position::{DiagnosticReport, FixedContent, PossibleFixContent};
 
@@ -11,6 +9,7 @@ fn fix_content_to_code_action(
     fixed_content: &FixedContent,
     uri: &Uri,
     alternative_message: &str,
+    is_preferred: bool,
 ) -> CodeAction {
     // 1) Use `fixed_content.message` if it exists
     // 2) Try to parse the report diagnostic message
@@ -29,7 +28,7 @@ fn fix_content_to_code_action(
     CodeAction {
         title,
         kind: Some(CodeActionKind::QUICKFIX),
-        is_preferred: Some(true),
+        is_preferred: Some(is_preferred),
         edit: Some(WorkspaceEdit {
             #[expect(clippy::disallowed_types)]
             changes: Some(std::collections::HashMap::from([(
@@ -48,17 +47,31 @@ fn fix_content_to_code_action(
 pub fn apply_fix_code_actions(report: &DiagnosticReport, uri: &Uri) -> Option<Vec<CodeAction>> {
     match &report.fixed_content {
         PossibleFixContent::None => None,
-        PossibleFixContent::Single(fixed_content) => {
-            Some(vec![fix_content_to_code_action(fixed_content, uri, &report.diagnostic.message)])
+        PossibleFixContent::Single(fixed_content) => Some(vec![fix_content_to_code_action(
+            fixed_content,
+            uri,
+            &report.diagnostic.message,
+            true,
+        )]),
+        PossibleFixContent::Multiple(fixed_contents) => {
+            // only the first code action is preferred
+            let mut preferred = true;
+            Some(
+                fixed_contents
+                    .iter()
+                    .map(|fixed_content| {
+                        let action = fix_content_to_code_action(
+                            fixed_content,
+                            uri,
+                            &report.diagnostic.message,
+                            preferred,
+                        );
+                        preferred = false;
+                        action
+                    })
+                    .collect(),
+            )
         }
-        PossibleFixContent::Multiple(fixed_contents) => Some(
-            fixed_contents
-                .iter()
-                .map(|fixed_content| {
-                    fix_content_to_code_action(fixed_content, uri, &report.diagnostic.message)
-                })
-                .collect(),
-        ),
     }
 }
 
@@ -107,83 +120,4 @@ pub fn apply_all_fix_code_action<'a>(
         diagnostics: None,
         command: None,
     })
-}
-
-pub fn ignore_this_line_code_action(report: &DiagnosticReport, uri: &Uri) -> CodeAction {
-    let rule_name = report.rule_name.as_ref();
-
-    // TODO: This CodeAction doesn't support disabling multiple rules by name for a given line.
-    //  To do that, we need to read `report.diagnostic.range.start.line` and check if a disable comment already exists.
-    //  If it does, it needs to be appended to instead of a completely new line inserted.
-    CodeAction {
-        title: rule_name.as_ref().map_or_else(
-            || "Disable oxlint for this line".into(),
-            |s| format!("Disable {s} for this line"),
-        ),
-        kind: Some(CodeActionKind::QUICKFIX),
-        is_preferred: Some(false),
-        edit: Some(WorkspaceEdit {
-            #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(
-                uri.clone(),
-                vec![TextEdit {
-                    range: Range {
-                        start: Position {
-                            line: report.diagnostic.range.start.line,
-                            // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-                            character: 0,
-                        },
-                        end: Position {
-                            line: report.diagnostic.range.start.line,
-                            // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-                            character: 0,
-                        },
-                    },
-                    new_text: rule_name.as_ref().map_or_else(
-                        || "// oxlint-disable-next-line\n".into(),
-                        |s| format!("// oxlint-disable-next-line {s}\n"),
-                    ),
-                }],
-            )])),
-            ..WorkspaceEdit::default()
-        }),
-        disabled: None,
-        data: None,
-        diagnostics: None,
-        command: None,
-    }
-}
-
-pub fn ignore_this_rule_code_action(report: &DiagnosticReport, uri: &Uri) -> CodeAction {
-    let rule_name = report.rule_name.as_ref();
-
-    CodeAction {
-        title: rule_name.as_ref().map_or_else(
-            || "Disable oxlint for this file".into(),
-            |s| format!("Disable {s} for this file"),
-        ),
-        kind: Some(CodeActionKind::QUICKFIX),
-        is_preferred: Some(false),
-        edit: Some(WorkspaceEdit {
-            #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(
-                uri.clone(),
-                vec![TextEdit {
-                    range: Range {
-                        start: Position { line: 0, character: 0 },
-                        end: Position { line: 0, character: 0 },
-                    },
-                    new_text: rule_name.as_ref().map_or_else(
-                        || "// oxlint-disable\n".into(),
-                        |s| format!("// oxlint-disable {s}\n"),
-                    ),
-                }],
-            )])),
-            ..WorkspaceEdit::default()
-        }),
-        disabled: None,
-        data: None,
-        diagnostics: None,
-        command: None,
-    }
 }
