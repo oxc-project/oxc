@@ -83,33 +83,34 @@ impl Rule for RequirePostMessageTargetOrigin {
 }
 
 fn is_message_port_expression(expr: &Expression<'_>) -> bool {
-    let expr = expr.without_parentheses();
+    let mut current_expr = expr.without_parentheses();
+    loop {
+        if let Expression::Identifier(ident) = current_expr
+            && matches!(ident.name.as_str(), "port" | "port1" | "port2" | "messagePort")
+        {
+            return true;
+        }
 
-    if let Expression::Identifier(ident) = expr
-        && matches!(ident.name.as_str(), "port" | "port1" | "port2" | "messagePort")
-    {
-        return true;
+        let Some(member_expr) = current_expr.get_member_expr() else {
+            return false;
+        };
+
+        if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2")) {
+            return true;
+        }
+
+        if member_expr.is_computed()
+            && member_expr.object().without_parentheses().get_member_expr().is_some_and(
+                |object_member| {
+                    object_member.static_property_name().is_some_and(|name| name == "ports")
+                },
+            )
+        {
+            return true;
+        }
+
+        current_expr = member_expr.object().without_parentheses();
     }
-
-    let Some(member_expr) = expr.get_member_expr() else {
-        return false;
-    };
-
-    if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2")) {
-        return true;
-    }
-
-    if member_expr.is_computed()
-        && member_expr.object().without_parentheses().get_member_expr().is_some_and(
-            |object_member| {
-                object_member.static_property_name().is_some_and(|name| name == "ports")
-            },
-        )
-    {
-        return true;
-    }
-
-    is_message_port_expression(member_expr.object())
 }
 
 #[test]
