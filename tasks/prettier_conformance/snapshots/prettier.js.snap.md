@@ -1,4 +1,4 @@
-js compatibility: 641/698 (91.83%)
+js compatibility: 642/698 (91.98%)
 
 # Failed
 
@@ -54,7 +54,6 @@ js compatibility: 641/698 (91.83%)
 | js/test-declarations/angular_fakeAsync.js | 💥💥 | 75.86% |
 | js/test-declarations/angular_waitForAsync.js | 💥💥 | 75.86% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
-| jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
