@@ -426,15 +426,6 @@ impl ArrayExpressionElement<'_> {
     }
 }
 
-impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
-    fn from(argument: Argument<'a>) -> Self {
-        match argument {
-            Argument::SpreadElement(spread) => Self::SpreadElement(spread),
-            match_expression!(Argument) => Self::from(argument.into_expression()),
-        }
-    }
-}
-
 impl<'a> ObjectPropertyKind<'a> {
     /// Returns `true` if this object property is a [spread](SpreadElement).
     #[inline]
@@ -854,7 +845,16 @@ impl NewExpression<'_> {
     }
 }
 
-impl Argument<'_> {
+impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
+    fn from(argument: Argument<'a>) -> Self {
+        match argument {
+            Argument::SpreadElement(spread) => Self::SpreadElement(spread),
+            _ => Self::from(argument.into_expression()),
+        }
+    }
+}
+
+impl<'a> Argument<'a> {
     /// Returns `true` if this argument is a spread element (like `...foo`).
     pub fn is_spread(&self) -> bool {
         matches!(self, Self::SpreadElement(_))
