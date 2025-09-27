@@ -148,3 +148,43 @@ pub fn message_with_position_to_lsp_diagnostic_report(
         rule_name: message.code.number.as_ref().map(std::string::ToString::to_string),
     }
 }
+
+pub fn generate_inverted_diagnostics(
+    diagnostics: &[DiagnosticReport],
+    uri: &Uri,
+) -> Vec<DiagnosticReport> {
+    let mut inverted_diagnostics = vec![];
+    for d in diagnostics {
+        let Some(related_info) = &d.diagnostic.related_information else {
+            continue;
+        };
+        let related_information = Some(vec![DiagnosticRelatedInformation {
+            location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+            message: "original diagnostic".to_string(),
+        }]);
+        for r in related_info {
+            if r.location.range == d.diagnostic.range {
+                continue;
+            }
+            if r.message.is_empty() {
+                continue;
+            }
+            inverted_diagnostics.push(DiagnosticReport {
+                diagnostic: lsp_types::Diagnostic {
+                    range: r.location.range,
+                    severity: Some(lsp_types::DiagnosticSeverity::HINT),
+                    code: None,
+                    message: r.message.clone(),
+                    source: d.diagnostic.source.clone(),
+                    code_description: None,
+                    related_information: related_information.clone(),
+                    tags: None,
+                    data: None,
+                },
+                fixed_content: PossibleFixContent::None,
+                rule_name: None,
+            });
+        }
+    }
+    inverted_diagnostics
+}
