@@ -16,13 +16,17 @@ fn main() {
         diff: args.contains("--diff"),
     };
 
-    // Init rayon thread pool
+    // Init rayon thread pool with larger stack size to handle deeply nested ASTs
     let thread_count = if args.debug {
         1
     } else {
         std::thread::available_parallelism().map(NonZeroUsize::get).unwrap_or(1)
     };
-    ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+    ThreadPoolBuilder::new()
+        .num_threads(thread_count)
+        .stack_size(16 * 1024 * 1024) // 16MB stack size
+        .build_global()
+        .unwrap();
 
     let task = command.as_deref().unwrap_or("default");
     match task {
