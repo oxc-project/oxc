@@ -86,13 +86,15 @@ jobs:
         if: steps.check-update.outputs.update_needed == 'true'
         id: changes
         run: |
-          if git diff --quiet; then
+          # Check if any files other than package.json were changed
+          CHANGED_FILES=$(git diff --name-only | grep -v '^tasks/compat_data/package\.json$' || true)
+          if [ -z "$CHANGED_FILES" ]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "No files were changed after build"
+            echo "No files were changed after build (excluding package.json)"
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Files changed:"
-            git diff --name-only
+            echo "Files changed (excluding package.json):"
+            echo "$CHANGED_FILES"
           fi
 
       - name: Create Pull Request
