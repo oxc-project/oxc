@@ -62,6 +62,9 @@ impl Rule for RequirePostMessageTargetOrigin {
             _ => return,
         };
         if matches!(member_expr.static_property_name(), Some(name) if name == "postMessage") {
+            if is_message_port_expression(member_expr.object()) {
+                return;
+            }
             let span = call_expr.arguments[0].span();
             ctx.diagnostic_with_suggestion(
                 require_post_message_target_origin_diagnostic(Span::new(span.end, span.end)),
@@ -77,6 +80,36 @@ impl Rule for RequirePostMessageTargetOrigin {
             );
         }
     }
+}
+
+fn is_message_port_expression(expr: &Expression<'_>) -> bool {
+    let expr = expr.without_parentheses();
+
+    if let Expression::Identifier(ident) = expr
+        && matches!(ident.name.as_str(), "port" | "port1" | "port2" | "messagePort")
+    {
+        return true;
+    }
+
+    let Some(member_expr) = expr.get_member_expr() else {
+        return false;
+    };
+
+    if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2")) {
+        return true;
+    }
+
+    if member_expr.is_computed()
+        && member_expr.object().without_parentheses().get_member_expr().is_some_and(
+            |object_member| {
+                object_member.static_property_name().is_some_and(|name| name == "ports")
+            },
+        )
+    {
+        return true;
+    }
+
+    is_message_port_expression(member_expr.object())
 }
 
 #[test]
@@ -101,6 +134,10 @@ fn test() {
         "window.c.postMessage?.(message)",
         "window.a.b?.postMessage(message)",
         "window?.a?.b?.postMessage(message)",
+        "event.ports[0].postMessage(message)",
+        "channel.port1.postMessage(message)",
+        "channel['port2'].postMessage(message)",
+        "event?.ports[0].postMessage(message)",
     ];
 
     let fail = vec![
