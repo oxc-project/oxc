@@ -394,6 +394,13 @@ impl<'a> PeepholeOptimizations {
                 ctx.state.changed = true;
             }
         }
+        if Self::substitute_single_use_symbol_within_declaration(
+            var_decl.kind,
+            &mut var_decl.declarations,
+            ctx,
+        ) {
+            ctx.state.changed = true;
+        }
 
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
@@ -850,6 +857,13 @@ impl<'a> PeepholeOptimizations {
                             ctx.state.changed = true;
                         }
                     }
+                    if Self::substitute_single_use_symbol_within_declaration(
+                        var_decl.kind,
+                        &mut var_decl.declarations,
+                        ctx,
+                    ) {
+                        ctx.state.changed = true;
+                    }
                 }
                 match_expression!(ForStatementInit) => {
                     let init = init.to_expression_mut();
@@ -1123,67 +1137,109 @@ impl<'a> PeepholeOptimizations {
             if prev_var_decl.kind.is_using() {
                 break;
             }
-
-            let last_non_inlined_index =
-                prev_var_decl.declarations.iter_mut().rposition(|prev_decl| {
-                    let Some(prev_decl_init) = &mut prev_decl.init else {
-                        return true;
-                    };
-                    let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind
-                    else {
-                        return true;
-                    };
-                    if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
-                        return true;
-                    }
-                    let Some(symbol_value) =
-                        ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
-                    else {
-                        return true;
-                    };
-                    // we should check whether it's exported by `symbol_value.exported`
-                    // because the variable might be exported with `export { foo }` rather than `export var foo`
-                    if symbol_value.exported
-                        || symbol_value.read_references_count > 1
-                        || symbol_value.write_references_count > 0
-                    {
-                        return true;
-                    }
-                    if non_scoped_literal_only && !prev_decl_init.is_literal_value(false, ctx) {
-                        return true;
-                    }
-                    let replaced = Self::substitute_single_use_symbol_in_expression(
-                        expr_in_stmt,
-                        &prev_decl_id.name,
-                        prev_decl_init,
-                        prev_decl_init.may_have_side_effects(ctx),
-                        ctx,
-                    );
-                    if replaced != Some(true) {
-                        return true;
-                    }
-                    false
-                });
-            match last_non_inlined_index {
-                None => {
-                    // all inlined
-                    stmts.pop();
-                    inlined = true;
-                }
-                Some(last_non_inlined_index)
-                    if last_non_inlined_index + 1 == prev_var_decl.declarations.len() =>
-                {
-                    // no change
-                    break;
-                }
-                Some(last_non_inlined_index) => {
-                    prev_var_decl.declarations.truncate(last_non_inlined_index + 1);
-                    inlined = true;
-                    break;
-                }
+            let old_len = prev_var_decl.declarations.len();
+            let new_len = Self::substitute_single_use_symbol_in_expression_from_declarators(
+                expr_in_stmt,
+                &mut prev_var_decl.declarations,
+                ctx,
+                non_scoped_literal_only,
+            );
+            if new_len == 0 {
+                inlined = true;
+                stmts.pop();
+            } else if old_len != new_len {
+                inlined = true;
+                prev_var_decl.declarations.truncate(new_len);
+                break;
+            } else {
+                break;
             }
         }
         inlined
+    }
+
+    fn substitute_single_use_symbol_within_declaration(
+        kind: VariableDeclarationKind,
+        declarations: &mut Vec<'a, VariableDeclarator<'a>>,
+        ctx: &Ctx<'a, '_>,
+    ) -> bool {
+        // TODO: we should skip this compression when direct eval exists
+        //       because the code inside eval may reference the variable
+
+        let mut changed = false;
+        if !Self::keep_top_level_var_in_script_mode(ctx) && !kind.is_using() {
+            let mut i = 1;
+            while i < declarations.len() {
+                let (prev_decls, [decl, ..]) = declarations.split_at_mut(i) else { unreachable!() };
+                let Some(decl_init) = &mut decl.init else {
+                    i += 1;
+                    continue;
+                };
+                let old_len = prev_decls.len();
+                let new_len = Self::substitute_single_use_symbol_in_expression_from_declarators(
+                    decl_init, prev_decls, ctx, false,
+                );
+                if old_len != new_len {
+                    changed = true;
+                    let drop_count = old_len - new_len;
+                    declarations.drain(i - drop_count..i);
+                    i -= drop_count;
+                }
+                i += 1;
+            }
+        }
+        changed
+    }
+
+    /// Returns new length
+    fn substitute_single_use_symbol_in_expression_from_declarators(
+        target_expr: &mut Expression<'a>,
+        declarators: &mut [VariableDeclarator<'a>],
+        ctx: &Ctx<'a, '_>,
+        non_scoped_literal_only: bool,
+    ) -> usize {
+        let last_non_inlined_index = declarators.iter_mut().rposition(|prev_decl| {
+            let Some(prev_decl_init) = &mut prev_decl.init else {
+                return true;
+            };
+            let BindingPatternKind::BindingIdentifier(prev_decl_id) = &prev_decl.id.kind else {
+                return true;
+            };
+            if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
+                return true;
+            }
+            let Some(symbol_value) =
+                ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
+            else {
+                return true;
+            };
+            // we should check whether it's exported by `symbol_value.exported`
+            // because the variable might be exported with `export { foo }` rather than `export var foo`
+            if symbol_value.exported
+                || symbol_value.read_references_count > 1
+                || symbol_value.write_references_count > 0
+            {
+                return true;
+            }
+            if non_scoped_literal_only && !prev_decl_init.is_literal_value(false, ctx) {
+                return true;
+            }
+            let replaced = Self::substitute_single_use_symbol_in_expression(
+                target_expr,
+                &prev_decl_id.name,
+                prev_decl_init,
+                prev_decl_init.may_have_side_effects(ctx),
+                ctx,
+            );
+            if replaced != Some(true) {
+                return true;
+            }
+            false
+        });
+        match last_non_inlined_index {
+            None => 0,
+            Some(last_non_inlined_index) => last_non_inlined_index + 1,
+        }
     }
 
     /// Returns Some(true) when the expression is successfully replaced.
