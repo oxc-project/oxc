@@ -1,4 +1,4 @@
-js compatibility: 642/698 (91.98%)
+js compatibility: 641/698 (91.83%)
 
 # Failed
 
@@ -27,7 +27,7 @@ js compatibility: 642/698 (91.98%)
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/functional-composition/pipe-function-calls.js | 💥 | 87.80% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
-| js/identifier/parentheses/let.js | 💥💥 | 99.09% |
+| js/identifier/parentheses/let.js | 💥💥 | 84.09% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/method-chain/print-width-120/constructor.js | 💥 | 71.43% |
@@ -54,6 +54,7 @@ js compatibility: 642/698 (91.98%)
 | js/test-declarations/angular_fakeAsync.js | 💥💥 | 75.86% |
 | js/test-declarations/angular_waitForAsync.js | 💥💥 | 75.86% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
+| jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
