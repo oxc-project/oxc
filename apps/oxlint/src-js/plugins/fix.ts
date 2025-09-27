@@ -10,7 +10,7 @@ const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
 // Type of `fix` function.
 // `fix` can return a single fix, an array of fixes, or any iterator that yields fixes.
 // e.g. `(function*() { yield fix1; yield fix2; })()`
-export type FixFn = (fixer: typeof FIXER) => Fix | Array<Fix | null> | IterableIterator<Fix | null> | null;
+export type FixFn = (fixer: Fixer) => Fix | Array<Fix | null> | IterableIterator<Fix | null> | null;
 
 // Type of a fix, as returned by `fix` function.
 export type Fix = { range: Range; text: string };
@@ -57,6 +57,8 @@ const FIXER = Object.freeze({
     return { range, text };
   },
 });
+
+type Fixer = typeof FIXER;
 
 /**
  * Get fixes from a `Diagnostic`.
