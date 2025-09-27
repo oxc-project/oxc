@@ -32,6 +32,11 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
+      - uses: oxc-project/setup-rust@d286d43bc1f606abbd98096666ff8be68c8d5f57 # v1.0.2
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: vscode
+
       - name: Type-Check VSCode
         working-directory: editors/vscode
         run: pnpm run type-check
