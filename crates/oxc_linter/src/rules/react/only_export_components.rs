@@ -1,4 +1,3 @@
-use lazy_regex::{Lazy, Regex};
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -230,7 +229,6 @@ declare_oxc_lint!(
     restriction
 );
 
-static REACT_COMPONENT_NAME_RE: Lazy<Regex> = lazy_regex::lazy_regex!(r"^[A-Z][a-zA-Z0-9]*$");
 static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef"];
 
 impl Rule for OnlyExportComponents {
@@ -301,6 +299,10 @@ impl OnlyExportComponents {
             || Path::new(f).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("jsx"))
             || (check_js
                 && Path::new(f).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("js")))
+    }
+
+    fn starts_with_ascii_upper(s: &str) -> bool {
+        matches!(s.as_bytes().first(), Some(b'A'..=b'Z'))
     }
 
     fn can_be_react_function_component(init: Option<&Expression>, react_hocs: &[&str]) -> bool {
@@ -389,7 +391,7 @@ impl OnlyExportComponents {
                     var_decl.declarations.iter().find_map(|declarator| {
                         if let BindingPatternKind::BindingIdentifier(binding_id) =
                             &declarator.id.kind
-                            && REACT_COMPONENT_NAME_RE.is_match(&binding_id.name)
+                            && Self::starts_with_ascii_upper(&binding_id.name)
                             && Self::can_be_react_function_component(
                                 declarator.init.as_ref(),
                                 react_hocs,
@@ -402,8 +404,7 @@ impl OnlyExportComponents {
                     })
                 }
                 AstKind::Function(func) => func.id.as_ref().and_then(|id| {
-                    if REACT_COMPONENT_NAME_RE.is_match(&id.name)
-                        && !Self::is_exported(ctx, node.id())
+                    if Self::starts_with_ascii_upper(&id.name) && !Self::is_exported(ctx, node.id())
                     {
                         Some(id.span)
                     } else {
@@ -634,7 +635,7 @@ impl OnlyExportComponents {
         }
 
         if is_function {
-            return if REACT_COMPONENT_NAME_RE.is_match(name) {
+            return if Self::starts_with_ascii_upper(name) {
                 ExportType::ReactComponent
             } else {
                 ExportType::NonComponent(span)
@@ -662,7 +663,7 @@ impl OnlyExportComponents {
             }
         }
 
-        if REACT_COMPONENT_NAME_RE.is_match(name) {
+        if Self::starts_with_ascii_upper(name) {
             ExportType::ReactComponent
         } else {
             ExportType::NonComponent(span)
