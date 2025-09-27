@@ -1,7 +1,6 @@
 import { assertIs } from './utils.js';
 
 import type { Diagnostic, InternalContext } from './context.ts';
-import type { Node } from './types.js';
 
 const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
   { getPrototypeOf, hasOwn, prototype: ObjectPrototype } = Object,
