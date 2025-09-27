@@ -254,17 +254,15 @@ impl Rule for OnlyExportComponents {
         Self(Box::new(config))
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
         let Some(filename) = ctx.file_path().file_name().and_then(|s| s.to_str()) else {
-            return;
+            return false;
         };
-        if Self::should_skip(filename) {
-            return;
-        }
-        if !Self::should_scan(filename, self.check_js) {
-            return;
-        }
 
+        Self::should_scan(filename, self.check_js) && !Self::should_skip(filename)
+    }
+
+    fn run_once(&self, ctx: &LintContext<'_>) {
         let react_is_in_scope = ctx.semantic().nodes().iter().any(|node| {
             matches!(node.kind(), AstKind::ImportDeclaration(import_decl) if import_decl.source.value == "react")
         });
