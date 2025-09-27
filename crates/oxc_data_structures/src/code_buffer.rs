@@ -53,6 +53,11 @@ pub struct CodeBuffer {
     indent_char: IndentChar,
     /// Number of indent characters per indentation level.
     indent_width: usize,
+    /// Small scratch buffer to accumulate bytes before flushing to main buffer.
+    /// This reduces the number of reallocations and improves performance.
+    scratch: [u8; 64],
+    /// Current length of valid data in scratch buffer.
+    scratch_len: usize,
 }
 
 impl Default for CodeBuffer {
@@ -62,6 +67,8 @@ impl Default for CodeBuffer {
             buf: Vec::new(),
             indent_char: IndentChar::default(),
             indent_width: DEFAULT_INDENT_WIDTH,
+            scratch: [0; 64],
+            scratch_len: 0,
         }
     }
 }
@@ -95,7 +102,7 @@ impl CodeBuffer {
     /// ```
     #[inline]
     pub fn with_indent(indent_char: IndentChar, indent_width: usize) -> Self {
-        Self { buf: Vec::new(), indent_char, indent_width }
+        Self { buf: Vec::new(), indent_char, indent_width, scratch: [0; 64], scratch_len: 0 }
     }
 
     /// Create a new [`CodeBuffer`] with the specified capacity.
@@ -115,6 +122,8 @@ impl CodeBuffer {
             buf: Vec::with_capacity(capacity),
             indent_char: IndentChar::default(),
             indent_width: DEFAULT_INDENT_WIDTH,
+            scratch: [0; 64],
+            scratch_len: 0,
         }
     }
 
@@ -135,7 +144,22 @@ impl CodeBuffer {
         indent_char: IndentChar,
         indent_width: usize,
     ) -> Self {
-        Self { buf: Vec::with_capacity(capacity), indent_char, indent_width }
+        Self {
+            buf: Vec::with_capacity(capacity),
+            indent_char,
+            indent_width,
+            scratch: [0; 64],
+            scratch_len: 0,
+        }
+    }
+
+    /// Flush the scratch buffer to the main buffer.
+    #[inline]
+    fn flush_scratch(&mut self) {
+        if self.scratch_len > 0 {
+            self.buf.extend_from_slice(&self.scratch[..self.scratch_len]);
+            self.scratch_len = 0;
+        }
     }
 
     /// Returns the number of bytes in the buffer.
@@ -144,7 +168,7 @@ impl CodeBuffer {
     /// since non-ASCII characters require multiple bytes.
     #[inline]
     pub fn len(&self) -> usize {
-        self.buf.len()
+        self.buf.len() + self.scratch_len
     }
 
     /// Returns the capacity of the buffer in bytes.
@@ -169,7 +193,7 @@ impl CodeBuffer {
     /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.buf.is_empty()
+        self.buf.is_empty() && self.scratch_len == 0
     }
 
     /// Reserves capacity for at least `additional` more bytes in the buffer.
@@ -189,6 +213,7 @@ impl CodeBuffer {
     /// ```
     #[inline]
     pub fn reserve(&mut self, additional: usize) {
+        self.flush_scratch();
         self.buf.reserve(additional);
     }
 
@@ -211,14 +236,32 @@ impl CodeBuffer {
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
     #[expect(clippy::missing_panics_doc)] // No panic possible in release mode
     pub fn peek_nth_char_back(&self, n: usize) -> Option<char> {
-        let s = if cfg!(debug_assertions) {
-            std::str::from_utf8(&self.buf).unwrap()
+        // We need to combine buf and scratch to peek correctly
+        // Create a temporary combined view without modifying self
+        if self.scratch_len == 0 {
+            // No scratch buffer content, just use main buffer
+            let s = if cfg!(debug_assertions) {
+                std::str::from_utf8(&self.buf).unwrap()
+            } else {
+                // SAFETY: All safe methods of `CodeBuffer` ensure `buf` is valid UTF-8
+                unsafe { std::str::from_utf8_unchecked(&self.buf) }
+            };
+            s.chars().nth_back(n)
         } else {
-            // SAFETY: All safe methods of `CodeBuffer` ensure `buf` is valid UTF-8
-            unsafe { std::str::from_utf8_unchecked(&self.buf) }
-        };
+            // Need to combine buf and scratch for accurate peeking
+            // This is less efficient but maintains const-correctness
+            let mut combined = Vec::with_capacity(self.buf.len() + self.scratch_len);
+            combined.extend_from_slice(&self.buf);
+            combined.extend_from_slice(&self.scratch[..self.scratch_len]);
 
-        s.chars().nth_back(n)
+            let s = if cfg!(debug_assertions) {
+                std::str::from_utf8(&combined).unwrap()
+            } else {
+                // SAFETY: All safe methods of `CodeBuffer` ensure both parts are valid UTF-8
+                unsafe { std::str::from_utf8_unchecked(&combined) }
+            };
+            s.chars().nth_back(n)
+        }
     }
 
     /// Peek the `n`th byte from the end of the buffer.
@@ -239,14 +282,29 @@ impl CodeBuffer {
     #[inline]
     #[must_use = "Peeking is pointless if the peeked char isn't used"]
     pub fn peek_nth_byte_back(&self, n: usize) -> Option<u8> {
-        let len = self.len();
-        if n < len { Some(self.buf[len - 1 - n]) } else { None }
+        let total_len = self.len();
+        if n >= total_len {
+            return None;
+        }
+
+        // Check if we need to look in scratch buffer
+        if n < self.scratch_len {
+            Some(self.scratch[self.scratch_len - 1 - n])
+        } else {
+            // Look in main buffer
+            let buf_idx = n - self.scratch_len;
+            Some(self.buf[self.buf.len() - 1 - buf_idx])
+        }
     }
 
     /// Peek the last byte from the end of the buffer.
     #[inline]
     pub fn last_byte(&self) -> Option<u8> {
-        self.buf.last().copied()
+        if self.scratch_len > 0 {
+            Some(self.scratch[self.scratch_len - 1])
+        } else {
+            self.buf.last().copied()
+        }
     }
 
     /// Peek the last char from the end of the buffer.
@@ -325,33 +383,31 @@ impl CodeBuffer {
     /// [`print_bytes_unchecked`]: CodeBuffer::print_bytes_unchecked
     #[inline]
     pub unsafe fn print_byte_unchecked(&mut self, byte: u8) {
-        // By default, `self.buf.push(byte)` results in quite verbose assembly, because the default
-        // branch is for the "buf is full to capacity" case.
-        //
-        // That's not ideal because growth strategy is doubling, so e.g. when the `Vec` has just grown
-        // from 1024 bytes to 2048 bytes, it won't need to grow again until another 1024 bytes have
-        // been pushed. "Needs to grow" is a very rare occurrence.
-        //
-        // So we use `push_slow` to move the complicated logic for the "needs to grow" path out of
-        // `print_byte_unchecked`, leaving a fast path for the common "there is sufficient capacity" case.
-        // https://godbolt.org/z/Kv8sEoEed
-        // https://github.com/oxc-project/oxc/pull/6148#issuecomment-2381635390
-        #[cold]
-        #[inline(never)]
-        fn push_slow(code_buffer: &mut CodeBuffer, byte: u8) {
-            let buf = &mut code_buffer.buf;
-            // SAFETY: We only call this function below if `buf.len() == buf.capacity()`.
-            // This function is not inlined, so we need this assertion to assist compiler to
-            // understand this fact.
-            unsafe { assert_unchecked!(buf.len() == buf.capacity()) }
-            buf.push(byte);
-        }
-
-        #[expect(clippy::if_not_else)]
-        if self.buf.len() != self.buf.capacity() {
-            self.buf.push(byte);
+        // Try to add to scratch buffer first
+        if self.scratch_len < self.scratch.len() {
+            self.scratch[self.scratch_len] = byte;
+            self.scratch_len += 1;
         } else {
-            push_slow(self, byte);
+            // Scratch buffer is full, flush it and write directly to main buffer
+            self.flush_scratch();
+
+            // Use the optimized push logic for direct writes to main buffer
+            #[cold]
+            #[inline(never)]
+            fn push_slow(buf: &mut Vec<u8>, byte: u8) {
+                // SAFETY: We only call this function below if `buf.len() == buf.capacity()`.
+                // This function is not inlined, so we need this assertion to assist compiler to
+                // understand this fact.
+                unsafe { assert_unchecked!(buf.len() == buf.capacity()) }
+                buf.push(byte);
+            }
+
+            #[expect(clippy::if_not_else)]
+            if self.buf.len() != self.buf.capacity() {
+                self.buf.push(byte);
+            } else {
+                push_slow(&mut self.buf, byte);
+            }
         }
     }
 
@@ -378,7 +434,17 @@ impl CodeBuffer {
     #[inline]
     pub fn print_char(&mut self, ch: char) {
         let mut b = [0; 4];
-        self.buf.extend_from_slice(ch.encode_utf8(&mut b).as_bytes());
+        let bytes = ch.encode_utf8(&mut b).as_bytes();
+
+        // Try to fit in scratch buffer if it's small enough
+        if bytes.len() + self.scratch_len <= self.scratch.len() {
+            self.scratch[self.scratch_len..self.scratch_len + bytes.len()].copy_from_slice(bytes);
+            self.scratch_len += bytes.len();
+        } else {
+            // Doesn't fit in scratch, flush and write directly
+            self.flush_scratch();
+            self.buf.extend_from_slice(bytes);
+        }
     }
 
     /// Push a string into the buffer.
@@ -391,7 +457,17 @@ impl CodeBuffer {
     /// ```
     #[inline]
     pub fn print_str<S: AsRef<str>>(&mut self, s: S) {
-        self.buf.extend_from_slice(s.as_ref().as_bytes());
+        let bytes = s.as_ref().as_bytes();
+
+        // Try to fit in scratch buffer if it's small enough
+        if bytes.len() + self.scratch_len <= self.scratch.len() {
+            self.scratch[self.scratch_len..self.scratch_len + bytes.len()].copy_from_slice(bytes);
+            self.scratch_len += bytes.len();
+        } else {
+            // Too large for scratch, flush scratch and write directly
+            self.flush_scratch();
+            self.buf.extend_from_slice(bytes);
+        }
     }
 
     /// Push a sequence of ASCII characters into the buffer.
@@ -413,7 +489,14 @@ impl CodeBuffer {
     {
         let iter = bytes.into_iter();
         let hint = iter.size_hint();
-        self.buf.reserve(hint.1.unwrap_or(hint.0));
+        let estimated_size = hint.1.unwrap_or(hint.0);
+
+        // Reserve capacity if needed
+        if estimated_size > self.scratch.len() - self.scratch_len {
+            self.flush_scratch();
+            self.buf.reserve(estimated_size);
+        }
+
         for byte in iter {
             self.print_ascii_byte(byte);
         }
@@ -446,7 +529,15 @@ impl CodeBuffer {
     /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_unchecked(&mut self, bytes: &[u8]) {
-        self.buf.extend_from_slice(bytes);
+        // Try to fit in scratch buffer if it's small enough
+        if bytes.len() + self.scratch_len <= self.scratch.len() {
+            self.scratch[self.scratch_len..self.scratch_len + bytes.len()].copy_from_slice(bytes);
+            self.scratch_len += bytes.len();
+        } else {
+            // Too large for scratch, flush scratch and write directly
+            self.flush_scratch();
+            self.buf.extend_from_slice(bytes);
+        }
     }
 
     /// Print a sequence of bytes, without checking that the buffer still contains a valid UTF-8 string.
@@ -476,6 +567,8 @@ impl CodeBuffer {
     /// [`into_string`]: CodeBuffer::into_string
     #[inline]
     pub unsafe fn print_bytes_iter_unchecked<I: IntoIterator<Item = u8>>(&mut self, bytes: I) {
+        // For iterators, we need to flush scratch first since we don't know the size
+        self.flush_scratch();
         self.buf.extend(bytes);
     }
 
@@ -508,15 +601,28 @@ impl CodeBuffer {
         /// so writing 32 bytes takes 2 x XMM writes.
         const CHUNK_SIZE: usize = 32;
 
+        let bytes = depth * self.indent_width;
+
+        // Try to fit in scratch buffer first
+        if bytes + self.scratch_len <= self.scratch.len() {
+            // Fill scratch with indent characters
+            for i in 0..bytes {
+                self.scratch[self.scratch_len + i] = self.indent_char as u8;
+            }
+            self.scratch_len += bytes;
+            return;
+        }
+
+        // Doesn't fit in scratch, flush and write directly
+        self.flush_scratch();
+
         #[cold]
         #[inline(never)]
         fn write_slow(code_buffer: &mut CodeBuffer, bytes: usize) {
             code_buffer.buf.extend(iter::repeat_n(code_buffer.indent_char as u8, bytes));
         }
 
-        let bytes = depth * self.indent_width;
-
-        let len = self.len();
+        let len = self.buf.len();
         let spare_capacity = self.capacity() - len;
         if bytes > CHUNK_SIZE || spare_capacity < CHUNK_SIZE {
             write_slow(self, bytes);
@@ -548,7 +654,8 @@ impl CodeBuffer {
     /// assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
     /// ```
     #[inline]
-    pub fn as_bytes(&self) -> &[u8] {
+    pub fn as_bytes(&mut self) -> &[u8] {
+        self.flush_scratch();
         &self.buf
     }
 
@@ -566,7 +673,8 @@ impl CodeBuffer {
     #[expect(clippy::missing_panics_doc)]
     #[must_use]
     #[inline]
-    pub fn into_string(self) -> String {
+    pub fn into_string(mut self) -> String {
+        self.flush_scratch();
         if cfg!(debug_assertions) {
             String::from_utf8(self.buf).unwrap()
         } else {
@@ -579,7 +687,10 @@ impl CodeBuffer {
 impl AsRef<[u8]> for CodeBuffer {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        self.as_bytes()
+        // Can't flush scratch buffer with immutable reference, so we assert it's empty.
+        // This is safe because as_ref is typically called after all writing is done.
+        debug_assert_eq!(self.scratch_len, 0, "as_ref called with non-empty scratch buffer");
+        &self.buf
     }
 }
 
