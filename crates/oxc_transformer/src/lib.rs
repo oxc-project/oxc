@@ -234,9 +234,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.enter_variable_declaration(decl, ctx);
-        }
         self.x2_es2018.enter_variable_declaration(decl, ctx);
     }
 
@@ -396,9 +393,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.enter_function(func, ctx);
-        }
         self.common.enter_function(func, ctx);
         self.x2_es2018.enter_function(func, ctx);
     }
