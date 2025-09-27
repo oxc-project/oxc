@@ -49,7 +49,7 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 ///
 /// [`FxHasher`]: rustc_hash::FxHasher
 #[derive(Debug)]
-pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
+pub struct HashMap<'alloc, K, V>(pub(crate) ManuallyDrop<FxHashMap<'alloc, K, V>>);
 
 /// SAFETY: Even though `Bump` is not `Sync`, we can make `HashMap<K, V>` `Sync` if both `K` and `V`
 /// are `Sync` because:
@@ -275,14 +275,3 @@ where
 }
 
 // Note: `Index` and `Extend` are implemented via `Deref`
-
-/*
-// Uncomment once we also provide `oxc_allocator::HashSet`
-impl<'alloc, T> From<HashMap<'alloc, T, ()>> for HashSet<'alloc, T> {
-    fn from(map: HashMap<'alloc, T, ()>) -> Self {
-        let inner_map = ManuallyDrop::into_inner(map.0);
-        let inner_set = FxHashSet::from(inner_map);
-        Self(ManuallyDrop::new(inner_set))
-    }
-}
-*/
