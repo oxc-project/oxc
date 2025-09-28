@@ -45,7 +45,23 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let r_paren_token = ")";
         let call_like_span = self.parent.span();
 
-        let arguments = self.as_ref();
+        // Check if we're within a TSTypeAssertion context
+        let is_within_type_assertion = {
+            let mut current = Some(self.parent);
+            let mut depth = 0;
+            while let Some(parent) = current {
+                if depth > 10 { break; } // Prevent infinite loops
+                if matches!(parent, AstNodes::TSTypeAssertion(_)) {
+                    break;
+                }
+                current = match parent {
+                    AstNodes::Dummy() => None,
+                    _ => Some(parent.parent()),
+                };
+                depth += 1;
+            }
+            current.is_some() && matches!(current.unwrap(), AstNodes::TSTypeAssertion(_))
+        };
 
         if self.is_empty() {
             return write!(
@@ -119,6 +135,26 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 && is_function_composition_args(self))
         {
             return format_all_args_broken_out(self, true, f);
+        }
+
+        // For type assertions, prefer inline formatting to avoid unnecessary expansion
+        if is_within_type_assertion {
+            return write!(
+                f,
+                [
+                    l_paren_token,
+                    format_with(|f| {
+                        f.join_with(space())
+                            .entries_with_trailing_separator(
+                                self.iter(),
+                                ",",
+                                TrailingSeparator::Omit,
+                            )
+                            .finish()
+                    }),
+                    r_paren_token
+                ]
+            );
         }
 
         if let Some(group_layout) = arguments_grouped_layout(call_like_span, self, f) {
@@ -488,6 +524,10 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
         Expression::TSSatisfiesExpression(expr) => {
             is_simple_ts_type(&expr.type_annotation)
                 && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
+        }
+        Expression::TSTypeAssertion(expr) => {
+            is_simple_ts_type(&expr.type_annotation)
+                && SimpleArgument::from(&expr.expression).is_simple()
         }
         Expression::RegExpLiteral(_) => true,
         Expression::CallExpression(call) => match call.arguments.len() {

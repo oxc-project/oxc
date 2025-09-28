@@ -69,9 +69,7 @@ fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
         }
         // Static member
         AstNodes::StaticMemberExpression(_) => true,
-        AstNodes::ComputedMemberExpression(member) => {
-            member.object.span() == span
-        }
+        AstNodes::ComputedMemberExpression(member) => member.object.span() == span,
         _ => false,
     }
 }

@@ -113,40 +113,48 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
         } else {
             write!(
                 f,
-                [group(&format_args!("<", format_once(|f| {
-                    // Check if this type parameter declaration is inside a test call expression
-                    // by walking up the parent chain
-                    let mut current_parent = Some(self.decl.parent);
-                    let mut is_test_call = false;
+                [group(&format_args!(
+                    "<",
+                    format_once(|f| {
+                        // Check if this type parameter declaration is inside a test call expression
+                        // by walking up the parent chain
+                        let mut current_parent = Some(self.decl.parent);
+                        let mut is_test_call = false;
 
-                    // Walk up to 5 levels to find a test call expression
-                    for _ in 0..5 {
-                        if let Some(parent) = current_parent {
-                            if let AstNodes::CallExpression(call) = parent {
-                                if is_test_call_expression(call) {
-                                    is_test_call = true;
+                        // Walk up to 5 levels to find a test call expression
+                        for _ in 0..5 {
+                            if let Some(parent) = current_parent {
+                                if let AstNodes::CallExpression(call) = parent {
+                                    if is_test_call_expression(call) {
+                                        is_test_call = true;
+                                        break;
+                                    }
+                                }
+                                // Check if parent is a dummy node before calling parent()
+                                if matches!(parent, AstNodes::Dummy()) {
                                     break;
                                 }
-                            }
-                            // Check if parent is a dummy node before calling parent()
-                            if matches!(parent, AstNodes::Dummy()) {
+                                current_parent = Some(parent.parent());
+                            } else {
                                 break;
                             }
-                            current_parent = Some(parent.parent());
-                        } else {
-                            break;
                         }
-                    }
 
-                    if is_test_call {
-                        f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
-                    } else {
-                        soft_block_indent(&params).fmt(f)
-                    }?;
-
-                    format_dangling_comments(self.decl.span).with_soft_block_indent().fmt(f)
-                }), ">"))
-                    .with_group_id(self.options.group_id)]
+                        if is_test_call {
+                            f.join_nodes_with_space()
+                                .entries_with_trailing_separator(
+                                    params,
+                                    ",",
+                                    TrailingSeparator::Omit,
+                                )
+                                .finish()
+                        } else {
+                            soft_block_indent(&params).fmt(f)
+                        }
+                    }),
+                    ">"
+                ))
+                .with_group_id(self.options.group_id)]
             )
         }
     }
