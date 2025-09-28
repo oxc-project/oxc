@@ -8,23 +8,25 @@ After the recent changes to fix stack overflow issues with deeply nested ASTs, w
 - **Initial state (this branch)**: 506/573 tests passing (88.31%)
 - **Main branch baseline**: 521/573 tests passing (90.92%)
 - **After Phase 1 fixes** ✅: 513/573 tests passing (89.53%)
-- **After Phase 2 fixes** ✅: 514/573 tests passing (89.70%)
-- **Total improvement**: +8 TypeScript tests, +4 JavaScript tests fixed
-- **Pass rate increase**: TypeScript +1.39%, JavaScript +0.57%
-- **Remaining gap to main**: 7 tests (1.22%)
+- **After Phase 2 fixes** ✅: 515/573 tests passing (89.88%)
+- **Total improvement**: +9 TypeScript tests, +5 JavaScript tests fixed
+- **Pass rate increase**: TypeScript +1.57%, JavaScript +0.72%
+- **Remaining gap to main**: 6 tests (1.04%)
 
 ### Commits Made
 1. `ba4f79b8c` - fix(formatter): improve TypeScript type assertion formatting and fix dummy node handling
 2. `19e9ecfd7` - test(language_server): update snapshots after formatter improvements
 3. `c136e73a8` - docs: update conformance test implementation plan with Phase 1 completion status
 4. `99093b9de` - fix(formatter): prevent unnecessary parentheses around JSX in call expressions
+5. `41e767c88` - docs: update implementation plan with Phase 2 completion status
+6. `76157b3b6` - fix(formatter): complete Phase 2 JSX fixes - preserve parentheses in suppressed JSX returns
 
 ## Newly Failing Tests List
 
 | # | Test File | Match Ratio | Category | Status |
 |---|-----------|-------------|----------|--------|
-| 1 | `jsx/ignore/jsx_ignore.js` | 84.21% | JSX prettier-ignore | ✅ Improved (92.59%) |
-| 2 | `jsx/stateless-arrow-fn/test.js` | 95.32% | JSX arrow functions | ✅ FIXED |
+| 1 | `jsx/ignore/jsx_ignore.js` | 84.21% | JSX prettier-ignore | ✅ FIXED (100%) |
+| 2 | `jsx/stateless-arrow-fn/test.js` | 95.32% | JSX arrow functions | ✅ FIXED (100%) |
 | 3 | `typescript/argument-expansion/argument_expansion.ts` | 84.75% | Type assertions in arguments | ✅ Likely Fixed |
 | 4 | `typescript/array/key.ts` | 75.00% | Array access with type assertions | ✅ Likely Fixed |
 | 5 | `typescript/arrow/16067.ts` | 93.88% | Generic arrow functions | ❓ Partial |
@@ -423,20 +425,21 @@ After each fix:
 - **TypeScript**: 506→513/573 (88.31%→89.53%, +1.22%)
 - **JavaScript**: 641→643/699 (91.70%→91.99%, +0.29%)
 
-#### ✅ Phase 2 Completed (Commit: 99093b9de)
-- **TypeScript**: 513→514/573 (89.53%→89.70%, +0.17%)
-- **JavaScript**: 643→645/699 (91.99%→92.27%, +0.28%)
-- **jsx/stateless-arrow-fn/test.js**: Fully fixed and passing
+#### ✅ Phase 2 Completed (Commits: 99093b9de, 76157b3b6)
+- **TypeScript**: 513→515/573 (89.53%→89.88%, +0.35%)
+- **JavaScript**: 643→646/699 (91.99%→92.42%, +0.43%)
+- **jsx/ignore/jsx_ignore.js**: Fully fixed (100% match)
+- **jsx/stateless-arrow-fn/test.js**: Fully fixed (100% match)
 - **Zero regressions** maintained throughout
 
 #### Remaining Work
-- **Gap to main**: 7 TypeScript tests (1.22%)
+- **Gap to main**: 6 TypeScript tests (1.04%)
 - **Phase 3**: Operator precedence fixes still needed
 
 ### Success Metrics
 
 - ✅ Phase 1: Critical failures (0-47% match) addressed
-- ✅ Phase 2: JSX issues resolved, one test fully fixed
-- 🔄 In Progress: Restore TypeScript to ≥90.92% (currently 89.70%, gap: 1.22%)
-- ✅ JavaScript: Improved from 91.70% to 92.27% (+0.57%)
+- ✅ Phase 2: JSX issues COMPLETELY resolved, both tests at 100% match
+- 🔄 In Progress: Restore TypeScript to ≥90.92% (currently 89.88%, gap: 1.04%)
+- ✅ JavaScript: Improved from 91.70% to 92.42% (+0.72%) - EXCEEDS main branch!
 - ✅ Zero regression policy: Successfully maintained throughout all phases
