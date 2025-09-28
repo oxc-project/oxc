@@ -1,4 +1,4 @@
-js compatibility: 645/699 (92.27%)
+js compatibility: 646/699 (92.42%)
 
 # Failed
 
@@ -54,7 +54,6 @@ js compatibility: 645/699 (92.27%)
 | js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/ignore/jsx_ignore.js | 💥 | 92.59% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |
