@@ -14533,23 +14533,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │    abstract set b(x: string);
    ╰────
 
-  × TS(1245): Method 'aa' cannot have an implementation because it is marked abstract.
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
- 2 │    abstract get a();
- 3 │    abstract get aa() { return 1; } // error
-   ·                 ──
- 4 │    abstract set b(x: string);
-   ╰────
-
   × TS(1318): Accessor 'bb' cannot have an implementation because it is marked abstract.
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
- 4 │    abstract set b(x: string);
- 5 │    abstract set bb(x: string) {} // error
-   ·                 ──
- 6 │ }
-   ╰────
-
-  × TS(1245): Method 'bb' cannot have an implementation because it is marked abstract.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
  4 │    abstract set b(x: string);
  5 │    abstract set bb(x: string) {} // error
@@ -14669,28 +14653,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ }
    ╰────
 
-  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
- 5 │ class B {
- 6 │     abstract foo() {}
-   ·              ───
- 7 │ }
-   ╰────
-
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
  5 │ class B {
  6 │     abstract foo() {}
    ·              ───
  7 │ }
-   ╰────
-
-  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
- 1 │ abstract class A {
- 2 │     abstract foo() {}
-   ·              ───
- 3 │ }
    ╰────
 
   × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.

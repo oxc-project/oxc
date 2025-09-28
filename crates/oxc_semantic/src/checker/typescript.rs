@@ -389,7 +389,6 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
                 // have abstract modifiers, but this gets checked during parsing
                 MethodDefinitionKind::Constructor => {}
             }
-            ctx.error(abstract_method_cannot_have_implementation(method_name, span));
         }
     }
 
