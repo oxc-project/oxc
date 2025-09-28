@@ -734,6 +734,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
             AstNodes::ComputedMemberExpression(member) => {
                 !member.optional && member.object.span() == self.span()
             }
+            AstNodes::TSNonNullExpression(_) => true,
             _ => false,
         }
     }

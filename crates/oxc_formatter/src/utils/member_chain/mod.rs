@@ -335,13 +335,7 @@ fn compute_remaining_groups<'a, 'b>(
                 has_seen_call_expression = true;
             }
             ChainMember::TSNonNullExpression(_) => {
-                if should_break_group {
-                    groups_builder.close_group();
-                    groups_builder.start_group(member.clone());
-                    has_seen_call_expression = false;
-                } else {
-                    groups_builder.start_or_continue_group(member.clone());
-                }
+                groups_builder.start_or_continue_group(member.clone());
             }
             ChainMember::Node(_) => unreachable!("Remaining members never have a `Node` variant"),
         }

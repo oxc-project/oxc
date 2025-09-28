@@ -1,4 +1,4 @@
-ts compatibility: 515/573 (89.88%)
+ts compatibility: 516/573 (90.05%)
 
 # Failed
 
@@ -15,11 +15,11 @@ ts compatibility: 515/573 (89.88%)
 | typescript/arrow/16067.ts | 💥💥 | 93.88% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
-| typescript/cast/generic-cast.ts | 💥 | 97.37% |
+| typescript/cast/generic-cast.ts | 💥 | 97.84% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
-| typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
-| typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
-| typescript/chain-expression/test.ts | 💥 | 0.00% |
+| typescript/chain-expression/call-expression.ts | 💥 | 82.81% |
+| typescript/chain-expression/member-expression.ts | 💥 | 82.09% |
+| typescript/chain-expression/test.ts | 💥 | 50.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/16065.ts | 💥 | 63.64% |
@@ -50,12 +50,11 @@ ts compatibility: 515/573 (89.88%)
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/method/issue-10352-consistency.ts | 💥 | 63.64% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
-| typescript/non-null/optional-chain.ts | 💥 | 72.22% |
+| typescript/non-null/optional-chain.ts | 💥 | 88.89% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 44.00% |
 | typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 42.86% |
-| typescript/ternaries/indent.ts | 💥 | 93.33% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 73.68% |
