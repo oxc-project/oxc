@@ -534,15 +534,30 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // If the body is _not_ one of those kinds, then we'll want to insert a
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
+        // For call arguments with simple literals, keep them inline to match Prettier
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
-            matches!(
+            let should_keep_inline = matches!(
                 expression,
                 Expression::ObjectExpression(_)
                     | Expression::ArrayExpression(_)
                     | Expression::SequenceExpression(_)
                     | Expression::JSXElement(_)
                     | Expression::JSXFragment(_)
-            )
+            );
+
+            // Additionally, for call arguments with TypeScript context, keep simple literals inline
+            let is_simple_literal_in_ts_call_arg = is_call_argument
+                && self.arrows().any(|arrow| arrow.type_parameters.is_some())
+                && matches!(
+                    expression,
+                    Expression::NumericLiteral(_)
+                        | Expression::StringLiteral(_)
+                        | Expression::BooleanLiteral(_)
+                        | Expression::NullLiteral(_)
+                        | Expression::Identifier(_)
+                );
+
+            should_keep_inline || is_simple_literal_in_ts_call_arg
         });
 
         // If the arrow chain will break onto multiple lines, either because
@@ -623,11 +638,20 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     //     (b) =>
                     //     (c) =>
                     //       0
+                    // However, for call arguments with generic arrow chains, keep all signatures
+                    // at the same level to match Prettier's formatting:
+                    //   foo(
+                    //     <T>() =>
+                    //     () => 1
+                    //   ,
                     // Because the chain is printed as a flat list, each entry needs to set
                     // its own indention. This ensures that the first item keeps the same
                     // level as the surrounding content, and then each subsequent item has
                     // one additional level, as shown above.
-                    if is_first_in_chain || has_initial_indent {
+                    let is_generic_chain_in_call_arg = is_call_argument &&
+                        self.arrows().any(|arrow| arrow.type_parameters.is_some());
+
+                    if is_first_in_chain || has_initial_indent || is_generic_chain_in_call_arg {
                         is_first_in_chain = false;
                         write!(f, [formatted_signature])?;
                     } else {
