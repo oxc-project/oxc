@@ -399,6 +399,7 @@ pub(crate) mod unicorn {
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
+    pub mod expiring_todo_comments;
     pub mod explicit_length_check;
     pub mod filename_case;
     pub mod new_for_builtins;
@@ -1150,6 +1151,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::error_message,
     unicorn::escape_case,
     unicorn::explicit_length_check,
+    unicorn::expiring_todo_comments,
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_unnecessary_array_splice_count,

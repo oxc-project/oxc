@@ -3037,6 +3037,11 @@ impl RuleRunner for crate::rules::unicorn::explicit_length_check::ExplicitLength
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::expiring_todo_comments::ExpiringTodoComments {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
+
 impl RuleRunner for crate::rules::unicorn::filename_case::FilenameCase {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
