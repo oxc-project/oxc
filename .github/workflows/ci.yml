@@ -256,7 +256,6 @@ jobs:
               - '!npm/**'
               - '!crates/oxc_linter/**'
               - '!crates/oxc_language_server/**'
-              - '!tasks/**'
 
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
