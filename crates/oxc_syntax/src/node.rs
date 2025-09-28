@@ -40,10 +40,18 @@ impl NodeId {
 }
 
 impl Idx for NodeId {
+    const MAX: usize = (u32::MAX - 1) as usize;
+
     #[expect(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         assert!(idx < u32::MAX as usize);
         // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    unsafe fn from_usize_unchecked(idx: usize) -> Self {
+        // SAFETY: Caller must ensure `idx` is a legal value for `NonMaxU32`
         Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
