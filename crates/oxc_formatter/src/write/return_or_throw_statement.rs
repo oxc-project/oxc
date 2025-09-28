@@ -90,9 +90,10 @@ impl<'a> Format<'a> for FormatReturnOrThrowArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let argument = self.0;
 
-        if !matches!(argument.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_))
-            && has_argument_leading_comments(argument, f)
-        {
+        let is_jsx = matches!(argument.as_ref(), Expression::JSXElement(_) | Expression::JSXFragment(_));
+        let is_jsx_suppressed = is_jsx && f.comments().is_suppressed(argument.span().start);
+
+        if has_argument_leading_comments(argument, f) && (!is_jsx || is_jsx_suppressed) {
             write!(f, [text("("), &block_indent(&argument), text(")")])
         } else if is_binary_or_sequence_argument(argument) {
             write!(
