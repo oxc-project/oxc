@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
+assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/astro/debugger.astro
@@ -15,7 +16,58 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } } })
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Remove the debugger statement",
+            ),
+            code: "",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 8,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this line",
+            ),
+            code: "// oxlint-disable-next-line no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this file",
+            ),
+            code: "// oxlint-disable no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
 
 
 code: "eslint(no-debugger)"
@@ -28,7 +80,58 @@ related_information[0].location.range: Range { start: Position { line: 10, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 10, character: 2 }, end: Position { line: 10, character: 10 } } })
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Remove the debugger statement",
+            ),
+            code: "",
+            range: Range {
+                start: Position {
+                    line: 10,
+                    character: 2,
+                },
+                end: Position {
+                    line: 10,
+                    character: 10,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this line",
+            ),
+            code: "// oxlint-disable-next-line no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 10,
+                    character: 0,
+                },
+                end: Position {
+                    line: 10,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this file",
+            ),
+            code: "// oxlint-disable no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 10,
+                    character: 0,
+                },
+                end: Position {
+                    line: 10,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
 
 
 code: "eslint(no-debugger)"
@@ -41,7 +144,58 @@ related_information[0].location.range: Range { start: Position { line: 14, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 14, character: 2 }, end: Position { line: 14, character: 10 } } })
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Remove the debugger statement",
+            ),
+            code: "",
+            range: Range {
+                start: Position {
+                    line: 14,
+                    character: 2,
+                },
+                end: Position {
+                    line: 14,
+                    character: 10,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this line",
+            ),
+            code: "// oxlint-disable-next-line no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 14,
+                    character: 0,
+                },
+                end: Position {
+                    line: 14,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this file",
+            ),
+            code: "// oxlint-disable no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 14,
+                    character: 0,
+                },
+                end: Position {
+                    line: 14,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
 
 
 code: "eslint(no-debugger)"
@@ -54,4 +208,55 @@ related_information[0].location.range: Range { start: Position { line: 18, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 18, character: 2 }, end: Position { line: 18, character: 10 } } })
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Remove the debugger statement",
+            ),
+            code: "",
+            range: Range {
+                start: Position {
+                    line: 18,
+                    character: 2,
+                },
+                end: Position {
+                    line: 18,
+                    character: 10,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this line",
+            ),
+            code: "// oxlint-disable-next-line no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 18,
+                    character: 0,
+                },
+                end: Position {
+                    line: 18,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this file",
+            ),
+            code: "// oxlint-disable no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 18,
+                    character: 0,
+                },
+                end: Position {
+                    line: 18,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)

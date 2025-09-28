@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
+assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/multiple_suggestions/forward_ref.ts
@@ -15,4 +16,71 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Multiple([FixedContent { message: Some("remove `forwardRef` wrapper"), code: "(props) => {}", range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 25 } } }, FixedContent { message: Some("add `ref` parameter"), code: "(props, ref)", range: Range { start: Position { line: 0, character: 11 }, end: Position { line: 0, character: 18 } } }])
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "remove `forwardRef` wrapper",
+            ),
+            code: "(props) => {}",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 25,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "add `ref` parameter",
+            ),
+            code: "(props, ref)",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 11,
+                },
+                end: Position {
+                    line: 0,
+                    character: 18,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable forward-ref-uses-ref for this line",
+            ),
+            code: "// oxlint-disable-next-line forward-ref-uses-ref\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable forward-ref-uses-ref for this file",
+            ),
+            code: "// oxlint-disable forward-ref-uses-ref\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)

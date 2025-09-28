@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
+assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/svelte/debugger.svelte
@@ -15,7 +16,42 @@ related_information[0].location.range: Range { start: Position { line: 3, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: None
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Disable no-unassigned-vars for this line",
+            ),
+            code: "// oxlint-disable-next-line no-unassigned-vars\n",
+            range: Range {
+                start: Position {
+                    line: 3,
+                    character: 0,
+                },
+                end: Position {
+                    line: 3,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-unassigned-vars for this file",
+            ),
+            code: "// oxlint-disable no-unassigned-vars\n",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
 
 
 code: "eslint(no-unassigned-vars)"
@@ -28,7 +64,42 @@ related_information[0].location.range: Range { start: Position { line: 4, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: None
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Disable no-unassigned-vars for this line",
+            ),
+            code: "// oxlint-disable-next-line no-unassigned-vars\n",
+            range: Range {
+                start: Position {
+                    line: 4,
+                    character: 0,
+                },
+                end: Position {
+                    line: 4,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-unassigned-vars for this file",
+            ),
+            code: "// oxlint-disable no-unassigned-vars\n",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
 
 
 code: "eslint(no-debugger)"
@@ -41,4 +112,55 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 1, character: 1 }, end: Position { line: 1, character: 10 } } })
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Remove the debugger statement",
+            ),
+            code: "",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 1,
+                },
+                end: Position {
+                    line: 1,
+                    character: 10,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this line",
+            ),
+            code: "// oxlint-disable-next-line no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this file",
+            ),
+            code: "// oxlint-disable no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
