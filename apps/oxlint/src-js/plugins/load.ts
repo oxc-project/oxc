@@ -131,7 +131,7 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
       let { fixable } = ruleMeta;
       if (fixable === void 0) {
         fixable = null;
-      } else if (fixable !== 'code' && fixable !== 'whitespace') {
+      } else if (fixable !== null && fixable !== 'code' && fixable !== 'whitespace') {
         throw new TypeError('Invalid `meta.fixable`');
       }
 

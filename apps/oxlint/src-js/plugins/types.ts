@@ -43,6 +43,6 @@ export interface EnterExit {
 // Rule metadata.
 // TODO: Fill in all properties.
 export interface RuleMeta {
-  fixable?: 'code' | 'whitespace';
+  fixable?: 'code' | 'whitespace' | null | undefined;
   [key: string]: unknown;
 }
