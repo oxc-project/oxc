@@ -10,7 +10,7 @@ pub trait IsGlobalReference {
 
 impl IsGlobalReference for ReferenceId {
     fn is_global_reference(&self, scoping: &Scoping) -> bool {
-        scoping.references[*self].symbol_id().is_none()
+        scoping.reference_symbol_ids[*self].is_none()
     }
 
     fn is_global_reference_name(&self, _name: &str, _scoping: &Scoping) -> bool {

@@ -57,7 +57,7 @@ impl Rule for NoUndef {
                     continue;
                 }
 
-                let name = ctx.semantic().reference_name(reference);
+                let name = ctx.semantic().reference_name(&reference);
 
                 if ctx.env_contains_var(name) {
                     continue;

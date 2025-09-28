@@ -8,7 +8,7 @@ use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     node::NodeId,
-    reference::{Reference, ReferenceId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -63,7 +63,13 @@ pub struct Scoping {
     /// Pointer to the AST Node where this symbol is declared
     pub(crate) symbol_declarations: IndexVec<SymbolId, NodeId>,
 
-    pub(crate) references: IndexVec<ReferenceId, Reference>,
+    /* Reference Fields - SoA pattern */
+    /// The AST nodes making the references
+    pub(crate) reference_node_ids: IndexVec<ReferenceId, NodeId>,
+    /// The symbols being referenced (None for unresolved references)
+    pub(crate) reference_symbol_ids: IndexVec<ReferenceId, Option<SymbolId>>,
+    /// Flags describing how references are used
+    pub(crate) reference_flags: IndexVec<ReferenceId, ReferenceFlags>,
 
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
@@ -96,7 +102,9 @@ impl Default for Scoping {
             symbol_flags: IndexVec::new(),
             symbol_scope_ids: IndexVec::new(),
             symbol_declarations: IndexVec::new(),
-            references: IndexVec::new(),
+            reference_node_ids: IndexVec::new(),
+            reference_symbol_ids: IndexVec::new(),
+            reference_flags: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             scope_parent_ids: IndexVec::new(),
             scope_build_child_ids: false,
@@ -439,27 +447,50 @@ impl Scoping {
     }
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
-        self.references.push(reference)
+        let id = self.reference_node_ids.push(reference.node_id());
+        self.reference_symbol_ids.push(reference.symbol_id());
+        self.reference_flags.push(reference.flags());
+        id
     }
 
     /// Get a resolved or unresolved reference.
     ///
     /// [`ReferenceId`]s can be found in [oxc_ast::ast::IdentifierReference] and similar nodes.
     #[inline]
-    pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
-        &self.references[reference_id]
+    pub fn get_reference(&self, reference_id: ReferenceId) -> Reference {
+        let node_id = self.reference_node_ids[reference_id];
+        let symbol_id = self.reference_symbol_ids[reference_id];
+        let flags = self.reference_flags[reference_id];
+        if let Some(symbol_id) = symbol_id {
+            Reference::new_with_symbol_id(node_id, symbol_id, flags)
+        } else {
+            Reference::new(node_id, flags)
+        }
     }
 
+    /// Returns the number of references in the semantic graph.
     #[inline]
-    pub fn get_reference_mut(&mut self, reference_id: ReferenceId) -> &mut Reference {
-        &mut self.references[reference_id]
+    pub fn references_len(&self) -> usize {
+        self.reference_node_ids.len()
+    }
+
+    /// Set the symbol_id for a reference.
+    #[inline]
+    pub fn set_reference_symbol_id(&mut self, reference_id: ReferenceId, symbol_id: SymbolId) {
+        self.reference_symbol_ids[reference_id] = Some(symbol_id);
+    }
+
+    /// Get a mutable reference to the flags for a reference.
+    #[inline]
+    pub fn reference_flags_mut(&mut self, reference_id: ReferenceId) -> &mut ReferenceFlags {
+        &mut self.reference_flags[reference_id]
     }
 
     /// Get the name of the symbol a reference is resolved to. Returns `None` if the reference is
     /// not resolved.
     #[inline]
     pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
-        self.symbol_name(self.references[reference_id].symbol_id()?).into()
+        self.symbol_name(self.reference_symbol_ids[reference_id]?).into()
     }
 
     /// Returns `true` if the corresponding [`Reference`] is resolved to a symbol.
@@ -468,7 +499,7 @@ impl Scoping {
     /// not exist.
     #[inline]
     pub fn has_binding(&self, reference_id: ReferenceId) -> bool {
-        self.references[reference_id].symbol_id().is_some()
+        self.reference_symbol_ids[reference_id].is_some()
     }
 
     /// Find [`Reference`] ids resolved to a symbol.
@@ -483,10 +514,10 @@ impl Scoping {
     pub fn get_resolved_references(
         &self,
         symbol_id: SymbolId,
-    ) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
+    ) -> impl DoubleEndedIterator<Item = Reference> + '_ {
         self.get_resolved_reference_ids(symbol_id)
             .iter()
-            .map(|&reference_id| &self.references[reference_id])
+            .map(|&reference_id| self.get_reference(reference_id))
     }
 
     /// Get whether a symbol is mutated (i.e. assigned to).
@@ -497,7 +528,7 @@ impl Scoping {
         if self.symbol_flags[symbol_id].contains(SymbolFlags::ConstVariable) {
             false
         } else {
-            self.get_resolved_references(symbol_id).any(Reference::is_write)
+            self.get_resolved_references(symbol_id).any(|ref r| r.is_write())
         }
     }
 
@@ -545,7 +576,9 @@ impl Scoping {
             cell.symbol_names.reserve_exact(additional_symbols);
             cell.resolved_references.reserve_exact(additional_symbols);
         });
-        self.references.reserve(additional_references);
+        self.reference_node_ids.reserve(additional_references);
+        self.reference_symbol_ids.reserve(additional_references);
+        self.reference_flags.reserve(additional_references);
 
         self.scope_parent_ids.reserve(additional_scopes);
         self.scope_flags.reserve(additional_scopes);
@@ -990,7 +1023,9 @@ impl Scoping {
             symbol_flags: self.symbol_flags.clone(),
             symbol_scope_ids: self.symbol_scope_ids.clone(),
             symbol_declarations: self.symbol_declarations.clone(),
-            references: self.references.clone(),
+            reference_node_ids: self.reference_node_ids.clone(),
+            reference_symbol_ids: self.reference_symbol_ids.clone(),
+            reference_flags: self.reference_flags.clone(),
             no_side_effects: self.no_side_effects.clone(),
             scope_parent_ids: self.scope_parent_ids.clone(),
             scope_build_child_ids: self.scope_build_child_ids,

@@ -75,7 +75,7 @@ impl Rule for NoGlobalAssign {
                 {
                     ctx.diagnostic(no_global_assign_diagnostic(
                         name,
-                        ctx.semantic().reference_span(reference),
+                        ctx.semantic().reference_span(&reference),
                     ));
                 }
             }

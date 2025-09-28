@@ -79,7 +79,7 @@ impl Rule for NoImportAssign {
                                 }
                                 _ => return,
                             }
-                            && span != ctx.semantic().reference_span(reference)
+                            && span != ctx.semantic().reference_span(&reference)
                         {
                             return ctx.diagnostic(no_import_assign_diagnostic(expr.span()));
                         }
@@ -94,7 +94,7 @@ impl Rule for NoImportAssign {
                                 check_namespace_member_assignment(
                                     &member_expr.object,
                                     parent_node,
-                                    reference,
+                                    &reference,
                                     ctx,
                                     condition_met,
                                 );
@@ -108,7 +108,7 @@ impl Rule for NoImportAssign {
                                 check_namespace_member_assignment(
                                     &member_expr.object,
                                     parent_node,
-                                    reference,
+                                    &reference,
                                     ctx,
                                     condition_met,
                                 );
@@ -123,7 +123,7 @@ impl Rule for NoImportAssign {
                         && is_argument_of_well_known_mutation_function(reference.node_id(), ctx))
                 {
                     ctx.diagnostic(no_import_assign_diagnostic(
-                        ctx.semantic().reference_span(reference),
+                        ctx.semantic().reference_span(&reference),
                     ));
                 }
             }

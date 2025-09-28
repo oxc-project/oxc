@@ -1,6 +1,6 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
-use oxc_semantic::{Reference, SymbolFlags};
+use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::Traverse;
@@ -100,7 +100,7 @@ impl<'a> TypeScriptModule<'a, '_> {
     ) -> Option<Declaration<'a>> {
         if !self.only_remove_type_imports
             && !ctx.parent().is_export_named_declaration()
-            && ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
+            && ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(|r| r.is_type())
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
             match &mut decl.module_reference {
@@ -108,12 +108,11 @@ impl<'a> TypeScriptModule<'a, '_> {
                     if let Some(ident) =
                         module_reference.to_ts_type_name().get_identifier_reference()
                     {
-                        let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
                         // The binding of TSImportEqualsDeclaration has treated as a type reference,
                         // so an identifier reference that it referenced also should be treated as a type reference.
                         // `import TypeBinding = X.Y.Z`
                         //                       ^ `X` should be treated as a type reference.
-                        let flags = reference.flags_mut();
+                        let flags = ctx.scoping_mut().reference_flags_mut(ident.reference_id());
                         debug_assert_eq!(*flags, ReferenceFlags::Read);
                         *flags = ReferenceFlags::Type;
                     }
@@ -180,8 +179,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
                 let ident = ident.clone();
-                let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
-                *reference.flags_mut() = ReferenceFlags::Read;
+                *ctx.scoping_mut().reference_flags_mut(ident.reference_id()) = ReferenceFlags::Read;
                 Expression::Identifier(ctx.alloc(ident))
             }
             TSTypeName::QualifiedName(qualified_name) => ctx

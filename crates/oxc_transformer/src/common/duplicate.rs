@@ -103,8 +103,7 @@ impl<'a> TransformCtx<'a> {
                 }
 
                 // Previously `x += 1` (`x` read + write), but moving to `_x = x` (`x` read only)
-                let reference = ctx.scoping_mut().get_reference_mut(reference_id);
-                *reference.flags_mut() = ReferenceFlags::Read;
+                *ctx.scoping_mut().reference_flags_mut(reference_id) = ReferenceFlags::Read;
 
                 self.var_declarations.create_uid_var(&ident.name, ctx)
             }

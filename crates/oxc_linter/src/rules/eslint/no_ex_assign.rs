@@ -56,7 +56,7 @@ impl Rule for NoExAssign {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(no_ex_assign_diagnostic(
-                        ctx.semantic().reference_span(reference),
+                        ctx.semantic().reference_span(&reference),
                     ));
                 }
             }

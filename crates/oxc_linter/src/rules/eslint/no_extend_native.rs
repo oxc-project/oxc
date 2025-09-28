@@ -91,7 +91,7 @@ impl Rule for NoExtendNative {
         for reference_id_list in ctx.scoping().root_unresolved_references_ids() {
             for reference_id in reference_id_list {
                 let reference = symbols.get_reference(reference_id);
-                let name = ctx.semantic().reference_name(reference);
+                let name = ctx.semantic().reference_name(&reference);
                 // If the referenced name does not appear to be a global object, skip it.
                 if !ctx.env_contains_var(name) {
                     continue;

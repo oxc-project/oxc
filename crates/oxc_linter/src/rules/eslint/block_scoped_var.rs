@@ -165,7 +165,7 @@ fn run_for_all_references(
         .for_each(|reference| {
             ctx.diagnostic(use_outside_scope_diagnostic(
                 pattern.span(),
-                ctx.reference_span(reference),
+                ctx.reference_span(&reference),
                 name,
             ));
         });

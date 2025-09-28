@@ -73,7 +73,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub fn references(&self) -> impl DoubleEndedIterator<Item = &Reference> + '_ + use<'_> {
+    pub fn references(&self) -> impl DoubleEndedIterator<Item = Reference> + '_ + use<'_> {
         self.scoping().get_resolved_references(self.id)
     }
 

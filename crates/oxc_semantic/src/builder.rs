@@ -272,7 +272,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.nodes.len() as u32,
                 self.scoping.scopes_len() as u32,
                 self.scoping.symbols_len() as u32,
-                self.scoping.references.len() as u32,
+                self.scoping.references_len() as u32,
             );
             stats.assert_accurate(actual_stats);
         }
@@ -521,9 +521,7 @@ impl<'a> SemanticBuilder<'a> {
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flags = self.scoping.symbol_flags(symbol_id);
                 references.retain(|&reference_id| {
-                    let reference = &mut self.scoping.references[reference_id];
-
-                    let flags = reference.flags_mut();
+                    let flags = self.scoping.reference_flags_mut(reference_id);
 
                     // Determine the symbol whether can be referenced by this reference.
                     let resolved = (flags.is_value() && symbol_flags.can_be_referenced_by_value())
@@ -552,7 +550,7 @@ impl<'a> SemanticBuilder<'a> {
                         //                                            make sure the reference is a type only.
                         *flags = ReferenceFlags::Type;
                     }
-                    reference.set_symbol_id(symbol_id);
+                    self.scoping.set_reference_symbol_id(reference_id, symbol_id);
                     self.scoping.add_resolved_reference(symbol_id, reference_id);
 
                     false

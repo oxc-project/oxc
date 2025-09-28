@@ -82,7 +82,7 @@ impl Rule for NoJasmineGlobals {
                     ctx.diagnostic(no_jasmine_globals_diagnostic(
                         error,
                         help,
-                        ctx.semantic().reference_span(reference),
+                        ctx.semantic().reference_span(&reference),
                     ));
                 }
             }

@@ -281,8 +281,7 @@ impl<'a> PeepholeOptimizations {
     /// But assignment expressions changes the value, so we should add ReferenceFlags::Read.
     pub fn mark_assignment_target_as_read(assign_target: &AssignmentTarget, ctx: &mut Ctx<'a, '_>) {
         if let AssignmentTarget::AssignmentTargetIdentifier(id) = assign_target {
-            let reference = ctx.scoping_mut().get_reference_mut(id.reference_id());
-            reference.flags_mut().insert(ReferenceFlags::Read);
+            ctx.scoping_mut().reference_flags_mut(id.reference_id()).insert(ReferenceFlags::Read);
         }
     }
 }

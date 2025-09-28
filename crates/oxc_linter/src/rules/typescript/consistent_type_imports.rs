@@ -10,7 +10,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{Reference, SymbolId};
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -412,7 +412,7 @@ fn is_only_has_type_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
     if peekable_iter.peek().is_none() {
         return false;
     }
-    peekable_iter.all(Reference::is_type)
+    peekable_iter.all(|r| r.is_type())
 }
 
 struct FixOptions<'a, 'b> {

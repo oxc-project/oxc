@@ -141,9 +141,9 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
         ident: &IdentifierReference<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
-        let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
-        *reference.flags_mut() = ReferenceFlags::Read;
+        let reference = ctx.scoping().get_reference(ident.reference_id());
         let symbol_id = reference.symbol_id();
+        *ctx.scoping_mut().reference_flags_mut(ident.reference_id()) = ReferenceFlags::Read;
         let left_expr = Expression::Identifier(ctx.alloc(ident.clone()));
 
         let ident = ctx.create_ident_reference(SPAN, ident.name, symbol_id, ReferenceFlags::Write);

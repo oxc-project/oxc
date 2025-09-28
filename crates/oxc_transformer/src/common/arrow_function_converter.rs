@@ -1053,8 +1053,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         // If no symbol ID, it means there is no variable named `arguments` in the scope.
         // The following code is just to sync semantics.
         if symbol_id.is_none() {
-            let reference = ctx.scoping_mut().get_reference_mut(reference_id);
-            reference.set_symbol_id(binding.symbol_id);
+            ctx.scoping_mut().set_reference_symbol_id(reference_id, binding.symbol_id);
             ctx.scoping_mut().delete_root_unresolved_reference(&ident.name, reference_id);
             ctx.scoping_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }

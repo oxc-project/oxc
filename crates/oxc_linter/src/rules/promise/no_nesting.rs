@@ -170,7 +170,7 @@ fn can_safely_unnest(
 fn uses_closest_cb_vars(closest_cb_scope_id: ScopeId, cb_span: Span, ctx: &LintContext) -> bool {
     for (_, binding_symbol_id) in ctx.scoping().get_bindings(closest_cb_scope_id) {
         for usage in ctx.semantic().symbol_references(*binding_symbol_id) {
-            let usage_span: Span = ctx.reference_span(usage);
+            let usage_span: Span = ctx.reference_span(&usage);
             if cb_span.contains_inclusive(usage_span) {
                 // Cannot unnest this nested promise as the nested cb refers to a variable
                 // defined in the parent promise callback scope. Unnesting would result in

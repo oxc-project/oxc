@@ -153,13 +153,15 @@ impl<'a> ExponentiationOperator<'a, '_> {
         let mut temp_var_inits = ctx.ast.vec();
 
         // Make sure side-effects of evaluating `left` only happen once
-        let reference = ctx.scoping.scoping_mut().get_reference_mut(ident.reference_id());
+        let reference = ctx.scoping.scoping().get_reference(ident.reference_id());
+        let symbol_id = reference.symbol_id();
+        let scoping_mut = ctx.scoping.scoping_mut();
 
         // `left **= right` is being transformed to `left = Math.pow(left, right)`,
         // so `left` in `left =` is no longer being read from
-        *reference.flags_mut() = ReferenceFlags::Write;
+        *scoping_mut.reference_flags_mut(ident.reference_id()) = ReferenceFlags::Write;
 
-        let pow_left = if let Some(symbol_id) = reference.symbol_id() {
+        let pow_left = if let Some(symbol_id) = symbol_id {
             // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
             // No need for a temp var.
             ctx.create_bound_ident_expr(SPAN, ident.name, symbol_id, ReferenceFlags::Read)

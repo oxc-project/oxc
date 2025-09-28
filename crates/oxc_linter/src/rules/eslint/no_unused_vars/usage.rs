@@ -117,8 +117,8 @@ impl<'a> Symbol<'_, 'a> {
 
             if reference.is_write() {
                 if do_reassignment_checks
-                    && (self.is_assigned_to_ignored_destructure(reference, options)
-                        || self.is_used_in_for_of_loop(reference))
+                    && (self.is_assigned_to_ignored_destructure(&reference, options)
+                        || self.is_used_in_for_of_loop(&reference))
                 {
                     return true;
                 }
@@ -134,7 +134,7 @@ impl<'a> Symbol<'_, 'a> {
 
             if reference.is_type() {
                 // e.g. `type Foo = Array<Foo>`
-                if do_type_self_usage_checks && self.is_type_self_usage(reference) {
+                if do_type_self_usage_checks && self.is_type_self_usage(&reference) {
                     continue;
                 }
 
@@ -144,7 +144,7 @@ impl<'a> Symbol<'_, 'a> {
                 // ```
                 if options.report_vars_only_used_as_types
                     && !self.flags().intersects(SymbolFlags::TypeImport.union(SymbolFlags::Import))
-                    && self.reference_contains_type_query(reference)
+                    && self.reference_contains_type_query(&reference)
                 {
                     continue;
                 }
@@ -152,7 +152,7 @@ impl<'a> Symbol<'_, 'a> {
                 // function foo(): foo { }
                 // ```
                 if self
-                    .get_ref_relevant_node(reference)
+                    .get_ref_relevant_node(&reference)
                     .is_some_and(|node| self.declaration().span().contains_inclusive(node.span()))
                 {
                     continue;
@@ -164,17 +164,17 @@ impl<'a> Symbol<'_, 'a> {
             // ======================= Read usage checks =======================
 
             // e.g. `let a = 0; a = a + 1`
-            if do_reassignment_checks && self.is_self_reassignment(reference) {
+            if do_reassignment_checks && self.is_self_reassignment(&reference) {
                 continue;
             }
 
             // e.g. reference on `a` in expression `let a = 0; let b = (a++, 0);`
-            if do_discarded_read_checks && self.is_discarded_read(reference) {
+            if do_discarded_read_checks && self.is_discarded_read(&reference) {
                 continue;
             }
 
             // e.g. `function foo() { foo() }`
-            if do_self_call_check && self.is_self_call(reference) {
+            if do_self_call_check && self.is_self_call(&reference) {
                 continue;
             }
 
@@ -836,7 +836,7 @@ impl<'a> Symbol<'_, 'a> {
     }
 
     pub fn has_reference_used_as_type_query(&self) -> bool {
-        self.references().any(|reference| self.reference_contains_type_query(reference))
+        self.references().any(|reference| self.reference_contains_type_query(&reference))
     }
 
     fn reference_contains_type_query(&self, reference: &Reference) -> bool {

@@ -131,7 +131,7 @@ impl<'a> ClassProperties<'a, '_> {
         ident.name = temp_binding.name;
 
         let symbols = ctx.scoping_mut();
-        symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);
+        symbols.set_reference_symbol_id(reference_id, temp_binding.symbol_id);
         symbols.delete_resolved_reference(symbol_id, reference_id);
         symbols.add_resolved_reference(temp_binding.symbol_id, reference_id);
     }

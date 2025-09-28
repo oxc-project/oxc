@@ -195,7 +195,7 @@ impl<'a> Semantic<'a> {
             self.nodes.len() as u32,
             self.scoping.scopes_len() as u32,
             self.scoping.symbols_len() as u32,
-            self.scoping.references.len() as u32,
+            self.scoping.references_len() as u32,
         )
     }
 
@@ -216,7 +216,7 @@ impl<'a> Semantic<'a> {
     pub fn symbol_references(
         &self,
         symbol_id: SymbolId,
-    ) -> impl Iterator<Item = &Reference> + '_ + use<'_> {
+    ) -> impl Iterator<Item = Reference> + '_ + use<'_> {
         self.scoping.get_resolved_references(symbol_id)
     }
 
@@ -324,7 +324,7 @@ mod tests {
         let allocator = Allocator::default();
         let source_type: SourceType = SourceType::default().with_typescript(true);
         let semantic = get_semantic(&allocator, source, source_type);
-        assert_eq!(semantic.scoping().references.len(), 1);
+        assert_eq!(semantic.scoping().references_len(), 1);
     }
 
     #[test]
@@ -448,7 +448,7 @@ mod tests {
                 num_refs == 1,
                 "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}"
             );
-            let ref_type = a_refs[0];
+            let ref_type = &a_refs[0];
             if flags.is_write() {
                 assert!(
                     ref_type.is_write(),

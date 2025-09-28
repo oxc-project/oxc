@@ -90,7 +90,7 @@
 use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::SparseStack;
-use oxc_semantic::{Reference, ReferenceFlags, SymbolId};
+use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{ContentEq, SPAN};
 use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 use rustc_hash::FxHashMap;
@@ -259,7 +259,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         // If the enum doesn't have any type references, that implies that no decorators
         // refer to this enum, so there is no need to infer its type.
         let has_type_reference =
-            ctx.scoping().get_resolved_references(symbol_id).any(Reference::is_type);
+            ctx.scoping().get_resolved_references(symbol_id).any(|r| r.is_type());
         if has_type_reference {
             let enum_type = Self::infer_enum_type(&decl.body.members);
             self.enum_types.insert(symbol_id, enum_type);
