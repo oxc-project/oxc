@@ -1,4 +1,4 @@
-ts compatibility: 513/573 (89.53%)
+ts compatibility: 514/573 (89.70%)
 
 # Failed
 
@@ -6,11 +6,10 @@ ts compatibility: 513/573 (89.53%)
 | :-------- | :--------------: | :---------: |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
+| jsx/ignore/jsx_ignore.js | 💥 | 92.59% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/stateless-arrow-fn/test.js | 💥 | 95.32% |
-| jsx/text-wrap/test.js | 💥 | 98.68% |
+| jsx/text-wrap/test.js | 💥 | 99.56% |
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |

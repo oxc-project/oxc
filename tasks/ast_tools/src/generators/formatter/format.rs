@@ -138,10 +138,19 @@ fn generate_struct_implementation(
     let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
 
     let needs_parentheses_before = if needs_parentheses {
-        quote! {
-            let needs_parentheses = self.needs_parentheses(f);
-            if needs_parentheses {
-                "(".fmt(f)?;
+        if matches!(struct_name, "JSXElement" | "JSXFragment") {
+            quote! {
+                let needs_parentheses = !is_suppressed && self.needs_parentheses(f);
+                if needs_parentheses {
+                    "(".fmt(f)?;
+                }
+            }
+        } else {
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                if needs_parentheses {
+                    "(".fmt(f)?;
+                }
             }
         }
     } else {
@@ -170,10 +179,10 @@ fn generate_struct_implementation(
         };
 
         // `Program` can't be suppressed.
-        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic
+        // `JSXElement` and `JSXFragment` need special suppression handling before parentheses
         let suppressed_check = (!matches!(
             struct_name,
-            "Program" | "JSXElement" | "JSXFragment" | "ExpressionStatement"
+            "Program" | "ExpressionStatement"
         ))
         .then(|| {
             quote! {
