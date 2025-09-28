@@ -8,10 +8,10 @@ file: fixtures/linter/vue/debugger.vue
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 5, character: 4 }, end: Position { line: 5, character: 12 } }
+range: Range { start: Position { line: 4, character: 8 }, end: Position { line: 4, character: 17 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/vue/debugger.vue"
-related_information[0].location.range: Range { start: Position { line: 5, character: 4 }, end: Position { line: 5, character: 12 } }
+related_information[0].location.range: Range { start: Position { line: 4, character: 8 }, end: Position { line: 4, character: 17 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
@@ -24,12 +24,12 @@ fixed: Multiple(
             code: "",
             range: Range {
                 start: Position {
-                    line: 5,
-                    character: 4,
+                    line: 4,
+                    character: 8,
                 },
                 end: Position {
-                    line: 5,
-                    character: 12,
+                    line: 4,
+                    character: 17,
                 },
             },
         },
@@ -40,11 +40,11 @@ fixed: Multiple(
             code: "// oxlint-disable-next-line no-debugger\n",
             range: Range {
                 start: Position {
-                    line: 5,
+                    line: 4,
                     character: 0,
                 },
                 end: Position {
-                    line: 5,
+                    line: 4,
                     character: 0,
                 },
             },
@@ -53,15 +53,15 @@ fixed: Multiple(
             message: Some(
                 "Disable no-debugger for this file",
             ),
-            code: "// oxlint-disable no-debugger\n",
+            code: "\n// oxlint-disable no-debugger\n",
             range: Range {
                 start: Position {
-                    line: 0,
-                    character: 0,
+                    line: 4,
+                    character: 8,
                 },
                 end: Position {
-                    line: 0,
-                    character: 0,
+                    line: 4,
+                    character: 8,
                 },
             },
         },
@@ -72,10 +72,10 @@ fixed: Multiple(
 code: "eslint(no-debugger)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
 message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
-range: Range { start: Position { line: 10, character: 4 }, end: Position { line: 10, character: 13 } }
+range: Range { start: Position { line: 8, character: 4 }, end: Position { line: 8, character: 13 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/vue/debugger.vue"
-related_information[0].location.range: Range { start: Position { line: 10, character: 4 }, end: Position { line: 10, character: 13 } }
+related_information[0].location.range: Range { start: Position { line: 8, character: 4 }, end: Position { line: 8, character: 13 } }
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
@@ -88,11 +88,11 @@ fixed: Multiple(
             code: "",
             range: Range {
                 start: Position {
-                    line: 10,
+                    line: 8,
                     character: 4,
                 },
                 end: Position {
-                    line: 10,
+                    line: 8,
                     character: 13,
                 },
             },
@@ -104,11 +104,11 @@ fixed: Multiple(
             code: "// oxlint-disable-next-line no-debugger\n",
             range: Range {
                 start: Position {
-                    line: 10,
+                    line: 8,
                     character: 0,
                 },
                 end: Position {
-                    line: 10,
+                    line: 8,
                     character: 0,
                 },
             },
@@ -120,11 +120,11 @@ fixed: Multiple(
             code: "// oxlint-disable no-debugger\n",
             range: Range {
                 start: Position {
-                    line: 0,
+                    line: 7,
                     character: 0,
                 },
                 end: Position {
-                    line: 0,
+                    line: 7,
                     character: 0,
                 },
             },

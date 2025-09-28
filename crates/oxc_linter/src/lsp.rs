@@ -109,8 +109,7 @@ pub fn message_to_message_with_position<'a>(
 ) -> MessageWithPosition<'a> {
     let code = message.error.code.clone();
     let error_offset = message.span().start;
-    // TODO: feature flag for knowing the source text section start offset of this message
-    let section_offset = 0;
+    let section_offset = message.section_offset;
 
     let mut result = oxc_diagnostic_to_message_with_position(message.error, source_text, rope);
     let fixes = match &message.fixes {
@@ -224,13 +223,25 @@ fn disable_for_this_section<'a>(
     rope: &Rope,
     source_text: &str,
 ) -> FixWithPosition<'a> {
-    let mut start_position = offset_to_position(rope, section_offset, source_text);
-    start_position.character = 0; // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-    let end_position = start_position.clone();
+    let (content, offset) = if section_offset == 0 {
+        // JS files - keep existing behavior
+        (Cow::Owned(format!("// oxlint-disable {rule_name}\n")), section_offset)
+    }
+    // Vue files or other files with section_offset > 0
+    // Check if there's a newline at the section offset
+    else if source_text.as_bytes().get(section_offset as usize).is_some_and(|c| *c == b'\n') {
+        // There's a newline at section_offset, insert after it
+        (Cow::Owned(format!("// oxlint-disable {rule_name}\n")), section_offset + 1)
+    } else {
+        // Not at beginning of line, add newline before comment
+        (Cow::Owned(format!("\n// oxlint-disable {rule_name}\n")), section_offset)
+    };
+
+    let position = offset_to_position(rope, offset, source_text);
 
     FixWithPosition {
-        content: Cow::Owned(format!("// oxlint-disable {rule_name}\n")),
-        span: SpanPositionMessage::new(start_position, end_position)
+        content,
+        span: SpanPositionMessage::new(position.clone(), position)
             .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this file")))),
     }
 }
