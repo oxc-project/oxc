@@ -318,7 +318,12 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                     options.call_arg_layout,
                     Some(GroupedCallArgumentLayout::GroupedFirstArgument)
                 ) {
-                    Self::should_break_chain_conservative(current)
+                    // For generic arrow functions, use standard breaking logic
+                    if current.type_parameters.is_some() {
+                        Self::should_break_chain(current)
+                    } else {
+                        Self::should_break_chain_conservative(current)
+                    }
                 } else {
                     Self::should_break_chain(current)
                 };
@@ -327,7 +332,12 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                     options.call_arg_layout,
                     Some(GroupedCallArgumentLayout::GroupedFirstArgument)
                 ) {
-                    Self::should_break_chain_conservative(next)
+                    // For generic arrow functions, use standard breaking logic
+                    if next.type_parameters.is_some() {
+                        Self::should_break_chain(next)
+                    } else {
+                        Self::should_break_chain_conservative(next)
+                    }
                 } else {
                     Self::should_break_chain(next)
                 };
