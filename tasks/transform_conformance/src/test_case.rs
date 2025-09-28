@@ -8,7 +8,7 @@ use similar::TextDiff;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{Codegen, CodegenOptions, CommentOptions},
+    codegen::{Codegen, CodegenOptions, CommentOptions, IndentChar},
     diagnostics::{NamedSource, OxcDiagnostic},
     parser::{ParseOptions, Parser},
     span::{SourceType, VALID_EXTENSIONS},
@@ -140,8 +140,7 @@ impl TestCase {
             return;
         };
         fs::create_dir_all(override_output_path.parent().unwrap()).unwrap();
-        let transformed_code = self.transformed_code.cow_replace("\t", "  ");
-        fs::write(&override_output_path, transformed_code.as_bytes()).unwrap();
+        fs::write(&override_output_path, self.transformed_code.as_bytes()).unwrap();
     }
 
     pub fn skip_test_case(&self) -> bool {
@@ -331,6 +330,8 @@ impl TestCase {
                                 annotation: !babel_options.plugins.async_to_generator,
                                 ..CommentOptions::default()
                             },
+                            indent_char: IndentChar::Space,
+                            indent_width: 2,
                             ..CodegenOptions::default()
                         })
                         .build(&ret.program)
@@ -367,17 +368,15 @@ impl TestCase {
                 }
             } else {
                 println!("Expected:\n");
-                let output = output.cow_replace("\t", "  ");
                 println!("{output}\n");
                 println!("Transformed:\n");
-                let transformed_code = self.transformed_code.cow_replace("\t", "  ");
-                println!("{transformed_code}");
+                println!("{}\n", self.transformed_code);
                 println!("Errors:\n");
                 if let Some(actual_errors) = &actual_errors {
                     println!("{actual_errors}\n");
                 }
                 if !passed {
-                    let diff = TextDiff::from_lines(&output, &transformed_code);
+                    let diff = TextDiff::from_lines(&output, &self.transformed_code);
                     println!("Diff:\n");
                     print_diff_in_terminal(&diff);
                 }

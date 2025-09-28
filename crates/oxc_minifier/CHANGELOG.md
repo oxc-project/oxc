@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.93.0] - 2025-09-28
+
+### 🚀 Features
+
+- 402e6c7 minifier: Inline single use variables within the same variable declarations (#13959) (sapphi-red)
+- 1337811 minifier: Evaluate `.concat` calls that has subsequent method calls (#14074) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 358f2fc minifier: Remove continue in for-in / for-of (#14151) (夕舞八弦)
+- d02d750 mangler: Mangle non top-level `exports` variable (#14169) (sapphi-red)
+
+
 ## [0.92.0] - 2025-09-24
 
 ### 🚀 Features

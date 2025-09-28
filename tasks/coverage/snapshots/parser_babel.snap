@@ -12388,22 +12388,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × TS(1245): Method 'method' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-with-body/input.ts:2:12]
- 1 │ abstract class Foo {
- 2 │   abstract method() {}
-   ·            ──────
- 3 │ }
-   ╰────
-
-  × TS(1245): Method 'foo()' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-with-body-computed/input.ts:2:13]
- 1 │ abstract class Foo {
- 2 │   abstract [foo()]() {}
-   ·             ─────
- 3 │ }
-   ╰────
-
   × TS(1245): Method 'foo()' cannot have an implementation because it is marked abstract.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/abstract-method-with-body-computed/input.ts:2:13]
  1 │ abstract class Foo {
@@ -12670,14 +12654,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  6 │   readonly *e() {}
    ╰────
 
-  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:5:13]
- 4 │   static *c() {}
- 5 │   abstract *d() {}
-   ·             ─
- 6 │   readonly *e() {}
-   ╰────
-
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:5:13]
  4 │   static *c() {}
@@ -12830,28 +12806,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │   readonly *e?() { }
    ╰────
 
-  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]
- 1 │ class C {
- 2 │   abstract *d?() { }
-   ·             ─
- 3 │   readonly *e?() { }
-   ╰────
-
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]
  1 │ class C {
  2 │   abstract *d?() { }
    ·             ─
  3 │   readonly *e?() { }
-   ╰────
-
-  × TS(1245): Method 'd?.d' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:8:14]
- 7 │ class A {
- 8 │   abstract *[d?.d]?() { }
-   ·              ────
- 9 │   readonly *[e?.e]?() { }
    ╰────
 
   × TS(1245): Method 'd?.d' cannot have an implementation because it is marked abstract.

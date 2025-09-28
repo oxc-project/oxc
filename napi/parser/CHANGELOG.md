@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.93.0] - 2025-09-28
+
+### 🚜 Refactor
+
+- c0c0c17 napi/parser: Remove unnecessary `#[estree(field_order)]` attr (#14144) (overlookmotel)
+
+### 🧪 Testing
+
+- 8c09592 napi/parser: Align fixture version with other tasks (#14146) (overlookmotel)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚜 Refactor
+
+- c0c0c17 napi/parser: Remove unnecessary `#[estree(field_order)]` attr (#14144) (overlookmotel)
+
+### 🧪 Testing
+
+- 8c09592 napi/parser: Align fixture version with other tasks (#14146) (overlookmotel)
+
+
 ## [0.92.0] - 2025-09-24
 
 ### 💥 BREAKING CHANGES
