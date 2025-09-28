@@ -1,14 +1,16 @@
 import { sep } from 'node:path';
 
+import type { Plugin, Rule } from '../../../dist/index.js';
+
 const SPAN = { start: 0, end: 0 };
 
 const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
 const relativePath = sep === '/'
-  ? path => path.slice(DIR_PATH_LEN)
-  : path => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
+  ? (path: string) => path.slice(DIR_PATH_LEN)
+  : (path: string) => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
-const rule = {
+const rule: Rule = {
   create(context) {
     context.report({
       message: `id: ${context.id}`,
@@ -35,7 +37,7 @@ const rule = {
   },
 };
 
-export default {
+const plugin: Plugin = {
   meta: {
     name: 'context-plugin',
   },
@@ -43,3 +45,5 @@ export default {
     'log-context': rule,
   },
 };
+
+export default plugin;

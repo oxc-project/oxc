@@ -1,18 +1,23 @@
 import { sep } from 'node:path';
 
+import type { Plugin, Rule } from '../../../dist/index.js';
+
 const SPAN = { start: 0, end: 0 };
 
 const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
 const relativePath = sep === '/'
-  ? path => path.slice(DIR_PATH_LEN)
-  : path => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
+  ? (path: string) => path.slice(DIR_PATH_LEN)
+  : (path: string) => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
 let createOnceCallCount = 0;
-const alwaysRunRule = {
+
+const alwaysRunRule: Rule = {
   createOnce(context) {
     createOnceCallCount++;
 
+    // `this` should be the rule object
+    // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
     // Check that these APIs throw here
@@ -49,7 +54,7 @@ const alwaysRunRule = {
   },
 };
 
-const skipRunRule = {
+const skipRunRule: Rule = {
   createOnce(context) {
     return {
       before() {
@@ -68,7 +73,7 @@ const skipRunRule = {
   },
 };
 
-const beforeOnlyRule = {
+const beforeOnlyRule: Rule = {
   createOnce(context) {
     return {
       before() {
@@ -85,7 +90,7 @@ const beforeOnlyRule = {
   },
 };
 
-const afterOnlyRule = {
+const afterOnlyRule: Rule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -102,7 +107,7 @@ const afterOnlyRule = {
   },
 };
 
-const noHooksRule = {
+const noHooksRule: Rule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -115,7 +120,7 @@ const noHooksRule = {
   },
 };
 
-export default {
+const plugin: Plugin = {
   meta: {
     name: 'create-once-plugin',
   },
@@ -128,7 +133,9 @@ export default {
   },
 };
 
-function tryCatch(fn) {
+export default plugin;
+
+function tryCatch(fn: () => unknown) {
   try {
     fn();
   } catch (err) {

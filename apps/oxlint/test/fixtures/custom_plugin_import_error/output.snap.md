@@ -5,9 +5,9 @@
 ```
 Failed to parse configuration file.
 
-  x Failed to load JS plugin: ./plugin.js
+  x Failed to load JS plugin: ./plugin.ts
   |   Error: whoops!
-  |     at <root>/apps/oxlint/test/fixtures/custom_plugin_import_error/plugin.js:1:7
+  |     at <root>/apps/oxlint/test/fixtures/custom_plugin_import_error/plugin.ts:1:7
 ```
 
 # stderr
