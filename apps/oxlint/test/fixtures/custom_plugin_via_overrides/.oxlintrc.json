@@ -2,7 +2,7 @@
   "overrides": [
     {
       "files": ["*.js"],
-      "jsPlugins": ["./plugin.js"],
+      "jsPlugins": ["./plugin.ts"],
       "rules": {
         "basic-custom-plugin/no-debugger": "error"
       }

@@ -1,4 +1,6 @@
-export default {
+import type { Plugin } from '../../../dist/index.js';
+
+const plugin: Plugin = {
   meta: {
     name: 'estree-check',
   },
@@ -8,7 +10,7 @@ export default {
         // Note: Collect visits in an array instead of `context.report` in each visitor function,
         // to ensure visitation happens in right order.
         // Diagnostics may be output in different order from the order they're created in.
-        const visits = [];
+        const visits: string[] = [];
         return {
           Program(program) {
             visits.push(program.type);
@@ -78,3 +80,5 @@ export default {
     },
   },
 };
+
+export default plugin;
