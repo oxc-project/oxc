@@ -3041,7 +3041,6 @@ impl RuleRunner for crate::rules::unicorn::expiring_todo_comments::ExpiringTodoC
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
-
 impl RuleRunner for crate::rules::unicorn::filename_case::FilenameCase {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
