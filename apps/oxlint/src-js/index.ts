@@ -2,6 +2,11 @@ import type { Context } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
+export type { Context, Diagnostic } from './plugins/context.ts';
+export type { Fix, Fixer, FixFn, NodeOrToken, Range } from './plugins/fix.ts';
+export type { CreateOnceRule, CreateRule, Plugin, Rule } from './plugins/load.ts';
+export type { AfterHook, BeforeHook, RuleMeta, Visitor, VisitorWithHooks } from './plugins/types.ts';
+
 const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf, create: ObjectCreate } = Object;
 
 const dummyOptions: unknown[] = [],

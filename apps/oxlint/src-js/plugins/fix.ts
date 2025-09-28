@@ -17,10 +17,10 @@ export type FixFn = (
 // Type of a fix, as returned by `fix` function.
 export type Fix = { range: Range; text: string };
 
-type Range = [number, number];
+export type Range = [number, number];
 
 // Currently we only support `Node`s, but will add support for `Token`s later
-interface NodeOrToken {
+export interface NodeOrToken {
   start: number;
   end: number;
 }
@@ -60,7 +60,7 @@ const FIXER = Object.freeze({
   },
 });
 
-type Fixer = typeof FIXER;
+export type Fixer = typeof FIXER;
 
 /**
  * Get fixes from a `Diagnostic`.

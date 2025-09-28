@@ -1,7 +1,6 @@
-import { defineConfig } from 'tsdown';
+import { defineConfig, type UserConfig } from 'tsdown';
 
-export default defineConfig({
-  entry: ['src-js/index.ts', 'src-js/cli.ts', 'src-js/plugins/index.ts'],
+const commonConfig: UserConfig = {
   format: ['esm'],
   platform: 'node',
   target: 'node20',
@@ -19,5 +18,19 @@ export default defineConfig({
   // At present only compress syntax.
   // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
   minify: { compress: true, mangle: false, codegen: { removeWhitespace: false } },
-  attw: true,
-});
+};
+
+// Only generate `.d.ts` file for main export, not for CLI
+export default defineConfig([
+  {
+    entry: ['src-js/cli.ts', 'src-js/plugins/index.ts'],
+    ...commonConfig,
+    dts: false,
+  },
+  {
+    entry: 'src-js/index.ts',
+    ...commonConfig,
+    dts: true,
+    attw: true,
+  },
+]);

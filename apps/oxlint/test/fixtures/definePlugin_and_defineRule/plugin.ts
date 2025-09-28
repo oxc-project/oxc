@@ -1,5 +1,5 @@
 import { sep } from 'node:path';
-import { defineRule } from '../../../dist/index.js';
+import { definePlugin, defineRule } from '../../../dist/index.js';
 
 // `loc` is required for ESLint
 const SPAN = {
@@ -14,8 +14,8 @@ const SPAN = {
 const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
 const relativePath = sep === '/'
-  ? path => path.slice(DIR_PATH_LEN)
-  : path => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
+  ? (path: string) => path.slice(DIR_PATH_LEN)
+  : (path: string) => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
 const createRule = defineRule({
   create(context) {
@@ -42,12 +42,13 @@ const createOnceRule = defineRule({
 
     // `fileNum` should be different for each file.
     // `identNum` should start at 1 for each file.
-    let fileNum = 0, identNum;
+    let fileNum = 0, identNum: number;
     // Note: Files are processed in unpredictable order, so `files/1.js` may be `fileNum` 1 or 2.
     // Therefore, collect all visits and check them in `after` hook of the 2nd file.
-    const visits = [];
+    const visits: { fileNum: number; identNum: number }[] = [];
 
     // `this` should be the rule object returned by `defineRule`
+    // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
     return {
@@ -194,9 +195,9 @@ const createOnceNoHooksRule = defineRule({
   },
 });
 
-export default {
+export default definePlugin({
   meta: {
-    name: 'define-rule-plugin',
+    name: 'define-plugin-and-rule-plugin',
   },
   rules: {
     create: createRule,
@@ -206,4 +207,4 @@ export default {
     'create-once-after-only': createOnceAfterOnlyRule,
     'create-once-no-hooks': createOnceNoHooksRule,
   },
-};
+});
