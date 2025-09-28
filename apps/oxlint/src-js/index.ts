@@ -9,9 +9,6 @@ export type { AfterHook, BeforeHook, RuleMeta, Visitor, VisitorWithHooks } from 
 
 const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf, create: ObjectCreate } = Object;
 
-const dummyOptions: unknown[] = [],
-  dummyReport = () => {};
-
 /**
  * Define a plugin.
  *
@@ -114,8 +111,8 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   // so should be OK to take this shortcut.
   const context = ObjectCreate(null, {
     id: { value: '', enumerable: true, configurable: true },
-    options: { value: dummyOptions, enumerable: true, configurable: true },
-    report: { value: dummyReport, enumerable: true, configurable: true },
+    options: { value: null, enumerable: true, configurable: true },
+    report: { value: null, enumerable: true, configurable: true },
   });
 
   let { before: beforeHook, after: afterHook, ...visitor } = createOnce.call(rule, context) as VisitorWithHooks;
