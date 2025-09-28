@@ -5,6 +5,8 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{FormatResult, Formatter, prelude::*},
+    generated::ast_nodes::{AstNode, AstNodes},
+    utils::is_expression_used_as_call_argument,
     write,
     write::FormatWrite,
 };
@@ -48,7 +50,9 @@ fn format_as_or_satisfies_expression<'a>(
     });
 
     if is_callee_or_object {
-        write!(f, [group(&soft_block_indent(&format_inner))])
+        // For call arguments, avoid soft_block_indent to prevent breaking
+        // the type assertion away from the expression
+        write!(f, [group(&format_inner)])
     } else {
         write!(f, [format_inner])
     }
@@ -56,10 +60,15 @@ fn format_as_or_satisfies_expression<'a>(
 
 fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
     match parent {
-        // Callee
-        AstNodes::CallExpression(_) | AstNodes::NewExpression(_)
+        // Callee or used as call/new argument - both need special formatting for proper grouping
+        AstNodes::CallExpression(call) => {
+            call.callee.span() == span || is_expression_used_as_call_argument(span, parent)
+        }
+        AstNodes::NewExpression(new_expr) => {
+            new_expr.callee.span() == span || is_expression_used_as_call_argument(span, parent)
+        }
         // Static member
-        | AstNodes::StaticMemberExpression(_) => true,
+        AstNodes::StaticMemberExpression(_) => true,
         AstNodes::ComputedMemberExpression(member) => {
             member.object.span() == span
         }
