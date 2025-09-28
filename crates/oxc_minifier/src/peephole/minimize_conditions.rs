@@ -200,7 +200,9 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        ctx.scoping_mut().reference_flags_mut(write_id_ref.reference_id()).insert(ReferenceFlags::Read);
+        ctx.scoping_mut()
+            .reference_flags_mut(write_id_ref.reference_id())
+            .insert(ReferenceFlags::Read);
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;

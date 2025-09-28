@@ -80,10 +80,9 @@ impl Rule for NoVar {
 
 fn is_written_to(binding_pat: &BindingPattern, ctx: &LintContext) -> bool {
     match &binding_pat.kind {
-        BindingPatternKind::BindingIdentifier(binding_ident) => ctx
-            .semantic()
-            .symbol_references(binding_ident.symbol_id())
-            .any(|r| r.is_write()),
+        BindingPatternKind::BindingIdentifier(binding_ident) => {
+            ctx.semantic().symbol_references(binding_ident.symbol_id()).any(|r| r.is_write())
+        }
         BindingPatternKind::ObjectPattern(object_pat) => {
             if object_pat.properties.iter().any(|prop| is_written_to(&prop.value, ctx)) {
                 return true;
