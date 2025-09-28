@@ -11,23 +11,37 @@
  * Even though we are not using `shell: true`, it's a good practice to validate the input.
  */
 export function validateSafeBinaryPath(binary: string): boolean {
-  // Check for path traversal
-  if (binary.includes('..')) {
+  // Check for path traversal (including Windows variants)
+  if (binary.includes('..') || binary.includes('.\\')) {
     return false;
   }
 
   // Check for malicious characters or patterns
   // These characters are never expected in a binary path.
   // If any of these characters are present, we consider the path unsafe.
-  const maliciousPatterns = ['$', '&', ';', '|', '`', '>', '<', '!'];
+  const maliciousPatterns = [
+    // linux/macOS
+    '$',
+    '&',
+    ';',
+    '|',
+    '`',
+    '>',
+    '<',
+    '!',
+    // windows
+    '%',
+    '^',
+  ];
   for (const pattern of maliciousPatterns) {
     if (binary.includes(pattern)) {
       return false;
     }
   }
+
   // Check if the filename contains `oxc_language_server`
   // Malicious projects might try to point to a different binary.
-  if (!binary.includes('oxc_language_server')) {
+  if (!binary.replaceAll('\\', '/').toLowerCase().split('/').pop()?.includes('oxc_language_server')) {
     return false;
   }
 
