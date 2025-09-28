@@ -19,4 +19,39 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: None
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Disable no-cycle for this line",
+            ),
+            code: "// oxlint-disable-next-line no-cycle\n",
+            range: Range {
+                start: Position {
+                    line: 1,
+                    character: 0,
+                },
+                end: Position {
+                    line: 1,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-cycle for this file",
+            ),
+            code: "// oxlint-disable no-cycle\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)

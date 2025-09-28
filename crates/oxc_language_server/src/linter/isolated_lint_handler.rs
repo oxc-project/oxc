@@ -134,7 +134,6 @@ impl IsolatedLintHandler {
                         data: None,
                     },
                     fixed_content: PossibleFixContent::None,
-                    rule_name: None,
                 });
             }
         }

@@ -1,4 +1,5 @@
 use oxc_data_structures::rope::{Rope, get_line_column};
+use oxc_span::GetSpan;
 use std::borrow::Cow;
 
 use crate::fixer::{Fix, Message, PossibleFixes};
@@ -106,8 +107,13 @@ pub fn message_to_message_with_position<'a>(
     source_text: &str,
     rope: &Rope,
 ) -> MessageWithPosition<'a> {
+    let code = message.error.code.clone();
+    let error_offset = message.span().start;
+    // TODO: feature flag for knowing the source text section start offset of this message
+    let section_offset = 0;
+
     let mut result = oxc_diagnostic_to_message_with_position(message.error, source_text, rope);
-    result.fixes = match &message.fixes {
+    let fixes = match &message.fixes {
         PossibleFixes::None => PossibleFixesWithPosition::None,
         PossibleFixes::Single(fix) => {
             PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
@@ -117,13 +123,28 @@ pub fn message_to_message_with_position<'a>(
         ),
     };
 
+    result.fixes = add_ignore_fixes(fixes, &code, error_offset, section_offset, rope, source_text);
+
     result
 }
 
+/// Possible fixes with position information.
+///
+/// This is similar to `PossibleFixes` but with position information.
+/// It also includes "ignore this line" and "ignore this rule" fixes for the Language Server.
+///
+/// The struct should be build with `message_to_message_with_position`
+/// or `oxc_diagnostic_to_message_with_position` function to ensure the ignore fixes are added correctly.
 #[derive(Debug)]
 pub enum PossibleFixesWithPosition<'a> {
+    // No possible fixes.
+    // This happens on parser/semantic errors.
     None,
+    // A single possible fix.
+    // This happens when a unused disable directive is reported.
     Single(FixWithPosition<'a>),
+    // Multiple possible fixes.
+    // This happens when a lint reports a violation, then ignore fixes are added.
     Multiple(Vec<FixWithPosition<'a>>),
 }
 
@@ -144,6 +165,73 @@ fn fix_to_fix_with_position<'a>(
         content: fix.content.clone(),
         span: SpanPositionMessage::new(start_position, end_position)
             .with_message(fix.message.as_ref().map(|label| Cow::Owned(label.to_string()))),
+    }
+}
+
+/// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
+/// These fixes will be added to the end of the existing fixes.
+/// If the existing fixes already contain an "remove unused disable directive" fix,
+/// then no ignore fixes will be added.
+fn add_ignore_fixes<'a>(
+    fixes: PossibleFixesWithPosition<'a>,
+    code: &OxcCode,
+    error_offset: u32,
+    section_offset: u32,
+    rope: &Rope,
+    source_text: &str,
+) -> PossibleFixesWithPosition<'a> {
+    // do not append ignore code actions when the error is the ignore action
+    if matches!(fixes, PossibleFixesWithPosition::Single(ref fix) if fix.span.message.as_ref().is_some_and(|message| message.starts_with("remove unused disable directive")))
+    {
+        return fixes;
+    }
+
+    let mut new_fixes: Vec<FixWithPosition<'a>> = vec![];
+    if let PossibleFixesWithPosition::Single(fix) = fixes {
+        new_fixes.push(fix);
+    } else if let PossibleFixesWithPosition::Multiple(existing_fixes) = fixes {
+        new_fixes.extend(existing_fixes);
+    }
+
+    if let Some(rule_name) = code.number.as_ref() {
+        // TODO:  doesn't support disabling multiple rules by name for a given line.
+        new_fixes.push(disable_for_this_line(rule_name, error_offset, rope, source_text));
+        new_fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
+    }
+
+    PossibleFixesWithPosition::Multiple(new_fixes)
+}
+
+fn disable_for_this_line<'a>(
+    rule_name: &str,
+    error_offset: u32,
+    rope: &Rope,
+    source_text: &str,
+) -> FixWithPosition<'a> {
+    let mut start_position = offset_to_position(rope, error_offset, source_text);
+    start_position.character = 0; // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
+    let end_position = start_position.clone();
+    FixWithPosition {
+        content: Cow::Owned(format!("// oxlint-disable-next-line {rule_name}\n")),
+        span: SpanPositionMessage::new(start_position, end_position)
+            .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this line")))),
+    }
+}
+
+fn disable_for_this_section<'a>(
+    rule_name: &str,
+    section_offset: u32,
+    rope: &Rope,
+    source_text: &str,
+) -> FixWithPosition<'a> {
+    let mut start_position = offset_to_position(rope, section_offset, source_text);
+    start_position.character = 0; // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
+    let end_position = start_position.clone();
+
+    FixWithPosition {
+        content: Cow::Owned(format!("// oxlint-disable {rule_name}\n")),
+        span: SpanPositionMessage::new(start_position, end_position)
+            .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this file")))),
     }
 }
 
