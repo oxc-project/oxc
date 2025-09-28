@@ -229,12 +229,26 @@ fn disable_for_this_section<'a>(
     }
     // Vue files or other files with section_offset > 0
     // Check if there's a newline at the section offset
-    else if source_text.as_bytes().get(section_offset as usize).is_some_and(|c| *c == b'\n') {
-        // There's a newline at section_offset, insert after it
-        (Cow::Owned(format!("// oxlint-disable {rule_name}\n")), section_offset + 1)
-    } else {
-        // Not at beginning of line, add newline before comment
-        (Cow::Owned(format!("\n// oxlint-disable {rule_name}\n")), section_offset)
+    else {
+        let bytes = source_text.as_bytes();
+        let offset_usize = section_offset as usize;
+
+        let Some(first_char) = bytes.get(offset_usize) else {
+            unreachable!("section_offset is out of bounds, there must be a end section marker");
+        };
+
+        // handle first new line after section offset
+        if *first_char == b'\n' || *first_char == b'\r' {
+            let msg = Cow::Owned(format!("// oxlint-disable {rule_name}\n"));
+            if *first_char == b'\r' && bytes.get(offset_usize + 1) == Some(&b'\n') {
+                (msg, section_offset + 2)
+            } else {
+                (msg, section_offset + 1)
+            }
+        } else {
+            // Not at beginning of line, add newline before comment
+            (Cow::Owned(format!("\n// oxlint-disable {rule_name}\n")), section_offset)
+        }
     };
 
     let position = offset_to_position(rope, offset, source_text);
@@ -285,6 +299,50 @@ mod test {
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
         offset_to_position(&Rope::from_str("foo"), 100, "foo");
+    }
+
+    #[test]
+    fn disable_for_section_js_file() {
+        let source = "console.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_after_lf() {
+        let source = "_\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 1, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_after_crlf() {
+        let source = "_\r\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 1, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_mid_line() {
+        let source = "const x = 5;";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-unused-vars", 6, &rope, source);
+
+        assert_eq!(fix.content, "\n// oxlint-disable no-unused-vars\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 6);
     }
 
     fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {
