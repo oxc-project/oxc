@@ -9,7 +9,8 @@ let lintFile: typeof lintFileWrapper | null = null;
 function loadPluginWrapper(path: string): Promise<string> {
   if (loadPlugin === null) {
     const require = createRequire(import.meta.url);
-    ({ loadPlugin, lintFile } = require('./plugins/index.js'));
+    // `plugins.js` is in root of `dist`. See `tsdown.config.ts`.
+    ({ loadPlugin, lintFile } = require('./plugins.js'));
   }
   return loadPlugin(path);
 }

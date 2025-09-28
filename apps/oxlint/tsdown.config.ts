@@ -23,7 +23,10 @@ const commonConfig: UserConfig = {
 // Only generate `.d.ts` file for main export, not for CLI
 export default defineConfig([
   {
-    entry: ['src-js/cli.ts', 'src-js/plugins/index.ts'],
+    entry: {
+      cli: 'src-js/cli.ts',
+      plugins: 'src-js/plugins/index.ts',
+    },
     ...commonConfig,
     dts: false,
   },
