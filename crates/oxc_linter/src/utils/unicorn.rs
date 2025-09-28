@@ -14,6 +14,20 @@ use crate::LintContext;
 mod boolean;
 pub use boolean::*;
 
+// Built-in Error constructors
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
+pub const BUILT_IN_ERRORS: [&str; 9] = [
+    "Error",
+    "EvalError",
+    "RangeError",
+    "ReferenceError",
+    "SyntaxError",
+    "TypeError",
+    "URIError",
+    "InternalError",
+    "AggregateError",
+];
+
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(
         expr,
