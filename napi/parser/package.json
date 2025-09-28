@@ -73,7 +73,7 @@
     "@oxc-project/types": "workspace:^"
   },
   "devDependencies": {
-    "@codspeed/vitest-plugin": "^4.0.0",
+    "@codspeed/vitest-plugin": "^5.0.0",
     "@napi-rs/wasm-runtime": "catalog:",
     "@typescript-eslint/visitor-keys": "^8.44.0",
     "@vitest/browser": "3.2.4",
