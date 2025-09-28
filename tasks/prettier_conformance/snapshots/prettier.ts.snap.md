@@ -1,4 +1,4 @@
-ts compatibility: 506/573 (88.31%)
+ts compatibility: 513/573 (89.53%)
 
 # Failed
 
@@ -14,14 +14,10 @@ ts compatibility: 506/573 (88.31%)
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
-| typescript/argument-expansion/argument_expansion.ts | 💥 | 84.75% |
-| typescript/array/key.ts | 💥 | 75.00% |
 | typescript/arrow/16067.ts | 💥💥 | 93.88% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/as/as.ts | 💥 | 88.24% |
-| typescript/as/long-identifiers.ts | 💥 | 86.67% |
-| typescript/cast/generic-cast.ts | 💥 | 96.32% |
-| typescript/cast/hug-args.ts | 💥 | 47.06% |
+| typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
+| typescript/cast/generic-cast.ts | 💥 | 97.37% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
 | typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
@@ -60,11 +56,8 @@ ts compatibility: 506/573 (88.31%)
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 44.00% |
-| typescript/satisfies-operators/argument-expansion.ts | 💥💥 | 83.87% |
-| typescript/satisfies-operators/hug-args.ts | 💥💥 | 0.00% |
-| typescript/satisfies-operators/satisfies.ts | 💥💥 | 95.45% |
+| typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 42.86% |
 | typescript/ternaries/indent.ts | 💥 | 93.33% |
-| typescript/test-declarations/test_declarations.ts | 💥💥 | 40.00% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeparams/empty-parameters-with-arrow-function/issue-13817.ts | 💥 | 73.68% |
