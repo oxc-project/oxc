@@ -863,7 +863,14 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSTypeAssertion<'a>> {
             AstNodes::BinaryExpression(binary) => {
                 matches!(binary.operator, BinaryOperator::ShiftLeft)
             }
-            _ => type_cast_like_needs_parens(self.span(), self.parent),
+            _ => {
+                // Type assertions don't need parentheses when used as function arguments
+                // This allows for "argument hugging" behavior like `func(<Type>obj)`
+                if is_expression_used_as_call_argument(self.span(), self.parent) {
+                    return false;
+                }
+                type_cast_like_needs_parens(self.span(), self.parent)
+            }
         }
     }
 }
@@ -1209,6 +1216,11 @@ fn ts_as_or_satisfies_needs_parens(
         AstNodes::ExportDefaultDeclaration(_) =>
             matches!(inner, Expression::FunctionExpression(_) | Expression::ClassExpression(_)),
         _ => {
+            // Type assertions don't need parentheses when used as function arguments
+            // This allows for "argument hugging" behavior like `func(obj as Type)`
+            if is_expression_used_as_call_argument(span, parent) {
+                return false;
+            }
             type_cast_like_needs_parens(span, parent)
         }
     }
