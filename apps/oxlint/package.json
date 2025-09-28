@@ -42,7 +42,7 @@
     "eslint": "^9.36.0",
     "execa": "^9.6.0",
     "jiti": "^2.6.0",
-    "tsdown": "0.15.1",
+    "tsdown": "^0.15.5",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
