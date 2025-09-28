@@ -69,7 +69,8 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
         let trailing_separator = if self.len() == 1
         // This only concern sources that allow JSX or a restricted standard variant.
         && f.context().source_type().is_jsx()
-        && matches!(self.grand_parent(), AstNodes::ArrowFunctionExpression(_))
+        && !matches!(self.parent, AstNodes::Dummy())
+        && matches!(self.parent.parent(), AstNodes::ArrowFunctionExpression(_))
         // Ignore Type parameter with an `extends` clause or a default type.
         && !self.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some())
         {
@@ -113,8 +114,31 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
             write!(
                 f,
                 [group(&format_args!("<", format_once(|f| {
-                    if matches!(self.decl.ancestors().nth(2), Some(AstNodes::CallExpression(call)) if is_test_call_expression(call))
-                    {
+                    // Check if this type parameter declaration is inside a test call expression
+                    // by walking up the parent chain
+                    let mut current_parent = Some(self.decl.parent);
+                    let mut is_test_call = false;
+
+                    // Walk up to 5 levels to find a test call expression
+                    for _ in 0..5 {
+                        if let Some(parent) = current_parent {
+                            if let AstNodes::CallExpression(call) = parent {
+                                if is_test_call_expression(call) {
+                                    is_test_call = true;
+                                    break;
+                                }
+                            }
+                            // Check if parent is a dummy node before calling parent()
+                            if matches!(parent, AstNodes::Dummy()) {
+                                break;
+                            }
+                            current_parent = Some(parent.parent());
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if is_test_call {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
                     } else {
                         soft_block_indent(&params).fmt(f)
