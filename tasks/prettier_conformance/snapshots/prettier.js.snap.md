@@ -1,4 +1,4 @@
-js compatibility: 643/699 (91.99%)
+js compatibility: 645/699 (92.27%)
 
 # Failed
 
@@ -10,7 +10,6 @@ js compatibility: 643/699 (91.99%)
 | js/arrows/currying-2.js | 💥💥 | 59.08% |
 | js/arrows/currying-4.js | 💥💥 | 94.50% |
 | js/comments/15661.js | 💥💥 | 55.81% |
-| js/comments/call_comment.js | 💥💥 | 55.00% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/return-statement.js | 💥💥 | 98.85% |
@@ -39,7 +38,7 @@ js compatibility: 643/699 (91.99%)
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/require/require.js | 💥 | 93.51% |
-| js/strings/template-literals.js | 💥💥 | 85.16% |
+| js/strings/template-literals.js | 💥💥 | 98.43% |
 | js/ternaries/binary.js | 💥💥💥💥✨✨✨✨ | 18.42% |
 | js/ternaries/func-call.js | 💥💥💥💥✨✨✨✨ | 25.00% |
 | js/ternaries/indent-after-paren.js | 💥💥💥💥✨✨✨✨ | 24.59% |
@@ -55,8 +54,7 @@ js compatibility: 643/699 (91.99%)
 | js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
-| jsx/ignore/jsx_ignore.js | 💥 | 84.21% |
+| jsx/ignore/jsx_ignore.js | 💥 | 92.59% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
-| jsx/stateless-arrow-fn/test.js | 💥 | 95.32% |
-| jsx/text-wrap/test.js | 💥 | 98.68% |
+| jsx/text-wrap/test.js | 💥 | 99.56% |
