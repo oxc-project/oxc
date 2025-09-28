@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
+assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/unused_disabled_directives/test.js
@@ -15,7 +16,42 @@ related_information[0].location.range: Range { start: Position { line: 9, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: None
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Disable no-console for this line",
+            ),
+            code: "// oxlint-disable-next-line no-console\n",
+            range: Range {
+                start: Position {
+                    line: 9,
+                    character: 0,
+                },
+                end: Position {
+                    line: 9,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-console for this file",
+            ),
+            code: "// oxlint-disable no-console\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
 
 
 code: "eslint(no-debugger)"
@@ -28,7 +64,58 @@ related_information[0].location.range: Range { start: Position { line: 2, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 2, character: 2 }, end: Position { line: 2, character: 11 } } })
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Remove the debugger statement",
+            ),
+            code: "",
+            range: Range {
+                start: Position {
+                    line: 2,
+                    character: 2,
+                },
+                end: Position {
+                    line: 2,
+                    character: 11,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this line",
+            ),
+            code: "// oxlint-disable-next-line no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 2,
+                    character: 0,
+                },
+                end: Position {
+                    line: 2,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this file",
+            ),
+            code: "// oxlint-disable no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
 
 
 code: ""
@@ -41,7 +128,24 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("remove unused disable directive"), code: "", range: Range { start: Position { line: 0, character: 2 }, end: Position { line: 0, character: 56 } } })
+fixed: Single(
+    FixedContent {
+        message: Some(
+            "remove unused disable directive",
+        ),
+        code: "",
+        range: Range {
+            start: Position {
+                line: 0,
+                character: 2,
+            },
+            end: Position {
+                line: 0,
+                character: 56,
+            },
+        },
+    },
+)
 
 
 code: ""
@@ -54,7 +158,24 @@ related_information[0].location.range: Range { start: Position { line: 5, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("remove unused disable directive"), code: "", range: Range { start: Position { line: 5, character: 39 }, end: Position { line: 5, character: 52 } } })
+fixed: Single(
+    FixedContent {
+        message: Some(
+            "remove unused disable directive",
+        ),
+        code: "",
+        range: Range {
+            start: Position {
+                line: 5,
+                character: 39,
+            },
+            end: Position {
+                line: 5,
+                character: 52,
+            },
+        },
+    },
+)
 
 
 code: ""
@@ -67,4 +188,21 @@ related_information[0].location.range: Range { start: Position { line: 8, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(FixedContent { message: Some("remove unused disable directive"), code: "", range: Range { start: Position { line: 8, character: 2 }, end: Position { line: 8, character: 52 } } })
+fixed: Single(
+    FixedContent {
+        message: Some(
+            "remove unused disable directive",
+        ),
+        code: "",
+        range: Range {
+            start: Position {
+                line: 8,
+                character: 2,
+            },
+            end: Position {
+                line: 8,
+                character: 52,
+            },
+        },
+    },
+)
