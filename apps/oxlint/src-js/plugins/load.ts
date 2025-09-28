@@ -68,11 +68,6 @@ interface PluginDetails {
   ruleNames: string[];
 }
 
-// Default rule metadata, used if `rule.meta` property is empty.
-const emptyRuleMeta: RuleMeta = {
-  fixable: null,
-};
-
 /**
  * Load a plugin.
  *
@@ -120,27 +115,22 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
     const ruleName = ruleNames[i],
       rule = rules[ruleName];
 
-    // Validate `rule.meta` and convert to object with standardized shape
-    // (all properties defined with default values if not supplied)
+    // Validate `rule.meta` and convert to vars with standardized shape
+    let isFixable = false;
     let ruleMeta = rule.meta;
-    if (ruleMeta == null) {
-      ruleMeta = emptyRuleMeta;
-    } else {
+    if (ruleMeta != null) {
       if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
 
-      let { fixable } = ruleMeta;
-      if (fixable === void 0) {
-        fixable = null;
-      } else if (fixable !== null && fixable !== 'code' && fixable !== 'whitespace') {
-        throw new TypeError('Invalid `meta.fixable`');
+      const { fixable } = ruleMeta;
+      if (fixable != null) {
+        if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `meta.fixable`');
+        isFixable = true;
       }
-
-      ruleMeta = { fixable };
     }
 
     // Create `Context` object for rule. This will be re-used for every file.
     // It's updated with file-specific data before linting each file with `setupContextForFile`.
-    const context = new Context(`${pluginName}/${ruleName}`, ruleMeta);
+    const context = new Context(`${pluginName}/${ruleName}`, isFixable);
 
     let ruleAndContext;
     if ('createOnce' in rule) {

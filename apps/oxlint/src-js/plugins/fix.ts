@@ -144,7 +144,7 @@ export function getFixes(diagnostic: Diagnostic, internal: InternalContext): Fix
 
   // ESLint does not throw this error if `fix` function returns only falsy values.
   // We've already exited if that is the case, so we're reproducing that behavior.
-  if (internal.meta.fixable === null) {
+  if (internal.isFixable === false) {
     throw new Error('Fixable rules must set the `meta.fixable` property to "code" or "whitespace".');
   }
 
