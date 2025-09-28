@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
+assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/lint_on_run/on_save/on-save.ts
@@ -15,4 +16,71 @@ related_information[0].location.range: Range { start: Position { line: 7, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Multiple([FixedContent { message: Some("Promises must be awaited."), code: "void ", range: Range { start: Position { line: 7, character: 0 }, end: Position { line: 7, character: 0 } } }, FixedContent { message: Some("Promises must be awaited."), code: "await ", range: Range { start: Position { line: 7, character: 0 }, end: Position { line: 7, character: 0 } } }])
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Promises must be awaited.",
+            ),
+            code: "void ",
+            range: Range {
+                start: Position {
+                    line: 7,
+                    character: 0,
+                },
+                end: Position {
+                    line: 7,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Promises must be awaited.",
+            ),
+            code: "await ",
+            range: Range {
+                start: Position {
+                    line: 7,
+                    character: 0,
+                },
+                end: Position {
+                    line: 7,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-floating-promises for this line",
+            ),
+            code: "// oxlint-disable-next-line no-floating-promises\n",
+            range: Range {
+                start: Position {
+                    line: 7,
+                    character: 0,
+                },
+                end: Position {
+                    line: 7,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-floating-promises for this file",
+            ),
+            code: "// oxlint-disable no-floating-promises\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)
