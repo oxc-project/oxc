@@ -131,9 +131,9 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         // but still allow breaking for very long call expressions
         if is_within_type_assertion {
             // Calculate the estimated width of the inline version
-            let estimated_width = call_like_span.size() +
-                self.iter().map(|arg| arg.span().size()).sum::<u32>() +
-                self.len().saturating_sub(1) as u32 * 2; // commas and spaces
+            let estimated_width = call_like_span.size()
+                + self.iter().map(|arg| arg.span().size()).sum::<u32>()
+                + self.len().saturating_sub(1) as u32 * 2; // commas and spaces
 
             // Only force inline if it's reasonably short (under 80 characters)
             if estimated_width <= 80 {

@@ -331,49 +331,64 @@ impl NeedsParentheses<'_> for AstNode<'_, ArrayExpression<'_>> {
     }
 }
 
+
 /// Checks if an object expression is part of a template literal's expressions
 /// and should receive parentheses to avoid being confused with a block statement
-fn find_template_literal_parent<'a>(span: Span, parent: &'a AstNodes<'a>) -> Option<&'a AstNodes<'a>> {
-    // Traverse up the parent chain to look for a TemplateLiteral, but be more selective
+fn find_template_literal_parent<'a>(
+    span: Span,
+    parent: &'a AstNodes<'a>,
+) -> Option<&'a AstNodes<'a>> {
+    // Check if this object is directly in a template literal expression
+    // vs. nested inside function calls or other expressions
+    if matches!(parent, AstNodes::TemplateLiteral(_)) {
+        return Some(parent);
+    }
+
+    // For more complex cases, traverse up but be more restrictive
     let mut current_parent = parent;
     let mut depth = 0;
-    let mut seen_call_as_argument = false;
+    let mut seen_call_or_complex_expr = false;
 
     loop {
         match current_parent {
-            AstNodes::TemplateLiteral(template) => {
-                // Found a template literal - this object expression should have parentheses
-                // only if we reached here through a reasonable path and not deeply nested in calls
-                if depth <= 3 && !seen_call_as_argument {
+            AstNodes::TemplateLiteral(_) => {
+                // Found a template literal - only add parentheses if:
+                // 1. We haven't gone through complex expressions like function calls
+                // 2. The depth is reasonable
+                if depth <= 2 && !seen_call_or_complex_expr {
                     return Some(current_parent);
                 } else {
                     return None;
                 }
             }
-            // Allow traversal through these common structural nodes that don't indicate
-            // we're outside a template expression context
+            // Simple structural nodes that don't change semantics
             AstNodes::ParenthesizedExpression(_)
             | AstNodes::TSAsExpression(_)
-            | AstNodes::TSSatisfiesExpression(_)
-            | AstNodes::ExpressionStatement(_) => {
+            | AstNodes::TSSatisfiesExpression(_) => {
                 current_parent = current_parent.parent();
                 depth += 1;
             }
-            // Allow traversal through call expressions but note that we're now an argument
-            AstNodes::CallExpression(_) => {
-                seen_call_as_argument = true;
+            // Complex expressions that indicate this object has other purposes
+            AstNodes::CallExpression(_)
+            | AstNodes::NewExpression(_)
+            | AstNodes::ArrayExpression(_) => {
+                seen_call_or_complex_expr = true;
                 current_parent = current_parent.parent();
                 depth += 1;
             }
-            // Stop at other nodes - if we hit array expressions, object properties, etc.
-            // then we're probably not in a template expression context
+            // Expression statement is okay for direct template literals
+            AstNodes::ExpressionStatement(_) if depth == 0 => {
+                current_parent = current_parent.parent();
+                depth += 1;
+            }
+            // Stop at other nodes
             _ => {
                 return None;
             }
         }
 
         // Safety limit
-        if depth > 5 {
+        if depth > 3 {
             return None;
         }
     }
@@ -384,8 +399,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
         let span = self.span();
         let parent = self.parent;
 
-        // Object expressions need parentheses when directly inside template literal expressions
-        // to avoid being confused with block statements - CHECK THIS FIRST!
+        // Object expressions need parentheses when inside template literal expressions
+        // to avoid being confused with block statements
         if let Some(_) = find_template_literal_parent(span, parent) {
             return true;
         }
