@@ -8,16 +8,16 @@
 ### Overall Progress
 
 - **Target**: Fix 23 test regressions to reach main branch parity
-- **Fixed So Far**: 3/23 (13.0% complete)
+- **Fixed So Far**: 8/23 (34.8% complete)
 - **Zero-Regression Policy**: ✅ **MAINTAINED**
 
 ### Current State vs Targets
 
 | Metric                | Start            | Current          | Target (Main)    | Progress         |
 | --------------------- | ---------------- | ---------------- | ---------------- | ---------------- |
-| **JavaScript**        | 647/699 (92.56%) | 649/699 (92.85%) | 663/699 (94.85%) | +2 of +16 needed |
+| **JavaScript**        | 647/699 (92.56%) | 654/699 (93.56%) | 663/699 (94.85%) | +7 of +16 needed |
 | **TypeScript**        | 526/573 (91.80%) | 527/573 (91.97%) | 533/573 (93.02%) | +1 of +7 needed  |
-| **Total Tests Fixed** | 0                | 3                | 23               | 13.0%            |
+| **Total Tests Fixed** | 0                | 8                | 23               | 34.8%            |
 
 ## Phase 1 Results (Ultra-High Match >97%)
 
@@ -67,6 +67,57 @@
 4. `b0b4fcc3e` - fix(formatter): restore optimal curried arrow threshold
    - Maintained the 120 character threshold after testing showed 60 was too aggressive
    - Ensures currying-4.js stays at 90.99% match
+
+5. **Phase 3 Decorator Fixes** (via oxc-domain-expert agent)
+   - Successfully fixed `js/decorators/member-expression.js` and `js/decorators/parens.js`
+   - Implemented hybrid approach with smart delegation to avoid double parentheses
+   - Enhanced `NeedsParentheses` for optional chaining support
+
+6. **Phase 3 New Expression Fixes** (via oxc-domain-expert agent)
+   - Successfully fixed `js/new-expression/call.js` and `js/new-expression/new_expression.js`
+   - Plus bonus fixes for Angular test declarations
+   - Implemented precise logic to distinguish call expressions as arguments vs callees
+
+7. **Regression Fix** (current session)
+   - Restored new-expression fix that was accidentally reverted
+   - Maintained conformance at 654/699 JavaScript tests
+
+## Phase 3 Results (Pattern-Based Fixes)
+
+### ✅ Successfully Fixed (4/5)
+
+#### 1. `js/decorators/member-expression.js` - **FIXED** ✅
+
+- **Original Match**: 92.42%
+- **Issue**: Double parentheses in decorator expressions with optional chaining
+- **Solution**: Enhanced `NeedsParentheses` for optional chaining support and smart delegation
+- **Status**: Now 100% match with Prettier
+
+#### 2. `js/decorators/parens.js` - **FIXED** ✅
+
+- **Original Match**: 75.00%
+- **Issue**: Double parentheses in decorator expressions
+- **Solution**: Same fix as member-expression.js - hybrid approach with smart delegation
+- **Status**: Now 100% match with Prettier
+
+#### 3. `js/new-expression/call.js` - **FIXED** ✅
+
+- **Original Match**: 75.00%
+- **Issue**: Overly broad parentheses logic for call expressions within new expressions
+- **Solution**: Precise logic to distinguish call expressions as arguments vs callees
+- **Status**: Now 100% match with Prettier
+
+#### 4. `js/new-expression/new_expression.js` - **FIXED** ✅
+
+- **Original Match**: 88.89%
+- **Issue**: Same as call.js - incorrect parentheses for call expressions
+- **Solution**: Same fix - check if call expression is used as argument
+- **Status**: Now 100% match with Prettier
+
+#### 5. Angular Test Declarations - **FIXED** ✅
+
+- **Bonus Fix**: All Angular test declaration tests were fixed as a side effect of the new expression fix
+- **Status**: All passing
 
 ## Remaining Work
 
@@ -155,13 +206,13 @@ git diff HEAD~1 HEAD tasks/prettier_conformance/snapshots/
 ## Success Metrics Tracking
 
 - **Phase 1**: 3/3 complete (100%) ✅
-- **Phase 2**: 0/3 complete (0%)
-- **Phase 3**: 0/7 complete (0%)
+- **Phase 2**: 0/3 complete (0%) - 1 improved
+- **Phase 3**: 5/7 complete (71%) ✅
 - **Phase 4**: 0/2 complete (0%)
 - **Phase 5**: 0/5 complete (0%)
 - **Phase 6**: 0/2 complete (0%)
 
-**Overall**: 3/23 tests fixed (13.0% complete)
+**Overall**: 8/23 tests fixed (34.8% complete)
 
 ---
 

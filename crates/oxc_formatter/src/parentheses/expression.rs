@@ -440,7 +440,10 @@ impl NeedsParentheses<'_> for AstNode<'_, CallExpression<'_>> {
         }
 
         match self.parent {
-            AstNodes::NewExpression(_) => true,
+            AstNodes::NewExpression(_) => {
+                // Call expressions don't need parentheses when used as new expression arguments
+                !is_expression_used_as_call_argument(self.span(), self.parent)
+            }
             AstNodes::Decorator(_) => !is_decorator_member_expression(&self.callee),
             AstNodes::ExportDefaultDeclaration(_) => {
                 let callee = &self.callee();
