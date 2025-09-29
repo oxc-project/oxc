@@ -7,7 +7,7 @@ use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
     Format,
-    formatter::{FormatResult, Formatter},
+    formatter::{FormatResult, Formatter, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, AstNodes},
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
 };
@@ -32,14 +32,18 @@ impl From<LogicalOperator> for BinaryLikeOperator {
     }
 }
 
-impl BinaryLikeOperator {
-    fn as_str(self) -> &'static str {
-        match self {
+impl Format<'_> for BinaryLikeOperator {
+    fn fmt(&self, f: &mut Formatter<'_, '_>) -> FormatResult<()> {
+        let operator = match self {
             Self::BinaryOperator(op) => op.as_str(),
             Self::LogicalOperator(op) => op.as_str(),
-        }
-    }
+        };
 
+        write!(f, operator)
+    }
+}
+
+impl BinaryLikeOperator {
     pub fn precedence(self) -> Precedence {
         match self {
             Self::BinaryOperator(op) => op.precedence(),
@@ -52,7 +56,7 @@ impl BinaryLikeOperator {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum BinaryLikeExpression<'a, 'b> {
     LogicalExpression(&'b AstNode<'a, LogicalExpression<'a>>),
     BinaryExpression(&'b AstNode<'a, BinaryExpression<'a>>),
@@ -280,6 +284,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 }
 
 /// Represents the right or left hand side of a binary expression.
+#[derive(Debug)]
 enum BinaryLeftOrRightSide<'a, 'b> {
     /// A terminal left hand side of a binary expression.
     ///
@@ -306,14 +311,92 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 inside_condition: inside_parenthesis,
                 root,
             } => {
+                let mut binary_like_expression = *binary_like_expression;
                 // // It's only possible to suppress the formatting of the whole binary expression formatting OR
                 // // the formatting of the right hand side value but not of a nested binary expression.
                 // // This aligns with Prettier's behaviour.
                 // f.context().comments().mark_suppression_checked(binary_like_expression.syntax());
+
+                let logical_operator = if let BinaryLikeExpression::LogicalExpression(logical) =
+                    binary_like_expression
+                {
+                    Some(logical.operator())
+                } else {
+                    None
+                };
+
+                // `(longVariable === "long-string") && ((1 <= longVariable) && (longVariable <= 100000000));`
+                //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                //                            is a LogicalExpression with the `&&` operator
+                //
+                //                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                //                                        the right side of the parent `LogicalExpression` is
+                //                                        also a `LogicalExpression` with the `&&` operator
+                //
+                // In this case, the both are `LogicalExpression`s and have the same operator, then we have to
+                // flatten them into the same group, so these three parts, respectively,
+                // `longVariable === "long-string"`, `1 <= longVariable` and `longVariable <= 100000000` should
+                // be formatted in the same group.
+                //
+                // In the following logic, we will recursively find the right side of the LogicalExpression to
+                // ensure that all parts are in the same group.
+                //
+                // Example output:
+                // ```js
+                // longVariable === "long-string" &&
+                //  1 <= longVariable &&
+                //  longVariable <= 100000000;
+                // ```
+                //
+                // Based on Prettier's rebalancing logic for LogicalExpressions:
+                // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/parse/postprocess/index.js#L64-L69>
+                loop {
+                    if let AstNodes::LogicalExpression(right_logical) =
+                        binary_like_expression.right().as_ast_nodes()
+                        && let Some(operator) = logical_operator
+                        && operator == right_logical.operator()
+                    {
+                        write!(
+                            f,
+                            [
+                                space(),
+                                operator.as_str(),
+                                soft_line_break_or_space(),
+                                format_once(|f| {
+                                    // If the left side of the right logical expression is still a logical expression with
+                                    // the same operator, we need to recursively split it into left and right sides.
+                                    // This way, we can ensure that all parts are in the same group.
+                                    let left_child = right_logical.left();
+                                    if let AstNodes::LogicalExpression(left_logical_child) =
+                                        left_child.as_ast_nodes()
+                                        && operator == left_logical_child.operator()
+                                    {
+                                        let left_parts = split_into_left_and_right_sides(
+                                            BinaryLikeExpression::LogicalExpression(
+                                                left_logical_child,
+                                            ),
+                                            *inside_parenthesis,
+                                        );
+
+                                        f.join().entries(left_parts).finish()
+                                    } else {
+                                        left_child.fmt(f)
+                                    }
+                                })
+                            ]
+                        )?;
+
+                        binary_like_expression =
+                            BinaryLikeExpression::LogicalExpression(right_logical);
+                    } else {
+                        break;
+                    }
+                }
+
                 let right = binary_like_expression.right();
-                let operator = binary_like_expression.operator();
+
                 let operator_and_right_expression = format_with(|f| {
-                    write!(f, [space(), operator.as_str()])?;
+                    write!(f, [space(), binary_like_expression.operator()])?;
 
                     if binary_like_expression.should_inline_logical_expression() {
                         write!(f, [space()])?;
@@ -338,11 +421,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 ) || is_same_binary_expression_kind(
                     binary_like_expression,
                     right.as_ast_nodes(),
-                ) || (*inside_parenthesis
-                    && matches!(
-                        binary_like_expression,
-                        BinaryLikeExpression::LogicalExpression(_)
-                    )));
+                ) || (*inside_parenthesis && logical_operator.is_some()));
 
                 if should_group {
                     // `left` side has printed before `right` side, so that trailing comments of `left` side has been printed,
@@ -364,6 +443,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         .rev()
                         .take_while(|comment| {
                             binary_like_expression.left().span().end < comment.span.start
+                                && right.span().start > comment.span.end
                         })
                         .any(|comment| comment.is_line());
 
@@ -437,7 +517,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
 
     // Stores the left and right parts of the binary expression in sequence (rather than nested as they
     // appear in the tree).
-    // `with_capacity(2)` because we expect at most 2 items (left and right).
+    // `with_capacity(2)` because we expect at least 2 items (left and right).
     let mut items = Vec::with_capacity(2);
 
     split_into_left_and_right_sides_inner(true, binary, inside_condition, &mut items);
@@ -460,7 +540,7 @@ fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
 }
 
 fn is_same_binary_expression_kind(
-    binary: &BinaryLikeExpression<'_, '_>,
+    binary: BinaryLikeExpression<'_, '_>,
     other: &AstNodes<'_>,
 ) -> bool {
     match binary {

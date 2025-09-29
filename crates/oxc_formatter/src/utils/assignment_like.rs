@@ -510,6 +510,7 @@ impl<'a> AssignmentLike<'a, '_> {
 
                     is_generic(&conditional_type.check_type)
                         || is_generic(&conditional_type.extends_type)
+                        || comments.has_comment_before(decl.type_annotation.span().start)
                 }
                 _ => {
                     // Check for leading comments on any other type
