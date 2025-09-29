@@ -1,4 +1,4 @@
-js compatibility: 646/699 (92.42%)
+js compatibility: 647/699 (92.56%)
 
 # Failed
 
@@ -9,7 +9,7 @@ js compatibility: 646/699 (92.42%)
 | js/arrows/curried.js | 💥💥 | 82.70% |
 | js/arrows/currying-2.js | 💥💥 | 59.08% |
 | js/arrows/currying-4.js | 💥💥 | 94.50% |
-| js/comments/15661.js | 💥💥 | 55.81% |
+| js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
 | js/comments/return-statement.js | 💥💥 | 98.85% |
@@ -28,7 +28,6 @@ js compatibility: 646/699 (92.42%)
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 84.09% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/logical_expressions/issue-7024.js | 💥 | 66.67% |
 | js/method-chain/print-width-120/constructor.js | 💥 | 71.43% |
 | js/new-expression/call.js | 💥 | 75.00% |
 | js/new-expression/new_expression.js | 💥 | 88.89% |
