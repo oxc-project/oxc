@@ -223,18 +223,31 @@ fn disable_for_this_section<'a>(
     rope: &Rope,
     source_text: &str,
 ) -> FixWithPosition<'a> {
+    let comment = format!("// oxlint-disable {rule_name}\n");
+
     let (content, offset) = if section_offset == 0 {
-        // JS files - keep existing behavior
-        (Cow::Owned(format!("// oxlint-disable {rule_name}\n")), section_offset)
-    }
-    // Vue files or other files with section_offset > 0
-    // Check if there's a newline at the section offset
-    else if source_text.as_bytes().get(section_offset as usize).is_some_and(|c| *c == b'\n') {
-        // There's a newline at section_offset, insert after it
-        (Cow::Owned(format!("// oxlint-disable {rule_name}\n")), section_offset + 1)
+        // JS files - insert at the beginning
+        (Cow::Owned(comment), section_offset)
     } else {
-        // Not at beginning of line, add newline before comment
-        (Cow::Owned(format!("\n// oxlint-disable {rule_name}\n")), section_offset)
+        // Framework files - check for line breaks at section_offset
+        let bytes = source_text.as_bytes();
+        let current = bytes.get(section_offset as usize);
+        let next = bytes.get((section_offset + 1) as usize);
+
+        match (current, next) {
+            (Some(b'\n'), _) => {
+                // LF at offset, insert after it
+                (Cow::Owned(comment), section_offset + 1)
+            }
+            (Some(b'\r'), Some(b'\n')) => {
+                // CRLF at offset, insert after both
+                (Cow::Owned(comment), section_offset + 2)
+            }
+            _ => {
+                // Not at line start, prepend newline
+                (Cow::Owned("\n".to_owned() + &comment), section_offset)
+            }
+        }
     };
 
     let position = offset_to_position(rope, offset, source_text);
