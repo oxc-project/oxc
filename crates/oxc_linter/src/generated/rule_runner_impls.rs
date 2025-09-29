@@ -843,6 +843,13 @@ impl RuleRunner for crate::rules::import::no_named_default::NoNamedDefault {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::import::no_named_export::NoNamedExport {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportAllDeclaration,
+        AstType::ExportNamedDeclaration,
+    ]));
+}
+
 impl RuleRunner for crate::rules::import::no_namespace::NoNamespace {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
