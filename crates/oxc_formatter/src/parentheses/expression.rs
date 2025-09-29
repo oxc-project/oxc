@@ -331,13 +331,45 @@ impl NeedsParentheses<'_> for AstNode<'_, ArrayExpression<'_>> {
     }
 }
 
-/// Checks if an object expression is directly part of a template literal's expressions
+/// Checks if an object expression is part of a template literal's expressions
 /// and should receive parentheses to avoid being confused with a block statement
 fn find_template_literal_parent<'a>(span: Span, parent: &'a AstNodes<'a>) -> Option<&'a AstNodes<'a>> {
-    // Check only immediate parent to be very conservative and avoid dummy node issues
-    match parent {
-        AstNodes::TemplateLiteral(_) => Some(parent),
-        _ => None,
+    // Traverse up the parent chain to look for a TemplateLiteral, but be more selective
+    let mut current_parent = parent;
+    let mut depth = 0;
+
+    loop {
+        match current_parent {
+            AstNodes::TemplateLiteral(template) => {
+                // Found a template literal - this object expression should have parentheses
+                // only if we reached here through a reasonable path (not too deep)
+                if depth <= 3 {
+                    return Some(current_parent);
+                } else {
+                    return None;
+                }
+            }
+            // Allow traversal through these common structural nodes that don't indicate
+            // we're outside a template expression context
+            AstNodes::ParenthesizedExpression(_)
+            | AstNodes::TSAsExpression(_)
+            | AstNodes::TSSatisfiesExpression(_)
+            | AstNodes::CallExpression(_)
+            | AstNodes::ExpressionStatement(_) => {
+                current_parent = current_parent.parent();
+                depth += 1;
+            }
+            // Stop at other nodes - if we hit array expressions, object properties, etc.
+            // then we're probably not in a template expression context
+            _ => {
+                return None;
+            }
+        }
+
+        // Safety limit
+        if depth > 5 {
+            return None;
+        }
     }
 }
 
@@ -369,6 +401,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
         if let Some(template_parent) = find_template_literal_parent(span, parent) {
             return true;
         }
+
 
         is_class_extends(parent, span)
             || is_first_in_statement(span, parent, FirstInStatementMode::ExpressionStatementOrArrow)
