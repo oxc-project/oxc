@@ -106,6 +106,35 @@ suite('code actions', () => {
     strictEqual(content.toString(), expected.toString());
   });
 
+  // https://discord.com/channels/1079625926024900739/1080723403595591700/1422191300395929620
+   test('code action `source.fixAll.oxc` ignores "ignore this rule for this line/file"', async () => {
+    let file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file2.js');
+    let expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
+
+    await workspace.getConfiguration('editor').update('codeActionsOnSave', {
+      'source.fixAll.oxc': 'always',
+    });
+    await workspace.saveAll();
+
+    const range = new Range(new Position(0, 0), new Position(0, 0));
+    const edit = new WorkspaceEdit();
+    edit.replace(file, range, ' ');
+
+    await sleep(1000);
+
+    await loadFixture('fixall_code_action_ignore_only_disable_fix');
+    await workspace.openTextDocument(file);
+    await workspace.applyEdit(edit);
+    await sleep(1000);
+    await workspace.saveAll();
+    await sleep(500);
+
+    const content = await workspace.fs.readFile(file);
+    const expected = await workspace.fs.readFile(expectedFile);
+
+    strictEqual(content.toString(), expected.toString());
+  });
+
   test('changing configuration flag "fix_kind" will reveal more code actions', async () => {
     await loadFixture('changing_fix_kind');
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'for_direction.ts');
