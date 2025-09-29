@@ -2800,6 +2800,11 @@ impl RuleRunner for crate::rules::unicorn::prefer_structured_clone::PreferStruct
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_top_level_await::PreferTopLevelAwait {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
 impl RuleRunner for crate::rules::unicorn::prefer_type_error::PreferTypeError {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ThrowStatement]));

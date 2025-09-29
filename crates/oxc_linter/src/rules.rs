@@ -487,6 +487,7 @@ pub(crate) mod unicorn {
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_structured_clone;
+    pub mod prefer_top_level_await;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
@@ -1177,6 +1178,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
     unicorn::prefer_class_fields,
+    unicorn::prefer_top_level_await,
     unicorn::prefer_at,
     unicorn::prefer_global_this,
     unicorn::prefer_object_from_entries,
