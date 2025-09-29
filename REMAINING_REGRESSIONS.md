@@ -1,7 +1,7 @@
 # Remaining Prettier Conformance Regressions
 
 **Updated**: 2025-09-29
-**Current Status**: 21 regressions remaining (2 fixed out of 23 original)
+**Current Status**: 20 regressions remaining (3 fixed out of 23 original)
 
 ## Summary by Priority
 
@@ -9,8 +9,7 @@
 
 These are closest to passing and should be easiest to fix:
 
-1. **`js/strings/template-literals.js`** - 98.43% ⚠️ _Attempted fix didn't work_
-2. **`js/require/require.js`** - 93.51%
+1. **`js/require/require.js`** - 93.51%
 
 ### 🟡 Priority 2: High Match (90-95%)
 
@@ -78,9 +77,8 @@ These need significant work:
 - ❌ `js/comments/function-declaration.js` - 92.80%
 - ❌ `js/comments-closure-typecast/comment-in-the-middle.js` - 90.91%
 
-### JavaScript Other (4 remaining)
+### JavaScript Other (3 remaining)
 
-- ❌ `js/strings/template-literals.js` - 98.43% ⚠️
 - ❌ `js/require/require.js` - 93.51%
 - ❌ `js/functional-composition/pipe-function-calls.js` - 87.80%
 - ❌ `js/method-chain/print-width-120/constructor.js` - 71.43%
@@ -122,8 +120,7 @@ Comment positioning and preservation issues.
 
 ## Recommended Fix Order
 
-1. **Fix template-literals properly** (98.43% - so close!)
-2. **Phase 2 tests** (93%+ match rate)
+1. **Phase 2 tests** (93%+ match rate)
 3. **Comment-related tests** (90%+ match, likely related)
 4. **Decorator pattern** (group fix possible)
 5. **Arrow currying patterns** (complex but related)
@@ -132,10 +129,10 @@ Comment positioning and preservation issues.
 
 ## Notes
 
-- Template literals fix was attempted but didn't work - needs different approach
+- ✅ Template literals successfully fixed by removing overly aggressive parentheses logic
 - Arrow currying tests show varying match rates, suggesting partial fixes may have affected them
 - TypeScript operator tests have very low match rates, indicating fundamental formatting differences
 
 ---
 
-_This document tracks the 21 remaining regressions that need to be fixed to reach main branch parity._
+_This document tracks the 20 remaining regressions that need to be fixed to reach main branch parity._
