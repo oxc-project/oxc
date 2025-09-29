@@ -7,7 +7,7 @@ js compatibility: 649/699 (92.85%)
 | js/arrows/chain-as-arg.js | 💥💥 | 35.14% |
 | js/arrows/curried.js | 💥💥 | 91.95% |
 | js/arrows/currying-2.js | 💥💥 | 59.08% |
-| js/arrows/currying-4.js | 💥💥 | 87.61% |
+| js/arrows/currying-4.js | 💥💥 | 90.99% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
