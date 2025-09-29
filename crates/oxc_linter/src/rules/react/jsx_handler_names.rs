@@ -282,7 +282,7 @@ impl Rule for JsxHandlerNames {
                     return;
                 }
                 if let Some((name, span, is_props_handler)) =
-                    get_event_handler_name_from_arrow_function(arrow_function, ctx)
+                    get_event_handler_name_from_arrow_function(arrow_function)
                 {
                     (Some(name), span, is_props_handler)
                 } else {
@@ -297,7 +297,7 @@ impl Rule for JsxHandlerNames {
             }
             JSXExpression::StaticMemberExpression(member_expr) => {
                 let (name, span, is_props_handler) =
-                    get_event_handler_name_from_static_member_expression(member_expr, ctx);
+                    get_event_handler_name_from_static_member_expression(member_expr);
                 (Some(name), span, is_props_handler)
             }
             _ => {
@@ -316,13 +316,14 @@ impl Rule for JsxHandlerNames {
             }
         };
 
+        // "ref" prop is allowed to be assigned to a function with any name.
         if prop_key == "ref" {
             return;
         }
 
         let prop_is_event_handler = self.match_event_handler_props_name(prop_key);
         let is_handler_name_correct = handler_name.as_ref().map_or(Some(false), |name| {
-            // if the event handler is a property of "props", the handler name can also start with the prop prefix.
+            // if the event handler is "this.props.*" or "props.*", the handler name can be the pattern of event handler props.
             if is_props_handler && self.match_event_handler_props_name(name).unwrap_or(false) {
                 return Some(true);
             }
@@ -377,22 +378,23 @@ fn is_member_expression_callee(arrow_function: &ArrowFunctionExpression<'_>) -> 
 
 fn get_event_handler_name_from_static_member_expression(
     member_expr: &StaticMemberExpression,
-    ctx: &LintContext,
 ) -> (CompactStr, Span, bool) {
     let name = member_expr.property.name.as_str();
     let span = member_expr.property.span;
     match &member_expr.object {
-        Expression::ThisExpression(_) => (name.into(), span, false),
         Expression::Identifier(ident) => {
             let obj_name = ident.name.as_str();
-            (name.into(), span, obj_name == "props")
+            (name.into(), span, obj_name == "props") // props.handleChange or obj.handleChange
         }
         Expression::StaticMemberExpression(expr) => {
-            let (obj_name, _obj_span, is_props) =
-                get_event_handler_name_from_static_member_expression(expr, ctx);
-            (name.into(), span, !is_props && obj_name == "props")
+            if let Expression::ThisExpression(_) = &expr.object {
+                let obj_name = expr.property.name.as_str();
+                (name.into(), span, obj_name == "props") // this.props.handleChange or this.obj.handleChange
+            } else {
+                (name.into(), span, false) // foo.props.handleChange, props.foo.handleChange, foo.bar.handleChange, etc.
+            }
         }
-        _ => (ctx.source_range(member_expr.span).into(), member_expr.span, false),
+        _ => (name.into(), span, false), // this.handleChange
     }
 }
 
@@ -453,7 +455,6 @@ fn test_normalize_handler_name() {
 
 fn get_event_handler_name_from_arrow_function<'a>(
     arrow_function: &'a ArrowFunctionExpression<'a>,
-    ctx: &LintContext<'a>,
 ) -> Option<(CompactStr, Span, bool)> {
     if !arrow_function.expression {
         // Ignore arrow functions with block bodies like `() => { this.handleChange() }`.
@@ -471,7 +472,7 @@ fn get_event_handler_name_from_arrow_function<'a>(
     match &call_expr.callee {
         Expression::Identifier(ident) => Some((ident.name.as_str().into(), ident.span, false)),
         Expression::StaticMemberExpression(member_expr) => {
-            Some(get_event_handler_name_from_static_member_expression(member_expr, ctx))
+            Some(get_event_handler_name_from_static_member_expression(member_expr))
         }
         _ => None,
     }
@@ -622,6 +623,8 @@ fn test() {
         ("<TestComponent onChange={this.handl3Change} />", None),
         ("<TestComponent onChange={this.handle4change} />", None),
         ("<TestComponent onChange={this.props.doSomethingOnChange} />", None),
+        ("<TestComponent onChange={this.props.obj.onChange} />", None),
+        ("<TestComponent onChange={props.obj.onChange} />", None),
         (
             "<TestComponent onChange={takeCareOfChange} />",
             Some(serde_json::json!([{ "checkLocalVariables": true }])),

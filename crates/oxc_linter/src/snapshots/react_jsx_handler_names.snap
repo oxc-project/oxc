@@ -50,6 +50,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
 
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: onChange
+   ╭─[jsx_handler_names.tsx:1:41]
+ 1 │ <TestComponent onChange={this.props.obj.onChange} />
+   ·                                         ────────
+   ╰────
+  help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
+
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: onChange
+   ╭─[jsx_handler_names.tsx:1:36]
+ 1 │ <TestComponent onChange={props.obj.onChange} />
+   ·                                    ────────
+   ╰────
+  help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
+
   ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: takeCareOfChange
    ╭─[jsx_handler_names.tsx:1:26]
  1 │ <TestComponent onChange={takeCareOfChange} />
