@@ -64,17 +64,32 @@
    - Increased threshold for breaking curried arrows from 80 to 120 characters
    - Files changed: 1 file (call_arguments.rs)
 
+4. `b0b4fcc3e` - fix(formatter): restore optimal curried arrow threshold
+   - Maintained the 120 character threshold after testing showed 60 was too aggressive
+   - Ensures currying-4.js stays at 90.99% match
+
 ## Remaining Work
 
 ### Phase 1 Complete ✅
 
 All three Phase 1 tests (>97% match) have been successfully fixed!
 
-### Phase 2 Partially Complete (1/3 improved)
+### Phase 2 Results (1/3 improved)
 
-1. `js/require/require.js` - Still at 93.51% match (attempted fix caused regression, reverted)
-2. `typescript/arrow/16067.ts` - Still at 93.88% match (requires complex architectural changes)
-3. `js/arrows/currying-4.js` - **IMPROVED** to 90.99% match (was 87.61%) ✅
+1. `js/require/require.js` - Still at 93.51% match
+   - Root cause: Destructuring pattern width calculation, not require() itself
+   - Attempted fix caused major regression (dropped to 48.48%), reverted
+   - Needs careful analysis of object pattern formatting
+
+2. `typescript/arrow/16067.ts` - Still at 93.88% match
+   - Issue: Arrow chain indentation in call arguments
+   - Requires architectural changes to arrow function formatting
+   - Deferred to avoid regression risk
+
+3. `js/arrows/currying-4.js` - **IMPROVED** to 90.99% match ✅
+   - Was 87.61% after Phase 1 fixes affected it
+   - Fixed by setting conservative threshold (120 chars) for breaking
+   - Simple curried arrows now stay inline correctly
 
 ### Phases 3-6 Pending
 
@@ -108,9 +123,10 @@ All three Phase 1 tests (>97% match) have been successfully fixed!
 
 ### Immediate Actions
 
-1. **Continue Phase 2** with the three 93-95% match tests
-2. **Monitor** for any delayed regression effects
-3. **Consider grouping related fixes** for efficiency
+1. **Deep dive into destructuring patterns** for require.js fix
+2. **Consider architectural review** for arrow chain formatting
+3. **Move to Phase 3** with remaining high-match tests (90%+)
+4. **Maintain conservative approach** to preserve stability
 
 ### Risk Mitigation
 
