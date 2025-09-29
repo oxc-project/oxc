@@ -8,6 +8,10 @@ use oxc_semantic::AstTypesBitset;
 
 use crate::rule::RuleRunner;
 
+impl RuleRunner for crate::rules::better_tailwindcss::enforce_consistent_important_position::EnforceConsistentImportantPosition {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[AstType::JSXAttribute, AstType::TemplateLiteral]));
+}
+
 impl RuleRunner for crate::rules::eslint::array_callback_return::ArrayCallbackReturn {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }

@@ -38,6 +38,8 @@ bitflags! {
         const REGEX = 1 << 13;
         /// `eslint-plugin-vue`
         const VUE = 1 << 14;
+        /// `eslint-plugin-better-tailwindcss`
+        const BETTER_TAILWINDCSS = 1 << 15;
     }
 }
 
@@ -97,6 +99,7 @@ impl From<&str> for LintPlugins {
             "node" => LintPlugins::NODE,
             "regex" => LintPlugins::REGEX,
             "vue" => LintPlugins::VUE,
+            "better-tailwindcss" | "better_tailwindcss" => LintPlugins::BETTER_TAILWINDCSS,
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
             _ => LintPlugins::empty(),

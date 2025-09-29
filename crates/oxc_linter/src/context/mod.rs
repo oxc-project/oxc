@@ -504,4 +504,5 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "node" => "eslint-plugin-node",
     "vue" => "eslint-plugin-vue",
     "regexp" => "eslint-plugin-regexp",
+    "better_tailwindcss" => "eslint-plugin-better-tailwindcss",
 };

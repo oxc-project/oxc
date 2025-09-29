@@ -641,6 +641,10 @@ pub(crate) mod vue {
     pub mod valid_define_props;
 }
 
+pub(crate) mod better_tailwindcss {
+    pub mod enforce_consistent_important_position;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::arrow_body_style,
@@ -1231,4 +1235,5 @@ oxc_macros::declare_all_lint_rules! {
     vue::require_typed_ref,
     vue::valid_define_emits,
     vue::valid_define_props,
+    better_tailwindcss::enforce_consistent_important_position,
 }
