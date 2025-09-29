@@ -1,0 +1,14 @@
+   Compiling oxc_span v0.93.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_span)
+   Compiling oxc_syntax v0.93.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_syntax)
+   Compiling oxc_regular_expression v0.93.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_regular_expression)
+   Compiling oxc_tasks_common v0.0.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/tasks/common)
+   Compiling oxc_ast v0.93.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_ast)
+   Compiling oxc_ecmascript v0.93.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_ecmascript)
+   Compiling oxc_ast_visit v0.93.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_ast_visit)
+   Compiling oxc_formatter v0.3.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_formatter)
+   Compiling oxc_parser v0.93.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_parser)
+   Compiling oxc_prettier_conformance v0.0.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/tasks/prettier_conformance)
+    Finished `dev` profile [unoptimized] target(s) in 5.20s
+     Running `target/debug/oxc_prettier_conformance`
+js compatibility: 647/699 (92.56%)
+ts compatibility: 526/573 (91.80%)
