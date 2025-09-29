@@ -77,9 +77,10 @@ All three Phase 1 tests (>97% match) have been successfully fixed!
 ### Phase 2 Results (1/3 improved)
 
 1. `js/require/require.js` - Still at 93.51% match
-   - Root cause: Destructuring pattern width calculation, not require() itself
-   - Attempted fix caused major regression (dropped to 48.48%), reverted
-   - Needs careful analysis of object pattern formatting
+   - Root cause: Complex interaction between destructuring and require() formatting
+   - Attempt 1: Modified require() expansion logic → regression to 48.48%, reverted
+   - Attempt 2: Enhanced inline formatting for require() → regression to 79.45%, reverted
+   - Needs a different approach focusing on destructuring pattern width
 
 2. `typescript/arrow/16067.ts` - Still at 93.88% match
    - Issue: Arrow chain indentation in call arguments
@@ -109,7 +110,9 @@ All three Phase 1 tests (>97% match) have been successfully fixed!
 
 1. **Broad logic changes** - Initial attempts that modified general formatting rules caused regressions
 2. **Over-aggressive parentheses** - Initial template literal fix added unnecessary parentheses; simpler was better
-3. **Complex require() expansion** - Attempting to break complex require arguments made formatting worse (93.51% -> 48.48%), had to revert
+3. **Complex require() expansion** - Multiple attempts to fix require() formatting caused regressions:
+   - First attempt: 93.51% → 48.48% (reverted)
+   - Second attempt: 93.51% → 79.45% (reverted)
 
 ### Technical Insights
 
@@ -118,6 +121,7 @@ All three Phase 1 tests (>97% match) have been successfully fixed!
 3. **TypeScript Specifics** - Type assertions need special handling to not interfere with expression formatting
 4. **Template Literal Context** - Objects in template literals are unambiguously in expression context, no parentheses needed
 5. **Threshold Tuning** - Span-based width calculations need conservative thresholds due to whitespace/comments
+6. **Require() Formatting Complexity** - The interaction between CommonJS calls and argument formatting is more complex than expected
 
 ## Next Steps
 
