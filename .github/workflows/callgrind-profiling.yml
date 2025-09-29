@@ -1,0 +1,63 @@
+name: Callgrind Profiling
+
+on:
+  push:
+    branches:
+      - callgrind
+  # workflow_dispatch:
+    # inputs:
+      # file_url:
+        # description: 'URL to the JavaScript/TypeScript file to profile'
+        # required: true
+        # type: string
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: oxc-project/setup-rust@f78b3964e121f889426634f0eaeeb09fccecac08 # v1.0.6
+
+      - name: Install Valgrind
+        run: |
+          sudo tee /etc/dpkg/dpkg.cfg.d/01_nodoc > /dev/null << 'EOF'
+          path-exclude /usr/share/doc/*
+          path-exclude /usr/share/man/*
+          path-exclude /usr/share/info/*
+          EOF
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+
+      - name: Build parser binary with debug symbols
+        run: cargo build -p oxc_parser --example parser --profile release-with-debug
+
+      - name: Download test file
+        run: |
+          # curl -L -o test_file.js "${{ inputs.file_url }}"
+          curl -L -o test_file.ts https://raw.githubusercontent.com/microsoft/TypeScript/refs/heads/main/src/compiler/checker.ts
+
+      - name: Run Callgrind profiling
+        run: |
+          valgrind \
+            --tool=callgrind \
+            --callgrind-out-file=callgrind.out \
+            --cache-sim=yes \
+            --branch-sim=yes \
+            ./target/release-with-debug/examples/parser test_file.ts
+
+      - name: Generate readable report
+        run: |
+          # Install kcachegrind tools for callgrind_annotate
+          sudo apt-get install -y kcachegrind
+
+          # Generate annotated output
+          callgrind_annotate callgrind.out > callgrind_report.txt
+
+          # Show top functions
+          echo "=== TOP 50 FUNCTIONS BY SELF COST ===" > callgrind_summary.txt
+          callgrind_annotate callgrind.out | head -n 100 >> callgrind_summary.txt
+
+          # Display summary in workflow
+          cat callgrind_summary.txt
