@@ -2334,6 +2334,11 @@ impl RuleRunner for crate::rules::unicorn::no_anonymous_default_export::NoAnonym
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_array_callback_reference::NoArrayCallbackReference {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
 impl RuleRunner for crate::rules::unicorn::no_array_for_each::NoArrayForEach {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));

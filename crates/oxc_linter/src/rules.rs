@@ -400,6 +400,7 @@ pub(crate) mod unicorn {
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
+    pub mod no_array_callback_reference;
     pub mod no_array_for_each;
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
@@ -1125,6 +1126,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_array_callback_reference,
     unicorn::no_array_sort,
     unicorn::no_array_reverse,
     unicorn::no_instanceof_builtins,
