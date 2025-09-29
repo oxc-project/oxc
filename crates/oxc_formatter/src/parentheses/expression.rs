@@ -309,35 +309,32 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ArrayExpression<'a>> {
 
 /// Checks if an object expression is part of a template literal's expressions
 /// and should receive parentheses to avoid being confused with a block statement
-fn find_template_literal_parent<'a>(span: Span, parent: &'a AstNodes<'a>) -> Option<&'a AstNodes<'a>> {
-    // Traverse up the parent chain to look for a TemplateLiteral, but be more selective
+fn find_template_literal_parent<'a>(
+    span: Span,
+    parent: &'a AstNodes<'a>,
+) -> Option<&'a AstNodes<'a>> {
+    // Traverse up the parent chain to look for a TemplateLiteral
     let mut current_parent = parent;
     let mut depth = 0;
-    let mut seen_call_as_argument = false;
 
     loop {
         match current_parent {
-            AstNodes::TemplateLiteral(template) => {
+            AstNodes::TemplateLiteral(_) => {
                 // Found a template literal - this object expression should have parentheses
-                // only if we reached here through a reasonable path and not deeply nested in calls
-                if depth <= 3 && !seen_call_as_argument {
+                // if we reached here through a reasonable path (not too deeply nested)
+                if depth <= 3 {
                     return Some(current_parent);
                 } else {
                     return None;
                 }
             }
-            // Allow traversal through these common structural nodes that don't indicate
-            // we're outside a template expression context
+            // Allow traversal through these structural nodes that can appear
+            // between an object expression and its containing template literal
             AstNodes::ParenthesizedExpression(_)
             | AstNodes::TSAsExpression(_)
             | AstNodes::TSSatisfiesExpression(_)
-            | AstNodes::ExpressionStatement(_) => {
-                current_parent = current_parent.parent();
-                depth += 1;
-            }
-            // Allow traversal through call expressions but note that we're now an argument
-            AstNodes::CallExpression(_) => {
-                seen_call_as_argument = true;
+            | AstNodes::ExpressionStatement(_)
+            | AstNodes::CallExpression(_) => {
                 current_parent = current_parent.parent();
                 depth += 1;
             }
