@@ -78,27 +78,27 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
 impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
-        write!(f, ["@"]);
+        write!(f, ["@"])?;
 
-        // Determine if parentheses are required around decorator expressions
-        let needs_parentheses = match &self.expression {
-            // Identifiers: `@decorator` needs no parens
+        // Check if we need to manually add parentheses for cases not handled by NeedsParentheses
+        let needs_manual_parentheses = match &self.expression {
+            // ParenthesizedExpression already has parens, don't add more
+            Expression::ParenthesizedExpression(_) => false,
+            // Let NeedsParentheses handle these known cases
+            Expression::CallExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::StaticMemberExpression(_) => false,
+            // Identifiers don't need parens
             Expression::Identifier(_) => false,
-            // Call expressions: `@obj.method()` needs no parens, `@(complex().method)()` needs parens
-            Expression::CallExpression(call) => !is_identifier_or_static_member_only(&call.callee),
-            // Static member expressions: `@obj.prop` needs no parens, `@(complex[key])` needs parens
-            Expression::StaticMemberExpression(static_member) => {
-                !is_identifier_or_static_member_only(&static_member.object)
-            }
-            // All other expressions need parentheses: `@(a + b)`, `@(condition ? a : b)`
+            // All other complex expressions need parentheses
             _ => true,
         };
 
-        if needs_parentheses {
+        if needs_manual_parentheses {
             write!(f, "(")?;
         }
         write!(f, [self.expression()])?;
-        if needs_parentheses {
+        if needs_manual_parentheses {
             write!(f, ")")?;
         }
         Ok(())

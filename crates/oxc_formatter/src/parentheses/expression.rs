@@ -408,7 +408,10 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
 impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self.parent {
-            AstNodes::NewExpression(_) => true,
+            AstNodes::NewExpression(_) => {
+                // Call expressions don't need parentheses when used as new expression arguments
+                !is_expression_used_as_call_argument(self.span(), self.parent)
+            }
             AstNodes::Decorator(_) => !is_decorator_member_expression(&self.callee),
             AstNodes::ExportDefaultDeclaration(_) => {
                 let callee = &self.callee();
