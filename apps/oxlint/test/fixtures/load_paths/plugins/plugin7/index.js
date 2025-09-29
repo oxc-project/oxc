@@ -1,6 +1,6 @@
 export default {
   meta: {
-    name: 'basic-custom-plugin',
+    name: 'plugin7',
   },
   rules: {
     'no-debugger': {

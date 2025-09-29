@@ -1,6 +1,8 @@
-export default {
+import type { Plugin } from '../../../dist/index.js';
+
+const plugin: Plugin = {
   meta: {
-    name: 'basic-custom-plugin',
+    name: 'utf16-plugin',
   },
   rules: {
     'no-debugger': {
@@ -8,7 +10,7 @@ export default {
         return {
           DebuggerStatement(debuggerStatement) {
             context.report({
-              message: 'Unexpected Debugger Statement',
+              message: `Debugger at ${debuggerStatement.start}-${debuggerStatement.end}`,
               node: debuggerStatement,
             });
           },
@@ -17,3 +19,5 @@ export default {
     },
   },
 };
+
+export default plugin;

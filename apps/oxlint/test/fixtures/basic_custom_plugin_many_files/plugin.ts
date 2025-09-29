@@ -1,16 +1,16 @@
-'use strict';
+import type { Plugin } from '../../../dist/index.js';
 
-module.exports = {
+const plugin: Plugin = {
   meta: {
-    name: "plugin6",
+    name: 'basic-custom-plugin',
   },
   rules: {
-    "no-debugger": {
+    'no-debugger': {
       create(context) {
         return {
           DebuggerStatement(debuggerStatement) {
             context.report({
-              message: "Unexpected Debugger Statement",
+              message: 'Unexpected Debugger Statement',
               node: debuggerStatement,
             });
           },
@@ -19,3 +19,5 @@ module.exports = {
     },
   },
 };
+
+export default plugin;

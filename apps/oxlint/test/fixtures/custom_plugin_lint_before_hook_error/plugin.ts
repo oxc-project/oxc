@@ -1,12 +1,14 @@
-export default {
+import type { Plugin } from '../../../dist/index.js';
+
+const plugin: Plugin = {
   meta: {
     name: 'error-plugin',
   },
   rules: {
     error: {
-      create(_context) {
+      createOnce(_context) {
         return {
-          Identifier(_node) {
+          before() {
             throw new Error('Whoops!');
           },
         };
@@ -14,3 +16,5 @@ export default {
     },
   },
 };
+
+export default plugin;

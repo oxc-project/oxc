@@ -1,4 +1,6 @@
-export default {
+import type { Diagnostic, Plugin, Range } from '../../../dist/index.js';
+
+const plugin: Plugin = {
   meta: {
     name: 'fixes-plugin',
   },
@@ -14,7 +16,7 @@ export default {
             debuggerCount++;
 
             let thisIsReport;
-            const report = {
+            const report: Diagnostic = {
               message: 'Remove debugger statement',
               node,
               fix(fixer) {
@@ -96,7 +98,7 @@ export default {
                   node,
                   fix(fixer) {
                     // Fixes can be in any order
-                    const range = [node.start, node.end];
+                    const range: Range = [node.start, node.end];
                     return [
                       fixer.replaceTextRange(range, 'er'),
                       fixer.insertTextAfterRange(range, 'mouse'),
@@ -122,7 +124,7 @@ export default {
                   // `fix` can be a generator function
                   *fix(fixer) {
                     // Fixes can be in any order
-                    const range = [node.start, node.end];
+                    const range: Range = [node.start, node.end];
                     yield fixer.insertTextAfterRange(range, 'bunga');
                     yield fixer.replaceTextRange(range, 'a');
                     yield fixer.insertTextBeforeRange(range, 'cow');
@@ -135,3 +137,5 @@ export default {
     },
   },
 };
+
+export default plugin;

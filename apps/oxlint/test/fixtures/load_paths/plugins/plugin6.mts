@@ -1,6 +1,8 @@
-export default {
+import type { Plugin } from '../../../../dist/index.js';
+
+const plugin: Plugin = {
   meta: {
-    name: 'basic-custom-plugin',
+    name: 'plugin6',
   },
   rules: {
     'no-debugger': {
@@ -17,3 +19,5 @@ export default {
     },
   },
 };
+
+export default plugin;

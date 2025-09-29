@@ -1,7 +1,6 @@
 import { getFixes } from './fix.js';
 
 import type { Fix, FixFn } from './fix.ts';
-import type { RuleMeta } from './types.ts';
 
 // Diagnostic in form passed by user to `Context#report()`
 export interface Diagnostic {
@@ -70,8 +69,8 @@ export interface InternalContext {
   filePath: string;
   // Options
   options: unknown[];
-  // Rule metadata
-  meta: RuleMeta;
+  // `true` if rule can provide fixes (`meta.fixable` in `RuleMeta` is 'code' or 'whitespace')
+  isFixable: boolean;
 }
 
 /**
@@ -88,13 +87,13 @@ export class Context {
    * @class
    * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
    */
-  constructor(fullRuleName: string, meta: RuleMeta) {
+  constructor(fullRuleName: string, isFixable: boolean) {
     this.#internal = {
       id: fullRuleName,
       filePath: '',
       ruleIndex: -1,
       options: [],
-      meta,
+      isFixable,
     };
   }
 

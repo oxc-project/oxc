@@ -1,4 +1,6 @@
-export default {
+import type { Plugin } from '../../../dist/index.js';
+
+const plugin: Plugin = {
   meta: {
     name: 'error-plugin',
   },
@@ -6,7 +8,7 @@ export default {
     error: {
       createOnce(_context) {
         return {
-          before() {
+          after() {
             throw new Error('Whoops!');
           },
         };
@@ -14,3 +16,5 @@ export default {
     },
   },
 };
+
+export default plugin;
