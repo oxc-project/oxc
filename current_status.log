@@ -1,0 +1,6 @@
+   Compiling oxc_formatter v0.3.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/crates/oxc_formatter)
+   Compiling oxc_prettier_conformance v0.0.0 (/Users/tylerearls/code/open-source-projects/forks/oxc/tasks/prettier_conformance)
+    Finished `dev` profile [unoptimized] target(s) in 2.20s
+     Running `target/debug/oxc_prettier_conformance`
+js compatibility: 645/699 (92.27%)
+ts compatibility: 527/573 (91.97%)
