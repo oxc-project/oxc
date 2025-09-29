@@ -115,25 +115,9 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        // Check if there's an empty line (2+ newlines) between any consecutive arguments.
-        // This is used to preserve intentional blank lines in the original source.
-        let has_empty_line = arguments.windows(2).any(|window| {
-            let (cur_arg, next_arg) = (&window[0], &window[1]);
-
-            // Count newlines between arguments, short-circuiting at 2 for performance
-            // Check if there are at least two newlines between arguments
-            f.source_text()
-                .bytes_range(cur_arg.span().end, next_arg.span().start)
-                .iter()
-                .filter(|&&b| b == b'\n')
-                .nth(1)
-                .is_some()
-        });
-
-        if has_empty_line
-            || (!matches!(self.grand_parent(), AstNodes::Decorator(_))
-                && is_function_composition_args(self))
-        {
+        let has_empty_line =
+            self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
+        if has_empty_line || is_function_composition_args(self) || is_pipe_function_call(self, self.parent) {
             return format_all_args_broken_out(self, true, f);
         }
 
@@ -177,6 +161,33 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             format_all_args_broken_out(self, false, f)
         }
     }
+}
+
+/// Tests if this is a pipe function call that should have expanded arguments
+fn is_pipe_function_call(args: &[Argument<'_>], parent: &AstNodes) -> bool {
+    // Check if parent is a call expression with pipe-like function name
+    if let AstNodes::CallExpression(call) = parent {
+        if let Expression::Identifier(id) = &call.callee {
+            let name = id.name.as_str();
+            // Only expand pipe functions when they have nested call expressions
+            // that would benefit from multi-line formatting
+            if matches!(name, "pipe" | "flow") {
+                // Count nested call expressions
+                let nested_calls = args.iter().filter(|arg| {
+                    if let Argument::CallExpression(call) = arg {
+                        // Check if this call has nested calls as arguments
+                        call.arguments.iter().any(|inner| matches!(inner, Argument::CallExpression(_)))
+                    } else {
+                        false
+                    }
+                }).count();
+
+                // Expand if we have nested complexity
+                return nested_calls > 0;
+            }
+        }
+    }
+    false
 }
 
 /// Tests if a call has multiple anonymous function like (arrow or function expression) arguments.
