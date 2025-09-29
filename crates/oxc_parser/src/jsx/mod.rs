@@ -4,7 +4,7 @@ use oxc_allocator::{Box, Dummy, Vec};
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, Span};
 
-use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
+use crate::{ParserImpl, diagnostics, lexer::Kind};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
@@ -12,9 +12,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `<`
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
-            self.expect_jsx_child(Kind::RAngle);
-            let opening_fragment = self.ast.jsx_opening_fragment(self.end_span(span));
-            Expression::JSXFragment(self.parse_jsx_fragment(span, opening_fragment, false))
+            Expression::JSXFragment(self.parse_jsx_fragment(span, false))
         } else if kind.is_identifier_or_keyword() {
             Expression::JSXElement(self.parse_jsx_element(span, false))
         } else {
@@ -24,12 +22,9 @@ impl<'a> ParserImpl<'a> {
 
     /// `JSXFragment` :
     ///   < > `JSXChildren_opt` < / >
-    fn parse_jsx_fragment(
-        &mut self,
-        span: u32,
-        opening_fragment: JSXOpeningFragment,
-        in_jsx_child: bool,
-    ) -> Box<'a, JSXFragment<'a>> {
+    fn parse_jsx_fragment(&mut self, span: u32, in_jsx_child: bool) -> Box<'a, JSXFragment<'a>> {
+        self.expect_jsx_child(Kind::RAngle);
+        let opening_fragment = self.ast.jsx_opening_fragment(self.end_span(span));
         let children = self.parse_jsx_children();
         let closing_fragment = self.parse_jsx_closing_fragment(in_jsx_child);
         self.ast.alloc_jsx_fragment(
@@ -61,10 +56,10 @@ impl<'a> ParserImpl<'a> {
     ///     true when inside jsx element, false when at top level expression
     fn parse_jsx_element(&mut self, span: u32, in_jsx_child: bool) -> Box<'a, JSXElement<'a>> {
         let (opening_element, self_closing) = self.parse_jsx_opening_element(span, in_jsx_child);
-        let children = if self_closing { self.ast.vec() } else { self.parse_jsx_children() };
-        let closing_element = if self_closing {
-            None
+        let (children, closing_element) = if self_closing {
+            (self.ast.vec(), None)
         } else {
+            let children = self.parse_jsx_children();
             let closing_element = self.parse_jsx_closing_element(in_jsx_child);
             if !Self::jsx_element_name_eq(&opening_element.name, &closing_element.name) {
                 self.error(diagnostics::jsx_element_no_match(
@@ -73,7 +68,7 @@ impl<'a> ParserImpl<'a> {
                     opening_element.name.span().source_text(self.source_text),
                 ));
             }
-            Some(closing_element)
+            (children, Some(closing_element))
         };
         self.ast.alloc_jsx_element(self.end_span(span), opening_element, children, closing_element)
     }
@@ -248,13 +243,7 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any(); // bump `<`
                 // <> open fragment
                 if self.at(Kind::RAngle) {
-                    self.expect_jsx_child(Kind::RAngle);
-                    let opening_fragment = self.ast.jsx_opening_fragment(self.end_span(span));
-                    return Some(JSXChild::Fragment(self.parse_jsx_fragment(
-                        span,
-                        opening_fragment,
-                        true,
-                    )));
+                    return Some(JSXChild::Fragment(self.parse_jsx_fragment(span, true)));
                 }
                 // <ident open element
                 if self.at(Kind::Ident) || self.cur_kind().is_any_keyword() {
@@ -304,7 +293,7 @@ impl<'a> ParserImpl<'a> {
             let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));
             JSXExpression::EmptyExpression(expr)
         } else {
-            let expr = JSXExpression::from(self.parse_jsx_assignment_expression());
+            let expr = JSXExpression::from(self.parse_expr());
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly);
             } else {
@@ -316,16 +305,10 @@ impl<'a> ParserImpl<'a> {
         self.ast.alloc_jsx_expression_container(self.end_span(span_start), expr)
     }
 
-    fn parse_jsx_assignment_expression(&mut self) -> Expression<'a> {
-        self.context(Context::default().and_await(self.ctx.has_await()), self.ctx, |p| {
-            p.parse_expr()
-        })
-    }
-
     /// `JSXChildExpression` :
     ///   { ... `AssignmentExpression` }
     fn parse_jsx_spread_child(&mut self, span_start: u32) -> Box<'a, JSXSpreadChild<'a>> {
-        let expr = self.parse_jsx_assignment_expression();
+        let expr = self.parse_expr();
         self.expect_jsx_child(Kind::RCurly);
         self.ast.alloc_jsx_spread_child(self.end_span(span_start), expr)
     }
@@ -369,7 +352,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3);
-        let argument = self.parse_jsx_assignment_expression();
+        let argument = self.parse_expr();
         self.expect(Kind::RCurly);
         self.ast.alloc_jsx_spread_attribute(self.end_span(span), argument)
     }
