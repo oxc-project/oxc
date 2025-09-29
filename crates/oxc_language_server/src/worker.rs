@@ -12,10 +12,10 @@ use tower_lsp_server::{
 
 use crate::{
     ConcurrentHashMap,
-    code_actions::{apply_all_fix_code_action, apply_fix_code_actions},
+    code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
     formatter::server_formatter::ServerFormatter,
     linter::{
-        error_with_position::{DiagnosticReport, PossibleFixContent},
+        error_with_position::DiagnosticReport,
         server_linter::{ServerLinter, ServerLinterRun, normalize_path},
     },
     options::Options,
@@ -286,48 +286,7 @@ impl WorkspaceWorker {
             return vec![];
         }
 
-        let mut text_edits = vec![];
-
-        for report in value {
-            let fix = match &report.fixed_content {
-                PossibleFixContent::None => None,
-                PossibleFixContent::Single(fixed_content) => Some(fixed_content),
-                // For multiple fixes, we take the first one as a representative fix.
-                // Applying all possible fixes at once is not possible in this context.
-                PossibleFixContent::Multiple(multi) => {
-                    // for a real linter fix, we expect at least 3 fixes
-                    if multi.len() > 2 {
-                        multi.first()
-                    } else {
-                        debug!("Multiple fixes found, but only ignore fixes available");
-                        #[cfg(debug_assertions)]
-                        {
-                            if !multi.is_empty() {
-                                debug_assert!(multi[0].message.as_ref().is_some());
-                                debug_assert!(
-                                    multi[0].message.as_ref().unwrap().starts_with("Disable")
-                                );
-                                debug_assert!(
-                                    multi[0].message.as_ref().unwrap().ends_with("for this line")
-                                );
-                            }
-                        }
-                        // this fix is only for "ignore this line/file" fixes
-                        // do not apply them for "fix all" code action
-                        None
-                    }
-                }
-            };
-
-            if let Some(fixed_content) = &fix {
-                text_edits.push(TextEdit {
-                    range: fixed_content.range,
-                    new_text: fixed_content.code.clone(),
-                });
-            }
-        }
-
-        text_edits
+        fix_all_text_edit(value.iter())
     }
 
     /// Handle file changes that are watched by the client

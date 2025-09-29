@@ -80,7 +80,32 @@ pub fn apply_all_fix_code_action<'a>(
     reports: impl Iterator<Item = &'a DiagnosticReport>,
     uri: &Uri,
 ) -> Option<CodeAction> {
-    let mut quick_fixes: Vec<TextEdit> = vec![];
+    let quick_fixes: Vec<TextEdit> = fix_all_text_edit(reports);
+
+    if quick_fixes.is_empty() {
+        return None;
+    }
+
+    Some(CodeAction {
+        title: "quick fix".to_string(),
+        kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
+        is_preferred: Some(true),
+        edit: Some(WorkspaceEdit {
+            #[expect(clippy::disallowed_types)]
+            changes: Some(std::collections::HashMap::from([(uri.clone(), quick_fixes)])),
+            ..WorkspaceEdit::default()
+        }),
+        disabled: None,
+        data: None,
+        diagnostics: None,
+        command: None,
+    })
+}
+
+/// Collect all text edits from the provided diagnostic reports, which can be applied at once.
+/// This is useful for implementing a "fix all" code action / command that applies multiple fixes in one go.
+pub fn fix_all_text_edit<'a>(reports: impl Iterator<Item = &'a DiagnosticReport>) -> Vec<TextEdit> {
+    let mut text_edits: Vec<TextEdit> = vec![];
 
     for report in reports {
         let fix = match &report.fixed_content {
@@ -119,29 +144,12 @@ pub fn apply_all_fix_code_action<'a>(
             // and return them as one workspace edit.
             // it is possible that one fix will change the range for the next fix
             // see oxc-project/oxc#10422
-            quick_fixes.push(TextEdit {
+            text_edits.push(TextEdit {
                 range: fixed_content.range,
                 new_text: fixed_content.code.clone(),
             });
         }
     }
 
-    if quick_fixes.is_empty() {
-        return None;
-    }
-
-    Some(CodeAction {
-        title: "quick fix".to_string(),
-        kind: Some(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC),
-        is_preferred: Some(true),
-        edit: Some(WorkspaceEdit {
-            #[expect(clippy::disallowed_types)]
-            changes: Some(std::collections::HashMap::from([(uri.clone(), quick_fixes)])),
-            ..WorkspaceEdit::default()
-        }),
-        disabled: None,
-        data: None,
-        diagnostics: None,
-        command: None,
-    })
+    text_edits
 }
