@@ -15,7 +15,7 @@ ts compatibility: 516/573 (90.05%)
 | typescript/arrow/16067.ts | 💥💥 | 93.88% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
-| typescript/cast/generic-cast.ts | 💥 | 97.84% |
+| typescript/cast/generic-cast.ts | 💥 | 96.28% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 82.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 82.09% |
