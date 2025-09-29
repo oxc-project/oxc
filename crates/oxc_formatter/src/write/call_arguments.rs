@@ -168,8 +168,8 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 /// Tests if this is a pipe function call that should have expanded arguments
 fn is_pipe_function_call(args: &[Argument<'_>], parent: &AstNodes) -> bool {
     // Check if parent is a call expression with pipe-like function name
-    if let AstNodes::CallExpression(call) = parent {
-        if let Expression::Identifier(id) = &call.callee {
+    if let AstNodes::CallExpression(call) = parent
+        && let Expression::Identifier(id) = &call.callee {
             let name = id.name.as_str();
             // Only expand pipe functions when they have nested call expressions
             // that would benefit from multi-line formatting
@@ -188,7 +188,6 @@ fn is_pipe_function_call(args: &[Argument<'_>], parent: &AstNodes) -> bool {
                 return nested_calls > 0;
             }
         }
-    }
     false
 }
 
