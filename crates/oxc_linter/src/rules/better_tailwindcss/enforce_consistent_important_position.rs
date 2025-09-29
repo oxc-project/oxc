@@ -159,9 +159,10 @@ impl EnforceConsistentImportantPosition {
 
     fn check_important_position(&self, class: &str, base_span: Span) -> Option<(String, Span)> {
         // Parse the class to separate variants and base class
-        let parts: Vec<&str> = class.rsplitn(2, ':').collect();
-        let (variants, base_class) =
-            if parts.len() == 2 { (Some(parts[1]), parts[0]) } else { (None, class) };
+        let (variants, base_class) = match class.rsplit_once(':') {
+            Some((variants, base)) => (Some(variants), base),
+            None => (None, class),
+        };
 
         let has_prefix = base_class.starts_with('!');
         let has_suffix = base_class.ends_with('!');
