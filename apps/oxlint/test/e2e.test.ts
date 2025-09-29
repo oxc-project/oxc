@@ -65,6 +65,10 @@ describe('oxlint CLI', () => {
     await testFixture('missing_custom_plugin');
   });
 
+  it('should report an error if a custom plugin has a reserved name', async () => {
+    await testFixture('reserved_name');
+  });
+
   it('should report an error if a custom plugin throws an error during import', async () => {
     await testFixture('custom_plugin_import_error');
   });
