@@ -638,18 +638,12 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     //     (b) =>
                     //     (c) =>
                     //       0
-                    // However, for call arguments with generic arrow chains, keep all signatures
-                    // at the same level to match Prettier's formatting:
-                    //   foo(
-                    //     <T>() =>
-                    //     () => 1
-                    //   ,
                     // Because the chain is printed as a flat list, each entry needs to set
                     // its own indention. This ensures that the first item keeps the same
                     // level as the surrounding content, and then each subsequent item has
                     // one additional level, as shown above.
-                    let is_generic_chain_in_call_arg = is_call_argument &&
-                        self.arrows().any(|arrow| arrow.type_parameters.is_some());
+                    let is_generic_chain_in_call_arg = is_call_argument
+                        && self.arrows().any(|arrow| arrow.type_parameters.is_some());
 
                     if is_first_in_chain || has_initial_indent || is_generic_chain_in_call_arg {
                         is_first_in_chain = false;
