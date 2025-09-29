@@ -50,7 +50,9 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             let mut current = Some(self.parent);
             let mut depth = 0;
             while let Some(parent) = current {
-                if depth > 10 { break; } // Prevent infinite loops
+                if depth > 10 {
+                    break;
+                } // Prevent infinite loops
                 if matches!(parent, AstNodes::TSTypeAssertion(_)) {
                     break;
                 }
@@ -117,7 +119,10 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 
         let has_empty_line =
             self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
-        if has_empty_line || is_function_composition_args(self) || is_pipe_function_call(self, self.parent) {
+        if has_empty_line
+            || is_function_composition_args(self)
+            || is_pipe_function_call(self, self.parent)
+        {
             return format_all_args_broken_out(self, true, f);
         }
 
@@ -167,25 +172,31 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 fn is_pipe_function_call(args: &[Argument<'_>], parent: &AstNodes) -> bool {
     // Check if parent is a call expression with pipe-like function name
     if let AstNodes::CallExpression(call) = parent
-        && let Expression::Identifier(id) = &call.callee {
-            let name = id.name.as_str();
-            // Only expand pipe functions when they have nested call expressions
-            // that would benefit from multi-line formatting
-            if matches!(name, "pipe" | "flow") {
-                // Count nested call expressions
-                let nested_calls = args.iter().filter(|arg| {
+        && let Expression::Identifier(id) = &call.callee
+    {
+        let name = id.name.as_str();
+        // Only expand pipe functions when they have nested call expressions
+        // that would benefit from multi-line formatting
+        if matches!(name, "pipe" | "flow") {
+            // Count nested call expressions
+            let nested_calls = args
+                .iter()
+                .filter(|arg| {
                     if let Argument::CallExpression(call) = arg {
                         // Check if this call has nested calls as arguments
-                        call.arguments.iter().any(|inner| matches!(inner, Argument::CallExpression(_)))
+                        call.arguments
+                            .iter()
+                            .any(|inner| matches!(inner, Argument::CallExpression(_)))
                     } else {
                         false
                     }
-                }).count();
+                })
+                .count();
 
-                // Expand if we have nested complexity
-                return nested_calls > 0;
-            }
+            // Expand if we have nested complexity
+            return nested_calls > 0;
         }
+    }
     false
 }
 
