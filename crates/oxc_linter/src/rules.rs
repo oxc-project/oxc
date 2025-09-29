@@ -30,6 +30,7 @@ pub(crate) mod import {
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_named_default;
+    pub mod no_named_export;
     pub mod no_namespace;
     pub mod no_self_import;
     pub mod no_unassigned_import;
@@ -802,6 +803,7 @@ oxc_macros::declare_all_lint_rules! {
     import::extensions,
     import::first,
     import::group_exports,
+    import::no_named_export,
     import::no_unassigned_import,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
