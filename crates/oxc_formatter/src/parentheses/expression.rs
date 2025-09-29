@@ -307,82 +307,18 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ArrayExpression<'a>> {
     }
 }
 
-
-/// Checks if an object expression is part of a template literal's expressions
-/// and should receive parentheses to avoid being confused with a block statement
-fn find_template_literal_parent<'a>(
-    span: Span,
-    parent: &'a AstNodes<'a>,
-) -> Option<&'a AstNodes<'a>> {
-    // Check if this object is directly in a template literal expression
-    // vs. nested inside function calls or other expressions
-    if matches!(parent, AstNodes::TemplateLiteral(_)) {
-        return Some(parent);
-    }
-
-    // For more complex cases, traverse up but be more restrictive
-    let mut current_parent = parent;
-    let mut depth = 0;
-    let mut seen_call_or_complex_expr = false;
-
-    loop {
-        match current_parent {
-            AstNodes::TemplateLiteral(_) => {
-                // Found a template literal - only add parentheses if:
-                // 1. We haven't gone through complex expressions like function calls
-                // 2. The depth is reasonable
-                if depth <= 2 && !seen_call_or_complex_expr {
-                    return Some(current_parent);
-                } else {
-                    return None;
-                }
-            }
-            // Simple structural nodes that don't change semantics
-            AstNodes::ParenthesizedExpression(_)
-            | AstNodes::TSAsExpression(_)
-            | AstNodes::TSSatisfiesExpression(_) => {
-                current_parent = current_parent.parent();
-                depth += 1;
-            }
-            // Complex expressions that indicate this object has other purposes
-            AstNodes::CallExpression(_)
-            | AstNodes::NewExpression(_)
-            | AstNodes::ArrayExpression(_) => {
-                seen_call_or_complex_expr = true;
-                current_parent = current_parent.parent();
-                depth += 1;
-            }
-            // Expression statement is okay for direct template literals
-            AstNodes::ExpressionStatement(_) if depth == 0 => {
-                current_parent = current_parent.parent();
-                depth += 1;
-            }
-            // Stop at other nodes
-            _ => {
-                return None;
-            }
-        }
-
-        // Safety limit
-        if depth > 3 {
-            return None;
-        }
-    }
-}
-
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let span = self.span();
         let parent = self.parent;
 
-        // Object expressions need parentheses when inside template literal expressions
-        // to avoid being confused with block statements
-        if let Some(_) = find_template_literal_parent(span, parent) {
-            return true;
+        // Object expressions inside template literals don't need parentheses
+        // They are unambiguously in expression context and cannot be confused with block statements
+        if matches!(parent, AstNodes::TemplateLiteral(_)) {
+            return false;
         }
 
         // Object expressions don't need parentheses when used as function arguments
-        // (unless they're in a template literal, which we checked above)
         if is_expression_used_as_call_argument(span, parent) {
             return false;
         }
