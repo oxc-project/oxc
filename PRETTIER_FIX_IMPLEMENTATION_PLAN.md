@@ -14,25 +14,26 @@
 ## Phase 1: Ultra-High Match Fixes (>97% match)
 **Goal**: Fix tests that are 1-2 characters away from passing
 
-### Step 1.1: Template Literals (98.43% match)
+### ✅ Step 1.1: Template Literals (98.43% match) - ATTEMPTED
 - Test: `js/strings/template-literals.js`
-- Run isolated test, identify exact difference
-- Fix formatting issue (likely spacing/quotes)
-- **Verify**: Run full conformance suite
-- **Success Criteria**: 648/699 JS tests passing (up from 647)
+- **Status**: ❌ Fix attempted but didn't work (still at 98.43%)
+- **Attempted**: Added parentheses logic for object literals in templates
+- **Result**: No regression but issue not resolved
+- **TODO**: Needs different approach
 
-### Step 1.2: TypeScript Cast (97.84% match)
+### ✅ Step 1.2: TypeScript Cast (97.84% match) - COMPLETED
 - Test: `typescript/cast/generic-cast.ts`
-- Examine cast operator spacing/parentheses
-- Apply minimal fix
-- **Verify**: Run full conformance suite
-- **Success Criteria**: 527/573 TS tests passing (up from 526)
+- **Status**: ✅ FIXED (now 100% match)
+- **Solution**: Added length-based logic for line breaking in TSTypeAssertion
+- **Commit**: `9e7d8ea55`
+- **Success**: 527/573 TS tests passing (up from 526)
 
-### Step 1.3: Arrow Call (99.35% match)
+### ✅ Step 1.3: Arrow Call (99.35% match) - COMPLETED
 - Test: `js/arrows/call.js`
-- Fix likely single-character issue
-- **Verify**: Full suite + all arrow tests
-- **Success Criteria**: 649/699 JS tests passing
+- **Status**: ✅ FIXED (now 100% match)
+- **Solution**: Detect long curried arrow arguments for proper expansion
+- **Commit**: `9e7d8ea55`
+- **Success**: 648/699 JS tests passing (up from 647)
 
 ## Phase 2: High Match Individual Fixes (93-95%)
 **Goal**: Fix nearly-passing tests one at a time
@@ -148,15 +149,22 @@
 - Tag each successful phase: `git tag phase-X-complete`
 
 ## Success Metrics
-- **Phase 1**: 3 tests fixed, 650/699 JS, 527/573 TS
-- **Phase 2**: 3 tests fixed, 653/699 JS, 528/573 TS
-- **Phase 3**: 7 tests fixed, 658/699 JS, 528/573 TS
-- **Phase 4**: 2 tests fixed, 661/699 JS, 528/573 TS
-- **Phase 5**: 5 tests fixed, 661/699 JS, 533/573 TS
-- **Phase 6**: 2 tests fixed, 663/699 JS, 533/573 TS
+
+### Current Progress
+- **Completed**: 2/23 tests fixed (8.7%)
+- **Current State**: 648/699 JS, 527/573 TS
+- **Remaining**: 21 tests to fix
+
+### Original Targets
+- **Phase 1**: ~~3~~ 2 tests fixed, ~~650~~ 648/699 JS, 527/573 TS ✅ (Partial)
+- **Phase 2**: 3 tests to fix, target 651/699 JS, 528/573 TS
+- **Phase 3**: 7 tests to fix, target 658/699 JS, 528/573 TS
+- **Phase 4**: 2 tests to fix, target 660/699 JS, 528/573 TS
+- **Phase 5**: 5 tests to fix, target 660/699 JS, 533/573 TS
+- **Phase 6**: 2 tests to fix, target 662/699 JS, 533/573 TS
 - **FINAL**: Back to main branch performance levels (663/699 JS, 533/573 TS)
 
-## Total: 23 regressions fixed in 6 phases, 16 implementation steps
+## Total: 21 regressions remaining (2 completed, 1 attempted but failed)
 
 ## Command Reference
 
