@@ -161,12 +161,21 @@ impl<'a> ParserImpl<'a> {
         matches!(token.kind(), Kind::Semicolon | Kind::RCurly | Kind::Eof) || token.is_on_new_line()
     }
 
+    /// Cold path for expect failures - separated to improve branch prediction
+    #[cold]
+    #[inline(never)]
+    fn handle_expect_failure(&mut self, expected_kind: Kind) {
+        let range = self.cur_token().span();
+        let error =
+            diagnostics::expect_token(expected_kind.to_str(), self.cur_kind().to_str(), range);
+        self.set_fatal_error(error);
+    }
+
     /// # Errors
+    #[inline]
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) {
         if !self.at(kind) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range);
-            self.set_fatal_error(error);
+            self.handle_expect_failure(kind);
         }
     }
 
@@ -174,7 +183,9 @@ impl<'a> ParserImpl<'a> {
     /// # Errors
     #[inline]
     pub(crate) fn expect(&mut self, kind: Kind) {
-        self.expect_without_advance(kind);
+        if !self.at(kind) {
+            self.handle_expect_failure(kind);
+        }
         self.advance(kind);
     }
 
