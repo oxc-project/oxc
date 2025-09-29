@@ -190,11 +190,13 @@ fn is_long_curried_arrow_argument(args: &[Argument<'_>], call_like_span: Span) -
         // Check if it's a curried arrow (arrow expression that returns another arrow)
         if arrow.expression {
             if let Some(Expression::ArrowFunctionExpression(_)) = arrow.get_expression() {
-                // Calculate estimated inline width: call span + arrow span + parentheses
+                // Use a more conservative threshold since span-based width estimation
+                // includes whitespace and comments, making it overly aggressive.
+                // Simple curried arrows like `(a) => (b) => (1, 2, 3)` should stay inline.
                 let estimated_width = call_like_span.size() + arrow.span.size() + 2; // 2 for parentheses
 
-                // Break if the estimated width exceeds reasonable limit
-                return estimated_width > 80;
+                // Only break for genuinely long expressions - be much more conservative
+                return estimated_width > 120;
             }
         }
     }
