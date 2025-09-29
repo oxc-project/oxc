@@ -337,13 +337,14 @@ fn find_template_literal_parent<'a>(span: Span, parent: &'a AstNodes<'a>) -> Opt
     // Traverse up the parent chain to look for a TemplateLiteral, but be more selective
     let mut current_parent = parent;
     let mut depth = 0;
+    let mut seen_call_as_argument = false;
 
     loop {
         match current_parent {
             AstNodes::TemplateLiteral(template) => {
                 // Found a template literal - this object expression should have parentheses
-                // only if we reached here through a reasonable path (not too deep)
-                if depth <= 3 {
+                // only if we reached here through a reasonable path and not deeply nested in calls
+                if depth <= 3 && !seen_call_as_argument {
                     return Some(current_parent);
                 } else {
                     return None;
@@ -354,8 +355,13 @@ fn find_template_literal_parent<'a>(span: Span, parent: &'a AstNodes<'a>) -> Opt
             AstNodes::ParenthesizedExpression(_)
             | AstNodes::TSAsExpression(_)
             | AstNodes::TSSatisfiesExpression(_)
-            | AstNodes::CallExpression(_)
             | AstNodes::ExpressionStatement(_) => {
+                current_parent = current_parent.parent();
+                depth += 1;
+            }
+            // Allow traversal through call expressions but note that we're now an argument
+            AstNodes::CallExpression(_) => {
+                seen_call_as_argument = true;
                 current_parent = current_parent.parent();
                 depth += 1;
             }
@@ -378,7 +384,14 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
         let span = self.span();
         let parent = self.parent;
 
+        // Object expressions need parentheses when directly inside template literal expressions
+        // to avoid being confused with block statements - CHECK THIS FIRST!
+        if let Some(_) = find_template_literal_parent(span, parent) {
+            return true;
+        }
+
         // Object expressions don't need parentheses when used as function arguments
+        // (unless they're in a template literal, which we checked above)
         if is_expression_used_as_call_argument(span, parent) {
             return false;
         }
@@ -395,13 +408,6 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
         {
             return false;
         }
-
-        // Object expressions need parentheses when directly inside template literal expressions
-        // to avoid being confused with block statements
-        if let Some(template_parent) = find_template_literal_parent(span, parent) {
-            return true;
-        }
-
 
         is_class_extends(parent, span)
             || is_first_in_statement(span, parent, FirstInStatementMode::ExpressionStatementOrArrow)
