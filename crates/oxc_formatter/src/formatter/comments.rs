@@ -338,8 +338,26 @@ impl<'a> Comments<'a> {
         );
 
         let Some(following_node) = following_node else {
-            let enclosing_span = enclosing_node.span();
-            return self.comments_before(enclosing_span.end);
+            // Find dangling comments at the end of the enclosing node
+            let comments = self.comments_before(enclosing_node.span().end);
+
+            let mut start = preceding_span.end;
+            for (idx, comment) in comments.iter().enumerate() {
+                // Comments inside the preceding node, which should be printed without checking
+                if start > comment.span.start {
+                    continue;
+                }
+
+                if !source_text.all_bytes_match(start, comment.span.start, |b| {
+                    b.is_ascii_whitespace() || matches!(b, b')' | b',' | b';')
+                }) {
+                    return &comments[..idx];
+                }
+
+                start = comment.span.end;
+            }
+
+            return comments;
         };
 
         let following_span = following_node.span();
