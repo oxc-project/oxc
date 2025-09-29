@@ -121,11 +121,11 @@ Comment positioning and preservation issues.
 ## Recommended Fix Order
 
 1. **Phase 2 tests** (93%+ match rate)
-3. **Comment-related tests** (90%+ match, likely related)
-4. **Decorator pattern** (group fix possible)
-5. **Arrow currying patterns** (complex but related)
-6. **Angular patterns** (specific framework patterns)
-7. **Low-match tests** (require deeper investigation)
+2. **Comment-related tests** (90%+ match, likely related)
+3. **Decorator pattern** (group fix possible)
+4. **Arrow currying patterns** (complex but related)
+5. **Angular patterns** (specific framework patterns)
+6. **Low-match tests** (require deeper investigation)
 
 ## Notes
 

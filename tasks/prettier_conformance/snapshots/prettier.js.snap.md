@@ -1,4 +1,4 @@
-js compatibility: 649/699 (92.85%)
+js compatibility: 654/699 (93.56%)
 
 # Failed
 
@@ -18,8 +18,6 @@ js compatibility: 649/699 (92.85%)
 | js/conditional/new-ternary-examples.js | 💥✨ | 20.14% |
 | js/conditional/new-ternary-spec.js | 💥✨ | 24.35% |
 | js/conditional/postfix-ternary-regressions.js | 💥✨ | 20.77% |
-| js/decorators/member-expression.js | 💥 | 92.42% |
-| js/decorators/parens.js | 💥 | 75.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 91.89% |
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
@@ -27,9 +25,6 @@ js compatibility: 649/699 (92.85%)
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 84.09% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/method-chain/print-width-120/constructor.js | 💥 | 71.43% |
-| js/new-expression/call.js | 💥 | 75.00% |
-| js/new-expression/new_expression.js | 💥 | 88.89% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
