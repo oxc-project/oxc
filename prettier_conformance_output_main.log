@@ -1,0 +1,4 @@
+    Finished `dev` profile [unoptimized] target(s) in 0.07s
+     Running `target/debug/oxc_prettier_conformance`
+js compatibility: 647/699 (92.56%)
+ts compatibility: 526/573 (91.80%)
