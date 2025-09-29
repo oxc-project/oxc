@@ -1,4 +1,4 @@
-js compatibility: 648/699 (92.70%)
+js compatibility: 649/699 (92.85%)
 
 # Failed
 
@@ -36,7 +36,6 @@ js compatibility: 648/699 (92.70%)
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/require/require.js | 💥 | 93.51% |
-| js/strings/template-literals.js | 💥💥 | 98.43% |
 | js/ternaries/binary.js | 💥💥💥💥✨✨✨✨ | 18.42% |
 | js/ternaries/func-call.js | 💥💥💥💥✨✨✨✨ | 25.00% |
 | js/ternaries/indent-after-paren.js | 💥💥💥💥✨✨✨✨ | 24.59% |
