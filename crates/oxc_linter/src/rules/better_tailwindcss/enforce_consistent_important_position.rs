@@ -7,11 +7,9 @@ use serde_json::Value;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn inconsistent_important_position(span: Span, class: &str, fixed: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "Incorrect important position. \"{class}\" should be \"{fixed}\""
-    ))
-    .with_help("Use consistent important modifier position across your codebase")
-    .with_label(span)
+    OxcDiagnostic::warn(format!("Incorrect important position. \"{class}\" should be \"{fixed}\""))
+        .with_help("Use consistent important modifier position across your codebase")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -100,22 +98,24 @@ impl Rule for EnforceConsistentImportantPosition {
             AstKind::JSXAttribute(attr) => {
                 if let Some(name) = attr.name.as_identifier()
                     && matches!(name.name.as_str(), "className" | "class")
-                        && let Some(value) = &attr.value
-                            && let Some(str_lit) = value.as_string_literal() {
-                                // For JSX string literals, we need to get the inner span without quotes
-                                // The span of the string literal includes the quotes, but we only want to replace the content
-                                let content_span =
-                                    Span::new(str_lit.span.start + 1, str_lit.span.end - 1);
-                                self.check_classes(&str_lit.value, content_span, ctx);
-                            }
+                    && let Some(value) = &attr.value
+                    && let Some(str_lit) = value.as_string_literal()
+                {
+                    // For JSX string literals, we need to get the inner span without quotes
+                    // The span of the string literal includes the quotes, but we only want to replace the content
+                    let content_span = Span::new(str_lit.span.start + 1, str_lit.span.end - 1);
+                    self.check_classes(&str_lit.value, content_span, ctx);
+                }
             }
             // Handle template literals (for now, just simple string literals in JSX)
             AstKind::TemplateLiteral(template) => {
                 // TODO: Handle template literals with expressions
-                if template.expressions.is_empty() && template.quasis.len() == 1
-                    && let Some(quasi) = template.quasis.first() {
-                        self.check_classes(&quasi.value.raw, template.span, ctx);
-                    }
+                if template.expressions.is_empty()
+                    && template.quasis.len() == 1
+                    && let Some(quasi) = template.quasis.first()
+                {
+                    self.check_classes(&quasi.value.raw, template.span, ctx);
+                }
             }
             _ => {}
         }
