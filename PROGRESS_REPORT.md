@@ -8,20 +8,20 @@
 ### Overall Progress
 
 - **Target**: Fix 23 test regressions to reach main branch parity
-- **Fixed So Far**: 2/23 (8.7% complete)
+- **Fixed So Far**: 3/23 (13.0% complete)
 - **Zero-Regression Policy**: ✅ **MAINTAINED**
 
 ### Current State vs Targets
 
 | Metric                | Start            | Current          | Target (Main)    | Progress         |
 | --------------------- | ---------------- | ---------------- | ---------------- | ---------------- |
-| **JavaScript**        | 647/699 (92.56%) | 648/699 (92.70%) | 663/699 (94.85%) | +1 of +16 needed |
+| **JavaScript**        | 647/699 (92.56%) | 649/699 (92.85%) | 663/699 (94.85%) | +2 of +16 needed |
 | **TypeScript**        | 526/573 (91.80%) | 527/573 (91.97%) | 533/573 (93.02%) | +1 of +7 needed  |
-| **Total Tests Fixed** | 0                | 2                | 23               | 8.7%             |
+| **Total Tests Fixed** | 0                | 3                | 23               | 13.0%            |
 
 ## Phase 1 Results (Ultra-High Match >97%)
 
-### ✅ Successfully Fixed (2/3)
+### ✅ Successfully Fixed (3/3)
 
 #### 1. `js/arrows/call.js` - **FIXED** ✅
 
@@ -39,31 +39,31 @@
 - **Commit**: `9e7d8ea55` (part of combined fix)
 - **Status**: Now 100% match with Prettier
 
-### ❌ Attempted but Not Fixed (1/3)
+#### 3. `js/strings/template-literals.js` - **FIXED** ✅
 
-#### 3. `js/strings/template-literals.js` - **NOT FIXED** ❌
-
-- **Match Rate**: Still at 98.43%
-- **Issue**: Object literals in template expressions need parentheses
-- **Attempted Fix**: Added parentheses logic in `99133bdab`
-- **Result**: Fix didn't work as expected, but caused no regressions
-- **Status**: Needs re-investigation
+- **Original Match**: 98.43%
+- **Issue**: Object expressions in template literals were incorrectly receiving parentheses
+- **Solution**: Removed overly aggressive parentheses logic; objects in template literals are unambiguously in expression context
+- **Commit**: `cde41e773` - fix(formatter): remove unnecessary parentheses from object expressions in template literals
+- **Status**: Now 100% match with Prettier
 
 ## Commits Made
 
-1. `99133bdab` - fix(formatter): template-literals.js - add parentheses to object literals in template expressions
-   - Attempted to fix template literals (unsuccessful but harmless)
-
-2. `9e7d8ea55` - fix(formatter): fix ultra-high match prettier conformance tests
+1. `9e7d8ea55` - fix(formatter): fix ultra-high match prettier conformance tests
    - Successfully fixed `js/arrows/call.js`
    - Successfully fixed `typescript/cast/generic-cast.ts`
    - Files changed: 3 files, +55 insertions, -23 deletions
 
+2. `cde41e773` - fix(formatter): remove unnecessary parentheses from object expressions in template literals
+   - Successfully fixed `js/strings/template-literals.js`
+   - Removed overly aggressive parentheses logic that was incorrectly adding parentheses
+   - Files changed: 1 file (expression.rs)
+
 ## Remaining Work
 
-### Phase 1 Incomplete (1 test)
+### Phase 1 Complete ✅
 
-- `js/strings/template-literals.js` (98.43% match) - Needs different approach
+All three Phase 1 tests (>97% match) have been successfully fixed!
 
 ### Phase 2 Pending (High Match 93-95%)
 
@@ -73,7 +73,7 @@
 
 ### Phases 3-6 Pending
 
-- 18 more tests to fix across various categories
+- 20 more tests to fix across various categories
 - See `PRETTIER_FIX_IMPLEMENTATION_PLAN.md` for full details
 
 ## Key Learnings
@@ -88,21 +88,22 @@
 ### What Didn't Work
 
 1. **Broad logic changes** - Initial attempts that modified general formatting rules caused regressions
-2. **Template literal parentheses** - First approach didn't resolve the issue (needs re-examination)
+2. **Over-aggressive parentheses** - Initial template literal fix added unnecessary parentheses; simpler was better
 
 ### Technical Insights
 
 1. **AST Complexity** - Arrow function arguments have complex nested structures requiring careful handling
 2. **Width Calculations** - Effective line breaking requires accurate width estimation
 3. **TypeScript Specifics** - Type assertions need special handling to not interfere with expression formatting
+4. **Template Literal Context** - Objects in template literals are unambiguously in expression context, no parentheses needed
 
 ## Next Steps
 
 ### Immediate Actions
 
-1. **Re-investigate** `js/strings/template-literals.js` with different approach
-2. **Continue Phase 2** with the three 93-95% match tests
-3. **Monitor** for any delayed regression effects
+1. **Continue Phase 2** with the three 93-95% match tests
+2. **Monitor** for any delayed regression effects
+3. **Consider grouping related fixes** for efficiency
 
 ### Risk Mitigation
 
@@ -126,14 +127,14 @@ git diff HEAD~1 HEAD tasks/prettier_conformance/snapshots/
 
 ## Success Metrics Tracking
 
-- **Phase 1**: 2/3 complete (66.7%)
+- **Phase 1**: 3/3 complete (100%) ✅
 - **Phase 2**: 0/3 complete (0%)
 - **Phase 3**: 0/7 complete (0%)
 - **Phase 4**: 0/2 complete (0%)
 - **Phase 5**: 0/5 complete (0%)
 - **Phase 6**: 0/2 complete (0%)
 
-**Overall**: 2/23 tests fixed (8.7% complete)
+**Overall**: 3/23 tests fixed (13.0% complete)
 
 ---
 
