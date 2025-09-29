@@ -8,8 +8,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn inconsistent_important_position(span: Span, class: &str, fixed: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Incorrect important position. \"{}\" should be \"{}\"",
-        class, fixed
+        "Incorrect important position. \"{class}\" should be \"{fixed}\""
     ))
     .with_help("Use consistent important modifier position across your codebase")
     .with_label(span)
@@ -99,28 +98,24 @@ impl Rule for EnforceConsistentImportantPosition {
         match node.kind() {
             // Handle JSX attributes (className, class)
             AstKind::JSXAttribute(attr) => {
-                if let Some(name) = attr.name.as_identifier() {
-                    if matches!(name.name.as_str(), "className" | "class") {
-                        if let Some(value) = &attr.value {
-                            if let Some(str_lit) = value.as_string_literal() {
+                if let Some(name) = attr.name.as_identifier()
+                    && matches!(name.name.as_str(), "className" | "class")
+                        && let Some(value) = &attr.value
+                            && let Some(str_lit) = value.as_string_literal() {
                                 // For JSX string literals, we need to get the inner span without quotes
                                 // The span of the string literal includes the quotes, but we only want to replace the content
                                 let content_span =
                                     Span::new(str_lit.span.start + 1, str_lit.span.end - 1);
                                 self.check_classes(&str_lit.value, content_span, ctx);
                             }
-                        }
-                    }
-                }
             }
             // Handle template literals (for now, just simple string literals in JSX)
             AstKind::TemplateLiteral(template) => {
                 // TODO: Handle template literals with expressions
-                if template.expressions.is_empty() && template.quasis.len() == 1 {
-                    if let Some(quasi) = template.quasis.first() {
+                if template.expressions.is_empty() && template.quasis.len() == 1
+                    && let Some(quasi) = template.quasis.first() {
                         self.check_classes(&quasi.value.raw, template.span, ctx);
                     }
-                }
             }
             _ => {}
         }
@@ -140,7 +135,7 @@ impl EnforceConsistentImportantPosition {
                     has_changes = true;
                     fixed_class
                 } else {
-                    class.to_string()
+                    (*class).to_string()
                 }
             })
             .collect();
@@ -204,12 +199,12 @@ impl EnforceConsistentImportantPosition {
 
         // Add important in the correct position
         let fixed_base = match self.0.position {
-            ImportantPosition::Legacy => format!("!{}", clean_base),
-            ImportantPosition::Recommended => format!("{}!", clean_base),
+            ImportantPosition::Legacy => format!("!{clean_base}"),
+            ImportantPosition::Recommended => format!("{clean_base}!"),
         };
 
         // Reconstruct with variants if present
-        if let Some(v) = variants { format!("{}:{}", v, fixed_base) } else { fixed_base }
+        if let Some(v) = variants { format!("{v}:{fixed_base}") } else { fixed_base }
     }
 }
 
@@ -240,7 +235,7 @@ fn test() {
             Some(json!([{"position": "legacy"}])),
         ),
         // Empty or no className
-        (r#"<div />"#, None),
+        (r"<div />", None),
         (r#"<div className="" />"#, None),
         // Other attributes
         (r#"<div id="!important" />"#, None),
