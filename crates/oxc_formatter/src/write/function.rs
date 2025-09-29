@@ -117,10 +117,10 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
                 )?;
 
                 if group_parameters {
-                    write!(f, [group(&format_parameters)])?;
+                    write!(f, [group(&format_parameters)])
                 } else {
-                    write!(f, [format_parameters])?;
-                }
+                    write!(f, [format_parameters])
+                }?;
 
                 write!(f, [format_return_type])
             }))]

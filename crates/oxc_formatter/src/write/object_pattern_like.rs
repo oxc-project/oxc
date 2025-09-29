@@ -9,7 +9,7 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
-    write::parameters::should_hug_function_parameters,
+    write::parameters::{get_this_param, should_hug_function_parameters},
 };
 
 use super::{
@@ -117,11 +117,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         matches!(self, Self::ObjectPattern(node) if {
             matches!(node.parent, AstNodes::FormalParameter(param) if {
                 matches!(param.parent, AstNodes::FormalParameters(params) if {
-                    let this_param = if let AstNodes::Function(function) = params.parent {
-                        function.this_param()
-                    } else {
-                        None
-                    };
+                    let this_param = get_this_param(param.parent);
                     should_hug_function_parameters(params, this_param, false, f)
                 })
             })

@@ -20,7 +20,9 @@ use crate::{
         object::format_property_key,
     },
     write,
-    write::{semicolon::OptionalSemicolon, type_parameters},
+    write::{
+        function::should_group_function_parameters, semicolon::OptionalSemicolon, type_parameters,
+    },
 };
 
 use super::{
@@ -83,6 +85,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
             }
         }
         let value = self.value();
+
         if value.r#async {
             write!(f, ["async", space()])?;
         }
@@ -95,22 +98,27 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
             format_property_key(self.key(), f)?;
         }
 
-        if self.optional() {
+        if self.optional {
             write!(f, "?")?;
         }
-        if let Some(type_parameters) = &value.type_parameters() {
-            write!(f, type_parameters)?;
+
+        if value.type_parameters.is_none() {
+            // // Handle comments between method name and parameters
+            // // Example: method /* comment */ (param) {}
+            // let comments = f.context().comments().comments_before(value.params().span.start);
+            // if !comments.is_empty() {
+            //     write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
+            // }
         }
-        // Handle comments between method name and parameters
-        // Example: method /* comment */ (param) {}
-        let comments = f.context().comments().comments_before(value.params().span.start);
-        if !comments.is_empty() {
-            write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
-        }
-        write!(f, group(&value.params()))?;
-        if let Some(return_type) = &value.return_type() {
-            write!(f, return_type)?;
-        }
+
+        format_grouped_parameters_with_return_type(
+            value.type_parameters(),
+            value.this_param.as_deref(),
+            value.params(),
+            value.return_type(),
+            f,
+        )?;
+
         if let Some(body) = &value.body() {
             // Handle block comments between method signature and body
             // Example: method() /* comment */ {}
@@ -622,4 +630,42 @@ impl<'a> Format<'a> for ClassPropertySemicolon<'a, '_> {
             Ok(())
         }
     }
+}
+
+pub fn format_grouped_parameters_with_return_type<'a>(
+    type_parameters: Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>>,
+    this_param: Option<&TSThisParameter<'a>>,
+    params: &AstNode<'a, FormalParameters<'a>>,
+    return_type: Option<&AstNode<'a, TSTypeAnnotation<'a>>>,
+    f: &mut Formatter<'_, 'a>,
+) -> FormatResult<()> {
+    write!(f, [type_parameters])?;
+
+    group(&format_once(|f| {
+        let mut format_parameters = params.memoized();
+        let mut format_return_type = return_type.memoized();
+
+        // Inspect early, in case the `return_type` is formatted before `parameters`
+        // in `should_group_function_parameters`.
+        format_parameters.inspect(f)?;
+
+        let group_parameters = should_group_function_parameters(
+            type_parameters.map(AsRef::as_ref),
+            params.items.len()
+                + usize::from(params.rest.is_some())
+                + usize::from(this_param.is_some()),
+            return_type.map(AsRef::as_ref),
+            &mut format_return_type,
+            f,
+        )?;
+
+        if group_parameters {
+            write!(f, [group(&format_parameters)])
+        } else {
+            write!(f, [format_parameters])
+        }?;
+
+        write!(f, [format_return_type])
+    }))
+    .fmt(f)
 }

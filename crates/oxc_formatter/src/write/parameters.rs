@@ -15,6 +15,16 @@ use crate::{
 
 use super::FormatWrite;
 
+pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThisParameter<'a>>> {
+    match parent {
+        AstNodes::Function(func) => func.this_param(),
+        AstNodes::TSFunctionType(func) => func.this_param(),
+        AstNodes::TSMethodSignature(func) => func.this_param(),
+        AstNodes::TSCallSignatureDeclaration(func) => func.this_param(),
+        _ => None,
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let comments = f.context().comments().comments_before(self.span.start);
@@ -28,11 +38,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             false
         };
 
-        let this_param = if let AstNodes::Function(function) = self.parent {
-            function.this_param()
-        } else {
-            None
-        };
+        let this_param = get_this_param(self.parent);
 
         let has_any_decorated_parameter =
             self.items.iter().any(|param| !param.decorators.is_empty());

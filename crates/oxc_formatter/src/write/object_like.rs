@@ -10,7 +10,7 @@ use crate::{
     generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
     write,
-    write::parameters::should_hug_function_parameters,
+    write::parameters::{get_this_param, should_hug_function_parameters},
 };
 
 #[derive(Clone, Copy)]
@@ -39,11 +39,7 @@ impl<'a> ObjectLike<'a, '_> {
                         let AstNodes::FormalParameters(parameters) = &param.parent else {
                             unreachable!()
                         };
-                        let this_param = if let AstNodes::Function(function) = parameters.parent {
-                            function.this_param()
-                        } else {
-                            None
-                        };
+                        let this_param = get_this_param(parameters.parent);
                         should_hug_function_parameters(parameters, this_param, false, f)
 
                     }
