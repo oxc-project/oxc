@@ -1,4 +1,4 @@
-ts compatibility: 527/573 (91.97%)
+ts compatibility: 526/573 (91.80%)
 
 # Failed
 
@@ -15,6 +15,7 @@ ts compatibility: 527/573 (91.97%)
 | typescript/arrow/16067.ts | 💥💥 | 93.88% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
+| typescript/cast/generic-cast.ts | 💥 | 97.84% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 82.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 82.09% |
