@@ -59,14 +59,24 @@ pub fn format_type_cast_comment_node<'a, T>(
         let type_cast_comments = &comments[..=type_cast_comment_index];
 
         write!(f, [FormatLeadingComments::Comments(type_cast_comments)])?;
-        f.context_mut().comments_mut().mark_as_handled_type_cast_comment();
+        f.context_mut().comments_mut().mark_as_type_cast_node(node);
         // If the printed cast comment is already handled, return early to avoid infinite recursion.
-    } else if !comments.is_already_handled_type_cast_comment()
+    } else if !comments.is_handled_type_cast_comment()
         && let Some(last_printed_comment) = comments.printed_comments().last()
     {
         if !last_printed_comment.span.end <= span.start
             || !f.comments().is_type_cast_comment(last_printed_comment)
         {
+            return Ok(false);
+        }
+
+        // Get the source text from the end of type cast comment to the node span
+        let node_source_text = source.bytes_range(last_printed_comment.span.end, span.end);
+
+        // `(/** @type {Number} */ (bar).zoo)`
+        //                         ^^^^
+        // Should wrap for `baz` rather than `baz.zoo`
+        if has_closed_parentheses(node_source_text) {
             return Ok(false);
         }
 
@@ -86,7 +96,7 @@ pub fn format_type_cast_comment_node<'a, T>(
             return Ok(false);
         }
 
-        f.context_mut().comments_mut().mark_as_handled_type_cast_comment();
+        f.context_mut().comments_mut().mark_as_type_cast_node(node);
     } else {
         // No typecast comment
         return Ok(false);

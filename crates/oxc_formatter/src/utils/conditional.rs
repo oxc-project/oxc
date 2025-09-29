@@ -161,9 +161,7 @@ fn format_trailing_comments<'a>(
     };
 
     let comments = get_comments(f);
-    FormatTrailingComments::Comments(comments).fmt(f)?;
-
-    Ok(())
+    FormatTrailingComments::Comments(comments).fmt(f)
 }
 
 impl<'a> FormatConditionalLike<'a, '_> {
