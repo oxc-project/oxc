@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.19.0] - 2025-09-29
+
+### 🚀 Features
+
+- eb6345f linter/unicorn: Implement no-array-callback-reference (#14230) (camc314)
+- c64fa61 linter: Add `import/no-named-export` rule (#14229) (yefan)
+- d30159b linter: Fix for unsorted keys (#14225) (Hamir Mahal)
+- c0e461f linter: Add `unicorn/no-array-sort` rule (#14117) (Cason Kervis)
+- 00954de linter/plugins: Remove `--js-plugins` CLI option (#14134) (overlookmotel)
+- b4d716f linter/plugins: Move custom JS plugin config to `jsPlugins` (#14133) (overlookmotel)
+- 60f0b3f linter: Add fix for `preserve-caught-error` (#14104) (Cam McHenry)
+- 2d74c17 linter/no-multiple-resolved: Implement promise rule no-multiple-resolved (#13420) (Li Wei)
+- 5e05d1b semantic: Put jsdoc behind linter feature, remove runtime flag (#14140) (Boshen)
+- 71af1aa semantic: Add "linter" feature (#14139) (Boshen)
+- 1a6d7ae linter: Add `vue/max-props` rule (#14039) (yefan)
+- 9c3afea linter/plugins: Support fixes (#14094) (overlookmotel)
+- 1472147 linter: Move `no-unused-expressions` to correctness (#14099) (camchenry)
+- 8b7c784 linter: Add react/jsx-pascal-case rule (#12165) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- e045391 linter/plugins: Error on JS plugin with reserved name (#14226) (overlookmotel)
+- 6005015 linter: Correctly handle CRLF when inserting disable comments in framework files (#14228) (shulaoda)
+- e37c435 language_server: Correct position for "ignore this rule for this file" in vue/astro/svelte files (#14187) (Sysix)
+- 03d1684 linter/plugins: Output warning on first JS plugin load (#14165) (overlookmotel)
+- fc7026d linter: Add missing `NODE_TYPES`, `cfg_id` method for no-multiple-resolved (#14147) (camc314)
+- 180c790 linter: Fix false positive in `no-restricted-globals` (#14135) (yefan)
+- 9f3e2bc linter/plugins: Output errors thrown in JS plugins (#14096) (overlookmotel)
+- 357a2d3 linter: Add support for `tsgolint.exe` on Windows (#14101) (camchenry)
+- 2604b28 linter: Fix lint errors building `oxlint` (#14095) (overlookmotel)
+
+### 🚜 Refactor
+
+- 4c3f1ac linter: Move `BUILT_IN_ERRORS` to utils file (#14221) (camc314)
+- 7a0eb57 language_server: Refactor ignore code action logic as a linter fix (#14183) (Sysix)
+- 497236e semantic: Move AstNode::cfg_id to struct of arrays in AstNodes (#14137) (Boshen)
+- 5ba765c semantic: Move AstNode::flags to struct of arrays in AstNodes (#14136) (Boshen)
+- ffc810d linter: `preserve-caught-errors`: rename config and add docs (#14103) (camchenry)
+- f91db73 linter: Add `CompositeFix::merge_fixes_fallible` method (#14093) (overlookmotel)
+- e55ffe0 curly: Enhance curly brace rule configuration and handling (#13498) (Antoine Zanardi)
+- 2fb69fd eslint/eqeqeq: Clean up implementation and improve documentation (#13527) (Antoine Zanardi)
+
+### ⚡ Performance
+
+- b6d2546 linter: Reduce string cloning in tsgo fixes (#14092) (overlookmotel)
+- c94c5dc linter: Remove allocation in `CompositeFix::merge_fixes` (#14090) (overlookmotel)
+
+
 ## [1.18.0] - 2025-09-24
 
 ### 🐛 Bug Fixes
