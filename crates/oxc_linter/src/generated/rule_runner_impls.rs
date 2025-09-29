@@ -2609,6 +2609,13 @@ impl RuleRunner for crate::rules::unicorn::prefer_array_some::PreferArraySome {
         Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression, AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_at::PreferAt {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+    ]));
+}
+
 impl RuleRunner for crate::rules::unicorn::prefer_blob_reading_methods::PreferBlobReadingMethods {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
