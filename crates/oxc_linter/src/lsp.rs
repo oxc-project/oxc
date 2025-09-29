@@ -300,6 +300,50 @@ mod test {
         offset_to_position(&Rope::from_str("foo"), 100, "foo");
     }
 
+    #[test]
+    fn disable_for_section_js_file() {
+        let source = "console.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_after_lf() {
+        let source = "<script>\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_after_crlf() {
+        let source = "<script>\r\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_mid_line() {
+        let source = "const x = 5;";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-unused-vars", 6, &rope, source);
+
+        assert_eq!(fix.content, "\n// oxlint-disable no-unused-vars\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 6);
+    }
+
     fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {
         let position = offset_to_position(&Rope::from_str(source), offset, source);
         assert_eq!(position.line, expected.0);
