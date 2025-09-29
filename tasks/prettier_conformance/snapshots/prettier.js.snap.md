@@ -1,14 +1,13 @@
-js compatibility: 647/699 (92.56%)
+js compatibility: 648/699 (92.70%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/call.js | 💥💥 | 99.35% |
 | js/arrows/chain-as-arg.js | 💥💥 | 35.14% |
-| js/arrows/curried.js | 💥💥 | 82.70% |
+| js/arrows/curried.js | 💥💥 | 91.95% |
 | js/arrows/currying-2.js | 💥💥 | 59.08% |
-| js/arrows/currying-4.js | 💥💥 | 94.50% |
+| js/arrows/currying-4.js | 💥💥 | 87.61% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
