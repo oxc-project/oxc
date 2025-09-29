@@ -124,12 +124,11 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
                         // Walk up to 5 levels to find a test call expression
                         for _ in 0..5 {
                             if let Some(parent) = current_parent {
-                                if let AstNodes::CallExpression(call) = parent {
-                                    if is_test_call_expression(call) {
+                                if let AstNodes::CallExpression(call) = parent
+                                    && is_test_call_expression(call) {
                                         is_test_call = true;
                                         break;
                                     }
-                                }
                                 // Check if parent is a dummy node before calling parent()
                                 if matches!(parent, AstNodes::Dummy()) {
                                     break;
