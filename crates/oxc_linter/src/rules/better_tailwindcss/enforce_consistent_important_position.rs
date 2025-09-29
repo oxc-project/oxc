@@ -126,13 +126,16 @@ impl EnforceConsistentImportantPosition {
     fn check_classes(&self, class_string: &str, span: Span, ctx: &LintContext) {
         let classes: Vec<&str> = class_string.split_whitespace().collect();
 
-        // Build a fixed version of the entire class string if needed
-        let mut has_changes = false;
+        let mut first_issue = None;
         let fixed_classes: Vec<String> = classes
             .iter()
             .map(|class| {
-                if let Some((fixed_class, _)) = self.check_important_position(class, span) {
-                    has_changes = true;
+                if let Some((fixed_class, _issue_span)) = self.check_important_position(class, span)
+                {
+                    // Store the first issue for the diagnostic
+                    if first_issue.is_none() {
+                        first_issue = Some(((*class).to_string(), fixed_class.clone()));
+                    }
                     fixed_class
                 } else {
                     (*class).to_string()
@@ -141,19 +144,12 @@ impl EnforceConsistentImportantPosition {
             .collect();
 
         // If we have fixes to apply, replace the entire class string
-        if has_changes {
+        if let Some((original_class, fixed_class)) = first_issue {
             let fixed_string = fixed_classes.join(" ");
-
-            // Find the first class that needs fixing for the diagnostic message
-            for class in &classes {
-                if let Some((fixed_class, _)) = self.check_important_position(class, span) {
-                    ctx.diagnostic_with_fix(
-                        inconsistent_important_position(span, class, &fixed_class),
-                        |fixer| fixer.replace(span, fixed_string.clone()),
-                    );
-                    break;
-                }
-            }
+            ctx.diagnostic_with_fix(
+                inconsistent_important_position(span, &original_class, &fixed_class),
+                |fixer| fixer.replace(span, fixed_string),
+            );
         }
     }
 
