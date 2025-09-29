@@ -1,4 +1,4 @@
-ts compatibility: 527/573 (91.97%)
+ts compatibility: 528/573 (92.15%)
 
 # Failed
 
@@ -19,7 +19,6 @@ ts compatibility: 527/573 (91.97%)
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
-| typescript/comments/location.ts | 💥 | 95.00% |
 | typescript/comments/method_types.ts | 💥 | 84.62% |
 | typescript/comments/type-parameters.ts | 💥 | 65.52% |
 | typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
