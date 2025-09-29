@@ -122,28 +122,39 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         if has_empty_line
             || is_function_composition_args(self)
             || is_pipe_function_call(self, self.parent)
+            || is_long_curried_arrow_argument(self, call_like_span)
         {
             return format_all_args_broken_out(self, true, f);
         }
 
-        // For type assertions, prefer inline formatting to avoid unnecessary expansion
+        // For type assertions, prefer inline formatting to avoid unnecessary expansion,
+        // but still allow breaking for very long call expressions
         if is_within_type_assertion {
-            return write!(
-                f,
-                [
-                    l_paren_token,
-                    format_with(|f| {
-                        f.join_with(space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Omit,
-                            )
-                            .finish()
-                    }),
-                    r_paren_token
-                ]
-            );
+            // Calculate the estimated width of the inline version
+            let estimated_width = call_like_span.size() +
+                self.iter().map(|arg| arg.span().size()).sum::<u32>() +
+                self.len().saturating_sub(1) as u32 * 2; // commas and spaces
+
+            // Only force inline if it's reasonably short (under 80 characters)
+            if estimated_width <= 80 {
+                return write!(
+                    f,
+                    [
+                        l_paren_token,
+                        format_with(|f| {
+                            f.join_with(space())
+                                .entries_with_trailing_separator(
+                                    self.iter(),
+                                    ",",
+                                    TrailingSeparator::Omit,
+                                )
+                                .finish()
+                        }),
+                        r_paren_token
+                    ]
+                );
+            }
+            // If too long, fall through to normal breaking logic
         }
 
         if let Some(group_layout) = arguments_grouped_layout(call_like_span, self, f) {
@@ -166,6 +177,29 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             format_all_args_broken_out(self, false, f)
         }
     }
+}
+
+/// Tests if this call has a long curried arrow function argument that should be broken out
+fn is_long_curried_arrow_argument(args: &[Argument<'_>], call_like_span: Span) -> bool {
+    // Only applies to single argument cases
+    if args.len() != 1 {
+        return false;
+    }
+
+    if let Some(Argument::ArrowFunctionExpression(arrow)) = args.first() {
+        // Check if it's a curried arrow (arrow expression that returns another arrow)
+        if arrow.expression {
+            if let Some(Expression::ArrowFunctionExpression(_)) = arrow.get_expression() {
+                // Calculate estimated inline width: call span + arrow span + parentheses
+                let estimated_width = call_like_span.size() + arrow.span.size() + 2; // 2 for parentheses
+
+                // Break if the estimated width exceeds reasonable limit
+                return estimated_width > 80;
+            }
+        }
+    }
+
+    false
 }
 
 /// Tests if this is a pipe function call that should have expanded arguments
