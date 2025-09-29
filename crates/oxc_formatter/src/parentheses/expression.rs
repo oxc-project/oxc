@@ -331,6 +331,16 @@ impl NeedsParentheses<'_> for AstNode<'_, ArrayExpression<'_>> {
     }
 }
 
+/// Checks if an object expression is directly part of a template literal's expressions
+/// and should receive parentheses to avoid being confused with a block statement
+fn find_template_literal_parent<'a>(span: Span, parent: &'a AstNodes<'a>) -> Option<&'a AstNodes<'a>> {
+    // Check only immediate parent to be very conservative and avoid dummy node issues
+    match parent {
+        AstNodes::TemplateLiteral(_) => Some(parent),
+        _ => None,
+    }
+}
+
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         let span = self.span();
@@ -352,6 +362,12 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ObjectExpression<'a>> {
             && is_expression_used_as_call_argument(satisfies_expr.span, satisfies_expr.parent)
         {
             return false;
+        }
+
+        // Object expressions need parentheses when directly inside template literal expressions
+        // to avoid being confused with block statements
+        if let Some(template_parent) = find_template_literal_parent(span, parent) {
+            return true;
         }
 
         is_class_extends(parent, span)
