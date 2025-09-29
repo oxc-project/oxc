@@ -58,10 +58,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             for _ in 0..5 {
                 if let Some(parent) = current_parent {
                     if let AstNodes::CallExpression(call) = parent
-                        && is_test_call_expression(call) {
-                            is_in_test_call = true;
-                            break;
-                        }
+                        && is_test_call_expression(call)
+                    {
+                        is_in_test_call = true;
+                        break;
+                    }
                     // Check if parent is a dummy node before accessing its parent
                     match parent {
                         AstNodes::Dummy() => break,
