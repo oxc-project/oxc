@@ -104,7 +104,8 @@ fn function_like_type_needs_parentheses<'a>(
             }
             false
         }
-        AstNodes::TSUnionType(_) | AstNodes::TSIntersectionType(_) => true,
+        AstNodes::TSUnionType(union) => union.types.len() > 1,
+        AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
         _ => operator_type_or_higher_needs_parens(span, parent),
     }
 }
@@ -126,12 +127,13 @@ fn operator_type_or_higher_needs_parens(span: Span, parent: &AstNodes) -> bool {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(
-            self.parent,
-            AstNodes::TSArrayType(_)
-                | AstNodes::TSTypeOperator(_)
-                | AstNodes::TSIndexedAccessType(_)
-        )
+        match self.parent {
+            AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
+            AstNodes::TSIntersectionType(intersection) => {
+                self.types.len() > 1 && intersection.types.len() > 1
+            }
+            parent => operator_type_or_higher_needs_parens(self.span(), parent),
+        }
     }
 }
 
@@ -141,7 +143,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
-            AstNodes::TSUnionType(_) | AstNodes::TSIntersectionType(_) => true,
+            AstNodes::TSUnionType(union) => union.types.len() > 1,
+            AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
             _ => operator_type_or_higher_needs_parens(self.span, self.parent),
         }
     }
