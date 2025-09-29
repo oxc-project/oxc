@@ -776,13 +776,12 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, ChainExpression<'a>> {
         }
 
         match self.parent {
-            AstNodes::NewExpression(_) => true,
             AstNodes::CallExpression(call) => !call.optional,
             AstNodes::StaticMemberExpression(member) => !member.optional,
             AstNodes::ComputedMemberExpression(member) => {
                 !member.optional && member.object.span() == self.span()
             }
-            AstNodes::TSNonNullExpression(_) => true,
+            AstNodes::NewExpression(_) | AstNodes::TSNonNullExpression(_) => true,
             _ => false,
         }
     }
