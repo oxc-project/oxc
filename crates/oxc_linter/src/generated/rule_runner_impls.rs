@@ -2513,6 +2513,13 @@ impl RuleRunner
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner
+    for crate::rules::unicorn::no_unnecessary_array_splice_count::NoUnnecessaryArraySpliceCount
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
 impl RuleRunner for crate::rules::unicorn::no_unnecessary_await::NoUnnecessaryAwait {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::AwaitExpression]));
