@@ -17,7 +17,7 @@ use crate::backend::Backend;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
-const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
+const OXC_CONFIG_FILES: &[&str] = &[".oxlintrc.jsonc", ".oxlintrc.json"];
 
 // max range for LSP integer is 2^31 - 1
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseTypes

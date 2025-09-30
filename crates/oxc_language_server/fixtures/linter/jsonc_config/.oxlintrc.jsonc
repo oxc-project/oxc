@@ -1,0 +1,6 @@
+{
+  // JSONC config for language server
+  "rules": {
+    "no-debugger": "error"
+  }
+}

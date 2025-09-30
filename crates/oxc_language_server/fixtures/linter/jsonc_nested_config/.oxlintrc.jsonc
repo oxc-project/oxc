@@ -1,0 +1,6 @@
+{
+  // Root config
+  "rules": {
+    "no-debugger": "error"
+  }
+}

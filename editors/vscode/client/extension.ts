@@ -44,14 +44,19 @@ let client: LanguageClient | undefined;
 let myStatusBarItem: StatusBarItem;
 
 // Global flag to check if the user allows us to start the server.
-// When `oxc.requireConfig` is `true`, make sure one `.oxlintrc.json` file is present.
+// When `oxc.requireConfig` is `true`, make sure one `.oxlintrc.json` or `.oxlintrc.jsonc` file is present.
 let allowedToStartServer: boolean;
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
-  allowedToStartServer = configService.vsCodeConfig.requireConfig
-    ? (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0
-    : true;
+  if (configService.vsCodeConfig.requireConfig) {
+    // Check for both .json and .jsonc config files
+    const jsonConfigs = await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1);
+    const jsoncConfigs = await workspace.findFiles(`**/.oxlintrc.jsonc`, '**/node_modules/**', 1);
+    allowedToStartServer = jsonConfigs.length > 0 || jsoncConfigs.length > 0;
+  } else {
+    allowedToStartServer = true;
+  }
 
   const restartCommand = commands.registerCommand(
     OxcCommands.RestartServer,
@@ -331,15 +336,22 @@ function updateStatsBar(
 }
 
 function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionContext): void {
-  const watcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, true);
-  watcher.onDidCreate(async () => {
-    watcher.dispose();
+  // Watch for both .json and .jsonc config files
+  const jsonWatcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, true);
+  const jsoncWatcher = workspace.createFileSystemWatcher('**/.oxlintrc.jsonc', false, true, true);
+
+  const onConfigCreated = async () => {
+    jsonWatcher.dispose();
+    jsoncWatcher.dispose();
     allowedToStartServer = true;
     updateStatsBar(context, config.enable);
     if (client && !client.isRunning() && config.enable) {
       await client.start();
     }
-  });
+  };
 
-  context.subscriptions.push(watcher);
+  jsonWatcher.onDidCreate(onConfigCreated);
+  jsoncWatcher.onDidCreate(onConfigCreated);
+
+  context.subscriptions.push(jsonWatcher, jsoncWatcher);
 }

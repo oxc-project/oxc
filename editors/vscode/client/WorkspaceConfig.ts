@@ -2,6 +2,7 @@ import { ConfigurationChangeEvent, ConfigurationTarget, workspace, WorkspaceFold
 import { ConfigService } from './ConfigService';
 
 export const oxlintConfigFileName = '.oxlintrc.json';
+export const oxlintConfigFileNameJsonc = '.oxlintrc.jsonc';
 
 export type Trigger = 'onSave' | 'onType';
 
@@ -129,7 +130,9 @@ export class WorkspaceConfig {
   }
 
   public get isCustomConfigPath(): boolean {
-    return this.configPath !== null && this.configPath !== oxlintConfigFileName;
+    return this.configPath !== null &&
+      this.configPath !== oxlintConfigFileName &&
+      this.configPath !== oxlintConfigFileNameJsonc;
   }
 
   get runTrigger(): Trigger {

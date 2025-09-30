@@ -21,7 +21,7 @@ use crate::linter::{
     options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
     tsgo_linter::TsgoLinter,
 };
-use crate::{ConcurrentHashMap, OXC_CONFIG_FILE};
+use crate::{ConcurrentHashMap, OXC_CONFIG_FILES};
 
 use super::config_walker::ConfigWalker;
 
@@ -90,21 +90,55 @@ impl ServerLinter {
         let mut nested_ignore_patterns = Vec::new();
         let (nested_configs, mut extended_paths) =
             Self::create_nested_configs(&root_path, options, &mut nested_ignore_patterns);
-        let config_path = options.config_path.as_ref().map_or(OXC_CONFIG_FILE, |v| v);
-        let config = normalize_path(root_path.join(config_path));
-        let oxlintrc = if config.try_exists().is_ok_and(|exists| exists) {
-            if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
-                oxlintrc
+
+        let oxlintrc = if let Some(config_path) = options.config_path.as_ref() {
+            // If explicit config path is provided, use it directly
+            let config = normalize_path(root_path.join(config_path));
+            if config.try_exists().is_ok_and(|exists| exists) {
+                if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
+                    oxlintrc
+                } else {
+                    warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                    Oxlintrc::default()
+                }
             } else {
-                warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                warn!(
+                    "Config file not found: {}, fallback to default config",
+                    config.to_string_lossy()
+                );
                 Oxlintrc::default()
             }
         } else {
-            warn!(
-                "Config file not found: {}, fallback to default config",
-                config.to_string_lossy()
-            );
-            Oxlintrc::default()
+            let mut found = None;
+
+            for config_file_name in OXC_CONFIG_FILES {
+                let config_file_name = normalize_path(root_path.join(config_file_name));
+
+                if config_file_name.try_exists().is_ok_and(|exists| exists) {
+                    match Oxlintrc::from_file(&config_file_name) {
+                        Ok(oxlintrc) => {
+                            debug!("Using config file: {}", config_file_name.to_string_lossy());
+                            found = Some(oxlintrc);
+                        }
+                        Err(_) => {
+                            warn!(
+                                "Failed to initialize oxlintrc config: {}",
+                                config_file_name.to_string_lossy()
+                            );
+                            found = Some(Oxlintrc::default());
+                        }
+                    }
+                    break;
+                }
+            }
+
+            match found {
+                Some(cfg) => cfg,
+                None => {
+                    debug!("No config file found, using default config");
+                    Oxlintrc::default()
+                }
+            }
         };
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
@@ -673,5 +707,27 @@ mod test {
             Some(LintOptions { type_aware: true, run: Run::OnSave, ..Default::default() }),
         );
         tester.test_and_snapshot_single_file("no-floating-promises/index.ts");
+    }
+
+    #[test]
+    fn test_jsonc_config() {
+        Tester::new("fixtures/linter/jsonc_config", None).test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_jsonc_nested_config() {
+        let mut nested_ignore_patterns = Vec::new();
+        let (configs, _) = ServerLinter::create_nested_configs(
+            &get_file_path("fixtures/linter/jsonc_nested_config"),
+            &LintOptions::default(),
+            &mut nested_ignore_patterns,
+        );
+        let configs = configs.pin();
+        let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
+        configs_dirs.sort();
+
+        assert!(configs_dirs.len() == 2);
+        assert!(configs_dirs[1].ends_with("subdir"));
+        assert!(configs_dirs[0].ends_with("jsonc_nested_config"));
     }
 }

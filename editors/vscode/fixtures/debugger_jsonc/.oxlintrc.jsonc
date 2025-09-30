@@ -1,0 +1,6 @@
+{
+  // JSONC config for VSCode extension test
+  "rules": {
+    "no-debugger": "error"
+  }
+}

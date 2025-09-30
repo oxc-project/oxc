@@ -1,0 +1,6 @@
+{
+  // Nested config
+  "rules": {
+    "no-console": "error"
+  }
+}

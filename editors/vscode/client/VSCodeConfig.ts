@@ -85,7 +85,7 @@ interface VSCodeConfigInterface {
    */
   binPath: string | undefined;
   /**
-   * Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces.
+   * Start the language server only when a `.oxlintrc.json` or `.oxlintrc.jsonc` file exists in one of the workspaces.
    * `oxc.requireConfig`
    * @default false
    */
