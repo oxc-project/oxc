@@ -59,6 +59,9 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let call_expression =
             if let AstNodes::CallExpression(call) = self.parent { Some(call) } else { None };
 
+        let new_expression =
+            if let AstNodes::NewExpression(new_expr) = self.parent { Some(new_expr) } else { None };
+
         let (is_commonjs_or_amd_call, is_test_call) = call_expression
             .map(|call| (is_commonjs_or_amd_call(self, call), is_test_call_expression(call)))
             .unwrap_or_default();
@@ -107,6 +110,12 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 
         // Check if this is a simple nested call that should stay compact
         if call_expression.is_some_and(|call| should_keep_nested_call_compact(call, self, f)) {
+            return format_compact_call_arguments(self, f);
+        }
+
+        // Check if this is a simple nested new expression that should stay compact
+        if new_expression.is_some_and(|new_expr| should_keep_nested_new_compact(new_expr, self, f))
+        {
             return format_compact_call_arguments(self, f);
         }
 
@@ -192,6 +201,9 @@ fn should_keep_nested_call_compact(
     let all_args_acceptable = args.iter().all(|arg| {
         match arg.as_expression() {
             Some(expr) => match expr {
+                // Exclude objects and arrays - they often break across lines during formatting
+                // even when marked as "simple", which defeats the purpose of compact formatting
+                Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => false,
                 // Allow conditionals, binary/logical expressions, and simple calls
                 Expression::ConditionalExpression(_)
                 | Expression::LogicalExpression(_)
@@ -227,6 +239,102 @@ fn should_keep_nested_call_compact(
             }
 
             parent_new.arguments.iter().any(|arg| arg.span().contains_inclusive(call.span))
+        }
+        _ => false,
+    }
+}
+
+/// Checks if this new expression should keep its arguments compact because it's a
+/// simple nested new expression used as an argument.
+///
+/// Returns `true` for patterns like:
+/// - `assert.sameValue(Temporal.Instant.compare(new Temporal.Instant(-1000n), new Temporal.Instant(1000n)), -1)`
+/// - `compareArray(new TA([0, 1, 2, 3]).copyWithin(0, 1, -1), [1, 2, 2, 3])`
+///
+/// Similar to `should_keep_nested_call_compact` but for NewExpression.
+fn should_keep_nested_new_compact(
+    new_expr: &AstNode<'_, NewExpression<'_>>,
+    args: &[Argument<'_>],
+    f: &Formatter<'_, '_>,
+) -> bool {
+    // Only applies to new expressions with 1-4 simple arguments
+    if args.is_empty() || args.len() > 4 {
+        return false;
+    }
+
+    // Don't use compact formatting if there are any comments in the arguments
+    let new_span = new_expr.span;
+    for (i, arg) in args.iter().enumerate() {
+        let previous_end = if i == 0 {
+            new_expr.callee.span().end // Check from after callee to first arg
+        } else {
+            args[i - 1].span().end // Check between args
+        };
+
+        let current_span = arg.span();
+        let following_start = arg.span().start;
+        if f.comments().has_comment(previous_end, current_span, following_start) {
+            return false;
+        }
+    }
+
+    // Also check after last argument (trailing comments)
+    if let Some(last_arg) = args.last() {
+        let dummy_span = Span::new(new_span.end, new_span.end);
+        if f.comments().has_comment(last_arg.span().end, dummy_span, new_span.end) {
+            return false;
+        }
+    }
+
+    // Estimate total argument length to avoid keeping very long calls compact
+    let total_length: u32 = args.iter().map(|arg| arg.span().size()).sum();
+    // If arguments are too long (> 60 chars), let the normal formatting handle it
+    if total_length > 60 {
+        return false;
+    }
+
+    // Check if arguments are relatively simple
+    let all_args_acceptable = args.iter().all(|arg| {
+        match arg.as_expression() {
+            Some(expr) => match expr {
+                // Exclude objects and arrays - they often break across lines during formatting
+                // even when marked as "simple", which defeats the purpose of compact formatting
+                Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => false,
+                // Allow conditionals, binary/logical expressions, and simple calls/new
+                Expression::ConditionalExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::BinaryExpression(_)
+                | Expression::CallExpression(_)
+                | Expression::NewExpression(_) => true,
+                // For other expressions, use the simple check
+                _ => is_relatively_short_argument(expr),
+            },
+            None => false, // SpreadElement is not acceptable
+        }
+    });
+
+    if !all_args_acceptable {
+        return false;
+    }
+
+    // Check if this new expression is itself an argument to another call/new
+    match new_expr.parent {
+        AstNodes::CallExpression(parent_call) => {
+            // Verify our span is within parent's arguments (not the callee)
+            if parent_call.callee.span().contains_inclusive(new_expr.span) {
+                return false; // We're the callee, not an argument
+            }
+
+            // Check if our span is within any of parent's arguments
+            parent_call.arguments.iter().any(|arg| arg.span().contains_inclusive(new_expr.span))
+        }
+        AstNodes::NewExpression(parent_new) => {
+            // Same check for parent new expressions
+            if parent_new.callee.span().contains_inclusive(new_expr.span) {
+                return false;
+            }
+
+            parent_new.arguments.iter().any(|arg| arg.span().contains_inclusive(new_expr.span))
         }
         _ => false,
     }
