@@ -2640,6 +2640,11 @@ impl RuleRunner for crate::rules::unicorn::prefer_class_fields::PreferClassField
         Some(&AstTypesBitset::from_types(&[AstType::Class]));
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_classlist_toggle::PreferClasslistToggle {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ConditionalExpression, AstType::IfStatement]));
+}
+
 impl RuleRunner for crate::rules::unicorn::prefer_code_point::PreferCodePoint {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
