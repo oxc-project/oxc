@@ -44,26 +44,6 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let r_paren_token = ")";
         let call_like_span = self.parent.span();
 
-        // Check if we're within a TSTypeAssertion context
-        let is_within_type_assertion = {
-            let mut current = Some(self.parent);
-            let mut depth = 0;
-            while let Some(parent) = current {
-                if depth > 10 {
-                    break;
-                } // Prevent infinite loops
-                if matches!(parent, AstNodes::TSTypeAssertion(_)) {
-                    break;
-                }
-                current = match parent {
-                    AstNodes::Dummy() => None,
-                    _ => Some(parent.parent()),
-                };
-                depth += 1;
-            }
-            current.is_some() && matches!(current.unwrap(), AstNodes::TSTypeAssertion(_))
-        };
-
         if self.is_empty() {
             return write!(
                 f,
@@ -119,42 +99,15 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let has_empty_line =
             self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
         if has_empty_line
-            || is_function_composition_args(self)
-            || is_pipe_function_call(self, self.parent)
-            || is_long_curried_arrow_argument(self, call_like_span)
+            || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
+                && is_function_composition_args(self))
         {
             return format_all_args_broken_out(self, true, f);
         }
 
-        // For type assertions, prefer inline formatting to avoid unnecessary expansion,
-        // but still allow breaking for very long call expressions
-        if is_within_type_assertion {
-            // Calculate the estimated width of the inline version
-            #[expect(clippy::cast_possible_truncation)]
-            let estimated_width = call_like_span.size()
-                + self.iter().map(|arg| arg.span().size()).sum::<u32>()
-                + self.len().saturating_sub(1) as u32 * 2; // commas and spaces
-
-            // Only force inline if it's reasonably short (under 80 characters)
-            if estimated_width <= 80 {
-                return write!(
-                    f,
-                    [
-                        l_paren_token,
-                        format_with(|f| {
-                            f.join_with(space())
-                                .entries_with_trailing_separator(
-                                    self.iter(),
-                                    ",",
-                                    TrailingSeparator::Omit,
-                                )
-                                .finish()
-                        }),
-                        r_paren_token
-                    ]
-                );
-            }
-            // If too long, fall through to normal breaking logic
+        // Check if this is a simple nested call that should stay compact
+        if call_expression.is_some_and(|call| should_keep_nested_call_compact(call, self, f)) {
+            return format_compact_call_arguments(self, f);
         }
 
         if let Some(group_layout) = arguments_grouped_layout(call_like_span, self, f) {
@@ -182,61 +135,101 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
     }
 }
 
-/// Tests if this call has a long curried arrow function argument that should be broken out
-fn is_long_curried_arrow_argument(args: &[Argument<'_>], call_like_span: Span) -> bool {
-    // Only applies to single argument cases
-    if args.len() != 1 {
+/// Checks if this call should keep its arguments compact because it's a
+/// simple nested call used as an argument.
+///
+/// Returns `true` for patterns like:
+/// - `require(path.join(arg1, arg2))`
+/// - `logger.error(pipe(call1(), call2()))`
+///
+/// After removing AstKind::Argument, these calls are direct children of
+/// their parent CallExpression, so we check if our span is within the
+/// parent's argument spans.
+fn should_keep_nested_call_compact(
+    call: &AstNode<'_, CallExpression<'_>>,
+    args: &[Argument<'_>],
+    f: &Formatter<'_, '_>,
+) -> bool {
+    // Only applies to calls with 2-4 simple arguments
+    if args.len() < 2 || args.len() > 4 {
         return false;
     }
 
-    if let Some(Argument::ArrowFunctionExpression(arrow)) = args.first() {
-        // Check if it's a curried arrow (arrow expression that returns another arrow)
-        if arrow.expression
-            && let Some(Expression::ArrowFunctionExpression(_)) = arrow.get_expression()
-        {
-            // Use a more conservative threshold since span-based width estimation
-            // includes whitespace and comments, making it overly aggressive.
-            // Simple curried arrows like `(a) => (b) => (1, 2, 3)` should stay inline.
-            let estimated_width = call_like_span.size() + arrow.span.size() + 2; // 2 for parentheses
+    // Don't use compact formatting if there are any comments in the arguments
+    // Check before first argument and between all arguments
+    let call_span = call.span;
+    for (i, arg) in args.iter().enumerate() {
+        let previous_end = if i == 0 {
+            call.callee.span().end // Check from after callee to first arg
+        } else {
+            args[i - 1].span().end // Check between args
+        };
 
-            // Only break for genuinely long expressions - be much more conservative
-            return estimated_width > 120;
+        let current_span = arg.span();
+        let following_start = arg.span().start;
+        if f.comments().has_comment(previous_end, current_span, following_start) {
+            return false;
         }
     }
 
-    false
-}
-
-/// Tests if this is a pipe function call that should have expanded arguments
-fn is_pipe_function_call(args: &[Argument<'_>], parent: &AstNodes) -> bool {
-    // Check if parent is a call expression with pipe-like function name
-    if let AstNodes::CallExpression(call) = parent
-        && let Expression::Identifier(id) = &call.callee
-    {
-        let name = id.name.as_str();
-        // Only expand pipe functions when they have nested call expressions
-        // that would benefit from multi-line formatting
-        if matches!(name, "pipe" | "flow") {
-            // Count nested call expressions
-            let nested_calls = args
-                .iter()
-                .filter(|arg| {
-                    if let Argument::CallExpression(call) = arg {
-                        // Check if this call has nested calls as arguments
-                        call.arguments
-                            .iter()
-                            .any(|inner| matches!(inner, Argument::CallExpression(_)))
-                    } else {
-                        false
-                    }
-                })
-                .count();
-
-            // Expand if we have nested complexity
-            return nested_calls > 0;
+    // Also check after last argument (trailing comments)
+    if let Some(last_arg) = args.last() {
+        let dummy_span = Span::new(call_span.end, call_span.end);
+        if f.comments().has_comment(last_arg.span().end, dummy_span, call_span.end) {
+            return false;
         }
     }
-    false
+
+    // Estimate total argument length to avoid keeping very long calls compact
+    let total_length: u32 = args.iter().map(|arg| arg.span().size()).sum();
+    // If arguments are too long (> 60 chars), let the normal formatting handle it
+    if total_length > 60 {
+        return false;
+    }
+
+    // Check if arguments are relatively simple
+    // Allow some complex expressions like conditionals and simple calls if they're short
+    let all_args_acceptable = args.iter().all(|arg| {
+        match arg.as_expression() {
+            Some(expr) => match expr {
+                // Allow conditionals, binary/logical expressions, and simple calls
+                Expression::ConditionalExpression(_)
+                | Expression::LogicalExpression(_)
+                | Expression::BinaryExpression(_)
+                | Expression::CallExpression(_) => true,
+                // For other expressions, use the simple check
+                _ => is_relatively_short_argument(expr),
+            },
+            None => false, // SpreadElement is not acceptable
+        }
+    });
+
+    if !all_args_acceptable {
+        return false;
+    }
+
+    // Check if this call is itself an argument to another call
+    // After AstKind::Argument removal, parent is directly the CallExpression
+    match call.parent {
+        AstNodes::CallExpression(parent_call) => {
+            // Verify our span is within parent's arguments (not the callee)
+            if parent_call.callee.span().contains_inclusive(call.span) {
+                return false; // We're the callee, not an argument
+            }
+
+            // Check if our span is within any of parent's arguments
+            parent_call.arguments.iter().any(|arg| arg.span().contains_inclusive(call.span))
+        }
+        AstNodes::NewExpression(parent_new) => {
+            // Same check for new expressions
+            if parent_new.callee.span().contains_inclusive(call.span) {
+                return false;
+            }
+
+            parent_new.arguments.iter().any(|arg| arg.span().contains_inclusive(call.span))
+        }
+        _ => false,
+    }
 }
 
 /// Tests if a call has multiple anonymous function like (arrow or function expression) arguments.
@@ -341,6 +334,33 @@ fn format_all_args_broken_out<'a, 'b>(
             ")",
         ))
         .should_expand(expand)]
+    )
+}
+
+/// Formats call arguments in a compact style that resists breaking.
+/// Used for simple nested calls that should stay on one line when possible.
+///
+/// Uses a simple group without soft_block_indent to avoid breaking when
+/// the outer call adds indentation.
+fn format_compact_call_arguments<'a>(
+    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    f: &mut Formatter<'_, 'a>,
+) -> FormatResult<()> {
+    write!(
+        f,
+        [group(&format_args!(
+            "(",
+            format_with(|f| {
+                for (index, argument) in node.iter().enumerate() {
+                    if index > 0 {
+                        write!(f, [",", space()])?;
+                    }
+                    write!(f, [argument])?;
+                }
+                Ok(())
+            }),
+            ")",
+        ))]
     )
 }
 
@@ -549,10 +569,6 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
             is_simple_ts_type(&expr.type_annotation)
                 && SimpleArgument::from(&expr.expression).is_simple()
         }
-        Expression::TSTypeAssertion(expr) => {
-            is_simple_ts_type(&expr.type_annotation)
-                && SimpleArgument::from(&expr.expression).is_simple()
-        }
         Expression::RegExpLiteral(_) => true,
         Expression::CallExpression(call) => match call.arguments.len() {
             0 => true,
@@ -654,16 +670,7 @@ fn can_group_arrow_function_expression_argument(
         Expression::ChainExpression(chain) => {
             matches!(chain.expression, ChainElement::CallExpression(_)) && !is_arrow_recursion
         }
-        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => {
-            // Allow simple call expressions in curried arrow functions to be groupable
-            // This ensures `foo(a => b => someFunc())` can be grouped
-            if is_arrow_recursion && matches!(expr, Expression::CallExpression(_)) {
-                // Only allow simple call expressions (not complex nested calls)
-                true
-            } else {
-                !is_arrow_recursion
-            }
-        }
+        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => !is_arrow_recursion,
         _ => false,
     })
 }
@@ -894,22 +901,11 @@ fn write_grouped_arguments<'a>(
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
-    // Exception: For arrow chains in GroupedFirstArgument, include most_flat for proper indentation
-    let should_include_flat_variant = !grouped_breaks
-        || {
-            // Special case for arrow chains as grouped first argument
-            group_layout.is_grouped_first() &&
-        node.first().and_then(|arg| arg.as_expression()).is_some_and(|expr| {
-            matches!(expr, Expression::ArrowFunctionExpression(arrow) if arrow.expression &&
-                arrow.get_expression().is_some_and(|body| matches!(body, Expression::ArrowFunctionExpression(_))))
-        })
-        };
-
-    let variants = if should_include_flat_variant {
-        vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
-    } else {
+    let variants = if grouped_breaks {
         write!(f, [expand_parent()])?;
         vec![middle_variant, most_expanded.into_boxed_slice()]
+    } else {
+        vec![most_flat, middle_variant, most_expanded.into_boxed_slice()]
     };
 
     // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:
