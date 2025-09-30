@@ -6,7 +6,7 @@ use std::{
 
 use ignore::DirEntry;
 
-use crate::OXC_CONFIG_FILE;
+use crate::OXC_CONFIG_FILES;
 
 pub struct ConfigWalker {
     inner: ignore::WalkParallel,
@@ -56,7 +56,7 @@ impl WalkCollector {
         }
         let Some(file_name) = entry.path().file_name() else { return false };
 
-        file_name == OXC_CONFIG_FILE
+        OXC_CONFIG_FILES.iter().any(|&f| file_name == f)
     }
 }
 
