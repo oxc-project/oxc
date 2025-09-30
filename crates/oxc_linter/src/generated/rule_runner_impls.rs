@@ -2535,6 +2535,13 @@ impl RuleRunner for crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife 
 }
 
 impl RuleRunner
+    for crate::rules::unicorn::no_useless_error_capture_stack_trace::NoUselessErrorCaptureStackTrace
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
+impl RuleRunner
     for crate::rules::unicorn::no_useless_fallback_in_spread::NoUselessFallbackInSpread
 {
     const NODE_TYPES: Option<&AstTypesBitset> =

@@ -436,6 +436,7 @@ pub(crate) mod unicorn {
     pub mod no_unnecessary_slice_end;
     pub mod no_unreadable_array_destructuring;
     pub mod no_unreadable_iife;
+    pub mod no_useless_error_capture_stack_trace;
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
@@ -1130,6 +1131,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::filename_case,
     unicorn::new_for_builtins,
     unicorn::no_array_callback_reference,
+    unicorn::no_useless_error_capture_stack_trace,
     unicorn::no_array_sort,
     unicorn::no_array_reverse,
     unicorn::no_instanceof_builtins,
