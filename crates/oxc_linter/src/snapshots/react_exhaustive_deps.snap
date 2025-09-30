@@ -319,14 +319,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): This dependency is specified more than once in the dependency array.
    ╭─[exhaustive_deps.tsx:6:22]
  5 │             console.log(local);
  6 │           }, [local, local]);
    ·                      ─────
  7 │         }
    ╰────
-  help: Remove the literal from the array.
+  help: Remove the duplicate dependency from the array.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `local`, which changes every render
    ╭─[exhaustive_deps.tsx:2:17]
@@ -814,14 +814,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
-  ⚠ eslint-plugin-react-hooks(exhaustive-deps): The literal is not a valid dependency because it never changes.
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): This dependency is specified more than once in the dependency array.
    ╭─[exhaustive_deps.tsx:5:22]
  4 │             console.log(local);
  5 │           }, [local, local]);
    ·                      ─────
  6 │         }
    ╰────
-  help: Remove the literal from the array.
+  help: Remove the duplicate dependency from the array.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React hook useEffect depends on `local`, which changes every render
    ╭─[exhaustive_deps.tsx:5:15]
