@@ -2,20 +2,10 @@ commit: baa48a41
 
 formatter_test262 Summary:
 AST Parsed     : 44517/44517 (100.00%)
-Positive Passed: 44509/44517 (99.98%)
+Positive Passed: 44514/44517 (99.99%)
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR-LF.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-CR.js
 
 Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/toString/line-terminator-normalisation-LF.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/Temporal/Instant/compare/exhaustive.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/compare/cast.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/Temporal/PlainDateTime/from/overflow-reject.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/copyWithin/negative-end.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/copyWithin/undefined-end.js
 
