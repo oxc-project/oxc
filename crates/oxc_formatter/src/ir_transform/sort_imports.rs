@@ -301,13 +301,9 @@ impl Line {
                 }
             }
         }
-        // NOTE: This may add empty lines.
-        // May be better to omit them if `options.partition_by_newline: false`.
         next_elements.push(FormatElement::Line(match self {
-            Line::Empty(mode)
-            | Line::CommentOnly(_, mode)
-            | Line::Import(_, mode, ..)
-            | Line::Others(_, mode) => *mode,
+            Line::CommentOnly(_, mode) | Line::Others(_, mode) => *mode,
+            Line::Empty(..) | Line::Import(..) => LineMode::Hard
         }));
     }
 }
@@ -379,7 +375,9 @@ impl ImportUnit {
         match &elements[source_idx] {
             FormatElement::LocatedTokenText { slice, .. } => slice.as_ref(),
             FormatElement::DynamicText { text } => text,
-            _ => unreachable!("`source_idx` must point to either `LocatedTokenText` or `DynamicText` in the `elements`."),
+            _ => unreachable!(
+                "`source_idx` must point to either `LocatedTokenText` or `DynamicText` in the `elements`."
+            ),
         }
     }
 }
