@@ -24,7 +24,7 @@ use super::{
 ///
 /// ::: danger NOTE
 ///
-/// Only the `.json` format is supported. You can use comments in configuration files.
+/// Both `.json` and `.jsonc` formats are supported. You can use comments in configuration files.
 ///
 /// :::
 ///

@@ -1,0 +1,20 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c config.jsonc test.js
+working directory: fixtures/jsonc_config_explicit
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+   ,-[test.js:1:1]
+ 1 | console.log("hello");
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 90 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

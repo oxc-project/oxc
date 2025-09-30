@@ -413,6 +413,7 @@ impl CliRunner {
 
 impl CliRunner {
     const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
+    const DEFAULT_OXLINTRC_JSONC: &'static str = ".oxlintrc.jsonc";
 
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
@@ -572,12 +573,22 @@ impl CliRunner {
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
-        let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
-        let full_path = cwd.join(path);
-
-        if config.is_some() || full_path.exists() {
+        if let Some(path) = config {
+            let full_path = cwd.join(path);
             return Oxlintrc::from_file(&full_path);
         }
+
+        // Try .oxlintrc.jsonc first, then .oxlintrc.json
+        let jsonc_path = cwd.join(Self::DEFAULT_OXLINTRC_JSONC);
+        if jsonc_path.exists() {
+            return Oxlintrc::from_file(&jsonc_path);
+        }
+
+        let json_path = cwd.join(Self::DEFAULT_OXLINTRC);
+        if json_path.exists() {
+            return Oxlintrc::from_file(&json_path);
+        }
+
         Ok(Oxlintrc::default())
     }
 
@@ -585,12 +596,18 @@ impl CliRunner {
     /// and returns `Err` if none exists or the file is invalid. Does not apply the default
     /// config file.
     fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let possible_config_path = dir.join(Self::DEFAULT_OXLINTRC);
-        if possible_config_path.is_file() {
-            Oxlintrc::from_file(&possible_config_path).map(Some)
-        } else {
-            Ok(None)
+        // Try .oxlintrc.jsonc first, then .oxlintrc.json
+        let jsonc_path = dir.join(Self::DEFAULT_OXLINTRC_JSONC);
+        if jsonc_path.is_file() {
+            return Oxlintrc::from_file(&jsonc_path).map(Some);
         }
+
+        let json_path = dir.join(Self::DEFAULT_OXLINTRC);
+        if json_path.is_file() {
+            return Oxlintrc::from_file(&json_path).map(Some);
+        }
+
+        Ok(None)
     }
 }
 
@@ -1274,6 +1291,26 @@ mod test {
         Tester::new()
             .with_cwd("fixtures/disable_directive_issue_13311".into())
             .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_jsonc_config_auto_detection() {
+        let args = &["test.js"];
+        Tester::new()
+            .with_cwd("fixtures/jsonc_config_auto_detection".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_jsonc_config_explicit() {
+        let args = &["-c", "config.jsonc", "test.js"];
+        Tester::new().with_cwd("fixtures/jsonc_config_explicit".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_jsonc_nested_config() {
+        let args = &["."];
+        Tester::new().with_cwd("fixtures/jsonc_nested_config".into()).test_and_snapshot(args);
     }
 
     // ToDo: `tsgolint` does not support `big-endian`?
