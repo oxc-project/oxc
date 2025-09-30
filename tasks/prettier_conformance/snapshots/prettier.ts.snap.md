@@ -1,4 +1,4 @@
-ts compatibility: 527/573 (91.97%)
+ts compatibility: 530/573 (92.50%)
 
 # Failed
 
@@ -22,7 +22,6 @@ ts compatibility: 527/573 (91.97%)
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/method_types.ts | 💥 | 84.62% |
-| typescript/comments/type-parameters.ts | 💥 | 73.33% |
 | typescript/conditional-types/comments.ts | 💥✨ | 31.51% |
 | typescript/conditional-types/conditonal-types.ts | 💥✨ | 34.48% |
 | typescript/conditional-types/infer-type.ts | 💥✨ | 4.76% |
@@ -31,10 +30,8 @@ ts compatibility: 527/573 (91.97%)
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/without-annotation.ts | 💥 | 83.33% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
-| typescript/functional-composition/pipe-function-calls.ts | 💥 | 82.76% |
 | typescript/interface/ignore.ts | 💥✨ | 40.09% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
