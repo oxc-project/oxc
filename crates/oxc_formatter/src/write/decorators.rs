@@ -83,14 +83,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
 
         // Check if we need to manually add parentheses for cases not handled by NeedsParentheses
         let needs_manual_parentheses = match &self.expression {
-            // ParenthesizedExpression already has parens, don't add more
-            Expression::ParenthesizedExpression(_) => false,
-            // Let NeedsParentheses handle these known cases
-            Expression::CallExpression(_)
+            // These expressions don't need manual parentheses:
+            // - ParenthesizedExpression already has parens
+            // - CallExpression, ComputedMemberExpression, StaticMemberExpression handled by NeedsParentheses
+            // - Identifiers don't need parens
+            Expression::ParenthesizedExpression(_)
+            | Expression::CallExpression(_)
             | Expression::ComputedMemberExpression(_)
-            | Expression::StaticMemberExpression(_) => false,
-            // Identifiers don't need parens
-            Expression::Identifier(_) => false,
+            | Expression::StaticMemberExpression(_)
+            | Expression::Identifier(_) => false,
             // All other complex expressions need parentheses
             _ => true,
         };
