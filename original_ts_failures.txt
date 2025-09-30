@@ -1,7 +1,0 @@
-typescript/arrow/16067.ts
-typescript/as/nested-await-and-as.ts
-typescript/cast/generic-cast.ts
-typescript/comments/type-parameters.ts
-typescript/decorators-ts/typeorm.ts
-typescript/functional-composition/pipe-function-calls.ts
-typescript/satisfies-operators/nested-await-and-satisfies.ts
