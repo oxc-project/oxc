@@ -130,6 +130,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         // but still allow breaking for very long call expressions
         if is_within_type_assertion {
             // Calculate the estimated width of the inline version
+            #[expect(clippy::cast_possible_truncation)]
             let estimated_width = call_like_span.size()
                 + self.iter().map(|arg| arg.span().size()).sum::<u32>()
                 + self.len().saturating_sub(1) as u32 * 2; // commas and spaces
@@ -190,16 +191,16 @@ fn is_long_curried_arrow_argument(args: &[Argument<'_>], call_like_span: Span) -
 
     if let Some(Argument::ArrowFunctionExpression(arrow)) = args.first() {
         // Check if it's a curried arrow (arrow expression that returns another arrow)
-        if arrow.expression {
-            if let Some(Expression::ArrowFunctionExpression(_)) = arrow.get_expression() {
-                // Use a more conservative threshold since span-based width estimation
-                // includes whitespace and comments, making it overly aggressive.
-                // Simple curried arrows like `(a) => (b) => (1, 2, 3)` should stay inline.
-                let estimated_width = call_like_span.size() + arrow.span.size() + 2; // 2 for parentheses
+        if arrow.expression
+            && let Some(Expression::ArrowFunctionExpression(_)) = arrow.get_expression()
+        {
+            // Use a more conservative threshold since span-based width estimation
+            // includes whitespace and comments, making it overly aggressive.
+            // Simple curried arrows like `(a) => (b) => (1, 2, 3)` should stay inline.
+            let estimated_width = call_like_span.size() + arrow.span.size() + 2; // 2 for parentheses
 
-                // Only break for genuinely long expressions - be much more conservative
-                return estimated_width > 120;
-            }
+            // Only break for genuinely long expressions - be much more conservative
+            return estimated_width > 120;
         }
     }
 
