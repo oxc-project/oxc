@@ -119,10 +119,10 @@ fn dependency_array_not_array_literal_diagnostic(hook_name: &str, span: Span) ->
     .with_error_code_scope(SCOPE)
 }
 
-fn literal_in_dependency_array_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The literal is not a valid dependency because it never changes.")
+fn duplicate_dependency_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("This dependency is specified more than once in the dependency array.")
         .with_label(span)
-        .with_help("Remove the literal from the array.")
+        .with_help("Remove the duplicate dependency from the array.")
         .with_error_code_scope(SCOPE)
 }
 
@@ -545,7 +545,7 @@ impl Rule for ExhaustiveDeps {
             for item in declared_dependencies_iter {
                 let span = item.span;
                 if !declared_dependencies.insert(item) {
-                    ctx.diagnostic(literal_in_dependency_array_diagnostic(span));
+                    ctx.diagnostic(duplicate_dependency_diagnostic(span));
                 }
             }
 
