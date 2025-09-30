@@ -2834,6 +2834,13 @@ impl RuleRunner for crate::rules::unicorn::require_array_join_separator::Require
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::unicorn::require_module_specifiers::RequireModuleSpecifiers {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportNamedDeclaration,
+        AstType::ImportDeclaration,
+    ]));
+}
+
 impl RuleRunner for crate::rules::unicorn::require_number_to_fixed_digits_argument::RequireNumberToFixedDigitsArgument {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
