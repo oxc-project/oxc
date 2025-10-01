@@ -14,7 +14,10 @@ pub mod typecast;
 pub mod typescript;
 
 use oxc_allocator::Address;
-use oxc_ast::{AstKind, ast::CallExpression};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, CallExpression},
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -130,7 +133,7 @@ pub fn is_expression_used_as_call_argument(span: Span, parent: &AstNodes) -> boo
 /// Cold path for checking many arguments - rarely called, optimized for code size not speed
 #[cold]
 #[inline(never)]
-fn check_many_arguments_cold(span: Span, arguments: &[oxc_ast::ast::Argument]) -> bool {
+fn check_many_arguments_cold(span: Span, arguments: &[Argument]) -> bool {
     // Iterator for rare complex cases (>3 arguments)
     arguments.iter().any(|arg| {
         let arg_span = arg.span();
