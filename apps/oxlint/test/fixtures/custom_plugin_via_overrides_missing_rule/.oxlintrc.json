@@ -5,7 +5,7 @@
   "overrides": [
     {
       "files": ["*.js"],
-      "jsPlugins": ["./plugin.js"],
+      "jsPlugins": ["./plugin.ts"],
       "rules": {
         "basic-custom-plugin/missing": "error"
       }

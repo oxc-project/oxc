@@ -412,7 +412,7 @@ impl NoFallthrough {
 // ----------------------------------------!README!-----------------------------------------------
 // >> PLEASE DON'T MAKE IT A REPEATING PATTERN IN THE PROJECT, ONE TIME HACK TO GET IT DONE
 //  >>  TODO: it is a hack to get our cases `cfg_id`s. please replace me with semantic API when
-//          one became available. This code is highly volitile and has a lot of assumptions about
+//          one became available. This code is highly volatile and has a lot of assumptions about
 //          the current shape of the CFG, It is just a slow and dirty workaround!
 // ----------------------------------------------------------------------------------------------
 // TREAT LIKE BLACK MAGIC, IT BREAKS WITH SMALLEST CHANGES TO THE SWITCH CASE CFG!

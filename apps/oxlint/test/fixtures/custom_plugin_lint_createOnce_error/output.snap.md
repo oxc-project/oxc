@@ -5,9 +5,9 @@
 ```
 Failed to parse configuration file.
 
-  x Failed to load JS plugin: ./plugin.js
+  x Failed to load JS plugin: ./plugin.ts
   |   Error: Whoops!
-  |     at Object.createOnce (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_createOnce_error/plugin.js:8:15)
+  |     at Object.createOnce (<root>/apps/oxlint/test/fixtures/custom_plugin_lint_createOnce_error/plugin.ts:10:15)
 ```
 
 # stderr

@@ -224,6 +224,8 @@ pub struct Message<'a> {
     pub fixes: PossibleFixes<'a>,
     span: Span,
     fixed: bool,
+    #[cfg(feature = "language_server")]
+    pub section_offset: u32,
 }
 
 impl<'new> CloneIn<'new> for Message<'_> {
@@ -235,6 +237,8 @@ impl<'new> CloneIn<'new> for Message<'_> {
             fixes: self.fixes.clone_in(allocator),
             span: self.span,
             fixed: self.fixed,
+            #[cfg(feature = "language_server")]
+            section_offset: self.section_offset,
         }
     }
 }
@@ -249,7 +253,20 @@ impl<'a> Message<'a> {
             .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false }
+        Self {
+            error,
+            span,
+            fixes,
+            fixed: false,
+            #[cfg(feature = "language_server")]
+            section_offset: 0,
+        }
+    }
+
+    #[cfg(feature = "language_server")]
+    pub fn with_section_offset(mut self, section_offset: u32) -> Self {
+        self.section_offset = section_offset;
+        self
     }
 
     /// move the offset of all spans to the right

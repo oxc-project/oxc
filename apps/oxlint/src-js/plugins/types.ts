@@ -26,8 +26,10 @@ export interface VisitorWithHooks extends Visitor {
 export type VisitFn = (node: Node) => void;
 
 // AST node type.
-// We'll make this type a union later on.
-export type Node = { type: string; start: number; end: number; [key: string]: unknown };
+export interface Node {
+  start: number;
+  end: number;
+}
 
 // Element of compiled visitor array.
 // * `VisitFn | null` for leaf nodes.
@@ -43,6 +45,6 @@ export interface EnterExit {
 // Rule metadata.
 // TODO: Fill in all properties.
 export interface RuleMeta {
-  fixable?: 'code' | 'whitespace';
+  fixable?: 'code' | 'whitespace' | null | undefined;
   [key: string]: unknown;
 }

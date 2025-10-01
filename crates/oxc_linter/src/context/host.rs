@@ -174,7 +174,7 @@ impl<'a> ContextHost<'a> {
     }
 
     /// The current [`ContextSubHost`]
-    fn current_sub_host(&self) -> &ContextSubHost<'a> {
+    pub fn current_sub_host(&self) -> &ContextSubHost<'a> {
         &self.sub_hosts[self.current_sub_host_index.get()]
     }
 

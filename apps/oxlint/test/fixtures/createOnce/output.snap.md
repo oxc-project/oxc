@@ -75,6 +75,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: sourceCode: Cannot access `context.sourceCode` in `createOnce`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x create-once-plugin(always-run): createOnce: this === rule: true
    ,-[files/1.js:1:1]
  1 | let x;
@@ -201,6 +207,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: sourceCode: Cannot access `context.sourceCode` in `createOnce`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
   x create-once-plugin(always-run): createOnce: this === rule: true
    ,-[files/2.js:1:1]
  1 | let y;
@@ -255,7 +267,7 @@
    :     ^
    `----
 
-Found 0 warnings and 42 errors.
+Found 0 warnings and 44 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

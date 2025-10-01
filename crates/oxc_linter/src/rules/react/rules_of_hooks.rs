@@ -10,6 +10,7 @@ use oxc_cfg::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId};
+use oxc_span::GetSpan;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
@@ -24,14 +25,22 @@ mod diagnostics {
     use oxc_span::Span;
     const SCOPE: &str = "eslint-plugin-react-hooks";
 
-    pub(super) fn function_error(span: Span, hook_name: &str, func_name: &str) -> OxcDiagnostic {
+    pub(super) fn function_error(
+        react_hook_span: Span,
+        outer_function_span: Span,
+        hook_name: &str,
+        func_name: &str,
+    ) -> OxcDiagnostic {
         OxcDiagnostic::warn(format!(
             "React Hook {hook_name:?} is called in function {func_name:?} that is neither \
             a React function component nor a custom React Hook function. \
             React component names must start with an uppercase letter. \
             React Hook names must start with the word \"use\".",
         ))
-        .with_label(span)
+        .with_labels(vec![
+            react_hook_span.primary_label("Hook is called here"),
+            outer_function_span.label("Outer function"),
+        ])
         .with_error_code_scope(SCOPE)
     }
 
@@ -202,6 +211,7 @@ impl Rule for RulesOfHooks {
                 if !is_react_component_or_hook_name(&id.name) =>
             {
                 return ctx.diagnostic(diagnostics::function_error(
+                    call.callee.span(),
                     id.span,
                     hook_name,
                     id.name.as_str(),
@@ -247,6 +257,7 @@ impl Rule for RulesOfHooks {
                 // }
                 if ident.is_some_and(|name| !is_react_component_or_hook_name(&name)) {
                     return ctx.diagnostic(diagnostics::function_error(
+                        call.callee.span(),
                         *span,
                         hook_name,
                         "Anonymous",

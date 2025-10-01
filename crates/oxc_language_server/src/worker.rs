@@ -12,13 +12,10 @@ use tower_lsp_server::{
 
 use crate::{
     ConcurrentHashMap,
-    code_actions::{
-        apply_all_fix_code_action, apply_fix_code_actions, ignore_this_line_code_action,
-        ignore_this_rule_code_action,
-    },
+    code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
     formatter::server_formatter::ServerFormatter,
     linter::{
-        error_with_position::{DiagnosticReport, PossibleFixContent},
+        error_with_position::DiagnosticReport,
         server_linter::{ServerLinter, ServerLinterRun, normalize_path},
     },
     options::Options,
@@ -264,29 +261,9 @@ impl WorkspaceWorker {
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
         for report in reports {
-            let mut append_ignore_code_actions = true;
-
             if let Some(fix_actions) = apply_fix_code_actions(report, uri) {
-                // do not append ignore code actions when the error is the ignore action
-                if fix_actions
-                    .first()
-                    .as_ref()
-                    .is_some_and(|fix| fix.title == "remove unused disable directive")
-                {
-                    append_ignore_code_actions = false;
-                }
                 code_actions_vec
                     .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
-            }
-
-            if append_ignore_code_actions {
-                code_actions_vec.push(CodeActionOrCommand::CodeAction(
-                    ignore_this_line_code_action(report, uri),
-                ));
-
-                code_actions_vec.push(CodeActionOrCommand::CodeAction(
-                    ignore_this_rule_code_action(report, uri),
-                ));
             }
         }
 
@@ -309,26 +286,7 @@ impl WorkspaceWorker {
             return vec![];
         }
 
-        let mut text_edits = vec![];
-
-        for report in value {
-            let fix = match &report.fixed_content {
-                PossibleFixContent::None => None,
-                PossibleFixContent::Single(fixed_content) => Some(fixed_content),
-                // For multiple fixes, we take the first one as a representative fix.
-                // Applying all possible fixes at once is not possible in this context.
-                PossibleFixContent::Multiple(multi) => multi.first(),
-            };
-
-            if let Some(fixed_content) = &fix {
-                text_edits.push(TextEdit {
-                    range: fixed_content.range,
-                    new_text: fixed_content.code.clone(),
-                });
-            }
-        }
-
-        text_edits
+        fix_all_text_edit(value.iter())
     }
 
     /// Handle file changes that are watched by the client

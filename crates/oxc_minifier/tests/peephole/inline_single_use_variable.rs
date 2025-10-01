@@ -224,6 +224,32 @@ fn test_inline_single_use_variable() {
 }
 
 #[test]
+fn test_inline_past_readonly_variable() {
+    test(
+        "function wrapper() { var x = foo, y = bar; return [x, y] }",
+        "function wrapper() { return [foo, bar] }",
+    );
+    test(
+        "function wrapper() { function x() {} var y = bar; return [x, y] }",
+        "function wrapper() { function x() {} return [x, bar] }",
+    );
+    test_same(
+        "function wrapper(bar) { Object.defineProperty(globalThis, 'foo', { value: () => { y = 1 } }); var x = foo, y = bar; return [x, y] }",
+    );
+    test_same(
+        "function wrapper(foo) { Object.defineProperty(globalThis, 'bar', { value: () => { x = 1 } }); var x = foo, y = bar; return [x, y] }",
+    );
+    test(
+        "function wrapper(bar) { var foo = { get bar() { y = 1 } }, x = foo.bar, y = bar; return [x, y] }",
+        "function wrapper(bar) { var x = { get bar() { y = 1 } }.bar, y = bar; return [x, y] }",
+    );
+    test(
+        "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
+        "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
+    );
+}
+
+#[test]
 fn test_within_same_variable_declarations() {
     test_script(
         "var a = foo, b = a; for (; bar;) console.log(b)",

@@ -37,6 +37,7 @@ extend-ignore-re = [
 ]
 
 [default.extend-words]
+strager = "strager"
 trivias = "trivias"
 trivia = "trivia"
 xdescribe = "xdescribe"

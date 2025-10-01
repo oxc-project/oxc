@@ -753,7 +753,6 @@ impl Runtime {
 
                         messages.lock().unwrap().extend(section_messages.iter().map(|message| {
                             let message = message_cloner.clone_message(message);
-
                             message_to_message_with_position(message, source_text, rope)
                         }));
                     },

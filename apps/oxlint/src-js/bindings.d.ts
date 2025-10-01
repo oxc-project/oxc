@@ -11,10 +11,11 @@ export type JsLoadPluginCb =
 /**
  * NAPI entry point.
  *
- * JS side passes in two callbacks:
- * 1. `load_plugin`: Load a JS plugin from a file path.
- * 2. `lint_file`: Lint a file.
+ * JS side passes in:
+ * 1. `args`: Command line arguments (process.argv.slice(2))
+ * 2. `load_plugin`: Load a JS plugin from a file path.
+ * 3. `lint_file`: Lint a file.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb): Promise<boolean>

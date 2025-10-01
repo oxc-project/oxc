@@ -57,8 +57,13 @@ impl<'a> ClassSymbolsStack<'a> {
     }
 
     /// Exit the current class scope
-    pub fn pop_class_scope(&mut self) {
-        self.stack.pop();
+    pub fn pop_class_scope(&mut self, declared_private_symbols: impl Iterator<Item = Atom<'a>>) {
+        let mut used_private_symbols = self.stack.pop();
+        declared_private_symbols.for_each(|name| {
+            used_private_symbols.remove(&name);
+        });
+        // if the symbol was not declared in this class, that is declared in the class outside the current class
+        self.stack.last_mut().extend(used_private_symbols);
     }
 
     /// Add a private member to the current class scope

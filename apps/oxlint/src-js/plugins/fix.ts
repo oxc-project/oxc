@@ -1,6 +1,7 @@
 import { assertIs } from './utils.js';
 
 import type { Diagnostic, InternalContext } from './context.ts';
+import type { Node } from './types.ts';
 
 const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
   { getPrototypeOf, hasOwn, prototype: ObjectPrototype } = Object,
@@ -17,13 +18,10 @@ export type FixFn = (
 // Type of a fix, as returned by `fix` function.
 export type Fix = { range: Range; text: string };
 
-type Range = [number, number];
+export type Range = [number, number];
 
 // Currently we only support `Node`s, but will add support for `Token`s later
-interface NodeOrToken {
-  start: number;
-  end: number;
-}
+export type NodeOrToken = Node;
 
 // Fixer, passed as argument to `fix` function passed to `Context#report()`.
 //
@@ -60,7 +58,7 @@ const FIXER = Object.freeze({
   },
 });
 
-type Fixer = typeof FIXER;
+export type Fixer = typeof FIXER;
 
 /**
  * Get fixes from a `Diagnostic`.
@@ -144,7 +142,7 @@ export function getFixes(diagnostic: Diagnostic, internal: InternalContext): Fix
 
   // ESLint does not throw this error if `fix` function returns only falsy values.
   // We've already exited if that is the case, so we're reproducing that behavior.
-  if (internal.meta.fixable === null) {
+  if (internal.isFixable === false) {
     throw new Error('Fixable rules must set the `meta.fixable` property to "code" or "whitespace".');
   }
 

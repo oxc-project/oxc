@@ -2,10 +2,13 @@ import type { Context } from './plugins/context.ts';
 import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
-const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf, create: ObjectCreate } = Object;
+export type { Context, Diagnostic } from './plugins/context.ts';
+export type { Fix, Fixer, FixFn, NodeOrToken, Range } from './plugins/fix.ts';
+export type { CreateOnceRule, CreateRule, Plugin, Rule } from './plugins/load.ts';
+export type { SourceCode } from './plugins/source_code.ts';
+export type { AfterHook, BeforeHook, Node, RuleMeta, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
-const dummyOptions: unknown[] = [],
-  dummyReport = () => {};
+const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf, create: ObjectCreate } = Object;
 
 /**
  * Define a plugin.
@@ -109,8 +112,8 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   // so should be OK to take this shortcut.
   const context = ObjectCreate(null, {
     id: { value: '', enumerable: true, configurable: true },
-    options: { value: dummyOptions, enumerable: true, configurable: true },
-    report: { value: dummyReport, enumerable: true, configurable: true },
+    options: { value: null, enumerable: true, configurable: true },
+    report: { value: null, enumerable: true, configurable: true },
   });
 
   let { before: beforeHook, after: afterHook, ...visitor } = createOnce.call(rule, context) as VisitorWithHooks;
