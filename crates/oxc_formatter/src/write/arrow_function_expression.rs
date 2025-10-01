@@ -470,7 +470,6 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
 
-
         // Check if this arrow function is a call argument (even if not grouped)
         let is_call_argument = is_grouped_call_arg_layout
             || crate::utils::is_expression_used_as_call_argument(self.head.span, head_parent);
@@ -512,9 +511,11 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
         // For call arguments with simple literals, keep them inline to match Prettier
-        let body_on_separate_line = if self.is_short_chain && is_call_argument
+        let body_on_separate_line = if self.is_short_chain
+            && is_call_argument
             && !self.arrows().any(|arrow| arrow.type_parameters.is_some())
-            && self.arrows().all(|arrow| has_only_simple_parameters(&arrow.params, true)) {
+            && self.arrows().all(|arrow| has_only_simple_parameters(&arrow.params, true))
+        {
             // Short chains (2 arrows) in call arguments with simple parameters:
             // only break if body naturally breaks
             // This keeps `(a) => (b) => dispatch(c)` inline
@@ -533,28 +534,14 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         } else {
             // Long chains or assignments: use full breaking logic
             !tail.get_expression().is_none_or(|expression| {
-                let should_keep_inline = matches!(
+                matches!(
                     expression,
                     Expression::ObjectExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::SequenceExpression(_)
                         | Expression::JSXElement(_)
                         | Expression::JSXFragment(_)
-                );
-
-                // Additionally, for call arguments with TypeScript context, keep simple literals inline
-                let is_simple_literal_in_ts_call_arg = is_call_argument
-                    && self.arrows().any(|arrow| arrow.type_parameters.is_some())
-                    && matches!(
-                        expression,
-                        Expression::NumericLiteral(_)
-                            | Expression::StringLiteral(_)
-                            | Expression::BooleanLiteral(_)
-                            | Expression::NullLiteral(_)
-                            | Expression::Identifier(_)
-                    );
-
-                should_keep_inline || is_simple_literal_in_ts_call_arg
+                )
             })
         };
 
@@ -584,7 +571,6 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 .options
                 .assignment_layout
                 .is_some_and(|layout| layout != AssignmentLikeLayout::BreakAfterOperator);
-
 
         let format_arrow_signatures = format_with(|f| {
             let join_signatures = format_with(|f| {
