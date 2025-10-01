@@ -123,6 +123,10 @@ describe('oxlint CLI', () => {
     await testFixture('context_properties');
   });
 
+  it('should give access to source code via `context.sourceCode`', async () => {
+    await testFixture('sourceCode');
+  });
+
   it('should support `createOnce`', async () => {
     await testFixture('createOnce');
   });
