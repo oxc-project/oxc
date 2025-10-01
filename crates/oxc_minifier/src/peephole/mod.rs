@@ -372,7 +372,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         let ctx = &mut Ctx::new(ctx);
         Self::remove_dead_code_exit_class_body(body, ctx);
         Self::remove_unused_private_members(body, ctx);
-        ctx.state.class_symbols_stack.pop_class_scope();
+        ctx.state.class_symbols_stack.pop_class_scope(Self::get_declared_private_symbols(body));
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
