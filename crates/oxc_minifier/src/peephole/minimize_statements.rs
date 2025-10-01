@@ -71,7 +71,12 @@ impl<'a> PeepholeOptimizations {
                 // "while (x) { y(); continue; }" => "while (x) { y(); }"
                 Statement::ContinueStatement(s) if s.label.is_none() => {
                     let mut changed = false;
-                    if let Some(Ancestor::ForStatementBody(_)) = ctx.ancestors().nth(1) {
+                    if let Some(
+                        Ancestor::ForStatementBody(_)
+                        | Ancestor::ForInStatementBody(_)
+                        | Ancestor::ForOfStatementBody(_),
+                    ) = ctx.ancestors().nth(1)
+                    {
                         stmts.pop();
                         changed = true;
                     }
@@ -1815,5 +1820,9 @@ mod test {
         test("for( a of b ){ if(c) { continue; } d() }", "for ( a of b ) c || d();");
         test("for( a in b ){ if(c) { continue; } d() }", "for ( a in b ) c || d();");
         test("for( ; ; ){ if(c) { continue; } d() }", "for ( ; ; ) c || d();");
+
+        test("for( a of b ){ c(); continue; }", "for ( a of b ) c();");
+        test("for( a in b ){ c(); continue; }", "for ( a in b ) c();");
+        test("for( ; ; ){ c(); continue; }", "for ( ; ; ) c();");
     }
 }
