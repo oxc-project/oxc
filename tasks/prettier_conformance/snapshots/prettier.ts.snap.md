@@ -1,4 +1,4 @@
-ts compatibility: 530/573 (92.50%)
+ts compatibility: 533/573 (93.02%)
 
 # Failed
 
@@ -12,9 +12,7 @@ ts compatibility: 530/573 (92.50%)
 | typescript/angular-component-examples/15934-computed.component.ts | 💥💥 | 76.92% |
 | typescript/angular-component-examples/15934.component.ts | 💥💥 | 53.85% |
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
-| typescript/arrow/16067.ts | 💥💥 | 93.88% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
-| typescript/as/nested-await-and-as.ts | 💥 | 42.86% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 82.81% |
 | typescript/chain-expression/member-expression.ts | 💥 | 82.09% |
@@ -41,7 +39,6 @@ ts compatibility: 530/573 (92.50%)
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 68.00% |
-| typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 42.86% |
 | typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
