@@ -137,7 +137,7 @@ const createOnceBeforeFalseRule = defineRule({
   },
 });
 
-// These 3 rules test that `createOnce` without `before` and `after` hooks works correctly.
+// These 4 rules test that `createOnce` without `before` and `after` hooks works correctly.
 
 const createOnceBeforeOnlyRule = defineRule({
   createOnce(context) {
@@ -181,6 +181,27 @@ const createOnceAfterOnlyRule = defineRule({
   },
 });
 
+const createOnceHooksOnlyRule = defineRule({
+  createOnce(context) {
+    return {
+      before() {
+        context.report({
+          message: 'before hook:\n' +
+            `filename: ${relativePath(context.filename)}`,
+          node: SPAN,
+        });
+      },
+      after() {
+        context.report({
+          message: 'after hook:\n' +
+            `filename: ${relativePath(context.filename)}`,
+          node: SPAN,
+        });
+      },
+    };
+  },
+});
+
 const createOnceNoHooksRule = defineRule({
   createOnce(context) {
     return {
@@ -205,6 +226,7 @@ export default definePlugin({
     'create-once-before-false': createOnceBeforeFalseRule,
     'create-once-before-only': createOnceBeforeOnlyRule,
     'create-once-after-only': createOnceAfterOnlyRule,
+    'create-once-hooks-only': createOnceHooksOnlyRule,
     'create-once-no-hooks': createOnceNoHooksRule,
   },
 });

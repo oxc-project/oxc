@@ -14,11 +14,15 @@ filename: files/1.js  define-plugin-and-rule-plugin/create-once
 filename: files/1.js                                               define-plugin-and-rule-plugin/create-once-before-false
   0:1  error  before hook:
 filename: files/1.js                                               define-plugin-and-rule-plugin/create-once-before-only
+  0:1  error  before hook:
+filename: files/1.js                                               define-plugin-and-rule-plugin/create-once-hooks-only
   0:1  error  after hook:
 identNum: 2
 filename: files/1.js                                    define-plugin-and-rule-plugin/create-once
   0:1  error  after hook:
 filename: files/1.js                                                define-plugin-and-rule-plugin/create-once-after-only
+  0:1  error  after hook:
+filename: files/1.js                                                define-plugin-and-rule-plugin/create-once-hooks-only
   1:5  error  ident visit fn "a":
 filename: files/1.js                                        define-plugin-and-rule-plugin/create
   1:5  error  ident visit fn "a":
@@ -53,6 +57,8 @@ filename: files/2.js  define-plugin-and-rule-plugin/create-once
 filename: files/2.js                                               define-plugin-and-rule-plugin/create-once-before-false
   0:1  error  before hook:
 filename: files/2.js                                               define-plugin-and-rule-plugin/create-once-before-only
+  0:1  error  before hook:
+filename: files/2.js                                               define-plugin-and-rule-plugin/create-once-hooks-only
   0:1  error  after hook:
 identNum: 2
 filename: files/2.js                                    define-plugin-and-rule-plugin/create-once
@@ -60,6 +66,8 @@ filename: files/2.js                                    define-plugin-and-rule-p
 filename: files/2.js                                                define-plugin-and-rule-plugin/create-once-before-false
   0:1  error  after hook:
 filename: files/2.js                                                define-plugin-and-rule-plugin/create-once-after-only
+  0:1  error  after hook:
+filename: files/2.js                                                define-plugin-and-rule-plugin/create-once-hooks-only
   1:5  error  ident visit fn "c":
 filename: files/2.js                                        define-plugin-and-rule-plugin/create
   1:5  error  ident visit fn "c":
@@ -87,7 +95,7 @@ filename: files/2.js                                        define-plugin-and-ru
   1:8  error  ident visit fn "d":
 filename: files/2.js                                        define-plugin-and-rule-plugin/create-once-no-hooks
 
-✖ 35 problems (35 errors, 0 warnings)
+✖ 39 problems (39 errors, 0 warnings)
 ```
 
 # stderr
