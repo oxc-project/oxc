@@ -1405,13 +1405,17 @@ impl<'a> PeepholeOptimizations {
                 ) {
                     return Some(changed);
                 }
-                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
-                    &mut logical_expr.right,
-                    search_for,
-                    replacement,
-                    replacement_has_side_effect,
-                    ctx,
-                ) {
+                // Do not substitute our unconditionally-executed value into a branch
+                // unless the value itself has no side effects
+                if !replacement_has_side_effect
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut logical_expr.right,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
                     return Some(changed);
                 }
             }
