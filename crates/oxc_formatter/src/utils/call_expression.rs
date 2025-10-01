@@ -43,12 +43,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
                 if let AstNodes::CallExpression(parent_call) = call.parent {
                     is_test_call_expression(parent_call)
                 } else {
-                    // Fallback: try parent.parent() for compatibility
-                    if let AstNodes::CallExpression(parent_call) = call.parent.parent() {
-                        is_test_call_expression(parent_call)
-                    } else {
-                        false
-                    }
+                    false
                 }
             } {
                 return matches!(
