@@ -198,7 +198,7 @@ pub trait CompilerInterface {
                 Compressor::new(&allocator).dead_code_elimination_with_scoping(
                     &mut program,
                     scoping,
-                    CompressOptions::smallest(),
+                    CompressOptions::dce(),
                 );
             }
         }

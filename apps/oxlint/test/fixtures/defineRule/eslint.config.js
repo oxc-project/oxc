@@ -12,6 +12,7 @@ export default [
       'define-rule-plugin/create-once-before-false': 'error',
       'define-rule-plugin/create-once-before-only': 'error',
       'define-rule-plugin/create-once-after-only': 'error',
+      'define-rule-plugin/create-once-hooks-only': 'error',
       'define-rule-plugin/create-once-no-hooks': 'error',
     },
   },

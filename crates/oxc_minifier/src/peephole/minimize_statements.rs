@@ -71,7 +71,12 @@ impl<'a> PeepholeOptimizations {
                 // "while (x) { y(); continue; }" => "while (x) { y(); }"
                 Statement::ContinueStatement(s) if s.label.is_none() => {
                     let mut changed = false;
-                    if let Some(Ancestor::ForStatementBody(_)) = ctx.ancestors().nth(1) {
+                    if let Some(
+                        Ancestor::ForStatementBody(_)
+                        | Ancestor::ForInStatementBody(_)
+                        | Ancestor::ForOfStatementBody(_),
+                    ) = ctx.ancestors().nth(1)
+                    {
                         stmts.pop();
                         changed = true;
                     }
@@ -1261,6 +1266,13 @@ impl<'a> PeepholeOptimizations {
                     *target_expr = replacement.take_in(ctx.ast);
                     return Some(true);
                 }
+                // If the identifier is not a getter and the identifier is read-only,
+                // we know that the value is same even if we reordered the expression.
+                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                    && !ctx.scoping().symbol_is_mutated(symbol_id)
+                {
+                    return None;
+                }
             }
             Expression::AwaitExpression(await_expr) => {
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
@@ -1393,13 +1405,17 @@ impl<'a> PeepholeOptimizations {
                 ) {
                     return Some(changed);
                 }
-                if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
-                    &mut logical_expr.right,
-                    search_for,
-                    replacement,
-                    replacement_has_side_effect,
-                    ctx,
-                ) {
+                // Do not substitute our unconditionally-executed value into a branch
+                // unless the value itself has no side effects
+                if !replacement_has_side_effect
+                    && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
+                        &mut logical_expr.right,
+                        search_for,
+                        replacement,
+                        replacement_has_side_effect,
+                        ctx,
+                    )
+                {
                     return Some(changed);
                 }
             }
@@ -1815,5 +1831,9 @@ mod test {
         test("for( a of b ){ if(c) { continue; } d() }", "for ( a of b ) c || d();");
         test("for( a in b ){ if(c) { continue; } d() }", "for ( a in b ) c || d();");
         test("for( ; ; ){ if(c) { continue; } d() }", "for ( ; ; ) c || d();");
+
+        test("for( a of b ){ c(); continue; }", "for ( a of b ) c();");
+        test("for( a in b ){ c(); continue; }", "for ( a in b ) c();");
+        test("for( ; ; ){ c(); continue; }", "for ( ; ; ) c();");
     }
 }

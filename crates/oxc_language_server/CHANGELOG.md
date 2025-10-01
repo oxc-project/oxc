@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.19.0] - 2025-09-29
+
+### 🚀 Features
+
+- 1472147 linter: Move `no-unused-expressions` to correctness (#14099) (camchenry)
+
+### 🐛 Bug Fixes
+
+- e37c435 language_server: Correct position for "ignore this rule for this file" in vue/astro/svelte files (#14187) (Sysix)
+- d36d227 language_server: Don't lint file on code action when it is already ignored (#13976) (Sysix)
+- 353bfe7 language_server: Check if tsconfig path is a file before starting the `LintService` (#14126) (Sysix)
+
+### 🚜 Refactor
+
+- 7a0eb57 language_server: Refactor ignore code action logic as a linter fix (#14183) (Sysix)
+
+### 📚 Documentation
+
+- b83b1bd language_server: Docs for `Backend` struct (#14172) (Sysix)
+- 3106ba0 language_server: Docs for `WorkspaceWorker` (#14161) (Sysix)
+
+### 🧪 Testing
+
+- be58d6d language_server: Fix test for ServerFormatter in windows (#14210) (Sysix)
+- d7041c1 language_server: Add linebreaks for formatter snapshot (#14173) (Sysix)
+
+
 
 ## [1.17.0] - 2025-09-23
 

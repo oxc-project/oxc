@@ -126,12 +126,13 @@ fn operator_type_or_higher_needs_parens(span: Span, parent: &AstNodes) -> bool {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(
-            self.parent,
-            AstNodes::TSArrayType(_)
-                | AstNodes::TSTypeOperator(_)
-                | AstNodes::TSIndexedAccessType(_)
-        )
+        match self.parent {
+            AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
+            AstNodes::TSIntersectionType(intersection) => {
+                self.types.len() > 1 && intersection.types.len() > 1
+            }
+            parent => operator_type_or_higher_needs_parens(self.span(), parent),
+        }
     }
 }
 

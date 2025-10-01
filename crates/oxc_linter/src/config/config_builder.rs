@@ -532,8 +532,12 @@ impl ConfigStoreBuilder {
 
         match result {
             PluginLoadResult::Success { name, offset, rule_names } => {
-                external_plugin_store.register_plugin(plugin_path, name, offset, rule_names);
-                Ok(())
+                if name != "eslint" && LintPlugins::from(name.as_str()) == LintPlugins::empty() {
+                    external_plugin_store.register_plugin(plugin_path, name, offset, rule_names);
+                    Ok(())
+                } else {
+                    Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name: name })
+                }
             }
             PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
                 plugin_specifier: plugin_specifier.to_string(),
@@ -580,6 +584,9 @@ pub enum ConfigBuilderError {
     NoExternalLinterConfigured {
         plugin_specifier: String,
     },
+    ReservedExternalPluginName {
+        plugin_name: String,
+    },
 }
 
 impl Display for ConfigBuilderError {
@@ -607,6 +614,13 @@ impl Display for ConfigBuilderError {
                 write!(
                     f,
                     "`jsPlugins` config contains '{plugin_specifier}'. JS plugins are not supported in the language server, or on 32-bit or big-endian platforms at present.",
+                )?;
+                Ok(())
+            }
+            ConfigBuilderError::ReservedExternalPluginName { plugin_name } => {
+                write!(
+                    f,
+                    "Plugin name '{plugin_name}' is reserved, and cannot be used for JS plugins",
                 )?;
                 Ok(())
             }

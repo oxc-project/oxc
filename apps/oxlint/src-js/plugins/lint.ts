@@ -104,6 +104,13 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
     throw new Error('Expected `ruleIds` to be a non-zero len array');
   }
 
+  // Decode source text from buffer
+  const { uint32 } = buffer,
+    programPos = uint32[DATA_POINTER_POS_32],
+    sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
@@ -111,7 +118,7 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
     const ruleId = ruleIds[i],
       ruleAndContext = registeredRules[ruleId];
     const { rule, context } = ruleAndContext;
-    setupContextForFile(context, i, filePath);
+    setupContextForFile(context, i, filePath, sourceText);
 
     let { visitor } = ruleAndContext;
     if (visitor === null) {
@@ -139,12 +146,6 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
-    const { uint32 } = buffer,
-      programPos = uint32[DATA_POINTER_POS_32],
-      sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-
-    const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
-
     // `preserveParens` argument is `false`, to match ESLint.
     // ESLint does not include `ParenthesizedExpression` nodes in its AST.
     const program = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);

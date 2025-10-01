@@ -154,6 +154,7 @@ impl NoUnusedExpressions {
             | Expression::CallExpression(_)
             | Expression::V8IntrinsicExpression(_)
             | Expression::UpdateExpression(_)
+            | Expression::TSSatisfiesExpression(_)
             | Expression::YieldExpression(_) => false,
             Expression::ConditionalExpression(conditional_expression) => {
                 if self.0.allow_ternary {
@@ -178,9 +179,6 @@ impl NoUnusedExpressions {
             Expression::JSXElement(_) | Expression::JSXFragment(_) => self.0.enforce_for_jsx,
             Expression::TSAsExpression(ts_as_expression) => {
                 self.is_disallowed(&ts_as_expression.expression)
-            }
-            Expression::TSSatisfiesExpression(ts_satisfies_expression) => {
-                self.is_disallowed(&ts_satisfies_expression.expression)
             }
             Expression::TSTypeAssertion(ts_type_assertion) => {
                 self.is_disallowed(&ts_type_assertion.expression)
@@ -342,6 +340,24 @@ fn test() {
             Some(serde_json::json!([{ "allowTernary": true }])),
         ),
         ("const _func = (value: number) => value + 1;", None),
+        (
+            "
+			type FooBarBaz = 'foo' | 'bar' | 'baz';
+			export function satisfiesTest(c: FooBarBaz): string {
+			    switch(c) {
+			        case 'foo':
+			            return 'foo';
+			        case 'bar':
+			            return 'bar';
+			        default:
+			            c satisfies never;
+			            return '';
+			    }
+			}
+			    ",
+            None,
+        ),
+        ("value satisfies number;", None),
     ];
 
     let fail = vec![

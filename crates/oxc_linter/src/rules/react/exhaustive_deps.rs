@@ -126,6 +126,13 @@ fn literal_in_dependency_array_diagnostic(span: Span) -> OxcDiagnostic {
         .with_error_code_scope(SCOPE)
 }
 
+fn duplicate_dependency_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("This dependency is specified more than once in the dependency array.")
+        .with_label(span)
+        .with_help("Remove the duplicate dependency from the array.")
+        .with_error_code_scope(SCOPE)
+}
+
 fn complex_expression_in_dependency_array_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "React Hook {hook_name} has a complex expression in the dependency array.",
@@ -530,6 +537,9 @@ impl Rule for ExhaustiveDeps {
 
                     if let Ok(dep) = analyze_property_chain(elem, ctx) {
                         dep
+                    } else if elem.is_literal() {
+                        ctx.diagnostic(literal_in_dependency_array_diagnostic(elem.span()));
+                        None
                     } else {
                         ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
                             hook_name.as_str(),
@@ -545,7 +555,7 @@ impl Rule for ExhaustiveDeps {
             for item in declared_dependencies_iter {
                 let span = item.span;
                 if !declared_dependencies.insert(item) {
-                    ctx.diagnostic(literal_in_dependency_array_diagnostic(span));
+                    ctx.diagnostic(duplicate_dependency_diagnostic(span));
                 }
             }
 

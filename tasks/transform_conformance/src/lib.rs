@@ -28,7 +28,7 @@ pub struct TestRunnerOptions {
     pub debug: bool,
     pub filter: Option<String>,
     pub exec: bool,
-    /// If it's true, will override the output of dismatch test cases,
+    /// If it's true, will override the output of mismatch test cases,
     /// and write it down to `overrides` folder
     pub r#override: bool,
 }

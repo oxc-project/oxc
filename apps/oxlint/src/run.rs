@@ -49,27 +49,30 @@ pub type JsLintFileCb = ThreadsafeFunction<
 
 /// NAPI entry point.
 ///
-/// JS side passes in two callbacks:
-/// 1. `load_plugin`: Load a JS plugin from a file path.
-/// 2. `lint_file`: Lint a file.
+/// JS side passes in:
+/// 1. `args`: Command line arguments (process.argv.slice(2))
+/// 2. `load_plugin`: Load a JS plugin from a file path.
+/// 3. `lint_file`: Lint a file.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
-    lint_impl(load_plugin, lint_file).report() == ExitCode::SUCCESS
+pub async fn lint(args: Vec<String>, load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
+    lint_impl(args, load_plugin, lint_file).report() == ExitCode::SUCCESS
 }
 
 /// Run the linter.
-fn lint_impl(load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> CliRunResult {
+fn lint_impl(
+    args: Vec<String>,
+    load_plugin: JsLoadPluginCb,
+    lint_file: JsLintFileCb,
+) -> CliRunResult {
     init_tracing();
     init_miette();
 
-    // 1st arg is path to NodeJS binary.
-    // 2nd arg is path to `oxlint/.bin/oxlint` (in released packages)
-    // or `apps/oxlint/dist/cli.js` (in development).
-    let args = std::env::args_os().skip(2).collect::<Vec<_>>();
+    // Convert String args to OsString for compatibility with bpaf
+    let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
 
     let cmd = crate::cli::lint_command();
     let command = match cmd.run_inner(&*args) {

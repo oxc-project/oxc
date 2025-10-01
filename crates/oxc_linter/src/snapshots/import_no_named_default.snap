@@ -21,3 +21,143 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
    ╰────
   help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:9]
+ 1 │ import {default as named} from "foo";
+   ·         ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:9]
+ 1 │ import {default as named,} from "foo";
+   ·         ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:9]
+ 1 │ import {default as named, bar} from "foo";
+   ·         ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:9]
+ 1 │ import {default as named, bar,} from "foo";
+   ·         ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:24]
+ 1 │ import defaultExport, {default as named} from "foo";
+   ·                        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:24]
+ 1 │ import defaultExport, {default as named,} from "foo";
+   ·                        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:24]
+ 1 │ import defaultExport, {default as named, bar} from "foo";
+   ·                        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:24]
+ 1 │ import defaultExport, {default as named, bar,} from "foo";
+   ·                        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:8]
+ 1 │ import{default as named}from"foo";
+   ·        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:9]
+ 1 │ import {default as named}from"foo";
+   ·         ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:8]
+ 1 │ import{default as named} from"foo";
+   ·        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:8]
+ 1 │ import{default as named,}from"foo";
+   ·        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:19]
+ 1 │ import/*comment*/{default as named}from"foo";
+   ·                   ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:20]
+ 1 │ import /*comment*/{default as named}from"foo";
+   ·                    ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:8]
+ 1 │ import{default as named}/*comment*/from"foo";
+   ·        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:23]
+ 1 │ import defaultExport,{default as named}from "foo";
+   ·                       ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:24]
+ 1 │ import defaultExport, {default as named} from "foo" with {type: "json"};
+   ·                        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:24]
+ 1 │ import defaultExport, {default as named} from "foo" with {type: "json"}
+   ·                        ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:9]
+ 1 │ import {default as named1, default as named2,} from "foo";
+   ·         ───────
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ eslint-plugin-import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:28]
+ 1 │ import {default as named1, default as named2,} from "foo";
+   ·                            ───────
+   ╰────
+  help: Forbid named default exports.

@@ -4,6 +4,124 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.19.0] - 2025-09-29
+
+### 🚀 Features
+
+- acd1266 linter/plugins: `oxlint` export types (#14163) (overlookmotel)
+- 00954de linter/plugins: Remove `--js-plugins` CLI option (#14134) (overlookmotel)
+- b4d716f linter/plugins: Move custom JS plugin config to `jsPlugins` (#14133) (overlookmotel)
+- 9c3afea linter/plugins: Support fixes (#14094) (overlookmotel)
+- 1472147 linter: Move `no-unused-expressions` to correctness (#14099) (camchenry)
+- c796966 linter/plugins: Add `meta` property to rules (#14089) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 39a171e linter: Get cli args on JS side, to avoid runtime inconsistencies (#14223) (camc314)
+- e045391 linter/plugins: Error on JS plugin with reserved name (#14226) (overlookmotel)
+- 37f6b09 linter/plugins: Make `null` a valid value for `meta.fixable` (#14204) (overlookmotel)
+- e9a14d1 linter/plugins: Allow `fix` function to return `undefined` (#14182) (overlookmotel)
+- ee9ecbe linter/plugins: Fix TS type for fixer methods (#14166) (overlookmotel)
+- 03d1684 linter/plugins: Output warning on first JS plugin load (#14165) (overlookmotel)
+- 9716f7c linter/plugins: Fix TS types (#14162) (overlookmotel)
+- 4a4fce8 linter: Fix cli argument parsing (#14112) (camc314)
+- 9f3e2bc linter/plugins: Output errors thrown in JS plugins (#14096) (overlookmotel)
+- d8e9cc5 linter/plugins: Validate type of `before` and `after` hooks (#14086) (overlookmotel)
+
+### 🚜 Refactor
+
+- 61ec0a7 linter/plugins: Simplify creation of `context` in `defineRule` ESLint shim (#14206) (overlookmotel)
+- 3b1fe6f linter/plugins: Flatten directory structure of `dist` (#14199) (overlookmotel)
+- d52cba6 linter: Bump TSDown to latest (#14198) (overlookmotel)
+- 983dd1b linter/plugins: Add `Fixer` type (#14180) (overlookmotel)
+- 2f8b076 linter/plugins: Remove dead code (#14178) (overlookmotel)
+- e69cd86 linter/plugins: `loadPluginImpl` return an object (#14087) (overlookmotel)
+
+### 📚 Documentation
+
+- b19f5bc linter/plugins: Improve JSDoc comments for `definePlugin` and `defineRule` (#14159) (overlookmotel)
+
+### ⚡ Performance
+
+- 2575065 linter/plugins: Store if rule is fixable as boolean (#14205) (overlookmotel)
+
+### 🧪 Testing
+
+- a9b603e linter/plugins: Convert all plugins in tests to TS (#14200) (overlookmotel)
+- 6ff3a23 linter/plugins: Add tests for `.ts`, `.mts`, `.cts` plugin files (#14164) (overlookmotel)
+- 8988d64 linter/plugins: Add line breaks to plugins files (#14181) (overlookmotel)
+- 52db331 linter/plugins: Type-check test fixtures (#14158) (overlookmotel)
+- aca083a linter/plugins: Include stderr output in snapshots (#14155) (overlookmotel)
+- a3c8f46 linter/plugins: Do not run `pnpm` in tests (#14157) (overlookmotel)
+- 0029b7f linter/plugins: Normalize line breaks in snapshots (#14154) (overlookmotel)
+- 7f2c101 linter/plugins: Specify path to `node` in tests (#14152) (overlookmotel)
+- fc14abc linter/plugins: Format test fixtures (#14125) (overlookmotel)
+- a6f965f linter/plugins: Simplify configs in test fixtures (#14124) (overlookmotel)
+- b1685f7 linter/plugins: Refactor tests (#14123) (overlookmotel)
+- 788e495 linter/plugins: Improve ESLint compat tests (#14119) (overlookmotel)
+- 5750077 linter/plugins: Fix file paths in snapshots (#14115) (overlookmotel)
+- 5c862f9 linter/plugins: Standardize test fixture structure (#14114) (overlookmotel)
+
+
+## [1.19.0] - 2025-09-29
+
+### 🚀 Features
+
+- acd1266 linter/plugins: `oxlint` export types (#14163) (overlookmotel)
+- 00954de linter/plugins: Remove `--js-plugins` CLI option (#14134) (overlookmotel)
+- b4d716f linter/plugins: Move custom JS plugin config to `jsPlugins` (#14133) (overlookmotel)
+- 9c3afea linter/plugins: Support fixes (#14094) (overlookmotel)
+- 1472147 linter: Move `no-unused-expressions` to correctness (#14099) (camchenry)
+- c796966 linter/plugins: Add `meta` property to rules (#14089) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 39a171e linter: Get cli args on JS side, to avoid runtime inconsistencies (#14223) (camc314)
+- e045391 linter/plugins: Error on JS plugin with reserved name (#14226) (overlookmotel)
+- 37f6b09 linter/plugins: Make `null` a valid value for `meta.fixable` (#14204) (overlookmotel)
+- e9a14d1 linter/plugins: Allow `fix` function to return `undefined` (#14182) (overlookmotel)
+- ee9ecbe linter/plugins: Fix TS type for fixer methods (#14166) (overlookmotel)
+- 03d1684 linter/plugins: Output warning on first JS plugin load (#14165) (overlookmotel)
+- 9716f7c linter/plugins: Fix TS types (#14162) (overlookmotel)
+- 4a4fce8 linter: Fix cli argument parsing (#14112) (camc314)
+- 9f3e2bc linter/plugins: Output errors thrown in JS plugins (#14096) (overlookmotel)
+- d8e9cc5 linter/plugins: Validate type of `before` and `after` hooks (#14086) (overlookmotel)
+
+### 🚜 Refactor
+
+- 61ec0a7 linter/plugins: Simplify creation of `context` in `defineRule` ESLint shim (#14206) (overlookmotel)
+- 3b1fe6f linter/plugins: Flatten directory structure of `dist` (#14199) (overlookmotel)
+- d52cba6 linter: Bump TSDown to latest (#14198) (overlookmotel)
+- 983dd1b linter/plugins: Add `Fixer` type (#14180) (overlookmotel)
+- 2f8b076 linter/plugins: Remove dead code (#14178) (overlookmotel)
+- e69cd86 linter/plugins: `loadPluginImpl` return an object (#14087) (overlookmotel)
+
+### 📚 Documentation
+
+- b19f5bc linter/plugins: Improve JSDoc comments for `definePlugin` and `defineRule` (#14159) (overlookmotel)
+
+### ⚡ Performance
+
+- 2575065 linter/plugins: Store if rule is fixable as boolean (#14205) (overlookmotel)
+
+### 🧪 Testing
+
+- a9b603e linter/plugins: Convert all plugins in tests to TS (#14200) (overlookmotel)
+- 6ff3a23 linter/plugins: Add tests for `.ts`, `.mts`, `.cts` plugin files (#14164) (overlookmotel)
+- 8988d64 linter/plugins: Add line breaks to plugins files (#14181) (overlookmotel)
+- 52db331 linter/plugins: Type-check test fixtures (#14158) (overlookmotel)
+- aca083a linter/plugins: Include stderr output in snapshots (#14155) (overlookmotel)
+- a3c8f46 linter/plugins: Do not run `pnpm` in tests (#14157) (overlookmotel)
+- 0029b7f linter/plugins: Normalize line breaks in snapshots (#14154) (overlookmotel)
+- 7f2c101 linter/plugins: Specify path to `node` in tests (#14152) (overlookmotel)
+- fc14abc linter/plugins: Format test fixtures (#14125) (overlookmotel)
+- a6f965f linter/plugins: Simplify configs in test fixtures (#14124) (overlookmotel)
+- b1685f7 linter/plugins: Refactor tests (#14123) (overlookmotel)
+- 788e495 linter/plugins: Improve ESLint compat tests (#14119) (overlookmotel)
+- 5750077 linter/plugins: Fix file paths in snapshots (#14115) (overlookmotel)
+- 5c862f9 linter/plugins: Standardize test fixture structure (#14114) (overlookmotel)
+
+
 ## [1.18.0] - 2025-09-24
 
 ### 🐛 Bug Fixes

@@ -84,7 +84,7 @@ declare_oxc_lint!(
     SortKeys,
     eslint,
     style,
-    pending
+    conditional_fix
 );
 
 impl Rule for SortKeys {
@@ -191,6 +191,147 @@ impl Rule for SortKeys {
                 all(property_groups.iter().zip(&sorted_property_groups), |(a, b)| a == b);
 
             if !is_sorted {
+                // Try to provide a safe autofix when possible.
+                // Conditions for providing a fix:
+                // - No spread properties (reordering spreads is unsafe)
+                // - All properties have a static key name
+                // - No comments between adjacent properties
+                // - No special grouping markers (we only support a single contiguous group)
+
+                let all_props = &dec.properties;
+                let mut can_fix = true;
+                let mut props: Vec<(String, Span)> = Vec::with_capacity(all_props.len());
+
+                for (i, prop) in all_props.iter().enumerate() {
+                    match prop {
+                        ObjectPropertyKind::SpreadProperty(_) => {
+                            can_fix = false;
+                            break;
+                        }
+                        ObjectPropertyKind::ObjectProperty(obj) => {
+                            let Some(key) = obj.key.static_name() else {
+                                can_fix = false;
+                                break;
+                            };
+                            props.push((key.to_string(), prop.span()));
+                            // check comments between this and next
+                            if i + 1 < all_props.len() {
+                                let next_span = all_props[i + 1].span();
+                                let between = Span::new(prop.span().end, next_span.start);
+                                if ctx.has_comments_between(between) {
+                                    can_fix = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if can_fix
+                    && !props.is_empty()
+                    && property_groups.len() == 1
+                    && !property_groups[0].iter().any(|s| s.starts_with('<'))
+                {
+                    // Build full text slices for each property spanning from the start of the
+                    // property to the start of the next property (or the end of the last one).
+                    // This preserves commas and formatting attached to each property so that
+                    // reordering produces syntactically-correct output.
+                    let mut prop_texts: Vec<String> = Vec::with_capacity(props.len());
+
+                    for i in 0..props.len() {
+                        let start = props[i].1.start;
+                        let end =
+                            if i + 1 < props.len() { props[i + 1].1.start } else { props[i].1.end };
+                        prop_texts.push(ctx.source_range(Span::new(start, end)).to_string());
+                    }
+
+                    // Prepare keys for comparison according to options
+                    let keys_for_cmp: Vec<String> = props
+                        .iter()
+                        .map(|(k, _)| {
+                            if self.case_sensitive {
+                                k.to_string()
+                            } else {
+                                k.cow_to_ascii_lowercase().to_string()
+                            }
+                        })
+                        .collect();
+
+                    // Compute the sorted key order using the same helpers as the main rule
+                    // so the autofix ordering matches the diagnostic ordering.
+                    let mut sorted_keys = keys_for_cmp.clone();
+                    if self.natural {
+                        natural_sort(&mut sorted_keys);
+                    } else {
+                        alphanumeric_sort(&mut sorted_keys);
+                    }
+                    if self.sort_order == SortOrder::Desc {
+                        sorted_keys.reverse();
+                    }
+
+                    // Map sorted keys back to indices in the original list. For duplicate
+                    // keys we consume the first unused occurrence.
+                    let mut used = vec![false; keys_for_cmp.len()];
+                    let mut indices: Vec<usize> = Vec::with_capacity(keys_for_cmp.len());
+
+                    for sk in &sorted_keys {
+                        if let Some(pos) = keys_for_cmp
+                            .iter()
+                            .enumerate()
+                            .find(|(idx, k)| !used[*idx] && k.as_str() == sk.as_str())
+                            .map(|(i, _)| i)
+                        {
+                            used[pos] = true;
+                            indices.push(pos);
+                        }
+                    }
+
+                    // Build sorted text by concatenating the full property snippets.
+                    // When moving snippets that used to be non-last (and thus include a
+                    // trailing comma) to the end, we must remove their trailing comma so
+                    // the resulting object doesn't end up with an extra comma before `}`.
+                    // Also normalize separators between properties to `, ` for clarity.
+                    let mut sorted_text = String::new();
+                    let trim_end_commas = |s: &str| -> String {
+                        let s = s.trim_end();
+                        let mut trimmed = s.to_string();
+
+                        // remove a single trailing comma if present
+                        if trimmed.ends_with(',') {
+                            trimmed.pop();
+                            trimmed = trimmed.trim_end().to_string();
+                        }
+                        trimmed
+                    };
+
+                    for (pos, &idx) in indices.iter().enumerate() {
+                        let is_last_in_new = pos + 1 == indices.len();
+                        let part = &prop_texts[idx];
+
+                        if is_last_in_new {
+                            // Ensure last property does not end with a comma or extra space
+                            sorted_text.push_str(&trim_end_commas(part));
+                        } else {
+                            // For non-last properties, ensure there is exactly ", " after the
+                            // property (regardless of how it appeared originally).
+                            let trimmed = trim_end_commas(part);
+                            sorted_text.push_str(&trimmed);
+                            sorted_text.push_str(", ");
+                        }
+                    }
+
+                    // Replace the full properties range
+                    let replace_span = Span::new(props[0].1.start, props[props.len() - 1].1.end);
+
+                    ctx.diagnostic_with_fix(sort_properties_diagnostic(node.span()), |fixer| {
+                        fixer.replace(replace_span, sorted_text)
+                    });
+
+                    // we've emitted a fix for this node; stop processing this node
+                    return;
+                }
+
+                // Fallback: still emit diagnostic if we couldn't produce a safe fix
                 ctx.diagnostic(sort_properties_diagnostic(node.span()));
             }
         }
@@ -1024,5 +1165,22 @@ fn test() {
         ), // { "ecmaVersion": 2018 }
     ];
 
-    Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).test_and_snapshot();
+    // Add comprehensive fixer tests: the rule now advertises conditional fixes,
+    // so provide expect_fix cases.
+    let fix = vec![
+        // Basic alphabetical sorting
+        ("var obj = {b:1, a:2}", "var obj = {a:2, b:1}"),
+        // Case sensitivity - lowercase comes after uppercase, so a:2 should come after B:1
+        ("var obj = {a:1, B:2}", "var obj = {B:2, a:1}"),
+        // Trailing commas preserved
+        ("var obj = {b:1, a:2,}", "var obj = {a:2, b:1,}"),
+        // With spaces and various formatting
+        ("var obj = { z: 1, a: 2 }", "var obj = { a: 2, z: 1 }"),
+        // Three properties
+        ("var obj = {c:1, a:2, b:3}", "var obj = {a:2, b:3, c:1}"),
+        // Mixed types
+        ("var obj = {2:1, a:2, 1:3}", "var obj = {1:3, 2:1, a:2}"),
+    ];
+
+    Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

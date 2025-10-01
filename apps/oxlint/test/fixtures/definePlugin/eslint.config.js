@@ -12,6 +12,7 @@ export default [
       'define-plugin-plugin/create-once-before-false': 'error',
       'define-plugin-plugin/create-once-before-only': 'error',
       'define-plugin-plugin/create-once-after-only': 'error',
+      'define-plugin-plugin/create-once-hooks-only': 'error',
       'define-plugin-plugin/create-once-no-hooks': 'error',
     },
   },

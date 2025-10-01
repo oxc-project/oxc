@@ -1,14 +1,13 @@
 import { getFixes } from './fix.js';
+import { SourceCode } from './source_code.js';
 
 import type { Fix, FixFn } from './fix.ts';
+import type { Node } from './types.ts';
 
 // Diagnostic in form passed by user to `Context#report()`
 export interface Diagnostic {
   message: string;
-  node: {
-    start: number;
-    end: number;
-  };
+  node: Node;
   fix?: FixFn;
 }
 
@@ -34,11 +33,13 @@ export const diagnostics: DiagnosticReport[] = [];
  * @param context - `Context` object
  * @param ruleIndex - Index of this rule within `ruleIds` passed from Rust
  * @param filePath - Absolute path of file being linted
+ * @param sourceText - Source text of file being linted
  */
 export let setupContextForFile: (
   context: Context,
   ruleIndex: number,
   filePath: string,
+  sourceText: string,
 ) => void;
 
 /**
@@ -67,6 +68,10 @@ export interface InternalContext {
   ruleIndex: number;
   // Absolute path of file being linted
   filePath: string;
+  // `SourceCode` class instance for this rule.
+  // Rule has single `SourceCode` instance that is updated for each file
+  // (NOT new `SourceCode` instance for each file).
+  sourceCode: SourceCode;
   // Options
   options: unknown[];
   // `true` if rule can provide fixes (`meta.fixable` in `RuleMeta` is 'code' or 'whitespace')
@@ -91,6 +96,7 @@ export class Context {
     this.#internal = {
       id: fullRuleName,
       filePath: '',
+      sourceCode: new SourceCode(),
       ruleIndex: -1,
       options: [],
       isFixable,
@@ -118,6 +124,11 @@ export class Context {
     return getInternal(this, 'access `context.options`').options;
   }
 
+  // Getter for `SourceCode` for file being linted.
+  get sourceCode() {
+    return getInternal(this, 'access `context.sourceCode`').sourceCode;
+  }
+
   /**
    * Report error.
    * @param diagnostic - Diagnostic object
@@ -137,11 +148,12 @@ export class Context {
   }
 
   static {
-    setupContextForFile = (context, ruleIndex, filePath) => {
+    setupContextForFile = (context, ruleIndex, filePath, sourceText) => {
       // TODO: Support `options`
       const internal = context.#internal;
       internal.ruleIndex = ruleIndex;
       internal.filePath = filePath;
+      internal.sourceCode.text = sourceText;
     };
 
     getInternal = (context, actionDescription) => {

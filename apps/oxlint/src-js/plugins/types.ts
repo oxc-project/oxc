@@ -26,8 +26,10 @@ export interface VisitorWithHooks extends Visitor {
 export type VisitFn = (node: Node) => void;
 
 // AST node type.
-// We'll make this type a union later on.
-export type Node = { type: string; start: number; end: number; [key: string]: unknown };
+export interface Node {
+  start: number;
+  end: number;
+}
 
 // Element of compiled visitor array.
 // * `VisitFn | null` for leaf nodes.

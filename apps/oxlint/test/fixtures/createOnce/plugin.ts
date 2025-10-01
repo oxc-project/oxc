@@ -25,6 +25,7 @@ const alwaysRunRule: Rule = {
     const filenameError = tryCatch(() => context.filename);
     const physicalFilenameError = tryCatch(() => context.physicalFilename);
     const optionsError = tryCatch(() => context.options);
+    const sourceCodeError = tryCatch(() => context.sourceCode);
     const reportError = tryCatch(() => context.report({ message: 'oh no', node: SPAN }));
 
     return {
@@ -35,6 +36,7 @@ const alwaysRunRule: Rule = {
         context.report({ message: `createOnce: filename: ${filenameError?.message}`, node: SPAN });
         context.report({ message: `createOnce: physicalFilename: ${physicalFilenameError?.message}`, node: SPAN });
         context.report({ message: `createOnce: options: ${optionsError?.message}`, node: SPAN });
+        context.report({ message: `createOnce: sourceCode: ${sourceCodeError?.message}`, node: SPAN });
         context.report({ message: `createOnce: report: ${reportError?.message}`, node: SPAN });
 
         context.report({ message: `before hook: id: ${context.id}`, node: SPAN });

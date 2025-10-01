@@ -56,6 +56,33 @@ impl<'a> PeepholeOptimizations {
             ctx.state.changed = true;
         }
     }
+
+    pub fn get_declared_private_symbols(body: &ClassBody<'a>) -> impl Iterator<Item = Atom<'a>> {
+        body.body.iter().filter_map(|element| match element {
+            ClassElement::PropertyDefinition(prop) => {
+                let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
+                    return None;
+                };
+                Some(private_id.name)
+            }
+            ClassElement::MethodDefinition(method) => {
+                let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
+                    return None;
+                };
+                Some(private_id.name)
+            }
+            ClassElement::AccessorProperty(accessor) => {
+                let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
+                    return None;
+                };
+                Some(private_id.name)
+            }
+            ClassElement::StaticBlock(_) => None,
+            ClassElement::TSIndexSignature(_) => {
+                unreachable!("TypeScript syntax should be transformed away")
+            }
+        })
+    }
 }
 
 #[cfg(test)]
@@ -148,6 +175,20 @@ mod test {
 
                         method() {
                             return this.#shared;
+                        }
+                    };
+                }
+            } new Outer();",
+        );
+        test_same(
+            r"class Outer {
+                #shared = 1;
+
+                getInner() {
+                    let self = this;
+                    return class {
+                        method() {
+                            return self.#shared;
                         }
                     };
                 }

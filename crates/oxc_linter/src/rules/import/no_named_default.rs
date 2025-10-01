@@ -64,11 +64,47 @@ fn test() {
         r#"import { type default as Foo } from "./bar";"#,
     ];
 
+    let unicorn_pass = vec![
+        r#"import named from "foo";"#,
+        r#"import "foo";"#,
+        r#"import * as named from "foo";"#,
+        r#"export {foo as default} from "foo";"#,
+        r#"export * as default from "foo";"#,
+    ];
+
     let fail = vec![
         r#"import { default as bar } from "./bar";"#,
         r#"import { foo, default as bar } from "./bar";"#,
         r#"import { "default" as bar } from "./bar";"#,
     ];
 
-    Tester::new(NoNamedDefault::NAME, NoNamedDefault::PLUGIN, pass, fail).test_and_snapshot();
+    let unicorn_fail = vec![
+        r#"import {default as named} from "foo";"#,
+        r#"import {default as named,} from "foo";"#,
+        r#"import {default as named, bar} from "foo";"#,
+        r#"import {default as named, bar,} from "foo";"#,
+        r#"import defaultExport, {default as named} from "foo";"#,
+        r#"import defaultExport, {default as named,} from "foo";"#,
+        r#"import defaultExport, {default as named, bar} from "foo";"#,
+        r#"import defaultExport, {default as named, bar,} from "foo";"#,
+        r#"import{default as named}from"foo";"#,
+        r#"import {default as named}from"foo";"#,
+        r#"import{default as named} from"foo";"#,
+        r#"import{default as named,}from"foo";"#,
+        r#"import/*comment*/{default as named}from"foo";"#,
+        r#"import /*comment*/{default as named}from"foo";"#,
+        r#"import{default as named}/*comment*/from"foo";"#,
+        r#"import defaultExport,{default as named}from "foo";"#,
+        r#"import defaultExport, {default as named} from "foo" with {type: "json"};"#,
+        r#"import defaultExport, {default as named} from "foo" with {type: "json"}"#,
+        r#"import {default as named1, default as named2,} from "foo";"#,
+    ];
+
+    Tester::new(
+        NoNamedDefault::NAME,
+        NoNamedDefault::PLUGIN,
+        pass.into_iter().chain(unicorn_pass).collect(),
+        fail.into_iter().chain(unicorn_fail).collect(),
+    )
+    .test_and_snapshot();
 }
