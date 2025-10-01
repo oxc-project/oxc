@@ -426,6 +426,15 @@ impl ArrayExpressionElement<'_> {
     }
 }
 
+impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
+    fn from(argument: Argument<'a>) -> Self {
+        match argument {
+            Argument::SpreadElement(spread) => Self::SpreadElement(spread),
+            _ => Self::from(argument.into_expression()),
+        }
+    }
+}
+
 impl<'a> ObjectPropertyKind<'a> {
     /// Returns `true` if this object property is a [spread](SpreadElement).
     #[inline]
@@ -842,15 +851,6 @@ impl NewExpression<'_> {
             let last = self.arguments.last().unwrap();
             Span::new(first.span().start, last.span().end)
         })
-    }
-}
-
-impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
-    fn from(argument: Argument<'a>) -> Self {
-        match argument {
-            Argument::SpreadElement(spread) => Self::SpreadElement(spread),
-            _ => Self::from(argument.into_expression()),
-        }
     }
 }
 
