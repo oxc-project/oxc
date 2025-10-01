@@ -52,27 +52,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             ParameterLayout::NoParameters
         } else if can_hug || {
             // Check if these parameters are part of a test call expression
-            // by walking up the parent chain (robust approach for different nesting levels)
+            // by walking up the parent chain
             let mut current_parent = Some(self.parent);
             let mut is_in_test_call = false;
 
-            // Walk up to 5 levels to find a test call expression
-            for _ in 0..5 {
-                if let Some(parent) = current_parent {
-                    if let AstNodes::CallExpression(call) = parent
-                        && is_test_call_expression(call)
-                    {
-                        is_in_test_call = true;
-                        break;
-                    }
-                    // Check if parent is a dummy node before accessing its parent
-                    match parent {
-                        AstNodes::Dummy() => break,
-                        _ => current_parent = Some(parent.parent()),
-                    }
-                } else {
+            while let Some(parent) = current_parent {
+                // Stop at root (Dummy node provides natural termination)
+                if matches!(parent, AstNodes::Dummy()) {
                     break;
                 }
+
+                if let AstNodes::CallExpression(call) = parent
+                    && is_test_call_expression(call)
+                {
+                    is_in_test_call = true;
+                    break;
+                }
+
+                current_parent = Some(parent.parent());
             }
 
             is_in_test_call
