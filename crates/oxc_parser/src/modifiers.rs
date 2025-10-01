@@ -159,12 +159,8 @@ impl<'a> Modifiers<'a> {
     ///  `modifiers`. E.g., if `modifiers` is empty, then so is `flags``.
     #[must_use]
     pub(crate) fn new(modifiers: Option<Vec<'a, Modifier>>, flags: ModifierFlags) -> Self {
-        if let Some(modifiers) = modifiers {
-            Self { modifiers: Some(modifiers), flags }
-        } else {
-            debug_assert!(flags.is_empty());
-            Self { modifiers: None, flags: ModifierFlags::empty() }
-        }
+        debug_assert_eq!(modifiers.is_none(), flags.is_empty());
+        Self { modifiers, flags }
     }
 
     pub fn empty() -> Self {
@@ -297,10 +293,10 @@ impl std::fmt::Display for ModifierKind {
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
-        let mut flags = ModifierFlags::empty();
         if !self.at_modifier() {
-            return Modifiers::new(None, flags);
+            return Modifiers::empty();
         }
+        let mut flags = ModifierFlags::empty();
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
             let span = self.start_span();

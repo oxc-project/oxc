@@ -23,6 +23,7 @@ use pico_args::Arguments;
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let no_semi = args.contains("--no-semi");
+    let show_ir = args.contains("--ir");
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     // Read source file
@@ -57,9 +58,19 @@ fn main() -> Result<(), String> {
         semicolons,
         ..Default::default()
     };
-    let code = Formatter::new(&allocator, options).build(&ret.program);
 
-    println!("{code}");
+    let formatter = Formatter::new(&allocator, options);
+    if show_ir {
+        let doc = formatter.doc(&ret.program);
+        println!("[");
+        for el in doc.iter() {
+            println!("  {el:?},");
+        }
+        println!("]");
+    } else {
+        let code = formatter.build(&ret.program);
+        println!("{code}");
+    }
 
     Ok(())
 }

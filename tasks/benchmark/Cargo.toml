@@ -83,66 +83,22 @@ serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 
 [features]
-default = [
-  "lexer",
-  "parser",
-  "transformer",
-  "semantic",
-  "minifier",
-  "codegen",
-  "linter",
-  "formatter",
-]
+default = ["compiler", "linter"]
 codspeed = ["criterion2/codspeed"]
 codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 
-# Features for running each benchmark separately with minimum dependencies that benchmark needs.
-# e.g. `cargo bench -p oxc_benchmark --bench parser --no-default-features --features parser`
-lexer = [
+# Features for running benchmarks with minimum dependencies.
+# "compiler" feature includes: lexer, parser, transformer, semantic, minifier, codegen, formatter
+# "linter" feature includes: linter
+compiler = [
   "dep:oxc_allocator",
   "dep:oxc_ast",
   "dep:oxc_ast_visit",
-  "dep:oxc_parser",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-]
-parser = [
-  "dep:oxc_allocator",
-  "dep:oxc_ast",
-  "dep:oxc_ast_visit",
-  "dep:oxc_parser",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-]
-transformer = [
-  "dep:oxc_allocator",
-  "dep:oxc_isolated_declarations",
-  "dep:oxc_parser",
-  "dep:oxc_semantic",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-  "dep:oxc_transformer",
-]
-semantic = [
-  "dep:oxc_allocator",
-  "dep:oxc_parser",
-  "dep:oxc_semantic",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-]
-minifier = [
-  "dep:oxc_allocator",
-  "dep:oxc_minifier",
-  "dep:oxc_mangler",
-  "dep:oxc_parser",
-  "dep:oxc_semantic",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-  "transformer",
-]
-codegen = [
-  "dep:oxc_allocator",
   "dep:oxc_codegen",
+  "dep:oxc_formatter",
+  "dep:oxc_isolated_declarations",
+  "dep:oxc_mangler",
+  "dep:oxc_minifier",
   "dep:oxc_parser",
   "dep:oxc_semantic",
   "dep:oxc_span",
@@ -158,4 +114,3 @@ linter = [
   "dep:oxc_tasks_common",
   "oxc_semantic/cfg",
 ]
-formatter = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_formatter", "dep:oxc_span", "dep:oxc_tasks_common"]

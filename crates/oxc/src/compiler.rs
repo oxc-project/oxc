@@ -5,7 +5,7 @@ use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
-use oxc_mangler::{MangleOptions, Mangler};
+use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn};
@@ -198,7 +198,7 @@ pub trait CompilerInterface {
                 Compressor::new(&allocator).dead_code_elimination_with_scoping(
                     &mut program,
                     scoping,
-                    CompressOptions::smallest(),
+                    CompressOptions::dce(),
                 );
             }
         }
@@ -282,7 +282,7 @@ pub trait CompilerInterface {
         Compressor::new(allocator).build(program, options);
     }
 
-    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> Scoping {
+    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> ManglerReturn {
         Mangler::new().with_options(options).build(program)
     }
 
@@ -290,13 +290,20 @@ pub trait CompilerInterface {
         &self,
         program: &Program<'_>,
         source_path: &Path,
-        scoping: Option<Scoping>,
+        mangler_return: Option<ManglerReturn>,
         options: CodegenOptions,
     ) -> CodegenReturn {
         let mut options = options;
         if self.enable_sourcemap() {
             options.source_map_path = Some(source_path.to_path_buf());
         }
-        Codegen::new().with_options(options).with_scoping(scoping).build(program)
+        let (scoping, class_private_mappings) = mangler_return
+            .map(|m| (Some(m.scoping), Some(m.class_private_mappings)))
+            .unwrap_or_default();
+        Codegen::new()
+            .with_options(options)
+            .with_scoping(scoping)
+            .with_private_member_mappings(class_private_mappings)
+            .build(program)
     }
 }

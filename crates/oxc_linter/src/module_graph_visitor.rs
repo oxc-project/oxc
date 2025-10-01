@@ -189,15 +189,20 @@ impl ModuleGraphVisitor {
         enter: &mut EnterMod,
         leave: &mut LeaveMod,
     ) -> VisitFoldWhile<T> {
-        for pair in module_record.loaded_modules.read().unwrap().iter() {
+        for (key, weak_module_record) in module_record.loaded_modules().iter() {
             if self.depth > self.max_depth {
                 return VisitFoldWhile::Stop(accumulator.into_inner());
             }
 
-            let path = &pair.1.resolved_absolute_path;
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+
+            let path = &loaded_module_record.resolved_absolute_path;
+
             if !self.traversed.insert(path.clone()) {
                 continue;
             }
+
+            let pair = (key, &loaded_module_record);
 
             if !filter(pair, module_record) {
                 continue;

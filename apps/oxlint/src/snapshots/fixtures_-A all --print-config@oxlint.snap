@@ -11,6 +11,7 @@ working directory: fixtures
     "typescript",
     "oxc"
   ],
+  "jsPlugins": null,
   "categories": {},
   "rules": {},
   "settings": {

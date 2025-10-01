@@ -24,13 +24,14 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+#[cfg(feature = "linter")]
+use crate::jsdoc::JSDocBuilder;
 use crate::{
-    JSDocFinder, Semantic,
+    Semantic,
     binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
     diagnostics::redeclaration,
-    jsdoc::JSDocBuilder,
     label::UnusedLabels,
     node::AstNodes,
     scoping::{Bindings, Scoping},
@@ -89,7 +90,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) unresolved_references: UnresolvedReferencesStack<'a>,
 
     unused_labels: UnusedLabels<'a>,
-    build_jsdoc: bool,
+    #[cfg(feature = "linter")]
     jsdoc: JSDocBuilder<'a>,
     stats: Option<Stats>,
     excess_capacity: f64,
@@ -143,7 +144,7 @@ impl<'a> SemanticBuilder<'a> {
             scoping,
             unresolved_references: UnresolvedReferencesStack::new(),
             unused_labels: UnusedLabels::default(),
-            build_jsdoc: false,
+            #[cfg(feature = "linter")]
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
@@ -168,13 +169,6 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
-        self
-    }
-
-    /// Enable/disable JSDoc parsing.
-    #[must_use]
-    pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
-        self.build_jsdoc = yes;
         self
     }
 
@@ -236,7 +230,8 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
-        if self.build_jsdoc {
+        #[cfg(feature = "linter")]
+        {
             self.jsdoc = JSDocBuilder::new(self.source_text, &program.comments);
         }
 
@@ -283,14 +278,12 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
-        if self.check_syntax_error && !self.source_type.is_typescript() {
-            checker::check_unresolved_exports(&self);
-        }
         self.scoping.set_root_unresolved_references(
             self.unresolved_references.into_root().into_iter().map(|(k, v)| (k.as_str(), v)),
         );
 
-        let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
+        #[cfg(feature = "linter")]
+        let jsdoc = self.jsdoc.build();
 
         #[cfg(debug_assertions)]
         self.unused_labels.assert_empty();
@@ -303,6 +296,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: self.nodes,
             scoping: self.scoping,
             classes: self.class_table_builder.build(),
+            #[cfg(feature = "linter")]
             jsdoc,
             unused_labels: self.unused_labels.labels,
             #[cfg(feature = "cfg")]
@@ -327,8 +321,12 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
+        #[cfg(not(feature = "linter"))]
+        let flags = self.current_node_flags;
+        #[cfg(feature = "linter")]
         let mut flags = self.current_node_flags;
-        if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
+        #[cfg(feature = "linter")]
+        if self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
 
@@ -336,6 +334,7 @@ impl<'a> SemanticBuilder<'a> {
             kind,
             self.current_scope_id,
             self.current_node_id,
+            #[cfg(feature = "cfg")]
             control_flow!(self, |cfg| cfg.current_node_ix),
             flags,
         );
@@ -649,6 +648,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_node_id = self.nodes.add_program_node(
             kind,
             self.current_scope_id,
+            #[cfg(feature = "cfg")]
             control_flow!(self, |cfg| cfg.current_node_ix),
             self.current_node_flags,
         );
@@ -2150,8 +2150,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::YieldExpression(_) => {
                 // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
                 // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
-                *self.nodes.get_node_mut(self.current_function_node_id).flags_mut() |=
-                    NodeFlags::HasYield;
+                *self.nodes.flags_mut(self.current_function_node_id) |= NodeFlags::HasYield;
             }
             AstKind::CallExpression(call_expr) => {
                 if !call_expr.optional && call_expr.callee.is_specific_id("eval") {

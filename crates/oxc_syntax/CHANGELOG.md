@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.93.0] - 2025-09-28
+
+### 🚜 Refactor
+
+- 7e42b0a syntax: Use allocator HashMap in ModuleRecord fields (#14141) (Boshen)
+- 0a9473d syntax: Remove unnecessary `#[estree(field_order)]` attr (#14142) (overlookmotel)
+
+
+
 ## [0.91.0] - 2025-09-22
 
 ### 💼 Other

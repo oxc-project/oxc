@@ -843,6 +843,13 @@ impl RuleRunner for crate::rules::import::no_named_default::NoNamedDefault {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::import::no_named_export::NoNamedExport {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportAllDeclaration,
+        AstType::ExportNamedDeclaration,
+    ]));
+}
+
 impl RuleRunner for crate::rules::import::no_namespace::NoNamespace {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
@@ -1547,6 +1554,10 @@ impl RuleRunner for crate::rules::promise::no_callback_in_promise::NoCallbackInP
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::promise::no_multiple_resolved::NoMultipleResolved {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::promise::no_nesting::NoNesting {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
@@ -1688,6 +1699,11 @@ impl RuleRunner for crate::rules::react::jsx_no_undef::JsxNoUndef {
 impl RuleRunner for crate::rules::react::jsx_no_useless_fragment::JsxNoUselessFragment {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::JSXElement, AstType::JSXFragment]));
+}
+
+impl RuleRunner for crate::rules::react::jsx_pascal_case::JsxPascalCase {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
 }
 
 impl RuleRunner for crate::rules::react::jsx_props_no_spread_multi::JsxPropsNoSpreadMulti {
@@ -2318,6 +2334,11 @@ impl RuleRunner for crate::rules::unicorn::no_anonymous_default_export::NoAnonym
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_array_callback_reference::NoArrayCallbackReference {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
 impl RuleRunner for crate::rules::unicorn::no_array_for_each::NoArrayForEach {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
@@ -2335,6 +2356,11 @@ impl RuleRunner for crate::rules::unicorn::no_array_reduce::NoArrayReduce {
 }
 
 impl RuleRunner for crate::rules::unicorn::no_array_reverse::NoArrayReverse {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
+impl RuleRunner for crate::rules::unicorn::no_array_sort::NoArraySort {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
@@ -2487,6 +2513,13 @@ impl RuleRunner
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner
+    for crate::rules::unicorn::no_unnecessary_array_splice_count::NoUnnecessaryArraySpliceCount
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
 impl RuleRunner for crate::rules::unicorn::no_unnecessary_await::NoUnnecessaryAwait {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::AwaitExpression]));
@@ -2504,6 +2537,13 @@ impl RuleRunner
 }
 
 impl RuleRunner for crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
+impl RuleRunner
+    for crate::rules::unicorn::no_useless_error_capture_stack_trace::NoUselessErrorCaptureStackTrace
+{
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
@@ -2583,9 +2623,26 @@ impl RuleRunner for crate::rules::unicorn::prefer_array_some::PreferArraySome {
         Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression, AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_at::PreferAt {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+    ]));
+}
+
 impl RuleRunner for crate::rules::unicorn::prefer_blob_reading_methods::PreferBlobReadingMethods {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
+impl RuleRunner for crate::rules::unicorn::prefer_class_fields::PreferClassFields {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Class]));
+}
+
+impl RuleRunner for crate::rules::unicorn::prefer_classlist_toggle::PreferClasslistToggle {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ConditionalExpression, AstType::IfStatement]));
 }
 
 impl RuleRunner for crate::rules::unicorn::prefer_code_point::PreferCodePoint {
@@ -2762,6 +2819,11 @@ impl RuleRunner for crate::rules::unicorn::prefer_structured_clone::PreferStruct
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_top_level_await::PreferTopLevelAwait {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
 impl RuleRunner for crate::rules::unicorn::prefer_type_error::PreferTypeError {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ThrowStatement]));
@@ -2770,6 +2832,13 @@ impl RuleRunner for crate::rules::unicorn::prefer_type_error::PreferTypeError {
 impl RuleRunner for crate::rules::unicorn::require_array_join_separator::RequireArrayJoinSeparator {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
+impl RuleRunner for crate::rules::unicorn::require_module_specifiers::RequireModuleSpecifiers {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportNamedDeclaration,
+        AstType::ImportDeclaration,
+    ]));
 }
 
 impl RuleRunner for crate::rules::unicorn::require_number_to_fixed_digits_argument::RequireNumberToFixedDigitsArgument {
@@ -2831,6 +2900,10 @@ impl RuleRunner for crate::rules::vue::define_emits_declaration::DefineEmitsDecl
 impl RuleRunner for crate::rules::vue::define_props_declaration::DefinePropsDeclaration {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
+impl RuleRunner for crate::rules::vue::max_props::MaxProps {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
 impl RuleRunner for crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs {

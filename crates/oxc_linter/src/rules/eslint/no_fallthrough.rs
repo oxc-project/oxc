@@ -260,7 +260,7 @@ impl Rule for NoFallthrough {
         let AstKind::SwitchStatement(switch) = node.kind() else { return };
 
         let cfg = ctx.cfg();
-        let switch_id = node.cfg_id();
+        let switch_id = ctx.nodes().cfg_id(node.id());
         let graph = cfg.graph();
 
         let (cfg_ids, tests, default, exit) = get_switch_semantic_cases(ctx, node, switch);
@@ -412,7 +412,7 @@ impl NoFallthrough {
 // ----------------------------------------!README!-----------------------------------------------
 // >> PLEASE DON'T MAKE IT A REPEATING PATTERN IN THE PROJECT, ONE TIME HACK TO GET IT DONE
 //  >>  TODO: it is a hack to get our cases `cfg_id`s. please replace me with semantic API when
-//          one became available. This code is highly volitile and has a lot of assumptions about
+//          one became available. This code is highly volatile and has a lot of assumptions about
 //          the current shape of the CFG, It is just a slow and dirty workaround!
 // ----------------------------------------------------------------------------------------------
 // TREAT LIKE BLACK MAGIC, IT BREAKS WITH SMALLEST CHANGES TO THE SWITCH CASE CFG!
@@ -438,7 +438,7 @@ fn get_switch_semantic_cases(
     let graph = cfg.graph();
     let has_default = switch.cases.iter().any(SwitchCase::is_default_case);
     let (mut cfg_ids, tests, exit) = graph
-        .edges_directed(node.cfg_id(), Direction::Outgoing)
+        .edges_directed(ctx.nodes().cfg_id(node.id()), Direction::Outgoing)
         .fold((Vec::new(), Vec::new(), None), |(mut cfg_ids, mut conds, exit), it| {
             let target = it.target();
             if !matches!(it.weight(), EdgeType::Normal) {

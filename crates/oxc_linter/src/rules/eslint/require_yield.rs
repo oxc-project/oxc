@@ -37,7 +37,7 @@ declare_oxc_lint!(
 impl Rule for RequireYield {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::Function(func) = node.kind()
-            && !node.flags().has_yield()
+            && !ctx.nodes().flags(node.id()).has_yield()
             && func.generator
             && func.body.as_ref().is_some_and(|body| !body.statements.is_empty())
         {

@@ -5,7 +5,7 @@ import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
-import { parseAsync, parseSync } from '../src-js/index.mjs';
+import { parseAsync, parseSync, type TSTypeAliasDeclaration, type VariableDeclaration } from '../src-js/index.js';
 
 import {
   ACORN_TEST262_DIR_PATH,
@@ -26,7 +26,7 @@ import {
   TS_ESTREE_DIR_PATH,
   TS_SHORT_DIR_PATH,
   TS_SNAPSHOT_PATH,
-} from './parse-raw-common.mjs';
+} from './parse-raw-common.js';
 
 const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
   ? [describe, it]
@@ -35,7 +35,7 @@ const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
 // Worker pool for running test cases.
 // Vitest provides parallelism across test files, but not across cases within a single test file.
 // So we run each case in a worker to achieve parallelism.
-const pool = new Tinypool({ filename: new URL('./parse-raw-worker.mjs', import.meta.url).href });
+const pool = new Tinypool({ filename: new URL('./parse-raw-worker.js', import.meta.url).href });
 
 let runCase;
 
@@ -46,7 +46,7 @@ async function runCaseInWorker(type, props) {
   // If test failed in worker, run it again in main thread with Vitest's `expect`,
   // to get a nice diff and stack trace
   if (!success) {
-    if (!runCase) ({ runCase } = await import('./parse-raw-worker.mjs'));
+    if (!runCase) ({ runCase } = await import('./parse-raw-worker.js'));
 
     type |= TEST_TYPE_PRETTY;
     await runCase({ type, props }, expect);
@@ -66,7 +66,7 @@ const benchFixtureUrls = [
   // Heavy with classes (554K)
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
   // ES5 (3.9M)
-  'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
+  'https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js',
 ];
 
 await mkdir(TARGET_DIR_PATH, { recursive: true });
@@ -273,7 +273,8 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: false });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('BinaryExpression');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
     });
 
     it.concurrent('TS', async () => {
@@ -282,8 +283,10 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: false });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('BinaryExpression');
-      expect(ret.program.body[1].typeAnnotation.type).toBe('TSStringKeyword');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('BinaryExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSStringKeyword');
     });
   });
 
@@ -294,7 +297,8 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.js', code, { experimentalRawTransfer: true, preserveParens: true });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('ParenthesizedExpression');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
     });
 
     it.concurrent('TS', async () => {
@@ -303,8 +307,10 @@ describe.concurrent('`preserveParens` option', () => {
       // @ts-ignore
       let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, preserveParens: true });
       expect(ret.errors.length).toBe(0);
-      expect(ret.program.body[0].declarations[0].init.type).toBe('ParenthesizedExpression');
-      expect(ret.program.body[1].typeAnnotation.type).toBe('TSParenthesizedType');
+      const firstStatement = ret.program.body[0] as VariableDeclaration;
+      expect(firstStatement.declarations[0].init.type).toBe('ParenthesizedExpression');
+      const secondStatement = ret.program.body[1] as TSTypeAliasDeclaration;
+      expect(secondStatement.typeAnnotation.type).toBe('TSParenthesizedType');
     });
   });
 });

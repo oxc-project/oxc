@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.93.0] - 2025-09-28
+
+### 🚀 Features
+
+- 5e05d1b semantic: Put jsdoc behind linter feature, remove runtime flag (#14140) (Boshen)
+- 71af1aa semantic: Add "linter" feature (#14139) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f2fd7da semantic: Don't report abstract method with implementation twice (#14193) (Ulrich Stark)
+
+### 🚜 Refactor
+
+- 3542572 semantic: Do not use `Astnodes::get_node` for `check_unresolved_exports` (#14176) (Boshen)
+- ad0e5df semantic: Split node.rs into node/mod.rs and node/nodes.rs (#14138) (Boshen)
+- 497236e semantic: Move AstNode::cfg_id to struct of arrays in AstNodes (#14137) (Boshen)
+- 5ba765c semantic: Move AstNode::flags to struct of arrays in AstNodes (#14136) (Boshen)
+
+
+
 ## [0.91.0] - 2025-09-22
 
 ### 🚀 Features

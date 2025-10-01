@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.93.0] - 2025-09-28
+
+### ⚡ Performance
+
+- 5b74a81 parser: Apply #[cold] attribute to error handling functions (#14188) (Boshen)
+- af88e94 parser: Cleanup and optimize various parsing functions (#14160) (Ulrich Stark)
+
+
+## [0.92.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- f4d6790 parser: Forbid accessors named `constructor` (#14017) (Don Isaac)
+
+
 ## [0.91.0] - 2025-09-22
 
 ### 🚀 Features

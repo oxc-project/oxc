@@ -383,7 +383,7 @@ impl TsGoLintState {
 
                                             let mut message_with_position: MessageWithPosition<'_> =
                                                 message_to_message_with_position(
-                                                    &Message::from_tsgo_lint_diagnostic(
+                                                    Message::from_tsgo_lint_diagnostic(
                                                         tsgolint_diagnostic,
                                                         &source_text,
                                                     ),
@@ -598,16 +598,18 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 #[cfg(feature = "language_server")]
 impl Message<'_> {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    fn from_tsgo_lint_diagnostic(val: TsGoLintDiagnostic, source_text: &str) -> Self {
+    fn from_tsgo_lint_diagnostic(mut val: TsGoLintDiagnostic, source_text: &str) -> Self {
+        use std::{borrow::Cow, mem};
+
         let mut fixes =
             Vec::with_capacity(usize::from(!val.fixes.is_empty()) + val.suggestions.len());
 
         if !val.fixes.is_empty() {
-            let fix_vec = val
-                .fixes
-                .iter()
+            let fix_vec = mem::take(&mut val.fixes);
+            let fix_vec = fix_vec
+                .into_iter()
                 .map(|fix| crate::fixer::Fix {
-                    content: fix.text.clone().into(),
+                    content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
                 })
@@ -616,19 +618,31 @@ impl Message<'_> {
             fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
         }
 
-        for suggestion in &val.suggestions {
+        let suggestions = mem::take(&mut val.suggestions);
+        fixes.extend(suggestions.into_iter().map(|mut suggestion| {
+            let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
             let fix_vec = suggestion
                 .fixes
-                .iter()
-                .map(|fix| crate::fixer::Fix {
-                    content: fix.text.clone().into(),
-                    span: Span::new(fix.range.pos, fix.range.end),
-                    message: Some(suggestion.message.description.clone().into()),
+                .into_iter()
+                .enumerate()
+                .map(|(i, fix)| {
+                    // Don't clone the message description on last turn of loop
+                    let message = if i < last_fix_index {
+                        suggestion.message.description.clone()
+                    } else {
+                        mem::take(&mut suggestion.message.description)
+                    };
+
+                    crate::fixer::Fix {
+                        content: Cow::Owned(fix.text),
+                        span: Span::new(fix.range.pos, fix.range.end),
+                        message: Some(Cow::Owned(message)),
+                    }
                 })
                 .collect();
 
-            fixes.push(CompositeFix::merge_fixes(fix_vec, source_text));
-        }
+            CompositeFix::merge_fixes(fix_vec, source_text)
+        }));
 
         let possible_fix = if fixes.is_empty() {
             PossibleFixes::None
@@ -761,16 +775,23 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         ));
     }
 
-    // executing a sub command in windows, needs a `cmd` or `ps1` extension.
-    // `cmd` is the most compatible one with older systems
-    let file = if cfg!(windows) { "tsgolint.CMD" } else { "tsgolint" };
+    // Executing a sub-command in Windows needs a `cmd` or `ps1` extension.
+    // Since `cmd` is the most compatible one with older systems, we use that one first,
+    // then check for `exe` which is also common. Bun, for example, does not create a `cmd`
+    // file but still produces an `exe` file (https://github.com/oxc-project/oxc/issues/13784).
+    #[cfg(windows)]
+    let files = &["tsgolint.CMD", "tsgolint.exe"];
+    #[cfg(not(windows))]
+    let files = &["tsgolint"];
 
     // Move upwards until we find a `package.json`, then look at `node_modules/.bin/tsgolint`
     let mut current_dir = cwd.to_path_buf();
     loop {
-        let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
-        if node_modules_bin.exists() {
-            return Ok(node_modules_bin);
+        for file in files {
+            let node_modules_bin = current_dir.join("node_modules").join(".bin").join(file);
+            if node_modules_bin.exists() {
+                return Ok(node_modules_bin);
+            }
         }
 
         // If we reach the root directory, stop searching

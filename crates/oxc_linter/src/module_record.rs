@@ -3,7 +3,7 @@
 use std::{
     fmt,
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock, RwLock},
+    sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
 use rustc_hash::FxHashMap;
@@ -46,7 +46,9 @@ pub struct ModuleRecord {
     ///
     /// Note that Oxc does not support cross-file analysis, so this map will be empty after
     /// [`ModuleRecord`] is created. You must link the module records yourself.
-    pub loaded_modules: RwLock<FxHashMap<CompactStr, Arc<ModuleRecord>>>,
+    ///
+    /// Use [ModuleRecord::get_loaded_module] to get a `ModuleRecord`.
+    loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -508,18 +510,46 @@ impl ModuleRecord {
         }
     }
 
+    /// # Panics
+    ///
+    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
+    pub fn loaded_modules(&self) -> RwLockReadGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
+        self.loaded_modules.read().unwrap()
+    }
+
+    /// # Panics
+    ///
+    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
+    pub fn write_loaded_modules(
+        &self,
+    ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
+        self.loaded_modules.write().unwrap()
+    }
+
+    /// Get a loaded module by upgrading the weak reference to an Arc.
+    /// Returns None if the module has been dropped or not found.
+    ///
+    /// # Panics
+    ///
+    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
+    /// * If `ModuleRecord` is dropped (fails to Weak::upgrade).
+    pub fn get_loaded_module(&self, key: &str) -> Option<Arc<ModuleRecord>> {
+        let loaded_modules = self.loaded_modules();
+        loaded_modules.get(key).map(|weak| Weak::upgrade(weak).unwrap())
+    }
+
     pub(crate) fn exported_bindings_from_star_export(
         &self,
     ) -> &FxHashMap<PathBuf, Vec<CompactStr>> {
         self.exported_bindings_from_star_export.get_or_init(|| {
             let mut exported_bindings_from_star_export: FxHashMap<PathBuf, Vec<CompactStr>> =
                 FxHashMap::default();
-            let loaded_modules = self.loaded_modules.read().unwrap();
             for export_entry in &self.star_export_entries {
                 let Some(module_request) = &export_entry.module_request else {
                     continue;
                 };
-                let Some(remote_module_record) = loaded_modules.get(module_request.name()) else {
+                let Some(remote_module_record) = self.get_loaded_module(module_request.name())
+                else {
                     continue;
                 };
                 // Append both remote `bindings` and `exported_bindings_from_star_export`

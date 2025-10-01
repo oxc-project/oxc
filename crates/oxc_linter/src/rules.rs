@@ -30,6 +30,7 @@ pub(crate) mod import {
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_named_default;
+    pub mod no_named_export;
     pub mod no_namespace;
     pub mod no_self_import;
     pub mod no_unassigned_import;
@@ -352,6 +353,7 @@ pub(crate) mod react {
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
+    pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
     pub mod no_array_index_key;
     pub mod no_children_prop;
@@ -398,10 +400,12 @@ pub(crate) mod unicorn {
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
+    pub mod no_array_callback_reference;
     pub mod no_array_for_each;
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
     pub mod no_array_reverse;
+    pub mod no_array_sort;
     pub mod no_await_expression_member;
     pub mod no_await_in_promise_methods;
     pub mod no_console_spaces;
@@ -428,10 +432,12 @@ pub(crate) mod unicorn {
     pub mod no_this_assignment;
     pub mod no_typeof_undefined;
     pub mod no_unnecessary_array_flat_depth;
+    pub mod no_unnecessary_array_splice_count;
     pub mod no_unnecessary_await;
     pub mod no_unnecessary_slice_end;
     pub mod no_unreadable_array_destructuring;
     pub mod no_unreadable_iife;
+    pub mod no_useless_error_capture_stack_trace;
     pub mod no_useless_fallback_in_spread;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
@@ -447,7 +453,10 @@ pub(crate) mod unicorn {
     pub mod prefer_array_flat_map;
     pub mod prefer_array_index_of;
     pub mod prefer_array_some;
+    pub mod prefer_at;
     pub mod prefer_blob_reading_methods;
+    pub mod prefer_class_fields;
+    pub mod prefer_classlist_toggle;
     pub mod prefer_code_point;
     pub mod prefer_date_now;
     pub mod prefer_dom_node_append;
@@ -481,8 +490,10 @@ pub(crate) mod unicorn {
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_structured_clone;
+    pub mod prefer_top_level_await;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
+    pub mod require_module_specifiers;
     pub mod require_number_to_fixed_digits_argument;
     pub mod require_post_message_target_origin;
     pub mod switch_case_braces;
@@ -600,6 +611,7 @@ pub(crate) mod promise {
     pub mod avoid_new;
     pub mod catch_or_return;
     pub mod no_callback_in_promise;
+    pub mod no_multiple_resolved;
     pub mod no_nesting;
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
@@ -630,6 +642,7 @@ pub(crate) mod node {
 pub(crate) mod vue {
     pub mod define_emits_declaration;
     pub mod define_props_declaration;
+    pub mod max_props;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
     pub mod require_typed_ref;
@@ -798,6 +811,7 @@ oxc_macros::declare_all_lint_rules! {
     import::extensions,
     import::first,
     import::group_exports,
+    import::no_named_export,
     import::no_unassigned_import,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
@@ -971,6 +985,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::no_nesting,
     promise::no_promise_in_callback,
     promise::no_callback_in_promise,
+    promise::no_multiple_resolved,
     promise::no_new_statics,
     promise::no_return_in_finally,
     promise::param_names,
@@ -985,6 +1000,7 @@ oxc_macros::declare_all_lint_rules! {
     react::forbid_elements,
     react::forward_ref_uses_ref,
     react::iframe_missing_sandbox,
+    react::jsx_pascal_case,
     react::jsx_fragments,
     react::jsx_filename_extension,
     react::jsx_boolean_value,
@@ -1117,6 +1133,10 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_unnecessary_array_splice_count,
+    unicorn::no_array_callback_reference,
+    unicorn::no_useless_error_capture_stack_trace,
+    unicorn::no_array_sort,
     unicorn::no_array_reverse,
     unicorn::no_instanceof_builtins,
     unicorn::no_array_method_this_argument,
@@ -1163,6 +1183,10 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
+    unicorn::prefer_classlist_toggle,
+    unicorn::prefer_class_fields,
+    unicorn::prefer_top_level_await,
+    unicorn::prefer_at,
     unicorn::prefer_global_this,
     unicorn::prefer_object_from_entries,
     unicorn::prefer_array_find,
@@ -1204,6 +1228,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_trim_start_end,
     unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
+    unicorn::require_module_specifiers,
     unicorn::require_post_message_target_origin,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
@@ -1218,6 +1243,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::require_local_test_context_for_concurrent_snapshots,
     vue::define_emits_declaration,
     vue::define_props_declaration,
+    vue::max_props,
     vue::no_multiple_slot_args,
     vue::no_required_prop_with_default,
     vue::require_typed_ref,

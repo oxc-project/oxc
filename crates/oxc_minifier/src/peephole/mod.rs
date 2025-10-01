@@ -13,6 +13,7 @@ mod normalize;
 mod remove_dead_code;
 mod remove_unused_declaration;
 mod remove_unused_expression;
+mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
@@ -123,6 +124,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 ctx.scoping_mut().delete_reference(*reference_id_to_remove);
             }
         }
+        debug_assert!(ctx.state.class_symbols_stack.is_exhausted());
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -362,14 +364,36 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         Self::convert_to_dotted_properties(expr, &ctx);
     }
 
+    fn enter_class_body(&mut self, _body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        ctx.state.class_symbols_stack.push_class_scope();
+    }
+
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = &mut Ctx::new(ctx);
         Self::remove_dead_code_exit_class_body(body, ctx);
+        Self::remove_unused_private_members(body, ctx);
+        ctx.state.class_symbols_stack.pop_class_scope(Self::get_declared_private_symbols(body));
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         let ctx = Ctx::new(ctx);
         Self::substitute_catch_clause(catch, &ctx);
+    }
+
+    fn exit_private_field_expression(
+        &mut self,
+        node: &mut PrivateFieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name);
+    }
+
+    fn exit_private_in_expression(
+        &mut self,
+        node: &mut PrivateInExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name);
     }
 }
 

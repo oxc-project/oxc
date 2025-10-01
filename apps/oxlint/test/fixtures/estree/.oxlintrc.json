@@ -1,10 +1,9 @@
 {
-    "plugins": ["./test_plugin"],
-    "categories": {
-      "correctness": "off"
-    },
-    "rules": {
-        "estree-check/check": "error"
-    },
-    "ignorePatterns": ["test_plugin/**"]
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "estree-check/check": "error"
+  }
 }

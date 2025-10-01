@@ -2,18 +2,18 @@ use std::{borrow::Cow, str::FromStr};
 
 use oxc_linter::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
 use tower_lsp_server::lsp_types::{
-    self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Uri,
+    self, CodeDescription, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString,
+    Position, Range, Uri,
 };
 
 use oxc_diagnostics::Severity;
 
 use crate::LSP_MAX_INT;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
     pub fixed_content: PossibleFixContent,
-    pub rule_name: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -23,8 +23,9 @@ pub struct FixedContent {
     pub range: Range,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum PossibleFixContent {
+    #[default]
     None,
     Single(FixedContent),
     Multiple(Vec<FixedContent>),
@@ -144,6 +145,46 @@ pub fn message_with_position_to_lsp_diagnostic_report(
                 fixes.iter().map(fix_with_position_to_fix_content).collect(),
             ),
         },
-        rule_name: message.code.number.as_ref().map(std::string::ToString::to_string),
     }
+}
+
+pub fn generate_inverted_diagnostics(
+    diagnostics: &[DiagnosticReport],
+    uri: &Uri,
+) -> Vec<DiagnosticReport> {
+    let mut inverted_diagnostics = vec![];
+    for d in diagnostics {
+        let Some(related_info) = &d.diagnostic.related_information else {
+            continue;
+        };
+        let related_information = Some(vec![DiagnosticRelatedInformation {
+            location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+            message: "original diagnostic".to_string(),
+        }]);
+        for r in related_info {
+            if r.location.range == d.diagnostic.range {
+                continue;
+            }
+            // If there is no message content for this span, then don't produce an additional diagnostic
+            // which also has no content. This prevents issues where editors expect diagnostics to have messages.
+            if r.message.is_empty() {
+                continue;
+            }
+            inverted_diagnostics.push(DiagnosticReport {
+                diagnostic: lsp_types::Diagnostic {
+                    range: r.location.range,
+                    severity: Some(DiagnosticSeverity::HINT),
+                    code: None,
+                    message: r.message.clone(),
+                    source: d.diagnostic.source.clone(),
+                    code_description: None,
+                    related_information: related_information.clone(),
+                    tags: None,
+                    data: None,
+                },
+                fixed_content: PossibleFixContent::None,
+            });
+        }
+    }
+    inverted_diagnostics
 }

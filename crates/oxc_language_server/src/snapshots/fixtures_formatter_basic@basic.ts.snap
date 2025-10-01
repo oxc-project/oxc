@@ -1,10 +1,10 @@
 ---
 source: crates/oxc_language_server/src/formatter/tester.rs
 ---
-########## 
-file: fixtures/formatter/basic/basic.ts
-----------
-Range {
+========================================
+File: fixtures/formatter/basic/basic.ts
+========================================
+Range: Range {
     start: Position {
         line: 1,
         character: 2,
@@ -13,6 +13,30 @@ Range {
         line: 26,
         character: 0,
     },
-},
+}
 
-"#name: string;\n\n  public get name() {\n    return this.#name;\n  }\n\n  private set name(name: string) {\n    this.#name = name;\n  }\n}\n\nclass C2 {\n  #name: string;\n\n  private set name(name: string) {\n    this.#name = name;\n  }\n\n  public get name() {\n    return this.#name;\n  }\n}\n\nconst c1 = new C1();\nconst c2 = new C2();"
+  #name: string;
+
+  public get name() {
+    return this.#name;
+  }
+
+  private set name(name: string) {
+    this.#name = name;
+  }
+}
+
+class C2 {
+  #name: string;
+
+  private set name(name: string) {
+    this.#name = name;
+  }
+
+  public get name() {
+    return this.#name;
+  }
+}
+
+const c1 = new C1();
+const c2 = new C2();

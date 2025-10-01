@@ -24,6 +24,7 @@ pub use oxc_syntax::{
 #[cfg(feature = "cfg")]
 pub mod dot;
 
+#[cfg(feature = "linter")]
 mod ast_types_bitset;
 mod binder;
 mod builder;
@@ -31,6 +32,7 @@ mod checker;
 mod class;
 mod diagnostics;
 mod is_global_reference;
+#[cfg(feature = "linter")]
 mod jsdoc;
 mod label;
 mod node;
@@ -38,9 +40,11 @@ mod scoping;
 mod stats;
 mod unresolved_stack;
 
+#[cfg(feature = "linter")]
 pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
+#[cfg(feature = "linter")]
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodes};
 pub use scoping::Scoping;
@@ -78,6 +82,7 @@ pub struct Semantic<'a> {
     irregular_whitespaces: Box<[Span]>,
 
     /// Parsed JSDoc comments.
+    #[cfg(feature = "linter")]
     jsdoc: JSDocFinder<'a>,
 
     unused_labels: Vec<NodeId>,
@@ -160,6 +165,7 @@ impl<'a> Semantic<'a> {
     /// Parsed [`JSDoc`] comments.
     ///
     /// Will be empty if JSDoc parsing is disabled.
+    #[cfg(feature = "linter")]
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
     }

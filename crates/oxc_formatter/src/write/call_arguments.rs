@@ -25,17 +25,17 @@ use crate::{
     write::{
         FormatFunctionOptions,
         arrow_function_expression::is_multiline_template_starting_on_same_line,
-        parameter_list::has_only_simple_parameters,
     },
 };
 
 use super::{
     array_element_list::can_concisely_print_array_list,
     arrow_function_expression::{
-        FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
-        FunctionBodyCacheMode, GroupedCallArgumentLayout,
+        FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions, FunctionCacheMode,
+        GroupedCallArgumentLayout,
     },
     function,
+    parameters::has_only_simple_parameters,
 };
 
 impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
@@ -98,7 +98,10 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
 
         let has_empty_line =
             self.iter().any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
-        if has_empty_line || is_function_composition_args(self) {
+        if has_empty_line
+            || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
+                && is_function_composition_args(self))
+        {
             return format_all_args_broken_out(self, true, f);
         }
 
@@ -299,11 +302,14 @@ fn should_group_last_argument(
     match last.and_then(|arg| arg.as_expression()) {
         Some(last) => {
             let penultimate = iter.next_back();
-            if let Some(penultimate) = &penultimate {
-                // TODO: check if both last and penultimate are same kind of expression.
-                // if penultimate.syntax().kind() == last.syntax().kind() {
-                //     return Ok(false);
-                // }
+            if let Some(penultimate) = &penultimate
+                && matches!(
+                    (penultimate, last),
+                    (Argument::ObjectExpression(_), Expression::ObjectExpression(_))
+                        | (Argument::ArrayExpression(_), Expression::ArrayExpression(_))
+                )
+            {
+                return false;
             }
 
             let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
@@ -570,7 +576,7 @@ fn write_grouped_arguments<'a>(
                             has_cached = true;
                             return function.fmt_with_options(
                                 FormatFunctionOptions {
-                                    cache_mode: FunctionBodyCacheMode::Cache,
+                                    cache_mode: FunctionCacheMode::Cache,
                                     ..Default::default()
                                 },
                                 f,
@@ -580,7 +586,7 @@ fn write_grouped_arguments<'a>(
                             has_cached = true;
                             return arrow.fmt_with_options(
                                 FormatJsArrowFunctionExpressionOptions {
-                                    cache_mode: FunctionBodyCacheMode::Cache,
+                                    cache_mode: FunctionCacheMode::Cache,
                                     ..FormatJsArrowFunctionExpressionOptions::default()
                                 },
                                 f,
@@ -798,7 +804,7 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
             AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 arrow.fmt_with_options(
                     FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionBodyCacheMode::Cache,
+                        cache_mode: FunctionCacheMode::Cache,
                         call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
                         ..FormatJsArrowFunctionExpressionOptions::default()
                     },
@@ -832,7 +838,7 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
                 with_token_tracking_disabled(f, |f| {
                     function.fmt_with_options(
                         FormatFunctionOptions {
-                            cache_mode: FunctionBodyCacheMode::Cache,
+                            cache_mode: FunctionCacheMode::Cache,
                             call_argument_layout: Some(
                                 GroupedCallArgumentLayout::GroupedLastArgument,
                             ),
@@ -845,7 +851,7 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
             AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 arrow.fmt_with_options(
                     FormatJsArrowFunctionExpressionOptions {
-                        cache_mode: FunctionBodyCacheMode::Cache,
+                        cache_mode: FunctionCacheMode::Cache,
                         call_arg_layout: Some(GroupedCallArgumentLayout::GroupedLastArgument),
                         ..FormatJsArrowFunctionExpressionOptions::default()
                     },

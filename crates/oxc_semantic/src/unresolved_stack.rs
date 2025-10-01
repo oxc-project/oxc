@@ -74,17 +74,6 @@ impl<'a> UnresolvedReferencesStack<'a> {
 
     /// Get unresolved references hash map for current scope
     #[inline]
-    pub(crate) fn root(&self) -> &TempUnresolvedReferences<'a> {
-        // SAFETY: `stack.len() > current_scope_depth` initially.
-        // Thereafter, `stack` never shrinks, only grows.
-        // `current_scope_depth` is only increased in `increment_scope_depth`,
-        // and it grows `stack` to ensure `stack.len()` always exceeds `current_scope_depth`.
-        // So this read is always guaranteed to be in bounds.
-        unsafe { self.stack.get_unchecked(0) }
-    }
-
-    /// Get unresolved references hash map for current scope
-    #[inline]
     pub(crate) fn current_mut(&mut self) -> &mut TempUnresolvedReferences<'a> {
         // SAFETY: `stack.len() > current_scope_depth` initially.
         // Thereafter, `stack` never shrinks, only grows.

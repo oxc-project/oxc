@@ -19,11 +19,27 @@ pub fn get_file_uri(relative_file_path: &str) -> Uri {
 }
 
 fn get_snapshot_from_text_edits(edits: &[TextEdit]) -> String {
-    edits
-        .iter()
-        .map(|edit| format!("{:#?},\n\n{:?}", edit.range, edit.new_text))
-        .collect::<Vec<_>>()
-        .join("\n")
+    if edits.len() == 1 {
+        // Single edit - show range and the actual formatted content with proper indentation
+        let edit = &edits[0];
+        let indent = " ".repeat(edit.range.start.character as usize);
+        let indented_content = format!("{}{}", indent, edit.new_text);
+
+        format!("Range: {:#?}\n\n{}", edit.range, indented_content)
+    } else {
+        // Multiple edits - show each edit separately
+        edits
+            .iter()
+            .enumerate()
+            .map(|(i, edit)| {
+                let indent = " ".repeat(edit.range.start.character as usize);
+                let indented_content = format!("{}{}", indent, edit.new_text);
+
+                format!("Edit {}: Range: {:#?}\n{}", i + 1, edit.range, indented_content)
+            })
+            .collect::<Vec<_>>()
+            .join("\n----------\n")
+    }
 }
 
 /// Testing struct for the [formatter server][crate::formatter::server_formatter::ServerFormatter].
@@ -71,8 +87,8 @@ impl Tester<'_> {
 
             let _ = write!(
                 snapshot_result,
-                "########## \nfile: {}/{relative_file_path}\n----------\n{snapshot}\n",
-                self.relative_root_dir
+                "========================================\nFile: {}/{}\n========================================\n{}\n",
+                self.relative_root_dir, relative_file_path, snapshot
             );
         }
 

@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.19.0] - 2025-09-29
+
+### 🚀 Features
+
+- b4d716f linter/plugins: Move custom JS plugin config to `jsPlugins` (#14133) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 8879b5a linter/plugins: Add types export to `npm/oxlint` (#14219) (overlookmotel)
+
+
+
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- 3e117c6 linter/plugins: Add `defineRule` API (#13945) (overlookmotel)
+- a14aa79 npm/oxlint: Convert to ES modules (#13876) (Boshen)
+- b52389a node: Bump `engines` field to require Node.js 20.19.0+ for ESM support (#13879) (Copilot)
+- 53d04dd linter: Convert `oxlint` to NAPI app (#13723) (overlookmotel)
+
+### 🚜 Refactor
+
+- bb040bc parser, linter: Replace `.mjs` files with `.js` (#14045) (overlookmotel)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+
+
 
 
 ## [1.14.0] - 2025-08-30

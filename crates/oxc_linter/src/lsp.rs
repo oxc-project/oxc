@@ -1,4 +1,5 @@
 use oxc_data_structures::rope::{Rope, get_line_column};
+use oxc_span::GetSpan;
 use std::borrow::Cow;
 
 use crate::fixer::{Fix, Message, PossibleFixes};
@@ -69,11 +70,13 @@ pub struct MessageWithPosition<'a> {
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn oxc_diagnostic_to_message_with_position<'a>(
-    diagnostic: &OxcDiagnostic,
+    diagnostic: OxcDiagnostic,
     source_text: &str,
     rope: &Rope,
 ) -> MessageWithPosition<'a> {
-    let labels = diagnostic.labels.as_ref().map(|labels| {
+    let inner = diagnostic.inner_owned();
+
+    let labels = inner.labels.as_ref().map(|labels| {
         labels
             .iter()
             .map(|labeled_span| {
@@ -89,62 +92,58 @@ pub fn oxc_diagnostic_to_message_with_position<'a>(
     });
 
     MessageWithPosition {
-        message: diagnostic.message.clone(),
-        severity: diagnostic.severity,
-        help: diagnostic.help.clone(),
-        url: diagnostic.url.clone(),
-        code: diagnostic.code.clone(),
+        message: inner.message,
+        severity: inner.severity,
+        help: inner.help,
+        url: inner.url,
+        code: inner.code,
         labels,
         fixes: PossibleFixesWithPosition::None,
     }
 }
 
-// clippy: the source field is checked and assumed to be less than 4GB, and
-// we assume that the fix offset will not exceed 2GB in either direction
-#[expect(clippy::cast_possible_truncation)]
 pub fn message_to_message_with_position<'a>(
-    message: &Message<'a>,
+    message: Message<'a>,
     source_text: &str,
     rope: &Rope,
 ) -> MessageWithPosition<'a> {
-    let labels = message.error.labels.as_ref().map(|labels| {
-        labels
-            .iter()
-            .map(|labeled_span| {
-                let offset = labeled_span.offset() as u32;
-                let start_position = offset_to_position(rope, offset, source_text);
-                let end_position =
-                    offset_to_position(rope, offset + labeled_span.len() as u32, source_text);
-                let message = labeled_span.label().map(|label| Cow::Owned(label.to_string()));
+    let code = message.error.code.clone();
+    let error_offset = message.span().start;
+    let section_offset = message.section_offset;
 
-                SpanPositionMessage::new(start_position, end_position).with_message(message)
-            })
-            .collect::<Vec<_>>()
-    });
+    let mut result = oxc_diagnostic_to_message_with_position(message.error, source_text, rope);
+    let fixes = match &message.fixes {
+        PossibleFixes::None => PossibleFixesWithPosition::None,
+        PossibleFixes::Single(fix) => {
+            PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
+        }
+        PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
+            fixes.iter().map(|fix| fix_to_fix_with_position(fix, rope, source_text)).collect(),
+        ),
+    };
 
-    MessageWithPosition {
-        message: message.error.message.clone(),
-        severity: message.error.severity,
-        help: message.error.help.clone(),
-        url: message.error.url.clone(),
-        code: message.error.code.clone(),
-        labels,
-        fixes: match &message.fixes {
-            PossibleFixes::None => PossibleFixesWithPosition::None,
-            PossibleFixes::Single(fix) => {
-                PossibleFixesWithPosition::Single(fix_to_fix_with_position(fix, rope, source_text))
-            }
-            PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
-                fixes.iter().map(|fix| fix_to_fix_with_position(fix, rope, source_text)).collect(),
-            ),
-        },
-    }
+    result.fixes = add_ignore_fixes(fixes, &code, error_offset, section_offset, rope, source_text);
+
+    result
 }
 
+/// Possible fixes with position information.
+///
+/// This is similar to `PossibleFixes` but with position information.
+/// It also includes "ignore this line" and "ignore this rule" fixes for the Language Server.
+///
+/// The struct should be build with `message_to_message_with_position`
+/// or `oxc_diagnostic_to_message_with_position` function to ensure the ignore fixes are added correctly.
 #[derive(Debug)]
 pub enum PossibleFixesWithPosition<'a> {
+    // No possible fixes.
+    // This happens on parser/semantic errors.
     None,
+    // A single possible fix.
+    // This happens when a unused disable directive is reported.
     Single(FixWithPosition<'a>),
+    // Multiple possible fixes.
+    // This happens when a lint reports a violation, then ignore fixes are added.
     Multiple(Vec<FixWithPosition<'a>>),
 }
 
@@ -165,6 +164,98 @@ fn fix_to_fix_with_position<'a>(
         content: fix.content.clone(),
         span: SpanPositionMessage::new(start_position, end_position)
             .with_message(fix.message.as_ref().map(|label| Cow::Owned(label.to_string()))),
+    }
+}
+
+/// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
+/// These fixes will be added to the end of the existing fixes.
+/// If the existing fixes already contain an "remove unused disable directive" fix,
+/// then no ignore fixes will be added.
+fn add_ignore_fixes<'a>(
+    fixes: PossibleFixesWithPosition<'a>,
+    code: &OxcCode,
+    error_offset: u32,
+    section_offset: u32,
+    rope: &Rope,
+    source_text: &str,
+) -> PossibleFixesWithPosition<'a> {
+    // do not append ignore code actions when the error is the ignore action
+    if matches!(fixes, PossibleFixesWithPosition::Single(ref fix) if fix.span.message.as_ref().is_some_and(|message| message.starts_with("remove unused disable directive")))
+    {
+        return fixes;
+    }
+
+    let mut new_fixes: Vec<FixWithPosition<'a>> = vec![];
+    if let PossibleFixesWithPosition::Single(fix) = fixes {
+        new_fixes.push(fix);
+    } else if let PossibleFixesWithPosition::Multiple(existing_fixes) = fixes {
+        new_fixes.extend(existing_fixes);
+    }
+
+    if let Some(rule_name) = code.number.as_ref() {
+        // TODO:  doesn't support disabling multiple rules by name for a given line.
+        new_fixes.push(disable_for_this_line(rule_name, error_offset, rope, source_text));
+        new_fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
+    }
+
+    PossibleFixesWithPosition::Multiple(new_fixes)
+}
+
+fn disable_for_this_line<'a>(
+    rule_name: &str,
+    error_offset: u32,
+    rope: &Rope,
+    source_text: &str,
+) -> FixWithPosition<'a> {
+    let mut start_position = offset_to_position(rope, error_offset, source_text);
+    start_position.character = 0; // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
+    let end_position = start_position.clone();
+    FixWithPosition {
+        content: Cow::Owned(format!("// oxlint-disable-next-line {rule_name}\n")),
+        span: SpanPositionMessage::new(start_position, end_position)
+            .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this line")))),
+    }
+}
+
+fn disable_for_this_section<'a>(
+    rule_name: &str,
+    section_offset: u32,
+    rope: &Rope,
+    source_text: &str,
+) -> FixWithPosition<'a> {
+    let comment = format!("// oxlint-disable {rule_name}\n");
+
+    let (content, offset) = if section_offset == 0 {
+        // JS files - insert at the beginning
+        (Cow::Owned(comment), section_offset)
+    } else {
+        // Framework files - check for line breaks at section_offset
+        let bytes = source_text.as_bytes();
+        let current = bytes.get(section_offset as usize);
+        let next = bytes.get((section_offset + 1) as usize);
+
+        match (current, next) {
+            (Some(b'\n'), _) => {
+                // LF at offset, insert after it
+                (Cow::Owned(comment), section_offset + 1)
+            }
+            (Some(b'\r'), Some(b'\n')) => {
+                // CRLF at offset, insert after both
+                (Cow::Owned(comment), section_offset + 2)
+            }
+            _ => {
+                // Not at line start, prepend newline
+                (Cow::Owned("\n".to_owned() + &comment), section_offset)
+            }
+        }
+    };
+
+    let position = offset_to_position(rope, offset, source_text);
+
+    FixWithPosition {
+        content,
+        span: SpanPositionMessage::new(position.clone(), position)
+            .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this file")))),
     }
 }
 
@@ -207,6 +298,50 @@ mod test {
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
         offset_to_position(&Rope::from_str("foo"), 100, "foo");
+    }
+
+    #[test]
+    fn disable_for_section_js_file() {
+        let source = "console.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_after_lf() {
+        let source = "<script>\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_after_crlf() {
+        let source = "<script>\r\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_mid_line() {
+        let source = "const x = 5;";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-unused-vars", 6, &rope, source);
+
+        assert_eq!(fix.content, "\n// oxlint-disable no-unused-vars\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 6);
     }
 
     fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {

@@ -83,14 +83,13 @@ jobs:
           pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@0e09747a63ae497bf945b3dcaf38fef0050d0109 # v2.62.0
+        uses: taiki-e/install-action@efd8b64311f7a0a9b888ed13d0df78ec9184c163 # v2.62.11
         with:
           tool: cross
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
-        with:
-          shared-key: release-${{ matrix.target }}
+      # Please do not set a cache for release builds; they are evicted before they can be re-used, yet they consume significant cache storage before eviction.
 
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
@@ -125,8 +124,8 @@ jobs:
           name: packages-${{ matrix.code-target }}
           path: ./oxc_language_server-${{ matrix.code-target }}.vsix
 
-  publish:
-    name: Publish VSCode
+  publish-vsce:
+    name: Publish to Microsoft Marketplace
     runs-on: ubuntu-latest
     needs: build
     environment: marketplace
@@ -148,6 +147,25 @@ jobs:
         run: pnpm exec vsce publish --packagePath oxc_language_server-*.vsix
         env:
           VSCE_PAT: ${{ secrets.VSCE_PERSONAL_ACCESS_TOKEN }}
+
+  # A different job so we can retry if the other publish fails.
+  publish-ovsx:
+    name: Publish to Open VSX Registry
+    runs-on: ubuntu-latest
+    needs: build
+    environment: marketplace
+    permissions:
+      contents: write
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Download extension artifacts
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          merge-multiple: true
+          path: editors/vscode
+
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
 
       - name: Publish to Open VSX Registry
         working-directory: editors/vscode

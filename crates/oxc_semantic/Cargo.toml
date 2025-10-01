@@ -1,6 +1,6 @@
 [package]
 name = "oxc_semantic"
-version = "0.91.0"
+version = "0.93.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -46,4 +46,5 @@ serde_json = { workspace = true }
 [features]
 default = []
 cfg = ["dep:oxc_cfg"]
+linter = []
 serialize = ["oxc_span/serialize", "oxc_syntax/serialize"]

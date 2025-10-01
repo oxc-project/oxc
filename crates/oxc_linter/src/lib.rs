@@ -1,17 +1,20 @@
 #![expect(clippy::self_named_module_files)] // for rules.rs
-#![allow(clippy::literal_string_with_formatting_args)]
 
-use std::{path::Path, rc::Rc};
+use std::{
+    mem,
+    path::Path,
+    ptr::{self, NonNull},
+    rc::Rc,
+};
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast_kind::AST_TYPE_MAX;
+use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
-
-#[cfg(test)]
-mod tester;
+use oxc_span::Span;
 
 mod ast_util;
 mod config;
@@ -42,15 +45,18 @@ mod generated {
     mod rule_runner_impls;
 }
 
+#[cfg(test)]
+mod tester;
+
 pub use crate::{
     config::{
-        BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
-        ESLintRule, LintIgnoreMatcher, LintPlugins, Oxlintrc, ResolvedLinterState,
+        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
+        LintPlugins, Oxlintrc, ResolvedLinterState,
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-        PluginLoadResult,
+        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, JsFix,
+        LintFileResult, PluginLoadResult,
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
@@ -67,7 +73,7 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
-    fixer::{Fixer, Message},
+    fixer::{CompositeFix, Fix, Fixer, Message, PossibleFixes},
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
 };
@@ -329,17 +335,6 @@ impl Linter {
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
     ) {
-        use std::{
-            mem,
-            ptr::{self, NonNull},
-        };
-
-        use oxc_ast::ast::Program;
-        use oxc_diagnostics::OxcDiagnostic;
-        use oxc_span::Span;
-
-        use crate::fixer::PossibleFixes;
-
         if external_rules.is_empty() {
             return;
         }
@@ -347,7 +342,7 @@ impl Linter {
         // `external_linter` always exists when `external_rules` is not empty
         let external_linter = self.external_linter.as_ref().unwrap();
 
-        let (program_offset, span_converter) = {
+        let (program_offset, source_text, span_converter) = {
             // Extract `Semantic` from `ContextHost`, and get a mutable reference to `Program`.
             //
             // It's not possible to obtain a `&mut Program` while `Semantic` exists, because `Semantic`
@@ -375,7 +370,7 @@ impl Linter {
             let semantic = mem::take(ctx_host.semantic_mut());
             let program_addr = NonNull::from(semantic.nodes().program()).addr();
             let mut program_ptr =
-                allocator.data_end_ptr().cast::<Program>().with_addr(program_addr);
+                allocator.data_end_ptr().cast::<Program<'a>>().with_addr(program_addr);
             drop(semantic);
             // SAFETY: Now that we've dropped `Semantic`, no references to any AST nodes remain,
             // so can get a mutable reference to `Program` without aliasing violations.
@@ -388,7 +383,7 @@ impl Linter {
             // Get offset of `Program` within buffer (bottom 32 bits of pointer)
             let program_offset = ptr::from_ref(program) as u32;
 
-            (program_offset, span_converter)
+            (program_offset, program.source_text, span_converter)
         };
 
         // Write offset of `Program` in metadata at end of buffer
@@ -407,8 +402,11 @@ impl Linter {
         match result {
             Ok(diagnostics) => {
                 for diagnostic in diagnostics {
-                    // Convert UTF-16 offsets back to UTF-8
-                    let mut span = Span::new(diagnostic.loc.start, diagnostic.loc.end);
+                    // Convert UTF-16 offsets back to UTF-8.
+                    // TODO: Validate span offsets are within bounds and `start <= end`.
+                    // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
+                    // That's possible if UTF-16 offset points to middle of a surrogate pair.
+                    let mut span = Span::new(diagnostic.start, diagnostic.end);
                     span_converter.convert_span_back(&mut span);
 
                     let (external_rule_id, severity) =
@@ -423,17 +421,60 @@ impl Linter {
                         continue;
                     }
 
+                    // Convert `JSFix`s fixes to `PossibleFixes`, including converting spans back to UTF-8
+                    let fix = if let Some(fixes) = diagnostic.fixes {
+                        debug_assert!(!fixes.is_empty()); // JS should send `None` instead of `Some([])`
+
+                        let is_single = fixes.len() == 1;
+
+                        let fixes = fixes.into_iter().map(|fix| {
+                            // TODO: Validate span offsets are within bounds and `start <= end`.
+                            // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
+                            // That's possible if UTF-16 offset points to middle of a surrogate pair.
+                            let mut span = Span::new(fix.range[0], fix.range[1]);
+                            span_converter.convert_span_back(&mut span);
+                            Fix::new(fix.text, span)
+                        });
+
+                        if is_single {
+                            PossibleFixes::Single(fixes.into_iter().next().unwrap())
+                        } else {
+                            let fixes = fixes.collect::<Vec<_>>();
+                            match CompositeFix::merge_fixes_fallible(fixes, source_text) {
+                                Ok(fix) => PossibleFixes::Single(fix),
+                                Err(err) => {
+                                    let path = path.to_string_lossy();
+                                    let message = format!(
+                                        "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
+                                    );
+                                    ctx_host.push_diagnostic(Message::new(
+                                        OxcDiagnostic::error(message),
+                                        PossibleFixes::None,
+                                    ));
+                                    PossibleFixes::None
+                                }
+                            }
+                        }
+                    } else {
+                        PossibleFixes::None
+                    };
+
                     ctx_host.push_diagnostic(Message::new(
                         OxcDiagnostic::error(diagnostic.message)
                             .with_label(span)
                             .with_error_code(plugin_name.to_string(), rule_name.to_string())
                             .with_severity(severity.into()),
-                        PossibleFixes::None,
+                        fix,
                     ));
                 }
             }
-            Err(_err) => {
-                // TODO: report diagnostic
+            Err(err) => {
+                let path = path.to_string_lossy();
+                let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
+                ctx_host.push_diagnostic(Message::new(
+                    OxcDiagnostic::error(message),
+                    PossibleFixes::None,
+                ));
             }
         }
     }
@@ -466,13 +507,14 @@ impl RawTransferMetadata {
 
 #[cfg(test)]
 mod test {
+    use std::fs;
+
+    use project_root::get_project_root;
+
     use super::Oxlintrc;
 
     #[test]
     fn test_schema_json() {
-        use std::fs;
-
-        use project_root::get_project_root;
         let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
         let schema = schemars::schema_for!(Oxlintrc);
         let json = serde_json::to_string_pretty(&schema).unwrap();

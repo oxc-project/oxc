@@ -1,19 +1,24 @@
 {
-    "plugins": [
-      "./plugins/test_plugin1.js",
-      "./plugins/test_plugin2.cjs",
-      "./plugins/test_plugin3.mjs",
-      "./plugins/test_plugin4",
-      "test_plugin5",
-      "test_plugin6"
-    ],
-    "rules": {
-        "plugin1/no-debugger": "error",
-        "plugin2/no-debugger": "error",
-        "plugin3/no-debugger": "error",
-        "plugin4/no-debugger": "error",
-        "plugin5/no-debugger": "error",
-        "plugin6/no-debugger": "error"
-    },
-    "ignorePatterns": ["plugins/**", "node_modules/**"]
+  "jsPlugins": [
+    "./plugins/plugin1.js",
+    "./plugins/plugin2.cjs",
+    "./plugins/plugin3.mjs",
+    "./plugins/plugin4.ts",
+    "./plugins/plugin5.cts",
+    "./plugins/plugin6.mts",
+    "./plugins/plugin7",
+    "plugin8",
+    "plugin9"
+  ],
+  "rules": {
+    "plugin1/no-debugger": "error",
+    "plugin2/no-debugger": "error",
+    "plugin3/no-debugger": "error",
+    "plugin4/no-debugger": "error",
+    "plugin5/no-debugger": "error",
+    "plugin6/no-debugger": "error",
+    "plugin7/no-debugger": "error",
+    "plugin8/no-debugger": "error",
+    "plugin9/no-debugger": "error"
+  }
 }

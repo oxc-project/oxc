@@ -16,7 +16,31 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
+use crate::{IsGlobalReference, builder::SemanticBuilder, diagnostics::redeclaration};
+
+#[cold]
+fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1)
+}
+
+/// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
+/// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
+pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>) {
+    if ctx.source_type.is_typescript() || ctx.source_type.is_script() {
+        return;
+    }
+    for stmt in &program.body {
+        if let Statement::ExportNamedDeclaration(decl) = stmt {
+            for specifier in &decl.specifiers {
+                if let ModuleExportName::IdentifierReference(ident) = &specifier.local
+                    && ident.is_global_reference(&ctx.scoping)
+                {
+                    ctx.errors.borrow_mut().push(undefined_export(&ident.name, ident.span));
+                }
+            }
+        }
+    }
+}
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;

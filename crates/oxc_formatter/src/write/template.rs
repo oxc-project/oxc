@@ -18,7 +18,8 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodeIterator},
     utils::{
-        call_expression::is_test_each_pattern, expression::FormatExpressionWithoutTrailingComments,
+        call_expression::is_test_each_pattern,
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     },
     write,
 };
@@ -245,7 +246,7 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
             TemplateExpression::Expression(e) => {
                 let leading_comments = f.context().comments().comments_before(e.span().start);
                 FormatLeadingComments::Comments(leading_comments).fmt(f)?;
-                FormatExpressionWithoutTrailingComments(e).fmt(f)?;
+                FormatNodeWithoutTrailingComments(e).fmt(f)?;
                 let trailing_comments =
                     f.context().comments().comments_before_character(e.span().start, b'}');
                 has_comment_in_expression =

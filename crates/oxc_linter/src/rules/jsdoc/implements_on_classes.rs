@@ -87,7 +87,7 @@ impl Rule for ImplementsOnClasses {
         }
 
         let Some(jsdocs) = get_function_nearest_jsdoc_node(node, ctx)
-            .and_then(|node| ctx.jsdoc().get_all_by_node(node))
+            .and_then(|node| ctx.jsdoc().get_all_by_node(ctx.nodes(), node))
         else {
             return;
         };

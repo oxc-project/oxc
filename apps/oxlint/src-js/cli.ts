@@ -9,7 +9,8 @@ let lintFile: typeof lintFileWrapper | null = null;
 function loadPluginWrapper(path: string): Promise<string> {
   if (loadPlugin === null) {
     const require = createRequire(import.meta.url);
-    ({ loadPlugin, lintFile } = require('./plugins/index.js'));
+    // `plugins.js` is in root of `dist`. See `tsdown.config.ts`.
+    ({ loadPlugin, lintFile } = require('./plugins.js'));
   }
   return loadPlugin(path);
 }
@@ -19,8 +20,11 @@ function lintFileWrapper(filePath: string, bufferId: number, buffer: Uint8Array 
   return lintFile(filePath, bufferId, buffer, ruleIds);
 }
 
-// Call Rust, passing `loadPlugin` and `lintFile` as callbacks
-const success = await lint(loadPluginWrapper, lintFileWrapper);
+// Get command line arguments, skipping first 2 (node binary and script path)
+const args = process.argv.slice(2);
+
+// Call Rust, passing `loadPlugin` and `lintFile` as callbacks, and CLI arguments
+const success = await lint(args, loadPluginWrapper, lintFileWrapper);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseSync, Visitor, visitorKeys } from '../src-js/index.mjs';
+import { parseSync, Visitor, visitorKeys, type VisitorObject } from '../src-js/index.js';
 
 describe('visit', () => {
   it('empty visitor', () => {
@@ -12,6 +12,7 @@ describe('visit', () => {
 
   describe('invalid visitor', () => {
     it('undefined visitor object', () => {
+      // @ts-ignore
       expect(() => new Visitor()).toThrow(new TypeError('Visitor must be an object'));
     });
 
@@ -20,19 +21,23 @@ describe('visit', () => {
     });
 
     it('boolean visitor object', () => {
-      expect(() => new Visitor(true)).toThrow(new TypeError('Visitor must be an object'));
+      expect(() => new Visitor(true as unknown as VisitorObject)).toThrow(new TypeError('Visitor must be an object'));
     });
 
     it('unknown type in entry', () => {
-      expect(() => new Visitor({ Foo() {} })).toThrow(new Error("Unknown node type 'Foo' in visitor object"));
+      expect(() => new Visitor({ Foo() {} } as VisitorObject)).toThrow(
+        new Error("Unknown node type 'Foo' in visitor object"),
+      );
     });
 
     it('unknown type in exit', () => {
-      expect(() => new Visitor({ 'Foo:exit'() {} })).toThrow(new Error("Unknown node type 'Foo' in visitor object"));
+      expect(() => new Visitor({ 'Foo:exit'() {} } as VisitorObject)).toThrow(
+        new Error("Unknown node type 'Foo' in visitor object"),
+      );
     });
 
     it('invalid postfix', () => {
-      expect(() => new Visitor({ 'Identifier:foo'() {} })).toThrow(
+      expect(() => new Visitor({ 'Identifier:foo'() {} } as VisitorObject)).toThrow(
         new Error("Unknown node type 'Identifier:foo' in visitor object"),
       );
     });

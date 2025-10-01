@@ -274,56 +274,6 @@ suite('E2E Diagnostics', () => {
     assert(secondDiagnostics.length != 0);
   });
 
-  test('cross module', async () => {
-    await loadFixture('cross_module');
-    const diagnostics = await getDiagnostics('dep-a.ts');
-
-    strictEqual(diagnostics.length, 1);
-    assert(typeof diagnostics[0].code == 'object');
-    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    assert(
-      diagnostics[0].message.startsWith("Dependency cycle detected"),
-    );
-    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
-    strictEqual(diagnostics[0].range.start.line, 1);
-    strictEqual(diagnostics[0].range.start.character, 18);
-    strictEqual(diagnostics[0].range.end.line, 1);
-    strictEqual(diagnostics[0].range.end.character, 30);
-  });
-
-  test('cross module with nested config', async () => {
-    await loadFixture('cross_module_nested_config');
-    const diagnostics = await getDiagnostics('folder/folder-dep-a.ts');
-
-    strictEqual(diagnostics.length, 1);
-    assert(typeof diagnostics[0].code == 'object');
-    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    assert(
-      diagnostics[0].message.startsWith("Dependency cycle detected"),
-    );
-    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
-    strictEqual(diagnostics[0].range.start.line, 1);
-    strictEqual(diagnostics[0].range.start.character, 18);
-    strictEqual(diagnostics[0].range.end.line, 1);
-    strictEqual(diagnostics[0].range.end.character, 37);
-  });
-
-  test('cross module with extended config', async () => {
-    await loadFixture('cross_module_extended_config');
-    const diagnostics = await getDiagnostics('dep-a.ts');
-
-    assert(typeof diagnostics[0].code == 'object');
-    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    assert(
-      diagnostics[0].message.startsWith("Dependency cycle detected"),
-    );
-    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
-    strictEqual(diagnostics[0].range.start.line, 1);
-    strictEqual(diagnostics[0].range.start.character, 18);
-    strictEqual(diagnostics[0].range.end.line, 1);
-    strictEqual(diagnostics[0].range.end.character, 30);
-  });
-
   test('formats code with `oxc.fmt.experimental`', async () => {
     await workspace.getConfiguration('oxc').update('fmt.experimental', true);
     await workspace.getConfiguration('editor').update('defaultFormatter', 'oxc.oxc-vscode');

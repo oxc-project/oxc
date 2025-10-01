@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.93.0] - 2025-09-28
+
+### 🚀 Features
+
+- 1521a1f data_structures: Add `Stack::clear` (#14028) (sapphi-red)
+
+
+
 ## [0.91.0] - 2025-09-22
 
 ### 🚀 Features

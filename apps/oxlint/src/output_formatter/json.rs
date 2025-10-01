@@ -1,13 +1,13 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
+
+use miette::JSONReportHandler;
+use serde::Serialize;
 
 use oxc_diagnostics::{
     Error,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::{RuleCategory, rules::RULES};
-
-use miette::JSONReportHandler;
 
 use crate::output_formatter::InternalFormatter;
 
@@ -18,7 +18,7 @@ pub struct JsonOutputFormatter {
 
 impl InternalFormatter for JsonOutputFormatter {
     fn all_rules(&self) -> Option<String> {
-        #[derive(Debug, serde::Serialize)]
+        #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
             value: &'a str,

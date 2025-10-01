@@ -1,7 +1,6 @@
 {
-    "plugins": ["./test_plugin"],
-    "rules": {
-        "basic-custom-plugin/no-debugger": "error"
-    },
-    "ignorePatterns": ["test_plugin/**"]
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "basic-custom-plugin/no-debugger": "error"
+  }
 }

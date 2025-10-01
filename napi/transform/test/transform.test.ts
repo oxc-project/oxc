@@ -290,6 +290,16 @@ describe('define plugin', () => {
     // Replaced `undefined` with `void 0` by DCE.
     expect(ret.code).toEqual('new (void 0)();\n');
   });
+
+  it('keeps debugger', () => {
+    const code = 'Foo; debugger;';
+    const ret = transform('test.js', code, {
+      define: {
+        Foo: 'Bar',
+      },
+    });
+    expect(ret.code).toEqual('Bar;\ndebugger;\n');
+  });
 });
 
 describe('inject plugin', () => {

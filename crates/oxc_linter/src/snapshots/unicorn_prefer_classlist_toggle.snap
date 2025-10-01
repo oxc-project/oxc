@@ -1,0 +1,438 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition) {
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition)
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               else
+ 4 │ ╰─▶                 element.classList.remove('className');
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition)
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition) {
+ 2 │ │                   element?.classList.add('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition)
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               else
+ 4 │ ╰─▶                 element?.classList.remove('className');
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition) {
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition) {
+ 2 │ │                   (( element )).classList.add('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (0, condition) {
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (0, condition) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition) {
+ 2 │ │                   element.classList.remove(((className)));
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add(((className)));
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:4]
+ 1 │     foo
+ 2 │ ╭─▶             if (condition) {
+ 3 │ │                   (( element )).classList.add('className')
+ 4 │ │               } else {
+ 5 │ │                   element.classList.remove('className')
+ 6 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (condition) {
+ 2 │ │                   (( element )).classList.add('className')
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className')
+ 5 │ ╰─▶             }
+ 6 │                 [].forEach(foo);
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element.classList.contains('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element?.classList.contains('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element.classList.contains?.('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element.classList?.contains('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element.classList.notContains('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element.classList.contains('not-same-class-name')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element.notClassList.contains('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (contains('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (notSameElement.classList.contains('className')) {
+ 2 │ │                   element.classList.remove('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.add('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (element.classList.contains('className')) {
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ ╭─▶ if (!element.classList.contains('className')) {
+ 2 │ │                   element.classList.add('className');
+ 3 │ │               } else {
+ 4 │ │                   element.classList.remove('className');
+ 5 │ ╰─▶             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:13]
+ 1 │ condition ? element.classList.add(className) : element.classList.remove(className)
+   ·             ──────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:13]
+ 1 │ condition ? element?.classList.add(className) : element.classList.remove(className)
+   ·             ───────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:13]
+ 1 │ condition ? element.classList.add(className) : element?.classList.remove(className)
+   ·             ───────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:13]
+ 1 │ condition ? element.classList.remove(className) : element.classList.add(className)
+   ·             ──────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:17]
+ 1 │ if (condition ? element.classList.add(className) : element.classList.remove(className));
+   ·                 ──────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:18]
+ 1 │ function foo() {
+ 2 │                 return!foo ? element.classList.add(className) : element.classList.remove(className)
+   ·                              ──────────────────────────────────────────────────────────────────────
+ 3 │             }
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:16]
+ 1 │ foo
+ 2 │             condition ? (( element )).classList.add(className) : element.classList.remove(className);
+   ·                         ────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element.classList.contains('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element?.classList.contains('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element.classList.contains?.('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element.classList?.contains('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element.classList.notContains('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element.classList.contains('not-same-class-name')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element.notClassList.contains('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     contains('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     notSameElement.classList.contains('className')
+ 2 │ ╭─▶                 ? element.classList.remove('className')
+ 3 │ ╰─▶                 : element.classList.add('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     element.classList.contains('className')
+ 2 │ ╭─▶                 ? element.classList.add('className')
+ 3 │ ╰─▶                 : element.classList.remove('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:2:7]
+ 1 │     !element.classList.contains('className')
+ 2 │ ╭─▶                 ? element.classList.add('className')
+ 3 │ ╰─▶                 : element.classList.remove('className')
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ element.classList[condition ? "add" : "remove"](className)
+   · ──────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ element.classList[condition ? "remove": "add"](className)
+   · ─────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ element?.classList[condition ? "add" : "remove"](className)
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:29]
+ 1 │ const toggle = (element) => element.classList[condition ? "add" : "remove"](className)
+   ·                             ──────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ element.classList[condition ? "add" : "remove"](((className)))
+   · ──────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ element.classList[index % 2 ? "remove" : "add"](className)
+   · ──────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ element.classList[(index % 2) ? "remove" : "add"](className)
+   · ────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead
+
+  ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
+   ╭─[prefer_classlist_toggle.tsx:1:1]
+ 1 │ element.classList[(0, condition) ? "add" : "remove"](className)
+   · ───────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `classList.toggle()` instead

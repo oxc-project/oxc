@@ -1730,8 +1730,8 @@ fn test_inline_single_use_variable() {
         "function wrapper(arg0, arg1) { return fn() + arg0;}",
     );
     test(
-        "function wrapper(arg0, arg1) { let x = fn(); return arg0 + x}",
-        "function wrapper(arg0, arg1) { let x = fn(); return arg0 + x;}",
+        "function wrapper(arg0, arg1) { let x = fn(); return arg0.a + x}",
+        "function wrapper(arg0, arg1) { let x = fn(); return arg0.a + x;}",
     );
     test(
         "function wrapper(arg0, arg1) { let x = fn(); return x + fn2()}",

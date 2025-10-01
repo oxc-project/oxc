@@ -1,7 +1,6 @@
 {
-    "plugins": ["./test_plugin"],
-    "rules": {
-        "utf16-plugin/no-debugger": "error"
-    },
-    "ignorePatterns": ["test_plugin/**"]
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "utf16-plugin/no-debugger": "error"
+  }
 }

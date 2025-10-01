@@ -3,24 +3,24 @@ import {
   SOURCE_LEN_OFFSET,
   // TODO(camc314): we need to generate `.d.ts` file for this module.
   // @ts-expect-error
-} from '../generated/constants.mjs';
+} from '../generated/constants.js';
 import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
-import { assertIs } from './utils.js';
+import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
 // Lazy implementation
 /*
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.mjs';
+import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { walkProgram } from '../../dist/generated/lazy/walk.mjs';
+import { walkProgram } from '../../dist/generated/lazy/walk.js';
 */
 
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.mjs';
+import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { walkProgram } from '../../dist/generated/visit/walk.mjs';
+import { walkProgram } from '../../dist/generated/visit/walk.js';
 
 import type { AfterHook } from './types.ts';
 
@@ -43,8 +43,40 @@ const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
 
-// Run rules on a file.
+/**
+ * Run rules on a file.
+ *
+ * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param bufferId - ID of buffer containing file data
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param ruleIds - IDs of rules to run on this file
+ * @returns JSON result
+ */
 export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
+  try {
+    lintFileImpl(filePath, bufferId, buffer, ruleIds);
+    return JSON.stringify({ Success: diagnostics });
+  } catch (err) {
+    return JSON.stringify({ Failure: getErrorMessage(err) });
+  } finally {
+    diagnostics.length = 0;
+  }
+}
+
+/**
+ * Run rules on a file.
+ *
+ * @param filePath - Absolute path of file being linted
+ * @param bufferId - ID of buffer containing file data
+ * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
+ * @param ruleIds - IDs of rules to run on this file
+ * @returns Diagnostics to send back to Rust
+ * @throws {Error} If any parameters are invalid
+ * @throws {*} If any rule throws
+ */
+function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -72,6 +104,13 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
     throw new Error('Expected `ruleIds` to be a non-zero len array');
   }
 
+  // Decode source text from buffer
+  const { uint32 } = buffer,
+    programPos = uint32[DATA_POINTER_POS_32],
+    sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+
+  const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
@@ -79,7 +118,7 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
     const ruleId = ruleIds[i],
       ruleAndContext = registeredRules[ruleId];
     const { rule, context } = ruleAndContext;
-    setupContextForFile(context, i, filePath);
+    setupContextForFile(context, i, filePath, sourceText);
 
     let { visitor } = ruleAndContext;
     if (visitor === null) {
@@ -107,12 +146,6 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
-    const { uint32 } = buffer,
-      programPos = uint32[DATA_POINTER_POS_32],
-      sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-
-    const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
-
     // `preserveParens` argument is `false`, to match ESLint.
     // ESLint does not include `ParenthesizedExpression` nodes in its AST.
     const program = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);
@@ -142,9 +175,4 @@ export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array 
     // Reset array, ready for next file
     afterHooks.length = 0;
   }
-
-  // Send diagnostics back to Rust
-  const ret = JSON.stringify(diagnostics);
-  diagnostics.length = 0;
-  return ret;
 }

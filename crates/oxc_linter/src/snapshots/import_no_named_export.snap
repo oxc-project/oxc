@@ -1,0 +1,145 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export const foo = 'foo';
+   · ─────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:2:13]
+ 1 │ 
+ 2 │             export const foo = 'foo';
+   ·             ─────────────────────────
+ 3 │             export default bar;
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:2:13]
+ 1 │ 
+ 2 │             export const foo = 'foo';
+   ·             ─────────────────────────
+ 3 │             export function bar() {};
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:3:13]
+ 2 │             export const foo = 'foo';
+ 3 │             export function bar() {};
+   ·             ────────────────────────
+ 4 │         
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export const foo = 'foo';
+   · ─────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:3:13]
+ 2 │             const foo = 'foo';
+ 3 │             export { foo };
+   ·             ───────────────
+ 4 │         
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:15]
+ 1 │ let foo, bar; export { foo, bar }
+   ·               ───────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export const { foo, bar } = item;
+   · ─────────────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export const { foo, bar: baz } = item;
+   · ──────────────────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export const { foo: { bar, baz } } = item;
+   · ──────────────────────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:3:13]
+ 2 │             let item;
+ 3 │             export const foo = item;
+   ·             ────────────────────────
+ 4 │             export { item };
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:4:13]
+ 3 │             export const foo = item;
+ 4 │             export { item };
+   ·             ────────────────
+ 5 │         
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export * from './foo';
+   · ──────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export const { foo } = { foo: 'bar' };
+   · ──────────────────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export const { foo: { bar } } = { foo: { bar: 'baz' } };
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export { a, b } from 'foo.js'
+   · ─────────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  ⚠ eslint-plugin-import(no-named-export): Named exports are not allowed.
+   ╭─[no_named_export.tsx:1:1]
+ 1 │ export type UserId = number;
+   · ────────────────────────────
+   ╰────
+  help: Replace named exports with a single export default to ensure a consistent module entry point.
+
+  × Unexpected token
+   ╭─[no_named_export.tsx:1:8]
+ 1 │ export foo from 'foo.js'
+   ·        ───
+   ╰────
+
+  × Unexpected token
+   ╭─[no_named_export.tsx:1:8]
+ 1 │ export Memory, { MemoryValue } from './Memory'
+   ·        ──────
+   ╰────

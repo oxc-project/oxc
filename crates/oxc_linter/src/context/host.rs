@@ -11,8 +11,8 @@ use oxc_semantic::Semantic;
 use oxc_span::{SourceType, Span};
 
 use crate::{
-    AllowWarnDeny, FrameworkFlags, LintPlugins,
-    config::LintConfig,
+    AllowWarnDeny, FrameworkFlags,
+    config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
@@ -174,7 +174,7 @@ impl<'a> ContextHost<'a> {
     }
 
     /// The current [`ContextSubHost`]
-    fn current_sub_host(&self) -> &ContextSubHost<'a> {
+    pub fn current_sub_host(&self) -> &ContextSubHost<'a> {
         &self.sub_hosts[self.current_sub_host_index.get()]
     }
 
@@ -223,8 +223,8 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub fn plugins(&self) -> &LintPlugins {
-        &self.config.plugins
+    pub fn plugins(&self) -> LintPlugins {
+        self.config.plugins
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used

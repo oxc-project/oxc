@@ -26,9 +26,21 @@ import { x } from 's'; export { x }
 import { x } from "s";
 export { x };
 
-function _ (exports) { Object.defineProperty(exports, '__esModule', { value: true }) }
-function _(exports) {
-	Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, '__esModule', { value: true })
+Object.defineProperty(exports, "__esModule", { value: true });
+
+var exports = {}; Object.defineProperty(exports, '__esModule', { value: true })
+var exports = {};
+Object.defineProperty(exports, "__esModule", { value: true });
+
+function _(exports) { Object.defineProperty(exports, '__esModule', { value: true }) }
+function _(e) {
+	Object.defineProperty(e, "__esModule", { value: true });
+}
+
+function _() { console.log(arguments) }
+function _() {
+	console.log(arguments);
 }
 
 function foo(foo_a, foo_b, foo_c) {}; function bar(bar_a, bar_b, bar_c) {}

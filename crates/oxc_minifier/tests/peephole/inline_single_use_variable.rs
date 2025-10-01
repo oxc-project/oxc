@@ -224,6 +224,68 @@ fn test_inline_single_use_variable() {
 }
 
 #[test]
+fn test_inline_past_readonly_variable() {
+    test(
+        "function wrapper() { var x = foo, y = bar; return [x, y] }",
+        "function wrapper() { return [foo, bar] }",
+    );
+    test(
+        "function wrapper() { function x() {} var y = bar; return [x, y] }",
+        "function wrapper() { function x() {} return [x, bar] }",
+    );
+    test_same(
+        "function wrapper(bar) { Object.defineProperty(globalThis, 'foo', { value: () => { y = 1 } }); var x = foo, y = bar; return [x, y] }",
+    );
+    test_same(
+        "function wrapper(foo) { Object.defineProperty(globalThis, 'bar', { value: () => { x = 1 } }); var x = foo, y = bar; return [x, y] }",
+    );
+    test(
+        "function wrapper(bar) { var foo = { get bar() { y = 1 } }, x = foo.bar, y = bar; return [x, y] }",
+        "function wrapper(bar) { var x = { get bar() { y = 1 } }.bar, y = bar; return [x, y] }",
+    );
+    test(
+        "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
+        "function wrapper(foo) { var bar = { get baz() { x = 1 } }, x = foo, y = bar.baz; return [x, y] }",
+    );
+}
+
+#[test]
+fn test_within_same_variable_declarations() {
+    test_script(
+        "var a = foo, b = a; for (; bar;) console.log(b)",
+        "for (var a = foo, b = a; bar;) console.log(b)",
+    );
+    test(
+        "function wrapper() { var a = foo, b = a; for (; bar;) return b }",
+        "function wrapper() { for (var b = foo; bar;) return b }",
+    );
+    test(
+        "function wrapper() { let a = foo, b = a; for (; bar;) return b }",
+        "function wrapper() { let b = foo; for (; bar;) return b }",
+    );
+    test_same("function wrapper() { using a = foo, b = a; for (; bar;) return b }");
+    test(
+        "function wrapper() { var a = foo, b = a, c = bar, d = c; for (; baz;) return [b, d] }",
+        "function wrapper() { for (var b = foo, d = bar; baz;) return [b, d] }",
+    );
+
+    test_script_same("for (var a = foo, b = a; bar;) console.log(b)");
+    test(
+        "function wrapper() { for (var a = foo, b = a; bar;) return b }",
+        "function wrapper() { for (var b = foo; bar;) return b }",
+    );
+    test(
+        "function wrapper() { for (let a = foo, b = a; bar;) return b }",
+        "function wrapper() { for (let b = foo; bar;) return b }",
+    );
+    test_same("function wrapper() { for (using a = foo, b = a; bar;) return b }");
+    test(
+        "function wrapper() { for (var a = foo, b = a, c = bar, d = c; baz;) return [b, d] }",
+        "function wrapper() { for (var b = foo, d = bar; baz;) return [b, d] }",
+    );
+}
+
+#[test]
 fn keep_exposed_variables() {
     test_same("var x = foo; x(); export { x }");
     test("var x = foo; x()", "foo()");

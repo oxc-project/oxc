@@ -15,6 +15,7 @@ pub struct FatalError {
 }
 
 impl<'a> ParserImpl<'a> {
+    #[cold]
     pub(crate) fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
@@ -34,6 +35,7 @@ impl<'a> ParserImpl<'a> {
     ///
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
     #[must_use]
+    #[cold]
     pub(crate) fn unexpected<T: Dummy<'a>>(&mut self) -> T {
         self.set_unexpected();
         Dummy::dummy(self.ast.allocator)

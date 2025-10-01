@@ -11,7 +11,7 @@ export type { Visitor };
 
 // Hook function that runs before traversal.
 // If returns `false`, traversal is skipped for the rule.
-export type BeforeHook = () => boolean | undefined;
+export type BeforeHook = () => boolean | void;
 
 // Hook function that runs after traversal.
 export type AfterHook = () => void;
@@ -26,8 +26,10 @@ export interface VisitorWithHooks extends Visitor {
 export type VisitFn = (node: Node) => void;
 
 // AST node type.
-// We'll make this type a union later on.
-export type Node = { type: string; start: number; end: number; [key: string]: unknown };
+export interface Node {
+  start: number;
+  end: number;
+}
 
 // Element of compiled visitor array.
 // * `VisitFn | null` for leaf nodes.
@@ -38,4 +40,11 @@ export type CompiledVisitorEntry = VisitFn | EnterExit | null;
 export interface EnterExit {
   enter: VisitFn | null;
   exit: VisitFn | null;
+}
+
+// Rule metadata.
+// TODO: Fill in all properties.
+export interface RuleMeta {
+  fixable?: 'code' | 'whitespace' | null | undefined;
+  [key: string]: unknown;
 }

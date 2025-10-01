@@ -16,7 +16,8 @@ import {
   activateExtension,
   fixturesWorkspaceUri,
   loadFixture,
-  sleep
+  sleep,
+  testSingleFolderMode
 } from './test-helpers';
 import assert = require('assert');
 
@@ -35,11 +36,11 @@ teardown(async () => {
 });
 
 suite('code actions', () => {
-  test('listed code actions', async () => {
+  // flaky test for multi workspace mode
+  testSingleFolderMode('listed code actions', async () => {
     await loadFixture('debugger');
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'debugger.js');
     // await window.showTextDocument(fileUri); -- should also work without opening the file
-    await sleep(500); // ¯\_(ツ)_/¯ -- test it again when adding/removing tests
 
     const codeActions: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
       'vscode.executeCodeActionProvider',
@@ -93,6 +94,35 @@ suite('code actions', () => {
     await sleep(1000);
 
     await loadFixture('fixall_with_code_actions_on_save');
+    await workspace.openTextDocument(file);
+    await workspace.applyEdit(edit);
+    await sleep(1000);
+    await workspace.saveAll();
+    await sleep(500);
+
+    const content = await workspace.fs.readFile(file);
+    const expected = await workspace.fs.readFile(expectedFile);
+
+    strictEqual(content.toString(), expected.toString());
+  });
+
+  // https://discord.com/channels/1079625926024900739/1080723403595591700/1422191300395929620
+   test('code action `source.fixAll.oxc` ignores "ignore this rule for this line/file"', async () => {
+    let file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file2.js');
+    let expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
+
+    await workspace.getConfiguration('editor').update('codeActionsOnSave', {
+      'source.fixAll.oxc': 'always',
+    });
+    await workspace.saveAll();
+
+    const range = new Range(new Position(0, 0), new Position(0, 0));
+    const edit = new WorkspaceEdit();
+    edit.replace(file, range, ' ');
+
+    await sleep(1000);
+
+    await loadFixture('fixall_code_action_ignore_only_disable_fix');
     await workspace.openTextDocument(file);
     await workspace.applyEdit(edit);
     await sleep(1000);

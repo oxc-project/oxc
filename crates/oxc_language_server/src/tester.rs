@@ -91,7 +91,7 @@ range: {range:?}
 severity: {severity:?}
 source: {source:?}
 tags: {tags:?}
-fixed: {fixed:?}
+fixed: {fixed:#?}
 "
     )
 }

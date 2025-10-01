@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.93.0] - 2025-09-28
+
+### 🚜 Refactor
+
+- c0c0c17 napi/parser: Remove unnecessary `#[estree(field_order)]` attr (#14144) (overlookmotel)
+
+### 🧪 Testing
+
+- 8c09592 napi/parser: Align fixture version with other tasks (#14146) (overlookmotel)
+
+
+## [0.93.0] - 2025-09-28
+
+### 🚜 Refactor
+
+- c0c0c17 napi/parser: Remove unnecessary `#[estree(field_order)]` attr (#14144) (overlookmotel)
+
+### 🧪 Testing
+
+- 8c09592 napi/parser: Align fixture version with other tasks (#14146) (overlookmotel)
+
+
+## [0.92.0] - 2025-09-24
+
+### 💥 BREAKING CHANGES
+
+- b1da5d5 napi/parser: [**BREAKING**] Change `oxc-parser` to ESM (#14042) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 1f4be38 napi/parser: Generate `.d.mts` extension for types (#14038) (Daniel Roe)
+
+### 🚜 Refactor
+
+- cc0019f napi: Move scripts into `scripts` directory (#14048) (overlookmotel)
+- bb040bc parser, linter: Replace `.mjs` files with `.js` (#14045) (overlookmotel)
+- e0be08b napi/parser: Freeze `visitorKeys` export (#14012) (overlookmotel)
+
+### 📚 Documentation
+
+- 909a086 parser: Simplify example (#14044) (overlookmotel)
+
+### 🧪 Testing
+
+- 55cd2f3 parser: Remove unused import (#14043) (overlookmotel)
+
+
+## [0.92.0] - 2025-09-24
+
+### 💥 BREAKING CHANGES
+
+- b1da5d5 napi/parser: [**BREAKING**] Change `oxc-parser` to ESM (#14042) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 1f4be38 napi/parser: Generate `.d.mts` extension for types (#14038) (Daniel Roe)
+
+### 🚜 Refactor
+
+- cc0019f napi: Move scripts into `scripts` directory (#14048) (overlookmotel)
+- bb040bc parser, linter: Replace `.mjs` files with `.js` (#14045) (overlookmotel)
+- e0be08b napi/parser: Freeze `visitorKeys` export (#14012) (overlookmotel)
+
+### 📚 Documentation
+
+- 909a086 parser: Simplify example (#14044) (overlookmotel)
+
+### 🧪 Testing
+
+- 55cd2f3 parser: Remove unused import (#14043) (overlookmotel)
+
+
 ## [0.91.0] - 2025-09-22
 
 ### 🐛 Bug Fixes

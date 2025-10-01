@@ -332,7 +332,7 @@ fn is_nodejs_terminal_statement(node: &AstNode) -> bool {
 fn has_no_return_code_path(node: &AstNode, ctx: &LintContext) -> bool {
     let cfg = ctx.cfg();
     let graph = cfg.graph();
-    let output = set_depth_first_search(graph, Some(node.cfg_id()), |event| {
+    let output = set_depth_first_search(graph, Some(ctx.nodes().cfg_id(node.id())), |event| {
         match event {
             // We only need to check paths that are normal or jump.
             DfsEvent::TreeEdge(a, b) => {

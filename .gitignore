@@ -33,6 +33,7 @@ tasks/coverage/test262/
 tasks/coverage/typescript/
 tasks/coverage/acorn-test262/
 tasks/coverage/acorn-test262-diff/
+tasks/coverage/node-compat-table/
 tasks/prettier_conformance/prettier/
 
 # Ignore accidental files from the root

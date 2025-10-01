@@ -1,6 +1,6 @@
 {
   "name": "oxc-minify",
-  "version": "0.91.0",
+  "version": "0.93.0",
   "type": "module",
   "main": "index.js",
   "browser": "browser.js",
@@ -8,7 +8,8 @@
     "build-dev": "napi build --esm --platform",
     "build-test": "pnpm run build-dev",
     "build": "pnpm run build-dev --features allocator --release",
-    "postbuild-dev": "node patch.mjs",
+    "postbuild": "publint",
+    "postbuild-dev": "node scripts/patch.js",
     "test": "tsc && vitest run --dir ./test"
   },
   "engines": {
@@ -35,15 +36,15 @@
     "index.d.ts",
     "index.js",
     "browser.js",
-    "webcontainer-fallback.js"
+    "webcontainer-fallback.cjs"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "devDependencies": {
-    "vitest": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "napi": {
     "binaryName": "minify",

@@ -65,19 +65,19 @@ impl Generator for RawTransferGenerator {
 
         vec![
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js.js"),
                 code: js,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.js"),
                 code: ts,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.mjs"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
                 code: constants_js.clone(),
             },
             Output::Javascript {
-                path: format!("{OXLINT_APP_PATH}/src-js/generated/constants.mjs"),
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/constants.js"),
                 code: constants_js,
             },
             Output::Rust {

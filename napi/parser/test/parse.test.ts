@@ -1,13 +1,13 @@
 import { Worker } from 'node:worker_threads';
 import { describe, expect, it, test } from 'vitest';
 
-import { parseAsync, parseSync, visitorKeys } from '../src-js/index.mjs';
+import { parseAsync, parseSync } from '../src-js/index.js';
 import type {
   ExpressionStatement,
   ParserOptions,
   TSTypeAliasDeclaration,
   VariableDeclaration,
-} from '../src-js/index.mjs';
+} from '../src-js/index.js';
 
 describe('parse', () => {
   const code = '/* comment */ foo';
@@ -877,7 +877,7 @@ describe('error', () => {
 describe('worker', () => {
   it('should run', async () => {
     const code = await new Promise((resolve, reject) => {
-      const worker = new Worker('./test/worker.mjs');
+      const worker = new Worker('./test/worker.js');
       worker.on('error', (err) => {
         reject(err);
       });

@@ -608,7 +608,7 @@ pub fn is_callee<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
 
 fn has_jsdoc_this_tag<'a>(semantic: &Semantic<'a>, node: &AstNode<'a>) -> bool {
     let Some(jsdocs) = get_function_nearest_jsdoc_node(node, semantic)
-        .and_then(|node| semantic.jsdoc().get_all_by_node(node))
+        .and_then(|node| semantic.jsdoc().get_all_by_node(semantic.nodes(), node))
     else {
         return false;
     };

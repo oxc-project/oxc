@@ -1,0 +1,565 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - 1];
+   · ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array?.[array.length - 1];
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length -1];
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - /* comment */ 1];
+   · ─────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - 1.];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - 0b1];
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - 9];
+   · ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[0][array[0].length - 1];
+   · ─────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[(( array.length )) - 1];
+   · ─────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - (( 1 ))];
+   · ─────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[(( array.length - 1 ))];
+   · ─────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( array ))[array.length - 1];
+   · ─────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:4]
+ 1 │ (( array[array.length - 1] ));
+   ·    ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - 1].pop().shift()[0];
+   · ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:5]
+ 1 │ a = array[array.length - 1]
+   ·     ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:11]
+ 1 │ const a = array[array.length - 1]
+   ·           ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:12]
+ 1 │ const {a = array[array.length - 1]} = {}
+   ·            ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:8]
+ 1 │ typeof array[array.length - 1]
+   ·        ───────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:24]
+ 1 │ function foo() {return arguments[arguments.length - 1]}
+   ·                        ───────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:31]
+ 1 │ class Foo {bar; baz() {return this.bar[this.bar.length - 1]}}
+   ·                               ─────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:32]
+ 1 │ class Foo {#bar; baz() {return this.#bar[this.#bar.length - 1]}}
+   ·                                ───────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(string.length - 1);
+   · ────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string?.charAt(string.length - 1);
+   · ─────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(string.length - 0o11);
+   · ───────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ some.string.charAt(some.string.length - 1);
+   · ──────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt((( string.length )) - 0xFF);
+   · ─────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt(string.length - (( 1 )));
+   · ──────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.charAt((( string.length - 1 )));
+   · ──────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( string )).charAt(string.length - 1);
+   · ──────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( string.charAt ))(string.length - 1);
+   · ──────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
+   ╭─[prefer_at.tsx:1:4]
+ 1 │ (( string.charAt(string.length - 1) ));
+   ·    ────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[0]
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[0]
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array?.slice(-1)[0]
+   · ───────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array?.slice(-1)[0]
+   · ───────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1).pop()
+   · ─────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1.0).shift()
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[(( 0 ))];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[(( 0 ))];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-(( 1 )))[0];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-(( 1 )))[0];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice((( -1 )))[0];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice((( -1 )))[0];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( array.slice(-1) ))[0];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( array )).slice(-1)[0];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( array )).slice(-1)[0];
+   · ────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:4]
+ 1 │ (( array.slice(-1)[0] ));
+   ·    ──────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:4]
+ 1 │ (( array.slice(-1)[0] ));
+   ·    ──────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( array.slice(-1) )).pop();
+   · ───────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( array.slice(-1).pop ))();
+   · ───────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:4]
+ 1 │ (( array.slice(-1).pop() ));
+   ·    ─────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[0].pop().shift().slice(-1)
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-1)[0].pop().shift().slice(-1)
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, -8)[0]
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, -8)[0]
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, -0o10)[0]
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, -0o10)[0]
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, -8).pop()
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, -8).shift()
+   · ───────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice((( -9 )), (( -8 )), ).shift()
+   · ─────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( array.slice(-9, -8).shift ))()
+   · ─────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, unknown)[0]
+   · ───────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, unknown)[0]
+   · ───────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-0o11, -7)[0]
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-0o11, -7)[0]
+   · ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, unknown).shift()
+   · ────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:19]
+ 1 │ const KNOWN = -8; array.slice(-9, KNOWN).shift()
+   ·                   ──────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
+   ╭─[prefer_at.tsx:1:4]
+ 1 │ (( (( array.slice( ((-9)), ((unknown)), ).shift ))() ));
+   ·    ─────────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, (a, really, _really, complicated, second) => argument)[0]
+   · ─────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array.slice(-9, (a, really, _really, complicated, second) => argument)[0]
+   · ─────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ _.last(array)
+   · ─────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `lodash.last()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ lodash.last(array)
+   · ──────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `underscore.last()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ underscore.last(array)
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ _.last(new Array)
+   · ─────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:2:4]
+ 1 │ const foo = []
+ 2 │             _.last([bar])
+   ·             ─────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:2:4]
+ 1 │ const foo = []
+ 2 │             _.last( new Array )
+   ·             ───────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:2:4]
+ 1 │ const foo = []
+ 2 │             _.last( (( new Array )) )
+   ·             ─────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:1:10]
+ 1 │ if (foo) _.last([bar])
+   ·          ─────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ _.last(getLast(utils.lastOne(array)))
+   · ─────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
+   ╭─[prefer_at.tsx:1:24]
+ 1 │ function foo() {return _.last(arguments)}
+   ·                        ─────────────────
+   ╰────
+  help: Use `.at()` for index access

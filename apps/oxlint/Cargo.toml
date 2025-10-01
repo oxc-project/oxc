@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.16.0"
+version = "1.19.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -34,7 +34,7 @@ napi = { workspace = true, features = ["async"], optional = true }
 napi-derive = { workspace = true, optional = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 tempfile = { workspace = true }

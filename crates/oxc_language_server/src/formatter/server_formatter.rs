@@ -21,7 +21,13 @@ impl ServerFormatter {
         let source_text = if let Some(content) = content {
             content
         } else {
-            std::fs::read_to_string(&path).ok()?
+            #[cfg(not(all(test, windows)))]
+            let source_text = std::fs::read_to_string(&path).ok()?;
+            #[cfg(all(test, windows))]
+            #[expect(clippy::disallowed_methods)] // no `cow_replace` in tests are fine
+            // On Windows, convert CRLF to LF for consistent formatting results
+            let source_text = std::fs::read_to_string(&path).ok()?.replace("\r\n", "\n");
+            source_text
         };
 
         let allocator = Allocator::new();
@@ -191,7 +197,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(windows))] // FIXME: snapshot differs on Windows. Possible newline issue?
     fn test_formatter() {
         Tester::new("fixtures/formatter/basic", Some(FormatOptions { experimental: true }))
             .format_and_snapshot_single_file("basic.ts");

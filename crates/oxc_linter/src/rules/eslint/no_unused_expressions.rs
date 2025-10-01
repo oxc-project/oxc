@@ -5,24 +5,30 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unused_expressions_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow unused expressions")
-        .with_help("Consider removing this expression")
+    OxcDiagnostic::warn("Expected expression to be used")
+        .with_help("Consider using this expression or removing it")
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedExpressions(Box<NoUnusedExpressionsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUnusedExpressionsConfig {
+    /// When set to `true`, allows short circuit evaluations in expressions.
     allow_short_circuit: bool,
+    /// When set to `true`, allows ternary operators in expressions.
     allow_ternary: bool,
+    /// When set to `true`, allows tagged template literals in expressions.
     allow_tagged_templates: bool,
+    /// When set to `true`, enforces the rule for unused JSX expressions also.
     enforce_for_jsx: bool,
 }
 
@@ -50,7 +56,8 @@ declare_oxc_lint!(
     /// ```
     NoUnusedExpressions,
     eslint,
-    restriction
+    correctness,
+    config = NoUnusedExpressionsConfig,
 );
 
 impl Rule for NoUnusedExpressions {
@@ -147,6 +154,7 @@ impl NoUnusedExpressions {
             | Expression::CallExpression(_)
             | Expression::V8IntrinsicExpression(_)
             | Expression::UpdateExpression(_)
+            | Expression::TSSatisfiesExpression(_)
             | Expression::YieldExpression(_) => false,
             Expression::ConditionalExpression(conditional_expression) => {
                 if self.0.allow_ternary {
@@ -171,9 +179,6 @@ impl NoUnusedExpressions {
             Expression::JSXElement(_) | Expression::JSXFragment(_) => self.0.enforce_for_jsx,
             Expression::TSAsExpression(ts_as_expression) => {
                 self.is_disallowed(&ts_as_expression.expression)
-            }
-            Expression::TSSatisfiesExpression(ts_satisfies_expression) => {
-                self.is_disallowed(&ts_satisfies_expression.expression)
             }
             Expression::TSTypeAssertion(ts_type_assertion) => {
                 self.is_disallowed(&ts_type_assertion.expression)
@@ -335,6 +340,24 @@ fn test() {
             Some(serde_json::json!([{ "allowTernary": true }])),
         ),
         ("const _func = (value: number) => value + 1;", None),
+        (
+            "
+			type FooBarBaz = 'foo' | 'bar' | 'baz';
+			export function satisfiesTest(c: FooBarBaz): string {
+			    switch(c) {
+			        case 'foo':
+			            return 'foo';
+			        case 'bar':
+			            return 'bar';
+			        default:
+			            c satisfies never;
+			            return '';
+			    }
+			}
+			    ",
+            None,
+        ),
+        ("value satisfies number;", None),
     ];
 
     let fail = vec![

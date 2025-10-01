@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.19.0] - 2025-09-29
+
+### 🐛 Bug Fixes
+
+- f8abab2 editor: Stricter path validation for `oxc.path.server` (#14202) (Sysix)
+- d36d227 language_server: Don't lint file on code action when it is already ignored (#13976) (Sysix)
+
+### 🧪 Testing
+
+- d985aeb editor: Remove cross-module tests, covered by language server (#14156) (Sysix)
+
+
+
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- 55c2e11 editor: Add `oxc.fmt.experimental` flag (#13923) (Sysix)
+
+### 🧪 Testing
+
+- ad14a41 editor: Fix test setup (#13929) (Sysix)
+
+
 ## [1.16.0] - 2025-09-16
 
 ### 🐛 Bug Fixes

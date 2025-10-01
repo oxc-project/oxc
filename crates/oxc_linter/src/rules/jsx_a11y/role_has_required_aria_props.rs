@@ -135,7 +135,7 @@ fn test() {
         ("<div role='slider' aria-valuemax aria-valuemin />", None, None),
         ("<div role='checkbox' />", None, None),
         ("<div role='checkbox' checked />", None, None),
-        ("<div role='checkbox' aria-chcked />", None, None),
+        ("<div role='checkbox' aria-chcked />", None, None), // spellchecker:disable-line
         ("<span role='checkbox' aria-labelledby='foo' tabindex='0'></span>", None, None),
         ("<div role='combobox' />", None, None),
         ("<div role='combobox' expanded />", None, None),

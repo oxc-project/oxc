@@ -4512,9 +4512,19 @@ impl<'a> Format<'a> for AstNode<'a, TSInferType<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSTypeQuery<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result =
             if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -4600,9 +4610,19 @@ impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSFunctionType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result =
             if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }
@@ -4611,9 +4631,19 @@ impl<'a> Format<'a> for AstNode<'a, TSFunctionType<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSConstructorType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f)? {
+            return Ok(());
+        }
         self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result =
             if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         self.format_trailing_comments(f)?;
         result
     }

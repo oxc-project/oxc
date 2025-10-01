@@ -4,6 +4,100 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.19.0] - 2025-09-29
+
+### 🚀 Features
+
+- eb6345f linter/unicorn: Implement no-array-callback-reference (#14230) (camc314)
+- c64fa61 linter: Add `import/no-named-export` rule (#14229) (yefan)
+- d30159b linter: Fix for unsorted keys (#14225) (Hamir Mahal)
+- c0e461f linter: Add `unicorn/no-array-sort` rule (#14117) (Cason Kervis)
+- 00954de linter/plugins: Remove `--js-plugins` CLI option (#14134) (overlookmotel)
+- b4d716f linter/plugins: Move custom JS plugin config to `jsPlugins` (#14133) (overlookmotel)
+- 60f0b3f linter: Add fix for `preserve-caught-error` (#14104) (Cam McHenry)
+- 2d74c17 linter/no-multiple-resolved: Implement promise rule no-multiple-resolved (#13420) (Li Wei)
+- 5e05d1b semantic: Put jsdoc behind linter feature, remove runtime flag (#14140) (Boshen)
+- 71af1aa semantic: Add "linter" feature (#14139) (Boshen)
+- 1a6d7ae linter: Add `vue/max-props` rule (#14039) (yefan)
+- 9c3afea linter/plugins: Support fixes (#14094) (overlookmotel)
+- 1472147 linter: Move `no-unused-expressions` to correctness (#14099) (camchenry)
+- 8b7c784 linter: Add react/jsx-pascal-case rule (#12165) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- e045391 linter/plugins: Error on JS plugin with reserved name (#14226) (overlookmotel)
+- 6005015 linter: Correctly handle CRLF when inserting disable comments in framework files (#14228) (shulaoda)
+- e37c435 language_server: Correct position for "ignore this rule for this file" in vue/astro/svelte files (#14187) (Sysix)
+- 03d1684 linter/plugins: Output warning on first JS plugin load (#14165) (overlookmotel)
+- fc7026d linter: Add missing `NODE_TYPES`, `cfg_id` method for no-multiple-resolved (#14147) (camc314)
+- 180c790 linter: Fix false positive in `no-restricted-globals` (#14135) (yefan)
+- 9f3e2bc linter/plugins: Output errors thrown in JS plugins (#14096) (overlookmotel)
+- 357a2d3 linter: Add support for `tsgolint.exe` on Windows (#14101) (camchenry)
+- 2604b28 linter: Fix lint errors building `oxlint` (#14095) (overlookmotel)
+
+### 🚜 Refactor
+
+- 4c3f1ac linter: Move `BUILT_IN_ERRORS` to utils file (#14221) (camc314)
+- 7a0eb57 language_server: Refactor ignore code action logic as a linter fix (#14183) (Sysix)
+- 497236e semantic: Move AstNode::cfg_id to struct of arrays in AstNodes (#14137) (Boshen)
+- 5ba765c semantic: Move AstNode::flags to struct of arrays in AstNodes (#14136) (Boshen)
+- ffc810d linter: `preserve-caught-errors`: rename config and add docs (#14103) (camchenry)
+- f91db73 linter: Add `CompositeFix::merge_fixes_fallible` method (#14093) (overlookmotel)
+- e55ffe0 curly: Enhance curly brace rule configuration and handling (#13498) (Antoine Zanardi)
+- 2fb69fd eslint/eqeqeq: Clean up implementation and improve documentation (#13527) (Antoine Zanardi)
+
+### ⚡ Performance
+
+- b6d2546 linter: Reduce string cloning in tsgo fixes (#14092) (overlookmotel)
+- c94c5dc linter: Remove allocation in `CompositeFix::merge_fixes` (#14090) (overlookmotel)
+
+
+## [1.18.0] - 2025-09-24
+
+### 🐛 Bug Fixes
+
+- 444fcf0 linter: Fix false positive in `vue/no-required-prop-with-default` (#14066) (yefan)
+- 2186b28 linter: Fix Arc<ModuleRecord> memory leak and lifecycle issues (#14049) (Boshen)
+
+### ⚡ Performance
+
+- c2f7459 language_server: Avoid cloning on message conversion (#14058) (Sysix)
+
+
+## [1.17.0] - 2025-09-23
+
+### 🚀 Features
+
+- 15eb326 linter: Add `vue/no-required-prop-with-default` rule (#13613) (yefan)
+- 5d3ba00 linter: Add `vue/require-typed-ref` rule (#13857) (yefan)
+- 8221a01 linter: Add `eslint/no-misleading-character-class` (#13365) (Sysix)
+
+### 🐛 Bug Fixes
+
+- b8790c2 language_server: Output correct position for parser & semantic errors (#14010) (Sysix)
+- 4d3c6e1 linter: Support let-chains in codegen node type detection (#14006) (camc314)
+- 27022ab linter/switch-case-braces: Add support for string including colon on case expression (#13687) (Lukinoh)
+- fa866b3 linter: Sort optimized/unoptimized diagnostics before comparison (#13850) (camc314)
+- fac7624 linter/plugins: Improve error for no JS plugins (#13858) (overlookmotel)
+
+### 🚜 Refactor
+
+- b353750 linter/plugins: Remove unnecessary `Serialize` derives (#14031) (overlookmotel)
+- 36ac0fb language_server: Don't create `mpsc` channel (#14011) (Sysix)
+- 2e9ae3f linter: Make disable directives own the rule name (#13987) (camc314)
+- 42e2c1d linter: Remove `Rc` from `DisableDirectives` (#13924) (camc314)
+- e90bfe3 linter: Remove double reference in unicorn/error-message (#13916) (camc314)
+- 83791a0 linter: Remove double reference in vue/jsx-no-undef (#13915) (camc314)
+- ebd22de linter: Remove double reference in vue/require-typed-ref (#13914) (camc314)
+- 7e0d736 linter/plugins: Rename `--experimental-js-plugins` to `--js-plugins` (#13860) (overlookmotel)
+
+### ⚡ Performance
+
+- 4d04c6e linter/plugins: Flatten `LintFileResult` fields (#14033) (overlookmotel)
+- 06363e0 linter: Add node type codegen support for `match node.kind()` (#13736) (camchenry)
+- b53292d linter: Use unstable sort where possible (#13818) (sapphi-red)
+
+
 ## [1.16.0] - 2025-09-16
 
 ### 🚀 Features

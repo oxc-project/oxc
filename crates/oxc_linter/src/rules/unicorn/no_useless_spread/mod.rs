@@ -607,6 +607,7 @@ fn test() {
         "[ ...new Uint8Array([ 1, 2, 3 ]) ].map(byte => byte.toString())",
     ];
 
+    #[expect(clippy::literal_string_with_formatting_args)]
     let fail = vec![
         r"const array = [...[a]]",
         r"const object = {...{a}}",

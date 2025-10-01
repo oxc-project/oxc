@@ -572,6 +572,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
     /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
+    #[cold]
     fn overlong_error(&self) -> Option<OxcDiagnostic> {
         if self.source_text.len() > MAX_LEN {
             return Some(diagnostics::overlong_source());

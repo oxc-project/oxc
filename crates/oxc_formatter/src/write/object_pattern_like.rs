@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     formatter::{
@@ -8,7 +9,7 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
-    write::parameter_list::should_hug_function_parameters,
+    write::parameters::{get_this_param, should_hug_function_parameters},
 };
 
 use super::{
@@ -21,14 +22,29 @@ pub enum ObjectPatternLike<'a, 'b> {
     ObjectAssignmentTarget(&'b AstNode<'a, ObjectAssignmentTarget<'a>>),
 }
 
-impl<'a> ObjectPatternLike<'a, '_> {
+impl GetSpan for ObjectPatternLike<'_, '_> {
     fn span(&self) -> Span {
         match self {
-            Self::ObjectPattern(o) => o.span,
-            Self::ObjectAssignmentTarget(o) => o.span,
+            Self::ObjectPattern(node) => {
+                // `{a, b}: {a: number, b: string}`
+                //  ^^^^^^^^^^^^^^ ObjectPattern's span covers the type annotation if exists,
+                //  ^^^^^^ but we want the span to cover only the pattern itself, otherwise,
+                //         the comments of type annotation will be treated as dangling comments
+                //         of ObjectPattern.
+                if let AstNodes::FormalParameter(param) = node.parent
+                    && let Some(ty) = &param.pattern.type_annotation
+                {
+                    Span::new(node.span.start, ty.span.start)
+                } else {
+                    node.span
+                }
+            }
+            Self::ObjectAssignmentTarget(node) => node.span,
         }
     }
+}
 
+impl<'a> ObjectPatternLike<'a, '_> {
     fn is_empty(&self) -> bool {
         match self {
             Self::ObjectPattern(o) => o.is_empty(),
@@ -38,12 +54,8 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::FormalParameter(_)) || self.is_hug_parameter(f)
-            }
-            Self::ObjectAssignmentTarget(node) => {
-                matches!(node.parent, AstNodes::FormalParameter(_))
-            }
+            Self::ObjectPattern(node) => self.is_hug_parameter(f),
+            Self::ObjectAssignmentTarget(node) => false,
         }
     }
 
@@ -53,9 +65,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
             Self::ObjectPattern(node) => {
                 matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
             }
-            Self::ObjectAssignmentTarget(node) => {
-                matches!(node.parent, AstNodes::CatchParameter(_) | AstNodes::FormalParameter(_))
-            }
+            Self::ObjectAssignmentTarget(node) => false,
         };
 
         if parent_is_catch_or_parameter {
@@ -104,16 +114,14 @@ impl<'a> ObjectPatternLike<'a, '_> {
     }
 
     fn is_hug_parameter(&self, f: &Formatter<'_, 'a>) -> bool {
-        match self {
-            Self::ObjectAssignmentTarget(_) => false,
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::FormalParameter(param) if {
-                    matches!(param.parent, AstNodes::FormalParameters(params) if {
-                        should_hug_function_parameters(params, false, f)
-                    })
+        matches!(self, Self::ObjectPattern(node) if {
+            matches!(node.parent, AstNodes::FormalParameter(param) if {
+                matches!(param.parent, AstNodes::FormalParameters(params) if {
+                    let this_param = get_this_param(param.parent);
+                    should_hug_function_parameters(params, this_param, false, f)
                 })
-            }
-        }
+            })
+        })
     }
 
     fn layout(&self, f: &Formatter<'_, 'a>) -> ObjectPatternLayout {

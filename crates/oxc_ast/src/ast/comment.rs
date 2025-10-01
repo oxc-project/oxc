@@ -123,7 +123,7 @@ impl<'alloc> CloneIn<'alloc> for CommentNewlines {
 #[ast]
 #[generate_derive(CloneIn, ContentEq, ESTree)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-#[estree(add_fields(value = CommentValue), field_order(kind, value, span), no_ts_def)]
+#[estree(add_fields(value = CommentValue), no_ts_def)]
 pub struct Comment {
     /// The span of the comment text, with leading and trailing delimiters.
     pub span: Span,

@@ -100,11 +100,7 @@ pub struct StringLiteral<'a> {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
-#[estree(
-    rename = "Literal",
-    add_fields(bigint = BigIntLiteralBigint),
-    field_order(value, raw, bigint, span),
-)]
+#[estree(rename = "Literal", add_fields(bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,

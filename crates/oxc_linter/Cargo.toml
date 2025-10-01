@@ -1,6 +1,6 @@
 [package]
 name = "oxc_linter"
-version = "1.16.0"
+version = "1.19.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -40,7 +40,7 @@ oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }
-oxc_semantic = { workspace = true, features = ["cfg"] }
+oxc_semantic = { workspace = true, features = ["cfg", "linter"] }
 oxc_span = { workspace = true, features = ["schemars", "serialize"] }
 oxc_syntax = { workspace = true, features = ["serialize"] }
 
@@ -60,6 +60,7 @@ language-tags = { workspace = true }
 lazy-regex = { workspace = true }
 memchr = { workspace = true }
 nonmax = { workspace = true }
+papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rust-lapper = { workspace = true }
