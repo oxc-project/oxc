@@ -104,6 +104,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         if has_empty_line
             || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
                 && is_function_composition_args(self))
+            || has_long_arrow_chain_arg(self)
         {
             return format_all_args_broken_out(self, true, f);
         }
@@ -382,6 +383,52 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     }
 
     false
+}
+
+/// Tests if a call has any long arrow chain argument (3+ arrows) that should force expansion.
+///
+/// Expands chains with:
+/// - Block bodies: `head => body => { console.log(); }`
+/// - Object/array expression bodies: `a => b => ({ foo: bar })`
+///
+/// Does NOT expand chains with simple expression bodies:
+/// - Literals: `a => b => c => 1`
+/// - Sequence expressions: `a => b => c => (1, 2, 3)`
+/// - Conditionals: `a => b => c => (x ? y : z)`
+fn has_long_arrow_chain_arg(args: &[Argument<'_>]) -> bool {
+    args.iter().any(|arg| {
+        if let Argument::ArrowFunctionExpression(arrow) = arg {
+            let mut current = arrow;
+            let mut chain_length = 1;
+
+            while current.expression
+                && let Some(Statement::ExpressionStatement(expr_stmt)) = current.body.statements.first()
+                && let Expression::ArrowFunctionExpression(next) = &expr_stmt.expression
+            {
+                chain_length += 1;
+                current = next;
+            }
+
+            if chain_length < 3 {
+                return false;
+            }
+
+            // Check if tail should force expansion
+            if !current.expression {
+                // Block body always forces expansion
+                return true;
+            }
+
+            // For expression bodies, only expand for object/array expressions
+            if let Some(Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) = current.get_expression() {
+                return true;
+            }
+
+            false
+        } else {
+            false
+        }
+    })
 }
 
 fn format_all_elements_broken_out<'a, 'b>(
