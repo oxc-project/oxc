@@ -563,6 +563,9 @@ impl Rule for ExhaustiveDeps {
                         } else {
                             Some(dep)
                         }
+                    } else if elem.is_literal() {
+                        ctx.diagnostic(literal_in_dependency_array_diagnostic(elem.span()));
+                        None
                     } else {
                         ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
                             hook_name.as_str(),
