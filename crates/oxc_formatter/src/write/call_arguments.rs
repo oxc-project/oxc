@@ -67,20 +67,28 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             .map(|call| (is_commonjs_or_amd_call(self, call), is_test_call_expression(call)))
             .unwrap_or_default();
 
+        // For test calls: use compact formatting (space-separated, no breaks)
+        // EXCEPT when there are exactly 2 args and the first is NOT a string/template.
+        // This handles patterns like:
+        // - it("name", () => {}) - compact
+        // - it("name", async(() => {})) - compact
+        // - beforeEach(async(() => {})) - compact
+        // - it(() => {}, () => {}) - NOT compact (2 args, first not string)
+        let should_use_compact_test_formatting = is_test_call
+            && (self.len() != 2
+                || matches!(
+                    self.as_ref().first(),
+                    Some(
+                        Argument::StringLiteral(_)
+                            | Argument::TemplateLiteral(_)
+                            | Argument::TaggedTemplateExpression(_)
+                    )
+                ));
+
         if is_commonjs_or_amd_call
             || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
-            || (is_test_call && {
-                self.len() != 2
-                    || matches!(
-                        arguments.first(),
-                        Some(
-                            Argument::StringLiteral(_)
-                                | Argument::TemplateLiteral(_)
-                                | Argument::TaggedTemplateExpression(_)
-                        )
-                    )
-            })
+            || should_use_compact_test_formatting
         {
             return write!(
                 f,
@@ -402,7 +410,8 @@ fn has_long_arrow_chain_arg(args: &[Argument<'_>]) -> bool {
             let mut chain_length = 1;
 
             while current.expression
-                && let Some(Statement::ExpressionStatement(expr_stmt)) = current.body.statements.first()
+                && let Some(Statement::ExpressionStatement(expr_stmt)) =
+                    current.body.statements.first()
                 && let Expression::ArrowFunctionExpression(next) = &expr_stmt.expression
             {
                 chain_length += 1;
@@ -420,7 +429,9 @@ fn has_long_arrow_chain_arg(args: &[Argument<'_>]) -> bool {
             }
 
             // For expression bodies, only expand for object/array expressions
-            if let Some(Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) = current.get_expression() {
+            if let Some(Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) =
+                current.get_expression()
+            {
                 return true;
             }
 

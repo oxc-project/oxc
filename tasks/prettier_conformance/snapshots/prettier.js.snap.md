@@ -1,13 +1,9 @@
-js compatibility: 656/699 (93.85%)
+js compatibility: 663/699 (94.85%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/chain-as-arg.js | 💥💥 | 35.14% |
-| js/arrows/curried.js | 💥💥 | 83.70% |
-| js/arrows/currying-2.js | 💥💥 | 59.08% |
-| js/arrows/currying-4.js | 💥💥 | 94.50% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
@@ -38,10 +34,7 @@ js compatibility: 656/699 (93.85%)
 | js/ternaries/parenthesis.js | 💥💥💥💥✨✨✨✨ | 12.50% |
 | js/ternaries/test.js | 💥💥💥💥✨✨✨✨ | 22.40% |
 | js/ternaries/parenthesis/await-expression.js | 💥✨ | 14.29% |
-| js/test-declarations/angular_async.js | 💥💥 | 86.21% |
-| js/test-declarations/angular_fakeAsync.js | 💥💥 | 75.86% |
-| js/test-declarations/angular_waitForAsync.js | 💥💥 | 75.86% |
-| js/test-declarations/angularjs_inject.js | 💥💥 | 69.84% |
+| js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |

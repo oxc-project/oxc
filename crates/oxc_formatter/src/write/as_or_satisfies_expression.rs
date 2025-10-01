@@ -6,7 +6,6 @@ use crate::{
     format_args,
     formatter::{FormatResult, Formatter, prelude::*},
     generated::ast_nodes::{AstNode, AstNodes},
-    utils::is_expression_used_as_call_argument,
     write,
     write::FormatWrite,
 };
@@ -50,9 +49,16 @@ fn format_as_or_satisfies_expression<'a>(
     });
 
     if is_callee_or_object {
-        // For call arguments, avoid soft_block_indent to prevent breaking
-        // the type assertion away from the expression
-        write!(f, [group(&format_inner)])
+        // When as/satisfies is the object of a member expression or callee of a call,
+        // wrap with indent and soft breaks to allow proper line breaking.
+        // This matches Prettier's formatting: group([indent([softline, ...parts]), softline])
+        write!(
+            f,
+            [group(&format_args!(
+                indent(&format_args!(soft_line_break(), format_inner)),
+                soft_line_break()
+            ))]
+        )
     } else {
         write!(f, [format_inner])
     }
@@ -60,15 +66,13 @@ fn format_as_or_satisfies_expression<'a>(
 
 fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
     match parent {
-        // Callee or used as call/new argument - both need special formatting for proper grouping
-        AstNodes::CallExpression(call) => {
-            call.callee.span() == span || is_expression_used_as_call_argument(span, parent)
-        }
-        AstNodes::NewExpression(new_expr) => {
-            new_expr.callee.span() == span || is_expression_used_as_call_argument(span, parent)
-        }
-        // Static member
+        // Only the callee of a call expression needs special formatting
+        AstNodes::CallExpression(call) => call.callee.span() == span,
+        // Only the callee of a new expression needs special formatting
+        AstNodes::NewExpression(new_expr) => new_expr.callee.span() == span,
+        // All static member expressions need special formatting (as expression is always the object)
         AstNodes::StaticMemberExpression(_) => true,
+        // Only when the as expression is the object of a computed member expression
         AstNodes::ComputedMemberExpression(member) => member.object.span() == span,
         _ => false,
     }

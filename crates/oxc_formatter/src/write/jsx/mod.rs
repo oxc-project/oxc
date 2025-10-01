@@ -199,7 +199,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                                 }
                                 // If body is JSX, treat like normal inline (no special handling)
                                 // If body is NOT JSX, we need to add line break
-                                !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_))
+                                !matches!(
+                                    expr,
+                                    Expression::JSXElement(_) | Expression::JSXFragment(_)
+                                )
                             } else {
                                 false
                             }
