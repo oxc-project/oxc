@@ -138,23 +138,20 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
                     let mut current_parent = Some(self.decl.parent);
                     let mut is_test_call = false;
 
-                    // Walk up to 5 levels to find a test call expression
-                    for _ in 0..5 {
-                        if let Some(parent) = current_parent {
-                            if let AstNodes::CallExpression(call) = parent
-                                && is_test_call_expression(call)
-                            {
-                                is_test_call = true;
-                                break;
-                            }
-                            // Check if parent is a dummy node before calling parent()
-                            if matches!(parent, AstNodes::Dummy()) {
-                                break;
-                            }
-                            current_parent = Some(parent.parent());
-                        } else {
+                    while let Some(parent) = current_parent {
+                        // Stop at root (Dummy node provides natural termination)
+                        if matches!(parent, AstNodes::Dummy()) {
                             break;
                         }
+
+                        if let AstNodes::CallExpression(call) = parent
+                            && is_test_call_expression(call)
+                        {
+                            is_test_call = true;
+                            break;
+                        }
+
+                        current_parent = Some(parent.parent());
                     }
 
                     if is_test_call {
