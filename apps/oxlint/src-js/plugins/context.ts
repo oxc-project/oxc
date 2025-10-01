@@ -1,14 +1,12 @@
 import { getFixes } from './fix.js';
 
 import type { Fix, FixFn } from './fix.ts';
+import type { Node } from './types.ts';
 
 // Diagnostic in form passed by user to `Context#report()`
 export interface Diagnostic {
   message: string;
-  node: {
-    start: number;
-    end: number;
-  };
+  node: Node;
   fix?: FixFn;
 }
 

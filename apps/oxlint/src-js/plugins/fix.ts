@@ -1,6 +1,7 @@
 import { assertIs } from './utils.js';
 
 import type { Diagnostic, InternalContext } from './context.ts';
+import type { Node } from './types.ts';
 
 const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
   { getPrototypeOf, hasOwn, prototype: ObjectPrototype } = Object,
@@ -20,10 +21,7 @@ export type Fix = { range: Range; text: string };
 export type Range = [number, number];
 
 // Currently we only support `Node`s, but will add support for `Token`s later
-export interface NodeOrToken {
-  start: number;
-  end: number;
-}
+export type NodeOrToken = Node;
 
 // Fixer, passed as argument to `fix` function passed to `Context#report()`.
 //
