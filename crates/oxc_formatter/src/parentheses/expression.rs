@@ -109,10 +109,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             AstNodes::StaticMemberExpression(it) => it.needs_parentheses(f),
             AstNodes::ComputedMemberExpression(it) => it.needs_parentheses(f),
             AstNodes::PrivateFieldExpression(it) => it.needs_parentheses(f),
-            _ => {
-                // TODO: incomplete
-                false
-            }
+            _ => false,
         }
     }
 }
@@ -517,9 +514,9 @@ impl NeedsParentheses<'_> for AstNode<'_, UnaryExpression<'_>> {
                     && parent_operator == operator
             }
             // A user typing `!foo instanceof Bar` probably intended `!(foo instanceof Bar)`,
-            // so format to `(!foo) instance Bar` to what is really happening
-            // A user typing `!foo in bar` probably intended `!(foo instanceof Bar)`,
-            // so format to `(!foo) in bar` to what is really happening
+            // so format to `(!foo) instanceof Bar` to show what is really happening
+            // A user typing `!foo in bar` probably intended `!(foo in bar)`,
+            // so format to `(!foo) in bar` to show what is really happening
             AstNodes::BinaryExpression(e) if e.operator().is_relational() => true,
             _ => unary_like_expression_needs_parens(UnaryLike::UnaryExpression(self)),
         }
