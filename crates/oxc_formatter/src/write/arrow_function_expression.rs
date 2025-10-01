@@ -286,49 +286,27 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut current = arrow;
         let mut should_break = false;
 
+        // Three-way context handling for chain building:
+        // 1. Assignments: always build chains
+        // 2. Grouped call arguments: always build chains
+        // 3. Unspecified call arguments: build only if complex (3+ arrows, type params, etc.)
+        let should_build_chain = options.assignment_layout.is_some()
+            || options.call_arg_layout.is_some()
+            || (options.call_arg_layout.is_none()
+                && options.assignment_layout.is_none()
+                && Self::should_build_unspecified_chain(arrow.as_ref()));
+
         loop {
             if current.expression()
                 && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
                     current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
                 && let AstNodes::ArrowFunctionExpression(next) =
                     &expr_stmt.expression().as_ast_nodes()
-                && matches!(
-                    options.call_arg_layout,
-                    None | Some(
-                        GroupedCallArgumentLayout::GroupedLastArgument
-                            | GroupedCallArgumentLayout::GroupedFirstArgument
-                    )
-                )
+                && should_build_chain
             {
-                // For grouped first arguments, be less aggressive about breaking chains
-                // to maintain compact formatting
-                let should_break_current = if matches!(
-                    options.call_arg_layout,
-                    Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-                ) {
-                    // For generic arrow functions, use standard breaking logic
-                    if current.type_parameters.is_some() {
-                        Self::should_break_chain(current)
-                    } else {
-                        Self::should_break_chain_conservative(current)
-                    }
-                } else {
-                    Self::should_break_chain(current)
-                };
-
-                let should_break_next = if matches!(
-                    options.call_arg_layout,
-                    Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-                ) {
-                    // For generic arrow functions, use standard breaking logic
-                    if next.type_parameters.is_some() {
-                        Self::should_break_chain(next)
-                    } else {
-                        Self::should_break_chain_conservative(next)
-                    }
-                } else {
-                    Self::should_break_chain(next)
-                };
+                // Build chains based on context
+                let should_break_current = Self::should_break_chain(current);
+                let should_break_next = Self::should_break_chain(next);
 
                 should_break = should_break || should_break_current;
                 should_break = should_break || should_break_next;
@@ -346,9 +324,10 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                 None => ArrowFunctionLayout::Single(current),
                 Some(head) => ArrowFunctionLayout::Chain(ArrowChain {
                     head,
-                    middle,
                     tail: current,
                     expand_signatures: should_break,
+                    is_short_chain: middle.is_empty(), // Only 2 arrows if middle is empty
+                    middle,
                     options,
                 }),
             };
@@ -384,40 +363,32 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         has_type_and_parameters || has_rest_object_or_array_parameter(parameters)
     }
 
-    /// Conservative version of should_break_chain for grouped first arguments.
-    /// Only breaks for truly complex cases that would be unreadable if kept inline.
-    /// Allows simple default parameters to maintain compact formatting.
-    fn should_break_chain_conservative(arrow: &ArrowFunctionExpression<'a>) -> bool {
-        if arrow.type_parameters.is_some() {
-            return true;
+    /// Checks if we should build a chain for an unspecified (non-grouped) call argument.
+    /// Returns true for complex chains that need breaking, false for simple 2-arrow chains.
+    ///
+    /// This is used when `call_arg_layout` is `None` (not grouped) to decide if chains
+    /// should be built based on their complexity.
+    fn should_build_unspecified_chain(arrow: &ArrowFunctionExpression<'a>) -> bool {
+        // Count chain length by traversing expression-bodied arrows
+        let mut current = arrow;
+        let mut chain_length = 1;
+
+        while current.expression
+            && let Some(body_stmt) = current.body.statements.first()
+            && let Statement::ExpressionStatement(expr_stmt) = body_stmt
+            && let Expression::ArrowFunctionExpression(next) = &expr_stmt.expression
+        {
+            chain_length += 1;
+            current = next;
         }
 
-        let parameters = &arrow.params;
-
-        // For grouped first arguments, only break on truly complex patterns
-        // Allow simple default parameters (AssignmentPattern) to keep compact formatting
-        if has_rest_object_or_array_parameter(parameters) {
-            return true;
-        }
-
-        // Check for complex patterns beyond simple default parameters
-        let has_complex_patterns = parameters.items.iter().any(|param| {
-            match &param.pattern.kind {
-                // Simple identifiers and assignment patterns (defaults) are OK
-                BindingPatternKind::BindingIdentifier(_)
-                | BindingPatternKind::AssignmentPattern(_) => false,
-                // Object and array destructuring are complex
-                BindingPatternKind::ObjectPattern(_) | BindingPatternKind::ArrayPattern(_) => true,
-            }
-        });
-
-        if has_complex_patterns {
-            return true;
-        }
-
-        // Only break if there are both parameters and return type
-        let has_parameters = !parameters.items.is_empty();
-        arrow.return_type.is_some() && has_parameters
+        // Build chains for:
+        // - 3+ arrows (long chains need breaking)
+        // - Chains with type parameters (complex)
+        // - Chains with complex parameters
+        chain_length >= 3
+            || arrow.type_parameters.is_some()
+            || !has_only_simple_parameters(&arrow.params, true)
     }
 }
 
@@ -476,6 +447,10 @@ struct ArrowChain<'a, 'b> {
 
     /// Whether the group wrapping the signatures should be expanded or not.
     expand_signatures: bool,
+
+    /// Whether this is a short chain (only 2 arrows: head + tail, no middle).
+    /// Short chains in call arguments are formatted more compactly.
+    is_short_chain: bool,
 }
 
 impl<'a, 'b> ArrowChain<'a, 'b> {
@@ -495,6 +470,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();
 
+
         // Check if this arrow function is a call argument (even if not grouped)
         let is_call_argument = is_grouped_call_arg_layout
             || crate::utils::is_expression_used_as_call_argument(self.head.span, head_parent);
@@ -509,8 +485,16 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         //        () => () =>
         //          a
         //      )();
-        let is_callee =
-            matches!(head_parent, AstNodes::CallExpression(_) | AstNodes::NewExpression(_));
+        //
+        // We need to verify the arrow is actually the CALLEE (the thing being called),
+        // not just an argument to a call. Check if arrow's span is within the callee's span.
+        let is_callee = match head_parent {
+            AstNodes::CallExpression(call) => call.callee.span().contains_inclusive(self.head.span),
+            AstNodes::NewExpression(new_expr) => {
+                new_expr.callee.span().contains_inclusive(self.head.span)
+            }
+            _ => false,
+        };
 
         // With arrays, objects, sequence expressions, and block function bodies,
         // the opening brace gives a convenient boundary to insert a line break,
@@ -528,41 +512,61 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
         // For call arguments with simple literals, keep them inline to match Prettier
-        let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
-            let should_keep_inline = matches!(
-                expression,
-                Expression::ObjectExpression(_)
-                    | Expression::ArrayExpression(_)
-                    | Expression::SequenceExpression(_)
-                    | Expression::JSXElement(_)
-                    | Expression::JSXFragment(_)
-            );
-
-            // Additionally, for call arguments with TypeScript context, keep simple literals inline
-            let is_simple_literal_in_ts_call_arg = is_call_argument
-                && self.arrows().any(|arrow| arrow.type_parameters.is_some())
-                && matches!(
+        let body_on_separate_line = if self.is_short_chain && is_call_argument
+            && !self.arrows().any(|arrow| arrow.type_parameters.is_some())
+            && self.arrows().all(|arrow| has_only_simple_parameters(&arrow.params, true)) {
+            // Short chains (2 arrows) in call arguments with simple parameters:
+            // only break if body naturally breaks
+            // This keeps `(a) => (b) => dispatch(c)` inline
+            // But breaks `<T>() => () => 1` because type parameters add complexity
+            // And breaks `(c=default, d=default) => (e) => 0` because complex params add complexity
+            matches!(
+                tail.get_expression(),
+                Some(
+                    Expression::ObjectExpression(_)
+                        | Expression::ArrayExpression(_)
+                        | Expression::SequenceExpression(_)
+                        | Expression::JSXElement(_)
+                        | Expression::JSXFragment(_)
+                )
+            )
+        } else {
+            // Long chains or assignments: use full breaking logic
+            !tail.get_expression().is_none_or(|expression| {
+                let should_keep_inline = matches!(
                     expression,
-                    Expression::NumericLiteral(_)
-                        | Expression::StringLiteral(_)
-                        | Expression::BooleanLiteral(_)
-                        | Expression::NullLiteral(_)
-                        | Expression::Identifier(_)
+                    Expression::ObjectExpression(_)
+                        | Expression::ArrayExpression(_)
+                        | Expression::SequenceExpression(_)
+                        | Expression::JSXElement(_)
+                        | Expression::JSXFragment(_)
                 );
 
-            should_keep_inline || is_simple_literal_in_ts_call_arg
-        });
+                // Additionally, for call arguments with TypeScript context, keep simple literals inline
+                let is_simple_literal_in_ts_call_arg = is_call_argument
+                    && self.arrows().any(|arrow| arrow.type_parameters.is_some())
+                    && matches!(
+                        expression,
+                        Expression::NumericLiteral(_)
+                            | Expression::StringLiteral(_)
+                            | Expression::BooleanLiteral(_)
+                            | Expression::NullLiteral(_)
+                            | Expression::Identifier(_)
+                    );
+
+                should_keep_inline || is_simple_literal_in_ts_call_arg
+            })
+        };
 
         // If the arrow chain will break onto multiple lines, either because
         // it's a callee or because the body is printed on its own line, then
         // the signatures should be expanded first.
-        // However, for call arguments (grouped or not), keep signatures on one line
-        let break_signatures = !is_call_argument
-            && ((is_callee && body_on_separate_line)
-                || matches!(
-                    self.options.assignment_layout,
-                    Some(AssignmentLikeLayout::ChainTailArrowFunction)
-                ));
+        // For call arguments, break signatures but don't expand them (controlled by expand_signatures)
+        let break_signatures = (is_callee && body_on_separate_line)
+            || matches!(
+                self.options.assignment_layout,
+                Some(AssignmentLikeLayout::ChainTailArrowFunction)
+            );
 
         // Arrow chains as callees or as the right side of an assignment
         // indent the entire signature chain a single level and do _not_
@@ -580,6 +584,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 .options
                 .assignment_layout
                 .is_some_and(|layout| layout != AssignmentLikeLayout::BreakAfterOperator);
+
 
         let format_arrow_signatures = format_with(|f| {
             let join_signatures = format_with(|f| {
@@ -635,10 +640,10 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // its own indention. This ensures that the first item keeps the same
                     // level as the surrounding content, and then each subsequent item has
                     // one additional level, as shown above.
-                    let is_generic_chain_in_call_arg = is_call_argument
-                        && self.arrows().any(|arrow| arrow.type_parameters.is_some());
-
-                    if is_first_in_chain || has_initial_indent || is_generic_chain_in_call_arg {
+                    // EXCEPTION: When has_initial_indent is true (assignments, callees), the
+                    // whole chain is already wrapped in indent(), so we don't add extra indent
+                    // to middle arrows to avoid double-indenting.
+                    if is_first_in_chain || has_initial_indent {
                         is_first_in_chain = false;
                         write!(f, [formatted_signature])?;
                     } else {
@@ -753,11 +758,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             write!(f, [space(), "=>"])?;
 
-            if is_call_argument {
-                write!(f, [group(&format_tail_body)])?;
-            } else {
-                write!(f, [indent_if_group_breaks(&format_tail_body, group_id)])?;
-            }
+            write!(f, [indent_if_group_breaks(&format_tail_body, group_id)])?;
 
             if is_callee {
                 write!(f, [if_group_breaks(&soft_line_break()).with_group_id(Some(group_id))])?;
@@ -832,9 +833,9 @@ fn format_signature<'a, 'b>(
         });
         let format_head = FormatContentWithCacheMode::new(arrow.params.span, content, cache_mode);
 
-        if is_first_or_last_call_argument {
-            // For grouped arguments, use the strict no-break policy for signatures
-            // This ensures parameters stay on one line to match Prettier behavior
+        if is_first_or_last_call_argument && is_first_in_chain {
+            // Only enforce strict no-break policy for the first signature in grouped arguments
+            // Chains need to be able to break for proper formatting
             let mut buffer = RemoveSoftLinesBuffer::new(f);
             let mut recording = buffer.start_recording();
 
