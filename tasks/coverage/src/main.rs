@@ -16,7 +16,7 @@ fn main() {
         diff: args.contains("--diff"),
     };
 
-    // Init rayon thread pool with larger stack size to handle deeply nested ASTs
+    // Init rayon thread pool
     let thread_count = if args.debug {
         1
     } else {
