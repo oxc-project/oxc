@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
 
-fn no_named_as_default_member_dignostic(
+fn no_named_as_default_member_diagnostic(
     span: Span,
     module_name: &str,
     export_name: &str,
@@ -133,7 +133,7 @@ impl Rule for NoNamedAsDefaultMember {
                     if let Some(module_name) =
                         get_external_module_name_if_has_entry(ident, prop_str)
                     {
-                        ctx.diagnostic(no_named_as_default_member_dignostic(
+                        ctx.diagnostic(no_named_as_default_member_diagnostic(
                             member_expr_kind.span(),
                             &ident.name,
                             prop_str,
@@ -156,7 +156,7 @@ impl Rule for NoNamedAsDefaultMember {
                         if let Some(module_name) =
                             get_external_module_name_if_has_entry(ident, &name)
                         {
-                            ctx.diagnostic(no_named_as_default_member_dignostic(
+                            ctx.diagnostic(no_named_as_default_member_diagnostic(
                                 decl.span,
                                 &ident.name,
                                 &name,

@@ -333,13 +333,13 @@ impl Parser {
     //   u{ CodePoint }
     // ```
     fn parse_unicode_escape_sequence(&mut self, offset_start: u32) -> Result<Option<u32>> {
-        let chckpoint = self.checkpoint();
+        let checkpoint = self.checkpoint();
 
         if self.eat('u') {
             if let Some(cp) = self.consume_hex4_digits() {
                 return Ok(Some(cp));
             }
-            self.rewind(chckpoint);
+            self.rewind(checkpoint);
         }
 
         if self.eat('u') {
@@ -350,7 +350,7 @@ impl Parser {
             {
                 return Ok(Some(hex_digits));
             }
-            self.rewind(chckpoint);
+            self.rewind(checkpoint);
         }
 
         Ok(None)

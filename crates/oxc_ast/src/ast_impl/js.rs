@@ -297,7 +297,7 @@ impl<'a> Expression<'a> {
     }
 
     /// Returns the [`IdentifierReference`] if this expression is an [`Expression::Identifier`],
-    /// or contains an [`Expression::Identifier`] and reurns `None` otherwise.
+    /// or contains an [`Expression::Identifier`] and reruns `None` otherwise.
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
         match self.get_inner_expression() {
             Expression::Identifier(ident) => Some(ident),

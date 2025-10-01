@@ -296,7 +296,7 @@ impl Rule for NoMagicNumbers {
         let nodes = ctx.nodes();
         let config = InternConfig::from(node, nodes.parent_node(node.id()));
 
-        if self.is_skipable(&config, nodes) {
+        if self.is_skippable(&config, nodes) {
             return;
         }
 
@@ -436,7 +436,7 @@ fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNo
 }
 
 impl NoMagicNumbers {
-    fn is_skipable<'a>(&self, config: &InternConfig<'a>, nodes: &AstNodes<'a>) -> bool {
+    fn is_skippable<'a>(&self, config: &InternConfig<'a>, nodes: &AstNodes<'a>) -> bool {
         if self.ignore.contains(&config.value) {
             return true;
         }
