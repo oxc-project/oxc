@@ -37,10 +37,18 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
     match (args.next(), args.next(), args.next()) {
         (Some(argument), None, None) if arguments.len() == 1 => {
             if is_angular_test_wrapper(call) && {
-                if let AstNodes::CallExpression(call) = call.parent.parent() {
-                    is_test_call_expression(call)
+                // After removal of AstKind::Argument, the parent of a CallExpression
+                // that's used as an argument is now directly the parent CallExpression,
+                // not parent.parent().
+                if let AstNodes::CallExpression(parent_call) = call.parent {
+                    is_test_call_expression(parent_call)
                 } else {
-                    false
+                    // Fallback: try parent.parent() for compatibility
+                    if let AstNodes::CallExpression(parent_call) = call.parent.parent() {
+                        is_test_call_expression(parent_call)
+                    } else {
+                        false
+                    }
                 }
             } {
                 return matches!(
