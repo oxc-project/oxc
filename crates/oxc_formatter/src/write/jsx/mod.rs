@@ -183,11 +183,50 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                         | JSXExpression::BinaryExpression(_)
                 );
 
+                // Check if this is an arrow function that needs special handling
+                let is_arrow_with_non_jsx_body =
+                    if let JSXExpression::ArrowFunctionExpression(arrow) = &self.expression {
+                        // Only apply special handling for expression arrows (not block arrows)
+                        if arrow.expression {
+                            // Check if the body is a JSX element
+                            if let Some(Statement::ExpressionStatement(expr_stmt)) =
+                                arrow.body.statements.first()
+                            {
+                                // Unwrap parenthesized expressions
+                                let mut expr = &expr_stmt.expression;
+                                while let Expression::ParenthesizedExpression(paren) = expr {
+                                    expr = &paren.expression;
+                                }
+                                // If body is JSX, treat like normal inline (no special handling)
+                                // If body is NOT JSX, we need to add line break
+                                !matches!(expr, Expression::JSXElement(_) | Expression::JSXFragment(_))
+                            } else {
+                                false
+                            }
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    };
+
                 let should_inline = !has_comment(f)
                     && (is_conditional_or_binary
                         || should_inline_jsx_expression(self, f.comments()));
 
-                if should_inline {
+                if is_arrow_with_non_jsx_body {
+                    // Arrow with non-JSX body: add line break before closing brace
+                    write!(
+                        f,
+                        [group(&format_args!(
+                            "{",
+                            self.expression(),
+                            line_suffix_boundary(),
+                            soft_line_break(),
+                            "}"
+                        ))]
+                    )
+                } else if should_inline {
                     write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
                 } else {
                     write!(
