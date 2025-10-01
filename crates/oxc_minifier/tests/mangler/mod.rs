@@ -118,6 +118,8 @@ fn private_member_mangling() {
         "class Foo { #x; check() { return #x in this; } }",
         // Nested classes
         "class Outer { #outerField = 1; inner() { return class Inner { #innerField = 2; get() { return this.#innerField; } }; } }",
+        "class Outer { #shared = 1; getInner() { let self = this; return class { method() { return self.#shared; } }; } }",
+        "class Outer { #shared = 1; getInner() { return class { #shared = 2; method() { return this.#shared; } }; } }",
         // Mixed public and private
         "class Foo { publicField = 1; #privateField = 2; getSum() { return this.publicField + this.#privateField; } }",
         // Test same names across different classes should reuse mangled names

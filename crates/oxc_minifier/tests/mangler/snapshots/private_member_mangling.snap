@@ -60,6 +60,32 @@ class Outer {
 	}
 }
 
+class Outer { #shared = 1; getInner() { let self = this; return class { method() { return self.#shared; } }; } }
+class Outer {
+	#e = 1;
+	getInner() {
+		let e = this;
+		return class {
+			method() {
+				return e.#e;
+			}
+		};
+	}
+}
+
+class Outer { #shared = 1; getInner() { return class { #shared = 2; method() { return this.#shared; } }; } }
+class Outer {
+	#e = 1;
+	getInner() {
+		return class {
+			#e = 2;
+			method() {
+				return this.#e;
+			}
+		};
+	}
+}
+
 class Foo { publicField = 1; #privateField = 2; getSum() { return this.publicField + this.#privateField; } }
 class Foo {
 	publicField = 1;
