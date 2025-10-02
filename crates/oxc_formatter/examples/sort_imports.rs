@@ -3,7 +3,7 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter, SortImports};
+use oxc_formatter::{FormatOptions, Formatter, SortImports, SortOrder};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -12,10 +12,15 @@ use pico_args::Arguments;
 fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let show_ir = args.contains("--ir");
+    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
+
     let partition_by_newline = args.contains("--partition_by_newline");
     let partition_by_comment = args.contains("--partition_by_comment");
     let sort_side_effects = args.contains("--sort_side_effects");
-    let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
+    let order = args.opt_value_from_str("--order").unwrap_or(None).unwrap_or(SortOrder::Asc);
+
+    let sort_imports_options =
+        SortImports { order, partition_by_newline, partition_by_comment, sort_side_effects };
 
     // Read source file
     let path = Path::new(&name);
@@ -44,11 +49,7 @@ fn main() -> Result<(), String> {
 
     // Format the parsed code
     let options = FormatOptions {
-        experimental_sort_imports: Some(SortImports {
-            partition_by_newline,
-            partition_by_comment,
-            sort_side_effects,
-        }),
+        experimental_sort_imports: Some(sort_imports_options),
         ..Default::default()
     };
 
@@ -66,10 +67,7 @@ fn main() -> Result<(), String> {
     }
 
     println!("=======================");
-    println!(
-        "Formatted with {:#?}",
-        SortImports { partition_by_newline, partition_by_comment, sort_side_effects }
-    );
+    println!("Formatted with {sort_imports_options:#?}",);
 
     Ok(())
 }

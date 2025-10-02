@@ -915,12 +915,57 @@ impl fmt::Display for OperatorPosition {
     }
 }
 
+// ---
+
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct SortImports {
+    /// Sort order (asc or desc).
+    pub order: SortOrder,
     /// Partition imports by newlines.
     pub partition_by_newline: bool,
     /// Partition imports by comments.
     pub partition_by_comment: bool,
     /// Sort side effects imports.
     pub sort_side_effects: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum SortOrder {
+    /// Sort in ascending order (A-Z).
+    #[default]
+    Asc,
+    /// Sort in descending order (Z-A).
+    Desc,
+}
+
+impl SortOrder {
+    pub const fn is_asc(self) -> bool {
+        matches!(self, Self::Asc)
+    }
+
+    pub const fn is_desc(self) -> bool {
+        matches!(self, Self::Desc)
+    }
+}
+
+impl FromStr for SortOrder {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "asc" => Ok(Self::Asc),
+            "desc" => Ok(Self::Desc),
+            _ => Err("Value not supported for SortOrder. Supported values are 'asc' and 'desc'."),
+        }
+    }
+}
+
+impl fmt::Display for SortOrder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            SortOrder::Asc => "ASC",
+            SortOrder::Desc => "DESC",
+        };
+        f.write_str(s)
+    }
 }

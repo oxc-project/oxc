@@ -1,5 +1,5 @@
 use super::assert_format;
-use oxc_formatter::{FormatOptions, QuoteStyle, Semicolons, SortImports};
+use oxc_formatter::{FormatOptions, QuoteStyle, Semicolons, SortImports, SortOrder};
 
 #[test]
 fn should_not_sort_by_default() {
@@ -654,6 +654,56 @@ import C from "c";
 
 import A from "a";
 import B from "b";
+"#,
+    );
+}
+
+// ---
+
+#[test]
+fn should_sort_by_order() {
+    // Z-A
+    assert_format(
+        r#"
+import { log } from "./log";
+import { log10 } from "./log10";
+import { log1p } from "./log1p";
+import { log2 } from "./log2";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                order: SortOrder::Desc,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import { log2 } from "./log2";
+import { log1p } from "./log1p";
+import { log10 } from "./log10";
+import { log } from "./log";
+"#,
+    );
+    // A-Z - default
+    assert_format(
+        r#"
+import { log } from "./log";
+import { log10 } from "./log10";
+import { log1p } from "./log1p";
+import { log2 } from "./log2";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                order: SortOrder::Asc,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import { log } from "./log";
+import { log10 } from "./log10";
+import { log1p } from "./log1p";
+import { log2 } from "./log2";
 "#,
     );
 }
