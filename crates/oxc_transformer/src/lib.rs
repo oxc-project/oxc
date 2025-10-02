@@ -251,7 +251,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         self.x2_es2020.enter_big_int_literal(node, ctx);
     }
 
-    fn enter_await_expression(&mut self, node: &mut AwaitExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_await_expression(
+        &mut self,
+        node: &mut AwaitExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         self.x2_es2022.enter_await_expression(node, ctx);
     }
 

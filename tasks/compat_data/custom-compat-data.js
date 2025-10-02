@@ -27,4 +27,25 @@ const customEs2020 = [
   },
 ].map(f('ES2020'));
 
-module.exports = [...customEs2020];
+const customEs2022 = [
+  {
+    name: 'TopLevelAwait',
+    babel: null,
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/await#browser_compatibility
+    targets: {
+      chrome: '89',
+      opera: '75',
+      edge: '89',
+      firefox: '89',
+      safari: '15.0',
+      node: '14.8',
+      deno: '1.0',
+      ios: '15.0',
+      samsung: '15.0',
+      opera_mobile: '63',
+      electron: '12.0',
+    },
+  },
+].map(f('ES2022'));
+
+module.exports = [...customEs2020, ...customEs2022];
