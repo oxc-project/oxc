@@ -1,17 +1,27 @@
+import assert from 'node:assert';
+
+import type { Program } from '@oxc-project/types';
 import type { Plugin, Rule } from '../../../dist/index.js';
 
 const SPAN = { start: 0, end: 0 };
 
 const createRule: Rule = {
   create(context) {
+    const { ast } = context.sourceCode;
+
     context.report({
       message: 'create:\n' +
         `text: ${JSON.stringify(context.sourceCode.text)}\n` +
-        `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
+        `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
+        // @ts-ignore
+        `ast: "${ast.body[0].declarations[0].id.name}"`,
       node: SPAN,
     });
 
     return {
+      Program(node) {
+        assert(node === ast);
+      },
       VariableDeclaration(node) {
         context.report({
           message: `var decl:\nsource: "${context.sourceCode.getText(node)}"`,
@@ -34,14 +44,23 @@ const createRule: Rule = {
 
 const createOnceRule: Rule = {
   createOnce(context) {
+    let ast: Program | null = null;
+
     return {
       before() {
+        ast = context.sourceCode.ast;
+
         context.report({
           message: 'before:\n' +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
-            `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
+            `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
+            // @ts-ignore
+            `ast: "${ast.body[0].declarations[0].id.name}"`,
           node: SPAN,
         });
+      },
+      Program(node) {
+        assert(node === ast);
       },
       VariableDeclaration(node) {
         context.report({
@@ -60,6 +79,9 @@ const createOnceRule: Rule = {
         });
       },
       after() {
+        assert(context.sourceCode.ast === ast);
+        ast = null;
+
         context.report({
           message: 'after:\n' +
             `source: ${JSON.stringify(context.sourceCode.text)}`,

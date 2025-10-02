@@ -112,8 +112,13 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
 
   const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
 
+  // Deserialize AST from buffer.
+  // `preserveParens` argument is `false`, to match ESLint.
+  // ESLint does not include `ParenthesizedExpression` nodes in its AST.
+  const program = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);
+
   const hasBOM = false; // TODO: Set this correctly
-  setupSourceForFile(sourceText, hasBOM);
+  setupSourceForFile(sourceText, hasBOM, program);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
@@ -150,9 +155,6 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
-    // `preserveParens` argument is `false`, to match ESLint.
-    // ESLint does not include `ParenthesizedExpression` nodes in its AST.
-    const program = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);
     walkProgram(program, compiledVisitor);
 
     // Lazy implementation

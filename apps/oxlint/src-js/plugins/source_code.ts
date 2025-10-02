@@ -9,15 +9,19 @@ const { max } = Math;
 let sourceText: string | null = null;
 // Set before linting each file by `setupSourceForFile`.
 let hasBOM = false;
+// Set before linting each file by `setupSourceForFile`.
+let ast: Program | null = null;
 
 /**
  * Set up source for the file about to be linted.
  * @param sourceTextInput - Source text
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
+ * @param astInput - The AST program for the file
  */
-export function setupSourceForFile(sourceTextInput: string, hasBOMInput: boolean): void {
+export function setupSourceForFile(sourceTextInput: string, hasBOMInput: boolean, astInput: Program): void {
   sourceText = sourceTextInput;
   hasBOM = hasBOMInput;
+  ast = astInput;
 }
 
 /**
@@ -25,6 +29,7 @@ export function setupSourceForFile(sourceTextInput: string, hasBOMInput: boolean
  */
 export function resetSource(): void {
   sourceText = null;
+  ast = null;
 }
 
 // `SourceCode` object.
@@ -49,7 +54,7 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get AST of the file.
   get ast(): Program {
-    throw new Error('`sourceCode.ast` not implemented yet'); // TODO
+    return ast;
   },
 
   // Get `ScopeManager` for the file.

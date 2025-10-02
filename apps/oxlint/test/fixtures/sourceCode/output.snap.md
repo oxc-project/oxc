@@ -6,6 +6,7 @@
   x source-code-plugin(create): create:
   | text: "let foo, bar;\n"
   | getText(): "let foo, bar;\n"
+  | ast: "foo"
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -21,6 +22,7 @@
   x source-code-plugin(create-once): before:
   | text: "let foo, bar;\n"
   | getText(): "let foo, bar;\n"
+  | ast: "foo"
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -83,6 +85,7 @@
   x source-code-plugin(create): create:
   | text: "let qux;\n"
   | getText(): "let qux;\n"
+  | ast: "qux"
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^
@@ -98,6 +101,7 @@
   x source-code-plugin(create-once): before:
   | text: "let qux;\n"
   | getText(): "let qux;\n"
+  | ast: "qux"
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^
