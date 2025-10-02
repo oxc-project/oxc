@@ -1,33 +1,86 @@
+import {
+  DATA_POINTER_POS_32,
+  SOURCE_LEN_OFFSET,
+  // TODO(camc314): we need to generate `.d.ts` file for this module.
+  // @ts-expect-error
+} from '../generated/constants.js';
+// @ts-expect-error we need to generate `.d.ts` file for this module
+import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.js';
+
 import type { Program } from '@oxc-project/types';
 import type { Scope, ScopeManager, Variable } from './scope.ts';
-import type { Comment, LineColumn, Node, NodeOrToken, Token } from './types.ts';
+import type { BufferWithArrays, Comment, LineColumn, Node, NodeOrToken, Token } from './types.ts';
 
 const { max } = Math;
 
-// Source text.
-// Initially `null`, but set to source text string before linting each file by `setupSourceForFile`.
-let sourceText: string | null = null;
-// Set before linting each file by `setupSourceForFile`.
+// Text decoder, for decoding source text from buffer
+const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
+
+// Buffer containing AST. Set before linting a file by `setupSourceForFile`.
+let buffer: BufferWithArrays | null = null;
+
+// Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
-// Set before linting each file by `setupSourceForFile`.
+
+// Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
+// or `getAst()` is called before the AST is walked.
+let sourceText: string | null = null;
+let sourceByteLen: number = 0;
 let ast: Program | null = null;
 
 /**
  * Set up source for the file about to be linted.
- * @param sourceTextInput - Source text
+ * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
- * @param astInput - The AST program for the file
  */
-export function setupSourceForFile(sourceTextInput: string, hasBOMInput: boolean, astInput: Program): void {
-  sourceText = sourceTextInput;
+export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
+  buffer = bufferInput;
   hasBOM = hasBOMInput;
-  ast = astInput;
+}
+
+/**
+ * Decode source text from buffer.
+ */
+function initSourceText(): void {
+  const { uint32 } = buffer,
+    programPos = uint32[DATA_POINTER_POS_32];
+  sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
+  sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+}
+
+/**
+ * Deserialize AST from buffer.
+ */
+function initAst(): void {
+  if (sourceText === null) initSourceText();
+
+  // `preserveParens` argument is `false`, to match ESLint.
+  // ESLint does not include `ParenthesizedExpression` nodes in its AST.
+  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);
+}
+
+/**
+ * Get AST of the file being linted.
+ * If AST has not already been deserialized, do it now.
+ * @returns AST of the file being linted.
+ */
+export function getAst(): Program {
+  if (ast === null) initAst();
+  return ast;
 }
 
 /**
  * Reset source after file has been linted, to free memory.
+ *
+ * Setting `buffer` to `null` also prevents AST being deserialized after linting,
+ * at which point the buffer may be being reused for another file.
+ * The buffer might contain a half-constructed AST (if parsing is currently in progress in Rust),
+ * which would cause deserialization to malfunction.
+ * With `buffer` set to `null`, accessing `SOURCE_CODE.ast` will still throw, but the error message will be clearer,
+ * and no danger of an infinite loop due to a circular AST (unlikely but possible).
  */
 export function resetSource(): void {
+  buffer = null;
   sourceText = null;
   ast = null;
 }
@@ -44,6 +97,7 @@ export function resetSource(): void {
 export const SOURCE_CODE = Object.freeze({
   // Get source text.
   get text(): string {
+    if (sourceText === null) initSourceText();
     return sourceText;
   },
 
@@ -54,7 +108,7 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get AST of the file.
   get ast(): Program {
-    return ast;
+    return getAst();
   },
 
   // Get `ScopeManager` for the file.
@@ -89,6 +143,8 @@ export const SOURCE_CODE = Object.freeze({
     beforeCount?: number | null | undefined,
     afterCount?: number | null | undefined,
   ): string {
+    if (sourceText === null) initSourceText();
+
     // ESLint treats all falsy values for `node` as undefined
     if (!node) return sourceText;
 

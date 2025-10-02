@@ -80,3 +80,9 @@ export interface RuleMeta {
   fixable?: 'code' | 'whitespace' | null | undefined;
   [key: string]: unknown;
 }
+
+// Buffer with typed array views of itself stored as properties.
+export interface BufferWithArrays extends Uint8Array {
+  uint32: Uint32Array;
+  float64: Float64Array;
+}

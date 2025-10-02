@@ -127,6 +127,14 @@ describe('oxlint CLI', () => {
     await testFixture('sourceCode');
   });
 
+  it('should get source text and AST from `context.sourceCode` when accessed late', async () => {
+    await testFixture('sourceCode_late_access');
+  });
+
+  it('should get source text and AST from `context.sourceCode` when accessed in `after` hook only', async () => {
+    await testFixture('sourceCode_late_access_after_only');
+  });
+
   it('should support `createOnce`', async () => {
     await testFixture('createOnce');
   });

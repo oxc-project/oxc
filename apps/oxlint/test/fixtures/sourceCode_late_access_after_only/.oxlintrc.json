@@ -1,0 +1,7 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
+  "rules": {
+    "source-code-plugin/create-once": "error"
+  }
+}

@@ -1,12 +1,6 @@
-import {
-  DATA_POINTER_POS_32,
-  SOURCE_LEN_OFFSET,
-  // TODO(camc314): we need to generate `.d.ts` file for this module.
-  // @ts-expect-error
-} from '../generated/constants.js';
 import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
-import { resetSource, setupSourceForFile } from './source_code.js';
+import { getAst, resetSource, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
@@ -19,17 +13,9 @@ import { walkProgram } from '../../dist/generated/lazy/walk.js';
 */
 
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.js';
-// @ts-expect-error we need to generate `.d.ts` file for this module
 import { walkProgram } from '../../dist/generated/visit/walk.js';
 
-import type { AfterHook } from './types.ts';
-
-// Buffer with typed array views of itself stored as properties
-interface BufferWithArrays extends Uint8Array {
-  uint32: Uint32Array;
-  float64: Float64Array;
-}
+import type { AfterHook, BufferWithArrays } from './types.ts';
 
 // Buffers cache.
 //
@@ -37,9 +23,6 @@ interface BufferWithArrays extends Uint8Array {
 // Buffers are only added to this array, never removed, so no buffers will be garbage collected
 // until the process exits.
 const buffers: (BufferWithArrays | null)[] = [];
-
-// Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
@@ -105,20 +88,16 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
     throw new Error('Expected `ruleIds` to be a non-zero len array');
   }
 
-  // Decode source text from buffer
-  const { uint32 } = buffer,
-    programPos = uint32[DATA_POINTER_POS_32],
-    sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-
-  const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
-
-  // Deserialize AST from buffer.
-  // `preserveParens` argument is `false`, to match ESLint.
-  // ESLint does not include `ParenthesizedExpression` nodes in its AST.
-  const program = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);
-
+  // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
+  //
+  // We don't want to do this eagerly, because all rules might return empty visitors,
+  // or `createOnce` rules might return `false` from their `before` hooks.
+  // In such cases, the AST doesn't need to be walked, so we can skip deserializing it.
+  //
+  // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
+  // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
   const hasBOM = false; // TODO: Set this correctly
-  setupSourceForFile(sourceText, hasBOM, program);
+  setupSourceForFile(buffer, hasBOM);
 
   // Get visitors for this file from all rules
   initCompiledVisitor();
@@ -155,6 +134,7 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
+    const program = getAst();
     walkProgram(program, compiledVisitor);
 
     // Lazy implementation
