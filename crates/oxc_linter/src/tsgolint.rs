@@ -610,17 +610,31 @@ pub struct Suggestion {
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[repr(u8)]
 pub enum MessageType {
     Error = 0,
     Diagnostic = 1,
 }
 
-impl MessageType {
-    pub fn from_u8(value: u8) -> Option<Self> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct InvalidMessageType(pub u8);
+
+impl std::fmt::Display for InvalidMessageType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "invalid message type: {}", self.0)
+    }
+}
+
+impl std::error::Error for InvalidMessageType {}
+
+impl TryFrom<u8> for MessageType {
+    type Error = InvalidMessageType;
+
+    fn try_from(value: u8) -> Result<Self, InvalidMessageType> {
         match value {
-            0 => Some(MessageType::Error),
-            1 => Some(MessageType::Diagnostic),
-            _ => None,
+            0 => Ok(Self::Error),
+            1 => Ok(Self::Diagnostic),
+            _ => Err(InvalidMessageType(value)),
         }
     }
 }
@@ -693,8 +707,8 @@ fn parse_single_message(cursor: &mut std::io::Cursor<&[u8]>) -> Result<TsGoLintM
     if cursor.read_exact(&mut message_type_byte).is_err() {
         return Err("Failed to read message type byte".to_string());
     }
-    let message_type = MessageType::from_u8(message_type_byte[0])
-        .ok_or_else(|| "Invalid message type byte".to_string())?;
+    let message_type = MessageType::try_from(message_type_byte[0])
+        .map_err(|_| "Invalid message type byte".to_string())?;
 
     let mut payload_bytes = vec![0u8; size];
     if cursor.read_exact(&mut payload_bytes).is_err() {
