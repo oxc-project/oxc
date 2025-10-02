@@ -375,7 +375,9 @@ impl PartitionedChunk {
         elements: &[FormatElement],
     ) -> (Vec<SortableImport>, Vec<SourceLine>) {
         let Self::Imports(lines) = self else {
-            unreachable!("`into_import_units()` must be called on `PartitionedChunk::Imports` only.");
+            unreachable!(
+                "`into_import_units()` must be called on `PartitionedChunk::Imports` only."
+            );
         };
 
         let mut units = vec![];
@@ -393,7 +395,9 @@ impl PartitionedChunk {
                     current_leading_lines.push(line);
                 }
                 SourceLine::Others(..) => {
-                    unreachable!("`PartitionedChunk::Imports` must not contain `SourceLine::Others`.");
+                    unreachable!(
+                        "`PartitionedChunk::Imports` must not contain `SourceLine::Others`."
+                    );
                 }
             }
         }
