@@ -86,6 +86,8 @@ export function getAst(): Program {
  * Split source text into lines.
  */
 function initLines(): void {
+  if (lines.length !== 0) return;
+
   if (sourceText === null) initSourceText();
 
   // This implementation is based on the one in ESLint.
@@ -174,7 +176,7 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get source text as array of lines, split according to specification's definition of line breaks.
   get lines(): string[] {
-    if (lines.length === 0) initLines();
+    initLines();
     return lines;
   },
 
@@ -525,7 +527,50 @@ export const SOURCE_CODE = Object.freeze({
    */
   // oxlint-disable-next-line no-unused-vars
   getIndexFromLoc(loc: LineColumn): number {
-    throw new Error('`sourceCode.getIndexFromLoc` not implemented yet'); // TODO
+    if (loc !== null && typeof loc === 'object') {
+      const { line, column } = loc;
+      if (typeof line === 'number' && typeof column === 'number') {
+        initLines();
+
+        const linesCount = lineStartOffsets.length;
+        if (line <= 0 || line > linesCount) {
+          throw new RangeError(
+            `Line number out of range (line ${line} requested). ` +
+              `Line numbers should be 1-based, and less than or equal to number of lines in file (${linesCount}).`,
+          );
+        }
+        if (column < 0) throw new RangeError(`Invalid column number (column ${column} requested).`);
+
+        const lineStartOffset = lineStartOffsets[line - 1];
+        const offset = lineStartOffset + column;
+
+        // Comment from ESLint implementation:
+        /*
+         * By design, `getIndexFromLoc({ line: lineNum, column: 0 })` should return the start index of
+         * the given line, provided that the line number is valid element of `lines`. Since the
+         * last element of `lines` is an empty string for files with trailing newlines, add a
+         * special case where getting the index for the first location after the end of the file
+         * will return the length of the file, rather than throwing an error. This allows rules to
+         * use `getIndexFromLoc` consistently without worrying about edge cases at the end of a file.
+         */
+
+        let lineEndOffset;
+        if (line === linesCount) {
+          lineEndOffset = sourceText.length;
+          if (offset <= lineEndOffset) return offset;
+        } else {
+          lineEndOffset = lineStartOffsets[line];
+          if (offset < lineEndOffset) return offset;
+        }
+
+        throw new RangeError(
+          `Column number out of range (column ${column} requested, ` +
+            `but the length of line ${line} is ${lineEndOffset - lineStartOffset}).`,
+        );
+      }
+    }
+
+    throw new TypeError('Expected `loc` to be an object with numeric `line` and `column` properties.');
   },
 
   /**
