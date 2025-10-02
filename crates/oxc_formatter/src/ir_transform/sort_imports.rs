@@ -249,10 +249,12 @@ impl SourceLine {
         range: Range<usize>,
         line_mode: LineMode,
     ) -> Self {
+
         debug_assert!(
             !range.is_empty(),
-            "`range` must not be empty, othereise use `SourceLine::Empty` directly."
+            "`range` must not be empty, otherwise use `SourceLine::Empty` directly."
         );
+
 
         // Check if the line is comment-only.
         // e.g.
