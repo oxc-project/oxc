@@ -27,8 +27,8 @@ import pluginJSXA11y from 'eslint-plugin-jsx-a11y';
 import pluginJest from 'eslint-plugin-jest';
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/v7.37.2/index.js
 import pluginReact from 'eslint-plugin-react';
-// https://github.com/facebook/react/blob/v18.3.1/packages/eslint-plugin-react-hooks/src/index.js
-import { rules as pluginReactHooksAllRules } from 'eslint-plugin-react-hooks';
+// https://github.com/facebook/react/blob/v19.2.0/packages/eslint-plugin-react-hooks/src/index.ts
+import pluginReactHooks from 'eslint-plugin-react-hooks';
 // https://github.com/cvazac/eslint-plugin-react-perf/blob/9bfa930661a23218f5460ebd39d35d76ccdb5724/index.js
 import pluginReactPerf from 'eslint-plugin-react-perf';
 // https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
@@ -70,11 +70,13 @@ const {
   rules: pluginPromiseRules,
 } = pluginPromise;
 const { rules: pluginReactAllRules } = pluginReact;
-const { rules: pluginNextAllRules } = pluginNext;
+// @ts-expect-error: Module has no exported member
+const { rules: pluginReactHooksAllRules } = pluginReactHooks;
 const {
   rules: pluginReactPerfAllRules,
   configs: pluginReactPerfConfigs,
 } = pluginReactPerf;
+const { rules: pluginNextAllRules } = pluginNext;
 const {
   configs: pluginVitestConfigs,
   rules: pluginVitestRules,
