@@ -292,91 +292,61 @@ impl TsGoLintState {
             drop(stdin);
 
             // Stream diagnostics as they are emitted, rather than waiting for all output
-            let mut stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             let stdout_handler =
                 std::thread::spawn(move || -> Result<Vec<MessageWithPosition<'_>>, String> {
-                    let mut buffer = Vec::with_capacity(8192);
-                    let mut read_buf = [0u8; 8192];
+                    let msg_iter = TsGoLintMessageStream::new(stdout);
 
                     let mut result = vec![];
 
-                    loop {
-                        match stdout.read(&mut read_buf) {
-                            Ok(0) => break, // EOF
-                            Ok(n) => {
-                                buffer.extend_from_slice(&read_buf[..n]);
+                    for msg in msg_iter {
+                        match msg {
+                            Ok(TsGoLintMessage::Error(err)) => {
+                                return Err(err.error);
+                            }
+                            Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
+                                let path = tsgolint_diagnostic.file_path.clone();
+                                let Some(resolved_config) = resolved_configs.get(&path) else {
+                                    // If we don't have a resolved config for this path, skip it. We should always
+                                    // have a resolved config though, since we processed them already above.
+                                    continue;
+                                };
 
-                                // Try to parse complete messages from buffer
-                                let mut cursor = std::io::Cursor::new(buffer.as_slice());
-                                let mut processed_up_to: u64 = 0;
-
-                                while cursor.position() < buffer.len() as u64 {
-                                    let start_pos = cursor.position();
-                                    match parse_single_message(&mut cursor) {
-                                        Ok(TsGoLintMessage::Error(err)) => {
-                                            return Err(err.error);
+                                let severity =
+                                    resolved_config.rules.iter().find_map(|(rule, status)| {
+                                        if rule.name() == tsgolint_diagnostic.rule {
+                                            Some(*status)
+                                        } else {
+                                            None
                                         }
-                                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                                            processed_up_to = cursor.position();
+                                    });
+                                let Some(severity) = severity else {
+                                    // If the severity is not found, we should not report the diagnostic
+                                    continue;
+                                };
 
-                                            let path = tsgolint_diagnostic.file_path.clone();
-                                            let Some(resolved_config) = resolved_configs.get(&path)
-                                            else {
-                                                // If we don't have a resolved config for this path, skip it. We should always
-                                                // have a resolved config though, since we processed them already above.
-                                                continue;
-                                            };
+                                let mut message_with_position: MessageWithPosition<'_> =
+                                    message_to_message_with_position(
+                                        Message::from_tsgo_lint_diagnostic(
+                                            tsgolint_diagnostic,
+                                            &source_text,
+                                        ),
+                                        &source_text,
+                                        &Rope::from_str(&source_text),
+                                    );
 
-                                            let severity = resolved_config.rules.iter().find_map(
-                                                |(rule, status)| {
-                                                    if rule.name() == tsgolint_diagnostic.rule {
-                                                        Some(*status)
-                                                    } else {
-                                                        None
-                                                    }
-                                                },
-                                            );
-                                            let Some(severity) = severity else {
-                                                // If the severity is not found, we should not report the diagnostic
-                                                continue;
-                                            };
+                                message_with_position.severity = if severity == AllowWarnDeny::Deny
+                                {
+                                    Severity::Error
+                                } else {
+                                    Severity::Warning
+                                };
 
-                                            let mut message_with_position: MessageWithPosition<'_> =
-                                                message_to_message_with_position(
-                                                    Message::from_tsgo_lint_diagnostic(
-                                                        tsgolint_diagnostic,
-                                                        &source_text,
-                                                    ),
-                                                    &source_text,
-                                                    &Rope::from_str(&source_text),
-                                                );
-
-                                            message_with_position.severity =
-                                                if severity == AllowWarnDeny::Deny {
-                                                    Severity::Error
-                                                } else {
-                                                    Severity::Warning
-                                                };
-
-                                            result.push(message_with_position);
-                                        }
-                                        Err(_) => {
-                                            // Could not parse a complete message, break and keep remaining data
-                                            cursor.set_position(start_pos);
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                // Keep unprocessed data for next iteration
-                                if processed_up_to > 0 {
-                                    #[expect(clippy::cast_possible_truncation)]
-                                    buffer.drain(..processed_up_to as usize);
-                                }
+                                result.push(message_with_position);
                             }
                             Err(e) => {
-                                return Err(format!("Failed to read from tsgolint stdout: {e}"));
+                                return Err(e);
                             }
                         }
                     }
