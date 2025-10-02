@@ -2902,6 +2902,11 @@ impl RuleRunner for crate::rules::vue::define_props_declaration::DefinePropsDecl
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::vue::define_props_destructuring::DefinePropsDestructuring {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+}
+
 impl RuleRunner for crate::rules::vue::max_props::MaxProps {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
