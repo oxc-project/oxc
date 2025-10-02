@@ -1,0 +1,114 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:4:25]
+ 3 │                   export * from 'foo'
+ 4 │                   export default {}
+   ·                                  ──
+ 5 │                   export class A {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:5:17]
+ 4 │                   export default {}
+ 5 │                   export class A {}
+   ·                          ──────────
+ 6 │                   export const test = '123'
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:6:17]
+ 5 │                   export class A {}
+ 6 │                   export const test = '123'
+   ·                          ──────────────────
+ 7 │                   export function foo() {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:7:17]
+ 6 │                   export const test = '123'
+ 7 │                   export function foo() {}
+   ·                          ─────────────────
+ 8 │                   const a = 1
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+    ╭─[no_export_in_script_setup.tsx:9:19]
+  8 │                   const a = 1
+  9 │                   export { a }
+    ·                            ─
+ 10 │                   export { fao } from 'bar'
+    ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+    ╭─[no_export_in_script_setup.tsx:10:19]
+  9 │                   export { a }
+ 10 │                   export { fao } from 'bar'
+    ·                            ───
+ 11 │                   </script>
+    ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:3:10]
+ 2 │                   <script setup>
+ 3 │                   export * from 'foo'
+   ·                   ───────────────────
+ 4 │                   export default {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:4:17]
+ 3 │                   export * from 'foo'
+ 4 │                   export default {}
+   ·                          ───────
+ 5 │                   export class A {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:7:25]
+ 6 │                   export * from 'foo'
+ 7 │                   export default {}
+   ·                                  ──
+ 8 │                   export class A {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:8:17]
+ 7 │                   export default {}
+ 8 │                   export class A {}
+   ·                          ──────────
+ 9 │                   </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:6:10]
+ 5 │                   <script setup>
+ 6 │                   export * from 'foo'
+   ·                   ───────────────────
+ 7 │                   export default {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:7:17]
+ 6 │                   export * from 'foo'
+ 7 │                   export default {}
+   ·                          ───────
+ 8 │                   export class A {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:3:17]
+ 2 │                   <script setup lang="ts">
+ 3 │                   export const Foo = {}
+   ·                          ──────────────
+ 4 │                   export enum Bar {}
+   ╰────
+
+  ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
+   ╭─[no_export_in_script_setup.tsx:4:17]
+ 3 │                   export const Foo = {}
+ 4 │                   export enum Bar {}
+   ·                          ───────────
+ 5 │                   export { }
+   ╰────
