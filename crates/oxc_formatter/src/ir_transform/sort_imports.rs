@@ -171,7 +171,10 @@ impl SortImportsTransform {
                     if 1 < import_units.len() {
                         // TODO: Sort based on `options.groups`, `options.type`, etc...
                         // TODO: Consider `options.ignore_case`, `special_characters`, removing `?raw`, etc...
-                        import_units.sort_by_key(|unit| unit.get_source(prev_elements));
+                        import_units.sort_by(|a, b| {
+                            let ord = a.get_source(prev_elements).cmp(b.get_source(prev_elements));
+                            if self.options.order.is_desc() { ord.reverse() } else { ord }
+                        });
                     }
 
                     let preserve_empty_line = self.options.partition_by_newline;
