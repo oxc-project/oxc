@@ -320,6 +320,8 @@ impl<'a> Visit<'a> for TestCase {
                     PropertyKey::StaticIdentifier(ident) if ident.name == "filename" => {
                         let span = prop.value.span();
                         let filename = span.source_text(&self.source_text);
+                        // trim quotes
+                        let filename = filename.trim_matches('"').trim_matches('\'');
                         self.filename = Some(filename.to_string());
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "languageOptions" => {
