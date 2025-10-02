@@ -707,3 +707,114 @@ import { log2 } from "./log2";
 "#,
     );
 }
+
+// ---
+
+#[test]
+fn should_sort_side_effects() {
+    // Side effect imports stay in their original positions by default
+    assert_format(
+        r#"
+import c from "c";
+import b from "b";
+import "s";
+import a from "a";
+import z from "z";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import a from "a";
+import b from "b";
+import "s";
+import c from "c";
+import z from "z";
+"#,
+    );
+    // Side effect imports stay in their original positions if `sort_side_effects: false`
+    assert_format(
+        r#"
+import c from "c";
+import b from "b";
+import "s";
+import a from "a";
+import z from "z";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                sort_side_effects: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import a from "a";
+import b from "b";
+import "s";
+import c from "c";
+import z from "z";
+"#,
+    );
+    assert_format(
+        r#"
+import "c";
+import "bb";
+import "aaa";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                sort_side_effects: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import "c";
+import "bb";
+import "aaa";
+"#,
+    );
+    // When `sort_side_effects: true`, all imports are sorted
+    assert_format(
+        r#"
+import y from "y";
+import a from "a";
+import "z";
+import "x";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                sort_side_effects: true,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import a from "a";
+import "x";
+import y from "y";
+import "z";
+"#,
+    );
+    assert_format(
+        r#"
+import "c";
+import "bb";
+import "aaa";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                sort_side_effects: true,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import "aaa";
+import "bb";
+import "c";
+"#,
+    );
+}
