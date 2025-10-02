@@ -33,6 +33,7 @@ const parserFilePaths = [
   'generated/lazy/walk.js',
   */
   'generated/deserialize/ts.js',
+  'generated/visit/keys.js',
   'generated/visit/types.js',
   'generated/visit/visitor.d.ts',
   'generated/visit/walk.js',

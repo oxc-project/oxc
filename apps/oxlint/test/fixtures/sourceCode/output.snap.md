@@ -7,6 +7,7 @@
   | text: "let foo, bar;\n"
   | getText(): "let foo, bar;\n"
   | ast: "foo"
+  | visitorKeys: left, right
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -23,6 +24,7 @@
   | text: "let foo, bar;\n"
   | getText(): "let foo, bar;\n"
   | ast: "foo"
+  | visitorKeys: left, right
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -86,6 +88,7 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | ast: "qux"
+  | visitorKeys: left, right
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^
@@ -102,6 +105,7 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | ast: "qux"
+  | visitorKeys: left, right
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^

@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import {
   DATA_POINTER_POS_32,
   SOURCE_LEN_OFFSET,
@@ -10,6 +11,8 @@ import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.js';
 import type { Program } from '@oxc-project/types';
 import type { Scope, ScopeManager, Variable } from './scope.ts';
 import type { BufferWithArrays, Comment, LineColumn, Node, NodeOrToken, Token } from './types.ts';
+
+const require = createRequire(import.meta.url);
 
 const { max } = Math;
 
@@ -27,6 +30,9 @@ let hasBOM = false;
 let sourceText: string | null = null;
 let sourceByteLen: number = 0;
 let ast: Program | null = null;
+
+// Lazily populated when `SOURCE_CODE.visitorKeys` is accessed.
+let visitorKeys: { [key: string]: string[] } | null = null;
 
 /**
  * Set up source for the file about to be linted.
@@ -118,7 +124,9 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get visitor keys to traverse this AST.
   get visitorKeys(): { [key: string]: string[] } {
-    throw new Error('`sourceCode.visitorKeys` not implemented yet'); // TODO
+    // This is the path relative to `plugins.js` file in `dist` directory
+    if (visitorKeys === null) visitorKeys = require('./generated/visit/keys.js').default;
+    return visitorKeys;
   },
 
   // Get parser services for the file.

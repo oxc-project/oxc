@@ -14,7 +14,8 @@ const createRule: Rule = {
         `text: ${JSON.stringify(context.sourceCode.text)}\n` +
         `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
         // @ts-ignore
-        `ast: "${ast.body[0].declarations[0].id.name}"`,
+        `ast: "${ast.body[0].declarations[0].id.name}"\n` +
+        `visitorKeys: ${context.sourceCode.visitorKeys.BinaryExpression.join(', ')}`,
       node: SPAN,
     });
 
@@ -55,7 +56,8 @@ const createOnceRule: Rule = {
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
             // @ts-ignore
-            `ast: "${ast.body[0].declarations[0].id.name}"`,
+            `ast: "${ast.body[0].declarations[0].id.name}"\n` +
+            `visitorKeys: ${context.sourceCode.visitorKeys.BinaryExpression.join(', ')}`,
           node: SPAN,
         });
       },
