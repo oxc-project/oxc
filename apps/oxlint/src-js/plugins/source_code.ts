@@ -608,7 +608,7 @@ function getLocFromIndex(offset: number): LineColumn {
  * @throws {TypeError|RangeError} If `loc` is not an object with a numeric `line` and `column`,
  *   or if the `line` is less than or equal to zero, or the line or column is out of the expected range.
  */
-function getIndexFromLoc(loc: LineColumn): number {
+export function getIndexFromLoc(loc: LineColumn): number {
   if (loc !== null && typeof loc === 'object') {
     const { line, column } = loc;
     if (typeof line === 'number' && typeof column === 'number' && (line | 0) === line && (column | 0) === column) {

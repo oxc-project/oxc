@@ -1,15 +1,26 @@
 import { getFixes } from './fix.js';
-import { SOURCE_CODE } from './source_code.js';
+import { getIndexFromLoc, SOURCE_CODE } from './source_code.js';
 
 import type { Fix, FixFn } from './fix.ts';
 import type { SourceCode } from './source_code.ts';
-import type { Node } from './types.ts';
+import type { Location, Node } from './types.ts';
+
+const { hasOwn } = Object;
 
 // Diagnostic in form passed by user to `Context#report()`
-export interface Diagnostic {
+export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
+
+export interface DiagnosticBase {
   message: string;
-  node: Node;
   fix?: FixFn;
+}
+
+export interface DiagnosticWithNode extends DiagnosticBase {
+  node: Node;
+}
+
+export interface DiagnosticWithLoc extends DiagnosticBase {
+  loc: Location;
 }
 
 // Diagnostic in form sent to Rust
@@ -127,16 +138,38 @@ export class Context {
   /**
    * Report error.
    * @param diagnostic - Diagnostic object
+   * @throws {TypeError} If `diagnostic` is invalid
    */
   report(diagnostic: Diagnostic): void {
     const internal = getInternal(this, 'report errors');
 
     // TODO: Validate `diagnostic`
-    const { node } = diagnostic;
+    let start: number, end: number, loc: Location;
+    if (hasOwn(diagnostic, 'loc') && (loc = (diagnostic as DiagnosticWithLoc).loc) != null) {
+      // `loc`
+      if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
+      start = getIndexFromLoc(loc.start);
+      end = getIndexFromLoc(loc.end);
+    } else {
+      // `node`
+      const { node } = diagnostic as DiagnosticWithNode;
+      if (node == null) throw new TypeError('Either `node` or `loc` is required');
+      if (typeof node !== 'object') throw new TypeError('`node` must be an object');
+      ({ start, end } = node);
+      // Do type validation checks here, to ensure no error in serialization / deserialization.
+      // Range validation happens on Rust side.
+      if (
+        typeof start !== 'number' || typeof end !== 'number' ||
+        start < 0 || end < 0 || (start | 0) !== start || (end | 0) !== end
+      ) {
+        throw new TypeError('`node.start` and `node.end` must be non-negative integers');
+      }
+    }
+
     diagnostics.push({
       message: diagnostic.message,
-      start: node.start,
-      end: node.end,
+      start,
+      end,
       ruleIndex: internal.ruleIndex,
       fixes: getFixes(diagnostic, internal),
     });

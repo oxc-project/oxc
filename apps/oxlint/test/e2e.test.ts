@@ -115,6 +115,10 @@ describe('oxlint CLI', () => {
     await testFixture('basic_custom_plugin_multiple_rules');
   });
 
+  it('should support reporting diagnostic with `loc`', async () => {
+    await testFixture('diagnostic_loc');
+  });
+
   it('should receive ESTree-compatible AST', async () => {
     await testFixture('estree');
   });
