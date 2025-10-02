@@ -145,21 +145,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
 
 impl ES2022<'_, '_> {
     fn is_top_level_await(ctx: &TraverseCtx) -> bool {
-        use oxc_traverse::Ancestor;
-        
-        // Check if we're inside any function
-        // Top-level await means await at the module top level (not inside any function)
-        for ancestor in ctx.ancestors() {
-            match ancestor {
-                Ancestor::FunctionBody(_) | Ancestor::ArrowFunctionExpressionBody(_) => {
-                    // If inside any function, it's not top-level await
-                    return false;
-                }
-                _ => {}
-            }
-        }
-        
-        // If we didn't find any function ancestor, it's top-level await
-        true
+        // Check if the hoist scope is the root scope
+        // Top-level await means await at the module top level
+        ctx.current_hoist_scope_id() == ctx.scoping().root_scope_id()
     }
 }

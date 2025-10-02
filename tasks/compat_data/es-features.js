@@ -297,6 +297,11 @@ const es2022 = [
       // ignore "shows up in flags"
     ],
   },
+  {
+    name: 'TopLevelAwait',
+    babel: null,
+    features: [],
+  },
 ].map(f('ES2022'));
 
 const es2024 = [
