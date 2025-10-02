@@ -16,8 +16,7 @@ use serde_json::Value;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
-    TsGoLintState,
+    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
 };
 
 use crate::{
@@ -311,6 +310,7 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
+        let has_external_linter = external_linter.is_some();
         let linter = Linter::new(LintOptions::default(), config_store.clone(), external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
@@ -338,54 +338,44 @@ impl CliRunner {
 
         let number_of_rules = linter.number_of_rules(self.options.type_aware);
 
-        let cwd = options.cwd().to_path_buf();
-
-        // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
-        {
-            let tx_error = tx_error.clone();
-            let files_to_lint = files_to_lint.clone();
-            rayon::spawn(move || {
-                let has_external_linter = linter.has_external_linter();
-
-                let mut lint_service = LintService::new(linter, options);
-                lint_service.with_paths(files_to_lint);
-
-                // Use `RawTransferFileSystem` if `ExternalLinter` exists.
-                // This reads the source text into start of allocator, instead of the end.
-                if has_external_linter {
-                    #[cfg(all(
-                        feature = "napi",
-                        target_pointer_width = "64",
-                        target_endian = "little"
-                    ))]
-                    lint_service
-                        .with_file_system(Box::new(crate::js_plugins::RawTransferFileSystem));
-
-                    #[cfg(not(all(
-                        feature = "napi",
-                        target_pointer_width = "64",
-                        target_endian = "little"
-                    )))]
-                    unreachable!(
-                        "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
-                    );
-                }
-
-                lint_service.run(&tx_error);
-            });
-        }
-
-        // Run type-aware linting through tsgolint
+        // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        if self.options.type_aware {
-            if let Err(err) = TsGoLintState::try_new(&cwd, config_store).and_then(|state| {
-                state.with_silent(misc_options.silent).lint(&files_to_lint, tx_error)
-            }) {
+        let lint_runner = match LintRunner::builder(options, config_store)
+            .with_linter(linter)
+            .with_type_aware(self.options.type_aware)
+            .with_silent(misc_options.silent)
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(err) => {
                 print_and_flush_stdout(stdout, &err);
                 return CliRunResult::TsGoLintError;
             }
+        };
+
+        // Configure the file system for external linter if needed
+        let file_system = if has_external_linter {
+            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+            {
+                Some(Box::new(crate::js_plugins::RawTransferFileSystem)
+                    as Box<dyn oxc_linter::RuntimeFileSystem + Sync + Send>)
+            }
+
+            #[cfg(not(all(
+                feature = "napi",
+                target_pointer_width = "64",
+                target_endian = "little"
+            )))]
+            unreachable!(
+                "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
+            );
         } else {
-            drop(tx_error);
+            None
+        };
+
+        if let Err(err) = lint_runner.lint_files(&files_to_lint, tx_error, file_system) {
+            print_and_flush_stdout(stdout, &err);
+            return CliRunResult::TsGoLintError;
         }
 
         let diagnostic_result = diagnostic_service.run(stdout);

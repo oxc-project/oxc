@@ -25,6 +25,7 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
+mod lint_runner;
 #[cfg(feature = "language_server")]
 mod lsp;
 mod module_graph_visitor;
@@ -61,6 +62,7 @@ pub use crate::{
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
     frameworks::FrameworkFlags,
+    lint_runner::{LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
