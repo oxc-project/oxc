@@ -25,10 +25,42 @@ export interface VisitorWithHooks extends Visitor {
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
 
-// AST node type.
-export interface Node {
+// Internal interface for any type which has `start` and `end` properties.
+// We'll add `range` and `loc` properties to this later.
+interface Spanned {
   start: number;
   end: number;
+}
+
+// AST node type.
+export interface Node extends Spanned {}
+
+// AST token type.
+export interface Token extends Spanned {
+  type: string;
+  value: string;
+}
+
+// Currently we only support `Node`s, but will add support for `Token`s later.
+export type NodeOrToken = Node | Token;
+
+// Comment.
+export interface Comment extends Spanned {
+  type: 'Line' | 'Block';
+  value: string;
+}
+
+// Source code location.
+export interface Location {
+  start: LineColumn;
+  end: LineColumn;
+}
+
+// Line number + column number pair.
+// `line` is 1-indexed, `column` is 0-indexed.
+export interface LineColumn {
+  line: number;
+  column: number;
 }
 
 // Element of compiled visitor array.

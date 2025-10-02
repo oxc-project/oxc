@@ -3,10 +3,31 @@ import type { CreateOnceRule, Plugin, Rule } from './plugins/load.ts';
 import type { BeforeHook, Visitor, VisitorWithHooks } from './plugins/types.ts';
 
 export type { Context, Diagnostic } from './plugins/context.ts';
-export type { Fix, Fixer, FixFn, NodeOrToken, Range } from './plugins/fix.ts';
+export type { Fix, Fixer, FixFn, Range } from './plugins/fix.ts';
 export type { CreateOnceRule, CreateRule, Plugin, Rule } from './plugins/load.ts';
-export type { SourceCode } from './plugins/source_code.ts';
-export type { AfterHook, BeforeHook, Node, RuleMeta, Visitor, VisitorWithHooks } from './plugins/types.ts';
+export type {
+  Definition,
+  DefinitionType,
+  Reference,
+  Scope,
+  ScopeManager,
+  ScopeType,
+  Variable,
+} from './plugins/scope.ts';
+export type { CountOptions, FilterFn, RangeOptions, SkipOptions, SourceCode } from './plugins/source_code.ts';
+export type {
+  AfterHook,
+  BeforeHook,
+  Comment,
+  LineColumn,
+  Location,
+  Node,
+  NodeOrToken,
+  RuleMeta,
+  Token,
+  Visitor,
+  VisitorWithHooks,
+} from './plugins/types.ts';
 
 const { defineProperty, getPrototypeOf, hasOwn, setPrototypeOf, create: ObjectCreate } = Object;
 
