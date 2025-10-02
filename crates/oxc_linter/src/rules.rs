@@ -646,6 +646,7 @@ pub(crate) mod vue {
     pub mod max_props;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
+    pub mod prefer_import_from_vue;
     pub mod require_typed_ref;
     pub mod valid_define_emits;
     pub mod valid_define_props;
@@ -1248,6 +1249,7 @@ oxc_macros::declare_all_lint_rules! {
     vue::max_props,
     vue::no_multiple_slot_args,
     vue::no_required_prop_with_default,
+    vue::prefer_import_from_vue,
     vue::require_typed_ref,
     vue::valid_define_emits,
     vue::valid_define_props,

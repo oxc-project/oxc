@@ -2920,6 +2920,10 @@ impl RuleRunner for crate::rules::vue::no_required_prop_with_default::NoRequired
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::vue::prefer_import_from_vue::PreferImportFromVue {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::vue::require_typed_ref::RequireTypedRef {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));

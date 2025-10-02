@@ -1,0 +1,114 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:27]
+ 1 │ import { createApp } from '@vue/runtime-dom'
+   ·                           ──────────────────
+   ╰────
+  help: Replace `'@vue/runtime-dom'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:26]
+ 1 │ import { computed } from '@vue/runtime-core'
+   ·                          ───────────────────
+   ╰────
+  help: Replace `'@vue/runtime-core'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:26]
+ 1 │ import { computed } from '@vue/reactivity'
+   ·                          ─────────────────
+   ╰────
+  help: Replace `'@vue/reactivity'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:32]
+ 1 │ import { normalizeClass } from '@vue/shared'
+   ·                                ─────────────
+   ╰────
+  help: Replace `'@vue/shared'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:25]
+ 1 │ import { unknown } from '@vue/reactivity'
+   ·                         ─────────────────
+   ╰────
+  help: Replace `'@vue/reactivity'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:25]
+ 1 │ import { unknown } from '@vue/runtime-dom'
+   ·                         ──────────────────
+   ╰────
+  help: Replace `'@vue/runtime-dom'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:22]
+ 1 │ import * as Foo from '@vue/reactivity'
+   ·                      ─────────────────
+   ╰────
+  help: Replace `'@vue/reactivity'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:22]
+ 1 │ import * as Foo from '@vue/runtime-dom'
+   ·                      ──────────────────
+   ╰────
+  help: Replace `'@vue/runtime-dom'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:15]
+ 1 │ export * from '@vue/reactivity'
+   ·               ─────────────────
+   ╰────
+  help: Replace `'@vue/reactivity'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:15]
+ 1 │ export * from '@vue/runtime-dom'
+   ·               ──────────────────
+   ╰────
+  help: Replace `'@vue/runtime-dom'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:26]
+ 1 │ export { computed } from '@vue/reactivity'
+   ·                          ─────────────────
+   ╰────
+  help: Replace `'@vue/reactivity'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:26]
+ 1 │ export { computed } from '@vue/runtime-dom'
+   ·                          ──────────────────
+   ╰────
+  help: Replace `'@vue/runtime-dom'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:25]
+ 1 │ export { unknown } from '@vue/reactivity'
+   ·                         ─────────────────
+   ╰────
+  help: Replace `'@vue/reactivity'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:25]
+ 1 │ export { unknown } from '@vue/runtime-dom'
+   ·                         ──────────────────
+   ╰────
+  help: Replace `'@vue/runtime-dom'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:21]
+ 1 │ import unknown from '@vue/reactivity'
+   ·                     ─────────────────
+   ╰────
+  help: Replace `'@vue/reactivity'` with `'vue'`.
+
+  ⚠ eslint-plugin-vue(prefer-import-from-vue): enforce import from 'vue' instead of import from '@vue/*'
+   ╭─[prefer_import_from_vue.tsx:1:21]
+ 1 │ import unknown from '@vue/runtime-dom'
+   ·                     ──────────────────
+   ╰────
+  help: Replace `'@vue/runtime-dom'` with `'vue'`.
