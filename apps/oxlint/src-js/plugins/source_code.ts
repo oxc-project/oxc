@@ -35,8 +35,9 @@ let sourceByteLen: number = 0;
 let ast: Program | null = null;
 
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
+// `lineStartOffsets` starts as `[0]`, and `resetSource` doesn't remove that initial element, so it's never empty.
 const lines: string[] = [],
-  lineStartOffsets: number[] = [];
+  lineStartOffsets: number[] = [0];
 
 // Lazily populated when `SOURCE_CODE.visitorKeys` is accessed.
 let visitorKeys: { [key: string]: string[] } | null = null;
@@ -101,7 +102,7 @@ function initLines(): void {
    * and uses match.index to get the correct line start indices.
    */
 
-  lineStartOffsets.push(0);
+  // Note: `lineStartOffsets` starts as `[0]`
   let lastOffset = 0, offset, match;
   while ((match = LINE_BREAK_PATTERN.exec(sourceText))) {
     offset = match.index;
@@ -126,7 +127,7 @@ export function resetSource(): void {
   sourceText = null;
   ast = null;
   lines.length = 0;
-  lineStartOffsets.length = 0;
+  lineStartOffsets.length = 1;
 }
 
 // `SourceCode` object.
