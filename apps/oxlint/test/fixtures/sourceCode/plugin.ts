@@ -6,8 +6,8 @@ const createRule: Rule = {
   create(context) {
     context.report({
       message: 'create:\n' +
-        `sourceCode.text: ${JSON.stringify(context.sourceCode.text)}\n` +
-        `sourceCode.getText(): ${JSON.stringify(context.sourceCode.getText())}`,
+        `text: ${JSON.stringify(context.sourceCode.text)}\n` +
+        `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
       node: SPAN,
     });
 
@@ -38,8 +38,8 @@ const createOnceRule: Rule = {
       before() {
         context.report({
           message: 'before:\n' +
-            `sourceCode.text: ${JSON.stringify(context.sourceCode.text)}\n` +
-            `sourceCode.getText(): ${JSON.stringify(context.sourceCode.getText())}`,
+            `text: ${JSON.stringify(context.sourceCode.text)}\n` +
+            `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
         });
       },

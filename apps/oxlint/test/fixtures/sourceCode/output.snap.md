@@ -4,8 +4,8 @@
 # stdout
 ```
   x source-code-plugin(create): create:
-  | sourceCode.text: "let foo, bar;\n"
-  | sourceCode.getText(): "let foo, bar;\n"
+  | text: "let foo, bar;\n"
+  | getText(): "let foo, bar;\n"
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -19,8 +19,8 @@
    `----
 
   x source-code-plugin(create-once): before:
-  | sourceCode.text: "let foo, bar;\n"
-  | sourceCode.getText(): "let foo, bar;\n"
+  | text: "let foo, bar;\n"
+  | getText(): "let foo, bar;\n"
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
@@ -81,8 +81,8 @@
    `----
 
   x source-code-plugin(create): create:
-  | sourceCode.text: "let qux;\n"
-  | sourceCode.getText(): "let qux;\n"
+  | text: "let qux;\n"
+  | getText(): "let qux;\n"
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^
@@ -96,8 +96,8 @@
    `----
 
   x source-code-plugin(create-once): before:
-  | sourceCode.text: "let qux;\n"
-  | sourceCode.getText(): "let qux;\n"
+  | text: "let qux;\n"
+  | getText(): "let qux;\n"
    ,-[files/2.js:1:1]
  1 | let qux;
    : ^

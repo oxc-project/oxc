@@ -6,6 +6,7 @@ import {
 } from '../generated/constants.js';
 import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
+import { resetSource, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
@@ -111,6 +112,9 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
 
   const sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
 
+  const hasBOM = false; // TODO: Set this correctly
+  setupSourceForFile(sourceText, hasBOM);
+
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
@@ -118,7 +122,7 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
     const ruleId = ruleIds[i],
       ruleAndContext = registeredRules[ruleId];
     const { rule, context } = ruleAndContext;
-    setupContextForFile(context, i, filePath, sourceText);
+    setupContextForFile(context, i, filePath);
 
     let { visitor } = ruleAndContext;
     if (visitor === null) {
@@ -175,4 +179,7 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
     // Reset array, ready for next file
     afterHooks.length = 0;
   }
+
+  // Reset source, to free memory
+  resetSource();
 }

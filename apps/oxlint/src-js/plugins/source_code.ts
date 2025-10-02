@@ -1,51 +1,76 @@
 import type { Program } from '@oxc-project/types';
-
 import type { Scope, ScopeManager, Variable } from './scope.ts';
 import type { Comment, LineColumn, Node, NodeOrToken, Token } from './types.ts';
 
 const { max } = Math;
 
+// Source text.
+// Initially `null`, but set to source text string before linting each file by `setupSourceForFile`.
+let sourceText: string | null = null;
+// Set before linting each file by `setupSourceForFile`.
+let hasBOM = false;
+
 /**
- * `SourceCode` class.
- *
- * Each rule has its own `SourceCode` object. It is stored in `Context` for that rule.
- *
- * A new `SourceCode` instance is NOT generated for each file.
- * The `SourceCode` instance for the rule is updated for each file.
+ * Set up source for the file about to be linted.
+ * @param sourceTextInput - Source text
+ * @param hasBOMInput - `true` if file's original source text has Unicode BOM
  */
-export class SourceCode {
-  // Source text.
-  // Initially `null`, but set to source text string before linting each file.
-  text: string = null as unknown as string;
+export function setupSourceForFile(sourceTextInput: string, hasBOMInput: boolean): void {
+  sourceText = sourceTextInput;
+  hasBOM = hasBOMInput;
+}
+
+/**
+ * Reset source after file has been linted, to free memory.
+ */
+export function resetSource(): void {
+  sourceText = null;
+}
+
+// `SourceCode` object.
+//
+// Only one file is linted at a time, so we can reuse a single object for all files.
+//
+// This has advantages:
+// 1. Property accesses don't need to go up prototype chain, as they would for instances of a class.
+// 2. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
+//
+// Freeze the object to prevent user mutating it.
+export const SOURCE_CODE = Object.freeze({
+  // Get source text.
+  get text(): string {
+    return sourceText;
+  },
 
   // `true` if source text has Unicode BOM.
-  // TODO: Set this correctly
-  hasBOM: boolean = false;
+  get hasBOM(): boolean {
+    return hasBOM;
+  },
 
   // Get AST of the file.
   get ast(): Program {
     throw new Error('`sourceCode.ast` not implemented yet'); // TODO
-  }
+  },
 
   // Get `ScopeManager` for the file.
   get scopeManager(): ScopeManager {
     throw new Error('`sourceCode.scopeManager` not implemented yet'); // TODO
-  }
+  },
 
   // Get visitor keys to traverse this AST.
   get visitorKeys(): { [key: string]: string[] } {
     throw new Error('`sourceCode.visitorKeys` not implemented yet'); // TODO
-  }
+  },
 
   // Get parser services for the file.
   get parserServices(): { [key: string]: unknown } {
     throw new Error('`sourceCode.parserServices` not implemented yet'); // TODO
-  }
+  },
 
   // Get source text as array of lines, split according to specification's definition of line breaks.
   get lines(): string[] {
     throw new Error('`sourceCode.lines` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the source code for the given node.
@@ -60,14 +85,14 @@ export class SourceCode {
     afterCount?: number | null | undefined,
   ): string {
     // ESLint treats all falsy values for `node` as undefined
-    if (!node) return this.text;
+    if (!node) return sourceText;
 
     // ESLint ignores falsy values for `beforeCount` and `afterCount`
     let { start, end } = node;
     if (beforeCount) start = max(start - beforeCount, 0);
     if (afterCount) end += afterCount;
-    return this.text.slice(start, end);
-  }
+    return sourceText.slice(start, end);
+  },
 
   /**
    * Retrieve an array containing all comments in the source code.
@@ -75,7 +100,7 @@ export class SourceCode {
    */
   getAllComments(): Comment[] {
     throw new Error('`sourceCode.getAllComments` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get all comment tokens directly before the given node or token.
@@ -85,7 +110,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
     throw new Error('`sourceCode.getCommentsBefore` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get all comment tokens directly after the given node or token.
@@ -95,7 +120,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
     throw new Error('`sourceCode.getCommentsAfter` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get all comment tokens inside the given node.
@@ -105,7 +130,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getCommentsInside(node: Node): Comment[] {
     throw new Error('`sourceCode.getCommentsInside` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Determine if two nodes or tokens have at least one whitespace character between them.
@@ -118,7 +143,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
     throw new Error('`sourceCode.isSpaceBetween` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Determine whether the given identifier node is a reference to a global variable.
@@ -128,12 +153,12 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   isGlobalReference(node: Node): boolean {
     throw new Error('`sourceCode.isGlobalReference` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get all tokens that are related to the given node.
    * @param node - The AST node.
-   * @param countOptions - Options object. If this is a function then it's `options.filter`.
+   * @param countOptions? - Options object. If this is a function then it's `options.filter`.
    * @returns Array of `Token`s.
    */
   /**
@@ -144,10 +169,13 @@ export class SourceCode {
    * @returns Array of `Token`s.
    */
   /* oxlint-disable no-unused-vars */
-  getTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null | undefined): Token[];
-  getTokens(node: Node, beforeCount?: number | null | undefined, afterCount?: number | null | undefined): Token[] {
+  getTokens(
+    node: Node,
+    countOptions?: CountOptions | number | FilterFn | null | undefined,
+    afterCount?: number | null | undefined,
+  ): Token[] {
     throw new Error('`sourceCode.getTokens` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -160,7 +188,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getFirstToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null | undefined): Token | null {
     throw new Error('`sourceCode.getFirstToken` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the first tokens of the given node.
@@ -172,7 +200,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getFirstTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null | undefined): Token[] {
     throw new Error('`sourceCode.getFirstTokens` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the last token of the given node.
@@ -183,7 +211,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getLastToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null | undefined): Token | null {
     throw new Error('`sourceCode.getLastToken` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the last tokens of the given node.
@@ -194,7 +222,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null | undefined): Token[] {
     throw new Error('`sourceCode.getLastTokens` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the token that precedes a given node or token.
@@ -208,7 +236,7 @@ export class SourceCode {
     skipOptions?: SkipOptions | number | FilterFn | null | undefined,
   ): Token | null {
     throw new Error('`sourceCode.getTokenBefore` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -223,7 +251,7 @@ export class SourceCode {
     countOptions?: CountOptions | number | FilterFn | null | undefined,
   ): Token[] {
     throw new Error('`sourceCode.getTokensBefore` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -238,7 +266,7 @@ export class SourceCode {
     skipOptions?: SkipOptions | number | FilterFn | null | undefined,
   ): Token | null {
     throw new Error('`sourceCode.getTokenAfter` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -253,7 +281,7 @@ export class SourceCode {
     countOptions?: CountOptions | number | FilterFn | null | undefined,
   ): Token[] {
     throw new Error('`sourceCode.getTokensAfter` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -275,14 +303,9 @@ export class SourceCode {
     nodeOrToken1: NodeOrToken | Comment,
     nodeOrToken2: NodeOrToken | Comment,
     countOptions?: CountOptions | number | FilterFn | null | undefined,
-  ): Token[];
-  getTokensBetween(
-    nodeOrToken1: NodeOrToken | Comment,
-    nodeOrToken2: NodeOrToken | Comment,
-    padding?: number,
   ): Token[] {
     throw new Error('`sourceCode.getTokensBetween` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -299,7 +322,7 @@ export class SourceCode {
     skipOptions?: SkipOptions | null | undefined,
   ): Token | null {
     throw new Error('`sourceCode.getFirstTokenBetween` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -316,7 +339,7 @@ export class SourceCode {
     countOptions?: CountOptions | number | FilterFn | null | undefined,
   ): Token[] {
     throw new Error('`sourceCode.getFirstTokensBetween` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -333,7 +356,7 @@ export class SourceCode {
     skipOptions?: SkipOptions | null | undefined,
   ): Token | null {
     throw new Error('`sourceCode.getLastTokenBetween` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -350,7 +373,7 @@ export class SourceCode {
     countOptions?: CountOptions | number | FilterFn | null | undefined,
   ): Token[] {
     throw new Error('`sourceCode.getLastTokensBetween` not implemented yet'); // TODO
-  }
+  },
   /* oxlint-enable no-unused-vars */
 
   /**
@@ -362,7 +385,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getTokenByRangeStart(index: number, rangeOptions?: RangeOptions | null | undefined): Token | null {
     throw new Error('`sourceCode.getTokenByRangeStart` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the deepest node containing a range index.
@@ -372,7 +395,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getNodeByRangeIndex(index: number): Node | null {
     throw new Error('`sourceCode.getNodeByRangeIndex` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Convert a source text index into a (line, column) pair.
@@ -383,7 +406,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getLocFromIndex(index: number): LineColumn {
     throw new Error('`sourceCode.getLocFromIndex` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Convert a `{ line, column }` pair into a range index.
@@ -395,7 +418,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getIndexFromLoc(loc: LineColumn): number {
     throw new Error('`sourceCode.getIndexFromLoc` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Check whether any comments exist or not between the given 2 nodes.
@@ -406,7 +429,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
     throw new Error('`sourceCode.commentsExistBetween` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get all the ancestors of a given node.
@@ -417,7 +440,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getAncestors(node: Node): Node[] {
     throw new Error('`sourceCode.getAncestors` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the variables that `node` defines.
@@ -428,7 +451,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getDeclaredVariables(node: Node): Variable[] {
     throw new Error('`sourceCode.getDeclaredVariables` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Get the scope for the given node
@@ -438,7 +461,7 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   getScope(node: Node): Scope {
     throw new Error('`sourceCode.getScope` not implemented yet'); // TODO
-  }
+  },
 
   /**
    * Mark a variable as used in the current scope
@@ -449,8 +472,10 @@ export class SourceCode {
   // oxlint-disable-next-line no-unused-vars
   markVariableAsUsed(name: string, refNode: Node): boolean {
     throw new Error('`sourceCode.markVariableAsUsed` not implemented yet'); // TODO
-  }
-}
+  },
+});
+
+export type SourceCode = typeof SOURCE_CODE;
 
 // Options for various `SourceCode` methods e.g. `getFirstToken`.
 export interface SkipOptions {
