@@ -151,10 +151,10 @@ impl TsGoLintState {
                             while cursor.position() < buffer.len() as u64 {
                                 let start_pos = cursor.position();
                                 match parse_single_message(&mut cursor) {
-                                    Ok(Some(TsGoLintMessage::Error(err))) => {
+                                    Ok(TsGoLintMessage::Error(err)) => {
                                         return Err(err.error);
                                     }
-                                    Ok(Some(TsGoLintMessage::Diagnostic(tsgolint_diagnostic))) => {
+                                    Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
                                         processed_up_to = cursor.position();
 
                                         let path = tsgolint_diagnostic.file_path.clone();
@@ -218,10 +218,6 @@ impl TsGoLintState {
                                             // Receiver has been dropped, stop processing
                                             return Ok(());
                                         }
-                                    }
-                                    Ok(None) => {
-                                        // Successfully parsed but no diagnostic to add
-                                        processed_up_to = cursor.position();
                                     }
                                     Err(_) => {
                                         // Could not parse a complete message, break and keep remaining data
@@ -351,12 +347,10 @@ impl TsGoLintState {
                                 while cursor.position() < buffer.len() as u64 {
                                     let start_pos = cursor.position();
                                     match parse_single_message(&mut cursor) {
-                                        Ok(Some(TsGoLintMessage::Error(err))) => {
+                                        Ok(TsGoLintMessage::Error(err)) => {
                                             return Err(err.error);
                                         }
-                                        Ok(Some(TsGoLintMessage::Diagnostic(
-                                            tsgolint_diagnostic,
-                                        ))) => {
+                                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
                                             processed_up_to = cursor.position();
 
                                             let path = tsgolint_diagnostic.file_path.clone();
@@ -399,10 +393,6 @@ impl TsGoLintState {
                                                 };
 
                                             result.push(message_with_position);
-                                        }
-                                        Ok(None) => {
-                                            // Successfully parsed but no diagnostic to add
-                                            processed_up_to = cursor.position();
                                         }
                                         Err(_) => {
                                             // Could not parse a complete message, break and keep remaining data
@@ -701,9 +691,7 @@ impl MessageType {
 /// Parses a single message from the binary tsgolint output.
 // Messages are encoded as follows:
 // | Payload Size (uint32 LE) - 4 bytes | Message Type (uint8) - 1 byte | Payload |
-fn parse_single_message(
-    cursor: &mut std::io::Cursor<&[u8]>,
-) -> Result<Option<TsGoLintMessage>, String> {
+fn parse_single_message(cursor: &mut std::io::Cursor<&[u8]>) -> Result<TsGoLintMessage, String> {
     let mut size_bytes = [0u8; 4];
     if cursor.read_exact(&mut size_bytes).is_err() {
         return Err("Failed to read size bytes".to_string());
@@ -728,21 +716,21 @@ fn parse_single_message(
             let error_payload = serde_json::from_str::<TsGoLintErrorPayload>(&payload_str)
                 .map_err(|e| format!("Failed to parse tsgolint error payload: {e}"))?;
 
-            Ok(Some(TsGoLintMessage::Error(TsGoLintError { error: error_payload.error })))
+            Ok(TsGoLintMessage::Error(TsGoLintError { error: error_payload.error }))
         }
         MessageType::Diagnostic => {
             let diagnostic_payload =
                 serde_json::from_str::<TsGoLintDiagnosticPayload>(&payload_str)
                     .map_err(|e| format!("Failed to parse tsgolint diagnostic payload: {e}"))?;
 
-            Ok(Some(TsGoLintMessage::Diagnostic(TsGoLintDiagnostic {
+            Ok(TsGoLintMessage::Diagnostic(TsGoLintDiagnostic {
                 range: diagnostic_payload.range,
                 rule: diagnostic_payload.rule,
                 message: diagnostic_payload.message,
                 fixes: diagnostic_payload.fixes,
                 suggestions: diagnostic_payload.suggestions,
                 file_path: diagnostic_payload.file_path,
-            })))
+            }))
         }
     }
 }
