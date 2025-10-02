@@ -4,30 +4,35 @@
 # stdout
 ```
   x source-code-plugin(create): create:
-  | text: "let foo, bar;\n"
-  | getText(): "let foo, bar;\n"
+  | text: "let foo, bar;\n\n// x\n// y\n"
+  | getText(): "let foo, bar;\n\n// x\n// y\n"
+  | lines: ["let foo, bar;","","// x","// y",""]
   | ast: "foo"
   | visitorKeys: left, right
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
+ 2 | 
    `----
 
   x source-code-plugin(create-once): after:
-  | source: "let foo, bar;\n"
+  | source: "let foo, bar;\n\n// x\n// y\n"
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
+ 2 | 
    `----
 
   x source-code-plugin(create-once): before:
-  | text: "let foo, bar;\n"
-  | getText(): "let foo, bar;\n"
+  | text: "let foo, bar;\n\n// x\n// y\n"
+  | getText(): "let foo, bar;\n\n// x\n// y\n"
+  | lines: ["let foo, bar;","","// x","// y",""]
   | ast: "foo"
   | visitorKeys: left, right
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^
+ 2 | 
    `----
 
   x source-code-plugin(create): var decl:
@@ -35,6 +40,7 @@
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^^^^^^^^^^^^^
+ 2 | 
    `----
 
   x source-code-plugin(create-once): var decl:
@@ -42,6 +48,7 @@
    ,-[files/1.js:1:1]
  1 | let foo, bar;
    : ^^^^^^^^^^^^^
+ 2 | 
    `----
 
   x source-code-plugin(create): ident "foo":
@@ -52,6 +59,7 @@
    ,-[files/1.js:1:5]
  1 | let foo, bar;
    :     ^^^
+ 2 | 
    `----
 
   x source-code-plugin(create-once): ident "foo":
@@ -62,6 +70,7 @@
    ,-[files/1.js:1:5]
  1 | let foo, bar;
    :     ^^^
+ 2 | 
    `----
 
   x source-code-plugin(create): ident "bar":
@@ -72,6 +81,7 @@
    ,-[files/1.js:1:10]
  1 | let foo, bar;
    :          ^^^
+ 2 | 
    `----
 
   x source-code-plugin(create-once): ident "bar":
@@ -82,11 +92,13 @@
    ,-[files/1.js:1:10]
  1 | let foo, bar;
    :          ^^^
+ 2 | 
    `----
 
   x source-code-plugin(create): create:
   | text: "let qux;\n"
   | getText(): "let qux;\n"
+  | lines: ["let qux;",""]
   | ast: "qux"
   | visitorKeys: left, right
    ,-[files/2.js:1:1]
@@ -104,6 +116,7 @@
   x source-code-plugin(create-once): before:
   | text: "let qux;\n"
   | getText(): "let qux;\n"
+  | lines: ["let qux;",""]
   | ast: "qux"
   | visitorKeys: left, right
    ,-[files/2.js:1:1]

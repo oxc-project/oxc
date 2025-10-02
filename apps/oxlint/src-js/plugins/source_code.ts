@@ -16,6 +16,9 @@ const require = createRequire(import.meta.url);
 
 const { max } = Math;
 
+// Pattern for splitting source text into lines
+const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
+
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
@@ -30,6 +33,10 @@ let hasBOM = false;
 let sourceText: string | null = null;
 let sourceByteLen: number = 0;
 let ast: Program | null = null;
+
+// Lazily populated when `SOURCE_CODE.lines` is accessed.
+const lines: string[] = [],
+  lineStartOffsets: number[] = [];
 
 // Lazily populated when `SOURCE_CODE.visitorKeys` is accessed.
 let visitorKeys: { [key: string]: string[] } | null = null;
@@ -76,6 +83,35 @@ export function getAst(): Program {
 }
 
 /**
+ * Split source text into lines.
+ */
+function initLines(): void {
+  if (sourceText === null) initSourceText();
+
+  // This implementation is based on the one in ESLint.
+  // TODO: Investigate if using `String.prototype.matchAll` is faster.
+  // This comment is above ESLint's implementation:
+  /*
+   * Previously, this was implemented using a regex that
+   * matched a sequence of non-linebreak characters followed by a
+   * linebreak, then adding the lengths of the matches. However,
+   * this caused a catastrophic backtracking issue when the end
+   * of a file contained a large number of non-newline characters.
+   * To avoid this, the current implementation just matches newlines
+   * and uses match.index to get the correct line start indices.
+   */
+
+  lineStartOffsets.push(0);
+  let lastOffset = 0, offset, match;
+  while ((match = LINE_BREAK_PATTERN.exec(sourceText))) {
+    offset = match.index;
+    lines.push(sourceText.slice(lastOffset, offset));
+    lineStartOffsets.push(lastOffset = offset + match[0].length);
+  }
+  lines.push(sourceText.slice(lastOffset));
+}
+
+/**
  * Reset source after file has been linted, to free memory.
  *
  * Setting `buffer` to `null` also prevents AST being deserialized after linting,
@@ -89,6 +125,8 @@ export function resetSource(): void {
   buffer = null;
   sourceText = null;
   ast = null;
+  lines.length = 0;
+  lineStartOffsets.length = 0;
 }
 
 // `SourceCode` object.
@@ -136,7 +174,8 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get source text as array of lines, split according to specification's definition of line breaks.
   get lines(): string[] {
-    throw new Error('`sourceCode.lines` not implemented yet'); // TODO
+    if (lines.length === 0) initLines();
+    return lines;
   },
 
   /**

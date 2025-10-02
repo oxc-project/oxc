@@ -13,6 +13,7 @@ const createRule: Rule = {
       message: 'create:\n' +
         `text: ${JSON.stringify(context.sourceCode.text)}\n` +
         `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
+        `lines: ${JSON.stringify(context.sourceCode.lines)}\n` +
         // @ts-ignore
         `ast: "${ast.body[0].declarations[0].id.name}"\n` +
         `visitorKeys: ${context.sourceCode.visitorKeys.BinaryExpression.join(', ')}`,
@@ -55,6 +56,7 @@ const createOnceRule: Rule = {
           message: 'before:\n' +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
+            `lines: ${JSON.stringify(context.sourceCode.lines)}\n` +
             // @ts-ignore
             `ast: "${ast.body[0].declarations[0].id.name}"\n` +
             `visitorKeys: ${context.sourceCode.visitorKeys.BinaryExpression.join(', ')}`,
