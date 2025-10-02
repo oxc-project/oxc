@@ -132,8 +132,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
         }
     }
 
-    fn enter_await_expression(&mut self, node: &mut AwaitExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.top_level_await && Self::is_top_level_await(ctx) {
+    fn enter_await_expression(
+        &mut self,
+        node: &mut AwaitExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.top_level_await && Self::is_top_level(ctx) {
             let warning = OxcDiagnostic::warn(
                 "Top-level await is not available in the configured target environment.",
             )
@@ -144,9 +148,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
 }
 
 impl ES2022<'_, '_> {
-    fn is_top_level_await(ctx: &TraverseCtx) -> bool {
-        // Check if the hoist scope is the root scope
-        // Top-level await means await at the module top level
+    fn is_top_level(ctx: &TraverseCtx) -> bool {
         ctx.current_hoist_scope_id() == ctx.scoping().root_scope_id()
     }
 }
