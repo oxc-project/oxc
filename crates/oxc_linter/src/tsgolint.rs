@@ -662,7 +662,6 @@ impl Iterator for TsGoLintMessageStream {
             let mut cursor = std::io::Cursor::new(self.buffer.as_slice());
 
             if cursor.position() < self.buffer.len() as u64 {
-                let start_pos = cursor.position();
                 match parse_single_message(&mut cursor) {
                     Ok(message) => {
                         // Successfully parsed a message, remove it from buffer
@@ -670,9 +669,9 @@ impl Iterator for TsGoLintMessageStream {
                         self.buffer.drain(..cursor.position() as usize);
                         return Some(Ok(message));
                     }
-                    Err(_) => {
-                        // Could not parse a complete message, need more data
-                        cursor.set_position(start_pos);
+                    Err(TsGoLintMessageParseError::IncompleteData) => {}
+                    Err(e) => {
+                        return Some(Err(e.to_string()));
                     }
                 }
             }
