@@ -127,114 +127,81 @@ impl TsGoLintState {
             drop(stdin);
 
             // Stream diagnostics as they are emitted, rather than waiting for all output
-            let mut stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
             // Process stdout stream in a separate thread to send diagnostics as they arrive
             let cwd_clone = self.cwd.clone();
 
             let stdout_handler = std::thread::spawn(move || -> Result<(), String> {
-                let mut buffer = Vec::with_capacity(8192);
-                let mut read_buf = [0u8; 8192];
+                let msg_iter = TsGoLintMessageStream::new(stdout);
 
                 let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
 
-                loop {
-                    match stdout.read(&mut read_buf) {
-                        Ok(0) => break, // EOF
-                        Ok(n) => {
-                            buffer.extend_from_slice(&read_buf[..n]);
+                for msg in msg_iter {
+                    match msg {
+                        Ok(TsGoLintMessage::Error(err)) => {
+                            return Err(err.error);
+                        }
+                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
+                            let path = tsgolint_diagnostic.file_path.clone();
+                            let Some(resolved_config) = resolved_configs.get(&path) else {
+                                // If we don't have a resolved config for this path, skip it. We should always
+                                // have a resolved config though, since we processed them already above.
+                                continue;
+                            };
 
-                            // Try to parse complete messages from buffer
-                            let mut cursor = std::io::Cursor::new(buffer.as_slice());
-                            let mut processed_up_to: u64 = 0;
-
-                            while cursor.position() < buffer.len() as u64 {
-                                let start_pos = cursor.position();
-                                match parse_single_message(&mut cursor) {
-                                    Ok(TsGoLintMessage::Error(err)) => {
-                                        return Err(err.error);
+                            let severity =
+                                resolved_config.rules.iter().find_map(|(rule, status)| {
+                                    if rule.name() == tsgolint_diagnostic.rule {
+                                        Some(*status)
+                                    } else {
+                                        None
                                     }
-                                    Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                                        processed_up_to = cursor.position();
+                                });
+                            let Some(severity) = severity else {
+                                // If the severity is not found, we should not report the diagnostic
+                                continue;
+                            };
 
-                                        let path = tsgolint_diagnostic.file_path.clone();
-                                        let Some(resolved_config) = resolved_configs.get(&path)
-                                        else {
-                                            // If we don't have a resolved config for this path, skip it. We should always
-                                            // have a resolved config though, since we processed them already above.
-                                            continue;
-                                        };
+                            let oxc_diagnostic: OxcDiagnostic =
+                                OxcDiagnostic::from(tsgolint_diagnostic);
 
-                                        let severity = resolved_config.rules.iter().find_map(
-                                            |(rule, status)| {
-                                                if rule.name() == tsgolint_diagnostic.rule {
-                                                    Some(*status)
-                                                } else {
-                                                    None
-                                                }
-                                            },
-                                        );
-                                        let Some(severity) = severity else {
-                                            // If the severity is not found, we should not report the diagnostic
-                                            continue;
-                                        };
+                            let oxc_diagnostic =
+                                oxc_diagnostic.with_severity(if severity == AllowWarnDeny::Deny {
+                                    Severity::Error
+                                } else {
+                                    Severity::Warning
+                                });
 
-                                        let oxc_diagnostic: OxcDiagnostic =
-                                            OxcDiagnostic::from(tsgolint_diagnostic);
+                            let source_text: &str = if self.silent {
+                                // The source text is not needed in silent mode.
+                                // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
+                                ""
+                            } else if let Some(source_text) = source_text_map.get(&path) {
+                                source_text.as_str()
+                            } else {
+                                let source_text =
+                                    read_to_string(&path).unwrap_or_else(|_| String::new());
+                                // Insert and get a reference to the inserted string
+                                let entry =
+                                    source_text_map.entry(path.clone()).or_insert(source_text);
+                                entry.as_str()
+                            };
 
-                                        let oxc_diagnostic = oxc_diagnostic.with_severity(
-                                            if severity == AllowWarnDeny::Deny {
-                                                Severity::Error
-                                            } else {
-                                                Severity::Warning
-                                            },
-                                        );
+                            let diagnostics = DiagnosticService::wrap_diagnostics(
+                                cwd_clone.clone(),
+                                path.clone(),
+                                source_text,
+                                vec![oxc_diagnostic],
+                            );
 
-                                        let source_text: &str = if self.silent {
-                                            // The source text is not needed in silent mode.
-                                            // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
-                                            ""
-                                        } else if let Some(source_text) = source_text_map.get(&path)
-                                        {
-                                            source_text.as_str()
-                                        } else {
-                                            let source_text = read_to_string(&path)
-                                                .unwrap_or_else(|_| String::new());
-                                            // Insert and get a reference to the inserted string
-                                            let entry = source_text_map
-                                                .entry(path.clone())
-                                                .or_insert(source_text);
-                                            entry.as_str()
-                                        };
-
-                                        let diagnostics = DiagnosticService::wrap_diagnostics(
-                                            cwd_clone.clone(),
-                                            path.clone(),
-                                            source_text,
-                                            vec![oxc_diagnostic],
-                                        );
-
-                                        if error_sender.send((path, diagnostics)).is_err() {
-                                            // Receiver has been dropped, stop processing
-                                            return Ok(());
-                                        }
-                                    }
-                                    Err(_) => {
-                                        // Could not parse a complete message, break and keep remaining data
-                                        cursor.set_position(start_pos);
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Keep unprocessed data for next iteration
-                            if processed_up_to > 0 {
-                                #[expect(clippy::cast_possible_truncation)]
-                                buffer.drain(..processed_up_to as usize);
+                            if error_sender.send((path, diagnostics)).is_err() {
+                                // Receiver has been dropped, stop processing
+                                return Ok(());
                             }
                         }
                         Err(e) => {
-                            return Err(format!("Failed to read from tsgolint stdout: {e}"));
+                            return Err(e);
                         }
                     }
                 }
@@ -684,6 +651,60 @@ impl MessageType {
             0 => Some(MessageType::Error),
             1 => Some(MessageType::Diagnostic),
             _ => None,
+        }
+    }
+}
+
+/// Iterator that streams messages from tsgolint stdout.
+struct TsGoLintMessageStream {
+    stdout: std::process::ChildStdout,
+    buffer: Vec<u8>,
+}
+
+impl TsGoLintMessageStream {
+    fn new(stdout: std::process::ChildStdout) -> TsGoLintMessageStream {
+        TsGoLintMessageStream { stdout, buffer: Vec::with_capacity(8192) }
+    }
+}
+
+impl Iterator for TsGoLintMessageStream {
+    type Item = Result<TsGoLintMessage, String>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut read_buf = [0u8; 8192];
+
+        loop {
+            // Try to parse a complete message from the existing buffer
+            let mut cursor = std::io::Cursor::new(self.buffer.as_slice());
+
+            if cursor.position() < self.buffer.len() as u64 {
+                let start_pos = cursor.position();
+                match parse_single_message(&mut cursor) {
+                    Ok(message) => {
+                        // Successfully parsed a message, remove it from buffer
+                        #[expect(clippy::cast_possible_truncation)]
+                        self.buffer.drain(..cursor.position() as usize);
+                        return Some(Ok(message));
+                    }
+                    Err(_) => {
+                        // Could not parse a complete message, need more data
+                        cursor.set_position(start_pos);
+                    }
+                }
+            }
+
+            // Read more data from stdout
+            match self.stdout.read(&mut read_buf) {
+                Ok(0) => {
+                    return None;
+                }
+                Ok(n) => {
+                    self.buffer.extend_from_slice(&read_buf[..n]);
+                }
+                Err(e) => {
+                    return Some(Err(format!("Failed to read from tsgolint stdout: {e}")));
+                }
+            }
         }
     }
 }
