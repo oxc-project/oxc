@@ -693,40 +693,65 @@ impl Iterator for TsGoLintMessageStream {
     }
 }
 
+enum TsGoLintMessageParseError {
+    IncompleteData,
+    InvalidMessageType(InvalidMessageType),
+    InvalidErrorPayload(serde_json::Error),
+    InvalidDiagnosticPayload(serde_json::Error),
+}
+
+impl std::fmt::Display for TsGoLintMessageParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TsGoLintMessageParseError::IncompleteData => write!(f, "Incomplete data"),
+            TsGoLintMessageParseError::InvalidMessageType(e) => write!(f, "{e}"),
+            TsGoLintMessageParseError::InvalidErrorPayload(e) => {
+                write!(f, "Failed to parse tsgolint error payload: {e}")
+            }
+            TsGoLintMessageParseError::InvalidDiagnosticPayload(e) => {
+                write!(f, "Failed to parse tsgolint diagnostic payload: {e}")
+            }
+        }
+    }
+}
+
 /// Parses a single message from the binary tsgolint output.
 // Messages are encoded as follows:
 // | Payload Size (uint32 LE) - 4 bytes | Message Type (uint8) - 1 byte | Payload |
-fn parse_single_message(cursor: &mut std::io::Cursor<&[u8]>) -> Result<TsGoLintMessage, String> {
+fn parse_single_message(
+    cursor: &mut std::io::Cursor<&[u8]>,
+) -> Result<TsGoLintMessage, TsGoLintMessageParseError> {
     let mut size_bytes = [0u8; 4];
     if cursor.read_exact(&mut size_bytes).is_err() {
-        return Err("Failed to read size bytes".to_string());
+        return Err(TsGoLintMessageParseError::IncompleteData);
     }
     let size = u32::from_le_bytes(size_bytes) as usize;
 
     let mut message_type_byte = [0u8; 1];
     if cursor.read_exact(&mut message_type_byte).is_err() {
-        return Err("Failed to read message type byte".to_string());
+        return Err(TsGoLintMessageParseError::IncompleteData);
     }
+
     let message_type = MessageType::try_from(message_type_byte[0])
-        .map_err(|_| "Invalid message type byte".to_string())?;
+        .map_err(TsGoLintMessageParseError::InvalidMessageType)?;
 
     let mut payload_bytes = vec![0u8; size];
     if cursor.read_exact(&mut payload_bytes).is_err() {
-        return Err("Failed to read payload bytes".to_string());
+        return Err(TsGoLintMessageParseError::IncompleteData);
     }
     let payload_str = String::from_utf8_lossy(&payload_bytes);
 
     match message_type {
         MessageType::Error => {
             let error_payload = serde_json::from_str::<TsGoLintErrorPayload>(&payload_str)
-                .map_err(|e| format!("Failed to parse tsgolint error payload: {e}"))?;
+                .map_err(TsGoLintMessageParseError::InvalidErrorPayload)?;
 
             Ok(TsGoLintMessage::Error(TsGoLintError { error: error_payload.error }))
         }
         MessageType::Diagnostic => {
             let diagnostic_payload =
                 serde_json::from_str::<TsGoLintDiagnosticPayload>(&payload_str)
-                    .map_err(|e| format!("Failed to parse tsgolint diagnostic payload: {e}"))?;
+                    .map_err(TsGoLintMessageParseError::InvalidDiagnosticPayload)?;
 
             Ok(TsGoLintMessage::Diagnostic(TsGoLintDiagnostic {
                 range: diagnostic_payload.range,
