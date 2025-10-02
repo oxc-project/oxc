@@ -7,6 +7,33 @@
   | text: "let foo, bar;\n\n// x\n// y\n"
   | getText(): "let foo, bar;\n\n// x\n// y\n"
   | lines: ["let foo, bar;","","// x","// y",""]
+  | locs:
+  |   0 => { line: 1, column: 0 }("l")
+  |   1 => { line: 1, column: 1 }("e")
+  |   2 => { line: 1, column: 2 }("t")
+  |   3 => { line: 1, column: 3 }(" ")
+  |   4 => { line: 1, column: 4 }("f")
+  |   5 => { line: 1, column: 5 }("o")
+  |   6 => { line: 1, column: 6 }("o")
+  |   7 => { line: 1, column: 7 }(",")
+  |   8 => { line: 1, column: 8 }(" ")
+  |   9 => { line: 1, column: 9 }("b")
+  |   10 => { line: 1, column: 10 }("a")
+  |   11 => { line: 1, column: 11 }("r")
+  |   12 => { line: 1, column: 12 }(";")
+  |   13 => { line: 1, column: 13 }("\n")
+  |   14 => { line: 2, column: 0 }("\n")
+  |   15 => { line: 3, column: 0 }("/")
+  |   16 => { line: 3, column: 1 }("/")
+  |   17 => { line: 3, column: 2 }(" ")
+  |   18 => { line: 3, column: 3 }("x")
+  |   19 => { line: 3, column: 4 }("\n")
+  |   20 => { line: 4, column: 0 }("/")
+  |   21 => { line: 4, column: 1 }("/")
+  |   22 => { line: 4, column: 2 }(" ")
+  |   23 => { line: 4, column: 3 }("y")
+  |   24 => { line: 4, column: 4 }("\n")
+  |   25 => { line: 5, column: 0 }("<EOF>")
   | ast: "foo"
   | visitorKeys: left, right
    ,-[files/1.js:1:1]
@@ -27,6 +54,33 @@
   | text: "let foo, bar;\n\n// x\n// y\n"
   | getText(): "let foo, bar;\n\n// x\n// y\n"
   | lines: ["let foo, bar;","","// x","// y",""]
+  | locs:
+  |   0 => { line: 1, column: 0 }("l")
+  |   1 => { line: 1, column: 1 }("e")
+  |   2 => { line: 1, column: 2 }("t")
+  |   3 => { line: 1, column: 3 }(" ")
+  |   4 => { line: 1, column: 4 }("f")
+  |   5 => { line: 1, column: 5 }("o")
+  |   6 => { line: 1, column: 6 }("o")
+  |   7 => { line: 1, column: 7 }(",")
+  |   8 => { line: 1, column: 8 }(" ")
+  |   9 => { line: 1, column: 9 }("b")
+  |   10 => { line: 1, column: 10 }("a")
+  |   11 => { line: 1, column: 11 }("r")
+  |   12 => { line: 1, column: 12 }(";")
+  |   13 => { line: 1, column: 13 }("\n")
+  |   14 => { line: 2, column: 0 }("\n")
+  |   15 => { line: 3, column: 0 }("/")
+  |   16 => { line: 3, column: 1 }("/")
+  |   17 => { line: 3, column: 2 }(" ")
+  |   18 => { line: 3, column: 3 }("x")
+  |   19 => { line: 3, column: 4 }("\n")
+  |   20 => { line: 4, column: 0 }("/")
+  |   21 => { line: 4, column: 1 }("/")
+  |   22 => { line: 4, column: 2 }(" ")
+  |   23 => { line: 4, column: 3 }("y")
+  |   24 => { line: 4, column: 4 }("\n")
+  |   25 => { line: 5, column: 0 }("<EOF>")
   | ast: "foo"
   | visitorKeys: left, right
    ,-[files/1.js:1:1]
@@ -56,6 +110,8 @@
   | source with before: "t foo"
   | source with after: "foo,"
   | source with both: "t foo,"
+  | start loc: {"line":1,"column":4}
+  | end loc: {"line":1,"column":7}
    ,-[files/1.js:1:5]
  1 | let foo, bar;
    :     ^^^
@@ -67,6 +123,8 @@
   | source with before: "t foo"
   | source with after: "foo,"
   | source with both: "t foo,"
+  | start loc: {"line":1,"column":4}
+  | end loc: {"line":1,"column":7}
    ,-[files/1.js:1:5]
  1 | let foo, bar;
    :     ^^^
@@ -78,6 +136,8 @@
   | source with before: ", bar"
   | source with after: "bar;"
   | source with both: ", bar;"
+  | start loc: {"line":1,"column":9}
+  | end loc: {"line":1,"column":12}
    ,-[files/1.js:1:10]
  1 | let foo, bar;
    :          ^^^
@@ -89,6 +149,8 @@
   | source with before: ", bar"
   | source with after: "bar;"
   | source with both: ", bar;"
+  | start loc: {"line":1,"column":9}
+  | end loc: {"line":1,"column":12}
    ,-[files/1.js:1:10]
  1 | let foo, bar;
    :          ^^^
@@ -99,6 +161,17 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | lines: ["let qux;",""]
+  | locs:
+  |   0 => { line: 1, column: 0 }("l")
+  |   1 => { line: 1, column: 1 }("e")
+  |   2 => { line: 1, column: 2 }("t")
+  |   3 => { line: 1, column: 3 }(" ")
+  |   4 => { line: 1, column: 4 }("q")
+  |   5 => { line: 1, column: 5 }("u")
+  |   6 => { line: 1, column: 6 }("x")
+  |   7 => { line: 1, column: 7 }(";")
+  |   8 => { line: 1, column: 8 }("\n")
+  |   9 => { line: 2, column: 0 }("<EOF>")
   | ast: "qux"
   | visitorKeys: left, right
    ,-[files/2.js:1:1]
@@ -117,6 +190,17 @@
   | text: "let qux;\n"
   | getText(): "let qux;\n"
   | lines: ["let qux;",""]
+  | locs:
+  |   0 => { line: 1, column: 0 }("l")
+  |   1 => { line: 1, column: 1 }("e")
+  |   2 => { line: 1, column: 2 }("t")
+  |   3 => { line: 1, column: 3 }(" ")
+  |   4 => { line: 1, column: 4 }("q")
+  |   5 => { line: 1, column: 5 }("u")
+  |   6 => { line: 1, column: 6 }("x")
+  |   7 => { line: 1, column: 7 }(";")
+  |   8 => { line: 1, column: 8 }("\n")
+  |   9 => { line: 2, column: 0 }("<EOF>")
   | ast: "qux"
   | visitorKeys: left, right
    ,-[files/2.js:1:1]
@@ -143,6 +227,8 @@
   | source with before: "t qux"
   | source with after: "qux;"
   | source with both: "t qux;"
+  | start loc: {"line":1,"column":4}
+  | end loc: {"line":1,"column":7}
    ,-[files/2.js:1:5]
  1 | let qux;
    :     ^^^
@@ -153,6 +239,8 @@
   | source with before: "t qux"
   | source with after: "qux;"
   | source with both: "t qux;"
+  | start loc: {"line":1,"column":4}
+  | end loc: {"line":1,"column":7}
    ,-[files/2.js:1:5]
  1 | let qux;
    :     ^^^
