@@ -132,7 +132,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// Create a new [`HashMap`] whose elements are taken from an iterator and
     /// allocated in the given `allocator`.
     ///
-    /// This is behaviorially identical to [`FromIterator::from_iter`].
+    /// This is behaviorally identical to [`FromIterator::from_iter`].
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = (K, V)>>(
         iter: I,
