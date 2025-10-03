@@ -241,7 +241,8 @@ debug = false
 [profile.test]
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
-debug = false
+debug = true
+strip = false # Keep
 
 [profile.dev.package]
 # Compile macros with some optimizations to make consuming crates build faster
@@ -258,11 +259,8 @@ opt-level = 'z'
 [profile.release]
 # Configurations explicitly listed here for clarity.
 # Using the best options for performance.
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-strip = "symbols" # Set to `false` for debug information
-debug = false # Set to `true` for debug information
+debug = true
+strip = false # Keep
 panic = "abort" # Let it crash and force ourselves to write safe Rust
 
 # Profile used for release mode, but with debugging information for profiling

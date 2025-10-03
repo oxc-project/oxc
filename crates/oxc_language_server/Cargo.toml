@@ -18,8 +18,11 @@ workspace = true
 
 [[bin]]
 name = "oxc_language_server"
-test = true
+path = "src/lib.rs"
+test = false
 doctest = false
+debug = true
+strip = false # Keep debug information in binary
 
 [dependencies]
 oxc_allocator = { workspace = true }
@@ -30,6 +33,7 @@ oxc_linter = { workspace = true, features = ["language_server"] }
 oxc_parser = { workspace = true }
 
 #
+dhat = "0.3.3"
 env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
