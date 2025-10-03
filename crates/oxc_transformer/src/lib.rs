@@ -210,6 +210,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
             typescript.exit_program(program, ctx);
         }
         self.x2_es2022.exit_program(program, ctx);
+        self.x2_es2020.exit_program(program, ctx);
         self.x2_es2018.exit_program(program, ctx);
         self.common.exit_program(program, ctx);
     }

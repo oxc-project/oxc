@@ -77,6 +77,7 @@ impl EnvOptions {
             },
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options {
+                export_namespace_from: true,
                 nullish_coalescing_operator: true,
                 // Turn this on would throw error for all bigints.
                 big_int: false,
@@ -154,6 +155,7 @@ impl From<EngineTargets> for EnvOptions {
                 optional_catch_binding: o.has_feature(ES2019OptionalCatchBinding),
             },
             es2020: ES2020Options {
+                export_namespace_from: o.has_feature(ES2020ExportNamespaceFrom),
                 nullish_coalescing_operator: o.has_feature(ES2020NullishCoalescingOperator),
                 big_int: o.has_feature(ES2020BigInt),
                 optional_chaining: o.has_feature(ES2020OptionalChaining),
