@@ -29,8 +29,14 @@ impl CommentNodeId {
 }
 
 impl Idx for CommentNodeId {
+    const MAX: usize = u32::MAX as usize;
+
     fn from_usize(idx: usize) -> Self {
         Self(u32::try_from(idx).expect("`idx` is greater than `u32::MAX`"))
+    }
+
+    unsafe fn from_usize_unchecked(idx: usize) -> Self {
+        Self(idx as u32)
     }
 
     fn index(self) -> usize {

@@ -1974,8 +1974,7 @@ dependencies = [
 [[package]]
 name = "oxc_index"
 version = "3.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "967ae797e1f284bd1385f2d8e8ab94293ad27f623c76839ecf66827521365f5b"
+source = "git+https://github.com/oxc-project/oxc-index-vec.git?branch=reduce-bounds-checks#e2d8098ce9a3d57ab649e4d7e9df2bfa20ac76a3"
 dependencies = [
  "serde",
 ]
