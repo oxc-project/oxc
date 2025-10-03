@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 
 use oxc_allocator::{Box, TakeIn};
-use oxc_ast::ast::*;
+use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
@@ -191,7 +191,7 @@ impl<'a> PeepholeOptimizations {
         *node = ctx.ast.expression_call(
             original_span,
             new_root_callee.take_in(ctx.ast),
-            Option::<TSTypeParameterInstantiation>::None,
+            NONE,
             ctx.ast.vec_from_iter(
                 collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx.ast)),
             ),
@@ -259,7 +259,7 @@ impl<'a> PeepholeOptimizations {
                     Some(ctx.ast.expression_call(
                         span,
                         callee.take_in(ctx.ast),
-                        Option::<TSTypeParameterInstantiation>::None,
+                        NONE,
                         args.take_in(ctx.ast),
                         false,
                     ))

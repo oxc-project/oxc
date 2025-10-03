@@ -762,7 +762,7 @@ impl<'a> PeepholeOptimizations {
             ctx.ast.expression_call(
                 SPAN,
                 callee,
-                Option::<TSTypeParameterInstantiation>::None,
+                NONE,
                 ctx.ast.vec1(Argument::from(ctx.ast.expression_numeric_literal(
                     SPAN,
                     offset,
@@ -1395,7 +1395,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.ast.identifier_name(expr.span(), "split"),
                 false,
             )),
-            Option::<TSTypeParameterInstantiation>::None,
+            NONE,
             ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(
                 expr.span(),
                 ctx.ast.atom(delimiter),
