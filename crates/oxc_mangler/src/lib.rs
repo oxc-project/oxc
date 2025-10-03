@@ -421,7 +421,7 @@ impl<'t> Mangler<'t> {
                 count += 1;
                 // Do not mangle keywords and unresolved references
                 let n = name.as_str();
-                if !is_keyword(n)
+                if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
                     && !(root_bindings.contains_key(n)
@@ -603,14 +603,6 @@ impl<'t> SlotFrequency<'t> {
     fn new(temp_allocator: &'t Allocator) -> Self {
         Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(temp_allocator) }
     }
-}
-
-#[rustfmt::skip]
-fn is_keyword(s: &str) -> bool {
-    matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
-            | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
-            | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
-            | "void" | "with")
 }
 
 // Maximum length of string is 15 (`slot_4294967295` for `u32::MAX`).
