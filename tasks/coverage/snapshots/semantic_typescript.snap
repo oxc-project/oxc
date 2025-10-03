@@ -7435,8 +7435,8 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDoesNotUseReexportedNamespaceAsLocal.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["add", "x"]
-rebuilt        : ScopeId(0): ["x"]
+after transform: ScopeId(0): ["_Q", "add", "x"]
+rebuilt        : ScopeId(0): ["_Q", "x"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
@@ -37758,8 +37758,8 @@ rebuilt        : ["x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["importStarTestA", "importTest", "reimportTest", "someValue", "typeA", "typeB", "typeC", "valueX", "valueY", "valueZ"]
-rebuilt        : ScopeId(0): ["importStarTestA", "importTest", "reimportTest", "someValue", "valueX", "valueY", "valueZ"]
+after transform: ScopeId(0): ["_Z", "importStarTestA", "importTest", "reimportTest", "someValue", "typeA", "typeB", "typeC", "valueX", "valueY", "valueZ"]
+rebuilt        : ScopeId(0): ["_Z", "importStarTestA", "importTest", "reimportTest", "someValue", "valueX", "valueY", "valueZ"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
