@@ -33,6 +33,7 @@ oxc_linter = { workspace = true, features = ["language_server"] }
 oxc_parser = { workspace = true }
 
 #
+dhat = "0.3.3"
 env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
@@ -43,7 +44,6 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tower-lsp-server = { workspace = true, features = ["proposed"] }
-dhat = "0.3.3"
 
 [dev-dependencies]
 insta = { workspace = true }
