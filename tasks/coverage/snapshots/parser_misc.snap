@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 91/91 (100.00%)
+Negative Passed: 92/92 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -2850,6 +2850,38 @@ Negative Passed: 91/91 (100.00%)
  1 │ const foo: Foo<> = 1
    ·               ──
    ╰────
+
+  × TS(1267): Property 'prop' cannot have an initializer because it is marked abstract.
+   ╭─[misc/fail/oxc-14013.ts:2:12]
+ 1 │ abstract class Foo {
+ 2 │   abstract prop = 3;
+   ·            ────
+ 3 │ 
+   ╰────
+
+  × TS(1245): Method 'method' cannot have an implementation because it is marked abstract.
+   ╭─[misc/fail/oxc-14013.ts:4:12]
+ 3 │ 
+ 4 │   abstract method() { }
+   ·            ──────
+ 5 │ 
+   ╰────
+
+  × TS(1318): Accessor 'accessor' cannot have an implementation because it is marked abstract.
+   ╭─[misc/fail/oxc-14013.ts:6:16]
+ 5 │ 
+ 6 │   abstract get accessor() {
+   ·                ────────
+ 7 │     return 1;
+   ╰────
+
+  × TS(1318): Accessor 'accessor' cannot have an implementation because it is marked abstract.
+    ╭─[misc/fail/oxc-14013.ts:10:16]
+  9 │ 
+ 10 │   abstract set accessor(value: number) {
+    ·                ────────
+ 11 │     
+    ╰────
 
   × Classes may not have a field named 'constructor'
    ╭─[misc/fail/oxc-14014.ts:2:12]

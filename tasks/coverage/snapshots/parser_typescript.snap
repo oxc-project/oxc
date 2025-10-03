@@ -14637,20 +14637,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  30 │ 
     ╰────
 
-  × TS(1244): Abstract methods can only appear within an abstract class.
-   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
- 1 │ class A {
- 2 │     abstract foo();
-   ·              ───
- 3 │ }
-   ╰────
-
   × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
  5 │ class B {
  6 │     abstract foo() {}
    ·              ───
  7 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
+ 1 │ class A {
+ 2 │     abstract foo();
+   ·              ───
+ 3 │ }
    ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.
@@ -16141,6 +16141,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  29 │ }
     ╰────
 
+  × TS(1267): Property '#quux' cannot have an initializer because it is marked abstract.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
   × Getters and setters must have an implementation.
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:17]
  24 │     readonly set #quxProp(value: number) {  }    // Error
@@ -16155,14 +16163,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  26 │     declare set #whatProp(value: number)         // Error
     ·                 ─────────
  27 │     async get #asyncProp() { return 1; }         // Error
-    ╰────
-
-  × TS(1267): Property '#quux' cannot have an initializer because it is marked abstract.
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
- 31 │ abstract class B {
- 32 │     abstract #quux = 3;      // Error
-    ·              ─────
- 33 │ }
     ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies

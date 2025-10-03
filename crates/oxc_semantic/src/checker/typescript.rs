@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_ecmascript::{BoundNames, PropName};
+use oxc_ecmascript::BoundNames;
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
@@ -289,48 +289,6 @@ fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> Oxc
     ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
-fn abstract_element_cannot_have_initializer(
-    code: &'static str,
-    elem_name: &str,
-    prop_name: &str,
-    span: Span,
-    init_or_impl: &str,
-) -> OxcDiagnostic {
-    ts_error(
-        code,
-        format!(
-            "{elem_name} '{prop_name}' cannot have an {init_or_impl} because it is marked abstract."
-        ),
-    )
-    .with_label(span)
-}
-
-/// TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
-fn abstract_method_cannot_have_implementation(method_name: &str, span: Span) -> OxcDiagnostic {
-    abstract_element_cannot_have_initializer("1245", "Method", method_name, span, "implementation")
-}
-
-/// TS(1267): Property 'foo' cannot have an initializer because it is marked abstract.
-fn abstract_property_cannot_have_initializer(prop_name: &str, span: Span) -> OxcDiagnostic {
-    abstract_element_cannot_have_initializer("1267", "Property", prop_name, span, "initializer")
-}
-
-/// TS(1318): Accessor 'foo' cannot have an implementation because it is marked abstract.
-///
-/// Applies to getters/setters
-///
-/// > TS's original message, `An abstract accessor cannot have an
-/// > implementation.`, is less helpful than the one provided here.
-fn abstract_accessor_cannot_have_implementation(accessor_name: &str, span: Span) -> OxcDiagnostic {
-    abstract_element_cannot_have_initializer(
-        "1318",
-        "Accessor",
-        accessor_name,
-        span,
-        "implementation",
-    )
-}
-
 /// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
 fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
     ts_error(
@@ -372,23 +330,6 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
         // constructors cannot be abstract, no matter what
         if method.kind.is_constructor() {
             ctx.error(illegal_abstract_modifier(method.key.span()));
-        } else if method.value.body.is_some() {
-            // abstract class elements cannot have bodies or initializers
-            let (method_name, span) = method.key.prop_name().unwrap_or_else(|| {
-                let key_span = method.key.span();
-                (&ctx.source_text[key_span], key_span)
-            });
-            match method.kind {
-                MethodDefinitionKind::Method => {
-                    ctx.error(abstract_method_cannot_have_implementation(method_name, span));
-                }
-                MethodDefinitionKind::Get | MethodDefinitionKind::Set => {
-                    ctx.error(abstract_accessor_cannot_have_implementation(method_name, span));
-                }
-                // abstract classes can have concrete methods. Constructors cannot
-                // have abstract modifiers, but this gets checked during parsing
-                MethodDefinitionKind::Constructor => {}
-            }
         }
     }
 
@@ -405,16 +346,6 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     // Illegal to have `get foo();` or `set foo(a)`
     if method.kind.is_accessor() && is_empty_body && !is_abstract && !is_declare {
         ctx.error(accessor_without_body(method.key.span()));
-    }
-}
-
-pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &SemanticBuilder<'a>) {
-    if prop.r#type.is_abstract() && prop.value.is_some() {
-        let (prop_name, span) = prop.key.prop_name().unwrap_or_else(|| {
-            let key_span = prop.key.span();
-            (&ctx.source_text[key_span], key_span)
-        });
-        ctx.error(abstract_property_cannot_have_initializer(prop_name, span));
     }
 }
 

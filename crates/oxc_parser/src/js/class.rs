@@ -614,6 +614,13 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::static_prototype(span));
             }
         }
+        if r#abstract && initializer.is_some() {
+            let (name, span) = name.prop_name().unwrap_or_else(|| {
+                let span = name.span();
+                (&self.source_text[span], span)
+            });
+            self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
+        }
         self.ast.class_element_property_definition(
             self.end_span(span),
             r#type,
@@ -688,6 +695,23 @@ impl<'a> ParserImpl<'a> {
             if let Some(type_sig) = &method.value.type_parameters {
                 // class Foo { constructor<T>(param: T ) {} }
                 self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
+            }
+        }
+        if method.r#type.is_abstract() && method.value.body.is_some() {
+            let (name, span) = method.key.prop_name().unwrap_or_else(|| {
+                let span = method.key.span();
+                (&self.source_text[span], span)
+            });
+            match method.kind {
+                MethodDefinitionKind::Method => {
+                    self.error(diagnostics::abstract_method_cannot_have_implementation(name, span));
+                }
+                MethodDefinitionKind::Get | MethodDefinitionKind::Set => {
+                    self.error(diagnostics::abstract_accessor_cannot_have_implementation(
+                        name, span,
+                    ));
+                }
+                MethodDefinitionKind::Constructor => {}
             }
         }
     }
