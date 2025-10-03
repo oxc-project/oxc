@@ -86,3 +86,25 @@ class Foo {
 		_classPrivateFieldInitSpec(this, _a, void 0);
 	}
 }
+
+########## 11 es2021
+await fetch('/')
+----------
+
+  ! Top-level await is not available in the configured target environment.
+   ,----
+ 1 | await fetch('/')
+   : ^^^^^^^^^^^^^^^^
+   `----
+
+########## 12 es2022
+await fetch('/')
+----------
+await fetch('/');
+
+########## 13 es2021
+async function f() { await fetch('/'); }
+----------
+async function f() {
+	await fetch('/');
+}

@@ -83,6 +83,8 @@ impl EnvOptions {
             es2022: ES2022Options {
                 class_static_block: true,
                 class_properties: Some(ClassPropertiesOptions::default()),
+                // Turn this on would throw error for all top-level awaits.
+                top_level_await: false,
             },
         }
     }
@@ -160,6 +162,7 @@ impl From<EngineTargets> for EnvOptions {
             es2022: ES2022Options {
                 class_static_block: o.has_feature(ES2022ClassStaticBlock),
                 class_properties: o.has_feature(ES2022ClassProperties).then(Default::default),
+                top_level_await: o.has_feature(ES2022TopLevelAwait),
             },
         }
     }

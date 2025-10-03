@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_traverse::Traverse;
 
 use crate::{
@@ -16,6 +17,9 @@ use class_static_block::ClassStaticBlock;
 pub use options::ES2022Options;
 
 pub struct ES2022<'a, 'ctx> {
+    ctx: &'ctx TransformCtx<'a>,
+    options: ES2022Options,
+
     // Plugins
     class_static_block: Option<ClassStaticBlock>,
     class_properties: Option<ClassProperties<'a, 'ctx>>,
@@ -43,7 +47,7 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
                     if options.class_static_block { Some(ClassStaticBlock::new()) } else { None };
                 (class_static_block, None)
             };
-        Self { class_static_block, class_properties }
+        Self { ctx, options, class_static_block, class_properties }
     }
 }
 
@@ -126,5 +130,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2022<'a, '_> {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.exit_static_block(block, ctx);
         }
+    }
+
+    fn enter_await_expression(
+        &mut self,
+        node: &mut AwaitExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.top_level_await && Self::is_top_level(ctx) {
+            let warning = OxcDiagnostic::warn(
+                "Top-level await is not available in the configured target environment.",
+            )
+            .with_label(node.span);
+            self.ctx.error(warning);
+        }
+    }
+}
+
+impl ES2022<'_, '_> {
+    fn is_top_level(ctx: &TraverseCtx) -> bool {
+        ctx.current_hoist_scope_id() == ctx.scoping().root_scope_id()
     }
 }

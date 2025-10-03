@@ -10,4 +10,7 @@ pub struct ES2022Options {
 
     #[serde(skip)]
     pub class_properties: Option<ClassPropertiesOptions>,
+
+    #[serde(skip)]
+    pub top_level_await: bool,
 }
