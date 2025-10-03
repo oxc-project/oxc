@@ -17,9 +17,10 @@ mod remove_unused_private_members;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
+use hashbrown::HashSet;
 use oxc_ast_visit::Visit;
 use oxc_semantic::ReferenceId;
-use rustc_hash::FxHashSet;
+use rustc_hash::FxBuildHasher;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
@@ -116,8 +117,17 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         self.changed = ctx.state.changed;
         if self.changed {
             // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+            let references = ctx.scoping().resolved_references().flatten().copied();
+            let mut refs_before = HashSet::<ReferenceId, _>::with_capacity_and_hasher(
+                references.size_hint().0,
+                FxBuildHasher,
+            );
+            // SAFETY: same ReferenceId is not inserted in multiple scopes.
+            unsafe {
+                for reference_id in references {
+                    refs_before.insert_unique_unchecked(reference_id);
+                }
+            };
             let mut counter = ReferencesCounter::default();
             counter.visit_program(program);
             for reference_id_to_remove in refs_before.difference(&counter.refs) {
@@ -450,9 +460,17 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.changed = ctx.state.changed;
         if self.changed {
-            // Remove unused references by visiting the AST again and diff the collected references.
-            let refs_before =
-                ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+            let references = ctx.scoping().resolved_references().flatten().copied();
+            let mut refs_before = HashSet::<ReferenceId, _>::with_capacity_and_hasher(
+                references.size_hint().0,
+                FxBuildHasher,
+            );
+            // SAFETY: same ReferenceId is not inserted in multiple scopes.
+            unsafe {
+                for reference_id in references {
+                    refs_before.insert_unique_unchecked(reference_id);
+                }
+            };
             let mut counter = ReferencesCounter::default();
             counter.visit_program(program);
             for reference_id_to_remove in refs_before.difference(&counter.refs) {
@@ -536,7 +554,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
 
 #[derive(Default)]
 struct ReferencesCounter {
-    refs: FxHashSet<ReferenceId>,
+    refs: HashSet<ReferenceId, FxBuildHasher>,
 }
 
 impl<'a> Visit<'a> for ReferencesCounter {

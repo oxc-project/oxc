@@ -2114,6 +2114,7 @@ name = "oxc_minifier"
 version = "0.93.0"
 dependencies = [
  "cow-utils",
+ "hashbrown 0.16.0",
  "insta",
  "javascript-globals",
  "oxc_allocator",
