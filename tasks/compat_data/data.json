@@ -1034,5 +1034,23 @@
       "samsung": "27",
       "electron": "31.0"
     }
+  },
+  {
+    "name": "ExportNamespaceFrom",
+    "babel": "transform-export-namespace-from",
+    "targets": {
+      "chrome": "72",
+      "opera": "60",
+      "edge": "79",
+      "firefox": "80",
+      "safari": "14.1",
+      "node": "13.2",
+      "deno": "1.0",
+      "ios": "14.5",
+      "samsung": "11.0",
+      "opera_mobile": "51",
+      "electron": "5.0"
+    },
+    "es": "ES2020"
   }
 ]
