@@ -304,6 +304,8 @@ impl Rule for JsxHandlerNames {
                 if !self.check_local_variables && !value_expr.is_member_expression() {
                     return;
                 }
+                // For other expressions types, use the whole content inside the braces as the handler name,
+                // which will be marked as a bad handler name if the prop key is an event handler prop.
                 let span = expression_container.span.shrink(1);
                 (Some(normalize_handler_name(ctx.source_range(span))), span, false)
             }
@@ -613,6 +615,8 @@ fn test() {
                 serde_json::json!([{ "checkLocalVariables": true, "ignoreComponentNames": ["MyLib*"] }]),
             ),
         ),
+        ("<TestComponent onChange={true} />", None), // ok if not checking local variables (the same behavior as eslint version)
+        ("<TestComponent onChange={'value'} />", None), // ok if not checking local variables (the same behavior as eslint version)
     ];
 
     let fail = vec![
@@ -688,6 +692,14 @@ fn test() {
             Some(
                 serde_json::json!([{ "checkLocalVariables": true, "ignoreComponentNames": ["MyLibrary*"] }]),
             ),
+        ),
+        (
+            "<TestComponent onChange={true} />",
+            Some(serde_json::json!([{ "checkLocalVariables": true }])),
+        ),
+        (
+            "<TestComponent onChange={'value'} />",
+            Some(serde_json::json!([{ "checkLocalVariables": true }])),
         ),
     ];
 

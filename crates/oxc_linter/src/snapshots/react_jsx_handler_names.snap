@@ -181,3 +181,17 @@ source: crates/oxc_linter/src/tester.rs
  8 │                 </div>
    ╰────
   help: Prop key for handleButton must begin with 'on'
+
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: true
+   ╭─[jsx_handler_names.tsx:1:26]
+ 1 │ <TestComponent onChange={true} />
+   ·                          ────
+   ╰────
+  help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
+
+  ⚠ eslint-plugin-react(jsx-handler-names): Invalid handler name: 'value'
+   ╭─[jsx_handler_names.tsx:1:26]
+ 1 │ <TestComponent onChange={'value'} />
+   ·                          ───────
+   ╰────
+  help: Handler function for onChange prop key must be a camelCase name beginning with 'handle' only
