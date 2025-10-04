@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -294,11 +296,9 @@ impl OnlyExportComponents {
     }
 
     fn should_scan(f: &str, check_js: bool) -> bool {
-        use std::path::Path;
-        Path::new(f).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("tsx"))
-            || Path::new(f).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("jsx"))
-            || (check_js
-                && Path::new(f).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("js")))
+        let ext = Path::new(f).extension().and_then(|e| e.to_str());
+        matches!(ext, Some(e) if e.eq_ignore_ascii_case("tsx") || e.eq_ignore_ascii_case("jsx"))
+            || (check_js && matches!(ext, Some(e) if e.eq_ignore_ascii_case("js")))
     }
 
     fn starts_with_ascii_upper(s: &str) -> bool {
