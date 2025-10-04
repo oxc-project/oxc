@@ -814,8 +814,11 @@ function deserializeBindingRestElement(pos) {
 }
 
 function deserializeFunction(pos) {
-  let params = deserializeBoxFormalParameters(pos + 56), thisParam = deserializeOptionBoxTSThisParameter(pos + 48);
-  thisParam !== null && params.unshift(thisParam);
+  let params = deserializeBoxFormalParameters(pos + 56);
+  {
+    let thisParam = deserializeOptionBoxTSThisParameter(pos + 48);
+    thisParam !== null && params.unshift(thisParam);
+  }
   return {
     type: deserializeFunctionType(pos + 84),
     id: deserializeOptionBindingIdentifier(pos + 8),
@@ -851,26 +854,28 @@ function deserializeFormalParameters(pos) {
 }
 
 function deserializeFormalParameter(pos) {
-  let accessibility = deserializeOptionTSAccessibility(pos + 64),
-    readonly = deserializeBool(pos + 65),
-    override = deserializeBool(pos + 66),
-    param;
-  if (accessibility === null && !readonly && !override) {
-    param = deserializeBindingPatternKind(pos + 32);
-    param.decorators = deserializeVecDecorator(pos + 8);
-    param.optional = deserializeBool(pos + 56);
-    param.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 48);
-  } else {param = {
-      type: 'TSParameterProperty',
-      accessibility,
-      decorators: deserializeVecDecorator(pos + 8),
-      override,
-      parameter: deserializeBindingPattern(pos + 32),
-      readonly,
-      static: false,
-      start: deserializeU32(pos),
-      end: deserializeU32(pos + 4),
-    };}
+  let param;
+  {
+    let accessibility = deserializeOptionTSAccessibility(pos + 64),
+      readonly = deserializeBool(pos + 65),
+      override = deserializeBool(pos + 66);
+    if (accessibility === null && !readonly && !override) {
+      param = deserializeBindingPatternKind(pos + 32);
+      param.decorators = deserializeVecDecorator(pos + 8);
+      param.optional = deserializeBool(pos + 56);
+      param.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 48);
+    } else {param = {
+        type: 'TSParameterProperty',
+        accessibility,
+        decorators: deserializeVecDecorator(pos + 8),
+        override,
+        parameter: deserializeBindingPattern(pos + 32),
+        readonly,
+        static: false,
+        start: deserializeU32(pos),
+        end: deserializeU32(pos + 4),
+      };}
+  }
   return param;
 }
 

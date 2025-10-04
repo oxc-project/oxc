@@ -8,10 +8,10 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{
     AstBuilder,
-    ast::{Expression, UnaryOperator},
+    ast::{BindingPatternKind, Expression, Program, Statement, UnaryOperator},
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::Codegen as Printer;
@@ -74,7 +74,7 @@ impl Generator for RawTransferGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let consts = get_constants(schema);
 
-        let Codes { js, ts, .. } = generate_deserializers(consts, schema, codegen);
+        let Codes { js, ts } = generate_deserializers(consts, schema, codegen);
         let (constants_js, constants_rust) = generate_constants(consts);
 
         vec![
@@ -112,15 +112,22 @@ impl Generator for RawTransferGenerator {
 
 /// Container for generated code.
 struct Codes {
-    /// Code which is part of JS deserializer only
+    /// Code for JS deserializer
     js: String,
-    /// Code which is part of TS deserializer only
+    /// Code for TS deserializer
     ts: String,
-    /// Code which is part of both deserializers
-    both: String,
 }
 
 /// Generate deserializer functions for all types.
+///
+/// Generates a single file which is the base of both the JS and TS deserializers.
+/// Code which is specific to JS or TS deserializer is gated by the `IS_TS` const.
+/// e.g.:
+/// * `if (IS_TS) node.typeAnnotation = null;`
+/// * `return { type: 'Function', id, params, ...(IS_TS && { typeAnnotation: null }) };`
+///
+/// When printing the JS and TS deserializers, the value of `IS_TS` is set to `true` or `false`,
+/// and minifier then shakes out the dead code for each.
 fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen) -> Codes {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
 
@@ -129,8 +136,10 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
     let data_pointer_pos_32 = consts.data_pointer_pos / 4;
 
     #[rustfmt::skip]
-    let prelude = format!("
+    let mut code = format!("
         let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
+
+        const IS_TS = false;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -162,28 +171,27 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
         }}
     ");
 
-    let mut codes = Codes { js: prelude.clone(), ts: prelude, both: String::new() };
+    let mut code_both = String::new();
 
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
-                generate_struct(struct_def, &mut codes.js, false, estree_derive_id, schema);
-                generate_struct(struct_def, &mut codes.ts, true, estree_derive_id, schema);
+                generate_struct(struct_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum(enum_def, &mut codes.both, estree_derive_id, schema);
+                generate_enum(enum_def, &mut code_both, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
-                generate_primitive(primitive_def, &mut codes.both, schema);
+                generate_primitive(primitive_def, &mut code_both, schema);
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut codes.both, estree_derive_id, schema);
+                generate_option(option_def, &mut code_both, estree_derive_id, schema);
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut codes.both, estree_derive_id, schema);
+                generate_box(box_def, &mut code_both, estree_derive_id, schema);
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut codes.both, estree_derive_id, schema);
+                generate_vec(vec_def, &mut code_both, estree_derive_id, schema);
             }
             TypeDef::Cell(_cell_def) => {
                 // No deserializers for `Cell`s - use inner type's deserializer
@@ -195,20 +203,38 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
         }
     }
 
-    codes.js.push_str(&codes.both);
-    codes.ts.push_str(&codes.both);
+    code.push_str(&code_both);
 
-    codes.js = minify(&codes.js);
-    codes.ts = minify(&codes.ts);
+    // Parse generated code
+    let allocator = Allocator::new();
+    let source_type = SourceType::mjs();
+    let parser_ret = Parser::new(&allocator, &code, source_type).parse();
+    assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
+    let mut program_js = parser_ret.program;
 
-    codes
+    // Create clone of AST for TS deserializer with `const IS_TS = true;`
+    let mut program_ts = program_js.clone_in(&allocator);
+    replace_const(&mut program_ts, "IS_TS", true);
+
+    // Print both deserializers, using minifier to shake out JS/TS-specific code from each
+    Codes {
+        js: print_minified(&mut program_js, &allocator),
+        ts: print_minified(&mut program_ts, &allocator),
+    }
+}
+
+/// Type of deserializer in which some code appears.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum DeserializerType {
+    Both,
+    JsOnly,
+    TsOnly,
 }
 
 /// Generate deserialize function for a struct.
 fn generate_struct(
     struct_def: &StructDef,
     code: &mut String,
-    is_ts: bool,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -217,7 +243,7 @@ fn generate_struct(
     }
 
     let fn_name = struct_def.deser_name(schema);
-    let mut generator = StructDeserializerGenerator::new(is_ts, schema);
+    let mut generator = StructDeserializerGenerator::new(schema);
 
     let body = struct_def.estree.via.as_deref().and_then(|converter_name| {
         let converter = schema.meta_by_name(converter_name);
@@ -240,23 +266,38 @@ fn generate_struct(
         let mut preamble_str = String::new();
         let mut fields_str = String::new();
 
-        generator.generate_struct_fields(struct_def, 0);
+        generator.generate_struct_fields(struct_def, 0, DeserializerType::Both);
 
-        for (field_name, value) in generator.fields {
-            if value.starts_with("...") {
-                write_it!(fields_str, "{value},");
-            } else if generator.dependent_field_names.contains(&field_name) {
-                if preamble_str.is_empty() {
-                    preamble_str.push_str("const ");
-                } else {
-                    preamble_str.push_str(",\n");
+        for (field_name, StructFieldValue { value, deser_type }) in generator.fields {
+            if let Some(value) = value.strip_prefix("...") {
+                match deser_type {
+                    DeserializerType::Both => write_it!(fields_str, "...{value},"),
+                    DeserializerType::JsOnly => write_it!(fields_str, "...(!IS_TS && {value}),"),
+                    DeserializerType::TsOnly => write_it!(fields_str, "...(IS_TS && {value}),"),
                 }
-                write_it!(preamble_str, "{field_name} = {value}");
-                write_it!(fields_str, "{field_name},");
-            } else if value == field_name {
-                write_it!(fields_str, "{field_name},");
             } else {
-                write_it!(fields_str, "{field_name}: {value},");
+                let value = if generator.dependent_field_names.contains(&field_name) {
+                    if preamble_str.is_empty() {
+                        preamble_str.push_str("const ");
+                    } else {
+                        preamble_str.push_str(",\n");
+                    }
+                    write_it!(preamble_str, "{field_name} = {value}");
+                    &field_name
+                } else {
+                    &value
+                };
+
+                if deser_type == DeserializerType::Both {
+                    write_it!(fields_str, "{field_name}: {value},");
+                } else {
+                    let condition = match deser_type {
+                        DeserializerType::JsOnly => "!IS_TS",
+                        DeserializerType::TsOnly => "IS_TS",
+                        DeserializerType::Both => unreachable!(),
+                    };
+                    write_it!(fields_str, "...({condition} && {{ {field_name}: {value} }}),");
+                }
             }
         }
 
@@ -287,22 +328,26 @@ fn generate_struct(
 }
 
 struct StructDeserializerGenerator<'s> {
-    /// `true` if generating deserializer for TypeScript
-    is_ts: bool,
     /// Dependencies
     dependent_field_names: FxHashSet<String>,
     /// Preamble
     preamble: Vec<String>,
     /// Fields, keyed by fields name (field name in ESTree AST)
-    fields: FxIndexMap<String, String>,
+    fields: FxIndexMap<String, StructFieldValue>,
     /// Schema
     schema: &'s Schema,
 }
 
+struct StructFieldValue {
+    /// Value of the field
+    value: String,
+    /// Which deserializer(s) should include this field
+    deser_type: DeserializerType,
+}
+
 impl<'s> StructDeserializerGenerator<'s> {
-    fn new(is_ts: bool, schema: &'s Schema) -> Self {
+    fn new(schema: &'s Schema) -> Self {
         Self {
-            is_ts,
             dependent_field_names: FxHashSet::default(),
             preamble: vec![],
             fields: FxIndexMap::default(),
@@ -310,11 +355,16 @@ impl<'s> StructDeserializerGenerator<'s> {
         }
     }
 
-    fn generate_struct_fields(&mut self, struct_def: &StructDef, struct_offset: u32) {
+    fn generate_struct_fields(
+        &mut self,
+        struct_def: &StructDef,
+        struct_offset: u32,
+        deser_type: DeserializerType,
+    ) {
         for &field_index in &struct_def.estree.field_indices {
             let field_index = field_index as usize;
             if let Some(field) = struct_def.fields.get(field_index) {
-                self.generate_struct_field_owned(field, struct_def, struct_offset);
+                self.generate_struct_field_owned(field, struct_def, struct_offset, deser_type);
             } else {
                 let (field_name, converter_name) =
                     &struct_def.estree.add_fields[field_index - struct_def.fields.len()];
@@ -323,6 +373,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                     field_name,
                     converter_name,
                     struct_offset,
+                    deser_type,
                 );
             }
         }
@@ -331,7 +382,14 @@ impl<'s> StructDeserializerGenerator<'s> {
         if !struct_def.estree.no_type && !self.fields.contains_key("type") {
             let struct_name =
                 struct_def.estree.rename.as_deref().unwrap_or_else(|| struct_def.name());
-            self.fields.insert_before(0, "type".to_string(), format!("'{struct_name}'"));
+            self.fields.insert_before(
+                0,
+                "type".to_string(),
+                StructFieldValue {
+                    value: format!("'{struct_name}'"),
+                    deser_type: DeserializerType::Both,
+                },
+            );
         }
     }
 
@@ -340,13 +398,16 @@ impl<'s> StructDeserializerGenerator<'s> {
         field: &FieldDef,
         struct_def: &StructDef,
         struct_offset: u32,
+        mut deser_type: DeserializerType,
     ) {
-        if (self.is_ts && field.estree.is_js) || (!self.is_ts && field.estree.is_ts) {
+        if should_skip_field(field, self.schema) {
             return;
         }
 
-        if should_skip_field(field, self.schema) {
-            return;
+        if field.estree.is_js {
+            deser_type = DeserializerType::JsOnly;
+        } else if field.estree.is_ts {
+            deser_type = DeserializerType::TsOnly;
         }
 
         let field_name = get_struct_field_name(field).to_string();
@@ -356,13 +417,16 @@ impl<'s> StructDeserializerGenerator<'s> {
         if should_flatten_field(field, self.schema) {
             match field_type {
                 TypeDef::Struct(field_struct_def) => {
-                    self.generate_struct_fields(field_struct_def, field_offset);
+                    self.generate_struct_fields(field_struct_def, field_offset, deser_type);
                 }
                 TypeDef::Enum(field_enum_def) => {
                     // TODO: Do this better
                     let value_fn = field_enum_def.deser_name(self.schema);
                     let pos = pos_offset(field_offset);
-                    self.fields.insert(field_name, format!("...{value_fn}({pos})"));
+                    self.fields.insert(
+                        field_name,
+                        StructFieldValue { value: format!("...{value_fn}({pos})"), deser_type },
+                    );
                 }
                 _ => panic!(
                     "Cannot flatten a field which is not a struct or enum: `{}::{}`",
@@ -430,7 +494,7 @@ impl<'s> StructDeserializerGenerator<'s> {
             format!("{value_fn}({pos})")
         };
 
-        self.fields.insert(field_name, value);
+        self.fields.insert(field_name, StructFieldValue { value, deser_type });
     }
 
     fn generate_struct_field_added(
@@ -439,14 +503,18 @@ impl<'s> StructDeserializerGenerator<'s> {
         field_name: &str,
         converter_name: &str,
         struct_offset: u32,
+        mut deser_type: DeserializerType,
     ) {
         let converter = self.schema.meta_by_name(converter_name);
-        if (self.is_ts && converter.estree.is_js) || (!self.is_ts && converter.estree.is_ts) {
-            return;
+
+        if converter.estree.is_js {
+            deser_type = DeserializerType::JsOnly;
+        } else if converter.estree.is_ts {
+            deser_type = DeserializerType::TsOnly;
         }
 
         let value = self.apply_converter(converter, struct_def, struct_offset).unwrap();
-        self.fields.insert(field_name.to_string(), value);
+        self.fields.insert(field_name.to_string(), StructFieldValue { value, deser_type });
     }
 
     fn apply_converter(
@@ -457,9 +525,7 @@ impl<'s> StructDeserializerGenerator<'s> {
     ) -> Option<String> {
         let raw_deser = converter.estree.raw_deser.as_deref()?;
 
-        let value = IF_TS_REGEX.replace_all(raw_deser, IfTsReplacer::new(self.is_ts));
-        let value = IF_JS_REGEX.replace_all(&value, IfJsReplacer::new(self.is_ts));
-        let value = THIS_REGEX.replace_all(&value, ThisReplacer::new(self));
+        let value = THIS_REGEX.replace_all(raw_deser, ThisReplacer::new(self));
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
         let value = POS_OFFSET_REGEX
             .replace_all(&value, PosOffsetReplacer::new(self, struct_def, struct_offset));
@@ -907,48 +973,6 @@ impl Replacer for PosOffsetReplacer<'_, '_> {
     }
 }
 
-static IF_TS_REGEX: Lazy<Regex> = lazy_regex!(r"/\* IF_TS \*/\s*([\s\S]*?)/\* END_IF_TS \*/\s*");
-
-struct IfTsReplacer {
-    is_ts: bool,
-}
-
-impl IfTsReplacer {
-    fn new(is_ts: bool) -> Self {
-        Self { is_ts }
-    }
-}
-
-impl Replacer for IfTsReplacer {
-    fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
-        assert_eq!(caps.len(), 2);
-        if self.is_ts {
-            dst.push_str(caps.get(1).unwrap().as_str());
-        }
-    }
-}
-
-static IF_JS_REGEX: Lazy<Regex> = lazy_regex!(r"/\* IF_JS \*/\s*([\s\S]*?)/\* END_IF_JS \*/\s*");
-
-struct IfJsReplacer {
-    is_ts: bool,
-}
-
-impl IfJsReplacer {
-    fn new(is_ts: bool) -> Self {
-        Self { is_ts }
-    }
-}
-
-impl Replacer for IfJsReplacer {
-    fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
-        assert_eq!(caps.len(), 2);
-        if !self.is_ts {
-            dst.push_str(caps.get(1).unwrap().as_str());
-        }
-    }
-}
-
 /// Trait to get deserializer function name for a type.
 pub(super) trait DeserializeFunctionName {
     fn deser_name(&self, schema: &Schema) -> String {
@@ -1154,19 +1178,36 @@ fn get_constants(schema: &Schema) -> Constants {
     }
 }
 
-/// Minify syntax.
+/// Replace the value of a `const` declaration with `true` / `false`.
+///
+/// Only replaces `const`s defined at top level which are currently defined as a boolean.
+fn replace_const(program: &mut Program<'_>, const_name: &str, value: bool) {
+    for stmt in &mut program.body {
+        let Statement::VariableDeclaration(var_decl) = stmt else { continue };
+        if !var_decl.kind.is_const() {
+            continue;
+        }
+
+        for declarator in &mut var_decl.declarations {
+            if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id.kind
+                && ident.name == const_name
+            {
+                let init = declarator.init.as_mut().unwrap();
+                let Expression::BooleanLiteral(bool_lit) = init else { continue };
+                bool_lit.value = value;
+                return;
+            }
+        }
+    }
+
+    panic!("`{const_name}` const not found");
+}
+
+/// Print AST with minified syntax.
 ///
 /// Do not remove whitespace, or mangle symbols.
 /// Purpose is not to compress length of code, but to remove dead code.
-fn minify(code: &str) -> String {
-    // Parse
-    let allocator = Allocator::new();
-
-    let source_type = SourceType::mjs();
-    let parser_ret = Parser::new(&allocator, code, source_type).parse();
-    assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
-    let mut program = parser_ret.program;
-
+fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -> String {
     // Minify
     let minify_options = MinifierOptions {
         mangle: None,
@@ -1180,14 +1221,14 @@ fn minify(code: &str) -> String {
             ..CompressOptions::default()
         }),
     };
-    Minifier::new(minify_options).minify(&allocator, &mut program);
+    Minifier::new(minify_options).minify(allocator, program);
 
     // Revert minification of `true` to `!0` and `false` to `!1`. It hurts readability.
-    let mut unminifier = BooleanUnminifier::new(&allocator);
-    unminifier.visit_program(&mut program);
+    let mut unminifier = BooleanUnminifier::new(allocator);
+    unminifier.visit_program(program);
 
     // Print. Add back line breaks between functions to aid readability.
-    let mut code = Printer::new().build(&program).code;
+    let mut code = Printer::new().build(program).code;
 
     #[expect(clippy::items_after_statements)]
     static RE: Lazy<Regex> = lazy_regex!(r"\n(function|export) ");

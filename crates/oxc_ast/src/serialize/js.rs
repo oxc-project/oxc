@@ -19,10 +19,10 @@ use super::{EmptyArray, Null};
 #[ast_meta]
 #[estree(raw_deser = "
     const pattern = DESER[BindingPatternKind](POS_OFFSET.kind);
-    /* IF_TS */
-    pattern.optional = DESER[bool](POS_OFFSET.optional);
-    pattern.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
-    /* END_IF_TS */
+    if (IS_TS) {
+        pattern.optional = DESER[bool](POS_OFFSET.optional);
+        pattern.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.type_annotation);
+    }
     pattern
 ")]
 pub struct BindingPatternConverter<'a, 'b>(pub &'b BindingPattern<'a>);
@@ -121,17 +121,15 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             pos = uint32[(POS_OFFSET.rest) >> 2];
             params.push({
                 type: 'RestElement',
-                /* IF_TS */
-                decorators: [],
-                /* END_IF_TS */
+                ...(IS_TS && { decorators: [] }),
                 argument: DESER[BindingPatternKind]( POS_OFFSET<BindingRestElement>.argument.kind ),
-                /* IF_TS */
-                optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
-                typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](
-                    POS_OFFSET<BindingRestElement>.argument.type_annotation
-                ),
-                value: null,
-                /* END_IF_TS */
+                ...(IS_TS && {
+                    optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
+                    typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](
+                        POS_OFFSET<BindingRestElement>.argument.type_annotation
+                    ),
+                    value: null,
+                }),
                 start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
                 end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
             });
@@ -183,35 +181,33 @@ impl ESTree for FormalParametersRest<'_, '_> {
 #[estree(
     ts_type = "FormalParameter | TSParameterProperty",
     raw_deser = "
-        /* IF_JS */
-        DESER[BindingPatternKind](POS_OFFSET.pattern.kind)
-        /* END_IF_JS */
-
-        /* IF_TS */
-        const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
-            readonly = DESER[bool](POS_OFFSET.readonly),
-            override = DESER[bool](POS_OFFSET.override);
         let param;
-        if (accessibility === null && !readonly && !override) {
-            param = DESER[BindingPatternKind](POS_OFFSET.pattern.kind);
-            param.decorators = DESER[Vec<Decorator>](POS_OFFSET.decorators);
-            param.optional = DESER[bool](POS_OFFSET.pattern.optional);
-            param.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation);
+        if (IS_TS) {
+            const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),
+                readonly = DESER[bool](POS_OFFSET.readonly),
+                override = DESER[bool](POS_OFFSET.override);
+            if (accessibility === null && !readonly && !override) {
+                param = DESER[BindingPatternKind](POS_OFFSET.pattern.kind);
+                param.decorators = DESER[Vec<Decorator>](POS_OFFSET.decorators);
+                param.optional = DESER[bool](POS_OFFSET.pattern.optional);
+                param.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation);
+            } else {
+                param = {
+                    type: 'TSParameterProperty',
+                    accessibility,
+                    decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
+                    override,
+                    parameter: DESER[BindingPattern](POS_OFFSET.pattern),
+                    readonly,
+                    static: false,
+                    start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                    end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                };
+            }
         } else {
-            param = {
-                type: 'TSParameterProperty',
-                accessibility,
-                decorators: DESER[Vec<Decorator>](POS_OFFSET.decorators),
-                override,
-                parameter: DESER[BindingPattern](POS_OFFSET.pattern),
-                readonly,
-                static: false,
-                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
-                end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
-            };
+            param = DESER[BindingPatternKind](POS_OFFSET.pattern.kind);
         }
         param
-        /* END_IF_TS */
     "
 )]
 pub struct FormalParameterConverter<'a, 'b>(pub &'b FormalParameter<'a>);
@@ -255,10 +251,10 @@ impl ESTree for FormalParameterConverter<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Box<FormalParameters>](POS_OFFSET.params);
-        /* IF_TS */
-        const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
-        if (thisParam !== null) params.unshift(thisParam);
-        /* END_IF_TS */
+        if (IS_TS) {
+            const thisParam = DESER[Option<Box<TSThisParameter>>](POS_OFFSET.this_param);
+            if (thisParam !== null) params.unshift(thisParam);
+        }
         params
     "
 )]
@@ -411,15 +407,13 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                 ? keyCopy
                 : {
                     type: 'AssignmentPattern',
-                    /* IF_TS */
-                    decorators: [],
-                    /* END_IF_TS */
+                    ...(IS_TS && { decorators: [] }),
                     left: keyCopy,
                     right: init,
-                    /* IF_TS */
-                    optional: false,
-                    typeAnnotation: null,
-                    /* END_IF_TS */
+                    ...(IS_TS && {
+                        optional: false,
+                        typeAnnotation: null,
+                    }),
                     start: THIS.start,
                     end: THIS.end,
                 };

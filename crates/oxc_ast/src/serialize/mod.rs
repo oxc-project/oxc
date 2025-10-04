@@ -124,31 +124,29 @@ impl Program<'_> {
     const body = DESER[Vec<Directive>](POS_OFFSET.directives);
     body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
 
-    /* IF_JS */
-    const start = DESER[u32](POS_OFFSET.span.start);
-    /* END_IF_JS */
-
     const end = DESER[u32](POS_OFFSET.span.end);
 
-    /* IF_TS */
     let start;
-    if (body.length > 0) {
-        const first = body[0];
-        start = first.start;
-        if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
-            const { declaration } = first;
-            if (
-                declaration !== null && declaration.type === 'ClassDeclaration'
-                && declaration.decorators.length > 0
-            ) {
-                const decoratorStart = declaration.decorators[0].start;
-                if (decoratorStart < start) start = decoratorStart;
+    if (IS_TS) {
+        if (body.length > 0) {
+            const first = body[0];
+            start = first.start;
+            if (first.type === 'ExportNamedDeclaration' || first.type === 'ExportDefaultDeclaration') {
+                const { declaration } = first;
+                if (
+                    declaration !== null && declaration.type === 'ClassDeclaration'
+                    && declaration.decorators.length > 0
+                ) {
+                    const decoratorStart = declaration.decorators[0].start;
+                    if (decoratorStart < start) start = decoratorStart;
+                }
             }
+        } else {
+            start = end;
         }
     } else {
-        start = end;
+        start = DESER[u32](POS_OFFSET.span.start);
     }
-    /* END_IF_TS */
 
     const program = {
         type: 'Program',

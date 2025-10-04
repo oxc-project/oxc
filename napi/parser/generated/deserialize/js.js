@@ -34,7 +34,8 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, preservePa
 function deserializeProgram(pos) {
   let body = deserializeVecDirective(pos + 72);
   body.push(...deserializeVecStatement(pos + 96));
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
+  let end = deserializeU32(pos + 4), start;
+  start = deserializeU32(pos);
   return {
     type: 'Program',
     body,
@@ -778,7 +779,9 @@ function deserializeFormalParameters(pos) {
 }
 
 function deserializeFormalParameter(pos) {
-  return deserializeBindingPatternKind(pos + 32);
+  let param;
+  param = deserializeBindingPatternKind(pos + 32);
+  return param;
 }
 
 function deserializeFunctionBody(pos) {
