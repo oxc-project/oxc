@@ -1,6 +1,6 @@
-import type { Plugin, Rule } from '../../../dist/index.js';
+import type { Node, Plugin, Rule } from '../../../dist/index.js';
 
-const SPAN = { start: 0, end: 0 };
+const SPAN: Node = { start: 0, end: 0, range: [0, 0] };
 
 // Purpose of this test fixture is to ensure that source text and AST are available in `after` hook
 // via `context.sourceCode` when the AST is not traversed

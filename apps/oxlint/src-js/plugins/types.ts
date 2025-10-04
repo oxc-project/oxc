@@ -25,11 +25,32 @@ export interface VisitorWithHooks extends Visitor {
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
 
-// Internal interface for any type which has `start` and `end` properties.
-// We'll add `range` and `loc` properties to this later.
+// Internal interface for any type which has location properties.
 interface Spanned {
   start: number;
   end: number;
+  // This property should not be optional - all AST nodes do have a `range` field.
+  // But ESTree types have `range` field as optional, so to allow AST nodes to be passed
+  // to methods which take `Node`, we have to make it optional here too.
+  // TODO: Fix this
+  range?: Range;
+  loc?: Location;
+}
+
+// Range of source offsets.
+export type Range = [number, number];
+
+// Source code location.
+export interface Location {
+  start: LineColumn;
+  end: LineColumn;
+}
+
+// Line number + column number pair.
+// `line` is 1-indexed, `column` is 0-indexed.
+export interface LineColumn {
+  line: number;
+  column: number;
 }
 
 // AST node type.
@@ -48,19 +69,6 @@ export type NodeOrToken = Node | Token;
 export interface Comment extends Spanned {
   type: 'Line' | 'Block';
   value: string;
-}
-
-// Source code location.
-export interface Location {
-  start: LineColumn;
-  end: LineColumn;
-}
-
-// Line number + column number pair.
-// `line` is 1-indexed, `column` is 0-indexed.
-export interface LineColumn {
-  line: number;
-  column: number;
 }
 
 // Element of compiled visitor array.

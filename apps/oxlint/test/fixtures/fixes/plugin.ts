@@ -1,4 +1,4 @@
-import type { Diagnostic, Plugin, Range } from '../../../dist/index.js';
+import type { Diagnostic, Node, Plugin } from '../../../dist/index.js';
 
 const plugin: Plugin = {
   meta: {
@@ -87,7 +87,8 @@ const plugin: Plugin = {
                     // Fixes can be in any order
                     return [
                       fixer.insertTextAfter(node, 'ty'),
-                      fixer.replaceText(node, 'mp'),
+                      // Test that any object with `range` property works
+                      fixer.replaceText({ range: [node.start, node.end] } as Node, 'mp'),
                       fixer.insertTextBefore(node, 'nu'),
                     ];
                   },
@@ -98,7 +99,7 @@ const plugin: Plugin = {
                   node,
                   fix(fixer) {
                     // Fixes can be in any order
-                    const range: Range = [node.start, node.end];
+                    const { range } = node;
                     return [
                       fixer.replaceTextRange(range, 'er'),
                       fixer.insertTextAfterRange(range, 'mouse'),
@@ -114,7 +115,8 @@ const plugin: Plugin = {
                   *fix(fixer) {
                     yield fixer.insertTextBefore(node, 'gra');
                     yield fixer.replaceText(node, 'nu');
-                    yield fixer.insertTextAfter(node, 'lar');
+                    // Test that any object with `range` property works
+                    yield fixer.insertTextAfter({ range: [node.start, node.end] } as Node, 'lar');
                   },
                 });
               case 'j':
@@ -124,7 +126,7 @@ const plugin: Plugin = {
                   // `fix` can be a generator function
                   *fix(fixer) {
                     // Fixes can be in any order
-                    const range: Range = [node.start, node.end];
+                    const { range } = node;
                     yield fixer.insertTextAfterRange(range, 'bunga');
                     yield fixer.replaceTextRange(range, 'a');
                     yield fixer.insertTextBeforeRange(range, 'cow');

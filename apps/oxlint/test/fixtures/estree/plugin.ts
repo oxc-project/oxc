@@ -13,6 +13,12 @@ const plugin: Plugin = {
         const visits: string[] = [];
         return {
           Program(program) {
+            context.report({
+              message: 'program:\n' +
+                `start/end: [${program.start},${program.end}]\n` +
+                `range: [${program.range}]`,
+              node: program,
+            });
             visits.push(program.type);
           },
           VariableDeclaration(decl) {
@@ -26,6 +32,12 @@ const plugin: Plugin = {
             visits.push(`${decl.type}: (init: ${decl.init.type})`);
           },
           Identifier(ident) {
+            context.report({
+              message: `ident "${ident.name}":\n` +
+                `start/end: [${ident.start},${ident.end}]\n` +
+                `range: [${ident.range}]`,
+              node: ident,
+            });
             visits.push(`${ident.type}: ${ident.name}`);
           },
           ObjectExpression(expr) {

@@ -155,14 +155,23 @@ export class Context {
       const { node } = diagnostic as DiagnosticWithNode;
       if (node == null) throw new TypeError('Either `node` or `loc` is required');
       if (typeof node !== 'object') throw new TypeError('`node` must be an object');
-      ({ start, end } = node);
+
+      // ESLint uses `loc` here instead of `range`.
+      // We can't do that because AST nodes don't have `loc` property yet. In any case, `range` is preferable,
+      // as otherwise we have to convert `loc` to `range` which is expensive at present.
+      // TODO: Revisit this once we have `loc` support in AST, and a fast translation table to convert `loc` to `range`.
+      const { range } = node;
+      if (range === null || typeof range !== 'object') throw new TypeError('`node.range` must be present');
+      start = range[0];
+      end = range[1];
+
       // Do type validation checks here, to ensure no error in serialization / deserialization.
       // Range validation happens on Rust side.
       if (
         typeof start !== 'number' || typeof end !== 'number' ||
         start < 0 || end < 0 || (start | 0) !== start || (end | 0) !== end
       ) {
-        throw new TypeError('`node.start` and `node.end` must be non-negative integers');
+        throw new TypeError('`node.range[0]` and `node.range[1]` must be non-negative integers');
       }
     }
 

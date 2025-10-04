@@ -1,8 +1,8 @@
 import { sep } from 'node:path';
 
-import type { Plugin, Rule } from '../../../dist/index.js';
+import type { Node, Plugin, Rule } from '../../../dist/index.js';
 
-const SPAN = { start: 0, end: 0 };
+const SPAN: Node = { start: 0, end: 0, range: [0, 0] };
 
 const DIR_PATH_LEN = import.meta.dirname.length + 1;
 

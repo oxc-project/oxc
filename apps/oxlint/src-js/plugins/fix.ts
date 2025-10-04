@@ -1,7 +1,7 @@
 import { assertIs } from './utils.js';
 
 import type { Diagnostic, InternalContext } from './context.ts';
-import type { NodeOrToken } from './types.ts';
+import type { NodeOrToken, Range } from './types.ts';
 
 const { prototype: ArrayPrototype, from: ArrayFrom } = Array,
   { getPrototypeOf, hasOwn, prototype: ObjectPrototype } = Object,
@@ -18,15 +18,13 @@ export type FixFn = (
 // Type of a fix, as returned by `fix` function.
 export type Fix = { range: Range; text: string };
 
-export type Range = [number, number];
-
 // Fixer, passed as argument to `fix` function passed to `Context#report()`.
 //
 // Fixer is stateless, so reuse a single object for all fixes.
 // Freeze the object to prevent user mutating it.
 const FIXER = Object.freeze({
   insertTextBefore(nodeOrToken: NodeOrToken, text: string): Fix {
-    const { start } = nodeOrToken;
+    const start = nodeOrToken.range[0];
     return { range: [start, start], text };
   },
   insertTextBeforeRange(range: Range, text: string): Fix {
@@ -34,7 +32,7 @@ const FIXER = Object.freeze({
     return { range: [start, start], text };
   },
   insertTextAfter(nodeOrToken: NodeOrToken, text: string): Fix {
-    const { end } = nodeOrToken;
+    const end = nodeOrToken.range[1];
     return { range: [end, end], text };
   },
   insertTextAfterRange(range: Range, text: string): Fix {
@@ -42,13 +40,13 @@ const FIXER = Object.freeze({
     return { range: [end, end], text };
   },
   remove(nodeOrToken: NodeOrToken): Fix {
-    return { range: [nodeOrToken.start, nodeOrToken.end], text: '' };
+    return { range: nodeOrToken.range, text: '' };
   },
   removeRange(range: Range): Fix {
     return { range, text: '' };
   },
   replaceText(nodeOrToken: NodeOrToken, text: string): Fix {
-    return { range: [nodeOrToken.start, nodeOrToken.end], text };
+    return { range: nodeOrToken.range, text };
   },
   replaceTextRange(range: Range, text: string): Fix {
     return { range, text };

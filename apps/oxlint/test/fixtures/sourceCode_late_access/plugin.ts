@@ -1,9 +1,9 @@
 import assert from 'node:assert';
 
 import type { Program } from '@oxc-project/types';
-import type { Plugin, Rule } from '../../../dist/index.js';
+import type { Node, Plugin, Rule } from '../../../dist/index.js';
 
-const SPAN = { start: 0, end: 0 };
+const SPAN: Node = { start: 0, end: 0, range: [0, 0] };
 
 // Purpose of this test fixture is to ensure that AST is not deserialized twice
 // if `context.sourceCode.ast` is accessed during AST traversal.

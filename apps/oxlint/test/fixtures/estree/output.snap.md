@@ -47,7 +47,93 @@
  14 | `-> type U = (((((string)) | ((number)))));
     `----
 
-Found 0 warnings and 1 error.
+  x estree-check(check): program:
+  | start/end: [59,265]
+  | range: [59,265]
+    ,-[files/index.ts:5:1]
+  4 |     // All `Identifier`s
+  5 | ,-> let a = { x: y };
+  6 | |   
+  7 | |   // No `ParenthesizedExpression`s in AST
+  8 | |   const b = (x * ((('str' + ((123))))));
+  9 | |   
+ 10 | |   // TS syntax
+ 11 | |   type T = string;
+ 12 | |   
+ 13 | |   // No `TSParenthesizedType`s in AST
+ 14 | `-> type U = (((((string)) | ((number)))));
+    `----
+
+  x estree-check(check): ident "a":
+  | start/end: [63,64]
+  | range: [63,64]
+   ,-[files/index.ts:5:5]
+ 4 | // All `Identifier`s
+ 5 | let a = { x: y };
+   :     ^
+ 6 | 
+   `----
+
+  x estree-check(check): ident "x":
+  | start/end: [69,70]
+  | range: [69,70]
+   ,-[files/index.ts:5:11]
+ 4 | // All `Identifier`s
+ 5 | let a = { x: y };
+   :           ^
+ 6 | 
+   `----
+
+  x estree-check(check): ident "y":
+  | start/end: [72,73]
+  | range: [72,73]
+   ,-[files/index.ts:5:14]
+ 4 | // All `Identifier`s
+ 5 | let a = { x: y };
+   :              ^
+ 6 | 
+   `----
+
+  x estree-check(check): ident "b":
+  | start/end: [124,125]
+  | range: [124,125]
+   ,-[files/index.ts:8:7]
+ 7 | // No `ParenthesizedExpression`s in AST
+ 8 | const b = (x * ((('str' + ((123))))));
+   :       ^
+ 9 | 
+   `----
+
+  x estree-check(check): ident "x":
+  | start/end: [129,130]
+  | range: [129,130]
+   ,-[files/index.ts:8:12]
+ 7 | // No `ParenthesizedExpression`s in AST
+ 8 | const b = (x * ((('str' + ((123))))));
+   :            ^
+ 9 | 
+   `----
+
+  x estree-check(check): ident "T":
+  | start/end: [176,177]
+  | range: [176,177]
+    ,-[files/index.ts:11:6]
+ 10 | // TS syntax
+ 11 | type T = string;
+    :      ^
+ 12 | 
+    `----
+
+  x estree-check(check): ident "U":
+  | start/end: [230,231]
+  | range: [230,231]
+    ,-[files/index.ts:14:6]
+ 13 | // No `TSParenthesizedType`s in AST
+ 14 | type U = (((((string)) | ((number)))));
+    :      ^
+    `----
+
+Found 0 warnings and 9 errors.
 Finished in Xms on 1 file using X threads.
 ```
 

@@ -6,7 +6,7 @@ import {
   // @ts-expect-error
 } from '../generated/constants.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts.js';
+import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts_range.js';
 
 import type { Program } from '@oxc-project/types';
 import type { Scope, ScopeManager, Variable } from './scope.ts';

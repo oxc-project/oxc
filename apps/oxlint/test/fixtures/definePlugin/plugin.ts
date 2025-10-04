@@ -1,11 +1,13 @@
 import { sep } from 'node:path';
 import { definePlugin } from '../../../dist/index.js';
-import type { Rule } from '../../../dist/index.js';
+
+import type { Node, Rule } from '../../../dist/index.js';
 
 // `loc` is required for ESLint
-const SPAN = {
+const SPAN: Node = {
   start: 0,
   end: 0,
+  range: [0, 0],
   loc: {
     start: { line: 0, column: 0 },
     end: { line: 0, column: 0 },
