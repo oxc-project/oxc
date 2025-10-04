@@ -352,17 +352,7 @@ fn validate_title(
     ctx: &LintContext,
 ) {
     if title.is_empty() {
-        let function_name = if name.starts_with(['f', 'x']) {
-            if name.contains("describe") { "describe" } else { "test" }
-        } else {
-            name
-        };
-        let error = format!("`{function_name}` should not have an empty title");
-        ctx.diagnostic(valid_title_diagnostic(
-            &error,
-            "Write a meaningful title for your test",
-            span,
-        ));
+        Message::EmptyTitle.diagnostic(ctx, span);
         return;
     }
 
@@ -456,6 +446,7 @@ fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
 
 enum Message {
     TitleMustBeString,
+    EmptyTitle,
     DuplicatePrefix,
     AccidentalSpace,
 }
@@ -465,6 +456,9 @@ impl Message {
         match self {
             Self::TitleMustBeString => {
                 ("Title must be a string", "Replace your title with a string")
+            }
+            Self::EmptyTitle => {
+                ("Should not have an empty title", "Write a meaningful title for your test")
             }
             Self::DuplicatePrefix => (
                 "Should not have duplicate prefix",

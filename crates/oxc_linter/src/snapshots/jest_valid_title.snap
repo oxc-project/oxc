@@ -169,14 +169,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: "Replace your title with a string"
 
-  ⚠ eslint-plugin-jest(valid-title): "`describe` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:10]
  1 │ describe('', function () {})
    ·          ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`it` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:3:24]
  2 │                 describe('foo', () => {
  3 │                     it('', () => {});
@@ -185,63 +185,63 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`it` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:4]
  1 │ it('', function () {})
    ·    ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`it` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:15]
  1 │ it.concurrent('', function () {})
    ·               ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`test` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:6]
  1 │ test('', function () {})
    ·      ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`test` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent('', function () {})
    ·                 ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`test` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:6]
  1 │ test(``, function () {})
    ·      ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`test` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:17]
  1 │ test.concurrent(``, function () {})
    ·                 ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`describe` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:11]
  1 │ xdescribe('', () => {})
    ·           ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`test` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:5]
  1 │ xit('', () => {})
    ·     ──
    ╰────
   help: "Write a meaningful title for your test"
 
-  ⚠ eslint-plugin-jest(valid-title): "`test` should not have an empty title"
+  ⚠ eslint-plugin-jest(valid-title): "Should not have an empty title"
    ╭─[valid_title.tsx:1:7]
  1 │ xtest('', () => {})
    ·       ──
