@@ -535,3 +535,29 @@ Example:
 
 
 ##### settings.react.linkComponents[n]
+
+
+
+
+
+
+### settings.vitest
+
+type: `object`
+
+
+Configure Vitest plugin rules.
+
+See [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s
+configuration for a full reference.
+
+
+#### settings.vitest.typecheck
+
+type: `boolean`
+
+default: `false`
+
+Whether to enable typecheck mode for Vitest rules.
+When enabled, some rules will skip certain checks for describe blocks
+to accommodate TypeScript type checking scenarios.

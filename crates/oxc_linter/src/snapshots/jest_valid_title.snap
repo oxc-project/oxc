@@ -574,3 +574,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ───
    ╰────
   help: "Replace your title with a string"
+
+  ⚠ eslint-plugin-jest(valid-title): "Title must be a string"
+   ╭─[valid_title.tsx:1:6]
+ 1 │ test(bar, () => {});
+   ·      ───
+   ╰────
+  help: "Replace your title with a string"
