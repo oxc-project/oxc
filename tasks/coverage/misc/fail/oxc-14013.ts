@@ -3,11 +3,11 @@ abstract class Foo {
 
   abstract method() { }
 
-  abstract get accessor() {
+  abstract get getter() {
     return 1;
   }
 
-  abstract set accessor(value: number) {
+  abstract set setter(value: number) {
     
   }
 }

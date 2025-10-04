@@ -2867,19 +2867,19 @@ Negative Passed: 92/92 (100.00%)
  5 │ 
    ╰────
 
-  × TS(1318): Accessor 'accessor' cannot have an implementation because it is marked abstract.
+  × TS(1318): Accessor 'getter' cannot have an implementation because it is marked abstract.
    ╭─[misc/fail/oxc-14013.ts:6:16]
  5 │ 
- 6 │   abstract get accessor() {
-   ·                ────────
+ 6 │   abstract get getter() {
+   ·                ──────
  7 │     return 1;
    ╰────
 
-  × TS(1318): Accessor 'accessor' cannot have an implementation because it is marked abstract.
+  × TS(1318): Accessor 'setter' cannot have an implementation because it is marked abstract.
     ╭─[misc/fail/oxc-14013.ts:10:16]
   9 │ 
- 10 │   abstract set accessor(value: number) {
-    ·                ────────
+ 10 │   abstract set setter(value: number) {
+    ·                ──────
  11 │     
     ╰────
 
