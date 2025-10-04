@@ -45,7 +45,7 @@ impl DisplayDot for ControlFlowGraph {
                     let block = &self.basic_blocks[*node.1];
                     let mut attrs = Attrs::default().with("label", block.display_dot());
 
-                    if *node.1 == 0 {
+                    if node.1.index() == 0 {
                         attrs += ("color", "green");
                     }
                     if block.is_unreachable() {

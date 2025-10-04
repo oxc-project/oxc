@@ -1,8 +1,6 @@
 use std::path::Path;
 
-use nonmax::NonMaxU32;
-
-use oxc_index::{Idx, IndexVec};
+use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
 
@@ -11,21 +9,9 @@ use crate::str::{LS_LAST_2_BYTES, LS_OR_PS_FIRST_BYTE, PS_LAST_2_BYTES};
 /// Number of lines to check with linear search when translating byte position to line index
 const LINE_SEARCH_LINEAR_ITERATIONS: usize = 16;
 
-/// Index into vec of `ColumnOffsets`
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct ColumnOffsetsId(NonMaxU32);
-
-impl Idx for ColumnOffsetsId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
+define_nonmax_u32_index_type! {
+    /// Index into vec of `ColumnOffsets`
+    struct ColumnOffsetsId;
 }
 
 /// Line offset tables.

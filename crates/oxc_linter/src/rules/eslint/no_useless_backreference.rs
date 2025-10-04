@@ -1,7 +1,5 @@
-use nonmax::NonMaxU32;
-
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_index::{Idx, IndexVec};
+use oxc_index::{IndexVec, define_nonmax_u32_index_type};
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
     ast::LookAroundAssertionKind,
@@ -117,20 +115,8 @@ enum BackRefInfoTarget<'a> {
     Name(&'a str),
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RegexNodeId(NonMaxU32);
-
-impl Idx for RegexNodeId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
+define_nonmax_u32_index_type! {
+    pub struct RegexNodeId;
 }
 
 #[derive(Debug)]

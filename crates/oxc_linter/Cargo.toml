@@ -35,7 +35,7 @@ oxc_codegen = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["box_macros"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
-oxc_index = { workspace = true, features = ["serde"] }
+oxc_index = { workspace = true }
 oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
@@ -59,7 +59,6 @@ json-strip-comments = { workspace = true }
 language-tags = { workspace = true }
 lazy-regex = { workspace = true }
 memchr = { workspace = true }
-nonmax = { workspace = true }
 papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }

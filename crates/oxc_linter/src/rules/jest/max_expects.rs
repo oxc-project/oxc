@@ -1,6 +1,5 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_index::Idx;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
@@ -500,7 +499,7 @@ fn test() {
         (
             " test('should pass', async () => {
 			     expect.hasAssertions();
-			   
+
 			     expect(true).toBeDefined();
 			     expect(true).toBeDefined();
 			     expect(true).toBeDefined();

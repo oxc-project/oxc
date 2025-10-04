@@ -42,7 +42,6 @@ to_js_string = ["dep:dragonbox_ecma"]
 serialize = [
   "bitflags/serde",
   "dep:serde",
-  "oxc_index/serde",
   "oxc_estree/serialize",
 ]
 

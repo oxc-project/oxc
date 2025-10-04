@@ -1,54 +1,19 @@
 #![expect(missing_docs)] // fixme
 use bitflags::bitflags;
-use nonmax::NonMaxU32;
 use oxc_allocator::{Allocator, CloneIn};
-use oxc_index::Idx;
+use oxc_index::define_nonmax_u32_index_type;
 #[cfg(feature = "serialize")]
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 
 use oxc_ast_macros::ast;
 
-#[ast]
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[builder(default)]
-#[clone_in(default)]
-#[content_eq(skip)]
-#[estree(skip)]
-pub struct SymbolId(NonMaxU32);
-
-impl SymbolId {
-    /// Create `SymbolId` from `u32`.
-    ///
-    /// # Panics
-    /// Panics if `idx` is `u32::MAX`.
-    pub const fn new(idx: u32) -> Self {
-        if let Some(idx) = NonMaxU32::new(idx) {
-            return Self(idx);
-        }
-        panic!();
-    }
-
-    /// Create `SymbolId` from `u32` unchecked.
-    ///
-    /// # SAFETY
-    /// `idx` must not be `u32::MAX`.
-    pub const unsafe fn new_unchecked(idx: u32) -> Self {
-        // SAFETY: Caller must ensure `idx` is not `u32::MAX`
-        unsafe { Self(NonMaxU32::new_unchecked(idx)) }
-    }
-}
-
-impl Idx for SymbolId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
+define_nonmax_u32_index_type! {
+    #[ast]
+    #[builder(default)]
+    #[clone_in(default)]
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub struct SymbolId;
 }
 
 impl<'alloc> CloneIn<'alloc> for SymbolId {
@@ -66,34 +31,8 @@ impl<'alloc> CloneIn<'alloc> for SymbolId {
     }
 }
 
-#[cfg(feature = "serialize")]
-impl Serialize for SymbolId {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_u32(self.0.get())
-    }
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct RedeclarationId(NonMaxU32);
-
-impl Idx for RedeclarationId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
-}
-
-#[cfg(feature = "serialize")]
-impl Serialize for RedeclarationId {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_u32(self.0.get())
-    }
+define_nonmax_u32_index_type! {
+    pub struct RedeclarationId;
 }
 
 bitflags! {

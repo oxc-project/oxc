@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
 use oxc_allocator::{Allocator, CloneIn, FromIn, HashMap as ArenaHashMap, Vec as ArenaVec};
-use oxc_index::{Idx, IndexVec};
+use oxc_index::IndexVec;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     node::NodeId,

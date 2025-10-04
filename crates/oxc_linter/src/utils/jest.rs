@@ -7,7 +7,6 @@ use oxc_ast::{
         match_member_expression,
     },
 };
-use oxc_index::Idx;
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
 use oxc_span::CompactStr;
 

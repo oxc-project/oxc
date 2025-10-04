@@ -30,7 +30,6 @@ use oxc::{
     transformer::{TransformOptions, Transformer},
 };
 use oxc_formatter::{FormatOptions, Formatter};
-use oxc_index::Idx;
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
     ModuleRecord, Oxlintrc,

@@ -257,6 +257,7 @@ impl<'c> Parser<'c> {
             "AtomicPtr" => primitive("AtomicPtr"),
             "&str" => primitive("&str"),
             "Atom" => primitive("Atom"),
+            "NonMaxU32" => primitive("NonMaxU32"),
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
@@ -286,7 +287,7 @@ impl<'c> Parser<'c> {
         }
 
         let was_inserted = self.type_names.insert(type_def.name().to_string());
-        assert!(was_inserted);
+        assert!(was_inserted, "{}", type_def.name());
 
         self.extra_types.push(type_def);
 

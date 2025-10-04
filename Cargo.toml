@@ -158,7 +158,7 @@ unicode-id-start = "1"
 javascript-globals = "1"
 json-strip-comments = "3"
 oxc-browserslist = "2"
-oxc_index = "3"
+oxc_index = { version = "4", features = ["nonmax", "serde"] }
 oxc_resolver = "11"
 oxc_sourcemap = "4"
 

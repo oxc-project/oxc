@@ -1,7 +1,6 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_index::Idx;
 use oxc_parser::Parser;
 use oxc_semantic::{ScopeId, Semantic, SemanticBuilder};
 use oxc_span::SourceType;

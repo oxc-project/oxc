@@ -26,6 +26,5 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 itertools = { workspace = true }
-nonmax = { workspace = true }
 petgraph = { workspace = true, default-features = false, features = ["std", "stable_graph"] }
 rustc-hash = { workspace = true }

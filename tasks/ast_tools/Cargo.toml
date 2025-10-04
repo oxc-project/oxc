@@ -23,7 +23,7 @@ cow-utils = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
 lazy-regex = { workspace = true }
-oxc_index = { workspace = true, features = ["serde"] }
+oxc_index = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 phf_codegen = { workspace = true }
 prettyplease = { workspace = true }
