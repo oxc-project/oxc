@@ -1,0 +1,6 @@
+{
+  // Test explicit config with comments
+  "rules": {
+    "no-console": "warn" // Warn on console usage
+  }
+}

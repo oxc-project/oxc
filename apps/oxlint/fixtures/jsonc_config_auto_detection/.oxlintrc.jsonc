@@ -1,0 +1,10 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  // This is a comment in JSONC format
+  "rules": {
+    // Deny debugger statements
+    "no-debugger": "error"
+  }
+}

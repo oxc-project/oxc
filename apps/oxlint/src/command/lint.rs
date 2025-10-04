@@ -106,11 +106,11 @@ impl LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
     /// Oxlint configuration file (experimental)
-    ///  * only `.json` extension is supported
+    ///  * `.json` and `.jsonc` extensions are supported
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with the ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for `.oxlintrc.json` in the current working directory.
+    /// If not provided, Oxlint will look for `.oxlintrc.jsonc` or `.oxlintrc.json` in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
