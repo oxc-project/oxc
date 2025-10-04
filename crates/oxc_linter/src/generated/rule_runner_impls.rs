@@ -424,6 +424,10 @@ impl RuleRunner for crate::rules::eslint::no_object_constructor::NoObjectConstru
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::eslint::no_param_reassign::NoParamReassign {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::eslint::no_plusplus::NoPlusplus {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::UpdateExpression]));
