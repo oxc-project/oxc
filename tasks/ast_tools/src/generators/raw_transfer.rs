@@ -171,27 +171,25 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
         }}
     ");
 
-    let mut code_both = String::new();
-
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
                 generate_struct(struct_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum(enum_def, &mut code_both, estree_derive_id, schema);
+                generate_enum(enum_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
-                generate_primitive(primitive_def, &mut code_both, schema);
+                generate_primitive(primitive_def, &mut code, schema);
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut code_both, estree_derive_id, schema);
+                generate_option(option_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut code_both, estree_derive_id, schema);
+                generate_box(box_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut code_both, estree_derive_id, schema);
+                generate_vec(vec_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Cell(_cell_def) => {
                 // No deserializers for `Cell`s - use inner type's deserializer
@@ -202,8 +200,6 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
             }
         }
     }
-
-    code.push_str(&code_both);
 
     // Parse generated code
     let allocator = Allocator::new();
