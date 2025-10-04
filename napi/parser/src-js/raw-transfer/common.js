@@ -28,7 +28,7 @@ if (!rawTransferSupported()) {
  *
  * @param {string} filename - Filename
  * @param {string} sourceText - Source text of file
- * @param {Object|undefined} options - Parsing options
+ * @param {Object} options - Parsing options
  * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
  * @returns {Object} - The return value of `convert`
  */
@@ -87,7 +87,7 @@ const queue = [];
  *
  * @param {string} filename - Filename
  * @param {string} sourceText - Source text of file
- * @param {Object|undefined} options - Parsing options
+ * @param {Object} options - Parsing options
  * @param {function} convert - Function to convert the buffer returned from Rust into a JS object
  * @returns {Object} - The return value of `convert`
  */
