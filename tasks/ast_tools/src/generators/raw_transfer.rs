@@ -8,6 +8,20 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::Allocator;
+use oxc_ast::{
+    AstBuilder,
+    ast::{Expression, UnaryOperator},
+};
+use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_codegen::Codegen as Printer;
+use oxc_minifier::{
+    CompressOptions, CompressOptionsKeepNames, Minifier, MinifierOptions, PropertyReadSideEffects,
+    TreeShakeOptions,
+};
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+
 use crate::{
     ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
     codegen::{Codegen, DeriveId},
@@ -183,6 +197,10 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
     codes.js.push_str(&codes.both);
     codes.ts.push_str(&codes.both);
+
+    codes.js = minify(&codes.js);
+    codes.ts = minify(&codes.ts);
+
     codes
 }
 
@@ -1133,5 +1151,76 @@ fn get_constants(schema: &Schema) -> Constants {
         program_offset,
         source_len_offset,
         raw_metadata_size,
+    }
+}
+
+/// Minify syntax.
+///
+/// Do not remove whitespace, or mangle symbols.
+/// Purpose is not to compress length of code, but to remove dead code.
+fn minify(code: &str) -> String {
+    // Parse
+    let allocator = Allocator::new();
+
+    let source_type = SourceType::mjs();
+    let parser_ret = Parser::new(&allocator, code, source_type).parse();
+    assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
+    let mut program = parser_ret.program;
+
+    // Minify
+    let minify_options = MinifierOptions {
+        mangle: None,
+        compress: Some(CompressOptions {
+            keep_names: CompressOptionsKeepNames::all_true(),
+            sequences: false,
+            treeshake: TreeShakeOptions {
+                property_read_side_effects: PropertyReadSideEffects::None,
+                ..TreeShakeOptions::default()
+            },
+            ..CompressOptions::default()
+        }),
+    };
+    Minifier::new(minify_options).minify(&allocator, &mut program);
+
+    // Revert minification of `true` to `!0` and `false` to `!1`. It hurts readability.
+    let mut unminifier = BooleanUnminifier::new(&allocator);
+    unminifier.visit_program(&mut program);
+
+    // Print. Add back line breaks between functions to aid readability.
+    let mut code = Printer::new().build(&program).code;
+
+    #[expect(clippy::items_after_statements)]
+    static RE: Lazy<Regex> = lazy_regex!(r"\n(function|export) ");
+    code = RE
+        .replace_all(&code, |caps: &Captures| {
+            // `format!("\n\n{} ", &caps[1])` would be simpler, but this avoids allocations
+            if &caps[1] == "function" { "\n\nfunction " } else { "\n\nexport " }
+        })
+        .into_owned();
+
+    code
+}
+
+/// Visitor which converts `!0` to `true` and `!1` to `false`.
+struct BooleanUnminifier<'a> {
+    ast: AstBuilder<'a>,
+}
+
+impl<'a> BooleanUnminifier<'a> {
+    fn new(allocator: &'a Allocator) -> Self {
+        Self { ast: AstBuilder::new(allocator) }
+    }
+}
+
+impl<'a> VisitMut<'a> for BooleanUnminifier<'a> {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        if let Expression::UnaryExpression(unary_expr) = expr
+            && unary_expr.operator == UnaryOperator::LogicalNot
+            && let Expression::NumericLiteral(lit) = &unary_expr.argument
+        {
+            *expr = self.ast.expression_boolean_literal(unary_expr.span, lit.value == 0.0);
+            return;
+        }
+        walk_mut::walk_expression(self, expr);
     }
 }
