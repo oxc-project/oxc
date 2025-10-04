@@ -9,8 +9,9 @@ export const TEST_TYPE_FIXTURE = 3;
 export const TEST_TYPE_INLINE_FIXTURE = 4;
 
 export const TEST_TYPE_MAIN_MASK = 7;
-export const TEST_TYPE_LAZY = 8;
-export const TEST_TYPE_PRETTY = 16;
+export const TEST_TYPE_RANGE_PARENT = 8;
+export const TEST_TYPE_LAZY = 16;
+export const TEST_TYPE_PRETTY = 32;
 
 export const ROOT_DIR_PATH = pathJoin(import.meta.dirname, '../../..');
 export const TARGET_DIR_PATH = pathJoin(ROOT_DIR_PATH, 'target');

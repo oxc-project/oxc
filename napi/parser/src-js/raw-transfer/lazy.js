@@ -87,10 +87,11 @@ const bufferRecycleRegistry = typeof FinalizationRegistry === 'undefined'
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @param {string} sourceText - Source for the file
  * @param {number} sourceByteLen - Length of source text in UTF-8 bytes
+ * @param {Object} _options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
  *   and `dispose` and `visit` methods
  */
-function construct(buffer, sourceText, sourceByteLen) {
+function construct(buffer, sourceText, sourceByteLen, _options) {
   // Create AST object
   const sourceIsAscii = sourceText.length === sourceByteLen;
   const ast = { buffer, sourceText, sourceByteLen, sourceIsAscii, nodes: new Map(), token: TOKEN };

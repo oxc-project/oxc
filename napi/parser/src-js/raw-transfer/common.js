@@ -35,7 +35,7 @@ if (!rawTransferSupported()) {
 export function parseSyncRawImpl(filename, sourceText, options, convert) {
   const { buffer, sourceByteLen } = prepareRaw(sourceText);
   parseSyncRawBinding(filename, buffer, sourceByteLen, options);
-  return convert(buffer, sourceText, sourceByteLen, !!options.range);
+  return convert(buffer, sourceText, sourceByteLen, options);
 }
 
 // User should not schedule more async tasks than there are available CPUs, as it hurts performance,
@@ -115,7 +115,7 @@ export async function parseAsyncRawImpl(filename, sourceText, options, convert) 
   // Parse
   const { buffer, sourceByteLen } = prepareRaw(sourceText);
   await parseAsyncRawBinding(filename, buffer, sourceByteLen, options);
-  const data = convert(buffer, sourceText, sourceByteLen, !!options.range);
+  const data = convert(buffer, sourceText, sourceByteLen, options);
 
   // Free the CPU core
   if (queue.length > 0) {
