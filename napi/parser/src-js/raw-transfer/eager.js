@@ -68,9 +68,7 @@ function deserialize(buffer, sourceText, sourceByteLen, range) {
     ).deserialize;
   }
 
-  // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
-  // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.
-  const data = deserializeThis(buffer, sourceText, sourceByteLen, true);
+  const data = deserializeThis(buffer, sourceText, sourceByteLen);
 
   // Add a line comment for hashbang if JS.
   // Do not add comment if TS, to match `@typescript-eslint/parser`.

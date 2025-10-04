@@ -449,7 +449,7 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
 
 /// Converter for [`ParenthesizedExpression`].
 ///
-/// In raw transfer, do not produce a `ParenthesizedExpression` node in AST if `preserveParens` is false.
+/// In raw transfer, do not produce a `ParenthesizedExpression` node in AST if `PRESERVE_PARENS` is false.
 ///
 /// Not useful in `oxc-parser`, as can use parser option `preserve_parens`.
 /// Required for `oxlint` plugins where we run parser with `preserve_parens` set to `true`,
@@ -459,7 +459,7 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
 #[ast_meta]
 #[estree(raw_deser = "
     let node = DESER[Expression](POS_OFFSET.expression);
-    if (preserveParens) {
+    if (PRESERVE_PARENS) {
         let start, end;
         node = {
             type: 'ParenthesizedExpression',

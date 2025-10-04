@@ -6,7 +6,8 @@ import {
   // @ts-expect-error
 } from '../generated/constants.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts_range.js';
+// We use the deserializer which removes `ParenthesizedExpression`s from AST to match ESLint
+import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts_range_no_parens.js';
 
 import type { Program } from '@oxc-project/types';
 import type { Scope, ScopeManager, Variable } from './scope.ts';
@@ -67,10 +68,7 @@ function initSourceText(): void {
  */
 function initAst(): void {
   if (sourceText === null) initSourceText();
-
-  // `preserveParens` argument is `false`, to match ESLint.
-  // ESLint does not include `ParenthesizedExpression` nodes in its AST.
-  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, false);
+  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen);
 }
 
 /**

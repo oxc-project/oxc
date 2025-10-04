@@ -71,6 +71,7 @@ src:
   - 'napi/parser/generated/deserialize/js_range.js'
   - 'napi/parser/generated/deserialize/ts.js'
   - 'napi/parser/generated/deserialize/ts_range.js'
+  - 'napi/parser/generated/deserialize/ts_range_no_parens.js'
   - 'napi/parser/generated/lazy/constructors.js'
   - 'napi/parser/generated/lazy/types.js'
   - 'napi/parser/generated/lazy/walk.js'

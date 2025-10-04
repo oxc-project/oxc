@@ -1,27 +1,26 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
 
-export function deserialize(buffer, sourceText, sourceByteLen, preserveParens) {
-  return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeRawTransferData);
+export function deserialize(buffer, sourceText, sourceByteLen) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
 }
 
-export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, preserveParens) {
-  return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeProgram);
+export function deserializeProgramOnly(buffer, sourceText, sourceByteLen) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
-  preserveParens = preserveParensInput;
   let data = deserialize(uint32[536870902]);
   uint8 =
     uint32 =
@@ -1033,12 +1032,12 @@ function deserializeChainElement(pos) {
 
 function deserializeParenthesizedExpression(pos) {
   let node = deserializeExpression(pos + 8);
-  preserveParens && (node = {
+  node = {
     type: 'ParenthesizedExpression',
     expression: node,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-  });
+  };
   return node;
 }
 
@@ -2915,12 +2914,12 @@ function deserializeTSIntersectionType(pos) {
 
 function deserializeTSParenthesizedType(pos) {
   let node = deserializeTSType(pos + 8);
-  preserveParens && (node = {
+  node = {
     type: 'TSParenthesizedType',
     typeAnnotation: node,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-  });
+  };
   return node;
 }
 

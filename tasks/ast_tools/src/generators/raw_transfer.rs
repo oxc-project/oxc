@@ -74,7 +74,8 @@ impl Generator for RawTransferGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let consts = get_constants(schema);
 
-        let Codes { js, ts, js_range, ts_range } = generate_deserializers(consts, schema, codegen);
+        let Codes { js, ts, js_range, ts_range, ts_range_no_parens } =
+            generate_deserializers(consts, schema, codegen);
         let (constants_js, constants_rust) = generate_constants(consts);
 
         vec![
@@ -93,6 +94,12 @@ impl Generator for RawTransferGenerator {
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts_range.js"),
                 code: ts_range,
+            },
+            Output::Javascript {
+                path: format!(
+                    "{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts_range_no_parens.js"
+                ),
+                code: ts_range_no_parens,
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
@@ -128,6 +135,8 @@ struct Codes {
     js_range: String,
     /// Code for TS deserializer with `range` fields
     ts_range: String,
+    /// Code for TS deserializer with `range` fields and no `ParenthesizedExpression` nodes (for linter)
+    ts_range_no_parens: String,
 }
 
 /// Generate deserializer functions for all types.
@@ -150,24 +159,25 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
     #[rustfmt::skip]
     let mut code = format!("
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 
         const IS_TS = false;
         const RANGE = false;
+        const PRESERVE_PARENS = true;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
 
-        export function deserialize(buffer, sourceText, sourceByteLen, preserveParens) {{
-            return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeRawTransferData);
+        export function deserialize(buffer, sourceText, sourceByteLen) {{
+            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
         }}
 
-        export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, preserveParens) {{
-            return deserializeWith(buffer, sourceText, sourceByteLen, preserveParens, deserializeProgram);
+        export function deserializeProgramOnly(buffer, sourceText, sourceByteLen) {{
+            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
         }}
 
-        function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, preserveParensInput, deserialize) {{
+        function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, deserialize) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
@@ -175,7 +185,6 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
             sourceText = sourceTextInput;
             sourceByteLen = sourceByteLenInput;
             sourceIsAscii = sourceText.length === sourceByteLen;
-            preserveParens = preserveParensInput;
 
             const data = deserialize(uint32[{data_pointer_pos_32}]);
 
@@ -232,12 +241,18 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
     let mut program_ts_range = program_ts.clone_in(&allocator);
     replace_const(&mut program_ts_range, "RANGE", true);
 
+    // Create clone of AST for with-`range` field and no-parentheses deserializer
+    // with `const RANGE = true; const PRESERVE_PARENS = false;`
+    let mut program_ts_range_no_parens = program_ts_range.clone_in(&allocator);
+    replace_const(&mut program_ts_range_no_parens, "PRESERVE_PARENS", false);
+
     // Print both deserializers, using minifier to shake out JS/TS-specific code from each
     Codes {
         js: print_minified(&mut program_js, &allocator),
         ts: print_minified(&mut program_ts, &allocator),
         js_range: print_minified(&mut program_js_range, &allocator),
         ts_range: print_minified(&mut program_ts_range, &allocator),
+        ts_range_no_parens: print_minified(&mut program_ts_range_no_parens, &allocator),
     }
 }
 
