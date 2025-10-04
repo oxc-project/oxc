@@ -12630,6 +12630,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ }
    ╰────
 
+  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:5:13]
+ 4 │   static *c() {}
+ 5 │   abstract *d() {}
+   ·             ─
+ 6 │   readonly *e() {}
+   ╰────
+
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:6:3]
  5 │   abstract *d() {}
@@ -12644,14 +12652,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │   declare *f() {}
    ·   ───────
  8 │   protected *g() {}
-   ╰────
-
-  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:5:13]
- 4 │   static *c() {}
- 5 │   abstract *d() {}
-   ·             ─
- 6 │   readonly *e() {}
    ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.
@@ -12766,6 +12766,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ }
    ╰────
 
+  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]
+ 1 │ class C {
+ 2 │   abstract *d?() { }
+   ·             ─
+ 3 │   readonly *e?() { }
+   ╰────
+
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:3:3]
  2 │   abstract *d?() { }
@@ -12780,6 +12788,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │   declare *f?() { }
    ·   ───────
  5 │ }
+   ╰────
+
+  × TS(1245): Method 'd?.d' cannot have an implementation because it is marked abstract.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:8:14]
+ 7 │ class A {
+ 8 │   abstract *[d?.d]?() { }
+   ·              ────
+ 9 │   readonly *[e?.e]?() { }
    ╰────
 
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
@@ -12798,28 +12814,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  11 │ }
     ╰────
 
-  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]
- 1 │ class C {
- 2 │   abstract *d?() { }
-   ·             ─
- 3 │   readonly *e?() { }
-   ╰────
-
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]
  1 │ class C {
  2 │   abstract *d?() { }
    ·             ─
  3 │   readonly *e?() { }
-   ╰────
-
-  × TS(1245): Method 'd?.d' cannot have an implementation because it is marked abstract.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:8:14]
- 7 │ class A {
- 8 │   abstract *[d?.d]?() { }
-   ·              ────
- 9 │   readonly *[e?.e]?() { }
    ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.

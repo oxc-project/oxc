@@ -692,6 +692,33 @@ pub fn index_signature_type_annotation(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn abstract_method_cannot_have_implementation(name: &str, span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1245",
+        format!("Method '{name}' cannot have an implementation because it is marked abstract."),
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn abstract_property_cannot_have_initializer(name: &str, span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1267",
+        format!("Property '{name}' cannot have an initializer because it is marked abstract."),
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn abstract_accessor_cannot_have_implementation(name: &str, span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1318",
+        format!("Accessor '{name}' cannot have an implementation because it is marked abstract."),
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn unexpected_export(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected export.").with_label(span)
 }
