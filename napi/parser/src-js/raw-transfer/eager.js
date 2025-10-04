@@ -41,7 +41,11 @@ export function parseAsyncRaw(filename, sourceText, options) {
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);
 }
 
-let deserializeJS = null, deserializeTS = null;
+// Deserializers are large files, so lazy-loaded.
+// `deserialize` functions are stored in this array once loaded.
+// Index into these arrays is `isJs * 1 + range * 2`.
+const deserializers = [null, null, null, null];
+const deserializerNames = ['ts', 'js', 'ts_range', 'js_range'];
 
 /**
  * Deserialize whole AST from buffer.
@@ -49,32 +53,37 @@ let deserializeJS = null, deserializeTS = null;
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @param {string} sourceText - Source for the file
  * @param {number} sourceByteLen - Length of source text in UTF-8 bytes
+ * @param {boolean} range - `true` if AST should contain `range` fields
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
-function deserialize(buffer, sourceText, sourceByteLen) {
+function deserialize(buffer, sourceText, sourceByteLen, range) {
+  const isJs = isJsAst(buffer);
+
   // Lazy load deserializer, and deserialize buffer to JS objects
-  let data;
-  if (isJsAst(buffer)) {
-    if (deserializeJS === null) deserializeJS = require('../../generated/deserialize/js.js').deserialize;
+  const deserializerIndex = (+isJs) | ((+range) << 1);
+  let deserializeThis = deserializers[deserializerIndex];
+  if (deserializeThis === null) {
+    deserializeThis = deserializers[deserializerIndex] = require(
+      `../../generated/deserialize/${deserializerNames[deserializerIndex]}.js`,
+    ).deserialize;
+  }
 
-    // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
-    // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.
-    data = deserializeJS(buffer, sourceText, sourceByteLen, true);
+  // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
+  // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.
+  const data = deserializeThis(buffer, sourceText, sourceByteLen, true);
 
-    // Add a line comment for hashbang
+  // Add a line comment for hashbang if JS.
+  // Do not add comment if TS, to match `@typescript-eslint/parser`.
+  // See https://github.com/oxc-project/oxc/blob/ea784f5f082e4c53c98afde9bf983afd0b95e44e/napi/parser/src/lib.rs#L106-L130
+  if (isJs) {
     const { hashbang } = data.program;
     if (hashbang !== null) {
-      data.comments.unshift({ type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end });
+      data.comments.unshift(
+        range
+          ? { type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end, range: hashbang.range }
+          : { type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end },
+      );
     }
-  } else {
-    if (deserializeTS === null) deserializeTS = require('../../generated/deserialize/ts.js').deserialize;
-
-    // `preserveParens` argument is unconditionally `true` here. If `options` contains `preserveParens: false`,
-    // `ParenthesizedExpression` nodes won't be in AST anyway, so the value is irrelevant.
-    data = deserializeTS(buffer, sourceText, sourceByteLen, true);
-
-    // Note: Do not add line comment for hashbang, to match `@typescript-eslint/parser`.
-    // See https://github.com/oxc-project/oxc/blob/ea784f5f082e4c53c98afde9bf983afd0b95e44e/napi/parser/src/lib.rs#L106-L130
   }
 
   // Return buffer to cache, to be reused

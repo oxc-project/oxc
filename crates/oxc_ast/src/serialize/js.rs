@@ -119,6 +119,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
         if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
             pos = uint32[(POS_OFFSET.rest) >> 2];
+            let start, end;
             params.push({
                 type: 'RestElement',
                 ...(IS_TS && { decorators: [] }),
@@ -130,8 +131,9 @@ impl ESTree for CatchParameterConverter<'_, '_> {
                     ),
                     value: null,
                 }),
-                start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
-                end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                start: start = DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                end: end = DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                ...(RANGE && { range: [start, end] }),
             });
         }
         params
@@ -192,6 +194,7 @@ impl ESTree for FormalParametersRest<'_, '_> {
                 param.optional = DESER[bool](POS_OFFSET.pattern.optional);
                 param.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](POS_OFFSET.pattern.type_annotation);
             } else {
+                let start, end;
                 param = {
                     type: 'TSParameterProperty',
                     accessibility,
@@ -200,8 +203,9 @@ impl ESTree for FormalParametersRest<'_, '_> {
                     parameter: DESER[BindingPattern](POS_OFFSET.pattern),
                     readonly,
                     static: false,
-                    start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
-                    end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                    start: start = DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
+                    end: end = DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
+                    ...(RANGE && { range: [start, end] }),
                 };
             }
         } else {
@@ -416,6 +420,7 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                     }),
                     start: THIS.start,
                     end: THIS.end,
+                    ...(RANGE && { range: [THIS.start, THIS.end] }),
                 };
         value
     "
@@ -455,11 +460,13 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
 #[estree(raw_deser = "
     let node = DESER[Expression](POS_OFFSET.expression);
     if (preserveParens) {
+        let start, end;
         node = {
             type: 'ParenthesizedExpression',
             expression: node,
-            start: DESER[u32]( POS_OFFSET.span.start ),
-            end: DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[u32]( POS_OFFSET.span.start ),
+            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            ...(RANGE && { range: [start, end] }),
         };
     }
     node

@@ -32,7 +32,7 @@ use crate::{
     output::Output,
     schema::{
         BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PointerDef, PrimitiveDef,
-        Schema, StructDef, TypeDef, VecDef,
+        Schema, StructDef, TypeDef, TypeId, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
     utils::{FxIndexMap, format_cow, number_lit, upper_case_first, write_it},
@@ -74,7 +74,7 @@ impl Generator for RawTransferGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let consts = get_constants(schema);
 
-        let Codes { js, ts } = generate_deserializers(consts, schema, codegen);
+        let Codes { js, ts, js_range, ts_range } = generate_deserializers(consts, schema, codegen);
         let (constants_js, constants_rust) = generate_constants(consts);
 
         vec![
@@ -85,6 +85,14 @@ impl Generator for RawTransferGenerator {
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.js"),
                 code: ts,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js_range.js"),
+                code: js_range,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts_range.js"),
+                code: ts_range,
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
@@ -116,6 +124,10 @@ struct Codes {
     js: String,
     /// Code for TS deserializer
     ts: String,
+    /// Code for JS deserializer with `range` fields
+    js_range: String,
+    /// Code for TS deserializer with `range` fields
+    ts_range: String,
 }
 
 /// Generate deserializer functions for all types.
@@ -130,6 +142,7 @@ struct Codes {
 /// and minifier then shakes out the dead code for each.
 fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen) -> Codes {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
+    let span_type_id = schema.type_names["Span"];
 
     // Prelude to generated deserializer.
     // Defines the main `deserialize` function.
@@ -140,6 +153,7 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
         let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, preserveParens;
 
         const IS_TS = false;
+        const RANGE = false;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -174,7 +188,7 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
-                generate_struct(struct_def, &mut code, estree_derive_id, schema);
+                generate_struct(struct_def, &mut code, span_type_id, estree_derive_id, schema);
             }
             TypeDef::Enum(enum_def) => {
                 generate_enum(enum_def, &mut code, estree_derive_id, schema);
@@ -212,10 +226,18 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
     let mut program_ts = program_js.clone_in(&allocator);
     replace_const(&mut program_ts, "IS_TS", true);
 
+    // Create clones of AST for with-`range` field deserializer with `const RANGE = true;`
+    let mut program_js_range = program_js.clone_in(&allocator);
+    replace_const(&mut program_js_range, "RANGE", true);
+    let mut program_ts_range = program_ts.clone_in(&allocator);
+    replace_const(&mut program_ts_range, "RANGE", true);
+
     // Print both deserializers, using minifier to shake out JS/TS-specific code from each
     Codes {
         js: print_minified(&mut program_js, &allocator),
         ts: print_minified(&mut program_ts, &allocator),
+        js_range: print_minified(&mut program_js_range, &allocator),
+        ts_range: print_minified(&mut program_ts_range, &allocator),
     }
 }
 
@@ -231,6 +253,7 @@ enum DeserializerType {
 fn generate_struct(
     struct_def: &StructDef,
     code: &mut String,
+    span_type_id: TypeId,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -239,7 +262,7 @@ fn generate_struct(
     }
 
     let fn_name = struct_def.deser_name(schema);
-    let mut generator = StructDeserializerGenerator::new(schema);
+    let mut generator = StructDeserializerGenerator::new(span_type_id, schema);
 
     let body = struct_def.estree.via.as_deref().and_then(|converter_name| {
         let converter = schema.meta_by_name(converter_name);
@@ -330,6 +353,8 @@ struct StructDeserializerGenerator<'s> {
     preamble: Vec<String>,
     /// Fields, keyed by fields name (field name in ESTree AST)
     fields: FxIndexMap<String, StructFieldValue>,
+    /// `TypeId` for `Span`
+    span_type_id: TypeId,
     /// Schema
     schema: &'s Schema,
 }
@@ -342,11 +367,12 @@ struct StructFieldValue {
 }
 
 impl<'s> StructDeserializerGenerator<'s> {
-    fn new(schema: &'s Schema) -> Self {
+    fn new(span_type_id: TypeId, schema: &'s Schema) -> Self {
         Self {
             dependent_field_names: FxHashSet::default(),
             preamble: vec![],
             fields: FxIndexMap::default(),
+            span_type_id,
             schema,
         }
     }
@@ -407,7 +433,8 @@ impl<'s> StructDeserializerGenerator<'s> {
         }
 
         let field_name = get_struct_field_name(field).to_string();
-        let field_type = field.type_def(self.schema);
+        let field_type_id = field.type_id;
+        let field_type = &self.schema.types[field_type_id];
         let field_offset = struct_offset + field.offset_64();
 
         if should_flatten_field(field, self.schema) {
@@ -430,6 +457,19 @@ impl<'s> StructDeserializerGenerator<'s> {
                     field.name(),
                 ),
             }
+
+            if field_type_id == self.span_type_id {
+                self.fields.insert(
+                    "range".to_string(),
+                    StructFieldValue {
+                        value: "...(RANGE && { range: [start, end] })".to_string(),
+                        deser_type,
+                    },
+                );
+
+                self.dependent_field_names.extend(["start".to_string(), "end".to_string()]);
+            }
+
             return;
         }
 

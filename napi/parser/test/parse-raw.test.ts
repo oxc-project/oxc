@@ -314,3 +314,73 @@ describe.concurrent('`preserveParens` option', () => {
     });
   });
 });
+
+describe.concurrent('`range` option', () => {
+  describe.concurrent('should not include `range` fields when false', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, range: false });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program).not.toHaveProperty('range');
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt).not.toHaveProperty('range');
+      const declaration = stmt.declarations[0];
+      expect(declaration).not.toHaveProperty('range');
+      expect(declaration.id).not.toHaveProperty('range');
+      expect(declaration.init).not.toHaveProperty('range');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, range: false });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program).not.toHaveProperty('range');
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt).not.toHaveProperty('range');
+      const declaration = stmt.declarations[0];
+      expect(declaration).not.toHaveProperty('range');
+      expect(declaration.id).not.toHaveProperty('range');
+      expect(declaration.init).not.toHaveProperty('range');
+    });
+  });
+
+  describe.concurrent('should include `range` fields when true', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, range: true });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program.range).toEqual([0, 10]);
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt.range).toEqual([0, 10]);
+      const declaration = stmt.declarations[0];
+      expect(declaration.range).toEqual([4, 9]);
+      expect(declaration.id.range).toEqual([4, 5]);
+      expect(declaration.init.range).toEqual([8, 9]);
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, range: true });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program.range).toEqual([0, 10]);
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt.range).toEqual([0, 10]);
+      const declaration = stmt.declarations[0];
+      expect(declaration.range).toEqual([4, 9]);
+      expect(declaration.id.range).toEqual([4, 5]);
+      expect(declaration.init.range).toEqual([8, 9]);
+    });
+  });
+});

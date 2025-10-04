@@ -60,27 +60,36 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
     if (body !== null && body.type === 'TSModuleDeclaration') {
         let innerId = body.id;
         if (innerId.type === 'Identifier') {
+            let start, end;
             id = {
                 type: 'TSQualifiedName',
                 left: id,
                 right: innerId,
-                start: id.start,
-                end: innerId.end,
+                start: start = id.start,
+                end: end = innerId.end,
+                ...(RANGE && { range: [start, end] }),
             };
         } else {
             // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
             // this module on left, and previous `left` of innermost `TSQualifiedName` on right
             while (true) {
-                innerId.start = id.start;
+                if (RANGE) {
+                    innerId.start = innerId.range[0] = id.start;
+                } else {
+                    innerId.start = id.start;
+                }
                 if (innerId.left.type === 'Identifier') break;
                 innerId = innerId.left;
             }
+
+            let start, end;
             innerId.left = {
                 type: 'TSQualifiedName',
                 left: id,
                 right: innerId.left,
-                start: id.start,
-                end: innerId.left.end,
+                start: start = id.start,
+                end: end = innerId.left.end,
+                ...(RANGE && { range: [start, end] }),
             };
             id = body.id;
         }
@@ -89,8 +98,18 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 
     // Skip `body` field if `null`
     const node = body === null
-        ? { type: 'TSModuleDeclaration', id, kind, declare, global, start, end }
-        : { type: 'TSModuleDeclaration', id, body, kind, declare, global, start, end };
+        ? {
+            type: 'TSModuleDeclaration',
+            id, kind, declare, global,
+            start, end,
+            ...(RANGE && { range: [start, end] })
+        }
+        : {
+            type: 'TSModuleDeclaration',
+            id, body, kind, declare, global,
+            start, end,
+            ...(RANGE && { range: [start, end] })
+        };
     node
 ")]
 pub struct TSModuleDeclarationConverter<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
@@ -273,26 +292,30 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
         let expression = DESER[TSTypeName](POS_OFFSET.expression);
         if (expression.type === 'TSQualifiedName') {
             let object = expression.left;
+            let start, end;
             let parent = expression = {
                 type: 'MemberExpression',
                 object,
                 property: expression.right,
                 optional: false,
                 computed: false,
-                start: expression.start,
-                end: expression.end,
+                start: start = expression.start,
+                end: end = expression.end,
+                ...(RANGE && { range: [start, end] }),
             };
 
             while (object.type === 'TSQualifiedName') {
                 const { left } = object;
+                let start, end;
                 parent = parent.object = {
                     type: 'MemberExpression',
                     object: left,
                     property: object.right,
                     optional: false,
                     computed: false,
-                    start: object.start,
-                    end: object.end,
+                    start: start = object.start,
+                    end: end = object.end,
+                    ...(RANGE && { range: [start, end] }),
                 };
                 object = left;
             }
@@ -415,11 +438,13 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
 #[estree(raw_deser = "
     let node = DESER[TSType](POS_OFFSET.type_annotation);
     if (preserveParens) {
+        let start, end;
         node = {
             type: 'TSParenthesizedType',
             typeAnnotation: node,
-            start: DESER[u32]( POS_OFFSET.span.start ),
-            end: DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[u32]( POS_OFFSET.span.start ),
+            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            ...(RANGE && { range: [start, end] }),
         };
     }
     node

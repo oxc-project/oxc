@@ -155,6 +155,7 @@ impl Program<'_> {
         hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
         start,
         end,
+        ...(RANGE && { range: [start, end] }),
     };
     program
 ")]

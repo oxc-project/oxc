@@ -56,7 +56,7 @@ impl ESTree for JSXOpeningElementSelfClosing<'_, '_> {
     ts_type = "JSXIdentifier",
     raw_deser = "
         const ident = DESER[Box<IdentifierReference>](POS);
-        { type: 'JSXIdentifier', name: ident.name, start: ident.start, end: ident.end }
+        { type: 'JSXIdentifier', name: ident.name, start: ident.start, end: ident.end, ...(RANGE && { range: ident.range }) }
     "
 )]
 pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>);
@@ -75,7 +75,7 @@ impl ESTree for JSXElementIdentifierReference<'_, '_> {
     ts_type = "JSXIdentifier",
     raw_deser = "
         const thisExpr = DESER[Box<ThisExpression>](POS);
-        { type: 'JSXIdentifier', name: 'this', start: thisExpr.start, end: thisExpr.end }
+        { type: 'JSXIdentifier', name: 'this', start: thisExpr.start, end: thisExpr.end, ...(RANGE && { range: thisExpr.range }) }
     "
 )]
 pub struct JSXElementThisExpression<'b>(pub &'b ThisExpression);

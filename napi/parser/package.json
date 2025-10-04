@@ -42,6 +42,8 @@
     "generated/constants.js",
     "generated/deserialize/js.js",
     "generated/deserialize/ts.js",
+    "generated/deserialize/js_range.js",
+    "generated/deserialize/ts_range.js",
     "generated/lazy/constructors.js",
     "generated/lazy/types.js",
     "generated/lazy/walk.js",
