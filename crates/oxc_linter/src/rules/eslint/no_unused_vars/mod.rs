@@ -3,6 +3,7 @@ mod binding_pattern;
 mod diagnostic;
 mod fixers;
 mod ignored;
+mod jsdoc;
 mod options;
 mod symbol;
 #[cfg(test)]
@@ -11,10 +12,11 @@ mod usage;
 
 use std::ops::Deref;
 
+use jsdoc::JSDocSymbols;
 use options::{IgnorePattern, NoUnusedVarsOptions};
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::GetSpan;
 use symbol::Symbol;
 
@@ -205,13 +207,15 @@ impl Rule for NoUnusedVars {
         Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap()))
     }
 
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol = Symbol::new(ctx, ctx.module_record(), symbol_id);
-        if Self::should_skip_symbol(&symbol) {
-            return;
+    fn run_once(&self, ctx: &LintContext) {
+        let jsdoc_symbols = JSDocSymbols::new(ctx);
+        for symbol_id in ctx.scoping().symbol_ids() {
+            let symbol = Symbol::new(ctx, ctx.module_record(), symbol_id);
+            if Self::should_skip_symbol(&symbol) {
+                continue;
+            }
+            self.run_on_symbol_internal(&symbol, ctx, &jsdoc_symbols);
         }
-
-        self.run_on_symbol_internal(&symbol, ctx);
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -228,7 +232,12 @@ impl Rule for NoUnusedVars {
 }
 
 impl NoUnusedVars {
-    fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
+    fn run_on_symbol_internal<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        ctx: &LintContext<'a>,
+        jsdoc_symbols: &JSDocSymbols<'_, 'a>,
+    ) {
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored && !self.report_used_ignore_pattern {
@@ -263,6 +272,11 @@ impl NoUnusedVars {
             | AstKind::ImportExpression(_)
             | AstKind::ImportDefaultSpecifier(_)
             | AstKind::ImportNamespaceSpecifier(_) => {
+                // NOTE: only imports are checked for jsdoc symbols
+                // this could be changed in the future
+                if jsdoc_symbols.has(symbol.name()) {
+                    return;
+                }
                 let diagnostic = diagnostic::imported(symbol);
                 let declaration =
                     symbol.iter_self_and_parents().map(AstNode::kind).find_map(|kind| match kind {
