@@ -1,0 +1,296 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a = 1; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a += 1; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ function foo(a) { ({...a} = obj); }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ function foo(a) { for (a in obj); }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:30]
+ 1 │ function foo(a) { for ({bar: a.b} of arr); }
+   ·                              ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a.b = 0; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(a) { ++a.b; }
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:26]
+ 1 │ function foo(a) { ({bar: a.b} = obj); }
+   ·                          ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:26]
+ 1 │ function foo(a) { delete a.b; }
+   ·                          ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a &&= b; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:36]
+ 1 │ function foo(a) { function bar() { a = 2; } }
+   ·                                    ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(bar) { bar = 13; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(bar) { bar += 13; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:35]
+ 1 │ function foo(bar) { (function() { bar = 13; })(); }
+   ·                                   ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:23]
+ 1 │ function foo(bar) { ++bar; }
+   ·                       ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(bar) { bar++; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:23]
+ 1 │ function foo(bar) { --bar; }
+   ·                       ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(bar) { bar--; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:23]
+ 1 │ function foo({bar}) { bar = 13; }
+   ·                       ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:27]
+ 1 │ function foo([, {bar}]) { bar = 13; }
+   ·                           ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:23]
+ 1 │ function foo(bar) { ({bar} = {}); }
+   ·                       ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:29]
+ 1 │ function foo(bar) { ({x: [, bar = 0]} = {}); }
+   ·                             ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:26]
+ 1 │ function foo(bar) { for (bar in baz); }
+   ·                          ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:26]
+ 1 │ function foo(bar) { for (bar of baz); }
+   ·                          ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(bar) { bar.a = 0; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(bar) { bar.get(0).a = 0; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:28]
+ 1 │ function foo(bar) { delete bar.a; }
+   ·                            ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:23]
+ 1 │ function foo(bar) { ++bar.a; }
+   ·                       ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:26]
+ 1 │ function foo(bar) { for (bar.a in {}); }
+   ·                          ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:26]
+ 1 │ function foo(bar) { for (bar.a of []); }
+   ·                          ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:28]
+ 1 │ function foo(bar) { (bar ? bar : [])[0] = 1; }
+   ·                            ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:22]
+ 1 │ function foo(bar) { [bar.a] = []; }
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:22]
+ 1 │ function foo(bar) { [bar.a] = []; }
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:22]
+ 1 │ function foo(bar) { [bar.a] = []; }
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:22]
+ 1 │ function foo(bar) { [bar.a] = []; }
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'bar'.
+   ╭─[no_param_reassign.tsx:1:28]
+ 1 │ function foo(bar) { ({foo: bar.a} = {}); }
+   ·                            ───
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:21]
+ 1 │ function foo(a) { ({a} = obj); }
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ function foo(a) { ([...a] = obj); }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ function foo(a) { ({...a} = obj); }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ function foo(a) { ([...a.b] = obj); }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:24]
+ 1 │ function foo(a) { ({...a.b} = obj); }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:30]
+ 1 │ function foo(a) { for ({bar: a.b} in {}); }
+   ·                              ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:25]
+ 1 │ function foo(a) { for ([a.b] of []); }
+   ·                         ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a &&= b; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a ||= b; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a ??= b; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a.b &&= c; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a.b.c ||= d; }
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-param-reassign): Assignment to property of function parameter 'a'.
+   ╭─[no_param_reassign.tsx:1:19]
+ 1 │ function foo(a) { a[b] ??= c; }
+   ·                   ─
+   ╰────
