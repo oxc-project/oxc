@@ -13,6 +13,7 @@ use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     es2022::ES2022Options,
+    es2026::ES2026Options,
     jsx::JsxOptions,
     plugins::{PluginsOptions, StyledComponentsOptions},
     proposals::ProposalOptions,
@@ -277,10 +278,11 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 es2020,
                 es2021,
                 es2022,
+                es2026: ES2026Options {
+                    explicit_resource_management: options.plugins.explicit_resource_management,
+                },
             },
-            proposals: ProposalOptions {
-                explicit_resource_management: options.plugins.explicit_resource_management,
-            },
+            proposals: ProposalOptions::default(),
             helper_loader,
             plugins,
         })
