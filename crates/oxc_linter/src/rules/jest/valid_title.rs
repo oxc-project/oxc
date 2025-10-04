@@ -320,7 +320,7 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
             }
 
             // Fallback: treat as a normal Rust regex with Unicode support
-            let reg_str = format!("(?u){}", pattern_str);
+            let reg_str = format!("(?u){pattern_str}");
             let reg = Regex::new(&reg_str).ok()?;
             Some((reg, None))
         }
@@ -334,7 +334,7 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
                 let (pat, _flags) = stripped.split_at(end);
                 Regex::new(pat).ok()?
             } else {
-                let reg_str = format!("(?u){}", pattern_str);
+                let reg_str = format!("(?u){pattern_str}");
                 Regex::new(&reg_str).ok()?
             };
 
