@@ -121,13 +121,27 @@ impl Program<'_> {
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
-    const body = DESER[Vec<Directive>](POS_OFFSET.directives);
+    const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
+        end = DESER[u32](POS_OFFSET.span.end);
+
+    const program = parent = {
+        type: 'Program',
+        body: null,
+        sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
+        hashbang: null,
+        start,
+        end,
+        ...(RANGE && { range: [start, end] }),
+        ...(PARENT && { parent: null }),
+    };
+
+    program.hashbang = DESER[Option<Hashbang>](POS_OFFSET.hashbang);
+
+    const body = program.body = DESER[Vec<Directive>](POS_OFFSET.directives);
     body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
 
-    const end = DESER[u32](POS_OFFSET.span.end);
-
-    let start;
     if (IS_TS) {
+        let start;
         if (body.length > 0) {
             const first = body[0];
             start = first.start;
@@ -144,19 +158,16 @@ impl Program<'_> {
         } else {
             start = end;
         }
-    } else {
-        start = DESER[u32](POS_OFFSET.span.start);
+
+        if (RANGE) {
+            program.start = program.range[0] = start;
+        } else {
+            program.start = start;
+        }
     }
 
-    const program = {
-        type: 'Program',
-        body,
-        sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
-        hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
-        start,
-        end,
-        ...(RANGE && { range: [start, end] }),
-    };
+    if (PARENT) parent = null;
+
     program
 ")]
 pub struct ProgramConverter<'a, 'b>(pub &'b Program<'a>);

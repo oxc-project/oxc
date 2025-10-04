@@ -43,9 +43,18 @@ export function parseAsyncRaw(filename, sourceText, options) {
 
 // Deserializers are large files, so lazy-loaded.
 // `deserialize` functions are stored in this array once loaded.
-// Index into these arrays is `isJs * 1 + range * 2`.
-const deserializers = [null, null, null, null];
-const deserializerNames = ['ts', 'js', 'ts_range', 'js_range'];
+// Index into these arrays is `isJs * 1 + range * 2 + experimentalParent * 4`.
+const deserializers = [null, null, null, null, null, null, null, null];
+const deserializerNames = [
+  'ts',
+  'js',
+  'ts_range',
+  'js_range',
+  'ts_parent',
+  'js_parent',
+  'ts_range_parent',
+  'js_range_parent',
+];
 
 /**
  * Deserialize whole AST from buffer.
@@ -53,14 +62,16 @@ const deserializerNames = ['ts', 'js', 'ts_range', 'js_range'];
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @param {string} sourceText - Source for the file
  * @param {number} sourceByteLen - Length of source text in UTF-8 bytes
- * @param {boolean} range - `true` if AST should contain `range` fields
+ * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`
  */
-function deserialize(buffer, sourceText, sourceByteLen, range) {
-  const isJs = isJsAst(buffer);
+function deserialize(buffer, sourceText, sourceByteLen, options) {
+  const isJs = isJsAst(buffer),
+    range = !!options.range,
+    parent = !!options.experimentalParent;
 
   // Lazy load deserializer, and deserialize buffer to JS objects
-  const deserializerIndex = (+isJs) | ((+range) << 1);
+  const deserializerIndex = (+isJs) | ((+range) << 1) | ((+parent) << 2);
   let deserializeThis = deserializers[deserializerIndex];
   if (deserializeThis === null) {
     deserializeThis = deserializers[deserializerIndex] = require(
