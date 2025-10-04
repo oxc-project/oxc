@@ -438,25 +438,15 @@ impl<'s> StructDeserializerGenerator<'s> {
         let field_offset = struct_offset + field.offset_64();
 
         if should_flatten_field(field, self.schema) {
-            match field_type {
-                TypeDef::Struct(field_struct_def) => {
-                    self.generate_struct_fields(field_struct_def, field_offset, deser_type);
-                }
-                TypeDef::Enum(field_enum_def) => {
-                    // TODO: Do this better
-                    let value_fn = field_enum_def.deser_name(self.schema);
-                    let pos = pos_offset(field_offset);
-                    self.fields.insert(
-                        field_name,
-                        StructFieldValue { value: format!("...{value_fn}({pos})"), deser_type },
-                    );
-                }
-                _ => panic!(
-                    "Cannot flatten a field which is not a struct or enum: `{}::{}`",
+            let TypeDef::Struct(field_struct_def) = field_type else {
+                panic!(
+                    "Cannot flatten a field which is not a struct: `{}::{}`",
                     struct_def.name(),
                     field.name(),
-                ),
-            }
+                );
+            };
+
+            self.generate_struct_fields(field_struct_def, field_offset, deser_type);
 
             if field_type_id == self.span_type_id {
                 self.fields.insert(
