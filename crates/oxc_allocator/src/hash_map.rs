@@ -144,14 +144,24 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let iter = iter.into_iter();
-        let mut map = ManuallyDrop::new(FxHashMap::with_capacity_and_hasher_in(
-            iter.size_hint().0,
-            FxBuildHasher,
-            allocator.bump(),
-        ));
+
+        // Use the iterator's lower size bound.
+        // This follows `hashbrown::HashMap`'s `from_iter` implementation.
+        //
+        // This is a trade-off:
+        // * Negative: If lower bound is too low, the `HashMap` may have to grow and reallocate during `for_each` loop.
+        // * Positive: Avoids potential large over-allocation for iterators where upper bound may be a large over-estimate
+        //   e.g. filter iterators.
+        let capacity = iter.size_hint().0;
+        let map = FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
+        // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
+        // to drop the `FxHashMap` in case of a panic in iterator's `next` method
+        let mut map = ManuallyDrop::new(map);
+
         iter.for_each(|(k, v)| {
             map.insert(k, v);
         });
+
         Self(map)
     }
 
