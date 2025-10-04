@@ -8,6 +8,7 @@ const interpolateAllResults = require('./compat-table/build-utils/interpolate-al
 const compareVersions = require('./compat-table/build-utils/compare-versions');
 const { addElectronSupportFromChromium } = require('./chromium-to-electron');
 const esFeatures = require(`./es-features`);
+const customCompatData = require('./custom-compat-data');
 
 const environments = [
   'chrome',
@@ -114,4 +115,7 @@ const generateData = (environments, items) => {
 
 const items = generateData(environments, esFeatures);
 
-fs.writeFileSync('./data.json', JSON.stringify(items, null, 2));
+// Merge custom compatibility data (for features not in compat-table)
+const allItems = [...items, ...customCompatData];
+
+fs.writeFileSync('./data.json', JSON.stringify(allItems, null, 2));
