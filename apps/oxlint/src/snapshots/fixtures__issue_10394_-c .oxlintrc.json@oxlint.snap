@@ -6,7 +6,7 @@ arguments: -c .oxlintrc.json
 working directory: fixtures/issue_10394
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: "Should not have an empty title"
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: "`describe` should not have an empty title"
    ,-[foo.test.ts:1:10]
  1 | describe("", () => {
    :          ^^

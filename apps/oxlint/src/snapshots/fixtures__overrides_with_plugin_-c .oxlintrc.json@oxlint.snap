@@ -6,7 +6,7 @@ arguments: -c .oxlintrc.json
 working directory: fixtures/overrides_with_plugin
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: "Should not have an empty title"
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: "`describe` should not have an empty title"
    ,-[index.test.ts:1:10]
  1 | describe("", () => {
    :          ^^
@@ -23,7 +23,7 @@ working directory: fixtures/overrides_with_plugin
    `----
   help: Add assertion(s) in this Test
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: "Should not have an empty title"
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/valid-title.html\eslint-plugin-jest(valid-title)]8;;\: "`it` should not have an empty title"
    ,-[index.test.ts:4:6]
  3 | 
  4 |   it("", () => {});
