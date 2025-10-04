@@ -7,9 +7,11 @@ use crate::{
     state::TransformState,
 };
 
+mod export_namespace_from;
 mod nullish_coalescing_operator;
 mod optional_chaining;
 mod options;
+use export_namespace_from::ExportNamespaceFrom;
 use nullish_coalescing_operator::NullishCoalescingOperator;
 pub use optional_chaining::OptionalChaining;
 pub use options::ES2020Options;
@@ -19,6 +21,7 @@ pub struct ES2020<'a, 'ctx> {
     options: ES2020Options,
 
     // Plugins
+    export_namespace_from: ExportNamespaceFrom<'a, 'ctx>,
     nullish_coalescing_operator: NullishCoalescingOperator<'a, 'ctx>,
     optional_chaining: OptionalChaining<'a, 'ctx>,
 }
@@ -28,6 +31,7 @@ impl<'a, 'ctx> ES2020<'a, 'ctx> {
         Self {
             ctx,
             options,
+            export_namespace_from: ExportNamespaceFrom::new(ctx),
             nullish_coalescing_operator: NullishCoalescingOperator::new(ctx),
             optional_chaining: OptionalChaining::new(ctx),
         }
@@ -35,6 +39,12 @@ impl<'a, 'ctx> ES2020<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.export_namespace_from {
+            self.export_namespace_from.exit_program(program, ctx);
+        }
+    }
+
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.nullish_coalescing_operator {
             self.nullish_coalescing_operator.enter_expression(expr, ctx);

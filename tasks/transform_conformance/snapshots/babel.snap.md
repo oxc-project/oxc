@@ -1,16 +1,17 @@
 commit: 41d96516
 
-Passed: 706/1213
+Passed: 712/1217
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
+* babel-plugin-transform-export-namespace-from
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (43/130)
+# babel-preset-env (45/130)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -45,12 +46,6 @@ env: Umd module is not implemented.
 x Output mismatch
 
 * export-namespace-from/auto-export-namespace-not-supported/input.mjs
-x Output mismatch
-
-* export-namespace-from/false-export-namespace-not-supported/input.mjs
-x Output mismatch
-
-* export-namespace-from/false-export-namespace-not-supported-caller-supported/input.mjs
 x Output mismatch
 
 * modules/auto-cjs/input.mjs
