@@ -1,8 +1,10 @@
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
+
+use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::DiagnosticSender;
 
@@ -11,6 +13,7 @@ use crate::Linter;
 mod runtime;
 use runtime::Runtime;
 pub use runtime::RuntimeFileSystem;
+#[derive(Clone)]
 pub struct LintServiceOptions {
     /// Current working directory
     cwd: Box<Path>,
@@ -83,6 +86,13 @@ impl LintService {
     /// # Panics
     pub fn run(&mut self, tx_error: &DiagnosticSender) {
         self.runtime.run(tx_error);
+    }
+
+    pub fn set_disable_directives_map(
+        &mut self,
+        map: Arc<Mutex<FxHashMap<PathBuf, crate::disable_directives::DisableDirectives>>>,
+    ) {
+        self.runtime.set_disable_directives_map(map);
     }
 
     #[cfg(feature = "language_server")]

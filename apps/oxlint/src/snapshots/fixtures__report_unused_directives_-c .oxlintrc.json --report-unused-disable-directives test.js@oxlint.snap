@@ -1,5 +1,6 @@
 ---
 source: apps/oxlint/src/tester.rs
+assertion_line: 115
 ---
 ########## 
 arguments: -c .oxlintrc.json --report-unused-disable-directives test.js
@@ -56,7 +57,7 @@ working directory: fixtures/report_unused_directives
     `----
   help: Delete this console statement.
 
-  ! Unused eslint-enable directive (no matching eslint-disable directives were found).
+  ! Unused eslint-enable directive (no matching eslint-disable found).
     ,-[test.js:31:3]
  30 | 
  31 | // eslint-enable

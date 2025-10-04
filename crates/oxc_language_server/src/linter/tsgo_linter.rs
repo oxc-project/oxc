@@ -1,13 +1,13 @@
 use std::{
-    path::Path,
-    sync::{Arc, OnceLock},
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex, OnceLock},
 };
 
 use oxc_linter::{
-    ConfigStore, LINTABLE_EXTENSIONS, TsGoLintState, loader::LINT_PARTIAL_LOADER_EXTENSIONS,
-    read_to_string,
+    ConfigStore, DisableDirectives, LINTABLE_EXTENSIONS, TsGoLintState,
+    loader::LINT_PARTIAL_LOADER_EXTENSIONS, read_to_string,
 };
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use crate::linter::error_with_position::{
@@ -20,7 +20,9 @@ pub struct TsgoLinter {
 
 impl TsgoLinter {
     pub fn new(root_uri: &Path, config_store: ConfigStore) -> Self {
-        let state = TsGoLintState::new(root_uri, config_store);
+        let disable_directives_map =
+            Arc::new(Mutex::new(FxHashMap::<PathBuf, DisableDirectives>::default()));
+        let state = TsGoLintState::new(root_uri, config_store, disable_directives_map);
         Self { state }
     }
 

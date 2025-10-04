@@ -1,0 +1,11 @@
+---
+source: apps/oxlint/src/tester.rs
+assertion_line: 115
+---
+########## 
+arguments: --type-aware test.ts
+working directory: fixtures/tsgolint_disable_directives
+----------
+Error running tsgolint: "exit status: exit status: 127"----------
+CLI result: TsGoLintError
+----------
