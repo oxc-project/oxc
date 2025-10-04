@@ -514,6 +514,7 @@ function deserializeTemplateElement(pos) {
     tail,
     start,
     end,
+    range: [start, end],
   };
 }
 
