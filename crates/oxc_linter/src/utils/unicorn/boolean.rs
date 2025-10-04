@@ -89,8 +89,7 @@ pub fn get_boolean_ancestor<'a, 'b>(
                 cur = parent;
                 continue;
             }
-            let parent = ctx.nodes().parent_node(parent.id());
-            if is_boolean_call(&parent.kind()) {
+            if is_boolean_call(&kind) {
                 cur = parent;
                 continue;
             }

@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
+assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/cross_module/debugger.ts
