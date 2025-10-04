@@ -380,14 +380,14 @@ pub fn find_innermost_function_with_jsx<'a>(
     match expr {
         Expression::CallExpression(call) => {
             // Check if this is a HOC call
-            if let Some(callee_name) = call.callee_name() {
-                if is_hoc_call(callee_name, ctx) {
-                    // This is a HOC, recursively check the first argument
-                    if let Some(first_arg) = call.arguments.first() {
-                        if let Some(inner_expr) = first_arg.as_expression() {
-                            return find_innermost_function_with_jsx(inner_expr, ctx);
-                        }
-                    }
+            if let Some(callee_name) = call.callee_name()
+                && is_hoc_call(callee_name, ctx)
+            {
+                // This is a HOC, recursively check the first argument
+                if let Some(first_arg) = call.arguments.first()
+                    && let Some(inner_expr) = first_arg.as_expression()
+                {
+                    return find_innermost_function_with_jsx(inner_expr, ctx);
                 }
             }
             None
@@ -404,20 +404,19 @@ pub fn find_innermost_function_with_jsx<'a>(
                 // Check if this arrow function returns another function that contains JSX
                 if arrow_func.expression {
                     // Expression-bodied arrow function: () => () => <div />
-                    if arrow_func.body.statements.len() == 1 {
-                        if let Statement::ExpressionStatement(expr_stmt) =
+                    if arrow_func.body.statements.len() == 1
+                        && let Statement::ExpressionStatement(expr_stmt) =
                             &arrow_func.body.statements[0]
-                        {
-                            return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
-                        }
+                    {
+                        return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
                     }
                 } else {
                     // Block-bodied arrow function: () => { return () => <div /> }
                     for stmt in &arrow_func.body.statements {
-                        if let Statement::ReturnStatement(ret_stmt) = stmt {
-                            if let Some(expr) = &ret_stmt.argument {
-                                return find_innermost_function_with_jsx(expr, ctx);
-                            }
+                        if let Statement::ReturnStatement(ret_stmt) = stmt
+                            && let Some(expr) = &ret_stmt.argument
+                        {
+                            return find_innermost_function_with_jsx(expr, ctx);
                         }
                     }
                 }
@@ -455,12 +454,11 @@ pub fn contains_jsx(expr: &Expression) -> bool {
 pub fn function_contains_jsx(func: &Function) -> bool {
     if let Some(body) = &func.body {
         for stmt in &body.statements {
-            if let Statement::ReturnStatement(ret_stmt) = stmt {
-                if let Some(expr) = &ret_stmt.argument {
-                    if contains_jsx(expr) {
-                        return true;
-                    }
-                }
+            if let Statement::ReturnStatement(ret_stmt) = stmt
+                && let Some(expr) = &ret_stmt.argument
+                && contains_jsx(expr)
+            {
+                return true;
             }
         }
     }
@@ -474,22 +472,20 @@ pub fn expression_contains_jsx(expr: &Expression) -> bool {
         Expression::ArrowFunctionExpression(arrow_func) => {
             if arrow_func.expression {
                 // Expression-bodied arrow function: () => <div />
-                if arrow_func.body.statements.len() == 1 {
-                    if let Statement::ExpressionStatement(expr_stmt) =
+                if arrow_func.body.statements.len() == 1
+                    && let Statement::ExpressionStatement(expr_stmt) =
                         &arrow_func.body.statements[0]
-                    {
-                        return contains_jsx(&expr_stmt.expression);
-                    }
+                {
+                    return contains_jsx(&expr_stmt.expression);
                 }
             } else {
                 // Block-bodied arrow function: () => { return <div /> }
                 for stmt in &arrow_func.body.statements {
-                    if let Statement::ReturnStatement(ret_stmt) = stmt {
-                        if let Some(expr) = &ret_stmt.argument {
-                            if contains_jsx(expr) {
-                                return true;
-                            }
-                        }
+                    if let Statement::ReturnStatement(ret_stmt) = stmt
+                        && let Some(expr) = &ret_stmt.argument
+                        && contains_jsx(expr)
+                    {
+                        return true;
                     }
                 }
             }

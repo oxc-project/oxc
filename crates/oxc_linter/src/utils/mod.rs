@@ -25,8 +25,8 @@ mod vitest;
 mod vue;
 
 pub use self::{
-    comment::*, config::*, express::*, hoc::*, jest::*, jsdoc::*, jsx::*, nextjs::*, promise::*,
-    react::*, react_perf::*, regex::*, unicorn::*, url::*, vitest::*, vue::*,
+    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
+    react_perf::*, regex::*, unicorn::*, url::*, vitest::*, vue::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.

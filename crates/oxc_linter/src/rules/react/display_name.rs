@@ -280,61 +280,58 @@ impl Rule for DisplayName {
             }
 
             // Process displayName assignments first (so they can resolve components found later)
-            if let AstKind::AssignmentExpression(assign) = node.kind() {
-                if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
-                    if member.property.name == "displayName" {
-                        // Extract component name directly from the member expression
-                        let component_name = match &member.object {
-                            Expression::Identifier(ident) => {
-                                // Simple case: Component.displayName
-                                CompactStr::from(ident.name.as_str())
-                            }
-                            Expression::StaticMemberExpression(_nested_member) => {
-                                // Nested case: Namespace.Component.displayName
-                                // Build the full path by traversing up the chain
-                                let mut path_parts = Vec::new();
-                                let mut current = &member.object;
-
-                                // Collect all parts of the path
-                                while let Expression::StaticMemberExpression(m) = current {
-                                    path_parts.push(m.property.name.into());
-                                    current = &m.object;
-                                }
-
-                                // Add the base identifier
-                                if let Expression::Identifier(ident) = current {
-                                    path_parts.push(ident.name.into());
-                                }
-
-                                // Reverse to get correct order and build the name
-                                path_parts.reverse();
-                                build_component_name(&path_parts, None)
-                            }
-                            _ => {
-                                // Skip other cases
-                                continue;
-                            }
-                        };
-                        tracker.resolve_display_name(&component_name);
+            if let AstKind::AssignmentExpression(assign) = node.kind()
+                && let AssignmentTarget::StaticMemberExpression(member) = &assign.left
+                && member.property.name == "displayName"
+            {
+                // Extract component name directly from the member expression
+                let component_name = match &member.object {
+                    Expression::Identifier(ident) => {
+                        // Simple case: Component.displayName
+                        CompactStr::from(ident.name.as_str())
                     }
-                }
+                    Expression::StaticMemberExpression(_nested_member) => {
+                        // Nested case: Namespace.Component.displayName
+                        // Build the full path by traversing up the chain
+                        let mut path_parts = Vec::new();
+                        let mut current = &member.object;
+
+                        // Collect all parts of the path
+                        while let Expression::StaticMemberExpression(m) = current {
+                            path_parts.push(m.property.name.into());
+                            current = &m.object;
+                        }
+
+                        // Add the base identifier
+                        if let Expression::Identifier(ident) = current {
+                            path_parts.push(ident.name.into());
+                        }
+
+                        // Reverse to get correct order and build the name
+                        path_parts.reverse();
+                        build_component_name(&path_parts, None)
+                    }
+                    _ => {
+                        // Skip other cases
+                        continue;
+                    }
+                };
+                tracker.resolve_display_name(&component_name);
             }
 
             // Guard: skip nodes that are part of React.memo(React.forwardRef(...)) assignments
             let mut should_skip = false;
             for ancestor in ctx.nodes().ancestor_ids(node.id()) {
                 let ancestor_node = ctx.nodes().get_node(ancestor);
-                if let AstKind::VariableDeclarator(decl) = ancestor_node.kind() {
-                    if let Some(Expression::CallExpression(call)) = &decl.init {
-                        if let Some(callee_name) = call.callee_name() {
-                            if is_hoc_call(callee_name, ctx) {
-                                // Only skip if React version is compatible
-                                if version_cache.get_memo_forwardref_compatible(ctx) {
-                                    should_skip = true;
-                                    break;
-                                }
-                            }
-                        }
+                if let AstKind::VariableDeclarator(decl) = ancestor_node.kind()
+                    && let Some(Expression::CallExpression(call)) = &decl.init
+                    && let Some(callee_name) = call.callee_name()
+                    && is_hoc_call(callee_name, ctx)
+                {
+                    // Only skip if React version is compatible
+                    if version_cache.get_memo_forwardref_compatible(ctx) {
+                        should_skip = true;
+                        break;
                     }
                 }
             }
@@ -345,55 +342,54 @@ impl Rule for DisplayName {
             // Process component detection
             match node.kind() {
                 AstKind::Class(class) => {
-                    if let Some(name) = &class.name() {
-                        if is_react_component_name(name) {
-                            // Check if class has static displayName
-                            let has_static_display_name =
-                                class.body.body.iter().any(|element| match element {
-                                    ClassElement::MethodDefinition(method_def) => {
-                                        method_def.r#static
-                                            && method_def.key.static_name()
-                                                == Some(std::borrow::Cow::Borrowed("displayName"))
-                                    }
-                                    ClassElement::PropertyDefinition(prop_def) => {
-                                        prop_def.r#static
-                                            && prop_def.key.static_name()
-                                                == Some(std::borrow::Cow::Borrowed("displayName"))
-                                    }
-                                    _ => false,
-                                });
-
-                            // Only track classes that contain JSX or are React components
-                            let contains_jsx = class.body.body.iter().any(|element| {
-                                if let ClassElement::MethodDefinition(method_def) = element {
-                                    if let Some(body) = &method_def.value.body {
-                                        for stmt in &body.statements {
-                                            if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                                if let Some(expr) = &ret_stmt.argument {
-                                                    if contains_jsx(expr) {
-                                                        return true;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                    if let Some(name) = &class.name()
+                        && is_react_component_name(name)
+                    {
+                        // Check if class has static displayName
+                        let has_static_display_name =
+                            class.body.body.iter().any(|element| match element {
+                                ClassElement::MethodDefinition(method_def) => {
+                                    method_def.r#static
+                                        && method_def.key.static_name()
+                                            == Some(std::borrow::Cow::Borrowed("displayName"))
                                 }
-                                false
+                                ClassElement::PropertyDefinition(prop_def) => {
+                                    prop_def.r#static
+                                        && prop_def.key.static_name()
+                                            == Some(std::borrow::Cow::Borrowed("displayName"))
+                                }
+                                _ => false,
                             });
 
-                            if has_static_display_name {
-                                tracker.resolve_display_name(name);
-                            } else if contains_jsx {
-                                if ignore_transpiler_name {
-                                    tracker.add_component(
-                                        name.as_str(),
-                                        class.span,
-                                        ComponentType::Class,
-                                        false,
-                                    );
-                                } else {
-                                    tracker.resolve_display_name(name);
+                        // Only track classes that contain JSX or are React components
+                        let contains_jsx = class.body.body.iter().any(|element| {
+                            if let ClassElement::MethodDefinition(method_def) = element
+                                && let Some(body) = &method_def.value.body
+                            {
+                                for stmt in &body.statements {
+                                    if let Statement::ReturnStatement(ret_stmt) = stmt
+                                        && let Some(expr) = &ret_stmt.argument
+                                        && contains_jsx(expr)
+                                    {
+                                        return true;
+                                    }
                                 }
+                            }
+                            false
+                        });
+
+                        if has_static_display_name {
+                            tracker.resolve_display_name(name);
+                        } else if contains_jsx {
+                            if ignore_transpiler_name {
+                                tracker.add_component(
+                                    name.as_str(),
+                                    class.span,
+                                    ComponentType::Class,
+                                    false,
+                                );
+                            } else {
+                                tracker.resolve_display_name(name);
                             }
                         }
                     }
@@ -441,35 +437,33 @@ impl Rule for DisplayName {
                                 // Handle anonymous functions that return JSX
                                 if let Some(body) = &func.body {
                                     for stmt in &body.statements {
-                                        if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                            if let Some(expr) = &ret_stmt.argument {
-                                                if let Expression::FunctionExpression(
-                                                    returned_func,
-                                                ) = expr
-                                                {
-                                                    if function_contains_jsx(returned_func) {
-                                                        tracker.add_component(
-                                                            "<anonymous>",
-                                                            func.span,
-                                                            ComponentType::Function,
-                                                            false,
-                                                        );
-                                                        break;
-                                                    }
-                                                } else if let Expression::ArrowFunctionExpression(
-                                                    _returned_func,
-                                                ) = expr
-                                                {
-                                                    if expression_contains_jsx(expr) {
-                                                        tracker.add_component(
-                                                            "<anonymous>",
-                                                            func.span,
-                                                            ComponentType::Function,
-                                                            false,
-                                                        );
-                                                        break;
-                                                    }
+                                        if let Statement::ReturnStatement(ret_stmt) = stmt
+                                            && let Some(expr) = &ret_stmt.argument
+                                        {
+                                            if let Expression::FunctionExpression(returned_func) =
+                                                expr
+                                            {
+                                                if function_contains_jsx(returned_func) {
+                                                    tracker.add_component(
+                                                        "<anonymous>",
+                                                        func.span,
+                                                        ComponentType::Function,
+                                                        false,
+                                                    );
+                                                    break;
                                                 }
+                                            } else if let Expression::ArrowFunctionExpression(
+                                                _returned_func,
+                                            ) = expr
+                                                && expression_contains_jsx(expr)
+                                            {
+                                                tracker.add_component(
+                                                    "<anonymous>",
+                                                    func.span,
+                                                    ComponentType::Function,
+                                                    false,
+                                                );
+                                                break;
                                             }
                                         }
                                     }
@@ -480,33 +474,31 @@ impl Rule for DisplayName {
                         // Handle anonymous functions that return JSX
                         if let Some(body) = &func.body {
                             for stmt in &body.statements {
-                                if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                    if let Some(expr) = &ret_stmt.argument {
-                                        if let Expression::FunctionExpression(returned_func) = expr
-                                        {
-                                            if function_contains_jsx(returned_func) {
-                                                tracker.add_component(
-                                                    "<anonymous>",
-                                                    func.span,
-                                                    ComponentType::Function,
-                                                    false,
-                                                );
-                                                break;
-                                            }
-                                        } else if let Expression::ArrowFunctionExpression(
-                                            _returned_func,
-                                        ) = expr
-                                        {
-                                            if expression_contains_jsx(expr) {
-                                                tracker.add_component(
-                                                    "<anonymous>",
-                                                    func.span,
-                                                    ComponentType::Function,
-                                                    false,
-                                                );
-                                                break;
-                                            }
+                                if let Statement::ReturnStatement(ret_stmt) = stmt
+                                    && let Some(expr) = &ret_stmt.argument
+                                {
+                                    if let Expression::FunctionExpression(returned_func) = expr {
+                                        if function_contains_jsx(returned_func) {
+                                            tracker.add_component(
+                                                "<anonymous>",
+                                                func.span,
+                                                ComponentType::Function,
+                                                false,
+                                            );
+                                            break;
                                         }
+                                    } else if let Expression::ArrowFunctionExpression(
+                                        _returned_func,
+                                    ) = expr
+                                        && expression_contains_jsx(expr)
+                                    {
+                                        tracker.add_component(
+                                            "<anonymous>",
+                                            func.span,
+                                            ComponentType::Function,
+                                            false,
+                                        );
+                                        break;
                                     }
                                 }
                             }
@@ -516,157 +508,148 @@ impl Rule for DisplayName {
                 AstKind::AssignmentExpression(assign) => {
                     // Handle: module.exports = () => <div />
                     if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
-                        if let Expression::Identifier(ident) = &member.object {
-                            if ident.name == "module" && member.property.name == "exports" {
-                                match &assign.right {
-                                    Expression::ArrowFunctionExpression(func) => {
-                                        if func.expression {
-                                            // Expression-bodied arrow function: () => <div />
-                                            // For expression-bodied arrows, the FunctionBody contains a single ExpressionStatement
-                                            if func.body.statements.len() == 1 {
-                                                if let Statement::ExpressionStatement(expr_stmt) =
-                                                    &func.body.statements[0]
-                                                {
-                                                    if contains_jsx(&expr_stmt.expression) {
+                        if let Expression::Identifier(ident) = &member.object
+                            && ident.name == "module"
+                            && member.property.name == "exports"
+                        {
+                            match &assign.right {
+                                Expression::ArrowFunctionExpression(func) => {
+                                    if func.expression {
+                                        // Expression-bodied arrow function: () => <div />
+                                        // For expression-bodied arrows, the FunctionBody contains a single ExpressionStatement
+                                        if func.body.statements.len() == 1
+                                            && let Statement::ExpressionStatement(expr_stmt) =
+                                                &func.body.statements[0]
+                                            && contains_jsx(&expr_stmt.expression)
+                                        {
+                                            tracker.add_component(
+                                                "<anonymous export>",
+                                                assign.span,
+                                                ComponentType::Function,
+                                                false,
+                                            );
+                                        }
+                                    } else {
+                                        // Block-bodied arrow function: () => { return <div /> }
+                                        for stmt in &func.body.statements {
+                                            if let Statement::ReturnStatement(ret_stmt) = stmt
+                                                && let Some(expr) = &ret_stmt.argument
+                                                && contains_jsx(expr)
+                                            {
+                                                tracker.add_component(
+                                                    "<anonymous export>",
+                                                    assign.span,
+                                                    ComponentType::Function,
+                                                    false,
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                                Expression::FunctionExpression(func) => {
+                                    if let Some(body) = &func.body {
+                                        for stmt in &body.statements {
+                                            if let Statement::ReturnStatement(ret_stmt) = stmt
+                                                && let Some(expr) = &ret_stmt.argument
+                                                && contains_jsx(expr)
+                                            {
+                                                // Check if the function has a name
+                                                if let Some(name) = &func.id {
+                                                    if ignore_transpiler_name {
+                                                        // Use the function name as the component name
                                                         tracker.add_component(
-                                                            "<anonymous export>",
+                                                            name.name.as_str(),
                                                             assign.span,
                                                             ComponentType::Function,
                                                             false,
                                                         );
+                                                    } else {
+                                                        // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
+                                                        tracker.resolve_display_name(name.name);
                                                     }
-                                                }
-                                            }
-                                        } else {
-                                            // Block-bodied arrow function: () => { return <div /> }
-                                            for stmt in &func.body.statements {
-                                                if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                                    if let Some(expr) = &ret_stmt.argument {
-                                                        if contains_jsx(expr) {
-                                                            tracker.add_component(
-                                                                "<anonymous export>",
-                                                                assign.span,
-                                                                ComponentType::Function,
-                                                                false,
-                                                            );
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    Expression::FunctionExpression(func) => {
-                                        if let Some(body) = &func.body {
-                                            for stmt in &body.statements {
-                                                if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                                    if let Some(expr) = &ret_stmt.argument {
-                                                        if contains_jsx(expr) {
-                                                            // Check if the function has a name
-                                                            if let Some(name) = &func.id {
-                                                                if ignore_transpiler_name {
-                                                                    // Use the function name as the component name
-                                                                    tracker.add_component(
-                                                                        name.name.as_str(),
-                                                                        assign.span,
-                                                                        ComponentType::Function,
-                                                                        false,
-                                                                    );
-                                                                } else {
-                                                                    // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
-                                                                    tracker.resolve_display_name(
-                                                                        name.name,
-                                                                    );
-                                                                }
-                                                            } else {
-                                                                // Anonymous function
-                                                                tracker.add_component(
-                                                                    "<anonymous export>",
-                                                                    assign.span,
-                                                                    ComponentType::Function,
-                                                                    false,
-                                                                );
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    Expression::CallExpression(call) => {
-                                        if let Some(callee_name) = call.callee_name() {
-                                            if callee_name == "createClass"
-                                                || callee_name == "createReactClass"
-                                            {
-                                                let has_display_name =
-                                                    call.arguments.iter().any(|arg| {
-                                                        if let Some(Expression::ObjectExpression(
-                                                            obj_expr,
-                                                        )) = arg.as_expression()
-                                                        {
-                                                            obj_expr.properties.iter().any(|prop| {
-                                                                if let Some((prop_name, _)) =
-                                                                    prop.prop_name()
-                                                                {
-                                                                    prop_name == "displayName"
-                                                                        || (!ignore_transpiler_name
-                                                                            && prop_name == "name")
-                                                                } else {
-                                                                    false
-                                                                }
-                                                            })
-                                                        } else {
-                                                            false
-                                                        }
-                                                    });
-
-                                                if !has_display_name {
-                                                    // Only track if missing displayName
-                                                    tracker.add_component(
-                                                        "<anonymous export>",
-                                                        assign.span,
-                                                        ComponentType::CreateReactClass,
-                                                        false,
-                                                    );
-                                                }
-                                            } else if callee_name == "createContext"
-                                                || callee_name.ends_with(".createContext")
-                                            {
-                                                // Handle React.createContext calls in assignment expressions
-                                                if check_context_objects {
+                                                } else {
+                                                    // Anonymous function
                                                     tracker.add_component(
                                                         "<anonymous export>",
                                                         assign.span,
                                                         ComponentType::Function,
-                                                        true,
+                                                        false,
                                                     );
                                                 }
                                             }
                                         }
                                     }
-                                    _ => {}
                                 }
+                                Expression::CallExpression(call) => {
+                                    if let Some(callee_name) = call.callee_name() {
+                                        if callee_name == "createClass"
+                                            || callee_name == "createReactClass"
+                                        {
+                                            let has_display_name =
+                                                call.arguments.iter().any(|arg| {
+                                                    if let Some(Expression::ObjectExpression(
+                                                        obj_expr,
+                                                    )) = arg.as_expression()
+                                                    {
+                                                        obj_expr.properties.iter().any(|prop| {
+                                                            if let Some((prop_name, _)) =
+                                                                prop.prop_name()
+                                                            {
+                                                                prop_name == "displayName"
+                                                                    || (!ignore_transpiler_name
+                                                                        && prop_name == "name")
+                                                            } else {
+                                                                false
+                                                            }
+                                                        })
+                                                    } else {
+                                                        false
+                                                    }
+                                                });
+
+                                            if !has_display_name {
+                                                // Only track if missing displayName
+                                                tracker.add_component(
+                                                    "<anonymous export>",
+                                                    assign.span,
+                                                    ComponentType::CreateReactClass,
+                                                    false,
+                                                );
+                                            }
+                                        } else if callee_name == "createContext"
+                                            || callee_name.ends_with(".createContext")
+                                        {
+                                            // Handle React.createContext calls in assignment expressions
+                                            if check_context_objects {
+                                                tracker.add_component(
+                                                    "<anonymous export>",
+                                                    assign.span,
+                                                    ComponentType::Function,
+                                                    true,
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                     }
                     // Handle: Hello = createContext()
                     else if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign.left
+                        && let Expression::CallExpression(call) = &assign.right
+                        && let Some(callee_name) = call.callee_name()
+                        && (callee_name == "createContext"
+                            || callee_name.ends_with(".createContext"))
                     {
-                        if let Expression::CallExpression(call) = &assign.right {
-                            if let Some(callee_name) = call.callee_name() {
-                                if callee_name == "createContext"
-                                    || callee_name.ends_with(".createContext")
-                                {
-                                    // Handle React.createContext calls in simple variable assignments
-                                    if check_context_objects {
-                                        tracker.add_component(
-                                            ident.name.as_str(),
-                                            assign.span,
-                                            ComponentType::Function,
-                                            true,
-                                        );
-                                    }
-                                }
-                            }
+                        // Handle React.createContext calls in simple variable assignments
+                        if check_context_objects {
+                            tracker.add_component(
+                                ident.name.as_str(),
+                                assign.span,
+                                ComponentType::Function,
+                                true,
+                            );
                         }
                     }
                 }
@@ -678,11 +661,58 @@ impl Rule for DisplayName {
                         ) => {
                             if func.expression {
                                 // Expression-bodied arrow function: () => <div />
-                                if func.body.statements.len() == 1 {
-                                    if let Statement::ExpressionStatement(expr_stmt) =
+                                if func.body.statements.len() == 1
+                                    && let Statement::ExpressionStatement(expr_stmt) =
                                         &func.body.statements[0]
+                                    && contains_jsx(&expr_stmt.expression)
+                                {
+                                    tracker.add_component(
+                                        "<anonymous export>",
+                                        export.span,
+                                        ComponentType::Function,
+                                        false,
+                                    );
+                                }
+                            } else {
+                                // Block-bodied arrow function: () => { return <div /> }
+                                for stmt in &func.body.statements {
+                                    if let Statement::ReturnStatement(ret_stmt) = stmt
+                                        && let Some(expr) = &ret_stmt.argument
+                                        && contains_jsx(expr)
                                     {
-                                        if contains_jsx(&expr_stmt.expression) {
+                                        tracker.add_component(
+                                            "<anonymous export>",
+                                            export.span,
+                                            ComponentType::Function,
+                                            false,
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        oxc_ast::ast::ExportDefaultDeclarationKind::FunctionExpression(func) => {
+                            if let Some(body) = &func.body {
+                                for stmt in &body.statements {
+                                    if let Statement::ReturnStatement(ret_stmt) = stmt
+                                        && let Some(expr) = &ret_stmt.argument
+                                        && contains_jsx(expr)
+                                    {
+                                        // Check if the function has a name
+                                        if let Some(name) = &func.id {
+                                            if ignore_transpiler_name {
+                                                // Use the function name as the component name
+                                                tracker.add_component(
+                                                    name.name.as_str(),
+                                                    export.span,
+                                                    ComponentType::Function,
+                                                    false,
+                                                );
+                                            } else {
+                                                // When ignoreTranspiler_name is false, the function name itself is considered a valid displayName
+                                                tracker.resolve_display_name(name.name);
+                                            }
+                                        } else {
+                                            // Anonymous function
                                             tracker.add_component(
                                                 "<anonymous export>",
                                                 export.span,
@@ -692,74 +722,22 @@ impl Rule for DisplayName {
                                         }
                                     }
                                 }
-                            } else {
-                                // Block-bodied arrow function: () => { return <div /> }
-                                for stmt in &func.body.statements {
-                                    if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                        if let Some(expr) = &ret_stmt.argument {
-                                            if contains_jsx(expr) {
-                                                tracker.add_component(
-                                                    "<anonymous export>",
-                                                    export.span,
-                                                    ComponentType::Function,
-                                                    false,
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        oxc_ast::ast::ExportDefaultDeclarationKind::FunctionExpression(func) => {
-                            if let Some(body) = &func.body {
-                                for stmt in &body.statements {
-                                    if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                        if let Some(expr) = &ret_stmt.argument {
-                                            if contains_jsx(expr) {
-                                                // Check if the function has a name
-                                                if let Some(name) = &func.id {
-                                                    if ignore_transpiler_name {
-                                                        // Use the function name as the component name
-                                                        tracker.add_component(
-                                                            name.name.as_str(),
-                                                            export.span,
-                                                            ComponentType::Function,
-                                                            false,
-                                                        );
-                                                    } else {
-                                                        // When ignoreTranspiler_name is false, the function name itself is considered a valid displayName
-                                                        tracker.resolve_display_name(name.name);
-                                                    }
-                                                } else {
-                                                    // Anonymous function
-                                                    tracker.add_component(
-                                                        "<anonymous export>",
-                                                        export.span,
-                                                        ComponentType::Function,
-                                                        false,
-                                                    );
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
                             }
                         }
                         oxc_ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
-                            if let Some(name) = &func.id {
-                                if is_react_component_name(&name.name)
-                                    && function_contains_jsx(func)
-                                {
-                                    if ignore_transpiler_name {
-                                        tracker.add_component(
-                                            name.name.as_str(),
-                                            export.span,
-                                            ComponentType::Function,
-                                            false,
-                                        );
-                                    } else {
-                                        tracker.resolve_display_name(name.name);
-                                    }
+                            if let Some(name) = &func.id
+                                && is_react_component_name(&name.name)
+                                && function_contains_jsx(func)
+                            {
+                                if ignore_transpiler_name {
+                                    tracker.add_component(
+                                        name.name.as_str(),
+                                        export.span,
+                                        ComponentType::Function,
+                                        false,
+                                    );
+                                } else {
+                                    tracker.resolve_display_name(name.name);
                                 }
                             }
                         }
@@ -789,18 +767,14 @@ impl Rule for DisplayName {
                                     // Only track classes that contain JSX or are React components
                                     let contains_jsx = class.body.body.iter().any(|element| {
                                         if let ClassElement::MethodDefinition(method_def) = element
+                                            && let Some(body) = &method_def.value.body
                                         {
-                                            if let Some(body) = &method_def.value.body {
-                                                for stmt in &body.statements {
-                                                    if let Statement::ReturnStatement(ret_stmt) =
-                                                        stmt
-                                                    {
-                                                        if let Some(expr) = &ret_stmt.argument {
-                                                            if contains_jsx(expr) {
-                                                                return true;
-                                                            }
-                                                        }
-                                                    }
+                                            for stmt in &body.statements {
+                                                if let Statement::ReturnStatement(ret_stmt) = stmt
+                                                    && let Some(expr) = &ret_stmt.argument
+                                                    && contains_jsx(expr)
+                                                {
+                                                    return true;
                                                 }
                                             }
                                         }
@@ -825,19 +799,16 @@ impl Rule for DisplayName {
                                                 .is_some_and(|super_class| {
                                                     if let Some(member_expr) =
                                                         super_class.as_member_expression()
-                                                    {
-                                                        if let Expression::Identifier(ident) =
+                                                        && let Expression::Identifier(ident) =
                                                             member_expr.object()
-                                                        {
-                                                            return ident.name == "React"
-                                                                && member_expr
-                                                                    .static_property_name()
-                                                                    .is_some_and(|name| {
-                                                                        name == "Component"
-                                                                            || name
-                                                                                == "PureComponent"
-                                                                    });
-                                                        }
+                                                    {
+                                                        return ident.name == "React"
+                                                            && member_expr
+                                                                .static_property_name()
+                                                                .is_some_and(|name| {
+                                                                    name == "Component"
+                                                                        || name == "PureComponent"
+                                                                });
                                                     }
                                                     if let Some(ident_reference) =
                                                         super_class.get_identifier_reference()
@@ -864,16 +835,15 @@ impl Rule for DisplayName {
                             } else {
                                 // For anonymous default-exported class
                                 let contains_jsx = class.body.body.iter().any(|element| {
-                                    if let ClassElement::MethodDefinition(method_def) = element {
-                                        if let Some(body) = &method_def.value.body {
-                                            for stmt in &body.statements {
-                                                if let Statement::ReturnStatement(ret_stmt) = stmt {
-                                                    if let Some(expr) = &ret_stmt.argument {
-                                                        if contains_jsx(expr) {
-                                                            return true;
-                                                        }
-                                                    }
-                                                }
+                                    if let ClassElement::MethodDefinition(method_def) = element
+                                        && let Some(body) = &method_def.value.body
+                                    {
+                                        for stmt in &body.statements {
+                                            if let Statement::ReturnStatement(ret_stmt) = stmt
+                                                && let Some(expr) = &ret_stmt.argument
+                                                && contains_jsx(expr)
+                                            {
+                                                return true;
                                             }
                                         }
                                     }
@@ -895,18 +865,16 @@ impl Rule for DisplayName {
                                             class.super_class.as_ref().is_some_and(|super_class| {
                                                 if let Some(member_expr) =
                                                     super_class.as_member_expression()
-                                                {
-                                                    if let Expression::Identifier(ident) =
+                                                    && let Expression::Identifier(ident) =
                                                         member_expr.object()
-                                                    {
-                                                        return ident.name == "React"
-                                                            && member_expr
-                                                                .static_property_name()
-                                                                .is_some_and(|name| {
-                                                                    name == "Component"
-                                                                        || name == "PureComponent"
-                                                                });
-                                                    }
+                                                {
+                                                    return ident.name == "React"
+                                                        && member_expr
+                                                            .static_property_name()
+                                                            .is_some_and(|name| {
+                                                                name == "Component"
+                                                                    || name == "PureComponent"
+                                                            });
                                                 }
                                                 if let Some(ident_reference) =
                                                     super_class.get_identifier_reference()
@@ -971,122 +939,101 @@ fn process_variable_declaration<'a>(
     version_cache: &mut VersionCache,
 ) {
     for var_decl in &decl.declarations {
-        if let Some(Expression::CallExpression(call)) = &var_decl.init {
-            if let Some(callee_name) = call.callee_name() {
-                if is_hoc_call(callee_name, ctx) {
-                    if let Some(Expression::CallExpression(inner_call)) =
-                        call.arguments.first().and_then(|arg| arg.as_expression())
-                    {
-                        if let Some(inner_callee_name) = inner_call.callee_name() {
-                            if is_hoc_call(inner_callee_name, ctx)
-                                && version_cache.get_memo_forwardref_compatible(ctx)
-                            {
-                                return;
-                            }
-                            if let Some(name) = var_decl.id.get_identifier_name() {
+        if let Some(Expression::CallExpression(call)) = &var_decl.init
+            && let Some(callee_name) = call.callee_name()
+            && is_hoc_call(callee_name, ctx)
+            && let Some(Expression::CallExpression(inner_call)) =
+                call.arguments.first().and_then(|arg| arg.as_expression())
+            && let Some(inner_callee_name) = inner_call.callee_name()
+        {
+            if is_hoc_call(inner_callee_name, ctx)
+                && version_cache.get_memo_forwardref_compatible(ctx)
+            {
+                return;
+            }
+            if let Some(name) = var_decl.id.get_identifier_name() {
+                tracker.add_component(name.as_str(), decl.span, ComponentType::Function, false);
+            }
+            return;
+        }
+        // Always check for innermost function with JSX and add to tracker
+        if let Some(expr) = &var_decl.init
+            && let Some(innermost_func) = find_innermost_function_with_jsx(expr, ctx)
+        {
+            let component_name =
+                var_decl.id.get_identifier_name().map_or_else(|| "<anonymous>", |s| s.as_str());
+            // is_direct is true only if the innermost function with JSX is the same as init
+            let is_direct = match innermost_func {
+                InnermostFunction::Function(func) => {
+                    matches!(var_decl.init.as_ref(), Some(Expression::FunctionExpression(f)) if std::ptr::eq(f.as_ref(), func))
+                }
+                InnermostFunction::ArrowFunction(arrow) => {
+                    matches!(var_decl.init.as_ref(), Some(Expression::ArrowFunctionExpression(a)) if std::ptr::eq(a.as_ref(), arrow))
+                }
+            };
+
+            if is_direct {
+                if ignore_transpiler_name {
+                    tracker.add_component(
+                        component_name,
+                        decl.span,
+                        ComponentType::Function,
+                        false,
+                    );
+                } else {
+                    tracker.resolve_display_name(component_name);
+                }
+            } else {
+                // For curried/nested functions, check if the innermost function is named
+                match innermost_func {
+                    InnermostFunction::Function(func) => {
+                        if let Some(func_id) = &func.id {
+                            // Named function: use the function name as displayName
+                            if ignore_transpiler_name {
                                 tracker.add_component(
-                                    name.as_str(),
+                                    func_id.name.as_str(),
                                     decl.span,
                                     ComponentType::Function,
                                     false,
                                 );
+                            } else {
+                                tracker.resolve_display_name(func_id.name);
                             }
-                            return;
+                        } else {
+                            // Anonymous function: always require explicit displayName
+                            tracker.add_component(
+                                component_name,
+                                decl.span,
+                                ComponentType::Function,
+                                false,
+                            );
                         }
                     }
-                }
-            }
-        }
-        // Always check for innermost function with JSX and add to tracker
-        if let Some(expr) = &var_decl.init {
-            if let Some(innermost_func) = find_innermost_function_with_jsx(expr, ctx) {
-                let component_name =
-                    var_decl.id.get_identifier_name().map_or_else(|| "<anonymous>", |s| s.as_str());
-                // is_direct is true only if the innermost function with JSX is the same as init
-                let is_direct = match innermost_func {
-                    InnermostFunction::Function(func) => {
-                        matches!(var_decl.init.as_ref(), Some(Expression::FunctionExpression(f)) if std::ptr::eq(f.as_ref(), func))
-                    }
-                    InnermostFunction::ArrowFunction(arrow) => {
-                        matches!(var_decl.init.as_ref(), Some(Expression::ArrowFunctionExpression(a)) if std::ptr::eq(a.as_ref(), arrow))
-                    }
-                };
-
-                if is_direct {
-                    if ignore_transpiler_name {
+                    InnermostFunction::ArrowFunction(_) => {
+                        // Always require explicit displayName for arrow functions inside HOCs
                         tracker.add_component(
                             component_name,
                             decl.span,
                             ComponentType::Function,
                             false,
                         );
-                    } else {
-                        tracker.resolve_display_name(component_name);
-                    }
-                } else {
-                    // For curried/nested functions, check if the innermost function is named
-                    match innermost_func {
-                        InnermostFunction::Function(func) => {
-                            if let Some(func_id) = &func.id {
-                                // Named function: use the function name as displayName
-                                if ignore_transpiler_name {
-                                    tracker.add_component(
-                                        func_id.name.as_str(),
-                                        decl.span,
-                                        ComponentType::Function,
-                                        false,
-                                    );
-                                } else {
-                                    tracker.resolve_display_name(func_id.name);
-                                }
-                            } else {
-                                // Anonymous function: always require explicit displayName
-                                tracker.add_component(
-                                    component_name,
-                                    decl.span,
-                                    ComponentType::Function,
-                                    false,
-                                );
-                            }
-                        }
-                        InnermostFunction::ArrowFunction(_) => {
-                            // Always require explicit displayName for arrow functions inside HOCs
-                            tracker.add_component(
-                                component_name,
-                                decl.span,
-                                ComponentType::Function,
-                                false,
-                            );
-                        }
                     }
                 }
-                return;
             }
+            return;
         }
 
         // If this is a HOC call with an arrow function as first argument, require displayName
-        if let Some(Expression::CallExpression(call)) = &var_decl.init {
-            if let Some(callee_name) = call.callee_name() {
-                if is_hoc_call(callee_name, ctx) {
-                    if let Some(first_arg) = call.arguments.first() {
-                        if let Some(Expression::ArrowFunctionExpression(_arrow)) =
-                            first_arg.as_expression()
-                        {
-                            // Arrow functions are always anonymous, so require displayName
-                            let component_name = var_decl
-                                .id
-                                .get_identifier_name()
-                                .map_or_else(|| "<anonymous>", |s| s.as_str());
-                            tracker.add_component(
-                                component_name,
-                                decl.span,
-                                ComponentType::Function,
-                                false,
-                            );
-                        }
-                    }
-                }
-            }
+        if let Some(Expression::CallExpression(call)) = &var_decl.init
+            && let Some(callee_name) = call.callee_name()
+            && is_hoc_call(callee_name, ctx)
+            && let Some(first_arg) = call.arguments.first()
+            && let Some(Expression::ArrowFunctionExpression(_arrow)) = first_arg.as_expression()
+        {
+            // Arrow functions are always anonymous, so require displayName
+            let component_name =
+                var_decl.id.get_identifier_name().map_or_else(|| "<anonymous>", |s| s.as_str());
+            tracker.add_component(component_name, decl.span, ComponentType::Function, false);
         }
         if let Some(init) = &var_decl.init {
             match init {
@@ -1101,184 +1048,174 @@ fn process_variable_declaration<'a>(
                     }
                 }
                 Expression::CallExpression(call) => {
-                    if let Some(name) = var_decl.id.get_identifier_name() {
-                        if let Some(callee_name) = call.callee_name() {
-                            // Handle createReactClass - this should always be processed
-                            if callee_name == "createClass" || callee_name == "createReactClass" {
-                                let has_display_name = call.arguments.iter().any(|arg| {
-                                    if let Some(Expression::ObjectExpression(obj_expr)) =
-                                        arg.as_expression()
-                                    {
-                                        obj_expr.properties.iter().any(|prop| {
-                                            if let Some((prop_name, _)) = prop.prop_name() {
-                                                prop_name == "displayName"
-                                                    || (!ignore_transpiler_name
-                                                        && prop_name == "name")
-                                            } else {
-                                                false
-                                            }
-                                        })
-                                    } else {
-                                        false
-                                    }
-                                });
+                    if let Some(name) = var_decl.id.get_identifier_name()
+                        && let Some(callee_name) = call.callee_name()
+                    {
+                        // Handle createReactClass - this should always be processed
+                        if callee_name == "createClass" || callee_name == "createReactClass" {
+                            let has_display_name = call.arguments.iter().any(|arg| {
+                                if let Some(Expression::ObjectExpression(obj_expr)) =
+                                    arg.as_expression()
+                                {
+                                    obj_expr.properties.iter().any(|prop| {
+                                        if let Some((prop_name, _)) = prop.prop_name() {
+                                            prop_name == "displayName"
+                                                || (!ignore_transpiler_name && prop_name == "name")
+                                        } else {
+                                            false
+                                        }
+                                    })
+                                } else {
+                                    false
+                                }
+                            });
 
-                                if has_display_name {
-                                    tracker.resolve_display_name(name);
-                                } else if ignore_transpiler_name {
+                            if has_display_name {
+                                tracker.resolve_display_name(name);
+                            } else if ignore_transpiler_name {
+                                tracker.add_component(
+                                    name.as_str(),
+                                    decl.span,
+                                    ComponentType::CreateReactClass,
+                                    false,
+                                );
+                            }
+                        } else {
+                            // Handle HOCs like React.memo, React.forwardRef
+                            if is_hoc_call(callee_name, ctx) {
+                                // Special case: React.memo(React.forwardRef(...)), skip reporting
+                                if callee_name.ends_with("memo") {
+                                    if let Some(first_arg) = call.arguments.first()
+                                        && let Some(inner_expr) = first_arg.as_expression()
+                                    {
+                                        // If React.memo(React.forwardRef(...)), skip reporting
+                                        if let Expression::CallExpression(inner_call) = inner_expr
+                                            && let Some(inner_callee_name) =
+                                                inner_call.callee_name()
+                                            && is_hoc_call(inner_callee_name, ctx)
+                                            && version_cache.get_memo_forwardref_compatible(ctx)
+                                        {
+                                            return;
+                                        }
+                                        // If the first argument is a named function, resolve the display name for the variable using the function's name
+                                        match inner_expr {
+                                            Expression::FunctionExpression(func) => {
+                                                if let Some(func_id) = &func.id {
+                                                    tracker.resolve_display_name(name);
+                                                    tracker.resolve_display_name(func_id.name);
+                                                    return;
+                                                }
+                                            }
+                                            Expression::Identifier(ident) => {
+                                                tracker.resolve_display_name(name);
+                                                tracker.resolve_display_name(ident.name);
+                                                return;
+                                            }
+                                            _ => {}
+                                        }
+                                    }
                                     tracker.add_component(
                                         name.as_str(),
                                         decl.span,
-                                        ComponentType::CreateReactClass,
+                                        ComponentType::Function,
+                                        false,
+                                    );
+                                    return;
+                                }
+                                // Handle plain React.forwardRef
+                                if callee_name.ends_with("forwardRef") {
+                                    if let Some(first_arg) = call.arguments.first()
+                                        && let Some(inner_expr) = first_arg.as_expression()
+                                    {
+                                        match inner_expr {
+                                            Expression::FunctionExpression(func) => {
+                                                if let Some(func_id) = &func.id {
+                                                    tracker.resolve_display_name(name);
+                                                    tracker.resolve_display_name(func_id.name);
+                                                    return;
+                                                }
+                                            }
+                                            Expression::Identifier(ident) => {
+                                                tracker.resolve_display_name(name);
+                                                tracker.resolve_display_name(ident.name);
+                                                return;
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                    tracker.add_component(
+                                        name.as_str(),
+                                        decl.span,
+                                        ComponentType::Function,
+                                        false,
+                                    );
+                                    return;
+                                }
+                                // For all other HOC cases (including plain React.memo), continue as before
+                                // Check if the inner function has a transpiler name
+                                if let Some(first_arg) = call.arguments.first() {
+                                    if let Some(inner_expr) = first_arg.as_expression() {
+                                        // Check if the inner function has a name (transpiler name)
+                                        let has_transpiler_name = match inner_expr {
+                                            Expression::FunctionExpression(func) => {
+                                                func.id.is_some()
+                                            }
+                                            Expression::ArrowFunctionExpression(_arrow) => {
+                                                // Arrow functions don't have names, so they don't have transpiler names
+                                                false
+                                            }
+                                            Expression::Identifier(_) => true,
+                                            _ => false,
+                                        };
+
+                                        if !ignore_transpiler_name && has_transpiler_name {
+                                            // If ignoreTranspilerName is false and the inner function has a name,
+                                            // resolve the displayName using the inner function's name
+                                            match inner_expr {
+                                                Expression::FunctionExpression(func) => {
+                                                    if let Some(func_id) = &func.id {
+                                                        tracker.resolve_display_name(func_id.name);
+                                                    }
+                                                }
+                                                Expression::Identifier(ident) => {
+                                                    tracker.resolve_display_name(ident.name);
+                                                }
+                                                _ => {}
+                                            }
+                                        } else {
+                                            // Otherwise, require explicit displayName
+                                            tracker.add_component(
+                                                name.as_str(),
+                                                decl.span,
+                                                ComponentType::Function,
+                                                false,
+                                            );
+                                        }
+                                    }
+                                } else {
+                                    // No arguments, require explicit displayName
+                                    tracker.add_component(
+                                        name.as_str(),
+                                        decl.span,
+                                        ComponentType::Function,
                                         false,
                                     );
                                 }
-                            } else {
-                                // Handle HOCs like React.memo, React.forwardRef
-                                if is_hoc_call(callee_name, ctx) {
-                                    // Special case: React.memo(React.forwardRef(...)), skip reporting
-                                    if callee_name.ends_with("memo") {
-                                        if let Some(first_arg) = call.arguments.first() {
-                                            if let Some(inner_expr) = first_arg.as_expression() {
-                                                // If React.memo(React.forwardRef(...)), skip reporting
-                                                if let Expression::CallExpression(inner_call) =
-                                                    inner_expr
-                                                {
-                                                    if let Some(inner_callee_name) =
-                                                        inner_call.callee_name()
-                                                    {
-                                                        if is_hoc_call(inner_callee_name, ctx)
-                                                            && version_cache
-                                                                .get_memo_forwardref_compatible(ctx)
-                                                        {
-                                                            return;
-                                                        }
-                                                    }
-                                                }
-                                                // If the first argument is a named function, resolve the display name for the variable using the function's name
-                                                match inner_expr {
-                                                    Expression::FunctionExpression(func) => {
-                                                        if let Some(func_id) = &func.id {
-                                                            tracker.resolve_display_name(name);
-                                                            tracker
-                                                                .resolve_display_name(func_id.name);
-                                                            return;
-                                                        }
-                                                    }
-                                                    Expression::Identifier(ident) => {
-                                                        tracker.resolve_display_name(name);
-                                                        tracker.resolve_display_name(ident.name);
-                                                        return;
-                                                    }
-                                                    _ => {}
-                                                }
-                                            }
-                                        }
-                                        tracker.add_component(
-                                            name.as_str(),
-                                            decl.span,
-                                            ComponentType::Function,
-                                            false,
-                                        );
-                                        return;
-                                    }
-                                    // Handle plain React.forwardRef
-                                    if callee_name.ends_with("forwardRef") {
-                                        if let Some(first_arg) = call.arguments.first() {
-                                            if let Some(inner_expr) = first_arg.as_expression() {
-                                                match inner_expr {
-                                                    Expression::FunctionExpression(func) => {
-                                                        if let Some(func_id) = &func.id {
-                                                            tracker.resolve_display_name(name);
-                                                            tracker
-                                                                .resolve_display_name(func_id.name);
-                                                            return;
-                                                        }
-                                                    }
-                                                    Expression::Identifier(ident) => {
-                                                        tracker.resolve_display_name(name);
-                                                        tracker.resolve_display_name(ident.name);
-                                                        return;
-                                                    }
-                                                    _ => {}
-                                                }
-                                            }
-                                        }
-                                        tracker.add_component(
-                                            name.as_str(),
-                                            decl.span,
-                                            ComponentType::Function,
-                                            false,
-                                        );
-                                        return;
-                                    }
-                                    // For all other HOC cases (including plain React.memo), continue as before
-                                    // Check if the inner function has a transpiler name
-                                    if let Some(first_arg) = call.arguments.first() {
-                                        if let Some(inner_expr) = first_arg.as_expression() {
-                                            // Check if the inner function has a name (transpiler name)
-                                            let has_transpiler_name = match inner_expr {
-                                                Expression::FunctionExpression(func) => {
-                                                    func.id.is_some()
-                                                }
-                                                Expression::ArrowFunctionExpression(_arrow) => {
-                                                    // Arrow functions don't have names, so they don't have transpiler names
-                                                    false
-                                                }
-                                                Expression::Identifier(_) => true,
-                                                _ => false,
-                                            };
-
-                                            if !ignore_transpiler_name && has_transpiler_name {
-                                                // If ignoreTranspilerName is false and the inner function has a name,
-                                                // resolve the displayName using the inner function's name
-                                                match inner_expr {
-                                                    Expression::FunctionExpression(func) => {
-                                                        if let Some(func_id) = &func.id {
-                                                            tracker
-                                                                .resolve_display_name(func_id.name);
-                                                        }
-                                                    }
-                                                    Expression::Identifier(ident) => {
-                                                        tracker.resolve_display_name(ident.name);
-                                                    }
-                                                    _ => {}
-                                                }
-                                            } else {
-                                                // Otherwise, require explicit displayName
-                                                tracker.add_component(
-                                                    name.as_str(),
-                                                    decl.span,
-                                                    ComponentType::Function,
-                                                    false,
-                                                );
-                                            }
-                                        }
-                                    } else {
-                                        // No arguments, require explicit displayName
-                                        tracker.add_component(
-                                            name.as_str(),
-                                            decl.span,
-                                            ComponentType::Function,
-                                            false,
-                                        );
-                                    }
-                                    // HOC handled, skip fallback tracking
-                                    return;
-                                } else if callee_name == "createContext"
-                                    || callee_name.ends_with(".createContext")
-                                {
-                                    // Handle React.createContext calls - always require explicit displayName
-                                    if check_context_objects {
-                                        tracker.add_component(
-                                            name.as_str(),
-                                            decl.span,
-                                            ComponentType::Function,
-                                            true,
-                                        );
-                                    }
-                                    return;
+                                // HOC handled, skip fallback tracking
+                                return;
+                            } else if callee_name == "createContext"
+                                || callee_name.ends_with(".createContext")
+                            {
+                                // Handle React.createContext calls - always require explicit displayName
+                                if check_context_objects {
+                                    tracker.add_component(
+                                        name.as_str(),
+                                        decl.span,
+                                        ComponentType::Function,
+                                        true,
+                                    );
                                 }
+                                return;
                             }
                         }
                     }
@@ -1296,40 +1233,38 @@ fn process_object_expression(
     ignore_transpiler_name: bool,
 ) {
     for prop in &obj_expr.properties {
-        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
-            if let PropertyKey::StaticIdentifier(ident) = &obj_prop.key {
-                let prop_name = &ident.name;
-                let expr = &obj_prop.value;
+        if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
+            && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
+        {
+            let prop_name = &ident.name;
+            let expr = &obj_prop.value;
 
-                if !obj_prop.method {
-                    if let Expression::ObjectExpression(nested_obj) = expr {
-                        let mut nested_path = current_path.to_owned();
-                        nested_path.push((*prop_name).into());
-                        process_object_expression(
-                            tracker,
-                            nested_obj,
-                            &nested_path,
-                            ignore_transpiler_name,
-                        );
-                    }
-                } else if is_react_component_name(prop_name) {
-                    if let Expression::FunctionExpression(func_expr) = expr {
-                        if function_contains_jsx(func_expr) {
-                            let component_name =
-                                build_component_name(current_path, Some(prop_name.as_str()));
+            if !obj_prop.method {
+                if let Expression::ObjectExpression(nested_obj) = expr {
+                    let mut nested_path = current_path.to_owned();
+                    nested_path.push((*prop_name).into());
+                    process_object_expression(
+                        tracker,
+                        nested_obj,
+                        &nested_path,
+                        ignore_transpiler_name,
+                    );
+                }
+            } else if is_react_component_name(prop_name)
+                && let Expression::FunctionExpression(func_expr) = expr
+                && function_contains_jsx(func_expr)
+            {
+                let component_name = build_component_name(current_path, Some(prop_name.as_str()));
 
-                            if ignore_transpiler_name {
-                                tracker.add_component(
-                                    component_name,
-                                    expr.span(),
-                                    ComponentType::ObjectProperty,
-                                    false,
-                                );
-                            } else {
-                                tracker.resolve_display_name(&component_name);
-                            }
-                        }
-                    }
+                if ignore_transpiler_name {
+                    tracker.add_component(
+                        component_name,
+                        expr.span(),
+                        ComponentType::ObjectProperty,
+                        false,
+                    );
+                } else {
+                    tracker.resolve_display_name(&component_name);
                 }
             }
         }
@@ -1339,14 +1274,12 @@ fn process_object_expression(
 fn function_returns_create_react_class(func_expr: &Function) -> bool {
     if let Some(body) = &func_expr.body {
         for stmt in &body.statements {
-            if let Statement::ReturnStatement(ret_stmt) = stmt {
-                if let Some(Expression::CallExpression(call)) = &ret_stmt.argument {
-                    if let Some(callee_name) = call.callee_name() {
-                        if callee_name == "createClass" || callee_name == "createReactClass" {
-                            return true;
-                        }
-                    }
-                }
+            if let Statement::ReturnStatement(ret_stmt) = stmt
+                && let Some(Expression::CallExpression(call)) = &ret_stmt.argument
+                && let Some(callee_name) = call.callee_name()
+                && (callee_name == "createClass" || callee_name == "createReactClass")
+            {
+                return true;
             }
         }
     }
