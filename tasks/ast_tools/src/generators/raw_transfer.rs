@@ -296,12 +296,7 @@ fn generate_struct(
                 }
             } else {
                 let value = if generator.dependent_field_names.contains(&field_name) {
-                    if preamble_str.is_empty() {
-                        preamble_str.push_str("const ");
-                    } else {
-                        preamble_str.push_str(",\n");
-                    }
-                    write_it!(preamble_str, "{field_name} = {value}");
+                    write_it!(preamble_str, "const {field_name} = {value};\n");
                     &field_name
                 } else {
                     &value
@@ -318,10 +313,6 @@ fn generate_struct(
                     write_it!(fields_str, "...({condition} && {{ {field_name}: {value} }}),");
                 }
             }
-        }
-
-        if !preamble_str.is_empty() {
-            preamble_str.push(';');
         }
 
         for preamble_part in generator.preamble {
