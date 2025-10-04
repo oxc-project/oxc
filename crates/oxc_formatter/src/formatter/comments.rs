@@ -127,7 +127,8 @@ pub struct Comments<'a> {
     printed_count: usize,
     /// The index of the type cast comment that has been printed already.
     /// Used to prevent duplicate processing of special TypeScript type cast comments.
-    handled_type_cast_comment: usize,
+    last_handled_type_cast_comment: usize,
+    type_cast_node_span: Span,
     /// Optional limit for the unprinted_comments view.
     ///
     /// When set, [`Self::unprinted_comments()`] will only return comments up to this index,
@@ -141,7 +142,8 @@ impl<'a> Comments<'a> {
             source_text,
             comments,
             printed_count: 0,
-            handled_type_cast_comment: 0,
+            last_handled_type_cast_comment: 0,
+            type_cast_node_span: Span::default(),
             view_limit: None,
         }
     }
@@ -236,7 +238,7 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any comments between the given positions.
     pub fn has_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.comments_before_iter(end).any(|comment| comment.span.end >= start)
+        self.comments_before_iter(end).any(|comment| comment.span.end > start)
     }
 
     /// Checks if there are any comments within the given span.
@@ -253,10 +255,8 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
-        self.comments_before_iter(start).any(|comment| {
-            self.source_text.is_own_line_comment(comment)
-                || self.source_text.lines_after(comment.span.end) > 0
-        })
+        self.comments_before_iter(start)
+            .any(|comment| self.source_text.lines_after(comment.span.end) > 0)
     }
 
     /// Checks if there are leading or trailing comments around `current_span`.
@@ -507,14 +507,20 @@ impl<'a> Comments<'a> {
         )
     }
 
-    /// Marks the most recently printed type cast comment as handled.
-    pub fn mark_as_handled_type_cast_comment(&mut self) {
-        self.handled_type_cast_comment = self.printed_count;
+    /// Marks the given span as a type cast node.
+    pub fn mark_as_type_cast_node(&mut self, node: &impl GetSpan) {
+        self.type_cast_node_span = node.span();
+        self.last_handled_type_cast_comment = self.printed_count;
     }
 
     /// Checks if the most recently printed type cast comment has been handled.
-    pub fn is_already_handled_type_cast_comment(&self) -> bool {
-        self.printed_count == self.handled_type_cast_comment
+    pub fn is_handled_type_cast_comment(&self) -> bool {
+        self.printed_count == self.last_handled_type_cast_comment
+    }
+
+    #[inline]
+    pub fn is_type_cast_node(&self, node: &impl GetSpan) -> bool {
+        self.type_cast_node_span == node.span()
     }
 
     /// Temporarily limits the unprinted comments view to only those before the given position.
