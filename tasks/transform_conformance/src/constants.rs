@@ -89,8 +89,6 @@ pub const SKIP_TESTS: &[&str] = &[
     // Report error for deprecate option or oxc doesn’t follow error message
     "babel-plugin-transform-typescript/test/fixtures/opts/allowDeclareFields",
     "babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-throw-when-filter-is-specified",
-    // Not standard JavaScript or typescript syntax
-    "babel-plugin-transform-typescript/test/fixtures/exports/export-type-star-from",
     // The output is valid and semantically correct
     // but does not match Babel's expected output
     "babel-plugin-transform-typescript/test/fixtures/namespace/canonical",

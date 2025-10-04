@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 705/1212
+Passed: 706/1213
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1440,7 +1440,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (48/158)
+# babel-plugin-transform-typescript (49/159)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
