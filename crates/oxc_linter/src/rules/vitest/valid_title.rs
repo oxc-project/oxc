@@ -181,9 +181,10 @@ impl ValidTitle {
 
         // Check if extend keyword has been used
         if let Some(member) = jest_fn_call.members.first()
-            && member.is_name_equal("extend") {
-                return;
-            }
+            && member.is_name_equal("extend")
+        {
+            return;
+        }
 
         let Some(arg) = call_expr.arguments.first() else {
             return;
@@ -223,15 +224,16 @@ impl ValidTitle {
             }
             Argument::TemplateLiteral(template_literal) => {
                 if template_literal.is_no_substitution_template()
-                    && let Some(quasi) = template_literal.single_quasi() {
-                        validate_title(
-                            quasi.as_str(),
-                            template_literal.span,
-                            self,
-                            &jest_fn_call.name,
-                            ctx,
-                        );
-                    }
+                    && let Some(quasi) = template_literal.single_quasi()
+                {
+                    validate_title(
+                        quasi.as_str(),
+                        template_literal.span,
+                        self,
+                        &jest_fn_call.name,
+                        ctx,
+                    );
+                }
             }
             Argument::BinaryExpression(binary_expr) => {
                 if !does_binary_expression_contain_string_node(binary_expr) {
@@ -339,12 +341,13 @@ fn compile_matcher_pattern(pattern: &MatcherPattern) -> Option<CompiledMatcherAn
             let pattern_str = value.as_str()?;
             // Check for JS regex literal: /pattern/flags
             if let Some(stripped) = pattern_str.strip_prefix('/')
-                && let Some(end) = stripped.rfind('/') {
-                    let (pat, _flags) = stripped.split_at(end);
-                    // For now, ignore flags and just use the pattern
-                    let regex = Regex::new(pat).ok()?;
-                    return Some((regex, None));
-                }
+                && let Some(end) = stripped.rfind('/')
+            {
+                let (pat, _flags) = stripped.split_at(end);
+                // For now, ignore flags and just use the pattern
+                let regex = Regex::new(pat).ok()?;
+                return Some((regex, None));
+            }
             // Fallback: treat as a normal Rust regex
             let regex = Regex::new(pattern_str).ok()?;
             Some((regex, None))
@@ -394,14 +397,15 @@ fn validate_title(
     // Check for duplicate prefix
     let un_prefixed_name = name.trim_start_matches(['f', 'x']);
     if let Some(first_word) = title.split(' ').next()
-        && first_word == un_prefixed_name {
-            let (error, help) = Message::DuplicatePrefix.detail();
-            ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
-                let replaced_title = title[first_word.len()..].trim();
-                fixer.replace(span.shrink(1), CompactStr::from(replaced_title))
-            });
-            return;
-        }
+        && first_word == un_prefixed_name
+    {
+        let (error, help) = Message::DuplicatePrefix.detail();
+        ctx.diagnostic_with_fix(valid_title_diagnostic(error, help, span), |fixer| {
+            let replaced_title = title[first_word.len()..].trim();
+            fixer.replace(span.shrink(1), CompactStr::from(replaced_title))
+        });
+        return;
+    }
 
     // Check pattern matching
     if let Some(jest_fn_name) = MatchKind::from(un_prefixed_name) {
@@ -423,15 +427,16 @@ fn check_disallowed_words(title: &str, span: Span, valid_title: &ValidTitle, ctx
     );
 
     if let Ok(disallowed_words_reg) = Regex::new(&pattern)
-        && let Some(matched) = disallowed_words_reg.find(title) {
-            let error =
-                CompactStr::from(format!("`{}` is not allowed in test title", matched.as_str()));
-            ctx.diagnostic(valid_title_diagnostic(
+        && let Some(matched) = disallowed_words_reg.find(title)
+    {
+        let error =
+            CompactStr::from(format!("`{}` is not allowed in test title", matched.as_str()));
+        ctx.diagnostic(valid_title_diagnostic(
                 error.as_str(),
                 format!("`{}` is included in the `disallowedWords` list, try to remove it from your test title", matched.as_str()).as_str(),
                 span,
             ));
-        }
+    }
 }
 
 fn check_pattern_matching(
@@ -444,49 +449,50 @@ fn check_pattern_matching(
 ) {
     // Check must match patterns
     if let Some((regex, message)) = valid_title.must_match_patterns.get(&jest_fn_name)
-        && !regex.is_match(title) {
-            let raw_pattern = regex.as_str();
-            if let Some(message) = message.as_ref() {
-                ctx.diagnostic(valid_title_diagnostic(
-                    message.as_str(),
-                    "Make sure the title matches the configured `mustMatch` pattern",
-                    span,
-                ));
-            } else {
-                // Use CompactStr for the message to avoid heap allocation
-                let msg =
-                    CompactStr::from(format!("`{un_prefixed_name}` should match `{raw_pattern}`"));
-                ctx.diagnostic(valid_title_diagnostic(
-                    msg.as_str(),
-                    "Make sure the title matches the configured `mustMatch` pattern",
-                    span,
-                ));
-            }
-            return;
+        && !regex.is_match(title)
+    {
+        let raw_pattern = regex.as_str();
+        if let Some(message) = message.as_ref() {
+            ctx.diagnostic(valid_title_diagnostic(
+                message.as_str(),
+                "Make sure the title matches the configured `mustMatch` pattern",
+                span,
+            ));
+        } else {
+            // Use CompactStr for the message to avoid heap allocation
+            let msg =
+                CompactStr::from(format!("`{un_prefixed_name}` should match `{raw_pattern}`"));
+            ctx.diagnostic(valid_title_diagnostic(
+                msg.as_str(),
+                "Make sure the title matches the configured `mustMatch` pattern",
+                span,
+            ));
         }
+        return;
+    }
 
     // Check must not match patterns
     if let Some((regex, message)) = valid_title.must_not_match_patterns.get(&jest_fn_name)
-        && regex.is_match(title) {
-            let raw_pattern = regex.as_str();
-            if let Some(message) = message.as_ref() {
-                ctx.diagnostic(valid_title_diagnostic(
-                    message.as_str(),
-                    "Make sure the title does not match the configured `mustNotMatch` pattern",
-                    span,
-                ));
-            } else {
-                // Use CompactStr for the message to avoid heap allocation
-                let msg = CompactStr::from(format!(
-                    "`{un_prefixed_name}` should not match `{raw_pattern}`"
-                ));
-                ctx.diagnostic(valid_title_diagnostic(
-                    msg.as_str(),
-                    "Make sure the title does not match the configured `mustNotMatch` pattern",
-                    span,
-                ));
-            }
+        && regex.is_match(title)
+    {
+        let raw_pattern = regex.as_str();
+        if let Some(message) = message.as_ref() {
+            ctx.diagnostic(valid_title_diagnostic(
+                message.as_str(),
+                "Make sure the title does not match the configured `mustNotMatch` pattern",
+                span,
+            ));
+        } else {
+            // Use CompactStr for the message to avoid heap allocation
+            let msg =
+                CompactStr::from(format!("`{un_prefixed_name}` should not match `{raw_pattern}`"));
+            ctx.diagnostic(valid_title_diagnostic(
+                msg.as_str(),
+                "Make sure the title does not match the configured `mustNotMatch` pattern",
+                span,
+            ));
         }
+    }
 }
 
 fn does_binary_expression_contain_string_node(expr: &BinaryExpression) -> bool {
