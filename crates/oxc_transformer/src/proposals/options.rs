@@ -1,10 +1,5 @@
-#[derive(Debug, Clone, Copy)]
+#[expect(clippy::empty_structs_with_brackets)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct ProposalOptions {
-    pub explicit_resource_management: bool,
-}
-
-impl Default for ProposalOptions {
-    fn default() -> Self {
-        Self { explicit_resource_management: true }
-    }
+    // Currently no proposals are configured here.
 }

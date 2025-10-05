@@ -113,6 +113,7 @@ describe('target', () => {
     ['es2019', 'a?.b;\n'],
     ['es2019', 'a ?? b;\n'],
     ['es2021', 'class foo {\n\tstatic {}\n}\n'],
+    ['es2025', 'using handlerSync = openSync();\n'],
   ];
 
   test.each(data)('transform %s', (target, code) => {

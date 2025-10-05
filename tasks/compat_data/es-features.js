@@ -325,6 +325,14 @@ const es2025 = [
   },
 ].map(f('ES2025'));
 
+const es2026 = [
+  {
+    name: 'ExplicitResourceManagement',
+    babel: 'transform-explicit-resource-management',
+    features: ['Explicit Resource Management'],
+  },
+].map(f('ES2026'));
+
 module.exports = [
   ...es5,
   ...es2015,
@@ -337,4 +345,5 @@ module.exports = [
   ...es2022,
   ...es2024,
   ...es2025,
+  ...es2026,
 ];

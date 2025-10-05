@@ -20,6 +20,7 @@ impl ESVersion for ESTarget {
             Self::ES2023 => Version(2023, 0, 0),
             Self::ES2024 => Version(2024, 0, 0),
             Self::ES2025 => Version(2025, 0, 0),
+            Self::ES2026 => Version(2026, 0, 0),
             Self::ESNext => Version(9999, 0, 0),
         }
     }

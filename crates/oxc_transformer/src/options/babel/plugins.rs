@@ -70,10 +70,10 @@ pub struct BabelPlugins {
     // ES2022
     pub class_static_block: bool,
     pub class_properties: Option<ClassPropertiesOptions>,
+    // ES2026
+    pub explicit_resource_management: bool,
     // Decorator
     pub legacy_decorator: Option<DecoratorOptions>,
-    // Proposals
-    pub explicit_resource_management: bool,
     // Built-in plugins
     pub styled_components: Option<StyledComponentsOptions>,
 }

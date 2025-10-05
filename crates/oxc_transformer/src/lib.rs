@@ -31,6 +31,7 @@ mod es2019;
 mod es2020;
 mod es2021;
 mod es2022;
+mod es2026;
 mod jsx;
 mod proposals;
 mod regexp;
@@ -50,8 +51,8 @@ use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
 use es2022::ES2022;
+use es2026::ES2026;
 use jsx::Jsx;
-use proposals::ExplicitResourceManagement;
 use regexp::RegExp;
 use rustc_hash::FxHashMap;
 use state::TransformState;
@@ -70,6 +71,7 @@ pub use crate::{
     es2020::ES2020Options,
     es2021::ES2021Options,
     es2022::{ClassPropertiesOptions, ES2022Options},
+    es2026::ES2026Options,
     jsx::{JsxOptions, JsxRuntime, ReactRefreshOptions},
     options::{
         ESTarget, Engine, EngineTargets, EnvOptions, Module, TransformOptions,
@@ -98,6 +100,7 @@ pub struct Transformer<'a> {
     plugins: PluginsOptions,
     jsx: JsxOptions,
     env: EnvOptions,
+    #[expect(dead_code)]
     proposals: ProposalOptions,
 }
 
@@ -140,15 +143,12 @@ impl<'a> Transformer<'a> {
             common: Common::new(&self.env, &self.ctx),
             decorator: Decorator::new(self.decorator, &self.ctx),
             plugins: Plugins::new(self.plugins, &self.ctx),
-            explicit_resource_management: self
-                .proposals
-                .explicit_resource_management
-                .then(|| ExplicitResourceManagement::new(&self.ctx)),
             x0_typescript: program
                 .source_type
                 .is_typescript()
                 .then(|| TypeScript::new(&self.typescript, &self.ctx)),
             x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.ctx),
+            x2_es2026: ES2026::new(self.env.es2026, &self.ctx),
             x2_es2022: ES2022::new(
                 self.env.es2022,
                 !self.typescript.allow_declare_fields
@@ -178,8 +178,8 @@ struct TransformerImpl<'a, 'ctx> {
     x0_typescript: Option<TypeScript<'a, 'ctx>>,
     decorator: Decorator<'a, 'ctx>,
     plugins: Plugins<'a, 'ctx>,
-    explicit_resource_management: Option<ExplicitResourceManagement<'a, 'ctx>>,
     x1_jsx: Jsx<'a, 'ctx>,
+    x2_es2026: ES2026<'a, 'ctx>,
     x2_es2022: ES2022<'a, 'ctx>,
     x2_es2021: ES2021<'a, 'ctx>,
     x2_es2020: ES2020<'a, 'ctx>,
@@ -200,9 +200,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         }
         self.plugins.enter_program(program, ctx);
         self.x1_jsx.enter_program(program, ctx);
-        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
-            explicit_resource_management.enter_program(program, ctx);
-        }
+        self.x2_es2026.enter_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -316,9 +314,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.exit_static_block(block, ctx);
-        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
-            explicit_resource_management.exit_static_block(block, ctx);
-        }
+        self.x2_es2026.exit_static_block(block, ctx);
         self.x2_es2022.exit_static_block(block, ctx);
     }
 
@@ -409,9 +405,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.enter_function_body(body, ctx);
-        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
-            explicit_resource_management.enter_function_body(body, ctx);
-        }
+        self.x2_es2026.enter_function_body(body, ctx);
     }
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -603,9 +597,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
             typescript.enter_statement(stmt, ctx);
         }
         self.x2_es2018.enter_statement(stmt, ctx);
-        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
-            explicit_resource_management.enter_statement(stmt, ctx);
-        }
+        self.x2_es2026.enter_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -646,9 +638,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_for_of_statement(stmt, ctx);
         }
-        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
-            explicit_resource_management.enter_for_of_statement(stmt, ctx);
-        }
+        self.x2_es2026.enter_for_of_statement(stmt, ctx);
         self.x2_es2018.enter_for_of_statement(stmt, ctx);
     }
 
@@ -660,9 +650,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
     }
 
     fn enter_try_statement(&mut self, stmt: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Some(explicit_resource_management) = self.explicit_resource_management.as_mut() {
-            explicit_resource_management.enter_try_statement(stmt, ctx);
-        }
+        self.x2_es2026.enter_try_statement(stmt, ctx);
     }
 
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {

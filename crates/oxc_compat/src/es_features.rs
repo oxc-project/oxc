@@ -53,6 +53,7 @@ pub enum ESFeature {
     ES2024UnicodeSetsRegex,
     ES2025DuplicateNamedCapturingGroupsRegex,
     ES2025RegexpModifiers,
+    ES2026ExplicitResourceManagement,
 }
 pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
     use ESFeature::*;
@@ -873,6 +874,16 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                     (Opera, Version(111u16, 0u16, 0u16)),
                     (Edge, Version(125u16, 0u16, 0u16)),
                     (Es, Version(2025u16, 0, 0)),
+                ])),
+            ),
+            (
+                ES2026ExplicitResourceManagement,
+                EngineTargets::new(FxHashMap::from_iter([
+                    (Chrome, Version(134u16, 0u16, 0u16)),
+                    (Node, Version(24u16, 0u16, 0u16)),
+                    (Firefox, Version(141u16, 0u16, 0u16)),
+                    (Edge, Version(134u16, 0u16, 0u16)),
+                    (Es, Version(2026u16, 0, 0)),
                 ])),
             ),
         ])

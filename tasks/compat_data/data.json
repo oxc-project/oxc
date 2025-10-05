@@ -1034,5 +1034,19 @@
       "samsung": "27",
       "electron": "31.0"
     }
+  },
+  {
+    "name": "ExplicitResourceManagement",
+    "babel": "transform-explicit-resource-management",
+    "features": [
+      "Explicit Resource Management"
+    ],
+    "es": "ES2026",
+    "targets": {
+      "chrome": "134",
+      "edge": "134",
+      "firefox": "141",
+      "node": "24"
+    }
   }
 ]
