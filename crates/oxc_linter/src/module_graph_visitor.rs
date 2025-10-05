@@ -1,4 +1,8 @@
-use std::{marker::PhantomData, path::PathBuf, sync::Arc};
+use std::{
+    marker::PhantomData,
+    path::PathBuf,
+    sync::{Arc, Weak},
+};
 
 use rustc_hash::FxHashSet;
 
@@ -189,7 +193,19 @@ impl ModuleGraphVisitor {
         enter: &mut EnterMod,
         leave: &mut LeaveMod,
     ) -> VisitFoldWhile<T> {
-        for (key, weak_module_record) in module_record.loaded_modules().iter() {
+        // Sort entries to ensure deterministic iteration order.
+        // The module graph is populated via parallel insertion (par_drain in runtime.rs),
+        // which causes non-deterministic insertion order into FxHashMap.
+        // Different iteration orders can cause cycle detection to find or miss cycles
+        // depending on which path reaches a node first (due to the `traversed` set).
+        let mut entries: Vec<_> = module_record
+            .loaded_modules()
+            .iter()
+            .map(|(k, v)| (k.clone(), Weak::clone(v)))
+            .collect();
+        entries.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+
+        for (key, weak_module_record) in entries {
             if self.depth > self.max_depth {
                 return VisitFoldWhile::Stop(accumulator.into_inner());
             }
@@ -202,7 +218,7 @@ impl ModuleGraphVisitor {
                 continue;
             }
 
-            let pair = (key, &loaded_module_record);
+            let pair = (&key, &loaded_module_record);
 
             if !filter(pair, module_record) {
                 continue;
