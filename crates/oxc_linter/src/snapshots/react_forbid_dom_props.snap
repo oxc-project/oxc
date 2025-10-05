@@ -86,13 +86,21 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         <input className="boo" />
  5 │                         <span className="foobar">Foobar</span>
    ·                               ─────────
- 6 │                         <div otherProp="bar" />
+ 6 │                         <div otherProp="bar" className="forbiddenClassname" />
    ╰────
 
   ⚠ eslint-plugin-react(forbid-dom-props): Avoid using otherProp
    ╭─[forbid_dom_props.tsx:6:30]
  5 │                         <span className="foobar">Foobar</span>
- 6 │                         <div otherProp="bar" />
+ 6 │                         <div otherProp="bar" className="forbiddenClassname" />
    ·                              ─────────
+ 7 │                       </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Please use class instead of ClassName
+   ╭─[forbid_dom_props.tsx:6:46]
+ 5 │                         <span className="foobar">Foobar</span>
+ 6 │                         <div otherProp="bar" className="forbiddenClassname" />
+   ·                                              ─────────
  7 │                       </div>
    ╰────
