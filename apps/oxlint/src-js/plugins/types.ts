@@ -25,15 +25,15 @@ export interface VisitorWithHooks extends Visitor {
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
 
+// Interface for any type which has `range` field
+export interface Ranged {
+  range: Range;
+}
+
 // Internal interface for any type which has location properties.
-interface Spanned {
+interface Spanned extends Ranged {
   start: number;
   end: number;
-  // This property should not be optional - all AST nodes do have a `range` field.
-  // But ESTree types have `range` field as optional, so to allow AST nodes to be passed
-  // to methods which take `Node`, we have to make it optional here too.
-  // TODO: Fix this
-  range?: Range;
   loc?: Location;
 }
 

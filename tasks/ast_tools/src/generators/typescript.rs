@@ -27,14 +27,15 @@ impl Generator for TypescriptGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let code = generate_ts_type_defs(schema, codegen);
 
+        // In Oxlint AST, `range` field is not optional
+        #[expect(clippy::disallowed_methods)]
+        let oxlint_code = code.replace("range?: [number, number];", "range: [number, number];");
+
         vec![
-            Output::Javascript {
-                path: TYPESCRIPT_DEFINITIONS_PATH.to_string(),
-                code: code.clone(),
-            },
+            Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/types.d.ts"),
-                code,
+                code: oxlint_code,
             },
         ]
     }

@@ -15,10 +15,12 @@ import {
   initCompiledVisitor,
 } from '../src-js/plugins/visitor.js';
 
-import type { EnterExit, VisitFn } from '../src-js/plugins/types.ts';
+import type { EnterExit, Node, VisitFn } from '../src-js/plugins/types.ts';
 
 const PROGRAM_TYPE_ID = NODE_TYPE_IDS_MAP.get('Program'),
   EMPTY_STMT_TYPE_ID = NODE_TYPE_IDS_MAP.get('EmptyStatement');
+
+const SPAN: Node = { start: 0, end: 0, range: [0, 0] };
 
 describe('compile visitor', () => {
   beforeEach(initCompiledVisitor);
@@ -97,7 +99,7 @@ describe('compile visitor', () => {
         addVisitorToCompiled({ EmptyStatement: enter, 'EmptyStatement:exit': exit });
         expect(finalizeCompiledVisitor()).toBe(true);
 
-        const node = { type: 'EmptyStatement', start: 0, end: 0 };
+        const node = { type: 'EmptyStatement', ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
         expect(enter).toHaveBeenCalledWith(node);
         expect(exit).toHaveBeenCalledWith(node);
@@ -110,7 +112,7 @@ describe('compile visitor', () => {
         addVisitorToCompiled({ 'EmptyStatement:exit': exit, EmptyStatement: enter });
         expect(finalizeCompiledVisitor()).toBe(true);
 
-        const node = { type: 'EmptyStatement', start: 0, end: 0 };
+        const node = { type: 'EmptyStatement', ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
         expect(enter).toHaveBeenCalledWith(node);
         expect(exit).toHaveBeenCalledWith(node);
@@ -158,7 +160,7 @@ describe('compile visitor', () => {
 
         expect(finalizeCompiledVisitor()).toBe(true);
 
-        const node = { type: 'EmptyStatement', start: 0, end: 0 };
+        const node = { type: 'EmptyStatement', ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
         expect(enter1).toHaveBeenCalledWith(node);
         expect(exit1).toHaveBeenCalledWith(node);
@@ -180,7 +182,7 @@ describe('compile visitor', () => {
 
         expect(finalizeCompiledVisitor()).toBe(true);
 
-        const node = { type: 'EmptyStatement', start: 0, end: 0 };
+        const node = { type: 'EmptyStatement', ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
         expect(enter1).toHaveBeenCalledWith(node);
         expect(exit1).toHaveBeenCalledWith(node);
@@ -202,7 +204,7 @@ describe('compile visitor', () => {
 
         expect(finalizeCompiledVisitor()).toBe(true);
 
-        const node = { type: 'EmptyStatement', start: 0, end: 0 };
+        const node = { type: 'EmptyStatement', ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
         expect(enter1).toHaveBeenCalledWith(node);
         expect(exit1).toHaveBeenCalledWith(node);
@@ -224,7 +226,7 @@ describe('compile visitor', () => {
 
         expect(finalizeCompiledVisitor()).toBe(true);
 
-        const node = { type: 'EmptyStatement', start: 0, end: 0 };
+        const node = { type: 'EmptyStatement', ...SPAN };
         (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
         expect(enter1).toHaveBeenCalledWith(node);
         expect(exit1).toHaveBeenCalledWith(node);
@@ -250,12 +252,12 @@ describe('compile visitor', () => {
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
-        const enterNode = { type: 'Program', start: 0, end: 0 };
+        const enterNode = { type: 'Program', ...SPAN };
         enterExit.enter(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
-        const exitNode = { type: 'Program', start: 0, end: 0 };
+        const exitNode = { type: 'Program', ...SPAN };
         enterExit.exit(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
@@ -274,12 +276,12 @@ describe('compile visitor', () => {
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
-        const enterNode = { type: 'Program', start: 0, end: 0 };
+        const enterNode = { type: 'Program', ...SPAN };
         enterExit.enter(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
-        const exitNode = { type: 'Program', start: 0, end: 0 };
+        const exitNode = { type: 'Program', ...SPAN };
         enterExit.exit(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
@@ -298,12 +300,12 @@ describe('compile visitor', () => {
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
-        const enterNode = { type: 'Program', start: 0, end: 0 };
+        const enterNode = { type: 'Program', ...SPAN };
         enterExit.enter(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
-        const exitNode = { type: 'Program', start: 0, end: 0 };
+        const exitNode = { type: 'Program', ...SPAN };
         enterExit.exit(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
@@ -322,12 +324,12 @@ describe('compile visitor', () => {
 
         const enterExit = compiledVisitor[PROGRAM_TYPE_ID] as EnterExit;
 
-        const enterNode = { type: 'Program', start: 0, end: 0 };
+        const enterNode = { type: 'Program', ...SPAN };
         enterExit.enter(enterNode);
         expect(enter1).toHaveBeenCalledWith(enterNode);
         expect(enter2).toHaveBeenCalledWith(enterNode);
 
-        const exitNode = { type: 'Program', start: 0, end: 0 };
+        const exitNode = { type: 'Program', ...SPAN };
         enterExit.exit(exitNode);
         expect(exit1).toHaveBeenCalledWith(exitNode);
         expect(exit2).toHaveBeenCalledWith(exitNode);
@@ -361,7 +363,7 @@ describe('compile visitor', () => {
 
       expect(finalizeCompiledVisitor()).toBe(true);
 
-      const node = { type: 'EmptyStatement', start: 0, end: 0 };
+      const node = { type: 'EmptyStatement', ...SPAN };
       (compiledVisitor[EMPTY_STMT_TYPE_ID] as VisitFn)(node);
 
       expect(enter1).toHaveBeenCalledWith(node);

@@ -12,7 +12,7 @@ import { getLineColumnFromOffset, getOffsetFromLineColumn, initLines, lines, res
 
 import type { Program } from '../generated/types.d.ts';
 import type { Scope, ScopeManager, Variable } from './scope.ts';
-import type { BufferWithArrays, Comment, Node, NodeOrToken, Token } from './types.ts';
+import type { BufferWithArrays, Comment, Node, NodeOrToken, Ranged, Token } from './types.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -139,7 +139,7 @@ export const SOURCE_CODE = Object.freeze({
    * @returns Source text representing the AST node.
    */
   getText(
-    node?: Node | null | undefined,
+    node?: Ranged | null | undefined,
     beforeCount?: number | null | undefined,
     afterCount?: number | null | undefined,
   ): string {

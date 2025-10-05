@@ -25,6 +25,7 @@ export type {
   Node,
   NodeOrToken,
   Range,
+  Ranged,
   RuleMeta,
   Token,
   Visitor,

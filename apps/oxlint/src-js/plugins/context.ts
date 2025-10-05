@@ -4,7 +4,7 @@ import { SOURCE_CODE } from './source_code.js';
 
 import type { Fix, FixFn } from './fix.ts';
 import type { SourceCode } from './source_code.ts';
-import type { Location, Node } from './types.ts';
+import type { Location, Ranged } from './types.ts';
 
 const { hasOwn } = Object;
 
@@ -17,7 +17,7 @@ export interface DiagnosticBase {
 }
 
 export interface DiagnosticWithNode extends DiagnosticBase {
-  node: Node;
+  node: Ranged;
 }
 
 export interface DiagnosticWithLoc extends DiagnosticBase {
