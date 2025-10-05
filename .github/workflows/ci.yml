@@ -228,8 +228,7 @@ jobs:
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
       - uses: oxc-project/setup-rust@f78b3964e121f889426634f0eaeeb09fccecac08 # v1.0.6
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: clippy
+          cache-key: warm
           components: clippy rust-docs
       - run: cargo lint -- -D warnings
       - run: cargo lint --profile dev-no-debug-assertions -- -D warnings
