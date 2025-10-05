@@ -518,16 +518,7 @@ export const SOURCE_CODE = Object.freeze({
     throw new Error('`sourceCode.commentsExistBetween` not implemented yet'); // TODO
   },
 
-  /**
-   * Get all the ancestors of a given node.
-   * @param node - AST node
-   * @returns All the ancestor nodes in the AST, not including the provided node,
-   *   starting from the root node at index 0 and going inwards to the parent node.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  getAncestors(node: Node): Node[] {
-    throw new Error('`sourceCode.getAncestors` not implemented yet'); // TODO
-  },
+  getAncestors,
 
   /**
    * Get the variables that `node` defines.
@@ -653,6 +644,26 @@ export function getIndexFromLoc(loc: LineColumn): number {
   }
 
   throw new TypeError('Expected `loc` to be an object with integer `line` and `column` properties.');
+}
+
+/**
+ * Get all the ancestors of a given node.
+ * @param node - AST node
+ * @returns All the ancestor nodes in the AST, not including the provided node,
+ *   starting from the root node at index 0 and going inwards to the parent node.
+ */
+function getAncestors(node: Node): Node[] {
+  const ancestors = [];
+
+  for (
+    let ancestor = (node as unknown as { parent: Node }).parent;
+    ancestor;
+    ancestor = (ancestor as unknown as { parent: Node }).parent
+  ) {
+    ancestors.push(ancestor);
+  }
+
+  return ancestors.reverse();
 }
 
 // Options for various `SourceCode` methods e.g. `getFirstToken`.
