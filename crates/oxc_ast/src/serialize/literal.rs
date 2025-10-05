@@ -202,7 +202,7 @@ impl ESTree for RegExpFlagsConverter<'_> {
         value.cooked = value.cooked
             .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
     }
-    { type: 'TemplateElement', value, tail, start, end, ...(RANGE && { range: [start, end] }) }
+    { type: 'TemplateElement', value, tail, start, end, ...(RANGE && { range: [start, end] }), ...(PARENT && { parent }) }
 "#)]
 pub struct TemplateElementConverter<'a, 'b>(pub &'b TemplateElement<'a>);
 

@@ -143,11 +143,14 @@ fn generate_deserializers(
 
         const IS_TS = false;
         const RANGE = false;
+        const PARENT = false;
         const PRESERVE_PARENS = false;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
+
+        let parent = null;
 
         export function deserialize(buffer, sourceText, sourceByteLen) {{
             return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
@@ -214,16 +217,20 @@ fn generate_deserializers(
     // Create deserializers with various settings, by setting `IS_TS`, `RANGE` and `PRESERVE_PARENS` consts,
     // and running through minifier to shake out irrelevant code
     let mut deserializers = vec![];
-    let mut create_deserializer = |is_ts, range, preserve_parens| {
+    let mut create_deserializer = |is_ts, range, parent, preserve_parens| {
         let mut program = program.clone_in(&allocator);
         replace_const(&mut program, "IS_TS", is_ts);
         replace_const(&mut program, "RANGE", range);
+        replace_const(&mut program, "PARENT", parent);
         replace_const(&mut program, "PRESERVE_PARENS", preserve_parens);
         let code = print_minified(&mut program, &allocator);
 
         let mut name = if is_ts { "ts" } else { "js" }.to_string();
         if range {
             name.push_str("_range");
+        }
+        if parent {
+            name.push_str("_parent");
         }
         if !preserve_parens {
             name.push_str("_no_parens");
@@ -234,12 +241,14 @@ fn generate_deserializers(
 
     for is_ts in [false, true] {
         for range in [false, true] {
-            create_deserializer(is_ts, range, true);
+            for parent in [false, true] {
+                create_deserializer(is_ts, range, parent, true);
+            }
         }
     }
 
     // `PRESERVE_PARENS = false` is only required for linter
-    create_deserializer(true, true, false);
+    create_deserializer(true, true, false, false);
 
     deserializers
 }
@@ -285,21 +294,27 @@ fn generate_struct(
     });
 
     let body = body.unwrap_or_else(|| {
-        let mut preamble_str = String::new();
+        let mut inline_preamble_str = String::new();
         let mut fields_str = String::new();
+        let mut assignments_preamble_str = String::new();
+        let mut assignments_str = String::new();
 
         generator.generate_struct_fields(struct_def, 0, DeserializerType::Both);
 
-        for (field_name, StructFieldValue { value, deser_type }) in generator.fields {
+        let has_type_field = generator.fields.contains_key("type");
+
+        let mut all_fields_inline = true;
+        for (field_name, StructFieldValue { value, deser_type, inline }) in generator.fields {
             if let Some(value) = value.strip_prefix("...") {
+                assert!(inline, "Spread fields must be inlined");
                 match deser_type {
                     DeserializerType::Both => write_it!(fields_str, "...{value},"),
                     DeserializerType::JsOnly => write_it!(fields_str, "...(!IS_TS && {value}),"),
                     DeserializerType::TsOnly => write_it!(fields_str, "...(IS_TS && {value}),"),
                 }
-            } else {
+            } else if inline || !has_type_field {
                 let value = if generator.dependent_field_names.contains(&field_name) {
-                    write_it!(preamble_str, "const {field_name} = {value};\n");
+                    write_it!(inline_preamble_str, "const {field_name} = {value};\n");
                     &field_name
                 } else {
                     &value
@@ -315,19 +330,55 @@ fn generate_struct(
                     };
                     write_it!(fields_str, "...({condition} && {{ {field_name}: {value} }}),");
                 }
+            } else {
+                all_fields_inline = false;
+
+                let value = if generator.dependent_field_names.contains(&field_name) {
+                    write_it!(assignments_preamble_str, "const {field_name} = {value};\n");
+                    &field_name
+                } else {
+                    &value
+                };
+
+                if deser_type == DeserializerType::Both {
+                    write_it!(fields_str, "{field_name}: null,");
+                    write_it!(assignments_str, "node.{field_name} = {value};");
+                } else {
+                    let condition = match deser_type {
+                        DeserializerType::JsOnly => "!IS_TS",
+                        DeserializerType::TsOnly => "IS_TS",
+                        DeserializerType::Both => unreachable!(),
+                    };
+                    write_it!(fields_str, "...({condition} && {{ {field_name}: null }}),");
+                    write_it!(assignments_str, "if ({condition}) node.{field_name} = {value};");
+                }
             }
         }
 
         for preamble_part in generator.preamble {
-            preamble_str.push_str(preamble_part.trim());
+            assignments_preamble_str.push_str(preamble_part.trim());
+        }
+
+        let mut parent_assignment_str = "";
+        if has_type_field {
+            fields_str.push_str("...(PARENT && { parent }),\n");
+
+            if !all_fields_inline {
+                inline_preamble_str.push_str("const previousParent = parent;\n");
+                parent_assignment_str = "parent = ";
+                assignments_str.push_str("if (PARENT) parent = previousParent;\n");
+            }
         }
 
         format!(
             "
-            {preamble_str}
-            return {{
+            {inline_preamble_str}
+            const node = {parent_assignment_str} {{
                 {fields_str}
             }};
+            {assignments_preamble_str}
+            {assignments_str}
+            return node;
         "
         )
     });
@@ -358,6 +409,8 @@ struct StructFieldValue {
     value: String,
     /// Which deserializer(s) should include this field
     deser_type: DeserializerType,
+    /// `true` if value can be inlined in object definition
+    inline: bool,
 }
 
 impl<'s> StructDeserializerGenerator<'s> {
@@ -404,6 +457,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                 StructFieldValue {
                     value: format!("'{struct_name}'"),
                     deser_type: DeserializerType::Both,
+                    inline: true,
                 },
             );
         }
@@ -448,6 +502,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                     StructFieldValue {
                         value: "...(RANGE && { range: [start, end] })".to_string(),
                         deser_type,
+                        inline: true,
                     },
                 );
 
@@ -470,6 +525,7 @@ impl<'s> StructDeserializerGenerator<'s> {
             concat_field_count += 1;
         }
 
+        let mut inline = false;
         let value = if concat_field_count > 1 {
             // Concatenate fields
             for (index, &field) in concat_fields[..concat_field_count].iter().enumerate() {
@@ -509,12 +565,20 @@ impl<'s> StructDeserializerGenerator<'s> {
             let converter = self.schema.meta_by_name(converter_name);
             self.apply_converter(converter, struct_def, struct_offset).unwrap()
         } else {
+            // Primitives and fieldless enums can be inlined into object literal,
+            // because they don't have a `parent` field
+            inline = match field_type.innermost_type(self.schema) {
+                TypeDef::Primitive(_) => true,
+                TypeDef::Enum(enum_def) => enum_def.is_fieldless(),
+                _ => false,
+            };
+
             let value_fn = field_type.deser_name(self.schema);
             let pos = pos_offset(field_offset);
             format!("{value_fn}({pos})")
         };
 
-        self.fields.insert(field_name, StructFieldValue { value, deser_type });
+        self.fields.insert(field_name, StructFieldValue { value, deser_type, inline });
     }
 
     fn generate_struct_field_added(
@@ -534,7 +598,8 @@ impl<'s> StructDeserializerGenerator<'s> {
         }
 
         let value = self.apply_converter(converter, struct_def, struct_offset).unwrap();
-        self.fields.insert(field_name.to_string(), StructFieldValue { value, deser_type });
+        self.fields
+            .insert(field_name.to_string(), StructFieldValue { value, deser_type, inline: false });
     }
 
     fn apply_converter(

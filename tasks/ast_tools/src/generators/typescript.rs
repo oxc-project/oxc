@@ -11,7 +11,7 @@ use crate::{
         should_skip_enum_variant, should_skip_field,
     },
     output::Output,
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId},
     utils::{FxIndexSet, format_cow, write_it},
 };
 
@@ -26,12 +26,19 @@ impl Generator for TypescriptGenerator {
     /// Generate Typescript type definitions for all AST types.
     fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
         let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
+        let program_type_id = schema.type_names["Program"];
 
         let mut code = String::new();
         let mut ast_node_names: Vec<String> = vec![];
         for type_def in &schema.types {
             if type_def.generates_derive(estree_derive_id) {
-                generate_ts_type_def(type_def, &mut code, &mut ast_node_names, schema);
+                generate_ts_type_def(
+                    type_def,
+                    &mut code,
+                    &mut ast_node_names,
+                    program_type_id,
+                    schema,
+                );
             }
         }
 
@@ -52,6 +59,7 @@ fn generate_ts_type_def(
     type_def: &TypeDef,
     code: &mut String,
     ast_node_names: &mut Vec<String>,
+    program_type_id: TypeId,
     schema: &Schema,
 ) {
     // Skip TS def generation if `#[estree(no_ts_def)]` attribute
@@ -64,7 +72,7 @@ fn generate_ts_type_def(
     if !no_ts_def {
         let ts_def = match type_def {
             TypeDef::Struct(struct_def) => {
-                generate_ts_type_def_for_struct(struct_def, ast_node_names, schema)
+                generate_ts_type_def_for_struct(struct_def, ast_node_names, program_type_id, schema)
             }
             TypeDef::Enum(enum_def) => generate_ts_type_def_for_enum(enum_def, schema),
             _ => unreachable!(),
@@ -90,6 +98,7 @@ fn generate_ts_type_def(
 fn generate_ts_type_def_for_struct(
     struct_def: &StructDef,
     ast_node_names: &mut Vec<String>,
+    program_type_id: TypeId,
     schema: &Schema,
 ) -> Option<String> {
     // If struct marked with `#[estree(ts_alias = "...")]`, then it needs no type def
@@ -148,6 +157,11 @@ fn generate_ts_type_def_for_struct(
                 schema,
             );
         }
+    }
+
+    if !struct_def.estree.no_type {
+        let parent_type = if struct_def.id == program_type_id { "null" } else { "Node" };
+        write_it!(fields_str, "\n\tparent?: {parent_type};");
     }
 
     let ts_def = if extends.is_empty() {

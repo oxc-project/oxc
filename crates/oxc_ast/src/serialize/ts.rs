@@ -53,63 +53,101 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
         start = DESER[u32](POS_OFFSET.span.start),
         end = DESER[u32](POS_OFFSET.span.end),
         declare = DESER[bool](POS_OFFSET.declare);
-    let id = DESER[TSModuleDeclarationName](POS_OFFSET.id),
-        body = DESER[Option<TSModuleDeclarationBody>](POS_OFFSET.body);
 
-    // Flatten `body`, and nest `id`
-    if (body !== null && body.type === 'TSModuleDeclaration') {
-        let innerId = body.id;
-        if (innerId.type === 'Identifier') {
-            let start, end;
-            id = {
-                type: 'TSQualifiedName',
-                left: id,
-                right: innerId,
-                start: start = id.start,
-                end: end = innerId.end,
-                ...(RANGE && { range: [start, end] }),
-            };
+    let node;
+    const previousParent = parent;
+
+    let body = DESER[Option<TSModuleDeclarationBody>](POS_OFFSET.body);
+    if (body === null) {
+        node = parent = {
+            type: 'TSModuleDeclaration',
+            id: null,
+            // No `body` field
+            kind,
+            declare,
+            global,
+            start,
+            end,
+            ...(RANGE && { range: [start, end] }),
+            ...(PARENT && { parent }),
+        };
+        node.id = DESER[TSModuleDeclarationName](POS_OFFSET.id);
+    } else {
+        node = parent = {
+            type: 'TSModuleDeclaration',
+            id: null,
+            body,
+            kind,
+            declare,
+            global,
+            start,
+            end,
+            ...(RANGE && { range: [start, end] }),
+            ...(PARENT && { parent }),
+        };
+
+        const id = DESER[TSModuleDeclarationName](POS_OFFSET.id);
+
+        if (body.type === 'TSModuleBlock') {
+            node.id = id;
+            if (PARENT) body.parent = node;
         } else {
-            // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
-            // this module on left, and previous `left` of innermost `TSQualifiedName` on right
-            while (true) {
-                if (RANGE) {
-                    innerId.start = innerId.range[0] = id.start;
-                } else {
-                    innerId.start = id.start;
+            let innerId = body.id;
+            if (innerId.type === 'Identifier') {
+                let start, end;
+                const outerId = node.id = parent = {
+                    type: 'TSQualifiedName',
+                    left: id,
+                    right: innerId,
+                    start: start = id.start,
+                    end: end = innerId.end,
+                    ...(RANGE && { range: [start, end] }),
+                    ...(PARENT && { parent: node }),
+                };
+                if (PARENT) id.parent = innerId.parent = outerId;
+            } else {
+                // Replace `left` of innermost `TSQualifiedName` with a nested `TSQualifiedName` with `id` of
+                // this module on left, and previous `left` of innermost `TSQualifiedName` on right
+                node.id = innerId;
+                if (PARENT) innerId.parent = node;
+
+                const { start } = id;
+                while (true) {
+                    if (RANGE) {
+                        innerId.start = innerId.range[0] = start;
+                    } else {
+                        innerId.start = start;
+                    }
+                    if (innerId.left.type === 'Identifier') break;
+                    innerId = innerId.left;
                 }
-                if (innerId.left.type === 'Identifier') break;
-                innerId = innerId.left;
+
+                let end;
+                const right = innerId.left;
+                const left = innerId.left = {
+                    type: 'TSQualifiedName',
+                    left: id,
+                    right,
+                    start,
+                    end: end = right.end,
+                    ...(RANGE && { range: [start, end] }),
+                    ...(PARENT && { parent: innerId }),
+                };
+                if (PARENT) id.parent = right.parent = left;
             }
 
-            let start, end;
-            innerId.left = {
-                type: 'TSQualifiedName',
-                left: id,
-                right: innerId.left,
-                start: start = id.start,
-                end: end = innerId.left.end,
-                ...(RANGE && { range: [start, end] }),
-            };
-            id = body.id;
+            if (Object.hasOwn(body, 'body')) {
+                body = body.body;
+                node.body = body;
+                if (PARENT) body.parent = node;
+            } else {
+                body = null;
+            }
         }
-        body = Object.hasOwn(body, 'body') ? body.body : null;
     }
 
-    // Skip `body` field if `null`
-    const node = body === null
-        ? {
-            type: 'TSModuleDeclaration',
-            id, kind, declare, global,
-            start, end,
-            ...(RANGE && { range: [start, end] })
-        }
-        : {
-            type: 'TSModuleDeclaration',
-            id, body, kind, declare, global,
-            start, end,
-            ...(RANGE && { range: [start, end] })
-        };
+    if (PARENT) parent = previousParent;
+
     node
 ")]
 pub struct TSModuleDeclarationConverter<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
@@ -252,8 +290,10 @@ impl ESTree for TSMappedTypeOptional<'_, '_> {
 #[estree(
     ts_type = "TSTypeParameter['name']",
     raw_deser = "
-        const typeParameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter);
-        typeParameter.name
+        const typeParameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter),
+            key = typeParameter.name;
+        if (PARENT) key.parent = parent;
+        key
     "
 )]
 pub struct TSMappedTypeKey<'a, 'b>(pub &'b TSMappedType<'a>);
@@ -269,7 +309,14 @@ impl ESTree for TSMappedTypeKey<'_, '_> {
 /// NOTE: Variable `typeParameter` in `raw_deser` is shared between `key` and `constraint` serializers.
 /// They will be concatenated in the generated code.
 #[ast_meta]
-#[estree(ts_type = "TSTypeParameter['constraint']", raw_deser = "typeParameter.constraint")]
+#[estree(
+    ts_type = "TSTypeParameter['constraint']",
+    raw_deser = "
+        const { constraint } = typeParameter;
+        if (PARENT && constraint !== null) constraint.parent = parent;
+        constraint
+    "
+)]
 pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
 
 impl ESTree for TSMappedTypeConstraint<'_, '_> {
@@ -292,31 +339,43 @@ impl ESTree for TSMappedTypeConstraint<'_, '_> {
         let expression = DESER[TSTypeName](POS_OFFSET.expression);
         if (expression.type === 'TSQualifiedName') {
             let object = expression.left;
+            const { right } = expression;
             let start, end;
-            let parent = expression = {
+            let previous = expression = {
                 type: 'MemberExpression',
                 object,
-                property: expression.right,
+                property: right,
                 optional: false,
                 computed: false,
                 start: start = expression.start,
                 end: end = expression.end,
                 ...(RANGE && { range: [start, end] }),
+                ...(PARENT && { parent }),
             };
 
-            while (object.type === 'TSQualifiedName') {
-                const { left } = object;
-                let start, end;
-                parent = parent.object = {
+            if (PARENT) right.parent = previous;
+
+            while (true) {
+                if (object.type !== 'TSQualifiedName') {
+                    if (PARENT) object.parent = previous;
+                    break;
+                }
+
+                const { left, right } = object;
+                previous = previous.object = {
                     type: 'MemberExpression',
                     object: left,
-                    property: object.right,
+                    property: right,
                     optional: false,
                     computed: false,
                     start: start = object.start,
                     end: end = object.end,
                     ...(RANGE && { range: [start, end] }),
+                    ...(PARENT && { parent: previous }),
                 };
+
+                if (PARENT) right.parent = previous;
+
                 object = left;
             }
         }
@@ -436,16 +495,22 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
 /// ESTree implementation is unchanged from the auto-generated version.
 #[ast_meta]
 #[estree(raw_deser = "
-    let node = DESER[TSType](POS_OFFSET.type_annotation);
+    let node;
     if (PRESERVE_PARENS) {
         let start, end;
-        node = {
+        const previousParent = parent;
+        node = parent = {
             type: 'TSParenthesizedType',
-            typeAnnotation: node,
+            typeAnnotation: null,
             start: start = DESER[u32]( POS_OFFSET.span.start ),
             end: end = DESER[u32]( POS_OFFSET.span.end ),
             ...(RANGE && { range: [start, end] }),
+            ...(PARENT && { parent }),
         };
+        node.typeAnnotation = DESER[TSType](POS_OFFSET.type_annotation);
+        if (PARENT) parent = previousParent;
+    } else {
+        node = DESER[TSType](POS_OFFSET.type_annotation);
     }
     node
 ")]

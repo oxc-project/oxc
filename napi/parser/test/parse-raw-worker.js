@@ -15,12 +15,16 @@ import {
   TEST_TYPE_LAZY,
   TEST_TYPE_MAIN_MASK,
   TEST_TYPE_PRETTY,
+  TEST_TYPE_RANGE_PARENT,
   TEST_TYPE_TEST262,
   TEST_TYPE_TS,
   TS_DIR_PATH,
   TS_ESTREE_DIR_PATH,
 } from './parse-raw-common.js';
 import { makeUnitsFromTest } from './typescript-make-units-from-test.js';
+
+const { hasOwn } = Object,
+  { isArray } = Array;
 
 // Run test case and return whether it passes.
 // This is the entry point when run as a worker.
@@ -37,25 +41,26 @@ export default async function(data) {
 // If test fails, will throw an error.
 // Can be called from main thread.
 export async function runCase({ type, props }, expect) {
-  const lazy = (type & TEST_TYPE_LAZY) !== 0,
+  const rangeParent = (type & TEST_TYPE_RANGE_PARENT) !== 0,
+    lazy = (type & TEST_TYPE_LAZY) !== 0,
     pretty = (type & TEST_TYPE_PRETTY) !== 0;
   type &= TEST_TYPE_MAIN_MASK;
 
   switch (type) {
     case TEST_TYPE_TEST262:
-      await runTest262Case(props, lazy, expect);
+      await runTest262Case(props, rangeParent, lazy, expect);
       break;
     case TEST_TYPE_JSX:
-      await runJsxCase(props, lazy, expect);
+      await runJsxCase(props, rangeParent, lazy, expect);
       break;
     case TEST_TYPE_TS:
-      await runTsCase(props, lazy, expect);
+      await runTsCase(props, rangeParent, lazy, expect);
       break;
     case TEST_TYPE_FIXTURE:
-      await runFixture(props, lazy, pretty, expect);
+      await runFixture(props, rangeParent, lazy, pretty, expect);
       break;
     case TEST_TYPE_INLINE_FIXTURE:
-      await runInlineFixture(props, lazy, pretty, expect);
+      await runInlineFixture(props, rangeParent, lazy, pretty, expect);
       break;
     default:
       throw new Error('Unexpected test type');
@@ -63,7 +68,7 @@ export async function runCase({ type, props }, expect) {
 }
 
 // Run Test262 test case
-async function runTest262Case(path, lazy, expect) {
+async function runTest262Case(path, rangeParent, lazy, expect) {
   const filename = basename(path);
   const [sourceText, acornJson] = await Promise.all([
     readFile(pathJoin(TEST262_DIR_PATH, path), 'utf8'),
@@ -72,6 +77,10 @@ async function runTest262Case(path, lazy, expect) {
 
   const sourceType = getSourceTypeFromJSON(acornJson);
 
+  if (rangeParent) {
+    testRangeParent(filename, sourceText, { sourceType }, expect);
+    return;
+  }
   if (lazy) {
     testLazy(filename, sourceText, { sourceType });
     return;
@@ -84,7 +93,7 @@ async function runTest262Case(path, lazy, expect) {
 }
 
 // Run JSX test case
-async function runJsxCase(filename, lazy, expect) {
+async function runJsxCase(filename, rangeParent, lazy, expect) {
   const sourcePath = pathJoin(JSX_DIR_PATH, filename),
     jsonPath = sourcePath.slice(0, -1) + 'on'; // `.jsx` -> `.json`
   const [sourceText, acornJson] = await Promise.all([
@@ -94,6 +103,10 @@ async function runJsxCase(filename, lazy, expect) {
 
   const sourceType = getSourceTypeFromJSON(acornJson);
 
+  if (rangeParent) {
+    testRangeParent(filename, sourceText, { sourceType }, expect);
+    return;
+  }
   if (lazy) {
     testLazy(filename, sourceText, { sourceType });
     return;
@@ -110,7 +123,7 @@ const TS_CASE_HEADER = '__ESTREE_TEST__:PASS:\n```json\n';
 const TS_CASE_FOOTER = '\n```\n';
 const TS_CASE_FOOTER_LEN = TS_CASE_FOOTER.length;
 
-async function runTsCase(path, lazy, expect) {
+async function runTsCase(path, rangeParent, lazy, expect) {
   const tsPath = path.slice(0, -3); // Trim off `.md`
   let [sourceText, casesJson] = await Promise.all([
     readFile(pathJoin(TS_DIR_PATH, tsPath), 'utf8'),
@@ -136,6 +149,10 @@ async function runTsCase(path, lazy, expect) {
       experimentalRawTransfer: true,
     };
 
+    if (rangeParent) {
+      testRangeParent(filename, sourceText, options, expect);
+      continue;
+    }
     if (lazy) {
       testLazy(filename, sourceText, options);
       continue;
@@ -168,24 +185,79 @@ async function runTsCase(path, lazy, expect) {
 }
 
 // Test raw transfer output matches standard (via JSON) output for a fixture file
-async function runFixture(path, lazy, pretty, expect) {
+async function runFixture(path, rangeParent, lazy, pretty, expect) {
   const filename = basename(path);
   const sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), 'utf8');
 
-  if (lazy) {
-    testLazy(filename, sourceText);
+  if (rangeParent) {
+    testRangeParent(filename, sourceText, null, expect);
+  } else if (lazy) {
+    testLazy(filename, sourceText, null);
   } else {
     assertRawAndStandardMatch(filename, sourceText, pretty, expect);
   }
 }
 
 // Test raw transfer output matches standard (via JSON) output for a fixture, with provided source text
-async function runInlineFixture({ filename, sourceText }, lazy, pretty, expect) {
-  if (lazy) {
-    testLazy(filename, sourceText);
+async function runInlineFixture({ filename, sourceText }, rangeParent, lazy, pretty, expect) {
+  if (rangeParent) {
+    testRangeParent(filename, sourceText, null, expect);
+  } else if (lazy) {
+    testLazy(filename, sourceText, null);
   } else {
     assertRawAndStandardMatch(filename, sourceText, pretty, expect);
   }
+}
+
+// Test `range` and `parent` fields are correct on all AST nodes.
+function testRangeParent(filename, sourceText, options, expect) {
+  // @ts-ignore
+  const ret = parseSync(filename, sourceText, {
+    ...options,
+    range: true,
+    experimentalRawTransfer: true,
+    experimentalParent: true,
+  });
+
+  let parent = null;
+  function walk(node) {
+    if (node === null || typeof node !== 'object') return;
+
+    if (isArray(node)) {
+      for (const child of node) {
+        walk(child);
+      }
+      return;
+    }
+
+    // Check `range`
+    if (hasOwn(node, 'start')) {
+      const { range } = node;
+      expect(isArray(range)).toBe(true);
+      expect(range.length).toBe(2);
+      expect(range[0]).toBe(node.start);
+      expect(range[1]).toBe(node.end);
+    }
+
+    // Check `parent`
+    let previousParent = parent;
+    const isNode = hasOwn(node, 'type');
+    if (isNode) {
+      expect(node.parent).toBe(parent);
+      parent = node;
+    }
+
+    // Walk children
+    for (const key in node) {
+      if (!hasOwn(node, key)) continue;
+      if (key === 'type' || key === 'start' || key === 'end' || key === 'range' || key === 'parent') continue;
+      walk(node[key]);
+    }
+
+    if (isNode) parent = previousParent;
+  }
+
+  walk(ret.program);
 }
 
 // Test lazy deserialization does not throw an error.
@@ -296,12 +368,11 @@ function removeNullProperties(obj) {
 }
 
 // Very simple `expect` implementation.
-// Only supports `expect(x).toEqual(y)`, and uses only a simple `===` comparison.
+// Only supports `expect(x).toEqual(y)` and `expect(x).toBe(y)`, and both use only a simple `===` comparison.
 // Therefore, only works for primitive values e.g. strings.
 function simpleExpect(value) {
-  return {
-    toEqual(expected) {
-      if (value !== expected) throw new Error('Mismatch');
-    },
+  const toBe = (expected) => {
+    if (value !== expected) throw new Error('Mismatch');
   };
+  return { toEqual: toBe, toBe };
 }

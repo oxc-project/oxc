@@ -21,6 +21,7 @@ import {
   TEST_TYPE_JSX,
   TEST_TYPE_LAZY,
   TEST_TYPE_PRETTY,
+  TEST_TYPE_RANGE_PARENT,
   TEST_TYPE_TEST262,
   TEST_TYPE_TS,
   TS_ESTREE_DIR_PATH,
@@ -28,7 +29,14 @@ import {
   TS_SNAPSHOT_PATH,
 } from './parse-raw-common.js';
 
-const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
+const { env } = process;
+const isEnabled = envValue => envValue === 'true' || envValue === '1';
+
+const [describeRangeParent, itRangeParent] = isEnabled(env.RUN_RAW_RANGE_TESTS)
+  ? [describe, it]
+  : (noop => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
+
+const [describeLazy, itLazy] = isEnabled(env.RUN_LAZY_TESTS)
   ? [describe, it]
   : (noop => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
 
@@ -103,6 +111,11 @@ describe.concurrent('test262', () => {
   it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262, path));
 });
 
+describeRangeParent.concurrent('range & parent test262', () => {
+  // oxlint-disable-next-line jest/expect-expect
+  it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_RANGE_PARENT, path));
+});
+
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy test262', () => {
   // oxlint-disable-next-line jest/expect-expect
@@ -120,6 +133,11 @@ const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
 describe.concurrent('JSX', () => {
   // oxlint-disable-next-line jest/expect-expect
   it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX, filename));
+});
+
+describeRangeParent.concurrent('range & parent JSX', () => {
+  // oxlint-disable-next-line jest/expect-expect
+  it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_RANGE_PARENT, filename));
 });
 
 // Check lazy deserialization doesn't throw
@@ -143,6 +161,11 @@ const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true }))
 describe.concurrent('TypeScript', () => {
   // oxlint-disable-next-line jest/expect-expect
   it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS, path));
+});
+
+describeRangeParent.concurrent('range & parent TypeScript', () => {
+  // oxlint-disable-next-line jest/expect-expect
+  it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_RANGE_PARENT, path));
 });
 
 // Check lazy deserialization doesn't throw
@@ -176,12 +199,21 @@ describe.concurrent('edge cases', () => {
     // oxlint-disable-next-line jest/expect-expect
     it('TS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.ts', sourceText }));
 
+    itRangeParent(
+      'JS range & parent',
+      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_RANGE_PARENT, { filename: 'dummy.js', sourceText }),
+    );
+    itRangeParent(
+      'TS range & parent',
+      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_RANGE_PARENT, { filename: 'dummy.ts', sourceText }),
+    );
+
     itLazy(
-      'JS',
+      'JS lazy',
       () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.js', sourceText }),
     );
     itLazy(
-      'TS',
+      'TS lazy',
       () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.ts', sourceText }),
     );
   });
@@ -191,6 +223,11 @@ describe.concurrent('edge cases', () => {
 describe.concurrent('fixtures', () => {
   // oxlint-disable-next-line jest/expect-expect
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
+});
+
+describeRangeParent.concurrent('range & parent fixtures', () => {
+  // oxlint-disable-next-line jest/expect-expect
+  it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_RANGE_PARENT, path));
 });
 
 // Check lazy deserialization doesn't throw
@@ -381,6 +418,76 @@ describe.concurrent('`range` option', () => {
       expect(declaration.range).toEqual([4, 9]);
       expect(declaration.id.range).toEqual([4, 5]);
       expect(declaration.init.range).toEqual([8, 9]);
+    });
+  });
+});
+
+describe.concurrent('`experimentalParent` option', () => {
+  describe.concurrent('should not include `parent` fields when false', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, experimentalParent: false });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program).not.toHaveProperty('parent');
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt).not.toHaveProperty('parent');
+      const declaration = stmt.declarations[0];
+      expect(declaration).not.toHaveProperty('parent');
+      expect(declaration.id).not.toHaveProperty('parent');
+      expect(declaration.init).not.toHaveProperty('parent');
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, experimentalParent: false });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program).not.toHaveProperty('parent');
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt).not.toHaveProperty('parent');
+      const declaration = stmt.declarations[0];
+      expect(declaration).not.toHaveProperty('parent');
+      expect(declaration.id).not.toHaveProperty('parent');
+      expect(declaration.init).not.toHaveProperty('parent');
+    });
+  });
+
+  describe.concurrent('should include `parent` fields when true', () => {
+    it.concurrent('JS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.js', code, { experimentalRawTransfer: true, experimentalParent: true });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program.parent).toBe(null);
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt.parent).toBe(program);
+      const declaration = stmt.declarations[0];
+      expect(declaration.parent).toBe(stmt);
+      expect(declaration.id.parent).toBe(declaration);
+      expect(declaration.init.parent).toBe(declaration);
+    });
+
+    it.concurrent('TS', async () => {
+      const code = 'let x = 1;';
+
+      // @ts-ignore
+      let ret = parseSync('test.ts', code, { experimentalRawTransfer: true, experimentalParent: true });
+      expect(ret.errors.length).toBe(0);
+      const { program } = ret;
+      expect(program.parent).toBe(null);
+      const stmt = ret.program.body[0] as VariableDeclaration;
+      expect(stmt.parent).toBe(program);
+      const declaration = stmt.declarations[0];
+      expect(declaration.parent).toBe(stmt);
+      expect(declaration.id.parent).toBe(declaration);
+      expect(declaration.init.parent).toBe(declaration);
     });
   });
 });
