@@ -235,6 +235,13 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)])
             } else {
+                let has_empty_line_before_tail =
+                    self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
+
+                if has_empty_line_before_tail || self.last_group().will_break(f) {
+                    write!(f, [expand_parent()])?;
+                }
+
                 write!(f, [best_fitting!(format_one_line, format_expanded)])
             }
         });

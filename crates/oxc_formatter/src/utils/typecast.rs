@@ -42,7 +42,24 @@ pub fn format_type_cast_comment_node<'a, T>(
         return Ok(false);
     }
 
-    if let Some(type_cast_comment_index) = comments.get_type_cast_comment_index(span) {
+    if !comments.is_handled_type_cast_comment()
+        && let Some(last_printed_comment) = comments.printed_comments().last()
+        && last_printed_comment.span.end <= span.start
+        && f.source_text().next_non_whitespace_byte_is(last_printed_comment.span.end, b'(')
+        && f.comments().is_type_cast_comment(last_printed_comment)
+    {
+        // Get the source text from the end of type cast comment to the node span
+        let node_source_text = source.bytes_range(last_printed_comment.span.end, span.end);
+
+        // `(/** @type {Number} */ (bar).zoo)`
+        //                         ^^^^
+        // Should wrap for `baz` rather than `baz.zoo`
+        if has_closed_parentheses(node_source_text) {
+            return Ok(false);
+        }
+
+        f.context_mut().comments_mut().mark_as_type_cast_node(node);
+    } else if let Some(type_cast_comment_index) = comments.get_type_cast_comment_index(span) {
         let comments = f.context().comments().unprinted_comments();
         let type_cast_comment = &comments[type_cast_comment_index];
 
@@ -61,42 +78,6 @@ pub fn format_type_cast_comment_node<'a, T>(
         write!(f, [FormatLeadingComments::Comments(type_cast_comments)])?;
         f.context_mut().comments_mut().mark_as_type_cast_node(node);
         // If the printed cast comment is already handled, return early to avoid infinite recursion.
-    } else if !comments.is_handled_type_cast_comment()
-        && let Some(last_printed_comment) = comments.printed_comments().last()
-    {
-        if !last_printed_comment.span.end <= span.start
-            || !f.comments().is_type_cast_comment(last_printed_comment)
-        {
-            return Ok(false);
-        }
-
-        // Get the source text from the end of type cast comment to the node span
-        let node_source_text = source.bytes_range(last_printed_comment.span.end, span.end);
-
-        // `(/** @type {Number} */ (bar).zoo)`
-        //                         ^^^^
-        // Should wrap for `baz` rather than `baz.zoo`
-        if has_closed_parentheses(node_source_text) {
-            return Ok(false);
-        }
-
-        let mut has_left_paren = false;
-        // Check whether there is only whitespace or left parenthesis between the comment and the node
-        for &byte in source.bytes_range(last_printed_comment.span.end, span.start) {
-            if !byte.is_ascii_whitespace() {
-                if byte == b'(' {
-                    has_left_paren = true;
-                } else {
-                    return Ok(false);
-                }
-            }
-        }
-
-        if !has_left_paren {
-            return Ok(false);
-        }
-
-        f.context_mut().comments_mut().mark_as_type_cast_node(node);
     } else {
         // No typecast comment
         return Ok(false);
@@ -124,7 +105,12 @@ fn has_closed_parentheses(source: &[u8]) -> bool {
     while i < source.len() {
         match source[i] {
             b'(' => paren_count += 1,
-            b')' => paren_count -= 1,
+            b')' => {
+                paren_count -= 1;
+                if paren_count == 0 {
+                    return true;
+                }
+            }
             b'/' if i + 1 < source.len() => {
                 match source[i + 1] {
                     b'/' => {
