@@ -14,7 +14,7 @@
     "dayjs": "^1.11.13",
     "es-toolkit": "^1.38.0",
     "fs-require": "^1.6.0",
-    "happy-dom": "^18.0.0",
+    "happy-dom": "^19.0.0",
     "immer": "^10.1.1",
     "jquery": "^3.7.1",
     "lit": "github:lit/dist#v3.3.1",
