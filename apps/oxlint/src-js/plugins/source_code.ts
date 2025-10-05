@@ -30,10 +30,10 @@ let buffer: BufferWithArrays | null = null;
 let hasBOM = false;
 
 // Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
-// or `getAst()` is called before the AST is walked.
+// or `initAst()` is called before the AST is walked.
 let sourceText: string | null = null;
 let sourceByteLen: number = 0;
-let ast: Program | null = null;
+export let ast: Program | null = null;
 
 // Lazily populated when `SOURCE_CODE.lines` is accessed.
 // `lineStartOffsets` starts as `[0]`, and `resetSource` doesn't remove that initial element, so it's never empty.
@@ -66,19 +66,9 @@ function initSourceText(): void {
 /**
  * Deserialize AST from buffer.
  */
-function initAst(): void {
+export function initAst(): void {
   if (sourceText === null) initSourceText();
   ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen);
-}
-
-/**
- * Get AST of the file being linted.
- * If AST has not already been deserialized, do it now.
- * @returns AST of the file being linted.
- */
-export function getAst(): Program {
-  if (ast === null) initAst();
-  return ast;
 }
 
 /**
@@ -151,7 +141,8 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get AST of the file.
   get ast(): Program {
-    return getAst();
+    if (ast === null) initAst();
+    return ast;
   },
 
   // Get `ScopeManager` for the file.

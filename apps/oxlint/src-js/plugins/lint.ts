@@ -1,6 +1,6 @@
 import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
-import { getAst, resetSource, setupSourceForFile } from './source_code.js';
+import { ast, initAst, resetSource, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
@@ -134,8 +134,8 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
   // Some rules seen in the wild return an empty visitor object from `create` if some initial check fails
   // e.g. file extension is not one the rule acts on.
   if (needsVisit) {
-    const program = getAst();
-    walkProgram(program, compiledVisitor);
+    if (ast === null) initAst();
+    walkProgram(ast, compiledVisitor);
 
     // Lazy implementation
     /*
