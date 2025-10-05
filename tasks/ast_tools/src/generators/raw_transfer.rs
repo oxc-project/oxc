@@ -216,14 +216,16 @@ fn generate_deserializers(
 
     // Create deserializers with various settings, by setting `IS_TS`, `RANGE` and `PRESERVE_PARENS` consts,
     // and running through minifier to shake out irrelevant code
+    let mut print_allocator = Allocator::new();
     let mut deserializers = vec![];
     let mut create_deserializer = |is_ts, range, parent, preserve_parens| {
-        let mut program = program.clone_in(&allocator);
+        let mut program = program.clone_in(&print_allocator);
         replace_const(&mut program, "IS_TS", is_ts);
         replace_const(&mut program, "RANGE", range);
         replace_const(&mut program, "PARENT", parent);
         replace_const(&mut program, "PRESERVE_PARENS", preserve_parens);
-        let code = print_minified(&mut program, &allocator);
+        let code = print_minified(&mut program, &print_allocator);
+        print_allocator.reset();
 
         let mut name = if is_ts { "ts" } else { "js" }.to_string();
         if range {
