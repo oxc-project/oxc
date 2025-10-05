@@ -1,5 +1,6 @@
 import { getFixes } from './fix.js';
-import { getIndexFromLoc, SOURCE_CODE } from './source_code.js';
+import { getOffsetFromLineColumn } from './location.js';
+import { SOURCE_CODE } from './source_code.js';
 
 import type { Fix, FixFn } from './fix.ts';
 import type { SourceCode } from './source_code.ts';
@@ -148,8 +149,8 @@ export class Context {
     if (hasOwn(diagnostic, 'loc') && (loc = (diagnostic as DiagnosticWithLoc).loc) != null) {
       // `loc`
       if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
-      start = getIndexFromLoc(loc.start);
-      end = getIndexFromLoc(loc.end);
+      start = getOffsetFromLineColumn(loc.start);
+      end = getOffsetFromLineColumn(loc.end);
     } else {
       // `node`
       const { node } = diagnostic as DiagnosticWithNode;
