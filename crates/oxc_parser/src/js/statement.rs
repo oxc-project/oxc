@@ -123,8 +123,8 @@ impl<'a> ParserImpl<'a> {
             Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
             Kind::Import => self.parse_import_statement(stmt_ctx),
             Kind::Const => self.parse_const_statement(stmt_ctx),
-            Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
-            Kind::Await if self.is_using_statement() => self.parse_using_statement(),
+            Kind::Using if self.is_using_declaration() => self.parse_using_statement(stmt_ctx),
+            Kind::Await if self.is_using_statement() => self.parse_using_statement(stmt_ctx),
             Kind::Interface
             | Kind::Type
             | Kind::Module

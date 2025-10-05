@@ -845,3 +845,11 @@ pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
 pub fn modifiers_cannot_appear_here(span: Span) -> OxcDiagnostic {
     ts_error("1184", "Modifiers cannot appear here.").with_label(span)
 }
+
+#[cold]
+pub fn top_level_using(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Using declaration cannot appear in the top level when source type is `script`.",
+    )
+    .with_label(span)
+}

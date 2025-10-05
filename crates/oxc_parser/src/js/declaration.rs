@@ -53,10 +53,13 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn parse_using_statement(&mut self) -> Statement<'a> {
+    pub(crate) fn parse_using_statement(&mut self, ctx: StatementContext) -> Statement<'a> {
         let mut decl = self.parse_using_declaration(StatementContext::StatementList);
         self.asi();
         decl.span = self.end_span(decl.span.start);
+        if ctx.is_top_level() && self.source_type.is_script() {
+            self.error(diagnostics::top_level_using(decl.span));
+        }
         Statement::VariableDeclaration(self.alloc(decl))
     }
 
