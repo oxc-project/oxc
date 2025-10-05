@@ -149,7 +149,8 @@ export const SOURCE_CODE = Object.freeze({
     if (!node) return sourceText;
 
     // ESLint ignores falsy values for `beforeCount` and `afterCount`
-    let { start, end } = node;
+    const { range } = node;
+    let start = range[0], end = range[1];
     if (beforeCount) start = max(start - beforeCount, 0);
     if (afterCount) end += afterCount;
     return sourceText.slice(start, end);
