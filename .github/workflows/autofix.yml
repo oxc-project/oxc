@@ -26,7 +26,7 @@ jobs:
           key: dprint-${{ hashFiles('dprint.json') }}
           path: ~/.cache/dprint
 
-      - uses: oxc-project/setup-rust@f78b3964e121f889426634f0eaeeb09fccecac08 # v1.0.6
+      - uses: oxc-project/setup-rust@1ff88fdaffd6ae35c0fb32ccc159340b37d0beac # v1.0.7
         with:
           restore-cache: true
           cache-key: warm
