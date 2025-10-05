@@ -248,7 +248,7 @@ fn generate_deserializers(
     }
 
     // `PRESERVE_PARENS = false` is only required for linter
-    create_deserializer(true, true, false, false);
+    create_deserializer(true, true, true, false);
 
     deserializers
 }

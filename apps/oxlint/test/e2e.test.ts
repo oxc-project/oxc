@@ -123,6 +123,10 @@ describe('oxlint CLI', () => {
     await testFixture('estree');
   });
 
+  it('should receive AST with all nodes having `parent` property', async () => {
+    await testFixture('parent');
+  });
+
   it('should receive data via `context`', async () => {
     await testFixture('context_properties');
   });
