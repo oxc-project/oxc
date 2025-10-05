@@ -5,23 +5,24 @@ let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
-let parent = null;
+let parent = null, getLoc;
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
-  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
+  return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
 }
 
-export function deserializeProgramOnly(buffer, sourceText, sourceByteLen) {
-  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
+export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
+  getLoc = getLocInput;
   let data = deserialize(uint32[536870902]);
   uint8 =
     uint32 =
@@ -41,6 +42,9 @@ function deserializeProgram(pos) {
       start: 0,
       end,
       range: [0, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent: null,
     };
   program.hashbang = deserializeOptionHashbang(pos + 48);
@@ -171,6 +175,9 @@ function deserializeIdentifierName(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -193,6 +200,9 @@ function deserializeIdentifierReference(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -215,6 +225,9 @@ function deserializeBindingIdentifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -237,6 +250,9 @@ function deserializeLabelIdentifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -253,6 +269,9 @@ function deserializeThisExpression(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -267,6 +286,9 @@ function deserializeArrayExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.elements = deserializeVecArrayExpressionElement(pos + 8);
@@ -385,6 +407,9 @@ function deserializeObjectExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.properties = deserializeVecObjectPropertyKind(pos + 8);
@@ -419,6 +444,9 @@ function deserializeObjectProperty(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.key = deserializePropertyKey(pos + 8);
@@ -549,6 +577,9 @@ function deserializeTemplateLiteral(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.quasis = deserializeVecTemplateElement(pos + 8);
@@ -569,6 +600,9 @@ function deserializeTaggedTemplateExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.tag = deserializeExpression(pos + 8);
@@ -592,6 +626,9 @@ function deserializeTemplateElement(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -616,6 +653,9 @@ function deserializeComputedMemberExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.object = deserializeExpression(pos + 8);
@@ -638,6 +678,9 @@ function deserializeStaticMemberExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.object = deserializeExpression(pos + 8);
@@ -660,6 +703,9 @@ function deserializePrivateFieldExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.object = deserializeExpression(pos + 8);
@@ -682,6 +728,9 @@ function deserializeCallExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.callee = deserializeExpression(pos + 8);
@@ -703,6 +752,9 @@ function deserializeNewExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.callee = deserializeExpression(pos + 8);
@@ -723,6 +775,9 @@ function deserializeMetaProperty(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.meta = deserializeIdentifierName(pos + 8);
@@ -741,6 +796,9 @@ function deserializeSpreadElement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeExpression(pos + 8);
@@ -855,6 +913,9 @@ function deserializeUpdateExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeSimpleAssignmentTarget(pos + 8);
@@ -874,6 +935,9 @@ function deserializeUnaryExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeExpression(pos + 8);
@@ -894,6 +958,9 @@ function deserializeBinaryExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializeExpression(pos + 8);
@@ -914,6 +981,9 @@ function deserializePrivateInExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializePrivateIdentifier(pos + 8);
@@ -935,6 +1005,9 @@ function deserializeLogicalExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializeExpression(pos + 8);
@@ -955,6 +1028,9 @@ function deserializeConditionalExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.test = deserializeExpression(pos + 8);
@@ -976,6 +1052,9 @@ function deserializeAssignmentExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializeAssignmentTarget(pos + 8);
@@ -1047,6 +1126,9 @@ function deserializeArrayAssignmentTarget(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     elements = deserializeVecOptionAssignmentTargetMaybeDefault(pos + 8),
@@ -1073,6 +1155,9 @@ function deserializeObjectAssignmentTarget(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     properties = deserializeVecAssignmentTargetProperty(pos + 8),
@@ -1100,6 +1185,9 @@ function deserializeAssignmentTargetRest(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -1154,6 +1242,9 @@ function deserializeAssignmentTargetWithDefault(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -1192,6 +1283,9 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     key = deserializeIdentifierReference(pos + 8),
@@ -1209,6 +1303,9 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
     left.parent = value;
@@ -1242,6 +1339,9 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.kind = 'init';
@@ -1264,6 +1364,9 @@ function deserializeSequenceExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expressions = deserializeVecExpression(pos + 8);
@@ -1278,6 +1381,9 @@ function deserializeSuper(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -1292,6 +1398,9 @@ function deserializeAwaitExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeExpression(pos + 8);
@@ -1309,6 +1418,9 @@ function deserializeChainExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeChainElement(pos + 8);
@@ -1421,6 +1533,9 @@ function deserializeDirective(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeStringLiteral(pos + 8);
@@ -1436,6 +1551,9 @@ function deserializeHashbang(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -1450,6 +1568,9 @@ function deserializeBlockStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.body = deserializeVecStatement(pos + 8);
@@ -1492,6 +1613,9 @@ function deserializeVariableDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.declarations = deserializeVecVariableDeclarator(pos + 8);
@@ -1528,6 +1652,9 @@ function deserializeVariableDeclarator(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.id = deserializeBindingPattern(pos + 8);
@@ -1543,6 +1670,9 @@ function deserializeEmptyStatement(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -1558,6 +1688,9 @@ function deserializeExpressionStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -1578,6 +1711,9 @@ function deserializeIfStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.test = deserializeExpression(pos + 8);
@@ -1598,6 +1734,9 @@ function deserializeDoWhileStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.body = deserializeStatement(pos + 8);
@@ -1617,6 +1756,9 @@ function deserializeWhileStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.test = deserializeExpression(pos + 8);
@@ -1638,6 +1780,9 @@ function deserializeForStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.init = deserializeOptionForStatementInit(pos + 8);
@@ -1755,6 +1900,9 @@ function deserializeForInStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializeForStatementLeft(pos + 8);
@@ -1806,6 +1954,9 @@ function deserializeForOfStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializeForStatementLeft(pos + 8);
@@ -1825,6 +1976,9 @@ function deserializeContinueStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.label = deserializeOptionLabelIdentifier(pos + 8);
@@ -1842,6 +1996,9 @@ function deserializeBreakStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.label = deserializeOptionLabelIdentifier(pos + 8);
@@ -1859,6 +2016,9 @@ function deserializeReturnStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeOptionExpression(pos + 8);
@@ -1877,6 +2037,9 @@ function deserializeWithStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.object = deserializeExpression(pos + 8);
@@ -1896,6 +2059,9 @@ function deserializeSwitchStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.discriminant = deserializeExpression(pos + 8);
@@ -1915,6 +2081,9 @@ function deserializeSwitchCase(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.test = deserializeOptionExpression(pos + 8);
@@ -1934,6 +2103,9 @@ function deserializeLabeledStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.label = deserializeLabelIdentifier(pos + 8);
@@ -1952,6 +2124,9 @@ function deserializeThrowStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeExpression(pos + 8);
@@ -1971,6 +2146,9 @@ function deserializeTryStatement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.block = deserializeBoxBlockStatement(pos + 8);
@@ -1991,6 +2169,9 @@ function deserializeCatchClause(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.param = deserializeOptionCatchParameter(pos + 8);
@@ -2010,6 +2191,9 @@ function deserializeDebuggerStatement(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -2055,6 +2239,9 @@ function deserializeAssignmentPattern(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -2079,6 +2266,9 @@ function deserializeObjectPattern(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     properties = deserializeVecBindingProperty(pos + 8),
@@ -2108,6 +2298,9 @@ function deserializeBindingProperty(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.kind = 'init';
@@ -2132,6 +2325,9 @@ function deserializeArrayPattern(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     elements = deserializeVecOptionBindingPattern(pos + 8),
@@ -2159,6 +2355,9 @@ function deserializeBindingRestElement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -2188,6 +2387,9 @@ function deserializeFunction(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     params = deserializeBoxFormalParameters(pos + 56);
@@ -2237,6 +2439,9 @@ function deserializeFormalParameters(pos) {
         start: start = deserializeU32(pos),
         end: end = deserializeU32(pos + 4),
         range: [start, end],
+        get loc() {
+          return getLoc(this);
+        },
         parent,
       };
     rest.argument = deserializeBindingPatternKind(pos + 8);
@@ -2272,6 +2477,9 @@ function deserializeFormalParameter(pos) {
         start: start = deserializeU32(pos),
         end: end = deserializeU32(pos + 4),
         range: [start, end],
+        get loc() {
+          return getLoc(this);
+        },
         parent,
       };
       param.decorators = deserializeVecDecorator(pos + 8);
@@ -2292,6 +2500,9 @@ function deserializeFunctionBody(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     body = deserializeVecDirective(pos + 8);
@@ -2319,6 +2530,9 @@ function deserializeArrowFunctionExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     body = deserializeBoxFunctionBody(pos + 32);
@@ -2347,6 +2561,9 @@ function deserializeYieldExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeOptionExpression(pos + 8);
@@ -2372,6 +2589,9 @@ function deserializeClass(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = deserializeVecDecorator(pos + 8);
@@ -2406,6 +2626,9 @@ function deserializeClassBody(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.body = deserializeVecClassElement(pos + 8);
@@ -2448,6 +2671,9 @@ function deserializeMethodDefinition(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = deserializeVecDecorator(pos + 8);
@@ -2489,6 +2715,9 @@ function deserializePropertyDefinition(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = deserializeVecDecorator(pos + 8);
@@ -2533,6 +2762,9 @@ function deserializePrivateIdentifier(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -2547,6 +2779,9 @@ function deserializeStaticBlock(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.body = deserializeVecStatement(pos + 8);
@@ -2586,6 +2821,9 @@ function deserializeAccessorProperty(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = deserializeVecDecorator(pos + 8);
@@ -2611,6 +2849,9 @@ function deserializeImportExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.source = deserializeExpression(pos + 8);
@@ -2633,6 +2874,9 @@ function deserializeImportDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     specifiers = deserializeOptionVecImportDeclarationSpecifier(pos + 8);
@@ -2681,6 +2925,9 @@ function deserializeImportSpecifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.imported = deserializeModuleExportName(pos + 8);
@@ -2699,6 +2946,9 @@ function deserializeImportDefaultSpecifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.local = deserializeBindingIdentifier(pos + 8);
@@ -2716,6 +2966,9 @@ function deserializeImportNamespaceSpecifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.local = deserializeBindingIdentifier(pos + 8);
@@ -2738,6 +2991,9 @@ function deserializeImportAttribute(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.key = deserializeImportAttributeKey(pos + 8);
@@ -2771,6 +3027,9 @@ function deserializeExportNamedDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     withClause = deserializeOptionBoxWithClause(pos + 96);
@@ -2793,6 +3052,9 @@ function deserializeExportDefaultDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.declaration = deserializeExportDefaultDeclarationKind(pos + 8);
@@ -2814,6 +3076,9 @@ function deserializeExportAllDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     withClause = deserializeOptionBoxWithClause(pos + 112);
@@ -2836,6 +3101,9 @@ function deserializeExportSpecifier(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.local = deserializeModuleExportName(pos + 8);
@@ -2967,6 +3235,9 @@ function deserializeV8IntrinsicExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.name = deserializeIdentifierName(pos + 8);
@@ -2987,6 +3258,9 @@ function deserializeBooleanLiteral(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.raw = start === 0 && end === 0 ? null : value + '';
@@ -3005,6 +3279,9 @@ function deserializeNullLiteral(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.value = null;
@@ -3022,6 +3299,9 @@ function deserializeNumericLiteral(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -3037,6 +3317,9 @@ function deserializeStringLiteral(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     value = deserializeStr(pos + 8);
@@ -3059,6 +3342,9 @@ function deserializeBigIntLiteral(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     bigint = deserializeStr(pos + 8);
@@ -3080,6 +3366,9 @@ function deserializeRegExpLiteral(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     regex = deserializeRegExp(pos + 8),
@@ -3126,6 +3415,9 @@ function deserializeJSXElement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     closingElement = deserializeOptionBoxJSXClosingElement(pos + 40),
@@ -3151,6 +3443,9 @@ function deserializeJSXOpeningElement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.name = deserializeJSXElementName(pos + 8);
@@ -3171,6 +3466,9 @@ function deserializeJSXClosingElement(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.name = deserializeJSXElementName(pos + 8);
@@ -3190,6 +3488,9 @@ function deserializeJSXFragment(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.openingFragment = deserializeJSXOpeningFragment(pos + 8);
@@ -3208,6 +3509,9 @@ function deserializeJSXOpeningFragment(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   parent = previousParent;
@@ -3221,6 +3525,9 @@ function deserializeJSXClosingFragment(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -3237,6 +3544,9 @@ function deserializeJSXElementName(pos) {
         start: ident.start,
         end: ident.end,
         range: ident.range,
+        get loc() {
+          return getLoc(this);
+        },
         parent,
       };
     case 2:
@@ -3251,6 +3561,9 @@ function deserializeJSXElementName(pos) {
         start: thisExpr.start,
         end: thisExpr.end,
         range: thisExpr.range,
+        get loc() {
+          return getLoc(this);
+        },
         parent,
       };
     default:
@@ -3269,6 +3582,9 @@ function deserializeJSXNamespacedName(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.namespace = deserializeJSXIdentifier(pos + 8);
@@ -3288,6 +3604,9 @@ function deserializeJSXMemberExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.object = deserializeJSXMemberExpressionObject(pos + 8);
@@ -3306,6 +3625,9 @@ function deserializeJSXMemberExpressionObject(pos) {
         start: ident.start,
         end: ident.end,
         range: ident.range,
+        get loc() {
+          return getLoc(this);
+        },
         parent,
       };
     case 1:
@@ -3318,6 +3640,9 @@ function deserializeJSXMemberExpressionObject(pos) {
         start: thisExpr.start,
         end: thisExpr.end,
         range: thisExpr.range,
+        get loc() {
+          return getLoc(this);
+        },
         parent,
       };
     default:
@@ -3335,6 +3660,9 @@ function deserializeJSXExpressionContainer(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeJSXExpression(pos + 8);
@@ -3444,6 +3772,9 @@ function deserializeJSXEmptyExpression(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -3470,6 +3801,9 @@ function deserializeJSXAttribute(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.name = deserializeJSXAttributeName(pos + 8);
@@ -3488,6 +3822,9 @@ function deserializeJSXSpreadAttribute(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeExpression(pos + 8);
@@ -3529,6 +3866,9 @@ function deserializeJSXIdentifier(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -3560,6 +3900,9 @@ function deserializeJSXSpreadChild(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -3576,6 +3919,9 @@ function deserializeJSXText(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -3593,6 +3939,9 @@ function deserializeTSThisParameter(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -3616,6 +3965,9 @@ function deserializeTSEnumDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.id = deserializeBindingIdentifier(pos + 8);
@@ -3634,6 +3986,9 @@ function deserializeTSEnumBody(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.members = deserializeVecTSEnumMember(pos + 8);
@@ -3653,6 +4008,9 @@ function deserializeTSEnumMember(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.id = deserializeTSEnumMemberName(pos + 8);
@@ -3687,6 +4045,9 @@ function deserializeTSTypeAnnotation(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeAnnotation = deserializeTSType(pos + 8);
@@ -3704,6 +4065,9 @@ function deserializeTSLiteralType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.literal = deserializeTSLiteral(pos + 8);
@@ -3824,6 +4188,9 @@ function deserializeTSConditionalType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.checkType = deserializeTSType(pos + 8);
@@ -3844,6 +4211,9 @@ function deserializeTSUnionType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.types = deserializeVecTSType(pos + 8);
@@ -3861,6 +4231,9 @@ function deserializeTSIntersectionType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.types = deserializeVecTSType(pos + 8);
@@ -3885,6 +4258,9 @@ function deserializeTSTypeOperator(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeAnnotation = deserializeTSType(pos + 8);
@@ -3915,6 +4291,9 @@ function deserializeTSArrayType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.elementType = deserializeTSType(pos + 8);
@@ -3933,6 +4312,9 @@ function deserializeTSIndexedAccessType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.objectType = deserializeTSType(pos + 8);
@@ -3951,6 +4333,9 @@ function deserializeTSTupleType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.elementTypes = deserializeVecTSTupleElement(pos + 8);
@@ -3970,6 +4355,9 @@ function deserializeTSNamedTupleMember(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.label = deserializeIdentifierName(pos + 8);
@@ -3988,6 +4376,9 @@ function deserializeTSOptionalType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeAnnotation = deserializeTSType(pos + 8);
@@ -4005,6 +4396,9 @@ function deserializeTSRestType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeAnnotation = deserializeTSType(pos + 8);
@@ -4104,6 +4498,9 @@ function deserializeTSAnyKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4115,6 +4512,9 @@ function deserializeTSStringKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4126,6 +4526,9 @@ function deserializeTSBooleanKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4137,6 +4540,9 @@ function deserializeTSNumberKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4148,6 +4554,9 @@ function deserializeTSNeverKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4159,6 +4568,9 @@ function deserializeTSIntrinsicKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4170,6 +4582,9 @@ function deserializeTSUnknownKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4181,6 +4596,9 @@ function deserializeTSNullKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4192,6 +4610,9 @@ function deserializeTSUndefinedKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4203,6 +4624,9 @@ function deserializeTSVoidKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4214,6 +4638,9 @@ function deserializeTSSymbolKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4225,6 +4652,9 @@ function deserializeTSThisType(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4236,6 +4666,9 @@ function deserializeTSObjectKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4247,6 +4680,9 @@ function deserializeTSBigIntKeyword(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -4262,6 +4698,9 @@ function deserializeTSTypeReference(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeName = deserializeTSTypeName(pos + 8);
@@ -4294,6 +4733,9 @@ function deserializeTSQualifiedName(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializeTSTypeName(pos + 8);
@@ -4312,6 +4754,9 @@ function deserializeTSTypeParameterInstantiation(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.params = deserializeVecTSType(pos + 8);
@@ -4334,6 +4779,9 @@ function deserializeTSTypeParameter(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.name = deserializeBindingIdentifier(pos + 8);
@@ -4353,6 +4801,9 @@ function deserializeTSTypeParameterDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.params = deserializeVecTSTypeParameter(pos + 8);
@@ -4373,6 +4824,9 @@ function deserializeTSTypeAliasDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.id = deserializeBindingIdentifier(pos + 8);
@@ -4406,6 +4860,9 @@ function deserializeTSClassImplements(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     expression = deserializeTSTypeName(pos + 8);
@@ -4423,6 +4880,9 @@ function deserializeTSClassImplements(pos) {
         start: start = expression.start,
         end: end = expression.end,
         range: [start, end],
+        get loc() {
+          return getLoc(this);
+        },
         parent,
       };
     right.parent = previous;
@@ -4441,6 +4901,9 @@ function deserializeTSClassImplements(pos) {
         start: start = object.start,
         end: end = object.end,
         range: [start, end],
+        get loc() {
+          return getLoc(this);
+        },
         parent: previous,
       };
       right.parent = previous;
@@ -4467,6 +4930,9 @@ function deserializeTSInterfaceDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.id = deserializeBindingIdentifier(pos + 8);
@@ -4487,6 +4953,9 @@ function deserializeTSInterfaceBody(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.body = deserializeVecTSSignature(pos + 8);
@@ -4510,6 +4979,9 @@ function deserializeTSPropertySignature(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.key = deserializePropertyKey(pos + 8);
@@ -4551,6 +5023,9 @@ function deserializeTSIndexSignature(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.parameters = deserializeVecTSIndexSignatureName(pos + 8);
@@ -4572,6 +5047,9 @@ function deserializeTSCallSignatureDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     params = deserializeBoxFormalParameters(pos + 24),
@@ -4616,6 +5094,9 @@ function deserializeTSMethodSignature(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     params = deserializeBoxFormalParameters(pos + 40),
@@ -4644,6 +5125,9 @@ function deserializeTSConstructSignatureDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 8);
@@ -4666,6 +5150,9 @@ function deserializeTSIndexSignatureName(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.decorators = [];
@@ -4686,6 +5173,9 @@ function deserializeTSInterfaceHeritage(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -4706,6 +5196,9 @@ function deserializeTSTypePredicate(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.parameterName = deserializeTSTypePredicateName(pos + 8);
@@ -4744,6 +5237,9 @@ function deserializeTSModuleDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
     node.id = deserializeTSModuleDeclarationName(pos + 8);
@@ -4758,6 +5254,9 @@ function deserializeTSModuleDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
     let id = deserializeTSModuleDeclarationName(pos + 8);
@@ -4779,6 +5278,9 @@ function deserializeTSModuleDeclaration(pos) {
               start: start = id.start,
               end: end = innerId.end,
               range: [start, end],
+              get loc() {
+                return getLoc(this);
+              },
               parent: node,
             };
       } else {
@@ -4800,6 +5302,9 @@ function deserializeTSModuleDeclaration(pos) {
           start,
           end: end = right.end,
           range: [start, end],
+          get loc() {
+            return getLoc(this);
+          },
           parent: innerId,
         };
       }
@@ -4859,6 +5364,9 @@ function deserializeTSModuleBlock(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     body = deserializeVecDirective(pos + 8);
@@ -4878,6 +5386,9 @@ function deserializeTSTypeLiteral(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.members = deserializeVecTSSignature(pos + 8);
@@ -4895,6 +5406,9 @@ function deserializeTSInferType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeParameter = deserializeBoxTSTypeParameter(pos + 8);
@@ -4913,6 +5427,9 @@ function deserializeTSTypeQuery(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.exprName = deserializeTSTypeQueryExprName(pos + 8);
@@ -4949,6 +5466,9 @@ function deserializeTSImportType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.argument = deserializeTSType(pos + 8);
@@ -4981,6 +5501,9 @@ function deserializeTSImportTypeQualifiedName(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.left = deserializeTSImportTypeQualifier(pos + 8);
@@ -5001,6 +5524,9 @@ function deserializeTSFunctionType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     params = deserializeBoxFormalParameters(pos + 24),
@@ -5026,6 +5552,9 @@ function deserializeTSConstructorType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 8);
@@ -5050,6 +5579,9 @@ function deserializeTSMappedType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     typeParameter = deserializeBoxTSTypeParameter(pos + 8),
@@ -5092,6 +5624,9 @@ function deserializeTSTemplateLiteralType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.quasis = deserializeVecTemplateElement(pos + 8);
@@ -5111,6 +5646,9 @@ function deserializeTSAsExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -5130,6 +5668,9 @@ function deserializeTSSatisfiesExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -5149,6 +5690,9 @@ function deserializeTSTypeAssertion(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeAnnotation = deserializeTSType(pos + 8);
@@ -5169,6 +5713,9 @@ function deserializeTSImportEqualsDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.id = deserializeBindingIdentifier(pos + 8);
@@ -5202,6 +5749,9 @@ function deserializeTSExternalModuleReference(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeStringLiteral(pos + 8);
@@ -5219,6 +5769,9 @@ function deserializeTSNonNullExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -5236,6 +5789,9 @@ function deserializeDecorator(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -5253,6 +5809,9 @@ function deserializeTSExportAssignment(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -5270,6 +5829,9 @@ function deserializeTSNamespaceExportDeclaration(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.id = deserializeIdentifierName(pos + 8);
@@ -5288,6 +5850,9 @@ function deserializeTSInstantiationExpression(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.expression = deserializeExpression(pos + 8);
@@ -5318,6 +5883,9 @@ function deserializeJSDocNullableType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeAnnotation = deserializeTSType(pos + 8);
@@ -5336,6 +5904,9 @@ function deserializeJSDocNonNullableType(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     };
   node.typeAnnotation = deserializeTSType(pos + 8);
@@ -5350,6 +5921,9 @@ function deserializeJSDocUnknownType(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
     parent,
   };
 }
@@ -5376,6 +5950,9 @@ function deserializeComment(pos) {
       start,
       end,
       range: [start, end],
+      get loc() {
+        return getLoc(this);
+      },
       parent,
     },
     endCut = type === 'Line' ? 0 : 2;
@@ -5391,6 +5968,9 @@ function deserializeNameSpan(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
   };
 }
 
@@ -5412,6 +5992,9 @@ function deserializeImportImportName(pos) {
         start: nameSpan.start,
         end: nameSpan.end,
         range: nameSpan.range,
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 1:
       return {
@@ -5420,6 +6003,9 @@ function deserializeImportImportName(pos) {
         start: null,
         end: null,
         range: [null, null],
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 2:
       var { start, end } = deserializeSpan(pos + 8);
@@ -5429,6 +6015,9 @@ function deserializeImportImportName(pos) {
         start,
         end,
         range: [start, end],
+        get loc() {
+          return getLoc(this);
+        },
       };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ImportImportName`);
@@ -5446,6 +6035,9 @@ function deserializeExportEntry(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
   };
 }
 
@@ -5459,6 +6051,9 @@ function deserializeExportImportName(pos) {
         start: nameSpan.start,
         end: nameSpan.end,
         range: nameSpan.range,
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 1:
       return {
@@ -5467,6 +6062,9 @@ function deserializeExportImportName(pos) {
         start: null,
         end: null,
         range: [null, null],
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 2:
       return {
@@ -5475,6 +6073,9 @@ function deserializeExportImportName(pos) {
         start: null,
         end: null,
         range: [null, null],
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 3:
       return {
@@ -5483,6 +6084,9 @@ function deserializeExportImportName(pos) {
         start: null,
         end: null,
         range: [null, null],
+        get loc() {
+          return getLoc(this);
+        },
       };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ExportImportName`);
@@ -5499,6 +6103,9 @@ function deserializeExportExportName(pos) {
         start: nameSpan.start,
         end: nameSpan.end,
         range: nameSpan.range,
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 1:
       var { start, end } = deserializeSpan(pos + 8);
@@ -5508,6 +6115,9 @@ function deserializeExportExportName(pos) {
         start,
         end,
         range: [start, end],
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 2:
       return {
@@ -5516,6 +6126,9 @@ function deserializeExportExportName(pos) {
         start: null,
         end: null,
         range: [null, null],
+        get loc() {
+          return getLoc(this);
+        },
       };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ExportExportName`);
@@ -5532,6 +6145,9 @@ function deserializeExportLocalName(pos) {
         start: nameSpan.start,
         end: nameSpan.end,
         range: nameSpan.range,
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 1:
       var nameSpan = deserializeNameSpan(pos + 8);
@@ -5541,6 +6157,9 @@ function deserializeExportLocalName(pos) {
         start: nameSpan.start,
         end: nameSpan.end,
         range: nameSpan.range,
+        get loc() {
+          return getLoc(this);
+        },
       };
     case 2:
       return {
@@ -5549,6 +6168,9 @@ function deserializeExportLocalName(pos) {
         start: null,
         end: null,
         range: [null, null],
+        get loc() {
+          return getLoc(this);
+        },
       };
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ExportLocalName`);
@@ -5562,6 +6184,9 @@ function deserializeDynamicImport(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
   };
 }
 
@@ -5757,6 +6382,9 @@ function deserializeErrorLabel(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
   };
 }
 
@@ -5778,6 +6406,9 @@ function deserializeStaticImport(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
   };
 }
 
@@ -5788,6 +6419,9 @@ function deserializeStaticExport(pos) {
     start,
     end,
     range: [start, end],
+    get loc() {
+      return getLoc(this);
+    },
   };
 }
 

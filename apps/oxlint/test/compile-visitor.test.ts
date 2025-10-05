@@ -20,7 +20,15 @@ import type { EnterExit, Node, VisitFn } from '../src-js/plugins/types.ts';
 const PROGRAM_TYPE_ID = NODE_TYPE_IDS_MAP.get('Program'),
   EMPTY_STMT_TYPE_ID = NODE_TYPE_IDS_MAP.get('EmptyStatement');
 
-const SPAN: Node = { start: 0, end: 0, range: [0, 0] };
+const SPAN: Node = {
+  start: 0,
+  end: 0,
+  range: [0, 0],
+  loc: {
+    start: { line: 0, column: 0 },
+    end: { line: 0, column: 0 },
+  },
+};
 
 describe('compile visitor', () => {
   beforeEach(initCompiledVisitor);

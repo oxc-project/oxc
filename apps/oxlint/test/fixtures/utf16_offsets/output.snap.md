@@ -14,6 +14,7 @@
   x utf16-plugin(no-debugger): debugger:
   | start/end: [0,9]
   | range: [0,9]
+  | loc: [{"start":{"line":1,"column":0},"end":{"line":1,"column":9}}]
    ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
@@ -23,6 +24,7 @@
   x utf16-plugin(no-debugger): program:
   | start/end: [0,47]
   | range: [0,47]
+  | loc: [{"start":{"line":1,"column":0},"end":{"line":8,"column":0}}]
    ,-[files/index.js:1:1]
  1 | ,-> debugger;
  2 | |   // £
@@ -45,6 +47,7 @@
   x utf16-plugin(no-debugger): debugger:
   | start/end: [15,24]
   | range: [15,24]
+  | loc: [{"start":{"line":3,"column":0},"end":{"line":3,"column":9}}]
    ,-[files/index.js:3:1]
  2 | // £
  3 | debugger;
@@ -64,6 +67,7 @@
   x utf16-plugin(no-debugger): debugger:
   | start/end: [35,44]
   | range: [35,44]
+  | loc: [{"start":{"line":6,"column":2},"end":{"line":6,"column":11}}]
    ,-[files/index.js:6:3]
  5 | {
  6 |   debugger;

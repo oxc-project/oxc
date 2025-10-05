@@ -25,20 +25,20 @@ export interface VisitorWithHooks extends Visitor {
 // Visit function for a specific AST node type.
 export type VisitFn = (node: Node) => void;
 
+// Range of source offsets.
+export type Range = [number, number];
+
 // Interface for any type which has `range` field
 export interface Ranged {
   range: Range;
 }
 
-// Internal interface for any type which has location properties.
-interface Spanned extends Ranged {
+// Interface for any type which has location properties.
+export interface Span extends Ranged {
   start: number;
   end: number;
-  loc?: Location;
+  loc: Location;
 }
-
-// Range of source offsets.
-export type Range = [number, number];
 
 // Source code location.
 export interface Location {
@@ -54,10 +54,10 @@ export interface LineColumn {
 }
 
 // AST node type.
-export interface Node extends Spanned {}
+export interface Node extends Span {}
 
 // AST token type.
-export interface Token extends Spanned {
+export interface Token extends Span {
   type: string;
   value: string;
 }
@@ -66,7 +66,7 @@ export interface Token extends Spanned {
 export type NodeOrToken = Node | Token;
 
 // Comment.
-export interface Comment extends Spanned {
+export interface Comment extends Span {
   type: 'Line' | 'Block';
   value: string;
 }

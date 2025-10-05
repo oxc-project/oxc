@@ -1,3 +1,5 @@
+import assert from 'node:assert';
+
 import type { Plugin } from '../../../dist/index.js';
 
 const plugin: Plugin = {
@@ -16,7 +18,8 @@ const plugin: Plugin = {
             context.report({
               message: 'program:\n' +
                 `start/end: [${program.start},${program.end}]\n` +
-                `range: [${program.range}]`,
+                `range: [${program.range}]\n` +
+                `loc: [${JSON.stringify(program.loc)}]`,
               node: program,
             });
             visits.push(program.type);
@@ -32,10 +35,16 @@ const plugin: Plugin = {
             visits.push(`${decl.type}: (init: ${decl.init.type})`);
           },
           Identifier(ident) {
+            // Check `loc` property returns same object each time it's accessed
+            const { loc } = ident;
+            const loc2 = ident.loc;
+            assert(loc2 === loc);
+
             context.report({
               message: `ident "${ident.name}":\n` +
                 `start/end: [${ident.start},${ident.end}]\n` +
-                `range: [${ident.range}]`,
+                `range: [${ident.range}]\n` +
+                `loc: [${JSON.stringify(loc)}]`,
               node: ident,
             });
             visits.push(`${ident.type}: ${ident.name}`);

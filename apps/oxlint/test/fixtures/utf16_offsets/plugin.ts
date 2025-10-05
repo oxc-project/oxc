@@ -12,7 +12,8 @@ const plugin: Plugin = {
             context.report({
               message: 'program:\n' +
                 `start/end: [${program.start},${program.end}]\n` +
-                `range: [${program.range}]`,
+                `range: [${program.range}]\n` +
+                `loc: [${JSON.stringify(program.loc)}]`,
               node: program,
             });
           },
@@ -20,7 +21,8 @@ const plugin: Plugin = {
             context.report({
               message: 'debugger:\n' +
                 `start/end: [${debuggerStatement.start},${debuggerStatement.end}]\n` +
-                `range: [${debuggerStatement.range}]`,
+                `range: [${debuggerStatement.range}]\n` +
+                `loc: [${JSON.stringify(debuggerStatement.loc)}]`,
               node: debuggerStatement,
             });
           },

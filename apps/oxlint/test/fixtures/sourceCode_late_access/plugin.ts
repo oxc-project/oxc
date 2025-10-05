@@ -4,7 +4,15 @@ import type { ESTree, Node, Plugin, Rule } from '../../../dist/index.js';
 
 type Program = ESTree.Program;
 
-const SPAN: Node = { start: 0, end: 0, range: [0, 0] };
+const SPAN: Node = {
+  start: 0,
+  end: 0,
+  range: [0, 0],
+  loc: {
+    start: { line: 0, column: 0 },
+    end: { line: 0, column: 0 },
+  },
+};
 
 // Purpose of this test fixture is to ensure that AST is not deserialized twice
 // if `context.sourceCode.ast` is accessed during AST traversal.

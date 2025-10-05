@@ -3,7 +3,6 @@ import { definePlugin, defineRule } from '../../../dist/index.js';
 
 import type { Node } from '../../../dist/index.js';
 
-// `loc` is required for ESLint
 const SPAN: Node = {
   start: 0,
   end: 0,

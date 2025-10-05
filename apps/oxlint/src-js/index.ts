@@ -27,6 +27,7 @@ export type {
   Range,
   Ranged,
   RuleMeta,
+  Span,
   Token,
   Visitor,
   VisitorWithHooks,

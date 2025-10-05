@@ -8,14 +8,14 @@ const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
 let parent = null;
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
-  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
+  return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
 }
 
-export function deserializeProgramOnly(buffer, sourceText, sourceByteLen) {
-  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
+export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc) {
+  return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;

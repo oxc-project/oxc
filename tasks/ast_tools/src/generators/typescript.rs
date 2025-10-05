@@ -3,6 +3,7 @@
 use std::borrow::Cow;
 
 use itertools::Itertools;
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 
 use crate::{
     Codegen, Generator, OXLINT_APP_PATH, TYPESCRIPT_DEFINITIONS_PATH,
@@ -26,10 +27,7 @@ impl Generator for TypescriptGenerator {
     /// Generate Typescript type definitions for all AST types.
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let code = generate_ts_type_defs(schema, codegen);
-
-        // In Oxlint AST, `range` field is not optional
-        #[expect(clippy::disallowed_methods)]
-        let oxlint_code = code.replace("range?: [number, number];", "range: [number, number];");
+        let oxlint_code = amend_oxlint_types(&code);
 
         vec![
             Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code },
@@ -452,4 +450,30 @@ fn get_single_field<'s>(struct_def: &'s StructDef, schema: &Schema) -> Option<&'
     } else {
         None
     }
+}
+
+/// Amend version of types for Oxlint.
+///
+/// Remove `export interface Span`, and instead import local version of same interface,
+/// which includes non-optional `range` and `loc` fields.
+fn amend_oxlint_types(code: &str) -> String {
+    static SPAN_REGEX: Lazy<Regex> = lazy_regex!(r"export interface Span \{.+?\}");
+
+    struct SpanReplacer;
+    impl Replacer for SpanReplacer {
+        fn replace_append(&mut self, _caps: &Captures, _dst: &mut String) {
+            // Remove it
+        }
+    }
+
+    let mut code = SPAN_REGEX.replace(code, SpanReplacer).into_owned();
+
+    #[rustfmt::skip]
+    code.insert_str(0, "
+        import { Span } from '../plugins/types.ts';
+        export { Span };
+
+    ");
+
+    code
 }

@@ -1,6 +1,9 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
+import { Span } from '../plugins/types.ts';
+export { Span };
+
 export interface Program extends Span {
   type: 'Program';
   body: Array<Directive | Statement>;
@@ -1700,12 +1703,6 @@ export type LogicalOperator = '||' | '&&' | '??';
 export type UnaryOperator = '+' | '-' | '!' | '~' | 'typeof' | 'void' | 'delete';
 
 export type UpdateOperator = '++' | '--';
-
-export interface Span {
-  start: number;
-  end: number;
-  range: [number, number];
-}
 
 export type ModuleKind = 'script' | 'module';
 

@@ -6,9 +6,18 @@ import {
   // @ts-expect-error
 } from '../generated/constants.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module
-// We use the deserializer which removes `ParenthesizedExpression`s from AST to match ESLint
-import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts_range_parent_no_parens.js';
-import { getLineColumnFromOffset, getOffsetFromLineColumn, initLines, lines, resetLines } from './location.js';
+// We use the deserializer which removes `ParenthesizedExpression`s from AST,
+// and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
+import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts_range_loc_parent_no_parens.js';
+
+import {
+  getLineColumnFromOffset,
+  getNodeLoc,
+  getOffsetFromLineColumn,
+  initLines,
+  lines,
+  resetLines,
+} from './location.js';
 
 import type { Program } from '../generated/types.d.ts';
 import type { Scope, ScopeManager, Variable } from './scope.ts';
@@ -61,7 +70,7 @@ export function initSourceText(): void {
  */
 export function initAst(): void {
   if (sourceText === null) initSourceText();
-  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen);
+  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
 }
 
 /**

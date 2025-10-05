@@ -1,6 +1,8 @@
 import { initSourceText, sourceText } from './source_code.js';
 
-import type { LineColumn } from './types.ts';
+import type { LineColumn, Location, Node } from './types.ts';
+
+const { defineProperty } = Object;
 
 // Pattern for splitting source text into lines
 const LINE_BREAK_PATTERN = /\r\n|[\r\n\u2028\u2029]/gu;
@@ -69,6 +71,18 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
     );
   }
 
+  return getLineColumnFromOffsetUnchecked(offset);
+}
+
+/**
+ * Convert a source text index into a (line, column) pair without:
+ * 1. Checking type of `offset`, or that it's in range.
+ * 2. Initializing `lineStartOffsets`. Caller must do that before calling this method.
+ *
+ * @param offset - The index of a character in a file.
+ * @returns `{line, column}` location object with 1-indexed line and 0-indexed column.
+ */
+function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
   // Binary search `lineStartOffsets` for the line containing `offset`
   let low = 0, high = lineStartOffsets.length, mid: number;
   do {
@@ -137,4 +151,31 @@ export function getOffsetFromLineColumn(loc: LineColumn): number {
   }
 
   throw new TypeError('Expected `loc` to be an object with integer `line` and `column` properties.');
+}
+
+/**
+ * Get the `Location` for an AST node. Used in `loc` getters on AST nodes.
+ *
+ * Overwrites the `loc` getter with the calculated `Location`, so accessing `loc` twice on same node
+ * results in the same object each time.
+ *
+ * For internal use only.
+ *
+ * @param node - AST node object
+ * @returns Location
+ */
+export function getNodeLoc(node: Node): Location {
+  // Build `lines` and `lineStartOffsets` tables if they haven't been already.
+  // This also decodes `sourceText` if it wasn't already.
+  if (lines.length === 0) initLines();
+
+  const loc = {
+    start: getLineColumnFromOffsetUnchecked(node.start),
+    end: getLineColumnFromOffsetUnchecked(node.end),
+  };
+
+  // Replace `loc` getter with the calculated value
+  defineProperty(node, 'loc', { value: loc, writable: true });
+
+  return loc;
 }

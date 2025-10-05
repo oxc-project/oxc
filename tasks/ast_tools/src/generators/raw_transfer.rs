@@ -10,8 +10,12 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast::{
-    AstBuilder,
-    ast::{BindingPatternKind, Expression, Program, Statement, UnaryOperator},
+    AstBuilder, NONE,
+    ast::{
+        Argument, BindingPatternKind, Expression, FormalParameterKind, FunctionType,
+        LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKind, Statement,
+        UnaryOperator,
+    },
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::Codegen as Printer;
@@ -20,7 +24,7 @@ use oxc_minifier::{
     TreeShakeOptions,
 };
 use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc_span::{SPAN, SourceType};
 
 use crate::{
     ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
@@ -143,6 +147,7 @@ fn generate_deserializers(
 
         const IS_TS = false;
         const RANGE = false;
+        const LOC = false;
         const PARENT = false;
         const PRESERVE_PARENS = false;
 
@@ -151,16 +156,17 @@ fn generate_deserializers(
             {{ fromCodePoint }} = String;
 
         let parent = null;
+        let getLoc;
 
         export function deserialize(buffer, sourceText, sourceByteLen) {{
-            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
+            return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
         }}
 
-        export function deserializeProgramOnly(buffer, sourceText, sourceByteLen) {{
-            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
+        export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc) {{
+            return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
         }}
 
-        function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, deserialize) {{
+        function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
@@ -168,6 +174,8 @@ fn generate_deserializers(
             sourceText = sourceTextInput;
             sourceByteLen = sourceByteLenInput;
             sourceIsAscii = sourceText.length === sourceByteLen;
+
+            if (LOC) getLoc = getLocInput;
 
             const data = deserialize(uint32[{data_pointer_pos_32}]);
 
@@ -218,18 +226,28 @@ fn generate_deserializers(
     // and running through minifier to shake out irrelevant code
     let mut print_allocator = Allocator::new();
     let mut deserializers = vec![];
-    let mut create_deserializer = |is_ts, range, parent, preserve_parens| {
+    let mut create_deserializer = |is_ts, range, loc, parent, preserve_parens| {
         let mut program = program.clone_in(&print_allocator);
         replace_const(&mut program, "IS_TS", is_ts);
         replace_const(&mut program, "RANGE", range);
+        replace_const(&mut program, "LOC", loc);
         replace_const(&mut program, "PARENT", parent);
         replace_const(&mut program, "PRESERVE_PARENS", preserve_parens);
+
+        if loc {
+            assert!(range, "`loc` requires `range`");
+            LocFieldAdder::new(&allocator).visit_program(&mut program);
+        }
+
         let code = print_minified(&mut program, &print_allocator);
         print_allocator.reset();
 
         let mut name = if is_ts { "ts" } else { "js" }.to_string();
         if range {
             name.push_str("_range");
+        }
+        if loc {
+            name.push_str("_loc");
         }
         if parent {
             name.push_str("_parent");
@@ -244,13 +262,13 @@ fn generate_deserializers(
     for is_ts in [false, true] {
         for range in [false, true] {
             for parent in [false, true] {
-                create_deserializer(is_ts, range, parent, true);
+                create_deserializer(is_ts, range, false, parent, true);
             }
         }
     }
 
     // `PRESERVE_PARENS = false` is only required for linter
-    create_deserializer(true, true, true, false);
+    create_deserializer(true, true, true, true, false);
 
     deserializers
 }
@@ -1350,5 +1368,82 @@ impl<'a> VisitMut<'a> for BooleanUnminifier<'a> {
             return;
         }
         walk_mut::walk_expression(self, expr);
+    }
+}
+
+/// Visitor to add `loc` field after `range` in all deserialize functions.
+///
+/// Works on AST pre-minification.
+struct LocFieldAdder<'a> {
+    ast: AstBuilder<'a>,
+}
+
+impl<'a> LocFieldAdder<'a> {
+    fn new(allocator: &'a Allocator) -> Self {
+        Self { ast: AstBuilder::new(allocator) }
+    }
+}
+
+impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
+    fn visit_object_expression(&mut self, obj_expr: &mut ObjectExpression<'a>) {
+        // Locate `range` field
+        let index = obj_expr.properties.iter().position(|prop| {
+            if let ObjectPropertyKind::SpreadProperty(spread) = prop
+                && let Expression::ParenthesizedExpression(paren_expr) = &spread.argument
+                && let Expression::LogicalExpression(logical_expr) = &paren_expr.expression
+                && logical_expr.operator == LogicalOperator::And
+                && let Expression::Identifier(ident) = &logical_expr.left
+                && ident.name == "RANGE"
+            {
+                true
+            } else {
+                false
+            }
+        });
+        let Some(index) = index else { return };
+
+        // Insert `get loc() { return getLoc(this) }` after `range` field
+        let ast = self.ast;
+        let prop = ast.object_property_kind_object_property(
+            SPAN,
+            PropertyKind::Get,
+            ast.property_key_static_identifier(SPAN, "loc"),
+            ast.expression_function(
+                SPAN,
+                FunctionType::FunctionExpression,
+                None,
+                false,
+                false,
+                false,
+                NONE,
+                NONE,
+                ast.formal_parameters(
+                    SPAN,
+                    FormalParameterKind::UniqueFormalParameters,
+                    ast.vec(),
+                    NONE,
+                ),
+                NONE,
+                Some(ast.function_body(
+                    SPAN,
+                    ast.vec(),
+                    ast.vec1(ast.statement_return(
+                        SPAN,
+                        Some(ast.expression_call(
+                            SPAN,
+                            ast.expression_identifier(SPAN, "getLoc"),
+                            NONE,
+                            ast.vec1(Argument::from(ast.expression_this(SPAN))),
+                            false,
+                        )),
+                    )),
+                )),
+            ),
+            false,
+            false,
+            false,
+        );
+
+        obj_expr.properties.insert(index + 1, prop);
     }
 }
