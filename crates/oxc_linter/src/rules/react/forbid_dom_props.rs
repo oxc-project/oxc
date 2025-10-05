@@ -365,7 +365,7 @@ fn test() {
                       <div className="foo">
                         <input className="boo" />
                         <span className="foobar">Foobar</span>
-                        <div otherProp="bar" />
+                        <div otherProp="bar" className="forbiddenClassname" />
                       </div>
                     );
                   "#,
