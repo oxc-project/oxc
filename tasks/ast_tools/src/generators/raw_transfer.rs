@@ -74,33 +74,19 @@ impl Generator for RawTransferGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
         let consts = get_constants(schema);
 
-        let Codes { js, ts, js_range, ts_range, ts_range_no_parens } =
-            generate_deserializers(consts, schema, codegen);
+        let deserializers = generate_deserializers(consts, schema, codegen);
+
         let (constants_js, constants_rust) = generate_constants(consts);
 
-        vec![
-            Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js.js"),
-                code: js,
-            },
-            Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts.js"),
-                code: ts,
-            },
-            Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/js_range.js"),
-                code: js_range,
-            },
-            Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts_range.js"),
-                code: ts_range,
-            },
-            Output::Javascript {
-                path: format!(
-                    "{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/ts_range_no_parens.js"
-                ),
-                code: ts_range_no_parens,
-            },
+        let mut outputs = deserializers
+            .into_iter()
+            .map(|(name, code)| Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/{name}.js"),
+                code,
+            })
+            .collect::<Vec<_>>();
+
+        outputs.extend([
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/constants.js"),
                 code: constants_js.clone(),
@@ -121,35 +107,29 @@ impl Generator for RawTransferGenerator {
                 path: format!("{ALLOCATOR_CRATE_PATH}/src/generated/fixed_size_constants.rs"),
                 tokens: constants_rust,
             },
-        ]
-    }
-}
+        ]);
 
-/// Container for generated code.
-struct Codes {
-    /// Code for JS deserializer
-    js: String,
-    /// Code for TS deserializer
-    ts: String,
-    /// Code for JS deserializer with `range` fields
-    js_range: String,
-    /// Code for TS deserializer with `range` fields
-    ts_range: String,
-    /// Code for TS deserializer with `range` fields and no `ParenthesizedExpression` nodes (for linter)
-    ts_range_no_parens: String,
+        outputs
+    }
 }
 
 /// Generate deserializer functions for all types.
 ///
 /// Generates a single file which is the base of both the JS and TS deserializers.
-/// Code which is specific to JS or TS deserializer is gated by the `IS_TS` const.
+/// Code which is specific to JS or TS deserializer is gated by the `IS_TS` const,
+/// code which adds `range` fields is gated by `RANGE` const.
 /// e.g.:
 /// * `if (IS_TS) node.typeAnnotation = null;`
 /// * `return { type: 'Function', id, params, ...(IS_TS && { typeAnnotation: null }) };`
+/// * `return { type: 'ThisExpression', start, end, ...(RANGE && { range: [start, end] }) };`
 ///
 /// When printing the JS and TS deserializers, the value of `IS_TS` is set to `true` or `false`,
 /// and minifier then shakes out the dead code for each.
-fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen) -> Codes {
+fn generate_deserializers(
+    consts: Constants,
+    schema: &Schema,
+    codegen: &Codegen,
+) -> Vec<(/* name */ String, /* code */ String)> {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let span_type_id = schema.type_names["Span"];
 
@@ -163,7 +143,7 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
 
         const IS_TS = false;
         const RANGE = false;
-        const PRESERVE_PARENS = true;
+        const PRESERVE_PARENS = false;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -229,31 +209,39 @@ fn generate_deserializers(consts: Constants, schema: &Schema, codegen: &Codegen)
     let source_type = SourceType::mjs();
     let parser_ret = Parser::new(&allocator, &code, source_type).parse();
     assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
-    let mut program_js = parser_ret.program;
+    let program = parser_ret.program;
 
-    // Create clone of AST for TS deserializer with `const IS_TS = true;`
-    let mut program_ts = program_js.clone_in(&allocator);
-    replace_const(&mut program_ts, "IS_TS", true);
+    // Create deserializers with various settings, by setting `IS_TS`, `RANGE` and `PRESERVE_PARENS` consts,
+    // and running through minifier to shake out irrelevant code
+    let mut deserializers = vec![];
+    let mut create_deserializer = |is_ts, range, preserve_parens| {
+        let mut program = program.clone_in(&allocator);
+        replace_const(&mut program, "IS_TS", is_ts);
+        replace_const(&mut program, "RANGE", range);
+        replace_const(&mut program, "PRESERVE_PARENS", preserve_parens);
+        let code = print_minified(&mut program, &allocator);
 
-    // Create clones of AST for with-`range` field deserializer with `const RANGE = true;`
-    let mut program_js_range = program_js.clone_in(&allocator);
-    replace_const(&mut program_js_range, "RANGE", true);
-    let mut program_ts_range = program_ts.clone_in(&allocator);
-    replace_const(&mut program_ts_range, "RANGE", true);
+        let mut name = if is_ts { "ts" } else { "js" }.to_string();
+        if range {
+            name.push_str("_range");
+        }
+        if !preserve_parens {
+            name.push_str("_no_parens");
+        }
 
-    // Create clone of AST for with-`range` field and no-parentheses deserializer
-    // with `const RANGE = true; const PRESERVE_PARENS = false;`
-    let mut program_ts_range_no_parens = program_ts_range.clone_in(&allocator);
-    replace_const(&mut program_ts_range_no_parens, "PRESERVE_PARENS", false);
+        deserializers.push((name, code));
+    };
 
-    // Print both deserializers, using minifier to shake out JS/TS-specific code from each
-    Codes {
-        js: print_minified(&mut program_js, &allocator),
-        ts: print_minified(&mut program_ts, &allocator),
-        js_range: print_minified(&mut program_js_range, &allocator),
-        ts_range: print_minified(&mut program_ts_range, &allocator),
-        ts_range_no_parens: print_minified(&mut program_ts_range_no_parens, &allocator),
+    for is_ts in [false, true] {
+        for range in [false, true] {
+            create_deserializer(is_ts, range, true);
+        }
     }
+
+    // `PRESERVE_PARENS = false` is only required for linter
+    create_deserializer(true, true, false);
+
+    deserializers
 }
 
 /// Type of deserializer in which some code appears.
