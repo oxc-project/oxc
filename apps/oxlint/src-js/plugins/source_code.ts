@@ -10,7 +10,7 @@ import {
 import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts_range_parent_no_parens.js';
 import { getLineColumnFromOffset, getOffsetFromLineColumn, initLines, lines, resetLines } from './location.js';
 
-import type { Program } from '@oxc-project/types';
+import type { Program } from '../generated/types.d.ts';
 import type { Scope, ScopeManager, Variable } from './scope.ts';
 import type { BufferWithArrays, Comment, Node, NodeOrToken, Token } from './types.ts';
 

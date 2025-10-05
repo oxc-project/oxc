@@ -35,7 +35,6 @@ const parserFilePaths = [
   'generated/deserialize/ts_range_parent_no_parens.js',
   'generated/visit/keys.js',
   'generated/visit/types.js',
-  'generated/visit/visitor.d.ts',
   'generated/visit/walk.js',
 ];
 

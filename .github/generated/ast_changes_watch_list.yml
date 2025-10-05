@@ -4,6 +4,8 @@
 src:
   - '.github/generated/ast_changes_watch_list.yml'
   - 'apps/oxlint/src-js/generated/constants.js'
+  - 'apps/oxlint/src-js/generated/types.d.ts'
+  - 'apps/oxlint/src-js/generated/visitor.d.ts'
   - 'apps/oxlint/src/generated/raw_transfer_constants.rs'
   - 'crates/oxc_allocator/src/generated/assert_layouts.rs'
   - 'crates/oxc_allocator/src/generated/fixed_size_constants.rs'

@@ -5,7 +5,7 @@ use std::borrow::Cow;
 use itertools::Itertools;
 
 use crate::{
-    Codegen, Generator, TYPESCRIPT_DEFINITIONS_PATH,
+    Codegen, Generator, OXLINT_APP_PATH, TYPESCRIPT_DEFINITIONS_PATH,
     derives::estree::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
         should_skip_enum_variant, should_skip_field,
@@ -24,32 +24,42 @@ define_generator!(TypescriptGenerator);
 
 impl Generator for TypescriptGenerator {
     /// Generate Typescript type definitions for all AST types.
-    fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
-        let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
-        let program_type_id = schema.type_names["Program"];
+    fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
+        let code = generate_ts_type_defs(schema, codegen);
 
-        let mut code = String::new();
-        let mut ast_node_names: Vec<String> = vec![];
-        for type_def in &schema.types {
-            if type_def.generates_derive(estree_derive_id) {
-                generate_ts_type_def(
-                    type_def,
-                    &mut code,
-                    &mut ast_node_names,
-                    program_type_id,
-                    schema,
-                );
-            }
-        }
-
-        // Manually append `ParamPattern`, which is generated via `add_ts_def`.
-        // `ParamPattern` is a union type of other `add_ts_def`ed types.
-        // TODO: Should not be hard-coded here.
-        let ast_node_union = ast_node_names.join(" | ");
-        write_it!(code, "export type Node = {ast_node_union} | ParamPattern;\n\n");
-
-        Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code }
+        vec![
+            Output::Javascript {
+                path: TYPESCRIPT_DEFINITIONS_PATH.to_string(),
+                code: code.clone(),
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/types.d.ts"),
+                code,
+            },
+        ]
     }
+}
+
+/// Generate Typescript type definitions for all types.
+fn generate_ts_type_defs(schema: &Schema, codegen: &Codegen) -> String {
+    let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
+    let program_type_id = schema.type_names["Program"];
+
+    let mut code = String::new();
+    let mut ast_node_names: Vec<String> = vec![];
+    for type_def in &schema.types {
+        if type_def.generates_derive(estree_derive_id) {
+            generate_ts_type_def(type_def, &mut code, &mut ast_node_names, program_type_id, schema);
+        }
+    }
+
+    // Manually append `ParamPattern`, which is generated via `add_ts_def`.
+    // `ParamPattern` is a union type of other `add_ts_def`ed types.
+    // TODO: Should not be hard-coded here.
+    let ast_node_union = ast_node_names.join(" | ");
+    write_it!(code, "export type Node = {ast_node_union} | ParamPattern;\n\n");
+
+    code
 }
 
 /// Generate Typescript type definition for a struct or enum.

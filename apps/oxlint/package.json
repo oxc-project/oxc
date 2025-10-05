@@ -35,9 +35,6 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "@oxc-project/types": "workspace:^"
-  },
   "devDependencies": {
     "eslint": "^9.36.0",
     "execa": "^9.6.0",

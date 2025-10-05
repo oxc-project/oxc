@@ -12,7 +12,7 @@ use serde::Deserialize;
 use oxc_index::{IndexVec, define_index_type};
 
 use crate::{
-    Codegen, Generator, NAPI_PARSER_PACKAGE_PATH,
+    Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
     output::Output,
     schema::Schema,
     utils::{string, write_it},
@@ -36,7 +36,17 @@ define_generator!(ESTreeVisitGenerator);
 
 impl Generator for ESTreeVisitGenerator {
     fn generate_many(&self, _schema: &Schema, codegen: &Codegen) -> Vec<Output> {
-        let Codes { walk, visitor_keys, type_ids_map, visitor_type } = generate(codegen);
+        let Codes { walk, visitor_keys, type_ids_map, mut visitor_type } = generate(codegen);
+
+        // Versions of `visitor_type` for parser and Oxlint import ESTree types from different places
+        #[rustfmt::skip]
+        let oxlint_visitor_type = format!("
+            import * as ESTree from './types.d.ts';
+
+            {visitor_type}
+        ");
+
+        visitor_type.insert_str(0, "import * as ESTree from '@oxc-project/types';\n\n");
 
         vec![
             Output::Javascript {
@@ -54,6 +64,10 @@ impl Generator for ESTreeVisitGenerator {
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
                 code: visitor_type,
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/visitor.d.ts"),
+                code: oxlint_visitor_type,
             },
         ]
     }
@@ -181,12 +195,7 @@ fn generate(codegen: &Codegen) -> Codes {
             // Leaf nodes
     ");
 
-    #[rustfmt::skip]
-    let mut visitor_type = string!("
-        import * as ESTree from '@oxc-project/types';
-
-        export interface VisitorObject {
-    ");
+    let mut visitor_type = string!("export interface VisitorObject {\n");
 
     let mut leaf_nodes_count = None;
     for (node_id, node) in nodes.iter_enumerated() {

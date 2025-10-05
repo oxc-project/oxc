@@ -1,4 +1,4 @@
-import type * as ESTree from '@oxc-project/types';
+import type * as ESTree from '../generated/types.d.ts';
 
 import type { Node } from './types.ts';
 

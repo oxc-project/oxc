@@ -1,7 +1,8 @@
 import assert from 'node:assert';
 
-import type { Program } from '@oxc-project/types';
-import type { Node, Plugin, Rule } from '../../../dist/index.js';
+import type { ESTree, Node, Plugin, Rule } from '../../../dist/index.js';
+
+type Program = ESTree.Program;
 
 const SPAN: Node = { start: 0, end: 0, range: [0, 0] };
 
