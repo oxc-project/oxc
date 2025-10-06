@@ -52,9 +52,9 @@ class Outer {
 	#e = 1;
 	inner() {
 		return class e {
-			#e = 2;
+			#t = 2;
 			get() {
-				return this.#e;
+				return this.#t;
 			}
 		};
 	}
@@ -78,9 +78,9 @@ class Outer {
 	#e = 1;
 	getInner() {
 		return class {
-			#e = 2;
+			#t = 2;
 			method() {
-				return this.#e;
+				return this.#t;
 			}
 		};
 	}
@@ -120,5 +120,17 @@ class B {
 	#e = 2;
 	#t() {
 		return this.#e;
+	}
+}
+
+class Outer { #shared = 1; #getInner() { return class { #method() { return this.#shared; } }; } }
+class Outer {
+	#e = 1;
+	#t() {
+		return class {
+			#n() {
+				return this.#e;
+			}
+		};
 	}
 }

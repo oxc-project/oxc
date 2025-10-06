@@ -564,11 +564,40 @@ impl<'t> Mangler<'t> {
         semantic: &Semantic<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
-        classes
+
+        let private_member_count: IndexVec<ClassId, usize> = classes
             .elements
             .iter()
             .map(|class_elements| {
-                assert!(u32::try_from(class_elements.len()).is_ok(), "too many class elements");
+                class_elements
+                    .iter()
+                    .filter_map(|element| {
+                        if element.is_private { Some(element.name.to_string()) } else { None }
+                    })
+                    .count()
+            })
+            .collect();
+        let parent_private_member_count: IndexVec<ClassId, usize> = classes
+            .declarations
+            .iter_enumerated()
+            .map(|(class_id, _)| {
+                classes
+                    .ancestors(class_id)
+                    .skip(1)
+                    .map(|id| private_member_count[id])
+                    .sum::<usize>()
+            })
+            .collect();
+
+        classes
+            .elements
+            .iter_enumerated()
+            .map(|(class_id, class_elements)| {
+                let parent_private_member_count = parent_private_member_count[class_id];
+                assert!(
+                    u32::try_from(class_elements.len() + parent_private_member_count).is_ok(),
+                    "too many class elements"
+                );
                 class_elements
                     .iter()
                     .filter_map(|element| {
@@ -580,7 +609,13 @@ impl<'t> Mangler<'t> {
                             clippy::cast_possible_truncation,
                             reason = "checked above with assert"
                         )]
-                        let mangled = CompactStr::new(base54(i as u32).as_str());
+                        let mangled = CompactStr::new(
+                            // Avoid reusing the same mangled name in parent classes.
+                            // We can improve this by reusing names that are not used in child classes,
+                            // but nesting a class inside another class is not common
+                            // and that would require liveness analysis.
+                            base54((parent_private_member_count + i) as u32).as_str(),
+                        );
                         (name, mangled)
                     })
                     .collect::<FxHashMap<_, _>>()
