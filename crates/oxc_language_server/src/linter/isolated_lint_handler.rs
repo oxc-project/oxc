@@ -9,8 +9,8 @@ use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
-    ConfigStore, LINTABLE_EXTENSIONS, LintOptions, LintService, LintServiceOptions, Linter,
-    MessageWithPosition, read_to_arena_str,
+    AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, LINTABLE_EXTENSIONS,
+    LintOptions, LintService, LintServiceOptions, Linter, MessageWithPosition, read_to_arena_str,
 };
 use oxc_linter::{RuntimeFileSystem, read_to_string};
 
@@ -28,15 +28,17 @@ pub struct IsolatedLintHandlerOptions {
 
 pub struct IsolatedLintHandler {
     service: LintService,
+    directives_coordinator: DirectivesStore,
+    unused_directives_severity: Option<AllowWarnDeny>,
 }
 
 pub struct IsolatedLintHandlerFileSystem {
     path_to_lint: PathBuf,
-    source_text: String,
+    source_text: Arc<str>,
 }
 
 impl IsolatedLintHandlerFileSystem {
-    pub fn new(path_to_lint: PathBuf, source_text: String) -> Self {
+    pub fn new(path_to_lint: PathBuf, source_text: Arc<str>) -> Self {
         Self { path_to_lint, source_text }
     }
 }
@@ -65,6 +67,8 @@ impl IsolatedLintHandler {
         config_store: ConfigStore,
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
+        let directives_coordinator = DirectivesStore::new();
+
         let linter = Linter::new(lint_options, config_store, None);
         let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
@@ -76,9 +80,14 @@ impl IsolatedLintHandler {
             lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
         }
 
-        let service = LintService::new(linter, lint_service_options);
+        let mut service = LintService::new(linter, lint_service_options);
+        service.set_disable_directives_map(directives_coordinator.map());
 
-        Self { service }
+        Self {
+            service,
+            directives_coordinator,
+            unused_directives_severity: lint_options.report_unused_directive,
+        }
     }
 
     pub fn run_single(
@@ -94,7 +103,7 @@ impl IsolatedLintHandler {
 
         let mut allocator = Allocator::default();
         let source_text = content.or_else(|| read_to_string(&path).ok())?;
-        let errors = self.lint_path(&mut allocator, &path, source_text);
+        let errors = self.lint_path(&mut allocator, &path, &source_text);
 
         let mut diagnostics: Vec<DiagnosticReport> =
             errors.iter().map(|e| message_with_position_to_lsp_diagnostic_report(e, uri)).collect();
@@ -108,17 +117,53 @@ impl IsolatedLintHandler {
         &mut self,
         allocator: &'a mut Allocator,
         path: &Path,
-        source_text: String,
+        source_text: &str,
     ) -> Vec<MessageWithPosition<'a>> {
         debug!("lint {}", path.display());
 
-        self.service
+        let mut messages = self
+            .service
             .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
                 path.to_path_buf(),
-                source_text,
+                Arc::from(source_text),
             )))
             .with_paths(vec![Arc::from(path.as_os_str())])
-            .run_source(allocator)
+            .run_source(allocator);
+
+        // Add unused directives if configured
+        if let Some(severity) = self.unused_directives_severity
+            && let Some(directives) = self.directives_coordinator.get(path)
+        {
+            messages.extend(self.create_unused_directives_messages(
+                &directives,
+                severity,
+                source_text,
+            ));
+        }
+
+        messages
+    }
+
+    #[expect(clippy::unused_self)]
+    fn create_unused_directives_messages(
+        &self,
+        directives: &DisableDirectives,
+        severity: AllowWarnDeny,
+        source_text: &str,
+    ) -> Vec<MessageWithPosition<'static>> {
+        use oxc_data_structures::rope::Rope;
+        use oxc_linter::{
+            create_unused_directives_diagnostics, oxc_diagnostic_to_message_with_position,
+        };
+
+        let rope = Rope::from_str(source_text);
+        let diagnostics = create_unused_directives_diagnostics(directives, severity);
+        diagnostics
+            .into_iter()
+            .map(|diagnostic| {
+                oxc_diagnostic_to_message_with_position(diagnostic, source_text, &rope)
+            })
+            .collect()
     }
 
     fn should_lint_path(path: &Path) -> bool {

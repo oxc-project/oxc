@@ -1,0 +1,102 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware test.ts
+working directory: fixtures/tsgolint_disable_directives
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+   ,-[test.ts:6:1]
+ 5 | // oxlint-disable-next-line typescript/no-floating-promises
+ 6 | myPromise
+   : ^^^^^^^^^
+ 7 | 
+   `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[test.ts:10:1]
+  9 | // eslint-disable-next-line @typescript-eslint/no-floating-promises
+ 10 | myPromise
+    : ^^^^^^^^^
+ 11 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[test.ts:14:1]
+ 13 | /* oxlint-disable typescript/no-floating-promises */
+ 14 | myPromise
+    : ^^^^^^^^^
+ 15 | myPromise
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[test.ts:15:1]
+ 14 | myPromise
+ 15 | myPromise
+    : ^^^^^^^^^
+ 16 | /* oxlint-enable typescript/no-floating-promises */
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[test.ts:19:1]
+ 18 | // This should still report an error (no disable directive)
+ 19 | myPromise
+    : ^^^^^^^^^
+ 20 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript-eslint(no-floating-promises): Promises must be awaited.
+    ,-[test.ts:19:1]
+ 18 | // This should still report an error (no disable directive)
+ 19 | myPromise
+    : ^^^^^^^^^
+ 20 | 
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[test.ts:23:1]
+ 22 | // oxlint-disable-next-line no-floating-promises
+ 23 | myPromise
+    : ^^^^^^^^^
+ 24 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[test.ts:26:1]
+ 25 | // eslint-disable-next-line typescript-eslint/no-floating-promises
+ 26 | myPromise
+    : ^^^^^^^^^
+ 27 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-expressions.html\eslint(no-unused-expressions)]8;;\: Expected expression to be used
+    ,-[test.ts:29:1]
+ 28 | // Test disable-line variant
+ 29 | myPromise // oxlint-disable-line typescript/no-floating-promises
+    : ^^^^^^^^^
+ 30 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! typescript-eslint(no-floating-promises): Promises must be awaited.
+    ,-[test.ts:39:1]
+ 38 | // Should report error
+ 39 | Promise.resolve(4)
+    : ^^^^^^^^^^^^^^^^^^
+    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+Found 10 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 103 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

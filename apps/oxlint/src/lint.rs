@@ -373,10 +373,17 @@ impl CliRunner {
             None
         };
 
-        if let Err(err) = lint_runner.lint_files(&files_to_lint, tx_error, file_system) {
-            print_and_flush_stdout(stdout, &err);
-            return CliRunResult::TsGoLintError;
+        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
+            Ok(lint_runner) => {
+                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+            }
+            Err(err) => {
+                print_and_flush_stdout(stdout, &err);
+                return CliRunResult::TsGoLintError;
+            }
         }
+
+        drop(tx_error);
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
@@ -1297,5 +1304,25 @@ mod test {
         // tsgolint shouldn't run when no files need type aware linting
         let args = &["--type-aware", "test.svelte"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[cfg(not(target_endian = "big"))]
+    #[test]
+    fn test_tsgolint_unused_disable_directives() {
+        // Test that unused disable directives are reported with type-aware rules
+        let args = &["--type-aware", "--report-unused-disable-directives", "unused.ts"];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint_disable_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[cfg(not(target_endian = "big"))]
+    #[test]
+    fn test_tsgolint_disable_directives() {
+        // Test that disable directives work with type-aware rules
+        let args = &["--type-aware", "test.ts"];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint_disable_directives".into())
+            .test_and_snapshot(args);
     }
 }

@@ -4,21 +4,21 @@ use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
-use oxc_linter::LintIgnoreMatcher;
+use oxc_linter::{AllowWarnDeny, LintIgnoreMatcher};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use tokio::sync::Mutex;
 use tower_lsp_server::lsp_types::Uri;
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions,
-    Oxlintrc,
+    Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions, Oxlintrc,
 };
 use tower_lsp_server::UriExt;
 
+use crate::linter::options::UnusedDisableDirectives;
 use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
-    options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+    options::{LintOptions as LSPLintOptions, Run},
     tsgo_linter::TsgoLinter,
 };
 use crate::{ConcurrentHashMap, OXC_CONFIG_FILE};
@@ -136,7 +136,6 @@ impl ServerLinter {
             },
             ..Default::default()
         };
-
         let config_store = ConfigStore::new(
             base_config,
             if use_nested_config {

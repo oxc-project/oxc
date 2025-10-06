@@ -3,7 +3,7 @@ use std::{
     ffi::OsStr,
     io::{ErrorKind, Read, Write},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use rustc_hash::FxHashMap;
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
-use super::{AllowWarnDeny, ConfigStore, ResolvedLinterState, read_to_string};
+use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
 #[cfg(feature = "language_server")]
 use crate::{
@@ -69,7 +69,12 @@ impl TsGoLintState {
     ///
     /// # Errors
     /// A human-readable error message indicating why the linting failed.
-    pub fn lint(self, paths: &[Arc<OsStr>], error_sender: DiagnosticSender) -> Result<(), String> {
+    pub fn lint(
+        self,
+        paths: &[Arc<OsStr>],
+        disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+        error_sender: DiagnosticSender,
+    ) -> Result<(), String> {
         if paths.is_empty() {
             return Ok(());
         }
@@ -133,6 +138,8 @@ impl TsGoLintState {
             let cwd_clone = self.cwd.clone();
 
             let stdout_handler = std::thread::spawn(move || -> Result<(), String> {
+                let disable_directives_map =
+                    disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
                 let mut source_text_map: FxHashMap<PathBuf, String> = FxHashMap::default();
@@ -162,6 +169,41 @@ impl TsGoLintState {
                                 // If the severity is not found, we should not report the diagnostic
                                 continue;
                             };
+
+                            let span = Span::new(
+                                tsgolint_diagnostic.range.pos,
+                                tsgolint_diagnostic.range.end,
+                            );
+
+                            let should_skip = {
+                                if let Some(directives) = disable_directives_map.get(&path) {
+                                    directives.contains(&tsgolint_diagnostic.rule, span)
+                                        || directives.contains(
+                                            &format!(
+                                                "typescript-eslint/{}",
+                                                tsgolint_diagnostic.rule
+                                            ),
+                                            span,
+                                        )
+                                        || directives.contains(
+                                            &format!(
+                                                "@typescript-eslint/{}",
+                                                tsgolint_diagnostic.rule
+                                            ),
+                                            span,
+                                        )
+                                } else {
+                                    debug_assert!(
+                                        false,
+                                        "disable_directives_map should have an entry for every file we linted"
+                                    );
+                                    false
+                                }
+                            };
+
+                            if should_skip {
+                                continue;
+                            }
 
                             let oxc_diagnostic: OxcDiagnostic =
                                 OxcDiagnostic::from(tsgolint_diagnostic);

@@ -938,6 +938,79 @@ semi*/
     }
 }
 
+/// Create diagnostics for unused disable directives.
+///
+/// This utility function generates `OxcDiagnostic` instances for:
+/// - Unused disable directives (no problems were reported)
+/// - Unused enable directives (no matching disable directives)
+///
+/// # Arguments
+/// * `directives` - The disable directives to check for unused comments
+/// * `severity` - The severity level (Warn or Deny) for the diagnostics
+///
+/// # Returns
+/// A vector of diagnostics for all unused directives
+pub fn create_unused_directives_diagnostics(
+    directives: &DisableDirectives,
+    severity: crate::AllowWarnDeny,
+) -> Vec<oxc_diagnostics::OxcDiagnostic> {
+    use oxc_diagnostics::OxcDiagnostic;
+
+    let mut diagnostics = Vec::new();
+
+    let severity = if severity == crate::AllowWarnDeny::Deny {
+        oxc_diagnostics::Severity::Error
+    } else {
+        oxc_diagnostics::Severity::Warning
+    };
+
+    // Report unused disable comments
+    let unused_disable = directives.collect_unused_disable_comments();
+    for unused_comment in unused_disable {
+        let span = unused_comment.span;
+        match unused_comment.r#type {
+            RuleCommentType::All => {
+                diagnostics.push(
+                    OxcDiagnostic::warn(
+                        "Unused eslint-disable directive (no problems were reported).",
+                    )
+                    .with_label(span)
+                    .with_severity(severity),
+                );
+            }
+            RuleCommentType::Single(rules) => {
+                for rule in rules {
+                    let rule_message = format!(
+                        "Unused eslint-disable directive (no problems were reported from {}).",
+                        rule.rule_name
+                    );
+                    diagnostics.push(
+                        OxcDiagnostic::warn(rule_message)
+                            .with_label(rule.name_span)
+                            .with_severity(severity),
+                    );
+                }
+            }
+        }
+    }
+
+    // Report unused enable comments
+    let unused_enable = directives.unused_enable_comments();
+    for (rule_name, span) in unused_enable {
+        let message = if let Some(rule_name) = rule_name {
+            format!(
+                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
+            )
+        } else {
+            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
+                .to_string()
+        };
+        diagnostics.push(OxcDiagnostic::warn(message).with_label(*span).with_severity(severity));
+    }
+
+    diagnostics
+}
+
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;

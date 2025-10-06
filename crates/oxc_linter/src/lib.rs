@@ -25,7 +25,6 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
-mod lint_runner;
 #[cfg(feature = "language_server")]
 mod lsp;
 mod module_graph_visitor;
@@ -49,6 +48,12 @@ mod generated {
 #[cfg(test)]
 mod tester;
 
+mod lint_runner;
+
+pub use crate::disable_directives::{
+    DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
+    create_unused_directives_diagnostics,
+};
 pub use crate::{
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
@@ -62,7 +67,7 @@ pub use crate::{
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    lint_runner::{LintRunner, LintRunnerBuilder},
+    lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -76,12 +81,16 @@ use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
     fixer::{CompositeFix, Fix, Fixer, Message, PossibleFixes},
+    loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
 };
 
 #[cfg(feature = "language_server")]
-pub use crate::lsp::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
+pub use crate::lsp::{
+    FixWithPosition, MessageWithPosition, PossibleFixesWithPosition,
+    oxc_diagnostic_to_message_with_position,
+};
 
 #[cfg(target_pointer_width = "64")]
 #[test]
@@ -146,12 +155,30 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message<'a>> {
+        self.run_with_disable_directives(path, context_sub_hosts, allocator).0
+    }
+
+    /// Same as `run` but also returns the disable directives for the file
+    ///
+    /// # Panics
+    /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
+    pub fn run_with_disable_directives<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+    ) -> (Vec<Message<'a>>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
+
+        let is_partial_loader_file = path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
 
         loop {
             let rules = rules
@@ -310,8 +337,11 @@ impl Linter {
 
             self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
 
+            // Report unused directives is now handled differently with type-aware linting
+
             if let Some(severity) = self.options.report_unused_directive
                 && severity.is_warn_deny()
+                && is_partial_loader_file
             {
                 ctx_host.report_unused_directives(severity.into());
             }
@@ -327,7 +357,14 @@ impl Linter {
             }
         }
 
-        ctx_host.take_diagnostics()
+        let diagnostics = ctx_host.take_diagnostics();
+        let disable_directives = if is_partial_loader_file {
+            None
+        } else {
+            Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
+        };
+
+        (diagnostics, disable_directives)
     }
 
     fn run_external_rules<'a>(
