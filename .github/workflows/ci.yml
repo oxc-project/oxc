@@ -169,8 +169,16 @@ jobs:
 
   test-napi:
     name: Test NAPI
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        exclude:
+          - os: ${{ github.ref_name != 'main' && 'windows-latest' || '' }}
+    runs-on: ${{ matrix.os }}
     steps:
+      - name: Enable long paths on Windows
+        if: matrix.os == 'windows-latest'
+        run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter

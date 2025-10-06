@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import { join as pathJoin } from 'node:path';
 
 import { execa } from 'execa';
