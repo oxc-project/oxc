@@ -1097,7 +1097,7 @@ mod test {
 
     #[test]
     fn test_report_unused_directives() {
-        let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives", "test.js"];
+        let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
 
         Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
     }
