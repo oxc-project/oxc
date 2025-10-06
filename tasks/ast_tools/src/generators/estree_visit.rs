@@ -9,11 +9,15 @@ use std::{
 
 use serde::Deserialize;
 
+use oxc_allocator::Allocator;
 use oxc_index::{IndexVec, define_index_type};
 
 use crate::{
     Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
-    output::Output,
+    output::{
+        Output,
+        javascript::{parse_js, print_minified},
+    },
     schema::Schema,
     utils::{string, write_it},
 };
@@ -319,6 +323,11 @@ fn generate(codegen: &Codegen) -> Codes {
 
         {walk_fns}
     ");
+
+    // Minify walker code
+    let allocator = Allocator::new();
+    let mut program = parse_js(&walk, &allocator);
+    let walk = print_minified(&mut program, &allocator);
 
     visitor_keys.push_str("});");
 
