@@ -225,7 +225,8 @@ describe.concurrent('fixtures', () => {
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
 
-describeRangeParent.concurrent('range & parent fixtures', () => {
+// `antd.js` test sometimes takes longer than 5 seconds on CI, so increase timeout to 10 seconds
+describeRangeParent.concurrent('range & parent fixtures', { timeout: 10_000 }, () => {
   // oxlint-disable-next-line jest/expect-expect
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_RANGE_PARENT, path));
 });
