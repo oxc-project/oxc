@@ -51,7 +51,7 @@ impl Generator for ESTreeVisitGenerator {
         vec![
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/walk.js"),
-                code: walk,
+                code: walk.clone(),
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.js"),
@@ -59,11 +59,19 @@ impl Generator for ESTreeVisitGenerator {
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/types.js"),
-                code: type_ids_map,
+                code: type_ids_map.clone(),
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
                 code: visitor_type,
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.js"),
+                code: walk,
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/types.js"),
+                code: type_ids_map,
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/visitor.d.ts"),

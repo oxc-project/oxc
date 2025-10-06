@@ -9,11 +9,11 @@ import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCom
 // @ts-expect-error we need to generate `.d.ts` file for this module.
 import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
 // @ts-expect-error we need to generate `.d.ts` file for this module.
-import { walkProgram } from '../../dist/generated/lazy/walk.js';
+import { walkProgram } from '../generated/walk.js';
 */
 
 // @ts-expect-error we need to generate `.d.ts` file for this module
-import { walkProgram } from '../../dist/generated/visit/walk.js';
+import { walkProgram } from '../generated/walk.js';
 
 import type { AfterHook, BufferWithArrays } from './types.ts';
 
