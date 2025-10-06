@@ -6,9 +6,7 @@ import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCom
 
 // Lazy implementation
 /*
-// @ts-expect-error we need to generate `.d.ts` file for this module.
 import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
-// @ts-expect-error we need to generate `.d.ts` file for this module.
 import { walkProgram } from '../generated/walk.js';
 */
 

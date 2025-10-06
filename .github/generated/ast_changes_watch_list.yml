@@ -3,10 +3,10 @@
 
 src:
   - '.github/generated/ast_changes_watch_list.yml'
-  - 'apps/oxlint/src-js/generated/constants.js'
+  - 'apps/oxlint/src-js/generated/constants.ts'
   - 'apps/oxlint/src-js/generated/deserialize.js'
   - 'apps/oxlint/src-js/generated/keys.js'
-  - 'apps/oxlint/src-js/generated/type_ids.js'
+  - 'apps/oxlint/src-js/generated/type_ids.ts'
   - 'apps/oxlint/src-js/generated/types.d.ts'
   - 'apps/oxlint/src-js/generated/visitor.d.ts'
   - 'apps/oxlint/src-js/generated/walk.js'

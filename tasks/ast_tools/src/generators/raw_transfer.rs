@@ -86,7 +86,8 @@ impl Generator for RawTransferGenerator {
                 code: constants_js.clone(),
             },
             Output::Javascript {
-                path: format!("{OXLINT_APP_PATH}/src-js/generated/constants.js"),
+                // This file is also valid as TS
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/constants.ts"),
                 code: constants_js,
             },
             Output::Rust {

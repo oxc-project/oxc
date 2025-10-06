@@ -1,13 +1,9 @@
 import { createRequire } from 'node:module';
-import {
-  DATA_POINTER_POS_32,
-  SOURCE_LEN_OFFSET,
-  // TODO(camc314): we need to generate `.d.ts` file for this module.
-  // @ts-expect-error
-} from '../generated/constants.js';
-// @ts-expect-error we need to generate `.d.ts` file for this module
+import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.js';
+
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
+// @ts-expect-error we need to generate `.d.ts` file for this module
 import { deserializeProgramOnly } from '../../dist/generated/deserialize.js';
 
 import {
