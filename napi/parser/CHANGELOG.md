@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- a2914fe linter/plugins: Add `loc` field getter to all AST nodes (#14355) (overlookmotel)
+- c8de6fe linter/plugins: Add `parent` field to AST nodes (#14345) (overlookmotel)
+- 7e4d04f napi/parser: Add option to add `parent` prop to AST nodes with raw transfer (#14344) (overlookmotel)
+- 6374065 napi/parser: Raw transfer support `range` field (#14319) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a11bc9f napi/parser, linter/plugins: Add `range` field to `TemplateElement` (#14339) (overlookmotel)
+- c65e782 napi/parser: Fix JSDoc comments (#14318) (overlookmotel)
+
+### 🚜 Refactor
+
+- 1489376 napi/parser, linter/plugins: Minify walker code (#14376) (overlookmotel)
+- c8eeeb5 linter/plugins: Remove build-time dependency on `napi/parser` (#14374) (overlookmotel)
+- 073167a napi/parser: Simplify raw transfer deserializer codegen (#14313) (overlookmotel)
+- 34e1c0b napi/parser: Use minifier to generate JS/TS raw transfer deserializers from single source (#14312) (overlookmotel)
+- a98757a napi/parser: Minify syntax in raw transfer deserializers (#14308) (overlookmotel)
+
+### ⚡ Performance
+
+- e75d42d napi/parser, linter/plugins: Remove runtime `preserveParens` option from raw transfer deserializers (#14338) (overlookmotel)
+
+
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- a2914fe linter/plugins: Add `loc` field getter to all AST nodes (#14355) (overlookmotel)
+- c8de6fe linter/plugins: Add `parent` field to AST nodes (#14345) (overlookmotel)
+- 7e4d04f napi/parser: Add option to add `parent` prop to AST nodes with raw transfer (#14344) (overlookmotel)
+- 6374065 napi/parser: Raw transfer support `range` field (#14319) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a11bc9f napi/parser, linter/plugins: Add `range` field to `TemplateElement` (#14339) (overlookmotel)
+- c65e782 napi/parser: Fix JSDoc comments (#14318) (overlookmotel)
+
+### 🚜 Refactor
+
+- 1489376 napi/parser, linter/plugins: Minify walker code (#14376) (overlookmotel)
+- c8eeeb5 linter/plugins: Remove build-time dependency on `napi/parser` (#14374) (overlookmotel)
+- 073167a napi/parser: Simplify raw transfer deserializer codegen (#14313) (overlookmotel)
+- 34e1c0b napi/parser: Use minifier to generate JS/TS raw transfer deserializers from single source (#14312) (overlookmotel)
+- a98757a napi/parser: Minify syntax in raw transfer deserializers (#14308) (overlookmotel)
+
+### ⚡ Performance
+
+- e75d42d napi/parser, linter/plugins: Remove runtime `preserveParens` option from raw transfer deserializers (#14338) (overlookmotel)
+
+
 ## [0.93.0] - 2025-09-28
 
 ### 🚜 Refactor
