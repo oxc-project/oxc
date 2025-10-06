@@ -50,9 +50,11 @@ use super::{macros::inherit_variants, *};
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
+    #[content_eq(skip)]
     #[estree(skip)]
     pub source_text: &'a str,
     /// Sorted comments
+    #[content_eq(skip)]
     #[estree(skip)]
     pub comments: Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
