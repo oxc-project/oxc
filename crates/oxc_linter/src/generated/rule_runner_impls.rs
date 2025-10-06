@@ -2915,6 +2915,10 @@ impl RuleRunner for crate::rules::vue::max_props::MaxProps {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::vue::no_export_in_script_setup::NoExportInScriptSetup {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
