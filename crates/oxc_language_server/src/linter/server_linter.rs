@@ -109,13 +109,10 @@ impl ServerLinter {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let config_builder = ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
-            None,
-            &mut ExternalPluginStore::default(),
-        )
-        .unwrap_or_default();
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let config_builder =
+            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
+                .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -125,7 +122,6 @@ impl ServerLinter {
                 && nested_configs.pin().values().any(|config| config.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
-        let external_plugin_store = ExternalPluginStore::default();
         let base_config = config_builder.build(&external_plugin_store).unwrap_or_else(|err| {
             warn!("Failed to build config: {err}");
             ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
@@ -152,7 +148,7 @@ impl ServerLinter {
             } else {
                 FxHashMap::default()
             },
-            ExternalPluginStore::default(),
+            external_plugin_store,
         );
 
         let isolated_linter = IsolatedLintHandler::new(
@@ -216,17 +212,17 @@ impl ServerLinter {
             };
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
+            let mut external_plugin_store = ExternalPluginStore::default();
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
                 None,
-                &mut ExternalPluginStore::default(),
+                &mut external_plugin_store,
             ) else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let external_plugin_store = ExternalPluginStore::default();
             let config = config_store_builder.build(&external_plugin_store).unwrap_or_else(|err| {
                 warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
                 ConfigStoreBuilder::empty().build(&external_plugin_store).unwrap()
