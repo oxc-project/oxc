@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import { join as pathJoin } from 'node:path';
 
 import { execa } from 'execa';
@@ -52,17 +51,7 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
     }
   }
 
-  let expectedSnapshot = null;
-  try {
-    expectedSnapshot = await fs.readFile(snapshotPath, 'utf8');
-  } catch (err) {
-    if (err?.code !== 'ENOENT') throw err;
-  }
-
-  if (snapshot !== expectedSnapshot) {
-    await fs.writeFile(snapshotPath, snapshot);
-    if (expectedSnapshot !== null) expect(snapshot).toBe(expectedSnapshot);
-  }
+  await expect(snapshot).toMatchFileSnapshot(snapshotPath);
 }
 
 /**
