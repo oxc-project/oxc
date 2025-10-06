@@ -9,10 +9,10 @@ packages:
   - tasks/mcp
 
 catalog:
-  '@napi-rs/cli': 3.2.0
-  '@napi-rs/wasm-runtime': 1.0.5
-  publint: 0.3.13
-  typescript: 5.9.2
+  '@napi-rs/cli': 3.3.0
+  '@napi-rs/wasm-runtime': 1.0.6
+  publint: 0.3.14
+  typescript: 5.9.3
   vitest: 3.2.4
 
 verifyDepsBeforeRun: install
