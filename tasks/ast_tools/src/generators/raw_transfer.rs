@@ -8,23 +8,16 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::Allocator;
 use oxc_ast::{
     AstBuilder, NONE,
     ast::{
-        Argument, BindingPatternKind, Expression, FormalParameterKind, FunctionType,
-        LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKind, Statement,
-        UnaryOperator,
+        Argument, Expression, FormalParameterKind, FunctionType, LogicalOperator, ObjectExpression,
+        ObjectPropertyKind, Program, PropertyKind,
     },
 };
-use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_codegen::Codegen as Printer;
-use oxc_minifier::{
-    CompressOptions, CompressOptionsKeepNames, Minifier, MinifierOptions, PropertyReadSideEffects,
-    TreeShakeOptions,
-};
-use oxc_parser::Parser;
-use oxc_span::{SPAN, SourceType};
+use oxc_ast_visit::VisitMut;
+use oxc_span::SPAN;
 
 use crate::{
     ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
@@ -33,7 +26,7 @@ use crate::{
         get_fieldless_variant_value, get_struct_field_name, should_flatten_field,
         should_skip_enum_variant, should_skip_field,
     },
-    output::Output,
+    output::{Output, javascript::VariantGenerator},
     schema::{
         BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PointerDef, PrimitiveDef,
         Schema, StructDef, TypeDef, TypeId, VecDef,
@@ -129,6 +122,7 @@ impl Generator for RawTransferGenerator {
 ///
 /// When printing the JS and TS deserializers, the value of `IS_TS` is set to `true` or `false`,
 /// and minifier then shakes out the dead code for each.
+#[expect(clippy::items_after_statements)]
 fn generate_deserializers(
     consts: Constants,
     schema: &Schema,
@@ -144,12 +138,6 @@ fn generate_deserializers(
     #[rustfmt::skip]
     let mut code = format!("
         let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
-
-        const IS_TS = false;
-        const RANGE = false;
-        const LOC = false;
-        const PARENT = false;
-        const PRESERVE_PARENS = false;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
@@ -215,62 +203,64 @@ fn generate_deserializers(
         }
     }
 
-    // Parse generated code
-    let allocator = Allocator::new();
-    let source_type = SourceType::mjs();
-    let parser_ret = Parser::new(&allocator, &code, source_type).parse();
-    assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
-    let program = parser_ret.program;
+    // Create deserializers with various settings, by setting `IS_TS`, `RANGE`, `LOC`, `PARENT`
+    // and `PRESERVE_PARENS` consts, and running through minifier to shake out irrelevant code
+    struct VariantGen {
+        variant_names: Vec<String>,
+    }
 
-    // Create deserializers with various settings, by setting `IS_TS`, `RANGE` and `PRESERVE_PARENS` consts,
-    // and running through minifier to shake out irrelevant code
-    let mut print_allocator = Allocator::new();
-    let mut deserializers = vec![];
-    let mut create_deserializer = |is_ts, range, loc, parent, preserve_parens| {
-        let mut program = program.clone_in(&print_allocator);
-        replace_const(&mut program, "IS_TS", is_ts);
-        replace_const(&mut program, "RANGE", range);
-        replace_const(&mut program, "LOC", loc);
-        replace_const(&mut program, "PARENT", parent);
-        replace_const(&mut program, "PRESERVE_PARENS", preserve_parens);
+    impl VariantGenerator<5> for VariantGen {
+        const FLAG_NAMES: [&str; 5] = ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS"];
 
-        if loc {
-            assert!(range, "`loc` requires `range`");
-            LocFieldAdder::new(&allocator).visit_program(&mut program);
+        fn variants(&mut self) -> Vec<[bool; 5]> {
+            let mut variants = Vec::with_capacity(9);
+
+            for is_ts in [false, true] {
+                for range in [false, true] {
+                    for parent in [false, true] {
+                        let mut name = if is_ts { "ts" } else { "js" }.to_string();
+                        if range {
+                            name.push_str("_range");
+                        }
+                        if parent {
+                            name.push_str("_parent");
+                        }
+                        self.variant_names.push(name);
+
+                        variants.push([
+                            is_ts, range, /* loc */ false, parent,
+                            /* preserve_parens */ true,
+                        ]);
+                    }
+                }
+            }
+
+            self.variant_names.push("ts_range_loc_parent_no_parens".to_string());
+            variants.push([
+                /* is_ts */ true, /* range */ true, /* loc */ true,
+                /* parent */ true, /* preserve_parens */ false,
+            ]);
+
+            variants
         }
 
-        let code = print_minified(&mut program, &print_allocator);
-        print_allocator.reset();
-
-        let mut name = if is_ts { "ts" } else { "js" }.to_string();
-        if range {
-            name.push_str("_range");
-        }
-        if loc {
-            name.push_str("_loc");
-        }
-        if parent {
-            name.push_str("_parent");
-        }
-        if !preserve_parens {
-            name.push_str("_no_parens");
-        }
-
-        deserializers.push((name, code));
-    };
-
-    for is_ts in [false, true] {
-        for range in [false, true] {
-            for parent in [false, true] {
-                create_deserializer(is_ts, range, false, parent, true);
+        fn pre_process_variant<'a>(
+            &mut self,
+            program: &mut Program<'a>,
+            flags: [bool; 5],
+            allocator: &'a Allocator,
+        ) {
+            if flags[2] {
+                // `loc` enabled
+                LocFieldAdder::new(allocator).visit_program(program);
             }
         }
     }
 
-    // `PRESERVE_PARENS = false` is only required for linter
-    create_deserializer(true, true, true, true, false);
+    let mut generator = VariantGen { variant_names: vec![] };
+    let codes = generator.generate(&code);
 
-    deserializers
+    generator.variant_names.into_iter().zip(codes).collect()
 }
 
 /// Type of deserializer in which some code appears.
@@ -1280,94 +1270,6 @@ fn get_constants(schema: &Schema) -> Constants {
         program_offset,
         source_len_offset,
         raw_metadata_size,
-    }
-}
-
-/// Replace the value of a `const` declaration with `true` / `false`.
-///
-/// Only replaces `const`s defined at top level which are currently defined as a boolean.
-fn replace_const(program: &mut Program<'_>, const_name: &str, value: bool) {
-    for stmt in &mut program.body {
-        let Statement::VariableDeclaration(var_decl) = stmt else { continue };
-        if !var_decl.kind.is_const() {
-            continue;
-        }
-
-        for declarator in &mut var_decl.declarations {
-            if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id.kind
-                && ident.name == const_name
-            {
-                let init = declarator.init.as_mut().unwrap();
-                let Expression::BooleanLiteral(bool_lit) = init else { continue };
-                bool_lit.value = value;
-                return;
-            }
-        }
-    }
-
-    panic!("`{const_name}` const not found");
-}
-
-/// Print AST with minified syntax.
-///
-/// Do not remove whitespace, or mangle symbols.
-/// Purpose is not to compress length of code, but to remove dead code.
-fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -> String {
-    // Minify
-    let minify_options = MinifierOptions {
-        mangle: None,
-        compress: Some(CompressOptions {
-            keep_names: CompressOptionsKeepNames::all_true(),
-            sequences: false,
-            treeshake: TreeShakeOptions {
-                property_read_side_effects: PropertyReadSideEffects::None,
-                ..TreeShakeOptions::default()
-            },
-            ..CompressOptions::default()
-        }),
-    };
-    Minifier::new(minify_options).minify(allocator, program);
-
-    // Revert minification of `true` to `!0` and `false` to `!1`. It hurts readability.
-    let mut unminifier = BooleanUnminifier::new(allocator);
-    unminifier.visit_program(program);
-
-    // Print. Add back line breaks between functions to aid readability.
-    let mut code = Printer::new().build(program).code;
-
-    #[expect(clippy::items_after_statements)]
-    static RE: Lazy<Regex> = lazy_regex!(r"\n(function|export) ");
-    code = RE
-        .replace_all(&code, |caps: &Captures| {
-            // `format!("\n\n{} ", &caps[1])` would be simpler, but this avoids allocations
-            if &caps[1] == "function" { "\n\nfunction " } else { "\n\nexport " }
-        })
-        .into_owned();
-
-    code
-}
-
-/// Visitor which converts `!0` to `true` and `!1` to `false`.
-struct BooleanUnminifier<'a> {
-    ast: AstBuilder<'a>,
-}
-
-impl<'a> BooleanUnminifier<'a> {
-    fn new(allocator: &'a Allocator) -> Self {
-        Self { ast: AstBuilder::new(allocator) }
-    }
-}
-
-impl<'a> VisitMut<'a> for BooleanUnminifier<'a> {
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        if let Expression::UnaryExpression(unary_expr) = expr
-            && unary_expr.operator == UnaryOperator::LogicalNot
-            && let Expression::NumericLiteral(lit) = &unary_expr.argument
-        {
-            *expr = self.ast.expression_boolean_literal(unary_expr.span, lit.value == 0.0);
-            return;
-        }
-        walk_mut::walk_expression(self, expr);
     }
 }
 

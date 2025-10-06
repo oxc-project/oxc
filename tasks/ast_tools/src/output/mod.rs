@@ -5,7 +5,7 @@ use proc_macro2::TokenStream;
 
 use crate::{log, log_result};
 
-mod javascript;
+pub mod javascript;
 mod rust;
 mod yaml;
 use javascript::print_javascript;
