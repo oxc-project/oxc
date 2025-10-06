@@ -27,7 +27,7 @@ import {
   TS_ESTREE_DIR_PATH,
   TS_SHORT_DIR_PATH,
   TS_SNAPSHOT_PATH,
-} from './parse-raw-common.js';
+} from './parse-raw-common';
 
 const { env } = process;
 const isEnabled = envValue => envValue === 'true' || envValue === '1';
@@ -43,7 +43,7 @@ const [describeLazy, itLazy] = isEnabled(env.RUN_LAZY_TESTS)
 // Worker pool for running test cases.
 // Vitest provides parallelism across test files, but not across cases within a single test file.
 // So we run each case in a worker to achieve parallelism.
-const pool = new Tinypool({ filename: new URL('./parse-raw-worker.js', import.meta.url).href });
+const pool = new Tinypool({ filename: new URL('./parse-raw-worker.ts', import.meta.url).href });
 
 let runCase;
 
@@ -54,7 +54,7 @@ async function runCaseInWorker(type, props) {
   // If test failed in worker, run it again in main thread with Vitest's `expect`,
   // to get a nice diff and stack trace
   if (!success) {
-    if (!runCase) ({ runCase } = await import('./parse-raw-worker.js'));
+    if (!runCase) ({ runCase } = await import('./parse-raw-worker.ts'));
 
     type |= TEST_TYPE_PRETTY;
     await runCase({ type, props }, expect);

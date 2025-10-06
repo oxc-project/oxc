@@ -20,8 +20,8 @@ import {
   TEST_TYPE_TS,
   TS_DIR_PATH,
   TS_ESTREE_DIR_PATH,
-} from './parse-raw-common.js';
-import { makeUnitsFromTest } from './typescript-make-units-from-test.js';
+} from './parse-raw-common.ts';
+import { makeUnitsFromTest } from './typescript-make-units-from-test.ts';
 
 const { hasOwn } = Object,
   { isArray } = Array;
