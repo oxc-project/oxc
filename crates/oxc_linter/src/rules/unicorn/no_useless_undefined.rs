@@ -140,10 +140,13 @@ fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
 
 impl Rule for NoUselessUndefined {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let check_arguments =
-            value.get("checkArguments").and_then(serde_json::Value::as_bool).unwrap_or(true);
-        let check_arrow_function_body = value
-            .get("checkArrowFunctionBody")
+        let config = value.get(0);
+        let check_arguments = config
+            .and_then(|c| c.get("checkArguments"))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(true);
+        let check_arrow_function_body = config
+            .and_then(|c| c.get("checkArrowFunctionBody"))
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(true);
         Self { check_arguments, check_arrow_function_body }
@@ -321,9 +324,9 @@ impl Rule for NoUselessUndefined {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    let options_ignore_arguments = || Some(serde_json::json!({ "checkArguments": false }));
+    let options_ignore_arguments = || Some(serde_json::json!([{ "checkArguments": false }]));
     let options_ignore_arrow_function_body =
-        || Some(serde_json::json!({"checkArrowFunctionBody": false}));
+        || Some(serde_json::json!([{ "checkArrowFunctionBody": false }]));
     let pass = vec![
         (r"function foo() {return;}", None),
         (r"const foo = () => {};", None),
@@ -382,6 +385,10 @@ fn test() {
         // `checkArguments: false`
         (r"foo(undefined, undefined);", options_ignore_arguments()),
         (r"foo.bind(undefined);", options_ignore_arguments()),
+        (
+            r"function run(name?: string) { return name; } run(undefined);",
+            options_ignore_arguments(),
+        ),
         // `checkArrowFunctionBody: false`
         (r"const foo = () => undefined", options_ignore_arrow_function_body()),
         (r"const x = { a: undefined }", None),
@@ -673,4 +680,65 @@ fn test() {
     Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_config_array_format() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (r"foo(undefined);", Some(serde_json::json!([{ "checkArguments": false }]))),
+        (
+            r"const foo = () => undefined;",
+            Some(serde_json::json!([{ "checkArrowFunctionBody": false }])),
+        ),
+    ];
+    let fail = vec![
+        (r"foo(undefined);", Some(serde_json::json!([{ "checkArguments": true }]))),
+        (
+            r"const foo = () => undefined;",
+            Some(serde_json::json!([{ "checkArrowFunctionBody": true }])),
+        ),
+    ];
+    let fix = vec![
+        (r"foo(undefined);", r"foo();", Some(serde_json::json!([{ "checkArguments": true }]))),
+        (
+            r"const foo = () => undefined;",
+            r"const foo = () => {};",
+            Some(serde_json::json!([{ "checkArrowFunctionBody": true }])),
+        ),
+    ];
+
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_issue_14368() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (
+            r"function run(name) { return name; } run(undefined);",
+            Some(serde_json::json!([{ "checkArguments": false }])),
+        ),
+        (
+            r"function run(name?: string) { return name; } run(undefined);",
+            Some(serde_json::json!([{ "checkArguments": false }])),
+        ),
+    ];
+    let fail = vec![(
+        r"function run(name) { return name; } run(undefined);",
+        Some(serde_json::json!([{ "checkArguments": true }])),
+    )];
+    let fix = vec![(
+        r"function run(name) { return name; } run(undefined);",
+        r"function run(name) { return name; } run();",
+        Some(serde_json::json!([{ "checkArguments": true }])),
+    )];
+
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
 }
