@@ -45,7 +45,7 @@ impl Generator for RawTransferLazyGenerator {
                 code: walkers,
             },
             Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/types.js"),
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/lazy/type_ids.js"),
                 code: node_type_ids_map,
             },
         ]

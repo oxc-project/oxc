@@ -1,13 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-// Lazy implementation
-/*
-// TODO(camc314): we need to generate `.d.ts` file for this module.
-// @ts-expect-error
-import { NODE_TYPE_IDS_MAP } from '../src-js/generated/types.js';
-*/
 // TODO(camc314): we need to generate `.d.ts` file for this module
 // @ts-expect-error
-import { NODE_TYPE_IDS_MAP } from '../src-js/generated/types.js';
+import { NODE_TYPE_IDS_MAP } from '../src-js/generated/type_ids.js';
 import {
   addVisitorToCompiled,
   compiledVisitor,

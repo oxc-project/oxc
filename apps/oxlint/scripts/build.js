@@ -30,7 +30,7 @@ const parserFilePaths = [
   'src-js/raw-transfer/lazy-common.js',
   'src-js/raw-transfer/node-array.js',
   'generated/lazy/constructors.js',
-  'generated/lazy/types.js',
+  'generated/lazy/type_ids.js',
   'generated/lazy/walk.js',
   'generated/deserialize/ts_range_loc_parent_no_parens.js',
   'generated/visit/keys.js',
