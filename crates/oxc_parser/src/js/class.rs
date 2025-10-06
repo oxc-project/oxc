@@ -416,7 +416,7 @@ impl<'a> ParserImpl<'a> {
             false,
             modifiers.accessibility(),
         );
-        self.check_method_definition(&method_definition);
+        self.check_method_definition_accessor(&method_definition);
         self.verify_modifiers(
             modifiers,
             ModifierFlags::all() - ModifierFlags::ASYNC - ModifierFlags::DECLARE,
@@ -451,7 +451,7 @@ impl<'a> ParserImpl<'a> {
             false,
             modifiers.accessibility(),
         );
-        self.check_method_definition(&method_definition);
+        self.check_method_definition_constructor(&method_definition);
         ClassElement::MethodDefinition(method_definition)
     }
 
@@ -570,7 +570,7 @@ impl<'a> ParserImpl<'a> {
             optional,
             modifiers.accessibility(),
         );
-        self.check_method_definition(&method_definition);
+        self.check_method_definition_method(&method_definition);
         ClassElement::MethodDefinition(method_definition)
     }
 
@@ -660,22 +660,15 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn check_method_definition(&mut self, method: &MethodDefinition<'a>) {
-        let function = &method.value;
-        match method.kind {
-            MethodDefinitionKind::Get => self.check_getter(function),
-            MethodDefinitionKind::Set => self.check_setter(function),
-            _ => {}
-        }
         if !method.computed
             && let Some((name, span)) = method.key.prop_name()
         {
-            if method.r#static && name == "prototype" && !self.ctx.has_ambient() {
-                self.error(diagnostics::static_prototype(span));
-            }
-            if !method.r#static && name == "constructor" {
-                if method.kind == MethodDefinitionKind::Get
-                    || method.kind == MethodDefinitionKind::Set
-                {
+            if method.r#static {
+                if name == "prototype" && !self.ctx.has_ambient() {
+                    self.error(diagnostics::static_prototype(span));
+                }
+            } else if name == "constructor" {
+                if matches!(method.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set) {
                     self.error(diagnostics::constructor_getter_setter(span));
                 }
                 if method.value.r#async {
@@ -686,33 +679,47 @@ impl<'a> ParserImpl<'a> {
                 }
             }
         }
-        if method.kind == MethodDefinitionKind::Constructor {
-            if let Some(this_param) = &method.value.this_param {
-                // class Foo { constructor(this: number) {} }
-                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
-            }
+    }
 
-            if let Some(type_sig) = &method.value.type_parameters {
-                // class Foo { constructor<T>(param: T ) {} }
-                self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
-            }
+    fn check_method_definition_accessor(&mut self, method: &MethodDefinition<'a>) {
+        self.check_method_definition(method);
+
+        match method.kind {
+            MethodDefinitionKind::Get => self.check_getter(&method.value),
+            MethodDefinitionKind::Set => self.check_setter(&method.value),
+            _ => {}
         }
         if method.r#type.is_abstract() && method.value.body.is_some() {
             let (name, span) = method.key.prop_name().unwrap_or_else(|| {
                 let span = method.key.span();
                 (&self.source_text[span], span)
             });
-            match method.kind {
-                MethodDefinitionKind::Method => {
-                    self.error(diagnostics::abstract_method_cannot_have_implementation(name, span));
-                }
-                MethodDefinitionKind::Get | MethodDefinitionKind::Set => {
-                    self.error(diagnostics::abstract_accessor_cannot_have_implementation(
-                        name, span,
-                    ));
-                }
-                MethodDefinitionKind::Constructor => {}
-            }
+            self.error(diagnostics::abstract_accessor_cannot_have_implementation(name, span));
+        }
+    }
+
+    fn check_method_definition_method(&mut self, method: &MethodDefinition<'a>) {
+        self.check_method_definition(method);
+
+        if method.r#type.is_abstract() && method.value.body.is_some() {
+            let (name, span) = method.key.prop_name().unwrap_or_else(|| {
+                let span = method.key.span();
+                (&self.source_text[span], span)
+            });
+            self.error(diagnostics::abstract_method_cannot_have_implementation(name, span));
+        }
+    }
+
+    fn check_method_definition_constructor(&mut self, method: &MethodDefinition<'a>) {
+        self.check_method_definition(method);
+
+        if let Some(this_param) = &method.value.this_param {
+            // class Foo { constructor(this: number) {} }
+            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
+        }
+        if let Some(type_sig) = &method.value.type_parameters {
+            // class Foo { constructor<T>(param: T ) {} }
+            self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
         }
     }
 }
