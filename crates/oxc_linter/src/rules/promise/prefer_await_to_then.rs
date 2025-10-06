@@ -65,10 +65,8 @@ fn is_inside_yield_or_await(node: &AstNode) -> bool {
 
 impl Rule for PreferAwaitToThen {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let strict = match value {
-            Value::Object(obj) => obj.get("strict").and_then(Value::as_bool).unwrap_or(false),
-            _ => false,
-        };
+        let config = value.get(0);
+        let strict = config.and_then(|v| v.get("strict")).and_then(Value::as_bool).unwrap_or(false);
 
         Self(PreferAwaitToThenConfig { strict })
     }
@@ -135,7 +133,7 @@ fn test() {
         ),
         (
             "async function hi() { await thing().then() }",
-            Some(serde_json::json!({ "strict": false })),
+            Some(serde_json::json!([{ "strict": false }])),
         ),
         ("const { promise, resolve } = Promise.withResolvers()", None),
         ("function x () { return Promise.all() } ", None),
@@ -153,9 +151,13 @@ fn test() {
         ("something().then(async () => await somethingElse())", None),
         (
             "async function foo() { await thing().then() }",
-            Some(serde_json::json!({ "strict": true })),
+            Some(serde_json::json!([{ "strict": true }])),
         ),
-        ("async function foo() { thing().then() }", Some(serde_json::json!({ "strict": false }))),
+        ("async function foo() { thing().then() }", Some(serde_json::json!([{ "strict": false }]))),
+        (
+            "async function hi() { await thing().then(x => {}) }",
+            Some(serde_json::json!([{ "strict": true }])),
+        ),
     ];
 
     Tester::new(PreferAwaitToThen::NAME, PreferAwaitToThen::PLUGIN, pass, fail).test_and_snapshot();
