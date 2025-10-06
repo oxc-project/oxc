@@ -36,9 +36,7 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
   });
 }
 
-describe.skipIf(
-  process.platform === 'win32',
-)('oxlint CLI', () => {
+describe('oxlint CLI', () => {
   it('should lint a directory without errors', async () => {
     await testFixture('built_in_no_errors', { args: [] });
   });

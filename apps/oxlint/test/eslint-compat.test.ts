@@ -17,7 +17,7 @@ async function testFixture(fixtureName: string): Promise<void> {
   });
 }
 
-describe.skipIf(process.platform === 'win32')('ESLint compatibility', () => {
+describe('ESLint compatibility', () => {
   it('`definePlugin` should work', async () => {
     await testFixture('definePlugin');
   });

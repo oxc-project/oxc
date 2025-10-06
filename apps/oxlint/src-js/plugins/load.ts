@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { Context } from './context.js';
 import { getErrorMessage } from './utils.js';
 
@@ -100,7 +101,7 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
     throw new Error('This plugin has already been registered. This is a bug in Oxlint. Please report it.');
   }
 
-  const { default: plugin } = (await import(path)) as { default: Plugin };
+  const { default: plugin } = (await import(pathToFileURL(path).href)) as { default: Plugin };
 
   registeredPluginPaths.add(path);
 

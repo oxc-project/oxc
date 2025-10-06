@@ -172,8 +172,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        exclude:
-          - os: ${{ github.ref_name != 'main' && 'windows-latest' || '' }}
+        # exclude:
+        #   - os: ${{ github.ref_name != 'main' && 'windows-latest' || '' }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Enable long paths on Windows
