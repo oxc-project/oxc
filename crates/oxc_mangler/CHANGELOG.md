@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- 3656908 rust: Oxc-index-vec v4.0 (#14254) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c257b41 mangler: Avoid reusing same mangled names in the outer class (#14362) (sapphi-red)
+- fc519c8 mangler: Mangle private class members in subsequent classes correctly (#14361) (sapphi-red)
+- 5d3114c mangler: Allow using typescript keywords as variable names (#14315) (sapphi-red)
+
+
 ## [0.93.0] - 2025-09-28
 
 ### 🐛 Bug Fixes

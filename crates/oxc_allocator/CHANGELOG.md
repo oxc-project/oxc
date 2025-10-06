@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- f37b211 allocator: Add `HashSet` (#14212) (sapphi-red)
+- 7a1c339 allocator: Add `HashMap::from_iter_in` (#14211) (sapphi-red)
+
+### 📚 Documentation
+
+- 0c14e50 allocator/hashmap: Add comments to `HashMap::from_iter_in` (#14329) (overlookmotel)
+
+
 ## [0.93.0] - 2025-09-28
 
 ### 🚜 Refactor

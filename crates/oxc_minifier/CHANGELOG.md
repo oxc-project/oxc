@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.94.0] - 2025-10-06
+
+### 🚀 Features
+
+- 6123684 minifier: Inline single-use variable past read-only variables (#14184) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- c257b41 mangler: Avoid reusing same mangled names in the outer class (#14362) (sapphi-red)
+- fc519c8 mangler: Mangle private class members in subsequent classes correctly (#14361) (sapphi-red)
+- 6b2daa8 minifier: Don't inline single use variable in conditional logical expressions (#14185) (sapphi-red)
+- e4e963b minifier: Remove `continue` in the end of for-in / for-of (#14186) (sapphi-red)
+- 353c001 minifier: Keep private class members used in nested classes (#14217) (sapphi-red)
+- b83ffe5 mangler: Mangle private class members used in nested classes properly (#14218) (sapphi-red)
+
+### 🚜 Refactor
+
+- 11dd63b minifier: Use `oxc_ast::NONE` (#14322) (sapphi-red)
+
+
 ## [0.93.0] - 2025-09-28
 
 ### 🚀 Features

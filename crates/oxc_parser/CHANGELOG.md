@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.94.0] - 2025-10-06
+
+### 🐛 Bug Fixes
+
+- 81a28d4 parser: Forbid abstract class members with implementation in parser instead of semantic (#14325) (Ulrich Stark)
+
+### 🚜 Refactor
+
+- feca94e parser: Split `check_method_definition` by method kind (#14364) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 653aa8a parser: Cleanup and optimize re-lexing angle tokens (#14208) (Ulrich Stark)
+- ff3c240 parser: Cleanup and optimize parsing jsx (#14234) (Ulrich Stark)
+- e6118fa parser: Optimize expect() to reduce branch misprediction (#14242) (Boshen)
+
+
 ## [0.93.0] - 2025-09-28
 
 ### ⚡ Performance
