@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.20.0] - 2025-10-06
+
+### 🚀 Features
+
+- d16df93 linter: Support disable directives for type aware rules (#14052) (camc314)
+
+### 🐛 Bug Fixes
+
+- adff069 language_server: Don't apply "ignore this rule" fixes for fixAll code action + command (#14243) (Sysix)
+
+### 🚜 Refactor
+
+- 891fc47 language_server: Share code for command `oxc.fixAll` and code action `source.fixAll.oxc` (#14244) (Sysix)
+- 7fe930c language_server: Remove unused fixture files (#14246) (Sysix)
+- 2b2c345 language-server: Move `generate_inverted_diagnostics` to `error_with_position` (#14118) (camc314)
+
+### ⚡ Performance
+
+- fa3712d language_server: Create less `ExternalPluginStore`s (#14378) (overlookmotel)
+
+
 ## [1.19.0] - 2025-09-29
 
 ### 🚀 Features

@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.20.0] - 2025-10-06
+
+### 🚀 Features
+
+- d16df93 linter: Support disable directives for type aware rules (#14052) (camc314)
+- f5c6acc linter: Add `vue/no-export-in-script-setup` rule (#14307) (Sysix)
+- 353b153 linter: Implement eslint/no-param-reassign rule (#14341) (Matthew Davis)
+- 3656908 rust: Oxc-index-vec v4.0 (#14254) (Boshen)
+- d8d3d18 linter: Add `vue/prefer-import-from-vue` rule (#14284) (Sysix)
+- f0e760b linter: Add `vue/define-props-destructuring` rule (#14272) (Sysix)
+- 7f450fc linter/unicorn: Implement require-module-specifiers (#13089) (keita hino)
+- a1e7154 linter/unicorn: Implement prefer-classlist-toggle (#14262) (camc314)
+- 8217dce linter/unicorn: Implement no-unnecessary-array-splice-count (#14255) (camc314)
+- 3d5db4a linter/unicorn: Implement no-useless-error-capture-stack-trace (#14222) (camc314)
+- b3b482a linter/unicorn: Implement prefer-top-level-await (#14247) (camc314)
+- 7931be8 linter/unicorn: Implement prefer-class-fields (#14245) (camc314)
+- a39434a linter/unicorn: Implement prefer-at (#14232) (camc314)
+
+### 🐛 Bug Fixes
+
+- e605222 linter/no-useless-undefined: Correctly respect `checkArguments` option (#14369) (camc314)
+- f1bc608 linter: Fix flaky import/no_cycle test (#14328) (Boshen)
+- 0a42d7f tsgolint: Report errors if we fail to parse tsgolint diagnostic messages (#14301) (camc314)
+- 42f8d7e linter/react-hooks: Fix diagnostic message for literal in dependency array (#14266) (camc314)
+- ece91c5 linter/react-hooks: Fix diagnostic message for duplicate dependency in array (#14265) (camc314)
+- 864fa0e linter/no-unused-expression: False positive with satisfies expressions (#14259) (camc314)
+- 46cceb8 linter/rules-of-hooks: Correctly place primary span to fix disable directive (#14237) (camc314)
+
+### 🚜 Refactor
+
+- 00dde41 tsgolint: Make parsing `TsGoLintMessage` parsing errors an enum (#14300) (camc314)
+- fc314f5 tsgolint: Make `MessageType` parsing more idomatic (#14299) (camc314)
+- a24c36e language-server/tsgolint: Use an iterator for tsgolint message parsing (#14298) (camc314)
+- 8be432a tsgolint: Use an iterator for tsgolint message parsing (#14297) (camc314)
+- 57daa54 tsgolint: Remove always `Some` option wrapper (#14296) (camc314)
+- 79eadf8 linter: Introduce `LintRunner` (#14051) (camc314)
+
+### 🧪 Testing
+
+- 55ebb8b linter: Add test for `disable_for_this_section` fix (#14240) (Sysix)
+- a7e8662 linter: Port unicorn test cases to no-named-default (#14239) (camc314)
+
+
 ## [1.19.0] - 2025-09-29
 
 ### 🚀 Features
