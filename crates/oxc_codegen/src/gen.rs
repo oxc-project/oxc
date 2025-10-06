@@ -2751,9 +2751,9 @@ impl Gen for AccessorProperty<'_> {
 
 impl Gen for PrivateIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        let name = if let Some(class_index) = p.current_class_index()
-            && let Some(mangled) = &p.private_member_mappings.as_ref().and_then(|m| {
-                m[0..=class_index].iter().rev().find_map(|m| m.get(self.name.as_str()))
+        let name = if let Some(private_member_mappings) = &p.private_member_mappings
+            && let Some(mangled) = p.current_class_ids().find_map(|class_id| {
+                private_member_mappings.get(class_id).and_then(|m| m.get(self.name.as_str()))
             }) {
             (*mangled).clone()
         } else {

@@ -108,3 +108,17 @@ class B {
 		return this.#e;
 	}
 }
+
+class A { #field = 1; #method() { return this.#field; } } class B { #field2 = 2; #method2() { return this.#field2; } }
+class A {
+	#e = 1;
+	#t() {
+		return this.#e;
+	}
+}
+class B {
+	#e = 2;
+	#t() {
+		return this.#e;
+	}
+}

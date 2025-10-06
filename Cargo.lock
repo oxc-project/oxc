@@ -2249,6 +2249,7 @@ dependencies = [
  "oxc_allocator 0.93.0",
  "oxc_ast 0.93.0",
  "oxc_data_structures 0.93.0",
+ "oxc_index 4.1.0",
  "oxc_parser 0.93.0",
  "oxc_semantic 0.93.0",
  "oxc_span 0.93.0",

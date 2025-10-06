@@ -2,6 +2,8 @@ use std::iter::{self, repeat_with};
 
 use itertools::Itertools;
 use keep_names::collect_name_symbols;
+use oxc_index::IndexVec;
+use oxc_syntax::class::ClassId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
@@ -59,7 +61,7 @@ pub struct ManglerReturn {
     pub scoping: Scoping,
     /// A vector where each element corresponds to a class in declaration order.
     /// Each element is a mapping from original private member names to their mangled names.
-    pub class_private_mappings: std::vec::Vec<FxHashMap<String, CompactStr>>,
+    pub class_private_mappings: IndexVec<ClassId, FxHashMap<String, CompactStr>>,
 }
 
 /// # Name Mangler / Symbol Minification
@@ -560,7 +562,7 @@ impl<'t> Mangler<'t> {
     /// Returns a Vec where each element corresponds to a class in declaration order
     fn collect_private_members_from_semantic(
         semantic: &Semantic<'_>,
-    ) -> std::vec::Vec<FxHashMap<String, CompactStr>> {
+    ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
         classes
             .elements

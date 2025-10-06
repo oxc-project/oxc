@@ -11,9 +11,11 @@ use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
+use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
 use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::{
+    class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
@@ -84,7 +86,7 @@ pub struct Codegen<'a> {
     scoping: Option<Scoping>,
 
     /// Private member name mappings for mangling
-    private_member_mappings: Option<Vec<FxHashMap<String, CompactStr>>>,
+    private_member_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
 
     /// Output Code
     code: CodeBuffer,
@@ -95,7 +97,8 @@ pub struct Codegen<'a> {
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
     binary_expr_stack: Stack<BinaryExpressionVisitor<'a>>,
-    class_stack_pos: usize,
+    class_stack: Stack<ClassId>,
+    next_class_id: ClassId,
     /// Indicates the output is JSX type, it is set in [`Program::gen`] and the result
     /// is obtained by [`oxc_span::SourceType::is_jsx`]
     is_jsx: bool,
@@ -157,7 +160,8 @@ impl<'a> Codegen<'a> {
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
             binary_expr_stack: Stack::with_capacity(12),
-            class_stack_pos: 0,
+            class_stack: Stack::with_capacity(4),
+            next_class_id: ClassId::from_usize(0),
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
@@ -204,7 +208,7 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_private_member_mappings(
         mut self,
-        mappings: Option<Vec<FxHashMap<String, CompactStr>>>,
+        mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
     ) -> Self {
         self.private_member_mappings = mappings;
         self
@@ -467,17 +471,19 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     fn enter_class(&mut self) {
-        self.class_stack_pos += 1;
+        let class_id = self.next_class_id;
+        self.next_class_id = ClassId::from_usize(self.next_class_id.index() + 1);
+        self.class_stack.push(class_id);
     }
 
     #[inline]
     fn exit_class(&mut self) {
-        self.class_stack_pos -= 1;
+        self.class_stack.pop();
     }
 
     #[inline]
-    fn current_class_index(&self) -> Option<usize> {
-        if self.class_stack_pos > 0 { Some(self.class_stack_pos - 1) } else { None }
+    fn current_class_ids(&self) -> impl Iterator<Item = ClassId> {
+        self.class_stack.iter().rev().copied()
     }
 
     #[inline]
