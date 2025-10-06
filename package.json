@@ -3,10 +3,10 @@
   "private": true,
   "packageManager": "pnpm@10.18.0",
   "scripts": {
-    "build": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build",
-    "build-dev": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build-dev",
-    "build-test": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' build-test",
-    "test": "pnpm --workspace-concurrency=1 --filter './napi/*' --filter './apps/*' test",
+    "build": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build",
+    "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
+    "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
+    "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
   },
   "devDependencies": {
