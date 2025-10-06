@@ -55,7 +55,7 @@ impl Generator for ESTreeVisitGenerator {
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.js"),
-                code: visitor_keys,
+                code: visitor_keys.clone(),
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/types.js"),
@@ -68,6 +68,10 @@ impl Generator for ESTreeVisitGenerator {
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.js"),
                 code: walk,
+            },
+            Output::Javascript {
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/keys.js"),
+                code: visitor_keys,
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/types.js"),

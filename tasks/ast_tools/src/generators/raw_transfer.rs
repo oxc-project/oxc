@@ -77,10 +77,7 @@ impl Generator for RawTransferGenerator {
 
         let mut outputs = deserializers
             .into_iter()
-            .map(|(name, code)| Output::Javascript {
-                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/{name}.js"),
-                code,
-            })
+            .map(|(path, code)| Output::Javascript { path, code })
             .collect::<Vec<_>>();
 
         outputs.extend([
@@ -127,7 +124,7 @@ fn generate_deserializers(
     consts: Constants,
     schema: &Schema,
     codegen: &Codegen,
-) -> Vec<(/* name */ String, /* code */ String)> {
+) -> Vec<(/* path */ String, /* code */ String)> {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let span_type_id = schema.type_names["Span"];
 
@@ -206,7 +203,7 @@ fn generate_deserializers(
     // Create deserializers with various settings, by setting `IS_TS`, `RANGE`, `LOC`, `PARENT`
     // and `PRESERVE_PARENS` consts, and running through minifier to shake out irrelevant code
     struct VariantGen {
-        variant_names: Vec<String>,
+        variant_paths: Vec<String>,
     }
 
     impl VariantGenerator<5> for VariantGen {
@@ -218,14 +215,12 @@ fn generate_deserializers(
             for is_ts in [false, true] {
                 for range in [false, true] {
                     for parent in [false, true] {
-                        let mut name = if is_ts { "ts" } else { "js" }.to_string();
-                        if range {
-                            name.push_str("_range");
-                        }
-                        if parent {
-                            name.push_str("_parent");
-                        }
-                        self.variant_names.push(name);
+                        self.variant_paths.push(format!(
+                            "{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/{}{}{}.js",
+                            if is_ts { "ts" } else { "js" },
+                            if range { "_range" } else { "" },
+                            if parent { "_parent" } else { "" },
+                        ));
 
                         variants.push([
                             is_ts, range, /* loc */ false, parent,
@@ -235,7 +230,7 @@ fn generate_deserializers(
                 }
             }
 
-            self.variant_names.push("ts_range_loc_parent_no_parens".to_string());
+            self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
                 /* parent */ true, /* preserve_parens */ false,
@@ -257,10 +252,10 @@ fn generate_deserializers(
         }
     }
 
-    let mut generator = VariantGen { variant_names: vec![] };
+    let mut generator = VariantGen { variant_paths: vec![] };
     let codes = generator.generate(&code);
 
-    generator.variant_names.into_iter().zip(codes).collect()
+    generator.variant_paths.into_iter().zip(codes).collect()
 }
 
 /// Type of deserializer in which some code appears.

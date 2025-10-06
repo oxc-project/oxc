@@ -8,7 +8,7 @@ import {
 // @ts-expect-error we need to generate `.d.ts` file for this module
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
-import { deserializeProgramOnly } from '../../dist/generated/deserialize/ts_range_loc_parent_no_parens.js';
+import { deserializeProgramOnly } from '../../dist/generated/deserialize.js';
 
 import {
   getLineColumnFromOffset,
@@ -125,7 +125,7 @@ export const SOURCE_CODE = Object.freeze({
   // Get visitor keys to traverse this AST.
   get visitorKeys(): { [key: string]: string[] } {
     // This is the path relative to `plugins.js` file in `dist` directory
-    if (visitorKeys === null) visitorKeys = require('./generated/visit/keys.js').default;
+    if (visitorKeys === null) visitorKeys = require('./generated/keys.js').default;
     return visitorKeys;
   },
 
