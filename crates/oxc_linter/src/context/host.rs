@@ -96,6 +96,11 @@ impl<'a> ContextSubHost<'a> {
     pub fn disable_directives(&self) -> &DisableDirectives {
         &self.disable_directives
     }
+
+    /// Shared reference to the [`FrameworkOptions`]
+    pub fn framework_options(&self) -> FrameworkOptions {
+        self.framework_options
+    }
 }
 
 /// Stores shared information about a file being linted.
