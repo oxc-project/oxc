@@ -146,66 +146,112 @@ impl TriviaBuilder {
 
     /// Parse Notation
     fn parse_annotation(&mut self, comment: &mut Comment, source_text: &str) {
-        let mut s = comment.content_span().source_text(source_text);
+        let s = comment.content_span().source_text(source_text);
+        let bytes = s.as_bytes();
 
-        if s.starts_with('!') {
-            comment.content = CommentContent::Legal;
+        // Early exit for empty comments
+        if bytes.is_empty() {
             return;
         }
 
-        if comment.is_block() && s.starts_with('*') {
-            // Ignore webpack comment `/*****/`
-            if !s.bytes().all(|c| c == b'*') {
+        // Check first byte for quick routing
+        match bytes[0] {
+            b'!' => {
+                comment.content = CommentContent::Legal;
+                return;
+            }
+            b'*' if comment.is_block() => {
+                // Ignore webpack comment `/*****/`
+                if !bytes.iter().all(|&c| c == b'*') {
+                    if contains_license_or_preserve_comment(s) {
+                        comment.content = CommentContent::JsdocLegal;
+                    } else {
+                        comment.content = CommentContent::Jsdoc;
+                    }
+                }
+                return;
+            }
+            _ => {}
+        }
+
+        // Skip leading whitespace without allocation
+        let mut start = 0;
+        while start < bytes.len() && bytes[start].is_ascii_whitespace() {
+            start += 1;
+        }
+
+        if start >= bytes.len() {
+            return;
+        }
+
+        // Fast path: check first non-whitespace byte
+        match bytes[start] {
+            b'@' => {
+                start += 1;
+                if start >= bytes.len() {
+                    return;
+                }
+
+                // Check for @vite, @license, @preserve
+                if bytes[start..].starts_with(b"vite") {
+                    comment.content = CommentContent::Vite;
+                    return;
+                }
+                if bytes[start..].starts_with(b"license") || bytes[start..].starts_with(b"preserve")
+                {
+                    comment.content = CommentContent::Legal;
+                    return;
+                }
+
+                // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after @
+            }
+            b'#' => {
+                start += 1;
+                // Continue to check for __PURE__ or __NO_SIDE_EFFECTS__ after #
+            }
+            b'w' => {
+                // Check for webpack comments
+                if bytes[start..].starts_with(b"webpack")
+                    && start + 7 < bytes.len()
+                    && bytes[start + 7].is_ascii_uppercase()
+                {
+                    comment.content = CommentContent::Webpack;
+                    return;
+                }
+                // Fall through to check for coverage ignore patterns
+            }
+            b'v' | b'c' | b'n' | b'i' => {
+                // Check coverage ignore patterns: "v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"
+                let rest = &bytes[start..];
+                if rest.starts_with(b"v8 ignore")
+                    || rest.starts_with(b"c8 ignore")
+                    || rest.starts_with(b"node:coverage")
+                    || rest.starts_with(b"istanbul ignore")
+                {
+                    comment.content = CommentContent::CoverageIgnore;
+                    return;
+                }
+                // Fall through to check license/preserve
+            }
+            _ => {
+                // Check for license/preserve comments in remaining cases
                 if contains_license_or_preserve_comment(s) {
-                    comment.content = CommentContent::JsdocLegal;
-                } else {
-                    comment.content = CommentContent::Jsdoc;
+                    comment.content = CommentContent::Legal;
                 }
                 return;
             }
         }
 
-        s = s.trim_ascii_start();
-
-        if let Some(ss) = s.strip_prefix('@') {
-            if ss.starts_with("vite") {
-                comment.content = CommentContent::Vite;
-                return;
+        // Check for __PURE__ or __NO_SIDE_EFFECTS__ after @ or #
+        if start < bytes.len() && bytes[start..].starts_with(b"__") {
+            let rest = &bytes[start + 2..];
+            if rest.starts_with(b"PURE__") {
+                comment.content = CommentContent::Pure;
+                self.has_pure_comment = true;
+            } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
+                comment.content = CommentContent::NoSideEffects;
+                self.has_no_side_effects_comment = true;
             }
-            if ss.starts_with("license") || ss.starts_with("preserve") {
-                comment.content = CommentContent::Legal;
-                return;
-            }
-            s = ss;
-        } else if let Some(ss) = s.strip_prefix('#') {
-            s = ss;
-        } else if s
-            .strip_prefix("webpack")
-            .and_then(|s| s.bytes().next())
-            .is_some_and(|b| b.is_ascii_uppercase())
-        {
-            comment.content = CommentContent::Webpack;
-            return;
-        } else if ["v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"]
-            .iter()
-            .any(|ss| s.starts_with(ss))
-        {
-            comment.content = CommentContent::CoverageIgnore;
-        } else {
-            if contains_license_or_preserve_comment(s) {
-                comment.content = CommentContent::Legal;
-            }
-            return;
-        }
-
-        let Some(s) = s.strip_prefix("__") else { return };
-        if s.starts_with("PURE__") {
-            comment.content = CommentContent::Pure;
-            self.has_pure_comment = true;
-        }
-        if s.starts_with("NO_SIDE_EFFECTS__") {
-            comment.content = CommentContent::NoSideEffects;
-            self.has_no_side_effects_comment = true;
         }
     }
 }
