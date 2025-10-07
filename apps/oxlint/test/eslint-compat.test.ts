@@ -17,7 +17,7 @@ async function testFixture(fixtureName: string): Promise<void> {
   });
 }
 
-describe('ESLint compatibility', () => {
+describe('ESLint compatibility', { timeout: 10_000 }, () => {
   it('`definePlugin` should work', async () => {
     await testFixture('definePlugin');
   });

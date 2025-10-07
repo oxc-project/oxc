@@ -171,6 +171,56 @@ jobs:
     name: Test NAPI
     runs-on: ubuntu-latest
     steps:
+      - name: Enable long paths on Windows
+        if: matrix.os == 'windows-latest'
+        run: git config --system core.longpaths true
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: |
+            src:
+              - '!crates/oxc_linter/**'
+              - '!crates/oxc_language_server/**'
+              - '!editors/**'
+      - uses: oxc-project/setup-rust@1ff88fdaffd6ae35c0fb32ccc159340b37d0beac # v1.0.7
+        if: steps.filter.outputs.src == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+        if: steps.filter.outputs.src == 'true'
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true'
+        with:
+          babel: false
+          prettier: false
+      - if: steps.filter.outputs.src == 'true'
+        name: Run tests in workspace
+        env:
+          RUN_RAW_RANGE_TESTS: "true"
+        run: |
+          rustup target add wasm32-wasip1-threads
+          pnpm run build-test
+          pnpm run test
+      - if: steps.filter.outputs.src == 'true'
+        name: Run e2e tests
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run test
+        working-directory: tasks/e2e
+      - if: steps.filter.outputs.src == 'true'
+        run: |
+          git diff --exit-code # Must commit everything
+
+  test-napi-windows:
+    name: Test NAPI (windows)
+    runs-on: windows-latest
+    if: ${{ github.ref_name == 'main' }}
+    steps:
+      - name: Enable long paths on Windows
+        run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
