@@ -105,6 +105,12 @@ pub enum Kind {
     Public,
     Static,
     Yield,
+    // 12.9.1 Null Literals
+    // 12.9.2 Boolean Literals
+    // Moved here to make all keywords contiguous for range check optimization
+    True,
+    False,
+    Null,
     // 12.8 punctuators
     Amp, // &
     Amp2,
@@ -164,11 +170,6 @@ pub enum Kind {
     Tilde,
     // arrow function
     Arrow,
-    // 12.9.1 Null Literals
-    Null,
-    // 12.9.2 Boolean Literals
-    True,
-    False,
     // 12.9.3 Numeric Literals
     Decimal,
     Float,
@@ -211,22 +212,10 @@ impl Kind {
         self == Eof
     }
 
+    /// All numeric literals are contiguous from Decimal..=HexBigInt in the enum.
     #[inline]
     pub fn is_number(self) -> bool {
-        matches!(
-            self,
-            Float
-                | Decimal
-                | Binary
-                | Octal
-                | Hex
-                | PositiveExponential
-                | NegativeExponential
-                | DecimalBigInt
-                | BinaryBigInt
-                | OctalBigInt
-                | HexBigInt
-        )
+        matches!(self as u8, x if x >= Decimal as u8 && x <= HexBigInt as u8)
     }
 
     #[inline] // Inline into `read_non_decimal` - see comment there as to why
@@ -364,12 +353,10 @@ impl Kind {
     }
 
     /// [Keywords and Reserved Words](https://tc39.es/ecma262/#sec-keywords-and-reserved-words)
+    /// All keywords are contiguous from Await..=Null in the enum for optimal range check.
     #[inline]
     pub fn is_any_keyword(self) -> bool {
-        self.is_reserved_keyword()
-            || self.is_contextual_keyword()
-            || self.is_strict_mode_contextual_keyword()
-            || self.is_future_reserved_keyword()
+        matches!(self as u8, x if x >= Await as u8 && x <= Null as u8)
     }
 
     #[rustfmt::skip]
