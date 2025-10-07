@@ -73,6 +73,7 @@
 // it will avoid full GC runs, which should greatly improve performance.
 
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP, NODE_TYPES_COUNT } from '../generated/type_ids.js';
+import { parseSelector, wrapVisitFnWithSelectorMatch } from './selector.js';
 
 import type { CompiledVisitorEntry, EnterExit, Node, VisitFn, Visitor } from './types.ts';
 
@@ -212,7 +213,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   for (let i = 0; i < keysLen; i++) {
     let name = keys[i];
 
-    const visitFn = (visitor as { [key: string]: VisitFn })[name];
+    let visitFn = visitor[name];
     if (typeof visitFn !== 'function') {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
@@ -220,9 +221,41 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     const isExit = name.endsWith(':exit');
     if (isExit) name = name.slice(0, -5);
 
-    const typeId = NODE_TYPE_IDS_MAP.get(name);
-    if (typeId === void 0) throw new Error(`Unknown node type '${name}' in visitor object`);
-    addVisitFn(typeId, isExit, visitFn);
+    // TODO: Combine the two hashmaps `NODE_TYPE_IDS_MAP` and selectors cache into one `Map`
+    // to avoid 2 hashmap lookups for selectors?
+    let typeId = NODE_TYPE_IDS_MAP.get(name);
+    if (typeId !== void 0) {
+      // Single type visit function e.g. `Program`
+      addVisitFn(typeId, isExit, visitFn);
+      continue;
+    }
+
+    // `*` matches any node without any filtering, so no need to wrap it
+    if (name !== '*') {
+      // Selector.
+      // Parse selector.
+      // Wrap `visitFn` so it only executes if the selector matches.
+      // If selector is simple (unconditionally matches certain types e.g. `:matches(X, Y)`), skip wrapping.
+      const selector = parseSelector(name);
+      if (selector.isComplex) visitFn = wrapVisitFnWithSelectorMatch(visitFn, selector.esquerySelector);
+
+      const { typeIds } = selector;
+      if (typeIds !== null) {
+        // Selector matches a specific set of node types
+        for (let i = 0, len = typeIds.length; i < len; i++) {
+          addVisitFn(typeIds[i], isExit, visitFn);
+        }
+        continue;
+      }
+    }
+
+    // `*` selector or some other selector that matches all node types
+    for (typeId = 0; typeId < LEAF_NODE_TYPES_COUNT; typeId++) {
+      addLeafVisitFn(typeId, isExit, visitFn);
+    }
+    for (; typeId < NODE_TYPES_COUNT; typeId++) {
+      addNonLeafVisitFn(typeId, isExit, visitFn);
+    }
   }
 }
 
@@ -325,6 +358,8 @@ function addNonLeafVisitFn(typeId: number, isExit: boolean, visitFn: VisitFn): v
  */
 export function finalizeCompiledVisitor() {
   if (hasActiveVisitors === false) return false;
+
+  // TODO: Visit functions need to be ordered by specificity of their selectors, with most specific first
 
   // Merge visit functions for node types which have multiple visitors from different rules,
   // or enter+exit functions for leaf nodes

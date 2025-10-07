@@ -380,4 +380,5 @@ export interface VisitorObject {
   'TSTypeReference:exit'?: (node: ESTree.TSTypeReference) => void;
   TSUnionType?: (node: ESTree.TSUnionType) => void;
   'TSUnionType:exit'?: (node: ESTree.TSUnionType) => void;
+  [key: string]: (node: ESTree.Node) => void;
 }

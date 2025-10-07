@@ -53,9 +53,18 @@ importers:
 
   apps/oxlint:
     devDependencies:
+      '@types/esquery':
+        specifier: ^1.5.4
+        version: 1.5.4
+      '@types/estree':
+        specifier: ^1.0.8
+        version: 1.0.8
       eslint:
         specifier: ^9.36.0
         version: 9.36.0(jiti@2.6.0)
+      esquery:
+        specifier: ^1.6.0
+        version: 1.6.0
       execa:
         specifier: ^9.6.0
         version: 9.6.0
@@ -1813,6 +1822,9 @@ packages:
 
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
+
+  '@types/esquery@1.5.4':
+    resolution: {integrity: sha512-yYO4Q8H+KJHKW1rEeSzHxcZi90durqYgWVfnh5K6ZADVBjBv2e1NEveYX5yT2bffgN7RqzH3k9930m+i2yBoMA==}
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
@@ -5466,6 +5478,10 @@ snapshots:
       '@types/deep-eql': 4.0.2
 
   '@types/deep-eql@4.0.2': {}
+
+  '@types/esquery@1.5.4':
+    dependencies:
+      '@types/estree': 1.0.8
 
   '@types/estree@1.0.8': {}
 

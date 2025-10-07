@@ -174,3 +174,4 @@ export const NODE_TYPE_IDS_MAP = new Map([
 
 export const NODE_TYPES_COUNT = 165;
 export const LEAF_NODE_TYPES_COUNT = 27;
+export const FUNCTION_NODE_TYPE_IDS = [30, 55, 56];

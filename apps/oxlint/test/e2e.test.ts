@@ -159,6 +159,10 @@ describe('oxlint CLI', () => {
     await testFixture('sourceCode_late_access_after_only');
   });
 
+  it('should support selectors', async () => {
+    await testFixture('selector');
+  });
+
   it('should support `createOnce`', async () => {
     await testFixture('createOnce');
   });

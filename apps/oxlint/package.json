@@ -36,7 +36,10 @@
     "dist"
   ],
   "devDependencies": {
+    "@types/esquery": "^1.5.4",
+    "@types/estree": "^1.0.8",
     "eslint": "^9.36.0",
+    "esquery": "^1.6.0",
     "execa": "^9.6.0",
     "jiti": "^2.6.0",
     "tsdown": "^0.15.5",

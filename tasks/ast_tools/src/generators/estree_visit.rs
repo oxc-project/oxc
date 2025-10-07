@@ -31,6 +31,10 @@ impl Display for NodeId {
     }
 }
 
+/// Names of ESTree function types.
+const FUNCTION_TYPE_NAMES: &[&str] =
+    &["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"];
+
 pub struct ESTreeVisitGenerator;
 
 define_generator!(ESTreeVisitGenerator);
@@ -41,7 +45,8 @@ impl Generator for ESTreeVisitGenerator {
             walk_parser,
             walk_oxlint,
             visitor_keys,
-            type_ids_map,
+            type_ids_map_parser,
+            type_ids_map_oxlint,
             visitor_type_parser,
             visitor_type_oxlint,
         } = generate(codegen);
@@ -57,7 +62,7 @@ impl Generator for ESTreeVisitGenerator {
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/type_ids.js"),
-                code: type_ids_map.clone(),
+                code: type_ids_map_parser,
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
@@ -75,7 +80,7 @@ impl Generator for ESTreeVisitGenerator {
             Output::Javascript {
                 // This file is also valid as TS
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/type_ids.ts"),
-                code: type_ids_map,
+                code: type_ids_map_oxlint,
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/visitor.d.ts"),
@@ -90,7 +95,8 @@ struct Codes {
     walk_parser: String,
     walk_oxlint: String,
     visitor_keys: String,
-    type_ids_map: String,
+    type_ids_map_parser: String,
+    type_ids_map_oxlint: String,
     visitor_type_parser: String,
     visitor_type_oxlint: String,
 }
@@ -215,6 +221,7 @@ fn generate(codegen: &Codegen) -> Codes {
     let mut visitor_type = string!("");
 
     let mut leaf_nodes_count = None;
+    let mut function_node_ids = vec![];
     for (node_id, node) in nodes.iter_enumerated() {
         let is_leaf = node.keys.is_empty();
         if leaf_nodes_count.is_none() && !is_leaf {
@@ -265,7 +272,12 @@ fn generate(codegen: &Codegen) -> Codes {
 
         let keys = &node.keys;
         write_it!(visitor_keys, "{node_name}: {keys:?},\n");
+
         write_it!(type_ids_map, "[\"{node_name}\", {node_id}],\n");
+
+        if FUNCTION_TYPE_NAMES.contains(&node_name) {
+            function_node_ids.push(node_id);
+        }
 
         // Convert ESTree type name to Oxc type names where they diverge
         let type_names: Option<&[&str]> = match node_name {
@@ -378,10 +390,17 @@ fn generate(codegen: &Codegen) -> Codes {
     write_it!(type_ids_map, "]);
 
         export const NODE_TYPES_COUNT = {nodes_count};
-        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
+        export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};");
+
+    function_node_ids.sort_unstable();
+    #[rustfmt::skip]
+    let type_ids_map_oxlint = format!("
+        {type_ids_map}
+        export const FUNCTION_NODE_TYPE_IDS = {function_node_ids:?};
     ");
 
-    // Versions of `visitor.d.ts` for parser and Oxlint import ESTree types from different places
+    // Versions of `visitor.d.ts` for parser and Oxlint import ESTree types from different places.
+    // Oxlint version also allows any arbitrary properties (selectors).
     #[rustfmt::skip]
     let visitor_type_parser = format!("
         import * as ESTree from '@oxc-project/types';
@@ -396,7 +415,7 @@ fn generate(codegen: &Codegen) -> Codes {
         import * as ESTree from './types.d.ts';
 
         export interface VisitorObject {{
-            {visitor_type}
+            {visitor_type} [key: string]: (node: ESTree.Node) => void;
         }}
     ");
 
@@ -404,7 +423,8 @@ fn generate(codegen: &Codegen) -> Codes {
         walk_parser,
         walk_oxlint,
         visitor_keys,
-        type_ids_map,
+        type_ids_map_parser: type_ids_map,
+        type_ids_map_oxlint,
         visitor_type_parser,
         visitor_type_oxlint,
     }
