@@ -88,19 +88,19 @@ impl<'a> ParserImpl<'a> {
     /// `StringValue` of `IdentifierName` normalizes any Unicode escape sequences
     /// in `IdentifierName` hence such escapes cannot be used to write an Identifier
     /// whose code point sequence is the same as a `ReservedWord`.
-    #[inline]
-    fn test_escaped_keyword(&mut self, kind: Kind) {
-        if self.cur_token().escaped() && kind.is_any_keyword() {
-            let span = self.cur_token().span();
-            self.error(diagnostics::escaped_keyword(span));
-        }
+    #[cold]
+    fn report_escaped_keyword(&mut self, span: Span) {
+        self.error(diagnostics::escaped_keyword(span));
     }
 
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
     #[inline]
     fn advance(&mut self, kind: Kind) {
-        self.test_escaped_keyword(kind);
+        // Manually inlined escaped keyword check - escaped identifiers are extremely rare
+        if self.token.escaped() && kind.is_any_keyword() {
+            self.report_escaped_keyword(self.token.span());
+        }
         self.prev_token_end = self.token.end();
         self.token = self.lexer.next_token();
     }
