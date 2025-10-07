@@ -1,0 +1,90 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineProps' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:3:19]
+ 2 │                   <script setup>
+ 3 │                   import { defineProps } from 'vue'
+   ·                            ───────────
+ 4 │                   </script>
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineProps' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:5:12]
+ 4 │                     ref,
+ 5 │                     defineProps
+   ·                     ───────────
+ 6 │                   } from 'vue'
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineProps' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:3:24]
+ 2 │                   <script setup>
+ 3 │                   import { ref, defineProps } from 'vue'
+   ·                                 ───────────
+ 4 │                   import { defineEmits, computed } from '@vue/runtime-core'
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineEmits' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:4:19]
+ 3 │                   import { ref, defineProps } from 'vue'
+ 4 │                   import { defineEmits, computed } from '@vue/runtime-core'
+   ·                            ───────────
+ 5 │                   import { defineExpose, watch, withDefaults } from '@vue/runtime-dom'
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineExpose' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:5:19]
+ 4 │                   import { defineEmits, computed } from '@vue/runtime-core'
+ 5 │                   import { defineExpose, watch, withDefaults } from '@vue/runtime-dom'
+   ·                            ────────────
+ 6 │                   </script>
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'withDefaults' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:5:40]
+ 4 │                   import { defineEmits, computed } from '@vue/runtime-core'
+ 5 │                   import { defineExpose, watch, withDefaults } from '@vue/runtime-dom'
+   ·                                                 ────────────
+ 6 │                   </script>
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineModel' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:3:19]
+ 2 │                   <script setup>
+ 3 │                   import { defineModel, defineOptions } from 'vue'
+   ·                            ───────────
+ 4 │                   </script>
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineOptions' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:3:32]
+ 2 │                   <script setup>
+ 3 │                   import { defineModel, defineOptions } from 'vue'
+   ·                                         ─────────────
+ 4 │                   </script>
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineSlots' is a compiler macro and doesn't need to be imported.
+   ╭─[no_import_compiler_macros.tsx:3:34]
+ 2 │                   <script setup lang="ts">
+ 3 │                   import { ref as refFoo, defineSlots as defineSlotsFoo, type computed } from '@vue/runtime-core'
+   ·                                           ─────────────────────────────
+ 4 │                   </script>
+   ╰────
+  help: Remove the import statement for this macro.
+
+  ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineProps' is a compiler macro and can't be imported outside of `<script setup>`.
+   ╭─[no_import_compiler_macros.tsx:1:10]
+ 1 │ import { defineProps } from 'vue'
+   ·          ───────────
+   ╰────
+  help: Remove the import statement for this macro.

@@ -2919,6 +2919,11 @@ impl RuleRunner for crate::rules::vue::no_export_in_script_setup::NoExportInScri
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
 
+impl RuleRunner for crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ImportDeclaration]));
+}
+
 impl RuleRunner for crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
