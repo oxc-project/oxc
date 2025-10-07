@@ -1,1 +1,2 @@
 apps/oxfmt/tests/fixtures/** text=auto eol=lf
+apps/oxlint/test/fixtures/** text=auto eol=lf
