@@ -162,7 +162,7 @@ export class Context {
     let message: string;
     if (hasOwn(diagnostic, 'messageId')) {
       const diagWithMessageId = diagnostic as DiagnosticWithMessageId;
-      message = this.#resolveMessage(diagWithMessageId.messageId, diagWithMessageId.data, internal);
+      message = resolveMessage(diagWithMessageId.messageId, diagWithMessageId.data, internal);
     } else {
       message = diagnostic.message;
       if (typeof message !== 'string') {
@@ -212,47 +212,6 @@ export class Context {
     });
   }
 
-  /**
-   * Resolve a messageId to its message string, with optional data interpolation.
-   * @param messageId - The message ID to resolve
-   * @param data - Optional data for placeholder interpolation
-   * @param internal - Internal context containing messages
-   * @returns Resolved message string
-   * @throws {Error} If messageId is not found in messages
-   */
-  #resolveMessage(
-    messageId: string,
-    data: Record<string, string | number> | undefined,
-    internal: InternalContext,
-  ): string {
-    const { messages } = internal;
-
-    if (!messages) {
-      throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in meta.messages`);
-    }
-
-    if (!hasOwn(messages, messageId)) {
-      throw new Error(
-        `Unknown messageId '${messageId}'. Available messages: ${
-          Object.keys(messages).map((msg) => `'${msg}'`).join(', ')
-        }`,
-      );
-    }
-
-    let message = messages[messageId];
-
-    // Interpolate placeholders {{key}} with data values
-    if (data) {
-      message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-        key = key.trim();
-        const value = data[key];
-        return value !== undefined ? String(value) : match;
-      });
-    }
-
-    return message;
-  }
-
   static {
     setupContextForFile = (context, ruleIndex, filePath) => {
       // TODO: Support `options`
@@ -267,4 +226,45 @@ export class Context {
       return internal;
     };
   }
+}
+
+/**
+ * Resolve a message ID to its message string, with optional data interpolation.
+ * @param messageId - The message ID to resolve
+ * @param data - Optional data for placeholder interpolation
+ * @param internal - Internal context containing messages
+ * @returns Resolved message string
+ * @throws {Error} If `messageId` is not found in `messages`
+ */
+function resolveMessage(
+  messageId: string,
+  data: Record<string, string | number> | undefined,
+  internal: InternalContext,
+): string {
+  const { messages } = internal;
+
+  if (!messages) {
+    throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in meta.messages`);
+  }
+
+  if (!hasOwn(messages, messageId)) {
+    throw new Error(
+      `Unknown messageId '${messageId}'. Available messages: ${
+        Object.keys(messages).map((msg) => `'${msg}'`).join(', ')
+      }`,
+    );
+  }
+
+  let message = messages[messageId];
+
+  // Interpolate placeholders {{key}} with data values
+  if (data) {
+    message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+      key = key.trim();
+      const value = data[key];
+      return value !== undefined ? String(value) : match;
+    });
+  }
+
+  return message;
 }
