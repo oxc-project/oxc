@@ -3,45 +3,61 @@
 
 # stdout
 ```
-  x interpolation-test(no-var): Variable {{name}} should not use var
+  x interpolation-test(no-var): Variables should not use var
    ,-[files/index.js:1:1]
  1 | var testWithNoData = {};
    : ^^^^^^^^^^^^^^^^^^^^^^^^
  2 | var testWithName = {};
    `----
 
-  x interpolation-test(no-var): Variable testWithName of type string should not use var
+  x interpolation-test(no-var): Variable `testWithName` should not use var
    ,-[files/index.js:2:1]
  1 | var testWithNoData = {};
  2 | var testWithName = {};
    : ^^^^^^^^^^^^^^^^^^^^^^
- 3 | var testWithMultiple = {};
+ 3 | var testWithNameNoData = {};
    `----
 
-  x interpolation-test(no-var): Variable testWithMultiple of type number should not use var
+  x interpolation-test(no-var): Variable `{{name}}` should not use var
    ,-[files/index.js:3:1]
  2 | var testWithName = {};
- 3 | var testWithMultiple = {};
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^
- 4 | var testWithMissingData = {};
+ 3 | var testWithNameNoData = {};
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | var testWithMultiple = {};
    `----
 
-  x interpolation-test(no-var): Value is example and name is {{name}}
+  x interpolation-test(no-var): Variable `testWithMultiple` of type `string` should not use var
    ,-[files/index.js:4:1]
- 3 | var testWithMultiple = {};
- 4 | var testWithMissingData = {};
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 5 | var testWithSpaces = {};
+ 3 | var testWithNameNoData = {};
+ 4 | var testWithMultiple = {};
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | var testWithMultipleNoData = {};
    `----
 
-  x interpolation-test(no-var): Value with spaces: hello and name: world
+  x interpolation-test(no-var): Variable `{{name}}` of type `{{type}}` should not use var
    ,-[files/index.js:5:1]
- 4 | var testWithMissingData = {};
- 5 | var testWithSpaces = {};
+ 4 | var testWithMultiple = {};
+ 5 | var testWithMultipleNoData = {};
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 6 | var testWithMissingData = {};
+   `----
+
+  x interpolation-test(no-var): Value is `example` and name is `{{name}}`
+   ,-[files/index.js:6:1]
+ 5 | var testWithMultipleNoData = {};
+ 6 | var testWithMissingData = {};
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 | var testWithSpaces = {};
+   `----
+
+  x interpolation-test(no-var): Value with spaces is `hello` and name is `world`
+   ,-[files/index.js:7:1]
+ 6 | var testWithMissingData = {};
+ 7 | var testWithSpaces = {};
    : ^^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
-Found 0 warnings and 5 errors.
+Found 0 warnings and 7 errors.
 Finished in Xms on 1 file using X threads.
 ```
 

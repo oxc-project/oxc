@@ -9,11 +9,11 @@ const plugin: Plugin = {
       meta: {
         messages: {
           noData: 'Variables should not use var',
-          withName: 'Variable {{name}} should not use var',
-          withMultiple: 'Variable {{name}} of type {{type}} should not use var',
+          withName: 'Variable `{{name}}` should not use var',
+          withMultiple: 'Variable `{{name}}` of type `{{type}}` should not use var',
           // edge cases
-          missingData: 'Value is {{value}} and name is {{name}}',
-          withSpaces: 'Value with spaces: {{ value }} and name: {{  name  }}',
+          missingData: 'Value is `{{value}}` and name is `{{name}}`',
+          withSpaces: 'Value with spaces is `{{ value }}` and name is `{{  name  }}`',
         },
       },
       create(context) {
@@ -26,14 +26,27 @@ const plugin: Plugin = {
                 if (firstDeclaration.id.type === 'Identifier') {
                   const name = firstDeclaration.id.name;
 
-                  // Test with single placeholder
                   if (name === 'testWithNoData') {
+                    // Test with no placeholders, no data
+                    context.report({
+                      messageId: 'noData',
+                      node,
+                    });
+                  } else if (name === 'testWithName') {
+                    // Test with single placeholder
+                    context.report({
+                      messageId: 'withName',
+                      node,
+                      data: { name },
+                    });
+                  } else if (name === 'testWithNameNoData') {
+                    // Test with single placeholder, but no data
                     context.report({
                       messageId: 'withName',
                       node,
                     });
-                  } // Test with multiple placeholders
-                  else if (name === 'testWithName') {
+                  } else if (name === 'testWithMultiple') {
+                    // Test with multiple placeholders
                     context.report({
                       messageId: 'withMultiple',
                       node,
@@ -42,15 +55,11 @@ const plugin: Plugin = {
                         type: 'string',
                       },
                     });
-                  } // Test without data
-                  else if (name === 'testWithMultiple') {
+                  } else if (name === 'testWithMultipleNoData') {
+                    // Test with multiple placeholders, but no data
                     context.report({
                       messageId: 'withMultiple',
                       node,
-                      data: {
-                        name,
-                        type: 'number',
-                      },
                     });
                   } else if (name === 'testWithMissingData') {
                     // Test missing data - placeholder should remain
