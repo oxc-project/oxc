@@ -37,18 +37,14 @@ define_generator!(ESTreeVisitGenerator);
 
 impl Generator for ESTreeVisitGenerator {
     fn generate_many(&self, _schema: &Schema, codegen: &Codegen) -> Vec<Output> {
-        let Codes { walk_parser, walk_oxlint, visitor_keys, type_ids_map, mut visitor_type } =
-            generate(codegen);
-
-        // Versions of `visitor_type` for parser and Oxlint import ESTree types from different places
-        #[rustfmt::skip]
-        let oxlint_visitor_type = format!("
-            import * as ESTree from './types.d.ts';
-
-            {visitor_type}
-        ");
-
-        visitor_type.insert_str(0, "import * as ESTree from '@oxc-project/types';\n\n");
+        let Codes {
+            walk_parser,
+            walk_oxlint,
+            visitor_keys,
+            type_ids_map,
+            visitor_type_parser,
+            visitor_type_oxlint,
+        } = generate(codegen);
 
         vec![
             Output::Javascript {
@@ -65,7 +61,7 @@ impl Generator for ESTreeVisitGenerator {
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/visitor.d.ts"),
-                code: visitor_type,
+                code: visitor_type_parser,
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.js"),
@@ -83,7 +79,7 @@ impl Generator for ESTreeVisitGenerator {
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/visitor.d.ts"),
-                code: oxlint_visitor_type,
+                code: visitor_type_oxlint,
             },
         ]
     }
@@ -95,7 +91,8 @@ struct Codes {
     walk_oxlint: String,
     visitor_keys: String,
     type_ids_map: String,
-    visitor_type: String,
+    visitor_type_parser: String,
+    visitor_type_oxlint: String,
 }
 
 /// Details of a node's name and visitor keys.
@@ -215,7 +212,7 @@ fn generate(codegen: &Codegen) -> Codes {
             // Leaf nodes
     ");
 
-    let mut visitor_type = string!("export interface VisitorObject {\n");
+    let mut visitor_type = string!("");
 
     let mut leaf_nodes_count = None;
     for (node_id, node) in nodes.iter_enumerated() {
@@ -384,7 +381,31 @@ fn generate(codegen: &Codegen) -> Codes {
         export const LEAF_NODE_TYPES_COUNT = {leaf_nodes_count};
     ");
 
-    visitor_type.push('}');
+    // Versions of `visitor.d.ts` for parser and Oxlint import ESTree types from different places
+    #[rustfmt::skip]
+    let visitor_type_parser = format!("
+        import * as ESTree from '@oxc-project/types';
 
-    Codes { walk_parser, walk_oxlint, visitor_keys, type_ids_map, visitor_type }
+        export interface VisitorObject {{
+            {visitor_type}
+        }}
+    ");
+
+    #[rustfmt::skip]
+    let visitor_type_oxlint = format!("
+        import * as ESTree from './types.d.ts';
+
+        export interface VisitorObject {{
+            {visitor_type}
+        }}
+    ");
+
+    Codes {
+        walk_parser,
+        walk_oxlint,
+        visitor_keys,
+        type_ids_map,
+        visitor_type_parser,
+        visitor_type_oxlint,
+    }
 }
