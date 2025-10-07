@@ -159,7 +159,10 @@ impl ConfigStoreBuilder {
             }
         }
 
-        if !external_plugins.is_empty() {
+        // If external plugins are not enabled (language server), then skip loading JS plugins.
+        // This is so that a project can use JS plugins via `oxlint` CLI, and language server
+        // will just silently ignore them - rather than crashing.
+        if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
                 let plugin_specifier = external_plugins.iter().next().unwrap().clone();
@@ -613,7 +616,7 @@ impl Display for ConfigBuilderError {
             ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier } => {
                 write!(
                     f,
-                    "`jsPlugins` config contains '{plugin_specifier}'. JS plugins are not supported in the language server, or on 32-bit or big-endian platforms at present.",
+                    "`jsPlugins` config contains '{plugin_specifier}'. JS plugins are not supported on 32-bit or big-endian platforms at present.",
                 )?;
                 Ok(())
             }

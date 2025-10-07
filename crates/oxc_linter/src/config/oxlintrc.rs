@@ -65,6 +65,9 @@ use super::{
 pub struct Oxlintrc {
     pub plugins: Option<LintPlugins>,
     /// JS plugins.
+    ///
+    /// Note: JS plugins are experimental and not subject to semver.
+    /// They are not supported in language server at present.
     #[serde(rename = "jsPlugins")]
     pub external_plugins: Option<FxHashSet<String>>,
     pub categories: OxlintCategories,

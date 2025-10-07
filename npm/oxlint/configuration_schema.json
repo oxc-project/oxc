@@ -48,7 +48,7 @@
       }
     },
     "jsPlugins": {
-      "description": "JS plugins.",
+      "description": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
       "default": null,
       "type": [
         "array",
@@ -440,7 +440,7 @@
           ]
         },
         "jsPlugins": {
-          "description": "JS plugins for this override.",
+          "description": "JS plugins for this override.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
           "type": [
             "array",
             "null"

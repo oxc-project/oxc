@@ -12,16 +12,40 @@ define_index_type! {
     pub struct ExternalRuleId = u32;
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ExternalPluginStore {
     registered_plugin_paths: FxHashSet<String>,
 
     plugins: IndexVec<ExternalPluginId, ExternalPlugin>,
     plugin_names: FxHashMap<String, ExternalPluginId>,
     rules: IndexVec<ExternalRuleId, ExternalRule>,
+
+    // `true` for `oxlint`, `false` for language server
+    is_enabled: bool,
+}
+
+impl Default for ExternalPluginStore {
+    fn default() -> Self {
+        Self::new(true)
+    }
 }
 
 impl ExternalPluginStore {
+    pub fn new(is_enabled: bool) -> Self {
+        Self {
+            registered_plugin_paths: FxHashSet::default(),
+            plugins: IndexVec::default(),
+            plugin_names: FxHashMap::default(),
+            rules: IndexVec::default(),
+            is_enabled,
+        }
+    }
+
+    /// Returns `true` if external plugins are enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.is_enabled
+    }
+
     /// Returns `true` if no external plugins have been loaded.
     pub fn is_empty(&self) -> bool {
         self.plugins.is_empty()

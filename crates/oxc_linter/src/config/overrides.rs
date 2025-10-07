@@ -94,6 +94,9 @@ pub struct OxlintOverride {
     pub plugins: Option<LintPlugins>,
 
     /// JS plugins for this override.
+    ///
+    /// Note: JS plugins are experimental and not subject to semver.
+    /// They are not supported in language server at present.
     #[serde(rename = "jsPlugins")]
     pub external_plugins: Option<FxHashSet<String>>,
 

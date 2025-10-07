@@ -1,0 +1,69 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+---
+########## 
+file: fixtures/linter/js_plugins/index.js
+----------
+
+code: "eslint(no-debugger)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
+message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
+range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 9 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/linter/js_plugins/index.js"
+related_information[0].location.range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 9 } }
+severity: Some(Warning)
+source: Some("oxc")
+tags: None
+fixed: Multiple(
+    [
+        FixedContent {
+            message: Some(
+                "Remove the debugger statement",
+            ),
+            code: "",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 9,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this line",
+            ),
+            code: "// oxlint-disable-next-line no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+        FixedContent {
+            message: Some(
+                "Disable no-debugger for this file",
+            ),
+            code: "// oxlint-disable no-debugger\n",
+            range: Range {
+                start: Position {
+                    line: 0,
+                    character: 0,
+                },
+                end: Position {
+                    line: 0,
+                    character: 0,
+                },
+            },
+        },
+    ],
+)

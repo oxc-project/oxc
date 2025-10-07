@@ -109,7 +109,7 @@ impl ServerLinter {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_plugin_store = ExternalPluginStore::new(false);
         let config_builder =
             ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
                 .unwrap_or_default();
@@ -211,7 +211,7 @@ impl ServerLinter {
             };
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
-            let mut external_plugin_store = ExternalPluginStore::default();
+            let mut external_plugin_store = ExternalPluginStore::new(false);
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
@@ -668,5 +668,14 @@ mod test {
             Some(LintOptions { type_aware: true, run: Run::OnSave, ..Default::default() }),
         );
         tester.test_and_snapshot_single_file("no-floating-promises/index.ts");
+    }
+
+    #[test]
+    fn test_ignore_js_plugins() {
+        let tester = Tester::new(
+            "fixtures/linter/js_plugins",
+            Some(LintOptions { run: Run::OnSave, ..Default::default() }),
+        );
+        tester.test_and_snapshot_single_file("index.js");
     }
 }
