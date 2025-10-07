@@ -122,6 +122,7 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
 
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false;
+    let messages: Record<string, string> | null = null;
     let ruleMeta = rule.meta;
     if (ruleMeta != null) {
       if (typeof ruleMeta !== 'object') throw new TypeError('Invalid `meta`');
@@ -131,11 +132,19 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
         if (fixable !== 'code' && fixable !== 'whitespace') throw new TypeError('Invalid `meta.fixable`');
         isFixable = true;
       }
+
+      // Extract messages for messageId support
+      if (ruleMeta.messages != null) {
+        if (typeof ruleMeta.messages !== 'object' || Array.isArray(ruleMeta.messages)) {
+          throw new TypeError('Invalid `meta.messages` - must be an object');
+        }
+        messages = ruleMeta.messages;
+      }
     }
 
     // Create `Context` object for rule. This will be re-used for every file.
     // It's updated with file-specific data before linting each file with `setupContextForFile`.
-    const context = new Context(`${pluginName}/${ruleName}`, isFixable);
+    const context = new Context(`${pluginName}/${ruleName}`, isFixable, messages);
 
     let ruleAndContext;
     if ('createOnce' in rule) {

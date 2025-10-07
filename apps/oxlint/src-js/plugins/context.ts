@@ -9,19 +9,27 @@ import type { Location, Ranged } from './types.ts';
 const { hasOwn } = Object;
 
 // Diagnostic in form passed by user to `Context#report()`
-export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
+export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc | DiagnosticWithMessageId;
 
 export interface DiagnosticBase {
-  message: string;
+  message?: string;
   fix?: FixFn;
 }
 
 export interface DiagnosticWithNode extends DiagnosticBase {
+  message: string;
   node: Ranged;
 }
 
 export interface DiagnosticWithLoc extends DiagnosticBase {
+  message: string;
   loc: Location;
+}
+
+export interface DiagnosticWithMessageId extends DiagnosticBase {
+  messageId: string;
+  node?: Ranged;
+  loc?: Location;
 }
 
 // Diagnostic in form sent to Rust
@@ -83,6 +91,8 @@ export interface InternalContext {
   options: unknown[];
   // `true` if rule can provide fixes (`meta.fixable` in `RuleMeta` is 'code' or 'whitespace')
   isFixable: boolean;
+  // Message templates for messageId support
+  messages: Record<string, string> | null;
 }
 
 /**
@@ -98,14 +108,17 @@ export class Context {
   /**
    * @class
    * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
+   * @param isFixable - Whether the rule can provide fixes
+   * @param messages - Message templates for messageId support
    */
-  constructor(fullRuleName: string, isFixable: boolean) {
+  constructor(fullRuleName: string, isFixable: boolean, messages: Record<string, string> | null = null) {
     this.#internal = {
       id: fullRuleName,
       filePath: '',
       ruleIndex: -1,
       options: [],
       isFixable,
+      messages,
     };
   }
 
@@ -144,8 +157,21 @@ export class Context {
   report(diagnostic: Diagnostic): void {
     const internal = getInternal(this, 'report errors');
 
+    // Resolve message from messageId if present
+    let message: string;
+    if (hasOwn(diagnostic, 'messageId')) {
+      const diagWithMessageId = diagnostic as DiagnosticWithMessageId;
+      message = this.#resolveMessage(diagWithMessageId.messageId, internal);
+    } else {
+      message = diagnostic.message;
+      if (typeof message !== 'string') {
+        throw new TypeError('Either `message` or `messageId` is required');
+      }
+    }
+
     // TODO: Validate `diagnostic`
     let start: number, end: number, loc: Location;
+
     if (hasOwn(diagnostic, 'loc') && (loc = (diagnostic as DiagnosticWithLoc).loc) != null) {
       // `loc`
       if (typeof loc !== 'object') throw new TypeError('`loc` must be an object');
@@ -177,12 +203,40 @@ export class Context {
     }
 
     diagnostics.push({
-      message: diagnostic.message,
+      message,
       start,
       end,
       ruleIndex: internal.ruleIndex,
       fixes: getFixes(diagnostic, internal),
     });
+  }
+
+  /**
+   * Resolve a messageId to its message string.
+   * @param messageId - The message ID to resolve
+   * @param internal - Internal context containing messages
+   * @returns Resolved message string
+   * @throws {Error} If messageId is not found in messages
+   */
+  #resolveMessage(
+    messageId: string,
+    internal: InternalContext,
+  ): string {
+    const { messages } = internal;
+
+    if (!messages) {
+      throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in meta.messages`);
+    }
+
+    if (!hasOwn(messages, messageId)) {
+      throw new Error(
+        `Unknown messageId '${messageId}'. Available messages: ${
+          Object.keys(messages).map((msg) => `'${msg}'`).join(', ')
+        }`,
+      );
+    }
+
+    return messages[messageId];
   }
 
   static {

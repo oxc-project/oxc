@@ -49,6 +49,14 @@ describe('oxlint CLI', () => {
     await testFixture('basic_custom_plugin');
   });
 
+  it('should support messageId', async () => {
+    await testFixture('message_id_plugin');
+  });
+
+  it('should report an error for unknown messageId', async () => {
+    await testFixture('message_id_error');
+  });
+
   it('should load a custom plugin with various import styles', async () => {
     await testFixture('load_paths');
   });

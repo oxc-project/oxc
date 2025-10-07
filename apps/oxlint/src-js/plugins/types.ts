@@ -86,6 +86,7 @@ export interface EnterExit {
 // TODO: Fill in all properties.
 export interface RuleMeta {
   fixable?: 'code' | 'whitespace' | null | undefined;
+  messages?: Record<string, string>;
   [key: string]: unknown;
 }
 
