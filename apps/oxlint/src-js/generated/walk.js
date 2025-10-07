@@ -2,6 +2,8 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/estree_visit.rs`.
 
 export { walkProgram };
+
+export const ancestors = [];
 const { isArray } = Array;
 
 function walkNode(node, visitors) {
@@ -650,10 +652,12 @@ function walkAccessorProperty(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
   walkNode(node.value, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -664,7 +668,9 @@ function walkArrayExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.elements, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -675,9 +681,11 @@ function walkArrayPattern(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.elements, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -688,10 +696,12 @@ function walkArrowFunctionExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -702,8 +712,10 @@ function walkAssignmentExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -714,10 +726,12 @@ function walkAssignmentPattern(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -728,7 +742,9 @@ function walkAwaitExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -739,8 +755,10 @@ function walkBinaryExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -751,7 +769,9 @@ function walkBlockStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -762,7 +782,9 @@ function walkBreakStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.label, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -773,9 +795,11 @@ function walkCallExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.callee, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.arguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -786,8 +810,10 @@ function walkCatchClause(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.param, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -798,7 +824,9 @@ function walkChainExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -809,7 +837,9 @@ function walkClassBody(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -820,6 +850,7 @@ function walkClassDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
@@ -827,6 +858,7 @@ function walkClassDeclaration(node, visitors) {
   walkNode(node.superTypeArguments, visitors);
   walkNode(node.implements, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -837,6 +869,7 @@ function walkClassExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
@@ -844,6 +877,7 @@ function walkClassExpression(node, visitors) {
   walkNode(node.superTypeArguments, visitors);
   walkNode(node.implements, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -854,9 +888,11 @@ function walkConditionalExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.test, visitors);
   walkNode(node.consequent, visitors);
   walkNode(node.alternate, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -867,7 +903,9 @@ function walkContinueStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.label, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -878,7 +916,9 @@ function walkDecorator(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -889,8 +929,10 @@ function walkDoWhileStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.body, visitors);
   walkNode(node.test, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -901,9 +943,11 @@ function walkExportAllDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.exported, visitors);
   walkNode(node.source, visitors);
   walkNode(node.attributes, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -914,7 +958,9 @@ function walkExportDefaultDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.declaration, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -925,10 +971,12 @@ function walkExportNamedDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.declaration, visitors);
   walkNode(node.specifiers, visitors);
   walkNode(node.source, visitors);
   walkNode(node.attributes, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -939,8 +987,10 @@ function walkExportSpecifier(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.local, visitors);
   walkNode(node.exported, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -951,7 +1001,9 @@ function walkExpressionStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -962,9 +1014,11 @@ function walkForInStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -975,9 +1029,11 @@ function walkForOfStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -988,10 +1044,12 @@ function walkForStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.init, visitors);
   walkNode(node.test, visitors);
   walkNode(node.update, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1002,11 +1060,13 @@ function walkFunctionDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1017,11 +1077,13 @@ function walkFunctionExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1032,8 +1094,10 @@ function walkIdentifier(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1044,9 +1108,11 @@ function walkIfStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.test, visitors);
   walkNode(node.consequent, visitors);
   walkNode(node.alternate, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1057,8 +1123,10 @@ function walkImportAttribute(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1069,9 +1137,11 @@ function walkImportDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.specifiers, visitors);
   walkNode(node.source, visitors);
   walkNode(node.attributes, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1082,7 +1152,9 @@ function walkImportDefaultSpecifier(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.local, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1093,8 +1165,10 @@ function walkImportExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.source, visitors);
   walkNode(node.options, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1105,7 +1179,9 @@ function walkImportNamespaceSpecifier(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.local, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1116,8 +1192,10 @@ function walkImportSpecifier(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.imported, visitors);
   walkNode(node.local, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1128,8 +1206,10 @@ function walkLabeledStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.label, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1140,8 +1220,10 @@ function walkLogicalExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1152,8 +1234,10 @@ function walkMemberExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.object, visitors);
   walkNode(node.property, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1164,8 +1248,10 @@ function walkMetaProperty(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.meta, visitors);
   walkNode(node.property, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1176,9 +1262,11 @@ function walkMethodDefinition(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1189,9 +1277,11 @@ function walkNewExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.callee, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.arguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1202,7 +1292,9 @@ function walkObjectExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.properties, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1213,9 +1305,11 @@ function walkObjectPattern(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.properties, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1226,7 +1320,9 @@ function walkParenthesizedExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1237,7 +1333,9 @@ function walkProgram(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1248,8 +1346,10 @@ function walkProperty(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1260,10 +1360,12 @@ function walkPropertyDefinition(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
   walkNode(node.value, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1274,9 +1376,11 @@ function walkRestElement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.argument, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1287,7 +1391,9 @@ function walkReturnStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1298,7 +1404,9 @@ function walkSequenceExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expressions, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1309,7 +1417,9 @@ function walkSpreadElement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1320,7 +1430,9 @@ function walkStaticBlock(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1331,8 +1443,10 @@ function walkSwitchCase(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.test, visitors);
   walkNode(node.consequent, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1343,8 +1457,10 @@ function walkSwitchStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.discriminant, visitors);
   walkNode(node.cases, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1355,9 +1471,11 @@ function walkTaggedTemplateExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.tag, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.quasi, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1368,8 +1486,10 @@ function walkTemplateLiteral(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.quasis, visitors);
   walkNode(node.expressions, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1380,7 +1500,9 @@ function walkThrowStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1391,9 +1513,11 @@ function walkTryStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.block, visitors);
   walkNode(node.handler, visitors);
   walkNode(node.finalizer, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1404,7 +1528,9 @@ function walkUnaryExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1415,7 +1541,9 @@ function walkUpdateExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1426,8 +1554,10 @@ function walkV8IntrinsicExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.name, visitors);
   walkNode(node.arguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1438,7 +1568,9 @@ function walkVariableDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.declarations, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1449,8 +1581,10 @@ function walkVariableDeclarator(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.init, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1461,8 +1595,10 @@ function walkWhileStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.test, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1473,8 +1609,10 @@ function walkWithStatement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.object, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1485,7 +1623,9 @@ function walkYieldExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1496,8 +1636,10 @@ function walkJSXAttribute(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.name, visitors);
   walkNode(node.value, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1508,7 +1650,9 @@ function walkJSXClosingElement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.name, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1519,9 +1663,11 @@ function walkJSXElement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.openingElement, visitors);
   walkNode(node.children, visitors);
   walkNode(node.closingElement, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1532,7 +1678,9 @@ function walkJSXExpressionContainer(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1543,9 +1691,11 @@ function walkJSXFragment(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.openingFragment, visitors);
   walkNode(node.children, visitors);
   walkNode(node.closingFragment, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1556,8 +1706,10 @@ function walkJSXMemberExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.object, visitors);
   walkNode(node.property, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1568,8 +1720,10 @@ function walkJSXNamespacedName(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.namespace, visitors);
   walkNode(node.name, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1580,9 +1734,11 @@ function walkJSXOpeningElement(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.name, visitors);
   walkNode(node.typeArguments, visitors);
   walkNode(node.attributes, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1593,7 +1749,9 @@ function walkJSXSpreadAttribute(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1604,7 +1762,9 @@ function walkJSXSpreadChild(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1615,9 +1775,11 @@ function walkTSAbstractAccessorProperty(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1628,8 +1790,10 @@ function walkTSAbstractMethodDefinition(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.key, visitors);
   walkNode(node.value, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1640,9 +1804,11 @@ function walkTSAbstractPropertyDefinition(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1653,7 +1819,9 @@ function walkTSArrayType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.elementType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1664,8 +1832,10 @@ function walkTSAsExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1676,9 +1846,11 @@ function walkTSCallSignatureDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1689,8 +1861,10 @@ function walkTSClassImplements(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
   walkNode(node.typeArguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1701,10 +1875,12 @@ function walkTSConditionalType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.checkType, visitors);
   walkNode(node.extendsType, visitors);
   walkNode(node.trueType, visitors);
   walkNode(node.falseType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1715,9 +1891,11 @@ function walkTSConstructSignatureDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1728,9 +1906,11 @@ function walkTSConstructorType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1741,11 +1921,13 @@ function walkTSDeclareFunction(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1756,10 +1938,12 @@ function walkTSEmptyBodyFunctionExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1770,7 +1954,9 @@ function walkTSEnumBody(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.members, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1781,8 +1967,10 @@ function walkTSEnumDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1793,8 +1981,10 @@ function walkTSEnumMember(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.initializer, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1805,7 +1995,9 @@ function walkTSExportAssignment(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1816,7 +2008,9 @@ function walkTSExternalModuleReference(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1827,9 +2021,11 @@ function walkTSFunctionType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1840,8 +2036,10 @@ function walkTSImportEqualsDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.moduleReference, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1852,10 +2050,12 @@ function walkTSImportType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.argument, visitors);
   walkNode(node.options, visitors);
   walkNode(node.qualifier, visitors);
   walkNode(node.typeArguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1866,8 +2066,10 @@ function walkTSIndexSignature(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.parameters, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1878,8 +2080,10 @@ function walkTSIndexedAccessType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.objectType, visitors);
   walkNode(node.indexType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1890,7 +2094,9 @@ function walkTSInferType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeParameter, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1901,8 +2107,10 @@ function walkTSInstantiationExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
   walkNode(node.typeArguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1913,7 +2121,9 @@ function walkTSInterfaceBody(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1924,10 +2134,12 @@ function walkTSInterfaceDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.extends, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1938,8 +2150,10 @@ function walkTSInterfaceHeritage(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
   walkNode(node.typeArguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1950,7 +2164,9 @@ function walkTSIntersectionType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.types, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1961,7 +2177,9 @@ function walkTSJSDocNonNullableType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1972,7 +2190,9 @@ function walkTSJSDocNullableType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1983,7 +2203,9 @@ function walkTSLiteralType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.literal, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -1994,10 +2216,12 @@ function walkTSMappedType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.key, visitors);
   walkNode(node.constraint, visitors);
   walkNode(node.nameType, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2008,10 +2232,12 @@ function walkTSMethodSignature(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.key, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.params, visitors);
   walkNode(node.returnType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2022,7 +2248,9 @@ function walkTSModuleBlock(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2033,8 +2261,10 @@ function walkTSModuleDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.body, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2045,8 +2275,10 @@ function walkTSNamedTupleMember(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.label, visitors);
   walkNode(node.elementType, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2057,7 +2289,9 @@ function walkTSNamespaceExportDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2068,7 +2302,9 @@ function walkTSNonNullExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2079,7 +2315,9 @@ function walkTSOptionalType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2090,8 +2328,10 @@ function walkTSParameterProperty(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.decorators, visitors);
   walkNode(node.parameter, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2102,7 +2342,9 @@ function walkTSParenthesizedType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2113,8 +2355,10 @@ function walkTSPropertySignature(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.key, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2125,8 +2369,10 @@ function walkTSQualifiedName(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.left, visitors);
   walkNode(node.right, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2137,7 +2383,9 @@ function walkTSRestType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2148,8 +2396,10 @@ function walkTSSatisfiesExpression(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.expression, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2160,8 +2410,10 @@ function walkTSTemplateLiteralType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.quasis, visitors);
   walkNode(node.types, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2172,7 +2424,9 @@ function walkTSTupleType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.elementTypes, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2183,9 +2437,11 @@ function walkTSTypeAliasDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.id, visitors);
   walkNode(node.typeParameters, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2196,7 +2452,9 @@ function walkTSTypeAnnotation(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2207,8 +2465,10 @@ function walkTSTypeAssertion(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
   walkNode(node.expression, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2219,7 +2479,9 @@ function walkTSTypeLiteral(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.members, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2230,7 +2492,9 @@ function walkTSTypeOperator(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2241,9 +2505,11 @@ function walkTSTypeParameter(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.name, visitors);
   walkNode(node.constraint, visitors);
   walkNode(node.default, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2254,7 +2520,9 @@ function walkTSTypeParameterDeclaration(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.params, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2265,7 +2533,9 @@ function walkTSTypeParameterInstantiation(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.params, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2276,8 +2546,10 @@ function walkTSTypePredicate(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.parameterName, visitors);
   walkNode(node.typeAnnotation, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2288,8 +2560,10 @@ function walkTSTypeQuery(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.exprName, visitors);
   walkNode(node.typeArguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2300,8 +2574,10 @@ function walkTSTypeReference(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.typeName, visitors);
   walkNode(node.typeArguments, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }
 
@@ -2312,6 +2588,8 @@ function walkTSUnionType(node, visitors) {
     ({ enter, exit } = enterExit);
     enter !== null && enter(node);
   }
+  ancestors.unshift(node);
   walkNode(node.types, visitors);
+  ancestors.shift();
   exit !== null && exit(node);
 }

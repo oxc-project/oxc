@@ -9,15 +9,12 @@ use std::{
 
 use serde::Deserialize;
 
-use oxc_allocator::Allocator;
+use oxc_ast::ast::{BindingPatternKind, Declaration, Statement, VariableDeclarationKind};
 use oxc_index::{IndexVec, define_index_type};
 
 use crate::{
     Codegen, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
-    output::{
-        Output,
-        javascript::{parse_js, print_minified},
-    },
+    output::{Output, javascript::VariantGenerator},
     schema::Schema,
     utils::{string, write_it},
 };
@@ -40,7 +37,8 @@ define_generator!(ESTreeVisitGenerator);
 
 impl Generator for ESTreeVisitGenerator {
     fn generate_many(&self, _schema: &Schema, codegen: &Codegen) -> Vec<Output> {
-        let Codes { walk, visitor_keys, type_ids_map, mut visitor_type } = generate(codegen);
+        let Codes { walk_parser, walk_oxlint, visitor_keys, type_ids_map, mut visitor_type } =
+            generate(codegen);
 
         // Versions of `visitor_type` for parser and Oxlint import ESTree types from different places
         #[rustfmt::skip]
@@ -55,7 +53,7 @@ impl Generator for ESTreeVisitGenerator {
         vec![
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/walk.js"),
-                code: walk.clone(),
+                code: walk_parser,
             },
             Output::Javascript {
                 path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/visit/keys.js"),
@@ -71,7 +69,7 @@ impl Generator for ESTreeVisitGenerator {
             },
             Output::Javascript {
                 path: format!("{OXLINT_APP_PATH}/src-js/generated/walk.js"),
-                code: walk,
+                code: walk_oxlint,
             },
             Output::Javascript {
                 // This file is also valid as TS
@@ -93,7 +91,8 @@ impl Generator for ESTreeVisitGenerator {
 
 /// Output code.
 struct Codes {
-    walk: String,
+    walk_parser: String,
+    walk_oxlint: String,
     visitor_keys: String,
     type_ids_map: String,
     visitor_type: String,
@@ -111,6 +110,7 @@ struct NodeKeys {
 /// * Visitor keys.
 /// * `Map` from node type name to node type ID.
 /// * Visitor type definition.
+#[expect(clippy::items_after_statements)]
 fn generate(codegen: &Codegen) -> Codes {
     // Run `napi/parser/scripts/visitor-keys.js` to get visitor keys from TS-ESLint
     let script_path = codegen.root_path().join("napi/parser/scripts/visitor-keys.js");
@@ -185,6 +185,8 @@ fn generate(codegen: &Codegen) -> Codes {
     let mut walk = string!("
         export { walkProgram }
 
+        export const ancestors = [];
+
         const { isArray } = Array;
 
         function walkNode(node, visitors) {
@@ -242,13 +244,17 @@ fn generate(codegen: &Codegen) -> Codes {
                     ({{ enter, exit }} = enterExit);
                     if (enter !== null) enter(node);
                 }}
+                if (ANCESTORS) ancestors.unshift(node);
             ");
 
             for key in &node.keys {
                 write_it!(walk_fn_body, "walkNode(node.{key}, visitors);\n");
             }
 
-            walk_fn_body.push_str("if (exit !== null) exit(node);\n");
+            walk_fn_body.push_str("
+                if (ANCESTORS) ancestors.shift();
+                if (exit !== null) exit(node);
+            ");
 
             walk_fn_body
         };
@@ -326,10 +332,46 @@ fn generate(codegen: &Codegen) -> Codes {
         {walk_fns}
     ");
 
-    // Minify walker code
-    let allocator = Allocator::new();
-    let mut program = parse_js(&walk, &allocator);
-    let walk = print_minified(&mut program, &allocator);
+    // Create 2 walker variants for parser and oxlint, by setting `ANCESTORS` const,
+    // and running through minifier to shake out irrelevant code
+    struct WalkVariantGenerator;
+    impl VariantGenerator<1> for WalkVariantGenerator {
+        const FLAG_NAMES: [&str; 1] = ["ANCESTORS"];
+
+        // Remove extraneous `export const ancestors = [];` statement from parser version
+        fn pre_process_variant<'a>(
+            &mut self,
+            program: &mut oxc_ast::ast::Program<'a>,
+            flags: [bool; 1],
+            _allocator: &'a oxc_allocator::Allocator,
+        ) {
+            if flags[0] {
+                return;
+            }
+
+            let stmt_index = program.body.iter().position(|stmt| {
+                if let Statement::ExportNamedDeclaration(decl) = stmt
+                    && let Some(Declaration::VariableDeclaration(decl)) = &decl.declaration
+                    && decl.kind == VariableDeclarationKind::Const
+                    && decl.declarations.len() == 1
+                    && let BindingPatternKind::BindingIdentifier(ident) =
+                        &decl.declarations[0].id.kind
+                    && ident.name == "ancestors"
+                {
+                    true
+                } else {
+                    false
+                }
+            });
+            let stmt_index = stmt_index.unwrap();
+            program.body.remove(stmt_index);
+        }
+    }
+
+    let mut walk_variants = WalkVariantGenerator.generate(&walk).into_iter();
+    assert!(walk_variants.len() == 2);
+    let walk_parser = walk_variants.next().unwrap();
+    let walk_oxlint = walk_variants.next().unwrap();
 
     visitor_keys.push_str("});");
 
@@ -344,5 +386,5 @@ fn generate(codegen: &Codegen) -> Codes {
 
     visitor_type.push('}');
 
-    Codes { walk, visitor_keys, type_ids_map, visitor_type }
+    Codes { walk_parser, walk_oxlint, visitor_keys, type_ids_map, visitor_type }
 }
