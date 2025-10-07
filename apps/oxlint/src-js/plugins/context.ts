@@ -28,6 +28,7 @@ export interface DiagnosticWithLoc extends DiagnosticBase {
 
 export interface DiagnosticWithMessageId extends DiagnosticBase {
   messageId: string;
+  data?: Record<string, string | number>;
   node?: Ranged;
   loc?: Location;
 }
@@ -161,7 +162,7 @@ export class Context {
     let message: string;
     if (hasOwn(diagnostic, 'messageId')) {
       const diagWithMessageId = diagnostic as DiagnosticWithMessageId;
-      message = this.#resolveMessage(diagWithMessageId.messageId, internal);
+      message = this.#resolveMessage(diagWithMessageId.messageId, diagWithMessageId.data, internal);
     } else {
       message = diagnostic.message;
       if (typeof message !== 'string') {
@@ -212,14 +213,16 @@ export class Context {
   }
 
   /**
-   * Resolve a messageId to its message string.
+   * Resolve a messageId to its message string, with optional data interpolation.
    * @param messageId - The message ID to resolve
+   * @param data - Optional data for placeholder interpolation
    * @param internal - Internal context containing messages
    * @returns Resolved message string
    * @throws {Error} If messageId is not found in messages
    */
   #resolveMessage(
     messageId: string,
+    data: Record<string, string | number> | undefined,
     internal: InternalContext,
   ): string {
     const { messages } = internal;
@@ -236,7 +239,18 @@ export class Context {
       );
     }
 
-    return messages[messageId];
+    let message = messages[messageId];
+
+    // Interpolate placeholders {{key}} with data values
+    if (data) {
+      message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+        key = key.trim();
+        const value = data[key];
+        return value !== undefined ? String(value) : match;
+      });
+    }
+
+    return message;
   }
 
   static {

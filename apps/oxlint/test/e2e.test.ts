@@ -53,6 +53,10 @@ describe('oxlint CLI', () => {
     await testFixture('message_id_plugin');
   });
 
+  it('should support messageId placeholder interpolation', async () => {
+    await testFixture('message_id_interpolation');
+  });
+
   it('should report an error for unknown messageId', async () => {
     await testFixture('message_id_error');
   });
