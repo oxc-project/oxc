@@ -134,11 +134,10 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
       }
 
       // Extract messages for messageId support
-      if (ruleMeta.messages != null) {
-        if (typeof ruleMeta.messages !== 'object' || Array.isArray(ruleMeta.messages)) {
-          throw new TypeError('Invalid `meta.messages` - must be an object');
-        }
-        messages = ruleMeta.messages;
+      const inputMessages = ruleMeta.messages;
+      if (inputMessages != null) {
+        if (typeof inputMessages !== 'object') throw new TypeError('`meta.messages` must be an object if provided');
+        messages = inputMessages;
       }
     }
 

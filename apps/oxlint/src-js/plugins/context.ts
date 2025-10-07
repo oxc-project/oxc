@@ -6,7 +6,7 @@ import type { Fix, FixFn } from './fix.ts';
 import type { SourceCode } from './source_code.ts';
 import type { Location, Ranged } from './types.ts';
 
-const { hasOwn } = Object;
+const { hasOwn, keys: ObjectKeys } = Object;
 
 // Diagnostic in form passed by user to `Context#report()`
 export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc | DiagnosticWithMessageId;
@@ -161,8 +161,7 @@ export class Context {
     // Resolve message from messageId if present
     let message: string;
     if (hasOwn(diagnostic, 'messageId')) {
-      const diagWithMessageId = diagnostic as DiagnosticWithMessageId;
-      message = resolveMessage(diagWithMessageId.messageId, internal);
+      message = resolveMessage((diagnostic as DiagnosticWithMessageId).messageId, internal);
     } else {
       message = diagnostic.message;
       if (typeof message !== 'string') {
@@ -249,15 +248,14 @@ export class Context {
  */
 function resolveMessage(messageId: string, internal: InternalContext): string {
   const { messages } = internal;
-
-  if (!messages) {
+  if (messages === null) {
     throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in meta.messages`);
   }
 
   if (!hasOwn(messages, messageId)) {
     throw new Error(
       `Unknown messageId '${messageId}'. Available messages: ${
-        Object.keys(messages).map((msg) => `'${msg}'`).join(', ')
+        ObjectKeys(messages).map((msg) => `'${msg}'`).join(', ')
       }`,
     );
   }
