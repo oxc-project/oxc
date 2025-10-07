@@ -4,8 +4,8 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
-    Format, FormatResult, FormatTrailingCommas, QuoteProperties, TrailingSeparator, best_fitting,
-    format_args,
+    Format, FormatResult, FormatTrailingCommas, JsLabels, QuoteProperties, TrailingSeparator,
+    best_fitting, format_args,
     formatter::{
         Formatter,
         prelude::*,
@@ -27,13 +27,17 @@ impl<'a> Format<'a> for ImportOrExportKind {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["import", space(), self.import_kind])?;
+        let decl = &format_once(|f| {
+            write!(f, ["import", space(), self.import_kind])?;
 
-        if let Some(specifiers) = self.specifiers() {
-            write!(f, [specifiers, space(), "from", space()])?;
-        }
+            if let Some(specifiers) = self.specifiers() {
+                write!(f, [specifiers, space(), "from", space()])?;
+            }
 
-        write!(f, [self.source(), self.with_clause(), OptionalSemicolon])
+            write!(f, [self.source(), self.with_clause(), OptionalSemicolon])
+        });
+
+        write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)])
     }
 }
 
