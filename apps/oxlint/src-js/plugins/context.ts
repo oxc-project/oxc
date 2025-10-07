@@ -110,9 +110,9 @@ export class Context {
    * @class
    * @param fullRuleName - Rule name, in form `<plugin>/<rule>`
    * @param isFixable - Whether the rule can provide fixes
-   * @param messages - Message templates for messageId support
+   * @param messages - Message templates for `messageId` support (or `null` if none)
    */
-  constructor(fullRuleName: string, isFixable: boolean, messages: Record<string, string> | null = null) {
+  constructor(fullRuleName: string, isFixable: boolean, messages: Record<string, string> | null) {
     this.#internal = {
       id: fullRuleName,
       filePath: '',
