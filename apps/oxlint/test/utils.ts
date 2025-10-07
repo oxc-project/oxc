@@ -92,10 +92,12 @@ function normalizeStdout(stdout: string): string {
       match = line.match(/^(\s*\|\s+File path: )(.+)$/);
       if (match) {
         const [, preamble, path] = match;
-        if (path.startsWith(REPO_ROOT_PATH)) return [`${preamble}<root>/${path.slice(REPO_ROOT_PATH.length)}`];
+        if (path.startsWith(REPO_ROOT_PATH)) {
+          return [`${preamble}<root>/${path.slice(REPO_ROOT_PATH.length).replace(/\\/g, '/')}`];
+        }
       }
     }
-    if (line.startsWith(REPO_ROOT_PATH)) line = `<root>/${line.slice(REPO_ROOT_PATH.length)}`;
+    if (line.startsWith(REPO_ROOT_PATH)) line = `<root>/${line.slice(REPO_ROOT_PATH.length).replace(/\\/g, '/')}`;
     return [line];
   });
 
