@@ -270,14 +270,13 @@ impl<'a> ParserImpl<'a> {
                 let lit = self.parse_literal_null();
                 Expression::NullLiteral(self.alloc(lit))
             }
+            Kind::DecimalBigInt | Kind::BinaryBigInt | Kind::OctalBigInt | Kind::HexBigInt => {
+                let lit = self.parse_literal_bigint();
+                Expression::BigIntLiteral(self.alloc(lit))
+            }
             kind if kind.is_number() => {
-                if self.cur_src().ends_with('n') {
-                    let lit = self.parse_literal_bigint();
-                    Expression::BigIntLiteral(self.alloc(lit))
-                } else {
-                    let lit = self.parse_literal_number();
-                    Expression::NumericLiteral(self.alloc(lit))
-                }
+                let lit = self.parse_literal_number();
+                Expression::NumericLiteral(self.alloc(lit))
             }
             _ => self.unexpected(),
         }
@@ -342,17 +341,17 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         let kind = token.kind();
         let has_separator = token.has_separator();
-        let base = match kind {
-            Kind::Decimal => BigintBase::Decimal,
-            Kind::Binary => BigintBase::Binary,
-            Kind::Octal => BigintBase::Octal,
-            Kind::Hex => BigintBase::Hex,
+        let (base, number_kind) = match kind {
+            Kind::DecimalBigInt => (BigintBase::Decimal, Kind::Decimal),
+            Kind::BinaryBigInt => (BigintBase::Binary, Kind::Binary),
+            Kind::OctalBigInt => (BigintBase::Octal, Kind::Octal),
+            Kind::HexBigInt => (BigintBase::Hex, Kind::Hex),
             _ => return self.unexpected(),
         };
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, kind, has_separator, self.ast.allocator);
+        let value = parse_big_int(src, number_kind, has_separator, self.ast.allocator);
 
         self.bump_any();
         self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)

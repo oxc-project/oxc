@@ -179,6 +179,11 @@ pub enum Kind {
     PositiveExponential,
     // for `1e-10`
     NegativeExponential,
+    // BigInt Literals (numeric literals with 'n' suffix)
+    DecimalBigInt,
+    BinaryBigInt,
+    OctalBigInt,
+    HexBigInt,
     // 12.9.4 String Literals
     /// String Type
     Str,
@@ -210,7 +215,17 @@ impl Kind {
     pub fn is_number(self) -> bool {
         matches!(
             self,
-            Float | Decimal | Binary | Octal | Hex | PositiveExponential | NegativeExponential
+            Float
+                | Decimal
+                | Binary
+                | Octal
+                | Hex
+                | PositiveExponential
+                | NegativeExponential
+                | DecimalBigInt
+                | BinaryBigInt
+                | OctalBigInt
+                | HexBigInt
         )
     }
 
@@ -660,6 +675,10 @@ impl Kind {
             Binary => "binary",
             Octal => "octal",
             Hex => "hex",
+            DecimalBigInt => "decimal bigint",
+            BinaryBigInt => "binary bigint",
+            OctalBigInt => "octal bigint",
+            HexBigInt => "hex bigint",
             Str | String => "string",
             RegExp => "/regexp/",
             NoSubstitutionTemplate => "${}",

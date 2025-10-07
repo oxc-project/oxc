@@ -21,7 +21,7 @@ impl Lexer<'_> {
             }
             Some(b'n') => {
                 self.consume_char();
-                self.check_after_numeric_literal(Kind::Decimal)
+                self.check_after_numeric_literal(Kind::DecimalBigInt)
             }
             Some(n) if n.is_ascii_digit() => self.read_legacy_octal(),
             _ => self.check_after_numeric_literal(Kind::Decimal),
@@ -33,7 +33,7 @@ impl Lexer<'_> {
         if self.next_ascii_byte_eq(b'.') {
             return self.decimal_literal_after_decimal_point_after_digits();
         } else if self.next_ascii_byte_eq(b'n') {
-            return self.check_after_numeric_literal(Kind::Decimal);
+            return self.check_after_numeric_literal(Kind::DecimalBigInt);
         }
 
         let kind = self.optional_exponent().map_or(Kind::Decimal, |kind| kind);
@@ -78,8 +78,17 @@ impl Lexer<'_> {
                 _ => break,
             }
         }
-        self.next_ascii_byte_eq(b'n');
-        self.check_after_numeric_literal(kind)
+        let final_kind = if self.next_ascii_byte_eq(b'n') {
+            match kind {
+                Kind::Binary => Kind::BinaryBigInt,
+                Kind::Octal => Kind::OctalBigInt,
+                Kind::Hex => Kind::HexBigInt,
+                _ => unreachable!(),
+            }
+        } else {
+            kind
+        };
+        self.check_after_numeric_literal(final_kind)
     }
 
     fn read_legacy_octal(&mut self) -> Kind {
