@@ -9,28 +9,21 @@ import type { Location, Ranged } from './types.ts';
 const { hasOwn, keys: ObjectKeys } = Object;
 
 // Diagnostic in form passed by user to `Context#report()`
-export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc | DiagnosticWithMessageId;
+export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc;
 
 export interface DiagnosticBase {
-  message?: string;
+  message?: string | null | undefined;
+  messageId?: string | null | undefined;
   data?: Record<string, string | number> | null | undefined;
   fix?: FixFn;
 }
 
 export interface DiagnosticWithNode extends DiagnosticBase {
-  message: string;
   node: Ranged;
 }
 
 export interface DiagnosticWithLoc extends DiagnosticBase {
-  message: string;
   loc: Location;
-}
-
-export interface DiagnosticWithMessageId extends DiagnosticBase {
-  messageId: string;
-  node?: Ranged;
-  loc?: Location;
 }
 
 // Diagnostic in form sent to Rust
@@ -158,16 +151,8 @@ export class Context {
   report(diagnostic: Diagnostic): void {
     const internal = getInternal(this, 'report errors');
 
-    // Resolve message from messageId if present
-    let message: string;
-    if (hasOwn(diagnostic, 'messageId')) {
-      message = resolveMessage((diagnostic as DiagnosticWithMessageId).messageId, internal);
-    } else {
-      message = diagnostic.message;
-      if (typeof message !== 'string') {
-        throw new TypeError('Either `message` or `messageId` is required');
-      }
-    }
+    // Get message, resolving message from `messageId` if present
+    let message = getMessage(diagnostic, internal);
 
     // Interpolate placeholders {{key}} with data values
     if (hasOwn(diagnostic, 'data')) {
@@ -240,13 +225,35 @@ export class Context {
 }
 
 /**
+ * Get message from diagnostic.
+ * @param diagnostic - Diagnostic object
+ * @param internal - Internal context object
+ * @returns Message string
+ * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
+ */
+function getMessage(diagnostic: Diagnostic, internal: InternalContext): string {
+  if (hasOwn(diagnostic, 'messageId')) {
+    const { messageId } = diagnostic as { messageId: string | null | undefined };
+    if (messageId != null) return resolveMessageFromMessageId(messageId, internal);
+  }
+
+  if (hasOwn(diagnostic, 'message')) {
+    const { message } = diagnostic;
+    if (typeof message === 'string') return message;
+    if (message != null) throw new TypeError('`message` must be a string');
+  }
+
+  throw new Error('Either `message` or `messageId` is required');
+}
+
+/**
  * Resolve a message ID to its message string, with optional data interpolation.
  * @param messageId - The message ID to resolve
  * @param internal - Internal context containing messages
  * @returns Resolved message string
  * @throws {Error} If `messageId` is not found in `messages`
  */
-function resolveMessage(messageId: string, internal: InternalContext): string {
+function resolveMessageFromMessageId(messageId: string, internal: InternalContext): string {
   const { messages } = internal;
   if (messages === null) {
     throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in meta.messages`);
