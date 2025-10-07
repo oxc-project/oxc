@@ -19,7 +19,7 @@ use oxc::{
     diagnostics::OxcDiagnostic,
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     mangler::{MangleOptions, MangleOptionsKeepNames},
-    minifier::{CompressOptions, Minifier, MinifierOptions},
+    minifier::{CompressOptions, Minifier, MinifierOptions, MinifierReturn},
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{
         ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
@@ -203,10 +203,10 @@ impl Oxc {
         }
 
         // Phase 7: Apply minification
-        let scoping = Self::apply_minification(&allocator, &mut program, &options);
+        let minifier_return = Self::apply_minification(&allocator, &mut program, &options);
 
         // Phase 8: Generate code
-        self.codegen(&path, &program, scoping, run_options, &codegen_options);
+        self.codegen(&path, &program, minifier_return, run_options, &codegen_options);
 
         // Phase 9: Finalize output
         self.finalize_output(&source_text, &mut program, &mut module_record, source_type);
@@ -318,7 +318,7 @@ impl Oxc {
         allocator: &'a Allocator,
         program: &mut Program<'a>,
         options: &OxcOptions,
-    ) -> Option<Scoping> {
+    ) -> Option<MinifierReturn> {
         if !options.run.compress && !options.run.mangle {
             return None;
         }
@@ -336,7 +336,7 @@ impl Oxc {
         } else {
             None
         };
-        Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program).scoping
+        Some(Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program))
     }
 
     fn finalize_output<'a>(
@@ -445,7 +445,7 @@ impl Oxc {
         &mut self,
         path: &Path,
         program: &Program<'_>,
-        scoping: Option<Scoping>,
+        minifier_return: Option<MinifierReturn>,
         run_options: &OxcRunOptions,
         codegen_options: &OxcCodegenOptions,
     ) {
@@ -464,8 +464,13 @@ impl Oxc {
             source_map_path: Some(path.to_path_buf()),
             ..CodegenOptions::default()
         };
-        let codegen_result =
-            Codegen::new().with_scoping(scoping).with_options(options).build(program);
+        let (scoping, class_private_mappings) =
+            minifier_return.map(|m| (m.scoping, m.class_private_mappings)).unwrap_or_default();
+        let codegen_result = Codegen::new()
+            .with_scoping(scoping)
+            .with_private_member_mappings(class_private_mappings)
+            .with_options(options)
+            .build(program);
         self.codegen_text = codegen_result.code;
         self.codegen_sourcemap_text = codegen_result.map.map(|map| map.to_json_string());
     }

@@ -28,6 +28,7 @@ oxc_codegen = { workspace = true }
 oxc_compat = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["stack"] }
 oxc_ecmascript = { workspace = true }
+oxc_index = { workspace = true }
 oxc_mangler = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }

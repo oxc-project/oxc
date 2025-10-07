@@ -57,8 +57,12 @@ mod tester;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
+use oxc_index::IndexVec;
 use oxc_mangler::Mangler;
 use oxc_semantic::{Scoping, SemanticBuilder};
+use oxc_span::CompactStr;
+use oxc_syntax::class::ClassId;
+use rustc_hash::FxHashMap;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
@@ -78,6 +82,10 @@ impl Default for MinifierOptions {
 
 pub struct MinifierReturn {
     pub scoping: Option<Scoping>,
+
+    /// A vector where each element corresponds to a class in declaration order.
+    /// Each element is a mapping from original private member names to their mangled names.
+    pub class_private_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
 
     /// Total number of iterations ran. Useful for debugging performance issues.
     pub iterations: u8,
@@ -127,15 +135,21 @@ impl<'a> Minifier {
                 (stats, iterations)
             })
             .unwrap_or_default();
-        let scoping = self.options.mangle.map(|options| {
-            let mut semantic = SemanticBuilder::new()
-                .with_stats(stats)
-                .with_scope_tree_child_ids(true)
-                .build(program)
-                .semantic;
-            Mangler::default().with_options(options).build_with_semantic(&mut semantic, program);
-            semantic.into_scoping()
-        });
-        MinifierReturn { scoping, iterations }
+        let (scoping, class_private_mappings) = self
+            .options
+            .mangle
+            .map(|options| {
+                let mut semantic = SemanticBuilder::new()
+                    .with_stats(stats)
+                    .with_scope_tree_child_ids(true)
+                    .build(program)
+                    .semantic;
+                let class_private_mappings = Mangler::default()
+                    .with_options(options)
+                    .build_with_semantic(&mut semantic, program);
+                (semantic.into_scoping(), class_private_mappings)
+            })
+            .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
+        MinifierReturn { scoping, class_private_mappings, iterations }
     }
 }

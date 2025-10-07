@@ -2311,6 +2311,7 @@ dependencies = [
  "oxc_compat 0.94.0",
  "oxc_data_structures 0.94.0",
  "oxc_ecmascript 0.94.0",
+ "oxc_index 4.1.0",
  "oxc_mangler 0.94.0",
  "oxc_parser 0.94.0",
  "oxc_regular_expression 0.94.0",

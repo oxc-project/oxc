@@ -268,20 +268,25 @@ impl<'t> Mangler<'t> {
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
         let mut semantic =
             SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
-        let class_private_mappings = Self::collect_private_members_from_semantic(&semantic);
-        self.build_with_semantic(&mut semantic, program);
+        let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
 
     /// # Panics
     ///
     /// Panics if the child_ids does not exist in scope_tree.
-    pub fn build_with_semantic(self, semantic: &mut Semantic<'_>, program: &Program<'_>) {
+    pub fn build_with_semantic(
+        self,
+        semantic: &mut Semantic<'_>,
+        program: &Program<'_>,
+    ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
         if self.options.debug {
             self.build_with_semantic_impl(semantic, program, debug_name);
         } else {
             self.build_with_semantic_impl(semantic, program, base54);
         }
+        class_private_mappings
     }
 
     fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
