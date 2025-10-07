@@ -13,6 +13,7 @@ export type Diagnostic = DiagnosticWithNode | DiagnosticWithLoc | DiagnosticWith
 
 export interface DiagnosticBase {
   message?: string;
+  data?: Record<string, string | number> | null | undefined;
   fix?: FixFn;
 }
 
@@ -28,7 +29,6 @@ export interface DiagnosticWithLoc extends DiagnosticBase {
 
 export interface DiagnosticWithMessageId extends DiagnosticBase {
   messageId: string;
-  data?: Record<string, string | number>;
   node?: Ranged;
   loc?: Location;
 }
@@ -162,11 +162,23 @@ export class Context {
     let message: string;
     if (hasOwn(diagnostic, 'messageId')) {
       const diagWithMessageId = diagnostic as DiagnosticWithMessageId;
-      message = resolveMessage(diagWithMessageId.messageId, diagWithMessageId.data, internal);
+      message = resolveMessage(diagWithMessageId.messageId, internal);
     } else {
       message = diagnostic.message;
       if (typeof message !== 'string') {
         throw new TypeError('Either `message` or `messageId` is required');
+      }
+    }
+
+    // Interpolate placeholders {{key}} with data values
+    if (hasOwn(diagnostic, 'data')) {
+      const { data } = diagnostic;
+      if (data != null) {
+        message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+          key = key.trim();
+          const value = data[key];
+          return value !== undefined ? String(value) : match;
+        });
       }
     }
 
@@ -231,16 +243,11 @@ export class Context {
 /**
  * Resolve a message ID to its message string, with optional data interpolation.
  * @param messageId - The message ID to resolve
- * @param data - Optional data for placeholder interpolation
  * @param internal - Internal context containing messages
  * @returns Resolved message string
  * @throws {Error} If `messageId` is not found in `messages`
  */
-function resolveMessage(
-  messageId: string,
-  data: Record<string, string | number> | undefined,
-  internal: InternalContext,
-): string {
+function resolveMessage(messageId: string, internal: InternalContext): string {
   const { messages } = internal;
 
   if (!messages) {
@@ -255,16 +262,5 @@ function resolveMessage(
     );
   }
 
-  let message = messages[messageId];
-
-  // Interpolate placeholders {{key}} with data values
-  if (data) {
-    message = message.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-      key = key.trim();
-      const value = data[key];
-      return value !== undefined ? String(value) : match;
-    });
-  }
-
-  return message;
+  return messages[messageId];
 }
