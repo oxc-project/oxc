@@ -98,12 +98,13 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::escaped_keyword(token_after_import.span()));
             }
 
-            if self.at(Kind::LCurly) || self.at(Kind::Star) {
+            let kind = self.cur_kind();
+            if kind == Kind::LCurly || kind == Kind::Star {
                 // `import type { ...`
                 // `import type * ...`
                 import_kind = ImportOrExportKind::Type;
                 has_default_specifier = false;
-            } else if self.cur_kind().is_binding_identifier() {
+            } else if kind.is_binding_identifier() {
                 // `import type something ...`
                 let token = self.cur_token();
                 let identifier_after_type = self.parse_binding_identifier();

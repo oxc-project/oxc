@@ -386,7 +386,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let kind = self.cur_kind();
 
-        if matches!(self.cur_kind(), Kind::Const) {
+        if kind == Kind::Const {
             if !permit_const_as_modifier {
                 return None;
             }
@@ -398,10 +398,10 @@ impl<'a> ParserImpl<'a> {
         } else if
         // we're at the start of a static block
         (stop_on_start_of_class_static_block
-            && matches!(self.cur_kind(), Kind::Static)
+            && kind == Kind::Static
             && self.lexer.peek_token().kind() == Kind::LCurly)
             // we may be at the start of a static block
-            || (has_seen_static_modifier && matches!(self.cur_kind(), Kind::Static))
+            || (has_seen_static_modifier && kind == Kind::Static)
             // next token is not a modifier
             || (!self.parse_any_contextual_modifier())
         {

@@ -85,17 +85,17 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::LAngle) {
             return true;
         }
-        if self.at(Kind::New) {
+        let kind = self.cur_kind();
+        if kind == Kind::New {
             return true;
         }
-        if !self.at(Kind::LParen) && !self.at(Kind::Abstract) {
+        if kind != Kind::LParen && kind != Kind::Abstract {
             return false;
         }
         let checkpoint = self.checkpoint();
-        let first = self.cur_kind();
         self.bump_any();
 
-        match first {
+        match kind {
             Kind::Abstract => {
                 // `abstract new ...`
                 if self.at(Kind::New) {
@@ -140,11 +140,12 @@ impl<'a> ParserImpl<'a> {
         if self.cur_kind().is_modifier_kind() {
             self.parse_modifiers(false, false);
         }
-        if self.cur_kind().is_identifier() || self.at(Kind::This) {
+        let kind = self.cur_kind();
+        if kind.is_identifier() || kind == Kind::This {
             self.bump_any();
             return true;
         }
-        if matches!(self.cur_kind(), Kind::LBrack | Kind::LCurly) {
+        if matches!(kind, Kind::LBrack | Kind::LCurly) {
             let errors_count = self.errors_count();
             self.parse_binding_pattern_kind();
             if !self.has_fatal_error() && errors_count == self.errors_count() {
@@ -555,7 +556,8 @@ impl<'a> ParserImpl<'a> {
 
     fn is_start_of_mapped_type(&mut self) -> bool {
         self.bump_any();
-        if self.at(Kind::Plus) || self.at(Kind::Minus) {
+        let kind = self.cur_kind();
+        if kind == Kind::Plus || kind == Kind::Minus {
             self.bump_any();
             return self.at(Kind::Readonly);
         }
@@ -1184,7 +1186,8 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) = self.parse_property_name();
         let optional = self.eat(Kind::Question);
 
-        if self.at(Kind::LParen) || self.at(Kind::LAngle) {
+        let kind = self.cur_kind();
+        if kind == Kind::LParen || kind == Kind::LAngle {
             for modifier in modifiers.iter() {
                 if modifier.kind == ModifierKind::Readonly {
                     self.error(

@@ -241,16 +241,17 @@ impl<'a> ParserImpl<'a> {
                 let span = self.start_span();
                 let checkpoint = self.checkpoint();
                 self.bump_any(); // bump `<`
+                let kind = self.cur_kind();
                 // <> open fragment
-                if self.at(Kind::RAngle) {
+                if kind == Kind::RAngle {
                     return Some(JSXChild::Fragment(self.parse_jsx_fragment(span, true)));
                 }
                 // <ident open element
-                if self.at(Kind::Ident) || self.cur_kind().is_any_keyword() {
+                if kind == Kind::Ident || kind.is_any_keyword() {
                     return Some(JSXChild::Element(self.parse_jsx_element(span, true)));
                 }
                 // </ close fragment
-                if self.at(Kind::Slash) {
+                if kind == Kind::Slash {
                     self.rewind(checkpoint);
                     return None;
                 }
@@ -318,10 +319,14 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> Vec<'a, JSXAttributeItem<'a>> {
         let mut attributes = self.ast.vec();
-        while !matches!(self.cur_kind(), Kind::LAngle | Kind::RAngle | Kind::Slash)
-            && self.fatal_error.is_none()
-        {
-            let attribute = match self.cur_kind() {
+        loop {
+            let kind = self.cur_kind();
+            if matches!(kind, Kind::LAngle | Kind::RAngle | Kind::Slash)
+                || self.fatal_error.is_some()
+            {
+                break;
+            }
+            let attribute = match kind {
                 Kind::LCurly => {
                     JSXAttributeItem::SpreadAttribute(self.parse_jsx_spread_attribute())
                 }
@@ -405,7 +410,8 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
     fn parse_jsx_identifier(&mut self) -> JSXIdentifier<'a> {
         let span = self.start_span();
-        if !self.at(Kind::Ident) && !self.cur_kind().is_any_keyword() {
+        let kind = self.cur_kind();
+        if kind != Kind::Ident && !kind.is_any_keyword() {
             return self.unexpected();
         }
         // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`

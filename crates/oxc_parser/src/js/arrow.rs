@@ -65,7 +65,8 @@ impl<'a> ParserImpl<'a> {
             if self.cur_token().is_on_new_line() {
                 return Tristate::False;
             }
-            if !self.at(Kind::LParen) && !self.at(Kind::LAngle) {
+            let kind = self.cur_kind();
+            if kind != Kind::LParen && kind != Kind::LAngle {
                 return Tristate::False;
             }
         }

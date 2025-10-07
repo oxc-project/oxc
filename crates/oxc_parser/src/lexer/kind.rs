@@ -270,9 +270,10 @@ impl Kind {
     }
 
     /// `IdentifierName`
+    /// All identifier names are either `Ident` or keywords (Await..=Null in the enum).
     #[inline]
     pub fn is_identifier_name(self) -> bool {
-        self == Ident || self.is_any_keyword()
+        self == Ident || matches!(self as u8, x if x >= Await as u8 && x <= Null as u8)
     }
 
     /// Check the succeeding token of a `let` keyword.

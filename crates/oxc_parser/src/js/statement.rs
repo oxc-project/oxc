@@ -620,9 +620,15 @@ impl<'a> ParserImpl<'a> {
         };
         self.expect(Kind::Colon);
         let mut consequent = self.ast.vec();
-        while !matches!(self.cur_kind(), Kind::Case | Kind::Default | Kind::RCurly)
-            && !self.has_fatal_error()
-        {
+        loop {
+            let kind = self.cur_kind();
+            if matches!(
+                kind,
+                Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof | Kind::Undetermined
+            ) || self.fatal_error.is_some()
+            {
+                break;
+            }
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
             consequent.push(stmt);
         }

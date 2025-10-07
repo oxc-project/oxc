@@ -344,7 +344,14 @@ impl<'a> ParserImpl<'a> {
     {
         self.expect(open);
         let mut list = self.ast.vec();
-        while !self.at(close) && !self.has_fatal_error() {
+        loop {
+            let kind = self.cur_kind();
+            if kind == close
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
+                break;
+            }
             list.push(f(self));
         }
         self.expect(close);
@@ -386,16 +393,25 @@ impl<'a> ParserImpl<'a> {
         F: Fn(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
-        if self.at(close) || self.has_fatal_error() {
+        // Cache cur_kind() to avoid redundant calls in compound checks
+        let kind = self.cur_kind();
+        if kind == close
+            || matches!(kind, Kind::Eof | Kind::Undetermined)
+            || self.fatal_error.is_some()
+        {
             return (list, None);
         }
         list.push(f(self));
         loop {
-            if self.at(close) || self.has_fatal_error() {
+            let kind = self.cur_kind();
+            if kind == close
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
                 return (list, None);
             }
             self.expect(separator);
-            if self.at(close) {
+            if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return (list, Some(trailing_separator));
             }
@@ -417,7 +433,11 @@ impl<'a> ParserImpl<'a> {
         let mut rest: Option<BindingRestElement<'a>> = None;
         let mut first = true;
         loop {
-            if self.at(close) || self.has_fatal_error() {
+            let kind = self.cur_kind();
+            if kind == close
+                || matches!(kind, Kind::Eof | Kind::Undetermined)
+                || self.fatal_error.is_some()
+            {
                 break;
             }
 
@@ -425,17 +445,15 @@ impl<'a> ParserImpl<'a> {
                 first = false;
             } else {
                 let comma_span = self.cur_token().span();
-                if !self.at(Kind::Comma) {
-                    let error = diagnostics::expect_token(
-                        Kind::Comma.to_str(),
-                        self.cur_kind().to_str(),
-                        comma_span,
-                    );
+                if kind != Kind::Comma {
+                    let error =
+                        diagnostics::expect_token(Kind::Comma.to_str(), kind.to_str(), comma_span);
                     self.set_fatal_error(error);
                     break;
                 }
                 self.bump_any();
-                if self.at(close) {
+                let kind = self.cur_kind();
+                if kind == close {
                     if rest.is_some() && !self.ctx.has_ambient() {
                         self.error(diagnostics::rest_element_trailing_comma(comma_span));
                     }
@@ -448,7 +466,9 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            if self.at(Kind::Dot3) {
+            // Re-capture kind to get the current token (may have changed after else branch)
+            let kind = self.cur_kind();
+            if kind == Kind::Dot3 {
                 rest.replace(self.parse_rest_element());
             } else {
                 list.push(parse_element(self));
