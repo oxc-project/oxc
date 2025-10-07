@@ -305,12 +305,13 @@ impl<'a> ParserImpl<'a> {
         let span = token.span();
         let kind = token.kind();
         let src = self.cur_src();
+        let has_separator = token.has_separator();
         let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
-                parse_int(src, kind, token.has_separator())
+                parse_int(src, kind, has_separator)
             }
             Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
-                parse_float(src, token.has_separator())
+                parse_float(src, has_separator)
             }
             _ => unreachable!(),
         };
@@ -340,6 +341,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
         let token = self.cur_token();
         let kind = token.kind();
+        let has_separator = token.has_separator();
         let base = match kind {
             Kind::Decimal => BigintBase::Decimal,
             Kind::Binary => BigintBase::Binary,
@@ -350,7 +352,7 @@ impl<'a> ParserImpl<'a> {
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let value = parse_big_int(src, kind, token.has_separator(), self.ast.allocator);
+        let value = parse_big_int(src, kind, has_separator, self.ast.allocator);
 
         self.bump_any();
         self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
