@@ -54,6 +54,7 @@ pub enum ESFeature {
     ES2025DuplicateNamedCapturingGroupsRegex,
     ES2025RegexpModifiers,
     ES2026ExplicitResourceManagement,
+    ES2020ExportNamespaceFrom,
 }
 pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
     use ESFeature::*;
@@ -884,6 +885,23 @@ pub fn features() -> &'static FxHashMap<ESFeature, EngineTargets> {
                     (Firefox, Version(141u16, 0u16, 0u16)),
                     (Edge, Version(134u16, 0u16, 0u16)),
                     (Es, Version(2026u16, 0, 0)),
+                ])),
+            ),
+            (
+                ES2020ExportNamespaceFrom,
+                EngineTargets::new(FxHashMap::from_iter([
+                    (Samsung, Version(11u16, 0u16, 0u16)),
+                    (Node, Version(13u16, 2u16, 0u16)),
+                    (Firefox, Version(80u16, 0u16, 0u16)),
+                    (Chrome, Version(72u16, 0u16, 0u16)),
+                    (Safari, Version(14u16, 1u16, 0u16)),
+                    (Ios, Version(14u16, 5u16, 0u16)),
+                    (Edge, Version(79u16, 0u16, 0u16)),
+                    (OperaMobile, Version(51u16, 0u16, 0u16)),
+                    (Deno, Version(1u16, 0u16, 0u16)),
+                    (Electron, Version(5u16, 0u16, 0u16)),
+                    (Opera, Version(60u16, 0u16, 0u16)),
+                    (Es, Version(2020u16, 0, 0)),
                 ])),
             ),
         ])
