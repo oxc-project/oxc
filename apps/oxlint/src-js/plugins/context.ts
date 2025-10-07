@@ -256,12 +256,12 @@ function getMessage(diagnostic: Diagnostic, internal: InternalContext): string {
 function resolveMessageFromMessageId(messageId: string, internal: InternalContext): string {
   const { messages } = internal;
   if (messages === null) {
-    throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in meta.messages`);
+    throw new Error(`Cannot use messageId '${messageId}' - rule does not define any messages in \`meta.messages\``);
   }
 
   if (!hasOwn(messages, messageId)) {
     throw new Error(
-      `Unknown messageId '${messageId}'. Available messages: ${
+      `Unknown messageId '${messageId}'. Available \`messageIds\`: ${
         ObjectKeys(messages).map((msg) => `'${msg}'`).join(', ')
       }`,
     );
