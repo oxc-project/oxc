@@ -117,6 +117,20 @@ const afterOnlyRule: Rule = {
   },
 };
 
+const hooksOnlyRule: Rule = {
+  createOnce(context) {
+    return {
+      // Neither hook should be called, because no AST node visitor functions
+      before() {
+        context.report({ message: 'before hook: should not be output', node: SPAN });
+      },
+      after() {
+        context.report({ message: 'after hook: should not be output', node: SPAN });
+      },
+    };
+  },
+};
+
 const noHooksRule: Rule = {
   createOnce(context) {
     return {
@@ -139,6 +153,7 @@ const plugin: Plugin = {
     'skip-run': skipRunRule,
     'before-only': beforeOnlyRule,
     'after-only': afterOnlyRule,
+    'only-hooks': hooksOnlyRule,
     'no-hooks': noHooksRule,
   },
 };

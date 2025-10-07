@@ -11,6 +11,7 @@ const plugin: Plugin = {
           before() {
             throw new Error('Whoops!');
           },
+          Program(_program) {},
         };
       },
     },

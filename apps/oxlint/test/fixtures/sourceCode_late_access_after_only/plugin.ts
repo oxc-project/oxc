@@ -16,6 +16,7 @@ const SPAN: Node = {
 const createOnceRule: Rule = {
   createOnce(context) {
     return {
+      Program(_program) {},
       after() {
         context.report({
           message: 'after:\n' +

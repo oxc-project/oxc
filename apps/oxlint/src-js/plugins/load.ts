@@ -60,6 +60,9 @@ const registeredPluginPaths = new Set<string>();
 // Indexed by `ruleId`, which is passed to `lintFile`.
 export const registeredRules: RuleAndContext[] = [];
 
+// `before` hook which makes rule never run.
+const neverRunBeforeHook: BeforeHook = () => false;
+
 // Plugin details returned to Rust
 interface PluginDetails {
   // Plugin name
@@ -145,6 +148,19 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
       let { before: beforeHook, after: afterHook, ...visitor } = visitorWithHooks;
       beforeHook = conformHookFn(beforeHook, 'before');
       afterHook = conformHookFn(afterHook, 'after');
+
+      // If empty visitor, make this rule never run by substituting a `before` hook which always returns `false`.
+      // This means the original `before` hook won't run either.
+      //
+      // Reason for doing this is:
+      // In future, we may do a check on Rust side whether AST contains any nodes which rules act on,
+      // and if not, skip calling into JS entirely. In that case, the `before` hook won't get called.
+      // We can't emulate that behavior exactly, but we can at least emulate it in this simple case,
+      // and prevent users defining rules with *only* a `before` hook, which they expect to run on every file.
+      if (ObjectKeys(visitor).length === 0) {
+        beforeHook = neverRunBeforeHook;
+        afterHook = null;
+      }
 
       ruleAndContext = { rule, context, visitor, beforeHook, afterHook };
     } else {

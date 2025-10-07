@@ -6,6 +6,7 @@
     "create-once-plugin/skip-run": "error",
     "create-once-plugin/before-only": "error",
     "create-once-plugin/after-only": "error",
+    "create-once-plugin/only-hooks": "error",
     "create-once-plugin/no-hooks": "error"
   }
 }

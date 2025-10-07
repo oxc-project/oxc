@@ -8,6 +8,7 @@ const plugin: Plugin = {
     error: {
       createOnce(_context) {
         return {
+          Program(_program) {},
           after() {
             throw new Error('Whoops!');
           },

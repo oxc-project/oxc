@@ -48,20 +48,6 @@
    : ^
    `----
 
-  x define-plugin-and-rule-plugin(create-once-hooks-only): before hook:
-  | filename: files/1.js
-   ,-[files/1.js:1:1]
- 1 | let a, b;
-   : ^
-   `----
-
-  x define-plugin-and-rule-plugin(create-once-hooks-only): after hook:
-  | filename: files/1.js
-   ,-[files/1.js:1:1]
- 1 | let a, b;
-   : ^
-   `----
-
   x define-plugin-and-rule-plugin(create): ident visit fn "a":
   | filename: files/1.js
    ,-[files/1.js:1:5]
@@ -186,20 +172,6 @@
    : ^
    `----
 
-  x define-plugin-and-rule-plugin(create-once-hooks-only): before hook:
-  | filename: files/2.js
-   ,-[files/2.js:1:1]
- 1 | let c, d;
-   : ^
-   `----
-
-  x define-plugin-and-rule-plugin(create-once-hooks-only): after hook:
-  | filename: files/2.js
-   ,-[files/2.js:1:1]
- 1 | let c, d;
-   : ^
-   `----
-
   x define-plugin-and-rule-plugin(create): ident visit fn "c":
   | filename: files/2.js
    ,-[files/2.js:1:5]
@@ -286,7 +258,7 @@
    :        ^
    `----
 
-Found 0 warnings and 39 errors.
+Found 0 warnings and 35 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

@@ -187,6 +187,7 @@ const createOnceAfterOnlyRule: Rule = {
 const createOnceHooksOnlyRule: Rule = {
   createOnce(context) {
     return {
+      // Neither hook should be called, because no AST node visitor functions
       before() {
         context.report({
           message: 'before hook:\n' +
