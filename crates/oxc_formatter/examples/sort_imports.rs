@@ -18,9 +18,15 @@ fn main() -> Result<(), String> {
     let partition_by_comment = args.contains("--partition_by_comment");
     let sort_side_effects = args.contains("--sort_side_effects");
     let order = args.opt_value_from_str("--order").unwrap_or(None).unwrap_or(SortOrder::Asc);
+    let ignore_case = !args.contains("--no_ignore_case");
 
-    let sort_imports_options =
-        SortImports { order, partition_by_newline, partition_by_comment, sort_side_effects };
+    let sort_imports_options = SortImports {
+        order,
+        partition_by_newline,
+        partition_by_comment,
+        sort_side_effects,
+        ignore_case,
+    };
 
     // Read source file
     let path = Path::new(&name);

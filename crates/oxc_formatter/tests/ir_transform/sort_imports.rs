@@ -706,6 +706,24 @@ import { log1p } from "./log1p";
 import { log2 } from "./log2";
 "#,
     );
+    assert_format(
+        r#"
+import { log } from "./log";
+import { log10 } from "./log10";
+import { log1p } from "./log1p";
+import { log2 } from "./log2";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import { log } from "./log";
+import { log10 } from "./log10";
+import { log1p } from "./log1p";
+import { log2 } from "./log2";
+"#,
+    );
 }
 
 // ---
@@ -815,6 +833,120 @@ import "aaa";
 import "aaa";
 import "bb";
 import "c";
+"#,
+    );
+}
+
+// ---
+
+#[test]
+fn should_sort_with_ignore_case_option() {
+    // Case-insensitive (ignore_case: true by default)
+    assert_format(
+        r#"
+import { A } from "a";
+import { b } from "B";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import { A } from "a";
+import { b } from "B";
+"#,
+    );
+    // "a" and "A" are treated as the same, maintaining original order
+    assert_format(
+        r#"
+import x from "A";
+import y from "a";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import x from "A";
+import y from "a";
+"#,
+    );
+    // Mixed case sorting with ignore_case: true
+    assert_format(
+        r#"
+import { z } from "Z";
+import { b } from "B";
+import { a } from "a";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                ignore_case: true,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import { a } from "a";
+import { b } from "B";
+import { z } from "Z";
+"#,
+    );
+    // Case-sensitive, lowercase comes after uppercase in ASCII
+    assert_format(
+        r#"
+import { a } from "a";
+import { B } from "B";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                ignore_case: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import { B } from "B";
+import { a } from "a";
+"#,
+    );
+    // Capital A vs lowercase a
+    assert_format(
+        r#"
+import x from "a";
+import y from "A";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                ignore_case: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import y from "A";
+import x from "a";
+"#,
+    );
+    // Multiple imports with mixed case
+    assert_format(
+        r#"
+import { z } from "z";
+import { B } from "B";
+import { a } from "a";
+import { Z } from "Z";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports {
+                ignore_case: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        r#"
+import { B } from "B";
+import { Z } from "Z";
+import { a } from "a";
+import { z } from "z";
 "#,
     );
 }

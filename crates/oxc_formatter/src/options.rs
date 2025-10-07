@@ -917,16 +917,35 @@ impl fmt::Display for OperatorPosition {
 
 // ---
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SortImports {
-    /// Sort order (asc or desc).
-    pub order: SortOrder,
     /// Partition imports by newlines.
+    /// Default is `false`.
     pub partition_by_newline: bool,
     /// Partition imports by comments.
+    /// Default is `false`.
     pub partition_by_comment: bool,
     /// Sort side effects imports.
+    /// Default is `false`.
     pub sort_side_effects: bool,
+    /// Sort order (asc or desc).
+    /// Default is ascending (asc).
+    pub order: SortOrder,
+    /// Ignore case when sorting.
+    /// Default is `true`.
+    pub ignore_case: bool,
+}
+
+impl Default for SortImports {
+    fn default() -> Self {
+        Self {
+            partition_by_newline: false,
+            partition_by_comment: false,
+            sort_side_effects: false,
+            order: SortOrder::default(),
+            ignore_case: true,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]

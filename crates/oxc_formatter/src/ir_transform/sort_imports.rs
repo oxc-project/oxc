@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use cow_utils::CowUtils;
+
 use crate::{
     JsLabels,
     formatter::format_element::{
@@ -434,7 +436,7 @@ impl IntoIterator for ImportUnits {
 
 impl ImportUnits {
     // TODO: Sort based on `options.groups`, `options.type`, etc...
-    // TODO: Consider `options.ignore_case`, `special_characters`, removing `?raw`, etc...
+    // TODO: Consider `special_characters`, removing `?raw`, etc...
     fn sort_imports(&mut self, elements: &[FormatElement], options: options::SortImports) {
         let imports_len = self.0.len();
 
@@ -458,7 +460,15 @@ impl ImportUnits {
 
         // Sort indices by comparing their corresponding import sources
         sortable_indices.sort_by(|&a, &b| {
-            let ord = self.0[a].get_source(elements).cmp(self.0[b].get_source(elements));
+            let source_a = self.0[a].get_source(elements);
+            let source_b = self.0[b].get_source(elements);
+
+            let ord = if options.ignore_case {
+                source_a.cow_to_lowercase().cmp(&source_b.cow_to_lowercase())
+            } else {
+                source_a.cmp(source_b)
+            };
+
             if options.order.is_desc() { ord.reverse() } else { ord }
         });
 
