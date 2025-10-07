@@ -17,6 +17,7 @@ async function testFixture(fixtureName: string): Promise<void> {
   });
 }
 
+// These tests take longer than 5 seconds on CI, so increase timeout to 10 seconds
 describe('ESLint compatibility', { timeout: 10_000 }, () => {
   it('`definePlugin` should work', async () => {
     await testFixture('definePlugin');
