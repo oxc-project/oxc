@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.js';
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
@@ -6,6 +5,7 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.j
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { deserializeProgramOnly } from '../../dist/generated/deserialize.js';
 
+import visitorKeys from '../generated/keys.js';
 import {
   getLineColumnFromOffset,
   getNodeLoc,
@@ -18,8 +18,6 @@ import {
 import type { Program } from '../generated/types.d.ts';
 import type { Scope, ScopeManager, Variable } from './scope.ts';
 import type { BufferWithArrays, Comment, Node, NodeOrToken, Ranged, Token } from './types.ts';
-
-const require = createRequire(import.meta.url);
 
 const { max } = Math;
 
@@ -37,9 +35,6 @@ let hasBOM = false;
 export let sourceText: string | null = null;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
-
-// Lazily populated when `SOURCE_CODE.visitorKeys` is accessed.
-let visitorKeys: { [key: string]: string[] } | null = null;
 
 /**
  * Set up source for the file about to be linted.
@@ -120,8 +115,6 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get visitor keys to traverse this AST.
   get visitorKeys(): { [key: string]: string[] } {
-    // This is the path relative to `plugins.js` file in `dist` directory
-    if (visitorKeys === null) visitorKeys = require('./generated/keys.js').default;
     return visitorKeys;
   },
 

@@ -74,7 +74,8 @@ impl Generator for ESTreeVisitGenerator {
                 code: walk,
             },
             Output::Javascript {
-                path: format!("{OXLINT_APP_PATH}/src-js/generated/keys.js"),
+                // This file is also valid as TS
+                path: format!("{OXLINT_APP_PATH}/src-js/generated/keys.ts"),
                 code: visitor_keys,
             },
             Output::Javascript {

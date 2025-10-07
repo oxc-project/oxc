@@ -33,7 +33,6 @@ const parserFilePaths = [
   'generated/lazy/type_ids.js',
   'generated/lazy/walk.js',
   'generated/deserialize/ts_range_loc_parent_no_parens.js',
-  'generated/visit/keys.js',
 ];
 
 for (const parserFilePath of parserFilePaths) {
@@ -44,7 +43,7 @@ for (const parserFilePath of parserFilePaths) {
 // Copy files from `src-js/generated` to `dist/generated`
 console.log('Copying generated files...');
 
-const generatedFilePaths = ['deserialize.js', 'keys.js'];
+const generatedFilePaths = ['deserialize.js'];
 for (const filePath of generatedFilePaths) {
   copyFile(join(oxlintDirPath, 'src-js/generated', filePath), join(distDirPath, 'generated', filePath));
 }
