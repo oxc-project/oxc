@@ -22,11 +22,8 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-#[cfg(feature = "language_server")]
-use crate::Message;
-
 #[cfg(any(test, feature = "language_server"))]
-use crate::fixer::PossibleFixes;
+use crate::{Message, fixer::PossibleFixes};
 
 use crate::{
     Fixer, Linter,
