@@ -4,6 +4,86 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.21.0] - 2025-10-08
+
+### 🚀 Features
+
+- 576be20 linter/plugins: Support selectors DSL (#14435) (overlookmotel)
+- b2de44f linter/plugins: Support interpolation in normal diagnostic `message` (#14419) (overlookmotel)
+- 382c5be linter/plugins: Support placeholders in messageIds (#14416) (camc314)
+- 529e88e linter/plugins: Support `messageId`s (#14415) (camc314)
+- 0ec0847 ci: Run napi tests on windows (#14383) (camc314)
+
+### 🐛 Bug Fixes
+
+- 88ec1bd linter/plugins: Fix error messages (#14423) (overlookmotel)
+- 18616c2 oxlint: Ignore fixtures dir for vitest (#14414) (camc314)
+- ec02fe8 oxlint: Normalize path separators in snapshot tests (#14406) (camc314)
+- 96663fb linter/plugins: Do not call `before` hook if empty visitor (#14401) (overlookmotel)
+- 52f04bd linter: Use `pathToFileURL` for importing plugins to ensure correct URL format (#14394) (camc314)
+- 1ea0d46 oxlint: Resolve tsdown deprecation warning (#14389) (camc314)
+
+### 🚜 Refactor
+
+- 3b26bf3 linter/plugins: Split adding visit function to compiler visitor into multiple functions (#14433) (overlookmotel)
+- af3a75e linter/plugins: Track ancestors while walking AST (#14432) (overlookmotel)
+- f279f0b linter/plugins: Do not lazy-load visitor keys (#14431) (overlookmotel)
+- 5e99ed3 linter/plugins: Allow nullish values as `message` or `messageId` (#14422) (overlookmotel)
+- dc30938 linter/plugins: Remove default value from `Context` constructor (#14421) (overlookmotel)
+- 28cfae0 oxlint: Use `vitest`s built in file snapshot comparison (#14392) (camc314)
+- 06b0e9f linter/plugins: Convert generated files to TS (#14385) (overlookmotel)
+- 52f35c6 napi/parser, linter/plugins: Rename `types.js` to `type_ids.js` (#14384) (overlookmotel)
+
+### ⚡ Performance
+
+- 26435a1 linter/plugins: Small perf optimizations (#14420) (overlookmotel)
+- d8a8be1 linter/plugins: Avoid private methods (#14418) (overlookmotel)
+
+### 🧪 Testing
+
+- d8da4a4 linter/plugins: Clarify tests for message placeholders (#14417) (overlookmotel)
+
+
+## [1.21.0] - 2025-10-08
+
+### 🚀 Features
+
+- 576be20 linter/plugins: Support selectors DSL (#14435) (overlookmotel)
+- b2de44f linter/plugins: Support interpolation in normal diagnostic `message` (#14419) (overlookmotel)
+- 382c5be linter/plugins: Support placeholders in messageIds (#14416) (camc314)
+- 529e88e linter/plugins: Support `messageId`s (#14415) (camc314)
+- 0ec0847 ci: Run napi tests on windows (#14383) (camc314)
+
+### 🐛 Bug Fixes
+
+- 88ec1bd linter/plugins: Fix error messages (#14423) (overlookmotel)
+- 18616c2 oxlint: Ignore fixtures dir for vitest (#14414) (camc314)
+- ec02fe8 oxlint: Normalize path separators in snapshot tests (#14406) (camc314)
+- 96663fb linter/plugins: Do not call `before` hook if empty visitor (#14401) (overlookmotel)
+- 52f04bd linter: Use `pathToFileURL` for importing plugins to ensure correct URL format (#14394) (camc314)
+- 1ea0d46 oxlint: Resolve tsdown deprecation warning (#14389) (camc314)
+
+### 🚜 Refactor
+
+- 3b26bf3 linter/plugins: Split adding visit function to compiler visitor into multiple functions (#14433) (overlookmotel)
+- af3a75e linter/plugins: Track ancestors while walking AST (#14432) (overlookmotel)
+- f279f0b linter/plugins: Do not lazy-load visitor keys (#14431) (overlookmotel)
+- 5e99ed3 linter/plugins: Allow nullish values as `message` or `messageId` (#14422) (overlookmotel)
+- dc30938 linter/plugins: Remove default value from `Context` constructor (#14421) (overlookmotel)
+- 28cfae0 oxlint: Use `vitest`s built in file snapshot comparison (#14392) (camc314)
+- 06b0e9f linter/plugins: Convert generated files to TS (#14385) (overlookmotel)
+- 52f35c6 napi/parser, linter/plugins: Rename `types.js` to `type_ids.js` (#14384) (overlookmotel)
+
+### ⚡ Performance
+
+- 26435a1 linter/plugins: Small perf optimizations (#14420) (overlookmotel)
+- d8a8be1 linter/plugins: Avoid private methods (#14418) (overlookmotel)
+
+### 🧪 Testing
+
+- d8da4a4 linter/plugins: Clarify tests for message placeholders (#14417) (overlookmotel)
+
+
 ## [1.20.0] - 2025-10-06
 
 ### 🚀 Features
