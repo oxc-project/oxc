@@ -264,6 +264,7 @@ impl<'a> Message<'a> {
     }
 
     #[cfg(feature = "language_server")]
+    #[must_use]
     pub fn with_section_offset(mut self, section_offset: u32) -> Self {
         self.section_offset = section_offset;
         self

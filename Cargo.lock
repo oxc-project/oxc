@@ -2161,6 +2161,7 @@ dependencies = [
  "oxc_formatter",
  "oxc_linter",
  "oxc_parser 0.94.0",
+ "oxc_span 0.94.0",
  "papaya",
  "rustc-hash",
  "serde",

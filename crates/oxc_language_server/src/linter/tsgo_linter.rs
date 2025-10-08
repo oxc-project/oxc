@@ -6,13 +6,14 @@ use std::{
 use oxc_data_structures::rope::Rope;
 use oxc_linter::{
     ConfigStore, LINTABLE_EXTENSIONS, TsGoLintState, loader::LINT_PARTIAL_LOADER_EXTENSIONS,
-    message_to_message_with_position, read_to_string,
+    read_to_string,
 };
 use rustc_hash::FxHashSet;
 use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use crate::linter::error_with_position::{
-    DiagnosticReport, generate_inverted_diagnostics, message_with_position_to_lsp_diagnostic_report,
+    DiagnosticReport, generate_inverted_diagnostics, message_to_message_with_position,
+    message_with_position_to_lsp_diagnostic_report,
 };
 
 pub struct TsgoLinter {

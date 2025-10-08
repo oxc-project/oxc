@@ -282,7 +282,7 @@ impl<'a> Deref for RuleFix<'a> {
 
 /// A completed, normalized fix ready to be applied to the source code.
 ///
-/// Used internally by this module. Lint rules should use [`RuleFix`].
+/// Used internally by this module. Lint rules should use `RuleFix`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Fix<'a> {
@@ -332,6 +332,7 @@ impl<'a> Fix<'a> {
         Self { content: Cow::Borrowed(""), message: None, span: SPAN }
     }
 
+    #[must_use]
     pub fn with_message(mut self, message: impl Into<Cow<'a, str>>) -> Self {
         self.message = Some(message.into());
         self

@@ -25,8 +25,6 @@ mod external_plugin_store;
 mod fixer;
 mod frameworks;
 mod globals;
-#[cfg(feature = "language_server")]
-mod lsp;
 mod module_graph_visitor;
 mod module_record;
 mod options;
@@ -65,7 +63,7 @@ pub use crate::{
         LintFileResult, PluginLoadResult,
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
-    fixer::FixKind,
+    fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -80,16 +78,10 @@ pub use crate::{
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
-    fixer::{CompositeFix, Fix, Fixer, Message, PossibleFixes},
+    fixer::{CompositeFix, Fixer},
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     utils::iter_possible_jest_call_node,
-};
-
-#[cfg(feature = "language_server")]
-pub use crate::lsp::{
-    FixWithPosition, MessageWithPosition, PossibleFixesWithPosition, SpanPositionMessage,
-    message_to_message_with_position, oxc_diagnostic_to_message_with_position,
 };
 
 #[cfg(target_pointer_width = "64")]

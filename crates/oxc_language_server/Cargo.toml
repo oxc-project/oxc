@@ -28,6 +28,7 @@ oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_linter = { workspace = true, features = ["language_server"] }
 oxc_parser = { workspace = true }
+oxc_span = { workspace = true }
 
 #
 env_logger = { workspace = true, features = ["humantime"] }

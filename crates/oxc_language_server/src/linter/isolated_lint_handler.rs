@@ -11,13 +11,14 @@ use tower_lsp_server::{UriExt, lsp_types::Uri};
 use oxc_allocator::Allocator;
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, LINTABLE_EXTENSIONS,
-    LintOptions, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    message_to_message_with_position, read_to_arena_str,
+    LintOptions, LintService, LintServiceOptions, Linter, RuntimeFileSystem,
+    create_unused_directives_diagnostics, read_to_arena_str, read_to_string,
 };
-use oxc_linter::{RuntimeFileSystem, read_to_string};
 
 use super::error_with_position::{
-    DiagnosticReport, generate_inverted_diagnostics, message_with_position_to_lsp_diagnostic_report,
+    DiagnosticReport, MessageWithPosition, generate_inverted_diagnostics,
+    message_to_message_with_position, message_with_position_to_lsp_diagnostic_report,
+    oxc_diagnostic_to_message_with_position,
 };
 
 /// smaller subset of LintServiceOptions, which is used by IsolatedLintHandler
@@ -159,10 +160,6 @@ impl IsolatedLintHandler {
         source_text: &str,
         rope: &Rope,
     ) -> Vec<MessageWithPosition<'static>> {
-        use oxc_linter::{
-            create_unused_directives_diagnostics, oxc_diagnostic_to_message_with_position,
-        };
-
         let diagnostics = create_unused_directives_diagnostics(directives, severity);
         diagnostics
             .into_iter()
