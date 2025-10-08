@@ -543,6 +543,7 @@ pub(crate) mod oxc {
     pub mod bad_min_max_func;
     pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;
+    pub mod branches_sharing_code;
     pub mod const_comparisons;
     pub mod double_comparisons;
     pub mod erasing_op;
@@ -969,6 +970,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::bad_min_max_func,
     oxc::bad_object_literal_comparison,
     oxc::bad_replace_all_arg,
+    oxc::branches_sharing_code,
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::erasing_op,

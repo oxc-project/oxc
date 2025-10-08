@@ -1461,6 +1461,11 @@ impl RuleRunner for crate::rules::oxc::bad_replace_all_arg::BadReplaceAllArg {
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::oxc::branches_sharing_code::BranchesSharingCode {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::IfStatement]));
+}
+
 impl RuleRunner for crate::rules::oxc::const_comparisons::ConstComparisons {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }

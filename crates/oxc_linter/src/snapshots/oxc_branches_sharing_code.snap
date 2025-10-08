@@ -1,0 +1,232 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (condition) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             console.log('hello');
+   ·             ─────────────────────
+ 4 │             doA();
+ 5 │         } else {
+ 6 │             console.log('hello');
+   ·             ─────────────────────
+ 7 │             doB();
+   ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the end
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (condition) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             doA();
+ 4 │             cleanup();
+   ·             ──────────
+ 5 │         } else {
+ 6 │             doB();
+ 7 │             cleanup();
+   ·             ──────────
+ 8 │         }
+   ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+   ╭─[branches_sharing_code.tsx:3:9]
+ 2 │         let foo;
+ 3 │         if (condition) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 4 │             console.log('start');
+   ·             ─────────────────────
+ 5 │             foo = 13;
+ 6 │         } else {
+ 7 │             console.log('start');
+   ·             ─────────────────────
+ 8 │             foo = 42;
+   ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (x) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             console.log('before');
+   ·             ──────────────────────
+ 4 │             doX();
+   ╰────
+   ╭─[branches_sharing_code.tsx:7:13]
+ 6 │         } else {
+ 7 │             console.log('before');
+   ·             ──────────────────────
+ 8 │             doY();
+   ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the end
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (x) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             console.log('before');
+ 4 │             doX();
+ 5 │             console.log('after');
+   ·             ─────────────────────
+ 6 │         } else {
+   ╰────
+    ╭─[branches_sharing_code.tsx:9:13]
+  8 │             doY();
+  9 │             console.log('after');
+    ·             ─────────────────────
+ 10 │         }
+    ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (flag) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             initialize();
+   ·             ─────────────
+ 4 │             processData();
+   ╰────
+   ╭─[branches_sharing_code.tsx:7:13]
+ 6 │         } else {
+ 7 │             initialize();
+   ·             ─────────────
+ 8 │             processOtherData();
+   ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the end
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (flag) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             initialize();
+ 4 │             processData();
+ 5 │             finalize();
+   ·             ───────────
+ 6 │         } else {
+   ╰────
+    ╭─[branches_sharing_code.tsx:9:13]
+  8 │             processOtherData();
+  9 │             finalize();
+    ·             ───────────
+ 10 │         }
+    ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (test) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             a++;
+   ·             ────
+ 4 │             b++;
+ 5 │         } else {
+ 6 │             a++;
+   ·             ────
+ 7 │             c++;
+   ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the end
+   ╭─[branches_sharing_code.tsx:2:9]
+ 1 │ 
+ 2 │         if (x > 0) {
+   ·         ─┬
+   ·          ╰── `if` statement declared here
+ 3 │             const a = 1;
+ 4 │             console.log(a);
+   ·             ───────────────
+ 5 │         } else {
+ 6 │             const a = 2;
+ 7 │             console.log(a);
+   ·             ───────────────
+ 8 │         }
+   ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+    ╭─[branches_sharing_code.tsx:2:9]
+  1 │ 
+  2 │         if (flag) {
+    ·         ─┬
+    ·          ╰── `if` statement declared here
+  3 │             console.log('start');
+    ·             ─────────────────────
+  4 │             doA();
+  5 │         } else if (otherFlag) {
+  6 │             console.log('start');
+    ·             ─────────────────────
+  7 │             doB();
+  8 │         } else {
+  9 │             console.log('start');
+    ·             ─────────────────────
+ 10 │             doC();
+    ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+    ╭─[branches_sharing_code.tsx:5:16]
+  4 │             doA();
+  5 │         } else if (otherFlag) {
+    ·                ─┬
+    ·                 ╰── `if` statement declared here
+  6 │             console.log('start');
+    ·             ─────────────────────
+  7 │             doB();
+  8 │         } else {
+  9 │             console.log('start');
+    ·             ─────────────────────
+ 10 │             doC();
+    ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+    ╭─[branches_sharing_code.tsx:2:9]
+  1 │ 
+  2 │         if (x === 1) {
+    ·         ─┬
+    ·          ╰── `if` statement declared here
+  3 │             setup();
+    ·             ────────
+  4 │             return 1;
+  5 │         } else if (x === 2) {
+  6 │             setup();
+    ·             ────────
+  7 │             return 2;
+  8 │         } else {
+  9 │             setup();
+    ·             ────────
+ 10 │             return 3;
+    ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
+
+  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
+    ╭─[branches_sharing_code.tsx:5:16]
+  4 │             return 1;
+  5 │         } else if (x === 2) {
+    ·                ─┬
+    ·                 ╰── `if` statement declared here
+  6 │             setup();
+    ·             ────────
+  7 │             return 2;
+  8 │         } else {
+  9 │             setup();
+    ·             ────────
+ 10 │             return 3;
+    ╰────
+  help: Move the shared code outside the `if` statement to reduce code duplication
