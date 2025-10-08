@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.22.0] - 2025-10-08
+
+### 🚀 Features
+
+- 9f9d25f linter/oxc: Implement `branches-sharing-code` (#14440) (camc314)
+
+
 ## [1.21.0] - 2025-10-08
 
 ### 🚀 Features
