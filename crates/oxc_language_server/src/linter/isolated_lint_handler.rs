@@ -16,8 +16,7 @@ use oxc_linter::{
 };
 
 use super::error_with_position::{
-    DiagnosticReport, generate_inverted_diagnostics, message_to_message_with_position,
-    message_with_position_to_lsp_diagnostic_report,
+    DiagnosticReport, generate_inverted_diagnostics, message_to_lsp_diagnostic,
 };
 
 /// smaller subset of LintServiceOptions, which is used by IsolatedLintHandler
@@ -123,13 +122,8 @@ impl IsolatedLintHandler {
             )))
             .with_paths(vec![Arc::from(path.as_os_str())])
             .run_source(&mut allocator)
-            .into_iter()
-            .map(|message| {
-                message_with_position_to_lsp_diagnostic_report(
-                    &message_to_message_with_position(message, source_text, rope),
-                    uri,
-                )
-            })
+            .iter()
+            .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
 
         // Add unused directives if configured
@@ -137,14 +131,9 @@ impl IsolatedLintHandler {
             && let Some(directives) = self.directives_coordinator.get(path)
         {
             messages.extend(
-                self.create_unused_directives_messages(&directives, severity).into_iter().map(
-                    |message| {
-                        message_with_position_to_lsp_diagnostic_report(
-                            &message_to_message_with_position(message, source_text, rope),
-                            uri,
-                        )
-                    },
-                ),
+                self.create_unused_directives_messages(&directives, severity)
+                    .iter()
+                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
             );
         }
 
