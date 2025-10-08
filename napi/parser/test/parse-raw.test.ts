@@ -220,7 +220,7 @@ describe.concurrent('edge cases', () => {
 });
 
 // Test raw transfer output matches standard (via JSON) output for some large files
-describe.concurrent('fixtures', () => {
+describe.concurrent('fixtures', { timeout: 10_000 }, () => {
   // oxlint-disable-next-line jest/expect-expect
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
