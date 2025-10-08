@@ -1,14 +1,14 @@
 use std::{borrow::Cow, str::FromStr};
 
-use oxc_linter::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
+use oxc_linter::{
+    FixWithPosition, MessageWithPosition, PossibleFixesWithPosition, SpanPositionMessage,
+};
 use tower_lsp_server::lsp_types::{
     self, CodeDescription, DiagnosticRelatedInformation, DiagnosticSeverity, NumberOrString,
     Position, Range, Uri,
 };
 
 use oxc_diagnostics::Severity;
-
-use crate::LSP_MAX_INT;
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -29,13 +29,6 @@ pub enum PossibleFixContent {
     None,
     Single(FixedContent),
     Multiple(Vec<FixedContent>),
-}
-
-fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
-    match first.start.cmp(&other.start) {
-        std::cmp::Ordering::Equal => first.end.cmp(&other.end),
-        o => o,
-    }
 }
 
 fn message_with_position_to_lsp_diagnostic(
@@ -71,24 +64,14 @@ fn message_with_position_to_lsp_diagnostic(
             .collect()
     });
 
-    let range = related_information.as_ref().map_or(
+    let range = message.labels.as_ref().map_or(Range::default(), |labels| {
+        let start = labels.first().map(SpanPositionMessage::start).cloned().unwrap_or_default();
+        let end = labels.first().map(SpanPositionMessage::end).cloned().unwrap_or_default();
         Range {
-            start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-            end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-        },
-        |infos: &Vec<DiagnosticRelatedInformation>| {
-            let mut ret_range = Range {
-                start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-                end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
-            };
-            for info in infos {
-                if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {
-                    ret_range = info.location.range;
-                }
-            }
-            ret_range
-        },
-    );
+            start: Position::new(start.line, start.character),
+            end: Position::new(end.line, end.character),
+        }
+    });
     let code = message.code.to_string();
     let code_description =
         message.url.as_ref().map(|url| CodeDescription { href: Uri::from_str(url).ok().unwrap() });

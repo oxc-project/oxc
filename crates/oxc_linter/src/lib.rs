@@ -88,7 +88,7 @@ use crate::{
 
 #[cfg(feature = "language_server")]
 pub use crate::lsp::{
-    FixWithPosition, MessageWithPosition, PossibleFixesWithPosition,
+    FixWithPosition, MessageWithPosition, PossibleFixesWithPosition, SpanPositionMessage,
     oxc_diagnostic_to_message_with_position,
 };
 

@@ -20,6 +20,7 @@ impl<'a> SpanPositionMessage<'a> {
         Self { start, end, message: None }
     }
 
+    #[must_use]
     pub fn with_message(mut self, message: Option<Cow<'a, str>>) -> Self {
         self.message = message;
         self
@@ -38,7 +39,7 @@ impl<'a> SpanPositionMessage<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct SpanPosition {
     pub line: u32,
     pub character: u32,
