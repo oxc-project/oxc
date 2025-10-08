@@ -199,7 +199,13 @@ fn add_ignore_fixes<'a>(
         new_fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
     }
 
-    PossibleFixesWithPosition::Multiple(new_fixes)
+    if new_fixes.is_empty() {
+        PossibleFixesWithPosition::None
+    } else if new_fixes.len() == 1 {
+        PossibleFixesWithPosition::Single(new_fixes.remove(0))
+    } else {
+        PossibleFixesWithPosition::Multiple(new_fixes)
+    }
 }
 
 fn disable_for_this_line<'a>(

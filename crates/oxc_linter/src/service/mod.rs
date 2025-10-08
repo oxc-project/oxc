@@ -99,7 +99,7 @@ impl LintService {
     pub fn run_source<'a>(
         &mut self,
         allocator: &'a mut oxc_allocator::Allocator,
-    ) -> Vec<crate::MessageWithPosition<'a>> {
+    ) -> Vec<crate::Message<'a>> {
         self.runtime.run_source(allocator)
     }
 

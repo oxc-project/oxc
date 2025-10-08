@@ -23,10 +23,11 @@ use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
 #[cfg(feature = "language_server")]
-use crate::lsp::MessageWithPosition;
+use crate::Message;
 
-#[cfg(test)]
-use crate::fixer::{Message, PossibleFixes};
+#[cfg(any(test, feature = "language_server"))]
+use crate::fixer::PossibleFixes;
+
 use crate::{
     Fixer, Linter,
     context::ContextSubHost,
@@ -710,29 +711,21 @@ impl Runtime {
     pub(super) fn run_source<'a>(
         &mut self,
         allocator: &'a mut oxc_allocator::Allocator,
-    ) -> Vec<MessageWithPosition<'a>> {
+    ) -> Vec<Message<'a>> {
         use std::sync::Mutex;
-
-        use oxc_data_structures::rope::Rope;
-
-        use crate::lsp::{
-            message_to_message_with_position, oxc_diagnostic_to_message_with_position,
-        };
 
         // Wrap allocator in `MessageCloner` so can clone `Message`s into it
         let message_cloner = MessageCloner::new(allocator);
 
-        let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
+        let messages = Mutex::new(Vec::<Message<'a>>::new());
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, None, |me, mut module_to_lint| {
                 module_to_lint.content.with_dependent_mut(
-                    |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
+                    |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(
                             module_to_lint.section_module_records.len(),
                             section_contents.len()
                         );
-
-                        let rope = &Rope::from_str(source_text);
 
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
@@ -751,11 +744,7 @@ impl Runtime {
                                     if !diagnostics.is_empty() {
                                         messages.lock().unwrap().extend(
                                             diagnostics.into_iter().map(|diagnostic| {
-                                                oxc_diagnostic_to_message_with_position(
-                                                    diagnostic,
-                                                    source_text,
-                                                    rope,
-                                                )
+                                                Message::new(diagnostic, PossibleFixes::None)
                                             }),
                                         );
                                     }
@@ -780,10 +769,11 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
-                        messages.lock().unwrap().extend(section_messages.iter().map(|message| {
-                            let message = message_cloner.clone_message(message);
-                            message_to_message_with_position(message, source_text, rope)
-                        }));
+                        messages.lock().unwrap().extend(
+                            section_messages
+                                .iter()
+                                .map(|message| message_cloner.clone_message(message)),
+                        );
                     },
                 );
             });

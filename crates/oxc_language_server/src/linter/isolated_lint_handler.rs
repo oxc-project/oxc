@@ -4,13 +4,15 @@ use std::{
 };
 
 use log::debug;
+use oxc_data_structures::rope::Rope;
 use rustc_hash::FxHashSet;
 use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, LINTABLE_EXTENSIONS,
-    LintOptions, LintService, LintServiceOptions, Linter, MessageWithPosition, read_to_arena_str,
+    LintOptions, LintService, LintServiceOptions, Linter, MessageWithPosition,
+    message_to_message_with_position, read_to_arena_str,
 };
 use oxc_linter::{RuntimeFileSystem, read_to_string};
 
@@ -120,15 +122,19 @@ impl IsolatedLintHandler {
         source_text: &str,
     ) -> Vec<MessageWithPosition<'a>> {
         debug!("lint {}", path.display());
+        let rope = &Rope::from_str(source_text);
 
-        let mut messages = self
+        let mut messages: Vec<MessageWithPosition<'a>> = self
             .service
             .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
                 path.to_path_buf(),
                 Arc::from(source_text),
             )))
             .with_paths(vec![Arc::from(path.as_os_str())])
-            .run_source(allocator);
+            .run_source(allocator)
+            .into_iter()
+            .map(|message| message_to_message_with_position(message, source_text, rope))
+            .collect();
 
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
@@ -138,6 +144,7 @@ impl IsolatedLintHandler {
                 &directives,
                 severity,
                 source_text,
+                rope,
             ));
         }
 
@@ -150,18 +157,17 @@ impl IsolatedLintHandler {
         directives: &DisableDirectives,
         severity: AllowWarnDeny,
         source_text: &str,
+        rope: &Rope,
     ) -> Vec<MessageWithPosition<'static>> {
-        use oxc_data_structures::rope::Rope;
         use oxc_linter::{
             create_unused_directives_diagnostics, oxc_diagnostic_to_message_with_position,
         };
 
-        let rope = Rope::from_str(source_text);
         let diagnostics = create_unused_directives_diagnostics(directives, severity);
         diagnostics
             .into_iter()
             .map(|diagnostic| {
-                oxc_diagnostic_to_message_with_position(diagnostic, source_text, &rope)
+                oxc_diagnostic_to_message_with_position(diagnostic, source_text, rope)
             })
             .collect()
     }
