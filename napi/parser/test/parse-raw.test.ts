@@ -1,7 +1,7 @@
 // Tests for raw transfer.
 
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
-import { basename, join as pathJoin, sep as pathSep } from 'node:path';
+import { basename, join as pathJoin } from 'node:path';
 import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
@@ -64,7 +64,7 @@ async function runCaseInWorker(type, props) {
 
 // Download fixtures.
 // Save in `target` directory, same as where benchmarks store them.
-const benchFixtureUrls = [
+let benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
   'https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts',
   // Real world app tsx (1.0M)
@@ -76,6 +76,11 @@ const benchFixtureUrls = [
   // ES5 (3.9M)
   'https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js',
 ];
+
+// `antd.js` tests sometimes take longer than 5 secs on CI, so skip that fixture in CI.
+// Tried setting `{ timeout: 10_000 }` option, but it didn't work for some reason.
+// TODO: Get longer timeout working and re-enable these tests in CI.
+if (process.env.CI) benchFixtureUrls = benchFixtureUrls.filter(url => !url.endsWith('/antd.js'));
 
 await mkdir(TARGET_DIR_PATH, { recursive: true });
 
@@ -225,12 +230,9 @@ describe.concurrent('fixtures', () => {
   it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
 
-// `antd.js` test sometimes takes longer than 5 seconds on CI, so skip it.
-// TODO: Why doesn't `timeout` option work?
-describeRangeParent.concurrent('range & parent fixtures', { timeout: 10_000 }, () => {
-  const paths = benchFixturePaths.filter(path => !path.endsWith(`${pathSep}antd.js`));
+describeRangeParent.concurrent('range & parent fixtures', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(paths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_RANGE_PARENT, path));
+  it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_RANGE_PARENT, path));
 });
 
 // Check lazy deserialization doesn't throw
