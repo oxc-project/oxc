@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.21.0] - 2025-10-08
+
+### 🚀 Features
+
+- 83e7824 linter: Add `vue/require-default-export` rule (#14351) (Sysix)
+- ff98536 linter: Add `vue/no-import-compiler-macros` rule (#14335) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 11e0440 linter/jsx-handler-name: Improve handler name position in error messages (#14174) (Takuji Shimokawa)
+- 493082c language_server: Use the first Span of the message as the primary Diagnostic range (#14057) (Sysix)
+- 6e8d2f6 language_server: Ignore JS plugins (#14379) (overlookmotel)
+- bb679b5 linter: Promise/prefer-await-to-then strict option not reading from config (#14382) (camc314)
+
+### 🚜 Refactor
+
+- 3374b8e linter/language_server: Move all lsp relevant code to `oxc_language_server` crate (#14430) (Sysix)
+- d24b74e linter/language_server: `oxc_linter::TsgoLinter::run_source` returns `Message` (#14429) (Sysix)
+- e5b7fb2 linter/language_server: `oxc_linter::Runtime::run_source` returns `Message` (#14428) (Sysix)
+
+
 ## [1.20.0] - 2025-10-06
 
 ### 🚀 Features
