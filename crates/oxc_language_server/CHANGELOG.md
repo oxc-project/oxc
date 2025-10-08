@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.21.0] - 2025-10-08
+
+### 🐛 Bug Fixes
+
+- 493082c language_server: Use the first Span of the message as the primary Diagnostic range (#14057) (Sysix)
+- 6e8d2f6 language_server: Ignore JS plugins (#14379) (overlookmotel)
+
+
 ## [1.20.0] - 2025-10-06
 
 ### 🚀 Features

@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.21.0] - 2025-10-08
+
+### 🚀 Features
+
+- 83e7824 linter: Add `vue/require-default-export` rule (#14351) (Sysix)
+- ff98536 linter: Add `vue/no-import-compiler-macros` rule (#14335) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 493082c language_server: Use the first Span of the message as the primary Diagnostic range (#14057) (Sysix)
+- 6e8d2f6 language_server: Ignore JS plugins (#14379) (overlookmotel)
+- bb679b5 linter: Promise/prefer-await-to-then strict option not reading from config (#14382) (camc314)
+
+
 ## [1.20.0] - 2025-10-06
 
 ### 🚀 Features
