@@ -13,7 +13,7 @@ const commonConfig: UserConfig = {
     'oxlint-*',
     // Files copied from `oxc-parser`.
     // Not bundled, to avoid needing sourcemaps when debugging.
-    /\/dist\//,
+    /^\.\.?\/.*\/dist\//,
   ],
   // At present only compress syntax.
   // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
