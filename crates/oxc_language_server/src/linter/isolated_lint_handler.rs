@@ -11,14 +11,13 @@ use tower_lsp_server::{UriExt, lsp_types::Uri};
 use oxc_allocator::Allocator;
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, LINTABLE_EXTENSIONS,
-    LintOptions, LintService, LintServiceOptions, Linter, RuntimeFileSystem,
+    LintOptions, LintService, LintServiceOptions, Linter, Message, RuntimeFileSystem,
     create_unused_directives_diagnostics, read_to_arena_str, read_to_string,
 };
 
 use super::error_with_position::{
-    DiagnosticReport, MessageWithPosition, generate_inverted_diagnostics,
-    message_to_message_with_position, message_with_position_to_lsp_diagnostic_report,
-    oxc_diagnostic_to_message_with_position,
+    DiagnosticReport, generate_inverted_diagnostics, message_to_message_with_position,
+    message_with_position_to_lsp_diagnostic_report,
 };
 
 /// smaller subset of LintServiceOptions, which is used by IsolatedLintHandler
@@ -104,49 +103,49 @@ impl IsolatedLintHandler {
             return None;
         }
 
-        let mut allocator = Allocator::default();
         let source_text = content.or_else(|| read_to_string(&path).ok())?;
-        let errors = self.lint_path(&mut allocator, &path, &source_text);
 
-        let mut diagnostics: Vec<DiagnosticReport> =
-            errors.iter().map(|e| message_with_position_to_lsp_diagnostic_report(e, uri)).collect();
-
-        let mut inverted_diagnostics = generate_inverted_diagnostics(&diagnostics, uri);
-        diagnostics.append(&mut inverted_diagnostics);
+        let mut diagnostics = self.lint_path(&path, uri, &source_text);
+        diagnostics.append(&mut generate_inverted_diagnostics(&diagnostics, uri));
         Some(diagnostics)
     }
 
-    fn lint_path<'a>(
-        &mut self,
-        allocator: &'a mut Allocator,
-        path: &Path,
-        source_text: &str,
-    ) -> Vec<MessageWithPosition<'a>> {
+    fn lint_path(&mut self, path: &Path, uri: &Uri, source_text: &str) -> Vec<DiagnosticReport> {
         debug!("lint {}", path.display());
+        let mut allocator = Allocator::default();
         let rope = &Rope::from_str(source_text);
 
-        let mut messages: Vec<MessageWithPosition<'a>> = self
+        let mut messages: Vec<DiagnosticReport> = self
             .service
             .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
                 path.to_path_buf(),
                 Arc::from(source_text),
             )))
             .with_paths(vec![Arc::from(path.as_os_str())])
-            .run_source(allocator)
+            .run_source(&mut allocator)
             .into_iter()
-            .map(|message| message_to_message_with_position(message, source_text, rope))
+            .map(|message| {
+                message_with_position_to_lsp_diagnostic_report(
+                    &message_to_message_with_position(message, source_text, rope),
+                    uri,
+                )
+            })
             .collect();
 
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
             && let Some(directives) = self.directives_coordinator.get(path)
         {
-            messages.extend(self.create_unused_directives_messages(
-                &directives,
-                severity,
-                source_text,
-                rope,
-            ));
+            messages.extend(
+                self.create_unused_directives_messages(&directives, severity).into_iter().map(
+                    |message| {
+                        message_with_position_to_lsp_diagnostic_report(
+                            &message_to_message_with_position(message, source_text, rope),
+                            uri,
+                        )
+                    },
+                ),
+            );
         }
 
         messages
@@ -157,15 +156,12 @@ impl IsolatedLintHandler {
         &self,
         directives: &DisableDirectives,
         severity: AllowWarnDeny,
-        source_text: &str,
-        rope: &Rope,
-    ) -> Vec<MessageWithPosition<'static>> {
+    ) -> Vec<Message<'_>> {
         let diagnostics = create_unused_directives_diagnostics(directives, severity);
         diagnostics
             .into_iter()
-            .map(|diagnostic| {
-                oxc_diagnostic_to_message_with_position(diagnostic, source_text, rope)
-            })
+            // TODO: unused directives should be fixable, `RuleCommentRule.create_fix()` can be used
+            .map(|diagnostic| Message::new(diagnostic, oxc_linter::PossibleFixes::None))
             .collect()
     }
 
