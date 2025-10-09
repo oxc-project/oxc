@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.4.0] - 2025-10-09
+
+### 🐛 Bug Fixes
+
+- 59dc17e oxfmt: Change bin script to ESM (#14263) (Boshen)
+
+### 🚜 Refactor
+
+- 226deee oxfmt: Rename build script to `.js` (#14046) (overlookmotel)
+
+
 ## [0.3.0] - 2025-09-19
 
 ### 🚀 Features

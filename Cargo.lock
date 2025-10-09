@@ -2095,7 +2095,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "cow-utils",
  "oxc_allocator 0.94.0",
@@ -2826,7 +2826,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bpaf",
  "cow-utils",
