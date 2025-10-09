@@ -67,15 +67,16 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             format!("Some(&{})", detected_types.to_ast_type_bitset_string())
         };
 
-        let values = rule_run_info.iter().cloned().collect::<Vec<_>>();
-        let rule_run_info_init = if values.len() == 1 && values[0] == "run" {
-            "RuleRunFunctionsImplemented::Run".to_string()
-        } else if values.len() == 1 && values[0] == "run_on_symbol" {
-            "RuleRunFunctionsImplemented::RunOnSymbol".to_string()
-        } else if values.len() == 1 && values[0] == "run_once" {
-            "RuleRunFunctionsImplemented::RunOnce".to_string()
-        } else if values.len() == 1 && values[0] == "run_on_jest_node" {
-            "RuleRunFunctionsImplemented::RunOnJestNode".to_string()
+        let rule_run_info_init = if rule_run_info.len() == 1 {
+            match rule_run_info.iter().next().map(String::as_str) {
+                Some("run") => "RuleRunFunctionsImplemented::Run".to_string(),
+                Some("run_on_symbol") => "RuleRunFunctionsImplemented::RunOnSymbol".to_string(),
+                Some("run_once") => "RuleRunFunctionsImplemented::RunOnce".to_string(),
+                Some("run_on_jest_node") => {
+                    "RuleRunFunctionsImplemented::RunOnJestNode".to_string()
+                }
+                _ => "RuleRunFunctionsImplemented::Unknown".to_string(),
+            }
         } else {
             "RuleRunFunctionsImplemented::Unknown".to_string()
         };
