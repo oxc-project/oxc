@@ -466,7 +466,7 @@ impl AstKind<'_> {
             Self::JSXSpreadChild(_) => "JSXSpreadChild".into(),
             Self::JSXAttribute(_) => "JSXAttribute".into(),
             Self::JSXSpreadAttribute(_) => "JSXSpreadAttribute".into(),
-            Self::JSXText(_) => "JSXText".into(),
+            Self::JSXText(t) => format!("JSXText({})", t.value).into(),
             Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
             Self::JSXIdentifier(id) => format!("JSXIdentifier({id})").into(),
             Self::JSXMemberExpression(_) => "JSXMemberExpression".into(),
