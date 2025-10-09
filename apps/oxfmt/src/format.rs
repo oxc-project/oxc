@@ -193,7 +193,7 @@ fn load_config(cwd: &Path, config: Option<&PathBuf>) -> Result<FormatOptions, St
 
         // This will error if the file does not exist or is invalid
         let oxfmtrc = Oxfmtrc::from_file(&full_path)?;
-        return oxfmtrc.into_format_options();
+        return oxfmtrc.get_format_options();
     }
 
     // If `--config` is not specified, search the nearest config file from cwd upwards
@@ -201,7 +201,7 @@ fn load_config(cwd: &Path, config: Option<&PathBuf>) -> Result<FormatOptions, St
         let config_path = dir.join(DEFAULT_OXFMTRC);
         if config_path.exists() {
             let oxfmtrc = Oxfmtrc::from_file(&config_path)?;
-            return oxfmtrc.into_format_options();
+            return oxfmtrc.get_format_options();
         }
     }
 

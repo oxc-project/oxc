@@ -103,10 +103,10 @@ impl Oxfmtrc {
 
     /// # Errors
     /// Returns error if any option value is invalid
-    pub fn into_format_options(self) -> Result<FormatOptions, String> {
+    pub fn get_format_options(&self) -> Result<FormatOptions, String> {
         let mut options = FormatOptions::default();
 
-        if let Some(style) = self.indent_style {
+        if let Some(style) = &self.indent_style {
             options.indent_style =
                 style.parse::<IndentStyle>().map_err(|e| format!("Invalid indent_style: {e}"))?;
         }
@@ -116,7 +116,7 @@ impl Oxfmtrc {
                 IndentWidth::try_from(width).map_err(|e| format!("Invalid indent_width: {e}"))?;
         }
 
-        if let Some(ending) = self.line_ending {
+        if let Some(ending) = &self.line_ending {
             options.line_ending =
                 ending.parse::<LineEnding>().map_err(|e| format!("Invalid line_ending: {e}"))?;
         }
@@ -126,34 +126,34 @@ impl Oxfmtrc {
                 LineWidth::try_from(width).map_err(|e| format!("Invalid line_width: {e}"))?;
         }
 
-        if let Some(style) = self.quote_style {
+        if let Some(style) = &self.quote_style {
             options.quote_style =
                 style.parse::<QuoteStyle>().map_err(|e| format!("Invalid quote_style: {e}"))?;
         }
 
-        if let Some(style) = self.jsx_quote_style {
+        if let Some(style) = &self.jsx_quote_style {
             options.jsx_quote_style =
                 style.parse::<QuoteStyle>().map_err(|e| format!("Invalid jsx_quote_style: {e}"))?;
         }
 
-        if let Some(props) = self.quote_properties {
+        if let Some(props) = &self.quote_properties {
             options.quote_properties = props
                 .parse::<QuoteProperties>()
                 .map_err(|e| format!("Invalid quote_properties: {e}"))?;
         }
 
-        if let Some(commas) = self.trailing_commas {
+        if let Some(commas) = &self.trailing_commas {
             options.trailing_commas = commas
                 .parse::<TrailingCommas>()
                 .map_err(|e| format!("Invalid trailing_commas: {e}"))?;
         }
 
-        if let Some(semis) = self.semicolons {
+        if let Some(semis) = &self.semicolons {
             options.semicolons =
                 semis.parse::<Semicolons>().map_err(|e| format!("Invalid semicolons: {e}"))?;
         }
 
-        if let Some(parens) = self.arrow_parentheses {
+        if let Some(parens) = &self.arrow_parentheses {
             options.arrow_parentheses = parens
                 .parse::<ArrowParentheses>()
                 .map_err(|e| format!("Invalid arrow_parentheses: {e}"))?;
@@ -167,24 +167,24 @@ impl Oxfmtrc {
             options.bracket_same_line = BracketSameLine::from(same_line);
         }
 
-        if let Some(position) = self.attribute_position {
+        if let Some(position) = &self.attribute_position {
             options.attribute_position = position
                 .parse::<AttributePosition>()
                 .map_err(|e| format!("Invalid attribute_position: {e}"))?;
         }
 
-        if let Some(expand) = self.expand {
+        if let Some(expand) = &self.expand {
             options.expand =
                 expand.parse::<Expand>().map_err(|e| format!("Invalid expand: {e}"))?;
         }
 
-        if let Some(position) = self.experimental_operator_position {
+        if let Some(position) = &self.experimental_operator_position {
             options.experimental_operator_position = position
                 .parse::<OperatorPosition>()
                 .map_err(|e| format!("Invalid experimental_operator_position: {e}"))?;
         }
 
-        if let Some(sort_imports_config) = self.experimental_sort_imports {
+        if let Some(sort_imports_config) = &self.experimental_sort_imports {
             let order = sort_imports_config
                 .order
                 .parse::<SortOrder>()
@@ -223,7 +223,7 @@ mod tests {
         }"#;
 
         let config: Oxfmtrc = serde_json::from_str(json).unwrap();
-        let options = config.into_format_options().unwrap();
+        let options = config.get_format_options().unwrap();
 
         assert!(options.indent_style.is_tab());
         assert_eq!(options.indent_width.value(), 4);
@@ -244,7 +244,7 @@ mod tests {
         }"#,
         )
         .unwrap();
-        let options = config.into_format_options().unwrap();
+        let options = config.get_format_options().unwrap();
 
         // Should use defaults
         assert!(options.indent_style.is_space());
@@ -256,7 +256,7 @@ mod tests {
     #[test]
     fn test_empty_config() {
         let config: Oxfmtrc = serde_json::from_str("{}").unwrap();
-        let options = config.into_format_options().unwrap();
+        let options = config.get_format_options().unwrap();
 
         // Should use defaults
         assert!(options.indent_style.is_space());
