@@ -29,22 +29,33 @@ use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, ast_operations::to_identifier};
+use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct ExportNamespaceFrom<'a, 'ctx> {
-    _ctx: &'ctx crate::context::TransformCtx<'a>,
+    _ctx: &'ctx TransformCtx<'a>,
 }
 
 impl<'a, 'ctx> ExportNamespaceFrom<'a, 'ctx> {
-    pub fn new(ctx: &'ctx crate::context::TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
         Self { _ctx: ctx }
     }
 }
 
 impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Early return if there's no `export * as ns from "mod"` to transform
+        let has_export_namespace = program.body.iter().any(|stmt| {
+            matches!(stmt, Statement::ExportAllDeclaration(decl) if decl.exported.is_some())
+        });
+        if !has_export_namespace {
+            return;
+        }
+
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
 
         for stmt in program.body.take_in(ctx.ast) {
@@ -55,10 +66,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
 
                     let ExportAllDeclaration { span, exported, source, export_kind, .. } =
                         export_all.unbox();
+                    let exported_name = exported.unwrap();
 
-                    // Create a unique binding for the import
+                    // Create a unique binding for the import based on the exported name
+                    let name = exported_name.name();
                     let binding = ctx.generate_uid(
-                        &to_identifier(exported.as_ref().unwrap().name().to_string()),
+                        name.as_str(),
                         program.scope_id(),
                         SymbolFlags::Import,
                     );
@@ -85,7 +98,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
                     let local =
                         ModuleExportName::IdentifierReference(binding.create_read_reference(ctx));
                     let export_specifier =
-                        ctx.ast.export_specifier(span, local, exported.unwrap(), export_kind);
+                        ctx.ast.export_specifier(span, local, exported_name, export_kind);
 
                     let export_named_decl = ctx.ast.alloc_export_named_declaration(
                         SPAN,
