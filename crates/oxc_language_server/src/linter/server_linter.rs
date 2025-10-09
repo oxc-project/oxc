@@ -21,7 +21,7 @@ use crate::linter::{
     options::{LintOptions as LSPLintOptions, Run},
     tsgo_linter::TsgoLinter,
 };
-use crate::{ConcurrentHashMap, OXC_CONFIG_FILE};
+use crate::{ConcurrentHashMap, LINT_CONFIG_FILE};
 
 use super::config_walker::ConfigWalker;
 
@@ -90,7 +90,7 @@ impl ServerLinter {
         let mut nested_ignore_patterns = Vec::new();
         let (nested_configs, mut extended_paths) =
             Self::create_nested_configs(&root_path, options, &mut nested_ignore_patterns);
-        let config_path = options.config_path.as_ref().map_or(OXC_CONFIG_FILE, |v| v);
+        let config_path = options.config_path.as_ref().map_or(LINT_CONFIG_FILE, |v| v);
         let config = normalize_path(root_path.join(config_path));
         let oxlintrc = if config.try_exists().is_ok_and(|exists| exists) {
             if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
