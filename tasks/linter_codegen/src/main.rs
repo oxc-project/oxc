@@ -8,6 +8,7 @@ use crate::{
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
     utils::{find_impl_function, find_rule_impl_block},
 };
+use rustc_hash::FxHashSet;
 use std::{
     fmt::Write as _,
     fs,
@@ -42,17 +43,22 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
     out.push_str("#![allow(clippy::needless_pass_by_value)]\n\n");
     out.push_str("use oxc_ast::AstType;\n");
     out.push_str("use oxc_semantic::AstTypesBitset;\n\n");
-    out.push_str("use crate::rule::RuleRunner;\n\n");
+    out.push_str("use crate::rule::{RuleRunner, RuleRunFunctionsImplemented};\n\n");
 
     for rule in &rule_entries {
         // Try to open the rule source file and use syn to detect node types
         let mut detected_types: NodeTypeSet = NodeTypeSet::new();
+        let mut rule_run_info: FxHashSet<String> = FxHashSet::default();
+
         if let Some(src_path) = find_rule_source_file(&root, rule)
             && let Ok(src_contents) = fs::read_to_string(&src_path)
             && let Ok(file) = syn::parse_file(&src_contents)
-            && let Some(node_types) = detect_top_level_node_types(&file, rule)
         {
-            detected_types.extend(node_types);
+            if let Some(node_types) = detect_top_level_node_types(&file, rule) {
+                detected_types.extend(node_types);
+            }
+
+            rule_run_info.extend(detect_rule_run_implementations(&file, rule));
         }
 
         let node_types_init = if detected_types.is_empty() {
@@ -61,11 +67,26 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             format!("Some(&{})", detected_types.to_ast_type_bitset_string())
         };
 
+        let rule_run_info_init = if rule_run_info.len() == 1 {
+            match rule_run_info.iter().next().map(String::as_str) {
+                Some("run") => "RuleRunFunctionsImplemented::Run".to_string(),
+                Some("run_on_symbol") => "RuleRunFunctionsImplemented::RunOnSymbol".to_string(),
+                Some("run_once") => "RuleRunFunctionsImplemented::RunOnce".to_string(),
+                Some("run_on_jest_node") => {
+                    "RuleRunFunctionsImplemented::RunOnJestNode".to_string()
+                }
+                _ => "RuleRunFunctionsImplemented::Unknown".to_string(),
+            }
+        } else {
+            "RuleRunFunctionsImplemented::Unknown".to_string()
+        };
+
         write!(
             out,
             r"
 impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} {{
     const NODE_TYPES: Option<&AstTypesBitset> = {node_types_init};
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = {rule_run_info_init};
 }}
             ",
             plugin_module = rule.plugin_module_name,
@@ -112,6 +133,37 @@ fn detect_top_level_node_types(file: &File, rule: &RuleEntry) -> Option<NodeType
     }
 
     None
+}
+
+/// Detect which `run` functions are implemented for a given rule. Returns a set of the function names
+/// that are implemented, and an empty set otherwise.
+fn detect_rule_run_implementations(file: &File, rule: &RuleEntry) -> FxHashSet<String> {
+    let mut set = FxHashSet::default();
+
+    let Some(rule_impl) = find_rule_impl_block(file, &rule.rule_struct_name()) else {
+        return FxHashSet::default();
+    };
+
+    // In order to be very conservative about only generating correct info, we will consider *all*
+    // functions that are implemented in the rule impl. Then, we will only remove a few known functions
+    // that do not affect rule run behavior. This way, if we ever add more ways of running a rule, it should
+    // be forwards compatible even if we do not change the linter codegen.
+    let ignore_funcs = FxHashSet::from_iter(["from_configuration", "should_run"]);
+
+    // Get names of all implemented functions in rule impl
+    let implemented_funcs = rule_impl
+        .items
+        .iter()
+        .filter_map(|item| {
+            if let syn::ImplItem::Fn(func) = item { Some(func.sig.ident.to_string()) } else { None }
+        })
+        .filter(|name| !ignore_funcs.contains(&name.as_str()));
+
+    for func in implemented_funcs {
+        set.insert(func);
+    }
+
+    set
 }
 
 /// Result of attempting to collect node type variants.

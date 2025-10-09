@@ -78,7 +78,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
             utils::PossibleJestNode,
             AstNode
         };
@@ -187,6 +187,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
                 match self {
                     #(Self::#struct_names(rule) => rule.types_info()),*
+                }
+            }
+
+            pub fn run_info(&self) -> RuleRunFunctionsImplemented {
+                match self {
+                    #(Self::#struct_names(rule) => rule.run_info()),*
                 }
             }
         }
