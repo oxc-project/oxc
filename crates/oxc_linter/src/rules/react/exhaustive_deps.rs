@@ -277,6 +277,7 @@ impl Rule for ExhaustiveDeps {
             .map(|config_json| ExhaustiveDepsConfig {
                 additional_hooks: config_json
                     .additional_hooks
+                    .filter(|pattern| !pattern.is_empty())
                     .and_then(|pattern| Regex::new(&pattern).ok()),
             })
             .unwrap_or_default();
@@ -4128,6 +4129,14 @@ fn test() {
         Some(serde_json::json!([{ "additionalHooks": "useSpecialEffect" }])),
     )];
 
+    let pass_additional_hooks_empty_string = vec![(
+        "function MyComponent(props) {
+          const foo = bar.add();
+        }
+        ",
+        Some(serde_json::json!([{ "additionalHooks": "" }])),
+    )];
+
     let fail_additional_hooks = vec![(
         "function MyComponent() {
           const [state, setState] = React.useState<number>(0);
@@ -4269,7 +4278,11 @@ fn test() {
     Tester::new(
         ExhaustiveDeps::NAME,
         ExhaustiveDeps::PLUGIN,
-        pass.iter().map(|&code| (code, None)).chain(pass_additional_hooks).collect::<Vec<_>>(),
+        pass.iter()
+            .map(|&code| (code, None))
+            .chain(pass_additional_hooks)
+            .chain(pass_additional_hooks_empty_string)
+            .collect::<Vec<_>>(),
         fail.iter().map(|&code| (code, None)).chain(fail_additional_hooks).collect::<Vec<_>>(),
     )
     .expect_fix(fix)
