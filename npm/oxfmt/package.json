@@ -24,6 +24,7 @@
   },
   "files": [
     "bin/oxfmt",
+    "configuration_schema.json",
     "README.md"
   ]
 }

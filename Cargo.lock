@@ -2098,7 +2098,9 @@ name = "oxc_formatter"
 version = "0.4.0"
 dependencies = [
  "cow-utils",
+ "insta",
  "json-strip-comments",
+ "oxc-schemars",
  "oxc_allocator 0.94.0",
  "oxc_ast 0.94.0",
  "oxc_data_structures 0.94.0",
@@ -2106,6 +2108,7 @@ dependencies = [
  "oxc_span 0.94.0",
  "oxc_syntax 0.94.0",
  "pico-args",
+ "project-root",
  "rustc-hash",
  "serde",
  "serde_json",

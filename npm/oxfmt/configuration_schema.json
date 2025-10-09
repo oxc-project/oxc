@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Oxfmtrc",
+  "type": "object",
+  "properties": {
+    "arrowParentheses": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "attributePosition": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "bracketSameLine": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "bracketSpacing": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "expand": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "experimentalOperatorPosition": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "experimentalSortImports": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortImportsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "indentStyle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "indentWidth": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint8",
+      "minimum": 0.0
+    },
+    "jsxQuoteStyle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lineEnding": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lineWidth": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "quoteProperties": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "quoteStyle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "semicolons": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "trailingCommas": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "definitions": {
+    "SortImportsConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreCase": {
+          "default": true,
+          "type": "boolean"
+        },
+        "order": {
+          "default": "asc",
+          "type": "string"
+        },
+        "partitionByComment": {
+          "default": false,
+          "type": "boolean"
+        },
+        "partitionByNewline": {
+          "default": false,
+          "type": "boolean"
+        },
+        "sortSideEffects": {
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

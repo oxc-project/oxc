@@ -29,10 +29,13 @@ oxc_syntax = { workspace = true }
 cow-utils = { workspace = true }
 json-strip-comments = { workspace = true }
 rustc-hash = { workspace = true }
+schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 unicode-width = "0.2"
 
 [dev-dependencies]
+insta = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
+project-root = { workspace = true }

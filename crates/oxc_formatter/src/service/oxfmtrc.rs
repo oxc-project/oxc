@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -8,7 +9,7 @@ use crate::{
     Semicolons, SortImports, SortOrder, TrailingCommas,
 };
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -45,7 +46,7 @@ pub struct Oxfmtrc {
     pub experimental_sort_imports: Option<SortImportsConfig>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortImportsConfig {
     #[serde(default)]
