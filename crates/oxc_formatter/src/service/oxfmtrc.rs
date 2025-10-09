@@ -87,7 +87,8 @@ impl Oxfmtrc {
     pub fn from_file(path: &Path) -> Result<Self, String> {
         // TODO: Use `simdutf8` like `oxc_linter`?
         let mut string = std::fs::read_to_string(path)
-            .map_err(|err| format!("Failed to read config {}: {err}", path.display()))?;
+            // Do not include OS error, it differs between platforms
+            .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
 
         // JSONC support - strip comments
         json_strip_comments::strip(&mut string)

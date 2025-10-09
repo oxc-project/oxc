@@ -79,14 +79,15 @@ impl Tester {
         let regex = Regex::new(r"\d+(?:\.\d+)?s|\d+ms").unwrap();
         let output_string = regex.replace_all(output_string, "<variable>ms").into_owned();
 
+        // Normalize all backslashes to forward slashes first (for Windows paths)
+        let output_string = output_string.cow_replace('\\', "/").to_string();
+
         // do not output the current working directory, each machine has a different one
-        let current_cwd_string = current_cwd.to_str().unwrap();
-        let current_cwd_string = current_cwd_string.cow_replace('\\', "/").to_string(); // for windows
+        let current_cwd_string = current_cwd.to_str().unwrap().cow_replace('\\', "/").to_string();
         let output_string = output_string.cow_replace(&current_cwd_string, "<cwd>");
 
         // Also replace the test cwd path
-        let test_cwd_string = self.cwd.to_str().unwrap();
-        let test_cwd_string = test_cwd_string.cow_replace('\\', "/").to_string(); // for windows
+        let test_cwd_string = self.cwd.to_str().unwrap().cow_replace('\\', "/").to_string();
         let output_string = output_string.cow_replace(&test_cwd_string, "<cwd>");
 
         let full_args_list =
