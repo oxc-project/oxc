@@ -39,3 +39,7 @@ insta = { workspace = true }
 oxc_parser = { workspace = true }
 pico-args = { workspace = true }
 project-root = { workspace = true }
+serde_json = { workspace = true }
+
+[build-dependencies]
+oxc_span = { workspace = true }
