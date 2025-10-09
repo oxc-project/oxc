@@ -49,3 +49,29 @@ fn write_mode() {
     let after = "class Foo {}\n";
     Tester::test_write("tests/fixtures/temp.js", before, after);
 }
+
+#[test]
+fn config_file_auto_discovery() {
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/config_file"))
+        .test_and_snapshot_multiple(&[&["--check"]]);
+
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/config_file/nested"))
+        .test_and_snapshot_multiple(&[&["--check"]]);
+
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/config_file/nested/deep"))
+        .test_and_snapshot_multiple(&[&["--check"]]);
+}
+
+#[test]
+fn config_file_explicit() {
+    Tester::new().with_cwd(PathBuf::from("tests/fixtures/config_file")).test_and_snapshot_multiple(
+        &[
+            &["--check", "--config", "./fmt.json"],
+            &["--check", "--config", "./fmt.jsonc"],
+            &["--check", "--config", "NOT_EXISTS.json"],
+        ],
+    );
+}

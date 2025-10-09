@@ -1,8 +1,15 @@
-use std::{env, io::Write, path::PathBuf, sync::mpsc, time::Instant};
+use std::{
+    env,
+    io::Write,
+    path::{Path, PathBuf},
+    sync::mpsc,
+    time::Instant,
+};
 
 use ignore::overrides::OverrideBuilder;
 
 use oxc_diagnostics::DiagnosticService;
+use oxc_formatter::{FormatOptions, Oxfmtrc};
 
 use crate::{
     cli::{CliRunResult, FormatCommand},
@@ -37,7 +44,19 @@ impl FormatRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, output_options, misc_options } = self.options;
+        let FormatCommand { paths, output_options, basic_options, misc_options } = self.options;
+
+        // Find and load config
+        let format_options = match load_config(&cwd, basic_options.config.as_ref()) {
+            Ok(options) => options,
+            Err(err) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to load configuration file.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
         // Default to current working directory if no paths are provided
         let paths = if paths.is_empty() { vec![cwd.clone()] } else { paths };
@@ -82,7 +101,7 @@ impl FormatRunner {
         let output_options_clone = output_options.clone();
         // Spawn a thread to run formatting service with streaming entries
         rayon::spawn(move || {
-            let format_service = FormatService::new(cwd, output_options_clone);
+            let format_service = FormatService::new(cwd, output_options_clone, format_options);
             format_service.run_streaming(rx_entry, &tx_error, tx_count);
         });
 
@@ -154,6 +173,40 @@ impl FormatRunner {
             }
         }
     }
+}
+
+const DEFAULT_OXFMTRC: &str = ".oxfmtrc.json";
+
+/// # Errors
+///
+/// Returns error if:
+/// - Config file is specified but not found or invalid
+/// - Config file parsing fails
+fn load_config(cwd: &Path, config: Option<&PathBuf>) -> Result<FormatOptions, String> {
+    // If `--config` is explicitly specified, use that path directly
+    if let Some(config_path) = config {
+        let full_path = if config_path.is_absolute() {
+            PathBuf::from(config_path)
+        } else {
+            cwd.join(config_path)
+        };
+
+        // This will error if the file does not exist or is invalid
+        let oxfmtrc = Oxfmtrc::from_file(&full_path)?;
+        return oxfmtrc.into_format_options();
+    }
+
+    // If `--config` is not specified, search the nearest config file from cwd upwards
+    for dir in cwd.ancestors() {
+        let config_path = dir.join(DEFAULT_OXFMTRC);
+        if config_path.exists() {
+            let oxfmtrc = Oxfmtrc::from_file(&config_path)?;
+            return oxfmtrc.into_format_options();
+        }
+    }
+
+    // No config file found, use defaults
+    Ok(FormatOptions::default())
 }
 
 fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {

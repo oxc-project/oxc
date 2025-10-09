@@ -1,0 +1,4 @@
+{
+  // Supports JSONC!
+  "semicolons": "always"
+}

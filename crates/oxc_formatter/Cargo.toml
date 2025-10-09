@@ -27,7 +27,10 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
+json-strip-comments = { workspace = true }
 rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 unicode-width = "0.2"
 
 [dev-dependencies]

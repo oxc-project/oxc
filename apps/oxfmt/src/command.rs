@@ -25,6 +25,9 @@ pub struct FormatCommand {
     pub output_options: OutputOptions,
 
     #[bpaf(external)]
+    pub basic_options: BasicOptions,
+
+    #[bpaf(external)]
     pub misc_options: MiscOptions,
 
     /// Single file, single path or list of paths.
@@ -47,6 +50,14 @@ pub enum OutputOptions {
     /// List mode - list files that would be changed
     #[bpaf(long)]
     ListDifferent,
+}
+
+/// Basic Options
+#[derive(Debug, Clone, Bpaf)]
+pub struct BasicOptions {
+    /// Path to the configuration file
+    #[bpaf(short, long, argument("PATH"))]
+    pub config: Option<PathBuf>,
 }
 
 /// Miscellaneous

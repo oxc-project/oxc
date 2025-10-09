@@ -13,14 +13,15 @@ use crate::{command::OutputOptions, walk::WalkEntry};
 pub struct FormatService {
     cwd: Box<Path>,
     output_options: OutputOptions,
+    format_options: FormatOptions,
 }
 
 impl FormatService {
-    pub fn new<T>(cwd: T, output_options: OutputOptions) -> Self
+    pub fn new<T>(cwd: T, output_options: OutputOptions, format_options: FormatOptions) -> Self
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), output_options }
+        Self { cwd: cwd.into(), output_options, format_options }
     }
 
     /// Process entries as they are received from the channel
@@ -72,9 +73,7 @@ impl FormatService {
             return;
         }
 
-        // TODO: Read and apply config
-        let options = FormatOptions::default();
-        let code = Formatter::new(&allocator, options).build(&ret.program);
+        let code = Formatter::new(&allocator, self.format_options.clone()).build(&ret.program);
 
         let elapsed = start_time.elapsed();
         let is_changed = source_text != code;

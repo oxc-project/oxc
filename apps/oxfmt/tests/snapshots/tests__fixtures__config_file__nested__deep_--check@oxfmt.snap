@@ -1,0 +1,15 @@
+---
+source: apps/oxfmt/tests/tester.rs
+---
+########## 
+arguments: --check
+working directory: tests/fixtures/config_file/nested/deep
+----------
+Checking formatting...
+test.js (<variable>ms)
+
+Format issues found in above 1 files. Run without `--check` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
