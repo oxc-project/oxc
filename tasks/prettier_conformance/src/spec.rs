@@ -187,8 +187,11 @@ impl VisitMut<'_> for SpecParser {
                                 }
                                 "arrowParens" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    options.arrow_parentheses =
-                                        ArrowParentheses::from_str(s).unwrap_or_default();
+                                    options.arrow_parentheses = ArrowParentheses::from_str(
+                                        // Prettier uses "avoid", but we use "as-needed"
+                                        if s == "avoid" { "as-needed" } else { s },
+                                    )
+                                    .unwrap_or_default();
                                 }
                                 "experimentalOperatorPosition" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
