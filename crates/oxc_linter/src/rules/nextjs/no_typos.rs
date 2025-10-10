@@ -13,8 +13,8 @@ use crate::{
 };
 
 fn no_typos_diagnostic(typo: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{typo} may be a typo. Did you mean {suggestion}?"))
-        .with_help("Prevent common typos in Next.js's data fetching functions")
+    OxcDiagnostic::warn(format!("`{typo}` may be a typo. Did you mean `{suggestion}`?"))
+        .with_help(format!("Change `{typo}` to `{suggestion}`"))
         .with_label(span)
 }
 
@@ -57,7 +57,7 @@ const NEXTJS_DATA_FETCHING_FUNCTIONS: [&str; 3] =
     ["getStaticProps", "getStaticPaths", "getServerSideProps"];
 
 // 0 is the exact match
-const THRESHOLD: i32 = 1;
+const THRESHOLD: usize = 1;
 
 impl Rule for NoTypos {
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -80,25 +80,15 @@ impl Rule for NoTypos {
             match decl {
                 Declaration::VariableDeclaration(decl) => {
                     for decl in &decl.declarations {
-                        let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind else {
-                            continue;
-                        };
-                        let Some(potential_typo) = get_potential_typo(&id.name) else {
-                            continue;
-                        };
-                        ctx.diagnostic(no_typos_diagnostic(
-                            id.name.as_str(),
-                            potential_typo,
-                            id.span,
-                        ));
+                        if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
+                            check_function_name(&id.name, id.span, ctx);
+                        }
                     }
                 }
                 Declaration::FunctionDeclaration(decl) => {
-                    let Some(id) = &decl.id else { return };
-                    let Some(potential_typo) = get_potential_typo(&id.name) else {
-                        return;
-                    };
-                    ctx.diagnostic(no_typos_diagnostic(id.name.as_str(), potential_typo, id.span));
+                    if let Some(id) = &decl.id {
+                        check_function_name(&id.name, id.span, ctx);
+                    }
                 }
                 _ => {}
             }
@@ -106,47 +96,40 @@ impl Rule for NoTypos {
     }
 }
 
-fn get_potential_typo(fn_name: &str) -> Option<&str> {
-    let mut potential_typos: Vec<_> = NEXTJS_DATA_FETCHING_FUNCTIONS
-        .iter()
-        .map(|&o| {
-            let distance = min_distance(o, fn_name);
-            (o, distance)
+fn check_function_name(name: &str, span: Span, ctx: &LintContext) {
+    let mut potential_typos = NEXTJS_DATA_FETCHING_FUNCTIONS
+        .into_iter()
+        .filter_map(|o| {
+            let distance = min_distance(o, name);
+            (distance <= THRESHOLD && distance > 0).then_some((o, distance))
         })
-        .filter(|&(_, distance)| distance <= THRESHOLD as usize && distance > 0)
-        .collect();
+        .collect::<Vec<_>>();
 
     potential_typos.sort_by(|a, b| a.1.cmp(&b.1));
-
-    potential_typos.first().map(|(option, _)| *option)
+    if let Some(suggestion) = potential_typos.first().map(|(option, _)| option) {
+        ctx.diagnostic(no_typos_diagnostic(name, suggestion, span));
+    }
 }
 
-// the minimum number of operations required to convert string a to string b.
 fn min_distance(a: &str, b: &str) -> usize {
-    let m = a.len();
-    let n = b.len();
-
-    if m < n {
+    if a.len() < b.len() {
         return min_distance(b, a);
     }
 
-    if n == 0 {
-        return m;
-    }
+    let b_chars: Vec<char> = b.chars().collect();
 
-    let mut previous_row: Vec<usize> = (0..=n).collect();
-
-    for (i, s1) in a.char_indices() {
-        let mut current_row = vec![i + 1];
-        for (j, s2) in b.char_indices() {
-            let insertions = previous_row[j + 1] + 1;
-            let deletions = current_row[j] + 1;
-            let substitutions = previous_row[j] + usize::from(s1 != s2);
-            current_row.push(insertions.min(deletions).min(substitutions));
+    let n = b_chars.len();
+    let mut prev: Vec<usize> = (0..=n).collect();
+    let mut curr: Vec<usize> = Vec::with_capacity(n + 1);
+    for (i, ca) in a.chars().enumerate() {
+        curr.clear();
+        curr.push(i + 1);
+        for (j, &cb) in b_chars.iter().enumerate() {
+            curr.push((prev[j] + usize::from(ca != cb)).min(prev[j + 1] + 1).min(curr[j] + 1));
         }
-        previous_row = current_row;
+        std::mem::swap(&mut prev, &mut curr);
     }
-    previous_row[n]
+    prev[n]
 }
 
 #[test]
