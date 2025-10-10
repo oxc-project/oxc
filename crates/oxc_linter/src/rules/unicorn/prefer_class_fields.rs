@@ -143,7 +143,7 @@ impl Rule for PreferClassFields {
                 if let Some(value) = &prop.value {
                     let mut codegen = fixer.codegen();
                     codegen.print_expression(&assign.right);
-                    fix.push(fixer.replace(value.span(), codegen));
+                    fix.push(fixer.replace(value.span(), codegen.into_source_text()));
                 }
 
                 fix.with_message("Replace `this` assignment with class field declaration")
@@ -162,7 +162,7 @@ impl Rule for PreferClassFields {
                 let mut codegen = fixer.codegen();
                 codegen.print_str(" = ");
                 codegen.print_expression(&assign.right);
-                fix.push(fixer.insert_text_after(&prop.key, codegen));
+                fix.push(fixer.insert_text_after(&prop.key, codegen.into_source_text()));
             } else {
                 let indent =
                     ctx.source_range(constructor.span).lines().next().map_or("\t", |line| {
@@ -176,7 +176,7 @@ impl Rule for PreferClassFields {
                 codegen.print_str(" = ");
                 codegen.print_expression(&assign.right);
                 codegen.print_str(";\n");
-                fix.push(fixer.insert_text_before(&**constructor, codegen));
+                fix.push(fixer.insert_text_before(&**constructor, codegen.into_source_text()));
             }
 
             fix.with_message("Replace `this` assignment with class field declaration")

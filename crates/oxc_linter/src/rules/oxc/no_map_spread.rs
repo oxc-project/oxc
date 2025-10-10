@@ -469,7 +469,7 @@ fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<&'b Exp
 fn fix_spread_to_object_assign<'a>(
     fixer: RuleFixer<'_, 'a>,
     obj: &ObjectExpression<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     use oxc_allocator::{Allocator, CloneIn};
     use oxc_ast::AstBuilder;
     use oxc_codegen::CodegenOptions;

@@ -125,7 +125,7 @@ fn find_empty_braces_in_export(
     find_empty_braces_in_text(export_text, export_decl.span)
 }
 
-fn fix_import<'a>(fixer: RuleFixer<'_, 'a>, import_decl: &ImportDeclaration<'a>) -> RuleFix<'a> {
+fn fix_import<'a>(fixer: RuleFixer<'_, 'a>, import_decl: &ImportDeclaration<'a>) -> RuleFix {
     let import_text = fixer.source_range(import_decl.span);
 
     let Some(comma_pos) = import_text.find(',') else {
@@ -141,10 +141,7 @@ fn fix_import<'a>(fixer: RuleFixer<'_, 'a>, import_decl: &ImportDeclaration<'a>)
     fixer.replace(import_decl.span, format!("{default_part} {from_part}"))
 }
 
-fn fix_export<'a>(
-    fixer: RuleFixer<'_, 'a>,
-    export_decl: &ExportNamedDeclaration<'a>,
-) -> RuleFix<'a> {
+fn fix_export<'a>(fixer: RuleFixer<'_, 'a>, export_decl: &ExportNamedDeclaration<'a>) -> RuleFix {
     if export_decl.source.is_some() {
         return fixer.noop();
     }

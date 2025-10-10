@@ -109,7 +109,7 @@ impl Rule for JsxPropsNoSpreadMulti {
                             .rev()
                             .skip(1)
                             .map(|span| Fix::delete(*span))
-                            .collect::<RuleFix<'a>>()
+                            .collect::<RuleFix>()
                             .with_message(REMOVE_DUPLICATE_SPREAD)
                     },
                 );

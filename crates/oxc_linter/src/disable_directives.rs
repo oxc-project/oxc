@@ -40,7 +40,7 @@ pub struct RuleCommentRule {
 
 impl RuleCommentRule {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    pub fn create_fix<'a>(&self, source_text: &'a str, comment_span: Span) -> Fix<'a> {
+    pub fn create_fix(&self, source_text: &str, comment_span: Span) -> Fix {
         let before_source =
             &source_text[comment_span.start as usize..self.name_span.start as usize];
 

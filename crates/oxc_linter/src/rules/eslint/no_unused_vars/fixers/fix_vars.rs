@@ -30,7 +30,7 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, 'a>,
         decl: &VariableDeclarator<'a>,
         decl_id: NodeId,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         if decl.init.as_ref().is_some_and(|init| is_skipped_init(symbol, init)) {
             return fixer.noop();
         }

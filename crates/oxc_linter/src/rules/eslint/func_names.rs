@@ -431,12 +431,12 @@ fn can_safely_apply_fix(func: &Function, name: &str, ctx: &LintContext) -> bool 
     })
 }
 
-fn apply_rule_fix<'a>(
-    fixer: &RuleFixer<'_, 'a>,
+fn apply_rule_fix(
+    fixer: &RuleFixer<'_, '_>,
     is_safe_fix: bool,
     replace_span: Span,
     function_name: Option<String>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     if is_safe_fix && let Some(name) = function_name {
         return fixer.insert_text_after(&replace_span, format!(" {name}"));
     }

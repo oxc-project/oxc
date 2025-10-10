@@ -284,7 +284,7 @@ fn generate_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     ctx: &LintContext<'a>,
     node: &AstNode<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     if call_expr.arguments.len() > 1 {
         return fixer.noop();
     }

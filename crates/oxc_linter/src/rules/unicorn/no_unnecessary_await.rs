@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -71,7 +71,7 @@ impl Rule for NoUnnecessaryAwait {
             } else {
                 ctx.diagnostic_with_fix(
                     no_unnecessary_await_diagnostic(Span::sized(expr.span.start, 5)),
-                    |fixer| fixer.replace(expr.span, fixer.source_range(expr.argument.span())),
+                    |fixer| fixer.replace_with(expr, &expr.argument),
                 );
             }
         }

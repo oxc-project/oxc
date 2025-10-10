@@ -111,7 +111,7 @@ impl Rule for NoSinglePromiseInPromiseMethods {
                 let call_span = call_expr.span;
 
                 if is_directly_in_await {
-                    fixer.replace(call_span, elem_text)
+                    fixer.replace(call_span, elem_text.to_owned())
                 } else {
                     fixer.replace(call_span, format!("Promise.resolve({elem_text})"))
                 }
