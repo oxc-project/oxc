@@ -198,7 +198,6 @@ fn generate_snapshot(path: &Path, source_text: &str) -> String {
 }
 
 /// Helper function to run a test for a single file
-#[expect(unused)]
 fn test_file(path: &Path) {
     let source_text = fs::read_to_string(path).unwrap();
     let snapshot = generate_snapshot(path, &source_text);
