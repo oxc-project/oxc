@@ -39,10 +39,39 @@ pub fn format_type_cast_comment_node<'a, T>(
     let source = f.source_text();
 
     if !source.next_non_whitespace_byte_is(span.end, b')') {
-        return Ok(false);
+        let comments_after_node = comments.comments_after(span.end);
+        let mut start = span.end;
+        // Skip comments after the node to find the next non-whitespace byte whether it's a `)`
+        for comment in comments_after_node {
+            if !source.all_bytes_match(start, comment.span.start, |b| b.is_ascii_whitespace()) {
+                break;
+            }
+            start = comment.span.end;
+        }
+        // Still not a `)`, return early because it's not a type cast
+        if !source.next_non_whitespace_byte_is(start, b')') {
+            return Ok(false);
+        }
     }
 
-    if let Some(type_cast_comment_index) = comments.get_type_cast_comment_index(span) {
+    if !comments.is_handled_type_cast_comment()
+        && let Some(last_printed_comment) = comments.printed_comments().last()
+        && last_printed_comment.span.end <= span.start
+        && f.source_text().next_non_whitespace_byte_is(last_printed_comment.span.end, b'(')
+        && f.comments().is_type_cast_comment(last_printed_comment)
+    {
+        // Get the source text from the end of type cast comment to the node span
+        let node_source_text = source.bytes_range(last_printed_comment.span.end, span.end);
+
+        // `(/** @type {Number} */ (bar).zoo)`
+        //                         ^^^^
+        // Should wrap for `baz` rather than `baz.zoo`
+        if has_closed_parentheses(node_source_text) {
+            return Ok(false);
+        }
+
+        f.context_mut().comments_mut().mark_as_type_cast_node(node);
+    } else if let Some(type_cast_comment_index) = comments.get_type_cast_comment_index(span) {
         let comments = f.context().comments().unprinted_comments();
         let type_cast_comment = &comments[type_cast_comment_index];
 
@@ -59,25 +88,11 @@ pub fn format_type_cast_comment_node<'a, T>(
         let type_cast_comments = &comments[..=type_cast_comment_index];
 
         write!(f, [FormatLeadingComments::Comments(type_cast_comments)])?;
-        f.context_mut().comments_mut().mark_as_handled_type_cast_comment();
-    } else {
-        let elements = f.elements().iter().rev();
-
+        f.context_mut().comments_mut().mark_as_type_cast_node(node);
         // If the printed cast comment is already handled, return early to avoid infinite recursion.
-        if !comments.is_already_handled_type_cast_comment()
-            && comments.printed_comments().last().is_some_and(|c| {
-                c.span.end <= span.start
-                    && source.all_bytes_match(c.span.end, span.start, |c| {
-                        c.is_ascii_whitespace() || c == b'('
-                    })
-                    && f.comments().is_type_cast_comment(c)
-            })
-        {
-            f.context_mut().comments_mut().mark_as_handled_type_cast_comment();
-        } else {
-            // No typecast comment
-            return Ok(false);
-        }
+    } else {
+        // No typecast comment
+        return Ok(false);
     }
 
     // https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/estree.js#L117-L120
@@ -102,7 +117,12 @@ fn has_closed_parentheses(source: &[u8]) -> bool {
     while i < source.len() {
         match source[i] {
             b'(' => paren_count += 1,
-            b')' => paren_count -= 1,
+            b')' => {
+                paren_count -= 1;
+                if paren_count == 0 {
+                    return true;
+                }
+            }
             b'/' if i + 1 < source.len() => {
                 match source[i + 1] {
                     b'/' => {
