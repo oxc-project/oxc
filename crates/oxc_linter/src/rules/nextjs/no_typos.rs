@@ -61,16 +61,17 @@ const THRESHOLD: usize = 1;
 
 impl Rule for NoTypos {
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        let Some(path) = ctx.file_path().to_str() else {
-            return false;
-        };
-        let Some(path_after_pages) = path.split("pages").nth(1) else {
-            return false;
-        };
-        if path_after_pages.starts_with("/api") {
-            return false;
+        let path = ctx.file_path();
+        let mut found_pages = false;
+        for component in path.components() {
+            if found_pages {
+                return component.as_os_str() != "api";
+            }
+            if component.as_os_str() == "pages" {
+                found_pages = true;
+            }
         }
-        true
+        false
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -222,16 +223,16 @@ fn test() {
         ),
         // even though there is a typo match, this should not fail because a file is inside pages/api directory
         (
-            r"
-                export default function Page() {
-                return <div></div>;
-                }
-                export const getStaticpaths = async () => {};
-                export const getStaticProps = async () => {};
-            ",
+            r"export const getStaticpaths = async () => {};",
             None,
             None,
             Some(PathBuf::from("pages/api/test.tsx")),
+        ),
+        (
+            r"export const getStaticpaths = async () => {};",
+            None,
+            None,
+            Some(PathBuf::from("pages\\api\\test.tsx")),
         ),
     ];
 
