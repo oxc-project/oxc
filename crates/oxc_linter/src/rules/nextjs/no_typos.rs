@@ -24,10 +24,11 @@ pub struct NoTypos;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent common typos in Next.js's data fetching functions
+    /// Detects common typos in Next.js data fetching function names.
     ///
     /// ### Why is this bad?
     ///
+    /// Next.js will not call incorrectly named data fetching functions, causing pages to render without expected data.
     ///
     /// ### Examples
     ///
