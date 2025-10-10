@@ -278,7 +278,10 @@ fn handle_type_argument(ctx: &LintContext, ts_type: &TSType, key_hash: &FxHashSe
             if !reference.is_type() {
                 return;
             }
-            let reference_node = ctx.symbol_declaration(reference.symbol_id().unwrap());
+            let Some(symbol_id) = reference.symbol_id() else {
+                return;
+            };
+            let reference_node = ctx.symbol_declaration(symbol_id);
             let AstKind::TSInterfaceDeclaration(interface_decl) = reference_node.kind() else {
                 return;
             };
@@ -618,6 +621,20 @@ fn test() {
                         required: false
                     }
                     })
+                </script>
+                ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "   <script lang='ts'>
+                export interface ComponentProps {
+                    name?: string;
+                }
+                </script>
+                <script setup lang='ts'>
+                    const {name='Hello'} = defineProps<ComponentProps>()
                 </script>
                 ",
             None,
