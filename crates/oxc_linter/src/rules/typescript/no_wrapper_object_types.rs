@@ -91,7 +91,7 @@ impl Rule for NoWrapperObjectTypes {
 
             if can_fix {
                 ctx.diagnostic_with_fix(no_wrapper_object_types(ident_span), |fixer| {
-                    fixer.replace(ident_span, ident_name.cow_to_ascii_lowercase())
+                    fixer.replace(ident_span, ident_name.cow_to_ascii_lowercase().to_string())
                 });
             } else {
                 ctx.diagnostic(no_wrapper_object_types(ident_span));

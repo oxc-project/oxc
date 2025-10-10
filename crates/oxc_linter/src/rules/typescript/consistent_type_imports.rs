@@ -432,7 +432,7 @@ fn fixer_error<S: Into<String>, T>(message: S) -> FixerResult<T> {
 
 // import { Foo, Bar } from 'foo' => import type { Foo, Bar } from 'foo'
 #[expect(clippy::cast_possible_truncation)]
-fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResult<RuleFix<'a>> {
+fn fix_to_type_import_declaration(options: &FixOptions<'_, '_>) -> FixerResult<RuleFix> {
     let FixOptions { fixer, import_decl, type_names, fix_style, ctx } = options;
     let fixer = fixer.for_multifix();
 
@@ -620,10 +620,10 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
         .with_message("Mark all type-only imports with the type specifier"))
 }
 
-fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
-    options: &FixOptions<'a, '_>,
+fn fix_insert_named_specifiers_in_named_specifier_list(
+    options: &FixOptions<'_, '_>,
     insert_text: &str,
-) -> FixerResult<RuleFix<'a>> {
+) -> FixerResult<RuleFix> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
     let import_text = ctx.source_range(import_decl.span);
     let close_brace = try_find_char(import_text, '}')?;
@@ -641,9 +641,9 @@ fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
 
 // Returns information for fixing named specifiers, type or value
 #[derive(Default, Debug)]
-struct FixNamedSpecifiers<'a> {
+struct FixNamedSpecifiers {
     type_named_specifiers_text: String,
-    remove_type_name_specifiers: RuleFix<'a>,
+    remove_type_name_specifiers: RuleFix,
 }
 
 // get the type-only named import declaration with same source
@@ -677,7 +677,7 @@ fn get_fixes_named_specifiers<'a>(
     options: &FixOptions<'a, '_>,
     subset_named_specifiers: &[&ImportSpecifier<'a>],
     all_named_specifiers: &[&ImportSpecifier<'a>],
-) -> FixerResult<FixNamedSpecifiers<'a>> {
+) -> FixerResult<FixNamedSpecifiers> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
     let fixer = fixer.for_multifix();
 
@@ -834,9 +834,7 @@ fn try_find_char(text: &str, c: char) -> Result<u32, Box<dyn Error>> {
     }
 }
 
-fn fix_inline_type_import_declaration<'a>(
-    options: &FixOptions<'a, '_>,
-) -> FixerResult<RuleFix<'a>> {
+fn fix_inline_type_import_declaration(options: &FixOptions<'_, '_>) -> FixerResult<RuleFix> {
     let FixOptions { fixer, import_decl, type_names, ctx, .. } = options;
     let fixer = fixer.for_multifix();
 
@@ -859,10 +857,10 @@ fn fix_inline_type_import_declaration<'a>(
     Ok(rule_fixes.with_message("Add type specifier to imported types"))
 }
 
-fn fix_insert_type_specifier_for_import_declaration<'a>(
-    options: &FixOptions<'a, '_>,
+fn fix_insert_type_specifier_for_import_declaration(
+    options: &FixOptions<'_, '_>,
     is_default_import: bool,
-) -> FixerResult<RuleFix<'a>> {
+) -> FixerResult<RuleFix> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
     let fixer = fixer.for_multifix();
     let import_specifiers_span = Span::new(import_decl.span.start, import_decl.source.span.start);
@@ -963,7 +961,7 @@ fn fix_remove_type_specifier_from_import_declaration<'a>(
     fixer: RuleFixer<'_, 'a>,
     import_decl_span: Span,
     ctx: &LintContext<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let import_source = ctx.source_range(import_decl_span);
     let new_import_source = import_source
         // `    type Foo from 'foo'`
@@ -979,21 +977,24 @@ fn fix_remove_type_specifier_from_import_declaration<'a>(
         fixer.replace(import_decl_span, new_import_source)
     } else {
         // when encountering an unexpected import declaration, do nothing.
-        fixer.replace(import_decl_span, import_source)
+        fixer.replace(import_decl_span, import_source.to_string())
     }
 }
 
 // import { type Foo } from 'foo'
 //          ^^^^ remove
-fn fix_remove_type_specifier_from_import_specifier<'a>(
-    fixer: RuleFixer<'_, 'a>,
+fn fix_remove_type_specifier_from_import_specifier(
+    fixer: RuleFixer<'_, '_>,
     specifier_span: Span,
-    ctx: &LintContext<'a>,
-) -> RuleFix<'a> {
-    let specifier_source = ctx.source_range(specifier_span);
+    ctx: &LintContext<'_>,
+) -> RuleFix {
+    let specifier_source = ctx.source_range(specifier_span).to_string();
     let new_specifier_source = specifier_source.strip_prefix("type ");
 
-    fixer.replace(specifier_span, new_specifier_source.unwrap_or(specifier_source))
+    fixer.replace(
+        specifier_span,
+        new_specifier_source.map(std::string::ToString::to_string).unwrap_or(specifier_source),
+    )
 }
 
 #[test]

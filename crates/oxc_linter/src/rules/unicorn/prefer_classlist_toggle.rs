@@ -345,7 +345,7 @@ fn fix_if_statement<'a>(
     add_call: &CallExpression<'a>,
     is_add_first: bool,
     ctx: &LintContext<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let Some(member_expr) = add_call.callee.get_member_expr() else {
         return fixer.noop();
     };
@@ -372,7 +372,7 @@ fn fix_conditional_expression<'a>(
     add_call: &CallExpression<'a>,
     is_add_first: bool,
     ctx: &LintContext<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let Some(member_expr) = add_call.callee.get_member_expr() else {
         return fixer.noop();
     };
@@ -398,7 +398,7 @@ fn fix_computed_member_call<'a>(
     test: &Expression<'a>,
     is_add_first: bool,
     ctx: &LintContext<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return fixer.noop();
     };

@@ -156,7 +156,7 @@ fn remove_console<'c, 'a: 'c>(
     fixer: RuleFixer<'c, 'a>,
     ctx: &'c LintContext<'a>,
     node: &AstNode<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let mut node_to_delete = node;
     for parent in ctx.nodes().ancestors(node.id()) {
         match parent.kind() {

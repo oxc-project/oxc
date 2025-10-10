@@ -132,7 +132,7 @@ pub struct ContextHost<'a> {
     /// Diagnostics reported by the linter.
     ///
     /// Contains diagnostics for all rules across a single file.
-    diagnostics: RefCell<Vec<Message<'a>>>,
+    diagnostics: RefCell<Vec<Message>>,
     /// Whether or not to apply code fixes during linting. Defaults to
     /// [`FixKind::None`] (no fixing).
     ///
@@ -241,7 +241,7 @@ impl<'a> ContextHost<'a> {
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
-    pub(crate) fn push_diagnostic(&self, mut diagnostic: Message<'a>) {
+    pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }
@@ -249,7 +249,7 @@ impl<'a> ContextHost<'a> {
     }
 
     // Append a list of diagnostics. Only used in report_unused_directives.
-    fn append_diagnostics(&self, mut diagnostics: Vec<Message<'a>>) {
+    fn append_diagnostics(&self, mut diagnostics: Vec<Message>) {
         if self.current_sub_host().source_text_offset != 0 {
             let offset = self.current_sub_host().source_text_offset;
             for diagnostic in &mut diagnostics {
@@ -345,7 +345,7 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Take ownership of all diagnostics collected during linting.
-    pub fn take_diagnostics(&self) -> Vec<Message<'a>> {
+    pub fn take_diagnostics(&self) -> Vec<Message> {
         // NOTE: diagnostics are only ever borrowed here and in push_diagnostic, append_diagnostics.
         // The latter drops the reference as soon as the function returns, so
         // this should never panic.
@@ -368,7 +368,7 @@ impl<'a> ContextHost<'a> {
     }
 
     #[cfg(debug_assertions)]
-    pub fn get_diagnostics(&self, cb: impl FnOnce(&mut Vec<Message<'a>>)) {
+    pub fn get_diagnostics(&self, cb: impl FnOnce(&mut Vec<Message>)) {
         cb(self.diagnostics.borrow_mut().as_mut());
     }
 
@@ -450,7 +450,7 @@ impl<'a> ContextHost<'a> {
     }
 }
 
-impl<'a> From<ContextHost<'a>> for Vec<Message<'a>> {
+impl<'a> From<ContextHost<'a>> for Vec<Message> {
     fn from(ctx_host: ContextHost<'a>) -> Self {
         ctx_host.diagnostics.into_inner()
     }

@@ -237,15 +237,15 @@ impl Rule for NoNull {
     }
 }
 
-fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
+fn fix_null(fixer: RuleFixer<'_, '_>, null: &NullLiteral) -> RuleFix {
     fixer.replace(null.span, "undefined")
 }
 
-fn try_fix_case<'a>(
-    fixer: RuleFixer<'_, 'a>,
+fn try_fix_case(
+    fixer: RuleFixer<'_, '_>,
     null: &NullLiteral,
-    switch: &SwitchStatement<'a>,
-) -> RuleFix<'a> {
+    switch: &SwitchStatement<'_>,
+) -> RuleFix {
     let also_has_undefined = switch
         .cases
         .iter()

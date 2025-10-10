@@ -103,7 +103,7 @@ fn do_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     err_kind: ErrorKind,
     call_expr: &CallExpression<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let Some(target_span) = can_replace(call_expr) else { return fixer.noop() };
     let (argument, method) = match err_kind {
         ErrorKind::StartsWith(arg) => {
@@ -120,7 +120,7 @@ fn do_fix<'a>(
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
     content.print_expression(&ast.expression_string_literal(SPAN, ast.atom(&argument), None));
     content.print_str(r")");
-    fixer.replace(call_expr.span, content)
+    fixer.replace(call_expr.span, content.into_source_text())
 }
 
 fn can_replace(call_expr: &CallExpression) -> Option<Span> {

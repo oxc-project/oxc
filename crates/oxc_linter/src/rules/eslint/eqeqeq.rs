@@ -296,9 +296,9 @@ fn get_operator_span(binary_expr: &BinaryExpression, operator: &str, ctx: &LintC
 
 fn apply_rule_fix<'a>(
     fixer: &RuleFixer<'_, 'a>,
-    binary_expr: &BinaryExpression,
-    preferred_operator_with_padding: &'a str,
-) -> RuleFix<'a> {
+    binary_expr: &'a BinaryExpression,
+    preferred_operator_with_padding: &'static str,
+) -> RuleFix {
     let span = Span::new(binary_expr.left.span().end, binary_expr.right.span().start);
 
     fixer.replace(span, preferred_operator_with_padding)

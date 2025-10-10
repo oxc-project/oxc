@@ -8,7 +8,6 @@ use crate::LintContext;
 
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, PossibleFixes, RuleFix};
-use oxc_allocator::{Allocator, CloneIn};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -55,12 +54,12 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     // NOTE(@DonIsaac): Internal methods shouldn't use `T: Into<Foo>` generics to optimize binary
     // size. Only use such generics in public APIs.
-    fn new_fix(&self, fix: CompositeFix<'a>, message: Option<Cow<'a, str>>) -> RuleFix<'a> {
+    fn new_fix(&self, fix: CompositeFix, message: Option<Cow<'static, str>>) -> RuleFix {
         RuleFix::new(self.kind, message, fix)
     }
 
     /// Create a new [`RuleFix`] with pre-allocated memory for multiple fixes.
-    pub fn new_fix_with_capacity(&self, capacity: usize) -> RuleFix<'a> {
+    pub fn new_fix_with_capacity(&self, capacity: usize) -> RuleFix {
         RuleFix::new(self.kind, None, CompositeFix::Multiple(Vec::with_capacity(capacity)))
     }
 
@@ -79,12 +78,12 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     /// Create a [`RuleFix`] that deletes the text covered by the given [`Span`]
     /// or AST node.
     #[inline]
-    pub fn delete<S: GetSpan>(&self, spanned: &S) -> RuleFix<'a> {
+    pub fn delete<S: GetSpan>(&self, spanned: &S) -> RuleFix {
         self.delete_range(spanned.span())
     }
 
     /// Delete text covered by a [`Span`]
-    pub fn delete_range(&self, span: Span) -> RuleFix<'a> {
+    pub fn delete_range(&self, span: Span) -> RuleFix {
         self.new_fix(
             CompositeFix::Single(Fix::delete(span)),
             self.auto_message.then_some(Cow::Borrowed("Delete this code.")),
@@ -92,11 +91,11 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     /// Replace a `target` AST node with the source code of a `replacement` node..
-    pub fn replace_with<T: GetSpan, S: GetSpan>(&self, target: &T, replacement: &S) -> RuleFix<'a> {
+    pub fn replace_with<T: GetSpan, S: GetSpan>(&self, target: &T, replacement: &S) -> RuleFix {
         // use an inner function to avoid megamorphic bloat
-        fn inner<'a>(fixer: &RuleFixer<'_, 'a>, target: Span, replacement: Span) -> RuleFix<'a> {
+        fn inner(fixer: &RuleFixer<'_, '_>, target: Span, replacement: Span) -> RuleFix {
             let replacement_text = fixer.ctx.source_range(replacement);
-            let fix = Fix::new(replacement_text, target);
+            let fix = Fix::new(Cow::Owned(replacement_text.to_string()), target);
             let message = fixer.auto_message.then(|| {
                 let target_text = fixer.possibly_truncate_range(target);
                 let borrowed_replacement = Cow::Borrowed(replacement_text);
@@ -110,13 +109,13 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     /// Replace a `target` AST node with a `replacement` string.
-    pub fn replace<S: Into<Cow<'a, str>>>(&self, target: Span, replacement: S) -> RuleFix<'a> {
+    pub fn replace<S: Into<Cow<'static, str>>>(&self, target: Span, replacement: S) -> RuleFix {
         // use an inner function to avoid megamorphic bloat
-        fn inner<'a>(
-            fixer: &RuleFixer<'_, 'a>,
+        fn inner(
+            fixer: &RuleFixer<'_, '_>,
             target: Span,
-            replacement: Cow<'a, str>,
-        ) -> RuleFix<'a> {
+            replacement: Cow<'static, str>,
+        ) -> RuleFix {
             let fix = Fix::new(replacement, target);
             let target_text = fixer.possibly_truncate_range(target);
             let content = fixer.possibly_truncate_snippet(&fix.content);
@@ -131,46 +130,46 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     /// Creates a fix command that inserts text before the given node.
     #[inline]
-    pub fn insert_text_before<T: GetSpan, S: Into<Cow<'a, str>>>(
+    pub fn insert_text_before<T: GetSpan, S: Into<Cow<'static, str>>>(
         &self,
         target: &T,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(target.span().start, text.into())
     }
 
     /// Creates a fix command that inserts text before the specified range in the source text.
     #[inline]
-    pub fn insert_text_before_range<S: Into<Cow<'a, str>>>(
+    pub fn insert_text_before_range<S: Into<Cow<'static, str>>>(
         &self,
         span: Span,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(span.start, text.into())
     }
 
     /// Creates a fix command that inserts text after the given node.
     #[inline]
-    pub fn insert_text_after<T: GetSpan, S: Into<Cow<'a, str>>>(
+    pub fn insert_text_after<T: GetSpan, S: Into<Cow<'static, str>>>(
         &self,
         target: &T,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(target.span().end, text.into())
     }
 
     /// Creates a fix command that inserts text after the specified range in the source text.
     #[inline]
-    pub fn insert_text_after_range<S: Into<Cow<'a, str>>>(
+    pub fn insert_text_after_range<S: Into<Cow<'static, str>>>(
         &self,
         span: Span,
         text: S,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         self.insert_text_at(span.end, text.into())
     }
 
     /// Creates a fix command that inserts text at the specified index in the source text.
-    fn insert_text_at(&self, index: u32, text: Cow<'a, str>) -> RuleFix<'a> {
+    fn insert_text_at(&self, index: u32, text: Cow<'static, str>) -> RuleFix {
         let fix = Fix::new(text, Span::empty(index));
         let content = self.possibly_truncate_snippet(&fix.content);
         let message = self.auto_message.then(|| Cow::Owned(format!("Insert `{content}`")));
@@ -184,7 +183,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 
-    pub fn noop(&self) -> RuleFix<'a> {
+    pub fn noop(&self) -> RuleFix {
         self.new_fix(CompositeFix::None, None)
     }
 
@@ -215,37 +214,22 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 pub struct FixResult<'a> {
     pub fixed: bool,
     pub fixed_code: Cow<'a, str>,
-    pub messages: Vec<Message<'a>>,
+    pub messages: Vec<Message>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Message<'a> {
+pub struct Message {
     pub error: OxcDiagnostic,
-    pub fixes: PossibleFixes<'a>,
+    pub fixes: PossibleFixes,
     span: Span,
     fixed: bool,
     #[cfg(feature = "language_server")]
     pub section_offset: u32,
 }
 
-impl<'new> CloneIn<'new> for Message<'_> {
-    type Cloned = Message<'new>;
-
-    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
-        Message {
-            error: self.error.clone(),
-            fixes: self.fixes.clone_in(allocator),
-            span: self.span,
-            fixed: self.fixed,
-            #[cfg(feature = "language_server")]
-            section_offset: self.section_offset,
-        }
-    }
-}
-
-impl<'a> Message<'a> {
+impl Message {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    pub fn new(error: OxcDiagnostic, fixes: PossibleFixes<'a>) -> Self {
+    pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
         let span = error
             .labels
             .as_ref()
@@ -298,14 +282,14 @@ impl<'a> Message<'a> {
     }
 }
 
-impl From<Message<'_>> for OxcDiagnostic {
+impl From<Message> for OxcDiagnostic {
     #[inline]
     fn from(message: Message) -> Self {
         message.error
     }
 }
 
-impl GetSpan for Message<'_> {
+impl GetSpan for Message {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -316,7 +300,7 @@ impl GetSpan for Message<'_> {
 /// Note that our parser has handled the BOM, so we don't need to port the BOM test cases from `ESLint`.
 pub struct Fixer<'a> {
     source_text: &'a str,
-    messages: Vec<Message<'a>>,
+    messages: Vec<Message>,
 
     // To test different fixes, we need to override the default behavior.
     // The behavior is oriented by `oxlint` where only one PossibleFixes is applied.
@@ -324,7 +308,7 @@ pub struct Fixer<'a> {
 }
 
 impl<'a> Fixer<'a> {
-    pub fn new(source_text: &'a str, messages: Vec<Message<'a>>) -> Self {
+    pub fn new(source_text: &'a str, messages: Vec<Message>) -> Self {
         Self { source_text, messages, fix_index: 0 }
     }
 
@@ -473,7 +457,7 @@ mod test {
     const REVERSE_RANGE: Fix =
         Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
 
-    fn get_fix_result(messages: Vec<Message>) -> FixResult {
+    fn get_fix_result(messages: Vec<Message>) -> FixResult<'static> {
         Fixer::new(TEST_CODE, messages).fix()
     }
 

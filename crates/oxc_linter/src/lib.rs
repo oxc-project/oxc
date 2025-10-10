@@ -146,7 +146,7 @@ impl Linter {
         path: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
-    ) -> Vec<Message<'a>> {
+    ) -> Vec<Message> {
         self.run_with_disable_directives(path, context_sub_hosts, allocator).0
     }
 
@@ -159,7 +159,7 @@ impl Linter {
         path: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
-    ) -> (Vec<Message<'a>>, Option<DisableDirectives>) {
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
