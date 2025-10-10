@@ -1,0 +1,13 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+var longlonglonglonglonglong = /*#__PURE__*/_interopDefaultLegacy(aaaaaaaaaaaaaaa);
+var short = /*#__PURE__*/_interopDefaultLegacy(b);
+
+==================== Output ====================
+var longlonglonglonglonglong =
+  /*#__PURE__*/ _interopDefaultLegacy(aaaaaaaaaaaaaaa);
+var short = /*#__PURE__*/ _interopDefaultLegacy(b);
+
+===================== End =====================
