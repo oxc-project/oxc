@@ -60,7 +60,7 @@ impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
         write!(f, self.keyword())?;
 
         if let Some(argument) = self.argument() {
-            write!(f, [space(), FormatReturnOrThrowArgument(argument)])?;
+            write!(f, [space(), FormatAdjacentArgument(argument)])?;
         }
 
         let dangling_comments = f.context().comments().comments_before(self.span().end);
@@ -84,9 +84,9 @@ impl<'a> Format<'a> for ReturnAndThrowStatement<'a, '_> {
     }
 }
 
-pub struct FormatReturnOrThrowArgument<'a, 'b>(&'b AstNode<'a, Expression<'a>>);
+pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
 
-impl<'a> Format<'a> for FormatReturnOrThrowArgument<'a, '_> {
+impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let argument = self.0;
 
