@@ -141,7 +141,9 @@ impl<'a> Format<'a> for FormatComputedMemberExpressionWithoutObject<'a, '_> {
             write!(f, [soft_line_break(), FormatLeadingComments::Comments(comments)])?;
         }
 
-        if matches!(self.expression, Expression::NumericLiteral(_)) {
+        if matches!(self.expression, Expression::NumericLiteral(_))
+            && !f.comments().has_comment_before(self.span.end)
+        {
             write!(f, [self.optional().then_some("?."), "[", self.expression(), "]"])
         } else {
             write!(
