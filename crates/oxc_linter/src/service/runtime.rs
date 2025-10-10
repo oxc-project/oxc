@@ -637,7 +637,7 @@ impl Runtime {
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
     #[cfg(feature = "language_server")]
-    pub(super) fn run_source(&mut self, _allocator: &mut oxc_allocator::Allocator) -> Vec<Message> {
+    pub(super) fn run_source(&mut self) -> Vec<Message> {
         use std::sync::Mutex;
 
         let messages = Mutex::new(Vec::<Message>::new());
@@ -706,7 +706,6 @@ impl Runtime {
     #[cfg(test)]
     pub(super) fn run_test_source(
         &mut self,
-        _allocator: &mut Allocator,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<Message> {
