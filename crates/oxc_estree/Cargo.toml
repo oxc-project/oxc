@@ -23,7 +23,8 @@ oxc_data_structures = { workspace = true, features = ["code_buffer", "slice_iter
 
 dragonbox_ecma = { workspace = true, optional = true }
 itoa = { workspace = true, optional = true }
+lexical-core = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:dragonbox_ecma"]
+serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:dragonbox_ecma", "dep:lexical-core"]

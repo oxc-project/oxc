@@ -14,6 +14,8 @@ use oxc_span::{Atom, format_atom};
 
 use super::kind::Kind;
 
+
+
 pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str> {
     match kind {
         Kind::Decimal => {
@@ -46,7 +48,8 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
 pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
     let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
-    s.parse::<f64>().map_err(|_| "invalid float")
+    // Use lexical-core for fast float parsing
+    lexical_core::parse::<f64>(s.as_bytes()).map_err(|_| "invalid float")
 }
 
 // ==================================== DECIMAL ====================================
@@ -58,6 +61,7 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 ///
 /// <https://godbolt.org/z/WMarz15sq>
 #[inline]
+#[allow(dead_code)] // Used in const tests
 const fn decimal_byte_to_value(b: u8) -> u8 {
     debug_assert!(b >= b'0' && b <= b'9');
     b & 15
@@ -65,50 +69,21 @@ const fn decimal_byte_to_value(b: u8) -> u8 {
 
 #[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_decimal(s: &str) -> f64 {
-    /// Numeric strings longer than this have the chance to overflow u64.
-    /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
-    const MAX_FAST_DECIMAL_LEN: usize = 19;
-
     debug_assert!(!s.is_empty());
-    if s.len() > MAX_FAST_DECIMAL_LEN {
-        return parse_decimal_slow(s);
-    }
-
-    let mut result = 0_u64;
-    for &b in s.as_bytes() {
-        // The latency of the multiplication can be hidden by issuing it
-        // before the result is needed to improve performance on
-        // modern out-of-order CPU as multiplication here is slower
-        // than the other instructions, we can get the end result faster
-        // doing multiplication first and let the CPU spends other cycles
-        // doing other computation and get multiplication result later.
-        result *= 10;
-        let n = decimal_byte_to_value(b);
-        result += n as u64;
-    }
-    result as f64
+    // Use lexical-core for fast decimal integer parsing
+    lexical_core::parse::<u64>(s.as_bytes())
+        .map(|v| v as f64)
+        .unwrap_or_else(|_| parse_decimal_slow(s))
 }
 
 #[expect(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_decimal_with_underscores(s: &str) -> f64 {
-    /// Numeric strings longer than this have the chance to overflow u64.
-    /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
-    const MAX_FAST_DECIMAL_LEN: usize = 19;
-
     debug_assert!(!s.is_empty());
-    if s.len() > MAX_FAST_DECIMAL_LEN {
-        return parse_decimal_slow(&s.cow_replace('_', ""));
-    }
-
-    let mut result = 0_u64;
-    for &b in s.as_bytes() {
-        if b != b'_' {
-            result *= 10;
-            let n = decimal_byte_to_value(b);
-            result += n as u64;
-        }
-    }
-    result as f64
+    // Remove underscores and use lexical-core
+    let s_clean = s.cow_replace('_', "");
+    lexical_core::parse::<u64>(s_clean.as_bytes())
+        .map(|v| v as f64)
+        .unwrap_or_else(|_| parse_decimal_slow(&s_clean))
 }
 
 #[cold]

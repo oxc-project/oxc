@@ -195,6 +195,7 @@ itertools = "0.14.0"
 itoa = "1.0.15"
 language-tags = "0.3.2"
 lazy-regex = "3.4.1"
+lexical-core = { version = "1.0.6", features = ["radix"] }
 log = "0.4.28"
 markdown = "1.0.0"
 memchr = "2.7.5"

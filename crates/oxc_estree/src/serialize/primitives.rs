@@ -1,5 +1,4 @@
 use dragonbox_ecma::Buffer as DragonboxBuffer;
-use itoa::Buffer as ItoaBuffer;
 
 use super::{ESTree, Serializer};
 
@@ -36,8 +35,10 @@ macro_rules! impl_integer {
     ($ty:ident) => {
         impl ESTree for $ty {
             fn serialize<S: Serializer>(&self, mut serializer: S) {
-                let mut buffer = ItoaBuffer::new();
-                let s = buffer.format(*self);
+                let mut buffer = [0u8; 40]; // Enough for any integer type
+                let written = lexical_core::write(*self, &mut buffer);
+                // SAFETY: lexical_core::write always writes valid UTF-8
+                let s = unsafe { std::str::from_utf8_unchecked(written) };
                 serializer.buffer_mut().print_str(s);
             }
         }

@@ -828,7 +828,8 @@ impl<'a> Codegen<'a> {
                 let len = i + 2; // `+2` to include the dot and first zero.
                 let digits = &best_candidate[len..];
                 let exp = digits.len() + len - 1;
-                let exp_str_len = itoa::Buffer::new().format(exp).len();
+                let mut buffer = [0u8; 40];
+                let exp_str_len = lexical_core::write(exp, &mut buffer).len();
                 // Calculate expected length: digits + 'e-' + exp_length
                 let expected_len = digits.len() + 2 + exp_str_len;
                 if expected_len < best_candidate.len() {
@@ -846,7 +847,8 @@ impl<'a> Codegen<'a> {
             && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
         {
             let base = &best_candidate[0..best_candidate.len() - len];
-            let exp_str_len = itoa::Buffer::new().format(len).len();
+            let mut buffer = [0u8; 40];
+            let exp_str_len = lexical_core::write(len, &mut buffer).len();
             // Calculate expected length: base + 'e' + len
             let expected_len = base.len() + 1 + exp_str_len;
             if expected_len < best_candidate.len() {
@@ -861,7 +863,8 @@ impl<'a> Codegen<'a> {
             .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
         {
             let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
-            let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
+            let mut buffer = [0u8; 40];
+            let new_exp_str_len = lexical_core::write(new_expr, &mut buffer).len();
             // Calculate expected length: integer + point + 'e' + new_exp_str_len
             let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
             if expected_len < best_candidate.len() {

@@ -31,6 +31,7 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
+lexical-core = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 rustc-hash = { workspace = true }
