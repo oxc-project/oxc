@@ -176,11 +176,7 @@ fn sanitize_module_name(name: &str) -> String {
 fn sanitize_identifier(mut name: String, prefix: &str) -> String {
     // Ensure it starts with a letter or underscore
     if name.is_empty() || name.chars().next().unwrap().is_numeric() {
-        name = if prefix.is_empty() {
-            format!("_{name}")
-        } else {
-            format!("{prefix}_{name}")
-        };
+        name = if prefix.is_empty() { format!("_{name}") } else { format!("{prefix}_{name}") };
     }
 
     // Handle reserved keywords
@@ -195,7 +191,8 @@ fn sanitize_identifier(mut name: String, prefix: &str) -> String {
 fn is_reserved_keyword(s: &str) -> bool {
     matches!(
         s,
-        "mod" | "fn"
+        "mod"
+            | "fn"
             | "let"
             | "mut"
             | "const"
