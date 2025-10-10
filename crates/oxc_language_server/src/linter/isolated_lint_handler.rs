@@ -111,7 +111,6 @@ impl IsolatedLintHandler {
 
     fn lint_path(&mut self, path: &Path, uri: &Uri, source_text: &str) -> Vec<DiagnosticReport> {
         debug!("lint {}", path.display());
-        let mut allocator = Allocator::default();
         let rope = &Rope::from_str(source_text);
 
         let mut messages: Vec<DiagnosticReport> = self
@@ -121,7 +120,7 @@ impl IsolatedLintHandler {
                 Arc::from(source_text),
             )))
             .with_paths(vec![Arc::from(path.as_os_str())])
-            .run_source(&mut allocator)
+            .run_source()
             .iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
