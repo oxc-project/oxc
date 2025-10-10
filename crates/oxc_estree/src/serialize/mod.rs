@@ -3,8 +3,6 @@
 
 use std::mem;
 
-use itoa::Buffer as ItoaBuffer;
-
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
 
 mod blanket;
@@ -225,8 +223,10 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
                     self.fixes_buffer.print_ascii_byte(b'"');
                 }
                 TracePathPart::Index(index) => {
-                    let mut buffer = ItoaBuffer::new();
-                    let s = buffer.format(index);
+                    let mut buffer = [0u8; 20]; // Enough for usize
+                    let written = lexical_core::write(index, &mut buffer);
+                    // SAFETY: lexical_core::write always writes valid UTF-8
+                    let s = unsafe { std::str::from_utf8_unchecked(written) };
                     self.fixes_buffer.print_str(s);
                 }
             }

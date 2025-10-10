@@ -22,9 +22,8 @@ doctest = false
 oxc_data_structures = { workspace = true, features = ["code_buffer", "slice_iter", "stack"], optional = true }
 
 dragonbox_ecma = { workspace = true, optional = true }
-itoa = { workspace = true, optional = true }
 lexical-core = { workspace = true, optional = true }
 
 [features]
 default = []
-serialize = ["dep:oxc_data_structures", "dep:itoa", "dep:dragonbox_ecma", "dep:lexical-core"]
+serialize = ["dep:oxc_data_structures", "dep:dragonbox_ecma", "dep:lexical-core"]

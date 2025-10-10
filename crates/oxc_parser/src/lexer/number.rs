@@ -14,8 +14,6 @@ use oxc_span::{Atom, format_atom};
 
 use super::kind::Kind;
 
-
-
 pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str> {
     match kind {
         Kind::Decimal => {

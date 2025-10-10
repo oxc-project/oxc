@@ -1990,7 +1990,6 @@ dependencies = [
  "cow-utils",
  "dragonbox_ecma",
  "insta",
- "itoa",
  "lexical-core",
  "oxc_allocator 0.94.0",
  "oxc_ast 0.94.0",
@@ -2147,7 +2146,6 @@ name = "oxc_estree"
 version = "0.94.0"
 dependencies = [
  "dragonbox_ecma",
- "itoa",
  "lexical-core",
  "oxc_data_structures 0.94.0",
 ]
