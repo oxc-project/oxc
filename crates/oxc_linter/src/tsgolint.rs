@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeSet,
     ffi::OsStr,
-    io::{ErrorKind, Read, Write},
+    io::{ErrorKind, Read, Write, stderr},
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
@@ -87,7 +87,8 @@ impl TsGoLintState {
             let mut cmd = std::process::Command::new(&self.executable_path);
             cmd.arg("headless")
                 .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped());
+                .stdout(std::process::Stdio::piped())
+                .stderr(stderr());
 
             if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
                 cmd.arg(format!("-trace={trace_file}"));
