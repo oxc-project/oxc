@@ -131,7 +131,9 @@ struct BloomFilter {
 
 impl BloomFilter {
     #[inline]
-    pub const fn new() -> Self { Self { bits: [0; BLOOM_U64S] } }
+    pub const fn new() -> Self {
+        Self { bits: [0; BLOOM_U64S] }
+    }
 
     #[inline]
     fn hash_pair(s: &str) -> (u64, u64) {
@@ -155,14 +157,18 @@ impl BloomFilter {
     pub fn insert(&mut self, s: &str) {
         let (h1, h2) = Self::hash_pair(s);
         // Use 3 hashes via double hashing scheme: h1 + i*h2
-        for i in 0..3u64 { self.set_bit(h1.wrapping_add(i.wrapping_mul(h2))); }
+        for i in 0..3u64 {
+            self.set_bit(h1.wrapping_add(i.wrapping_mul(h2)));
+        }
     }
 
     #[inline]
     pub fn might_contain(&self, s: &str) -> bool {
         let (h1, h2) = Self::hash_pair(s);
         for i in 0..3u64 {
-            if !self.get_bit(h1.wrapping_add(i.wrapping_mul(h2))) { return false; }
+            if !self.get_bit(h1.wrapping_add(i.wrapping_mul(h2))) {
+                return false;
+            }
         }
         true
     }
@@ -840,7 +846,9 @@ impl Scoping {
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
         // Fast negative: if bloom says definitely absent, return early.
-        if !self.bloom.might_contain(name) { return None; }
+        if !self.bloom.might_contain(name) {
+            return None;
+        }
         for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
