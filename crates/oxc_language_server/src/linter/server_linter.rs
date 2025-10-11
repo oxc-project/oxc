@@ -1,4 +1,4 @@
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -21,6 +21,7 @@ use crate::linter::{
     options::{LintOptions as LSPLintOptions, Run},
     tsgo_linter::TsgoLinter,
 };
+use crate::utils::normalize_path;
 use crate::{ConcurrentHashMap, LINT_CONFIG_FILE};
 
 use super::config_walker::ConfigWalker;
@@ -377,31 +378,6 @@ impl ServerLinter {
     }
 }
 
-/// Normalize a path by removing `.` and resolving `..` components,
-/// without touching the filesystem.
-pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
-    let mut result = PathBuf::new();
-
-    for component in path.as_ref().components() {
-        match component {
-            Component::ParentDir => {
-                result.pop();
-            }
-            Component::CurDir => {
-                // Skip current directory component
-            }
-            Component::Normal(c) => {
-                result.push(c);
-            }
-            Component::RootDir | Component::Prefix(_) => {
-                result.push(component.as_os_str());
-            }
-        }
-    }
-
-    result
-}
-
 #[cfg(test)]
 mod test {
     use std::path::{Path, PathBuf};
@@ -411,19 +387,11 @@ mod test {
         linter::{
             error_with_position::DiagnosticReport,
             options::{LintOptions, Run, UnusedDisableDirectives},
-            server_linter::{ServerLinter, ServerLinterDiagnostics, normalize_path},
+            server_linter::{ServerLinter, ServerLinterDiagnostics},
         },
         tester::{Tester, get_file_path},
     };
     use rustc_hash::FxHashMap;
-
-    #[test]
-    fn test_normalize_path() {
-        assert_eq!(
-            normalize_path(Path::new("/root/directory/./.oxlintrc.json")),
-            Path::new("/root/directory/.oxlintrc.json")
-        );
-    }
 
     #[test]
     fn test_create_nested_configs_with_disabled_nested_configs() {
