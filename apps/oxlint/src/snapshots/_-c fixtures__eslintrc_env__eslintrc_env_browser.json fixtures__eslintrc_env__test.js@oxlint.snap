@@ -6,7 +6,7 @@ arguments: -c fixtures/eslintrc_env/eslintrc_env_browser.json fixtures/eslintrc_
 working directory: 
 ----------
 Found 0 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 90 rules using 1 threads.
+Finished in <variable>ms on 1 file with 91 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
