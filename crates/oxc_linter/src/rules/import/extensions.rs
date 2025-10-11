@@ -325,11 +325,17 @@ impl Extensions {
                     is_import,
                 ));
             }
-        } else if matches!(
-            require_extension,
-            Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
-        ) {
+        } else if matches!(require_extension, Some(FileExtensionConfig::Always)) {
             ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+        } else if matches!(require_extension, Some(FileExtensionConfig::IgnorePackages)) {
+            // When using ignorePackages, check if per-extension configs override it
+            // If js/ts configs are set to Never (not IgnorePackages), then missing extensions are OK
+            // Otherwise, require extension for non-packages
+            if matches!(config.js, FileExtensionConfig::IgnorePackages)
+                || matches!(config.ts, FileExtensionConfig::IgnorePackages)
+            {
+                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+            }
         }
     }
 
@@ -362,11 +368,17 @@ impl Extensions {
                             true,
                         ));
                     }
-                } else if matches!(
-                    require_extension,
-                    Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
-                ) {
+                } else if matches!(require_extension, Some(FileExtensionConfig::Always)) {
                     ctx.diagnostic(extension_missing_diagnostic(span, true));
+                } else if matches!(require_extension, Some(FileExtensionConfig::IgnorePackages)) {
+                    // When using ignorePackages, check if per-extension configs override it
+                    // If js/ts configs are set to Never (not IgnorePackages), then missing extensions are OK
+                    // Otherwise, require extension for non-packages
+                    if matches!(config.js, FileExtensionConfig::IgnorePackages)
+                        || matches!(config.ts, FileExtensionConfig::IgnorePackages)
+                    {
+                        ctx.diagnostic(extension_missing_diagnostic(span, true));
+                    }
                 }
             }
         }
@@ -544,14 +556,18 @@ fn test() {
             r#"
                 import { A } from './something';
             "#,
-            Some(json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}])),
+            Some(
+                json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
+            ),
         ),
         // https://github.com/oxc-project/oxc/issues/12220
         (
             r#"
                 import { D } from '~/common/something';
             "#,
-            Some(json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}])),
+            Some(
+                json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
+            ),
         ),
     ];
 
