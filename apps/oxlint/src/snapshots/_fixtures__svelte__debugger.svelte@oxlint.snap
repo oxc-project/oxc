@@ -34,7 +34,7 @@ working directory:
   help: Variable declared without assignment. Either assign a value or remove the declaration.
 
 Found 3 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 89 rules using 1 threads.
+Finished in <variable>ms on 1 file with 90 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
