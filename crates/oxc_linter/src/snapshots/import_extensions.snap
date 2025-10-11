@@ -169,15 +169,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:2:17]
  1 │ 
- 2 │                 import thing from "non-package/test";
-   ·                 ─────────────────────────────────────
- 3 │             
-   ╰────
-  help: Add a file extension to this import.
-
-  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:2:17]
- 1 │ 
  2 │                 import thing from "@name/pkg/test";
    ·                 ───────────────────────────────────
  3 │             
@@ -203,11 +194,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a file extension to this import.
 
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:5:17]
- 4 │                 import Component from './Component';
- 5 │                 import baz from 'foo/baz';
-   ·                 ──────────────────────────
+   ╭─[extensions.tsx:7:17]
  6 │                 import baw from '@scoped/baw/import';
+ 7 │                 import chart from '@/configs/chart';
+   ·                 ────────────────────────────────────
+ 8 │                 import express from 'express';
    ╰────
   help: Add a file extension to this import.
 
@@ -221,11 +212,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a file extension to this import.
 
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
-   ╭─[extensions.tsx:5:17]
- 4 │                 import Component from './Component';
- 5 │                 import baz from 'foo/baz';
-   ·                 ──────────────────────────
+   ╭─[extensions.tsx:7:17]
  6 │                 import baw from '@scoped/baw/import';
+ 7 │                 import chart from '@/configs/chart';
+   ·                 ────────────────────────────────────
+ 8 │                 import express from 'express';
    ╰────
   help: Add a file extension to this import.
 

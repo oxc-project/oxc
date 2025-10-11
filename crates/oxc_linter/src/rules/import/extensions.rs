@@ -296,9 +296,7 @@ impl Extensions {
         let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
             || ctx.globals().is_enabled(module_name.as_str());
 
-        let is_package = module_name.as_str().starts_with('@')
-            || (!module_name.as_str().starts_with('.')
-                && !module_name.as_str().get(1..).is_some_and(|v| v.contains('/')));
+        let is_package = is_package_import(module_name.as_str());
 
         if is_builtin_node_module || (is_package && ignore_packages) {
             return;
@@ -384,6 +382,40 @@ impl Extensions {
         }
     }
 }
+/// Determines if an import specifier is a package import (not relative or path alias)
+fn is_package_import(module_name: &str) -> bool {
+    // Relative imports start with ./ or ../
+    if module_name.starts_with('.') {
+        return false;
+    }
+
+    // Absolute paths start with /
+    if module_name.starts_with('/') {
+        return false;
+    }
+
+    // Check for path aliases with single-char prefix followed by /
+    // Examples: @/, ~/, #/
+    if module_name.len() >= 2 {
+        let chars: Vec<char> = module_name.chars().collect();
+        if chars.len() >= 2 && chars[1] == '/' {
+            // Single character before slash - this is a path alias
+            return false;
+        }
+    }
+
+    // Scoped packages: @org/pkg where org has length >= 2
+    // This handles @babel/core, @types/node, etc.
+    if module_name.starts_with('@') {
+        // Must have a slash to be a valid scoped package
+        return module_name.contains('/');
+    }
+
+    // Bare imports without slash are packages: 'lodash', 'react'
+    // Bare imports with slash are package subpaths: 'lodash/fp', 'react/dom'
+    true
+}
+
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
     if let Some((_, extension)) =
         module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
@@ -448,6 +480,8 @@ fn test() {
         (r#"import thing from "./fake-file.js";"#, Some(json!(["always"]))),
         // 'never': no extensions allowed
         (r#"import thing from "non-package";"#, Some(json!(["never"]))),
+        // Package subpaths are treated as packages (correctly handled with improved detection)
+        (r#"import thing from "non-package/test";"#, Some(json!(["always"]))),
         // 'ignorePackages': require extensions for relative imports, not for packages
         // Packages are detected using string heuristics (not filesystem resolution)
         (
@@ -573,7 +607,7 @@ fn test() {
             ),
         ),
         // Path alias ~/: correctly identified as non-package
-        // Note: @/ is currently treated as scoped package (bug, will be fixed in Phase 2)
+        // Note: @/ path alias detection was fixed in Phase 2
         // https://github.com/oxc-project/oxc/issues/12220
         (
             r#"
@@ -598,6 +632,31 @@ fn test() {
                 import c from '@org/pkg/sub';
             "#,
             Some(json!(["ignorePackages", { "js": "always" }])),
+        ),
+        // Phase 2: @/ path alias detection fix - passes when ignorePackages: false
+        // @/ is correctly identified as a path alias (not a scoped package), so with extensions it passes
+        (
+            r#"
+                import foo from '@/components/Foo.js';
+                import bar from '@/utils/bar.ts';
+            "#,
+            Some(json!(["always", { "ignorePackages": false }])),
+        ),
+        // Phase 2: Other single-char path aliases are also correctly detected
+        (
+            r#"
+                import a from '~/config.js';
+                import b from '#/internal.ts';
+            "#,
+            Some(json!(["always", { "ignorePackages": false }])),
+        ),
+        // Phase 2: Scoped packages are still correctly distinguished from path aliases
+        (
+            r#"
+                import babel from '@babel/core';
+                import types from '@types/node';
+            "#,
+            Some(json!(["ignorePackages"])),
         ),
     ];
 
@@ -672,12 +731,6 @@ fn test() {
                 import thing from "./fake-file.js";
             "#,
             Some(json!(["never"])),
-        ),
-        (
-            r#"
-                import thing from "non-package/test";
-            "#,
-            Some(json!(["always"])),
         ),
         (
             r#"
