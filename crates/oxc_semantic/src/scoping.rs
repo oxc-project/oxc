@@ -1,9 +1,10 @@
+use core::hash::{Hash, Hasher};
 use std::{collections::hash_map::Entry, fmt, mem};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, FromIn, HashMap as ArenaHashMap, Vec as ArenaVec};
+use oxc_allocator::{Allocator, BitSet, CloneIn, FromIn, HashMap as ArenaHashMap, Vec as ArenaVec};
 use oxc_index::IndexVec;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
@@ -109,8 +110,82 @@ impl Default for Scoping {
                 bindings: IndexVec::new(),
                 scope_child_ids: ArenaVec::new_in(allocator),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
+                bloom: BloomFilter::new_in(allocator),
             }),
         }
+    }
+}
+
+// Very small, fixed-size bloom filter sufficient for per-file identifier membership tests.
+// 2048 bits keeps memory overhead negligible while lowering false positive rate.
+const BLOOM_BITS: usize = 8192;
+
+struct BloomFilter<'a> {
+    bits: BitSet<'a>,
+}
+
+impl<'a> BloomFilter<'a> {
+    #[inline]
+    pub fn new_in(allocator: &'a Allocator) -> Self {
+        Self { bits: BitSet::new_in(BLOOM_BITS, allocator) }
+    }
+
+    // Hash the string once (FxHasher) then derive an infinite sequence of hashes using
+    // the same double-hashing strategy as fastbloom's `DoubleHasher` (adapted):
+    //   Real hash -> treat upper/lower 32 bits as separate, derive h2 from upper 32 * constant.
+    //   Subsequent hashes: h1 = rotl(h1 + h2, 5).
+    #[inline]
+    fn base_hash(s: &str) -> u64 {
+        let mut hasher = FxHasher::default();
+        s.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    #[inline]
+    fn make_double_hasher(h: u64) -> (u64, u64) {
+        // Derive h1 (the original hash) and h2 (upper 32 * constant) like fastbloom.
+        let h1 = h;
+        let h2 = h1.wrapping_shr(32).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95);
+        (h1, h2)
+    }
+
+    #[inline]
+    fn nth_hash(mut h1: u64, h2: u64, n: u32) -> u64 {
+        // Produce the n-th derived hash (0-based) matching DoubleHasher::next semantics.
+        for _ in 0..n {
+            h1 = h1.wrapping_add(h2).rotate_left(5);
+        }
+        h1
+    }
+
+    #[inline]
+    pub fn insert(&mut self, s: &str) {
+        let h = Self::base_hash(s);
+        // Set 3 bits.
+        // for i in 0..3u32 {
+        // let hv = Self::nth_hash(h1, h2, i);
+        self.set_bit(h);
+        // }
+    }
+
+    #[inline]
+    pub fn might_contain(&self, s: &str) -> bool {
+        let h = Self::base_hash(s);
+        // let (h1, h2) = Self::make_double_hasher(h);
+        // for i in 0..3u32 {
+        //     let hv = Self::nth_hash(h1, h2, i);
+        let idx = (h as usize) & (BLOOM_BITS - 1); // BLOOM_BITS is power of two
+        if !self.bits.has_bit(idx) {
+            return false;
+        }
+        // }
+        true
+    }
+
+    #[inline]
+    fn set_bit(&mut self, h: u64) {
+        let idx = (h as usize) & (BLOOM_BITS - 1); // mask instead of modulo
+        self.bits.set_bit(idx);
     }
 }
 
@@ -271,6 +346,10 @@ pub struct ScopingInner<'cell> {
     scope_child_ids: ArenaVec<'cell, ArenaVec<'cell, ScopeId>>,
 
     pub(crate) root_unresolved_references: UnresolvedReferences<'cell>,
+
+    /// Bloom filter of all binding names declared in this file. Provides an O(1) fast-negative
+    /// check for `find_binding`. False positives are allowed; false negatives are not.
+    bloom: BloomFilter<'cell>,
 }
 
 // Symbol Table Methods
@@ -395,6 +474,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(Atom::from_in(name, allocator));
             cell.resolved_references.push(ArenaVec::new_in(allocator));
+            cell.bloom.insert(name);
         });
         self.symbol_spans.push(span);
         self.symbol_flags.push(flags);
@@ -768,6 +848,10 @@ impl Scoping {
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        // Fast negative: if bloom says definitely absent, return early.
+        if !self.cell.borrow_dependent().bloom.might_contain(name) {
+            return None;
+        }
         for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
@@ -810,6 +894,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = allocator.alloc_str(name);
             cell.bindings[scope_id].insert(name, symbol_id);
+            cell.bloom.insert(name);
         });
     }
 
@@ -894,6 +979,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = allocator.alloc_str(name);
             cell.bindings[scope_id].insert(name, symbol_id);
+            cell.bloom.insert(name);
         });
     }
 
@@ -936,6 +1022,7 @@ impl Scoping {
             let new_name = allocator.alloc_str(new_name);
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
+            cell.bloom.insert(new_name);
         });
     }
 
@@ -959,6 +1046,8 @@ impl Scoping {
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
             let existing_symbol_id = bindings.insert(new_name.as_str(), symbol_id);
             debug_assert!(existing_symbol_id.is_none());
+            let updated_name: &str = cell.symbol_names[symbol_id.index()].as_str();
+            cell.bloom.insert(updated_name);
         });
     }
 
@@ -1017,6 +1106,16 @@ impl Scoping {
                     root_unresolved_references: cell
                         .root_unresolved_references
                         .clone_in_with_semantic_ids(allocator),
+                    bloom: {
+                        // Rebuild bloom filter from all binding names
+                        let mut bf = BloomFilter::new_in(allocator);
+                        for map in &cell.bindings {
+                            for name in map.keys() {
+                                bf.insert(name);
+                            }
+                        }
+                        bf
+                    },
                 })
             },
         }
