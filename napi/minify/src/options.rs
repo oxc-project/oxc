@@ -30,11 +30,12 @@ pub struct CompressOptions {
     /// @default true
     pub drop_debugger: Option<bool>,
 
-    /// Drop unreferenced functions and variables.
+    /// Pass `true` to drop unreferenced functions and variables.
     ///
-    /// Simple direct variable assignments do not count as references unless set to "keep_assign".
-    #[napi(ts_type = "true | false | 'keep_assign'")]
-    pub unused: Option<String>,
+    /// Simple direct variable assignments do not count as references unless set to `keep_assign`.
+    /// @default true
+    #[napi(ts_type = "boolean | 'keep_assign'")]
+    pub unused: Option<Either<bool, String>>,
 
     /// Keep function / class names.
     pub keep_names: Option<CompressOptionsKeepNames>,
@@ -55,8 +56,14 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             // TODO
             join_vars: true,
             sequences: true,
-            // TODO
-            unused: oxc_minifier::CompressOptionsUnused::Keep,
+            unused: match &o.unused {
+                Some(Either::A(true)) => oxc_minifier::CompressOptionsUnused::Remove,
+                Some(Either::A(false)) => oxc_minifier::CompressOptionsUnused::Keep,
+                Some(Either::B(s)) if s == "keep_assign" => {
+                    oxc_minifier::CompressOptionsUnused::KeepAssign
+                }
+                None | Some(Either::B(_)) => default.unused,
+            },
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
             max_iterations: None,
