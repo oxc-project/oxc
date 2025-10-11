@@ -638,9 +638,9 @@ pub(crate) mod vitest {
 }
 
 pub(crate) mod node {
-    pub mod no_process_env;
     pub mod no_exports_assign;
     pub mod no_new_require;
+    pub mod no_process_env;
 }
 
 pub(crate) mod vue {
