@@ -52,45 +52,54 @@ impl<'a> Lexer<'a> {
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { self.source.position().add(1) };
 
-        // Consume bytes which are part of identifier
-        let next_byte = byte_search! {
-            lexer: self,
-            table: NOT_ASCII_ID_CONTINUE_TABLE,
-            start: after_first,
-            handle_eof: {
-                // Return identifier minus its first char.
-                // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
-                // of `after_first` which could be after current position.
-                return unsafe { self.source.str_from_pos_to_current_unchecked(after_first) };
-            },
-        };
+        // Fast path: scan using inline checks for common ASCII identifier chars
+        // This avoids table lookups for ~95% of identifier bytes
+        let mut pos = after_first;
+        let end = self.source.end();
 
-        // Found a matching byte.
-        // Either end of identifier found, or a Unicode char, or `\` escape.
-        // Handle uncommon cases in cold branches to keep the common ASCII path
-        // as fast as possible.
-        if !next_byte.is_ascii() {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_tail_unicode(start_pos)[1..]
-            });
-        }
-        if next_byte == b'\\' {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_backslash(start_pos, false)[1..]
-            });
-        }
+        // SAFETY: We check bounds before each access
+        unsafe {
+            while pos < end {
+                let byte = pos.read();
 
-        // Return identifier minus its first char.
-        // SAFETY: `after_first` was position of `lexer.source` at start of this search.
-        // Searching only proceeds in forwards direction, so `lexer.source.position()`
-        // cannot be before `after_first`.
-        unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+                // Inline checks for common identifier continuation chars
+                // a-z (0x61-0x7A), A-Z (0x41-0x5A), 0-9 (0x30-0x39), _ (0x5F), $ (0x24)
+                // This is branchless for the common case
+                let is_lower = byte.wrapping_sub(b'a') < 26;
+                let is_upper = byte.wrapping_sub(b'A') < 26;
+                let is_digit = byte.wrapping_sub(b'0') < 10;
+                let is_special = byte == b'_' || byte == b'$';
+
+                if is_lower || is_upper || is_digit || is_special {
+                    pos = pos.add(1);
+                    continue;
+                }
+
+                // Non-identifier char found
+                self.source.set_position(pos);
+
+                // Handle special cases
+                if !byte.is_ascii() {
+                    return cold_branch(|| {
+                        let start_pos = after_first.sub(1);
+                        &self.identifier_tail_unicode(start_pos)[1..]
+                    });
+                }
+                if byte == b'\\' {
+                    return cold_branch(|| {
+                        let start_pos = after_first.sub(1);
+                        &self.identifier_backslash(start_pos, false)[1..]
+                    });
+                }
+
+                // Normal terminator
+                return self.source.str_from_pos_to_current_unchecked(after_first);
+            }
+
+            // Reached EOF
+            self.source.advance_to_end();
+            self.source.str_from_pos_to_current_unchecked(after_first)
+        }
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
