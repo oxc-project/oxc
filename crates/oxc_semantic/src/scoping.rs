@@ -81,6 +81,9 @@ pub struct Scoping {
     scope_flags: IndexVec<ScopeId, ScopeFlags>,
 
     pub(crate) cell: ScopingCell,
+    /// Bloom filter of all binding names declared in this file. Provides an O(1) fast-negative
+    /// check for `find_binding`. False positives are allowed; false negatives are not.
+    bloom: BloomFilter,
 }
 
 impl fmt::Debug for Scoping {
@@ -110,7 +113,80 @@ impl Default for Scoping {
                 scope_child_ids: ArenaVec::new_in(allocator),
                 root_unresolved_references: UnresolvedReferences::new_in(allocator),
             }),
+            bloom: BloomFilter::new(),
         }
+    }
+}
+
+// --- Bloom Filter Implementation --------------------------------------------------------------
+// Very small, fixed-size bloom filter sufficient for per-file identifier membership tests.
+// 2048 bits (32 * u64) keeps memory overhead negligible while lowering false positive rate.
+const BLOOM_BITS: usize = 2048; // must be power of two for mask logic below
+const BLOOM_U64S: usize = BLOOM_BITS / 64;
+
+#[derive(Clone, Copy)]
+struct BloomFilter {
+    bits: [u64; BLOOM_U64S],
+}
+
+impl BloomFilter {
+    #[inline]
+    pub const fn new() -> Self {
+        Self { bits: [0; BLOOM_U64S] }
+    }
+
+    #[inline]
+    fn hash_pair(s: &str) -> (u64, u64) {
+        // Two simple independent-ish 64-bit hashes (FNV-1a variants with different offsets/primes)
+        const FNV_OFFSET1: u64 = 0xcbf29ce484222325;
+        const FNV_PRIME1: u64 = 0x100000001b3;
+        const FNV_OFFSET2: u64 = 0x84222325cbf29ce4; // rotated offset
+        const FNV_PRIME2: u64 = 0x000001b310000000; // modified prime (not real FNV) for variation
+        let mut h1 = FNV_OFFSET1;
+        let mut h2 = FNV_OFFSET2;
+        for b in s.as_bytes() {
+            h1 ^= u64::from(*b);
+            h1 = h1.wrapping_mul(FNV_PRIME1);
+            h2 ^= u64::from(*b).wrapping_add(0x9e3779b97f4a7c15);
+            h2 = h2.wrapping_mul(FNV_PRIME2).rotate_left(13);
+        }
+        (h1, h2)
+    }
+
+    #[inline]
+    pub fn insert(&mut self, s: &str) {
+        let (h1, h2) = Self::hash_pair(s);
+        // Use 3 hashes via double hashing scheme: h1 + i*h2
+        for i in 0..3u64 {
+            self.set_bit(h1.wrapping_add(i.wrapping_mul(h2)));
+        }
+    }
+
+    #[inline]
+    pub fn might_contain(&self, s: &str) -> bool {
+        let (h1, h2) = Self::hash_pair(s);
+        for i in 0..3u64 {
+            if !self.get_bit(h1.wrapping_add(i.wrapping_mul(h2))) {
+                return false;
+            }
+        }
+        true
+    }
+
+    #[inline]
+    fn set_bit(&mut self, h: u64) {
+        let bit_index = (h as usize) & (BLOOM_BITS - 1); // modulo power of two
+        let arr_index = bit_index >> 6;
+        let bit = 1u64 << (bit_index & 63);
+        self.bits[arr_index] |= bit;
+    }
+
+    #[inline]
+    fn get_bit(&self, h: u64) -> bool {
+        let bit_index = (h as usize) & (BLOOM_BITS - 1);
+        let arr_index = bit_index >> 6;
+        let bit = 1u64 << (bit_index & 63);
+        (self.bits[arr_index] & bit) != 0
     }
 }
 
@@ -392,6 +468,7 @@ impl Scoping {
         scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
+        self.bloom.insert(name);
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names.push(Atom::from_in(name, allocator));
             cell.resolved_references.push(ArenaVec::new_in(allocator));
@@ -768,6 +845,10 @@ impl Scoping {
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        // Fast negative: if bloom says definitely absent, return early.
+        if !self.bloom.might_contain(name) {
+            return None;
+        }
         for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
@@ -811,6 +892,7 @@ impl Scoping {
             let name = allocator.alloc_str(name);
             cell.bindings[scope_id].insert(name, symbol_id);
         });
+        self.bloom.insert(name);
     }
 
     /// Return whether this `ScopeTree` has child IDs recorded
@@ -895,6 +977,7 @@ impl Scoping {
             let name = allocator.alloc_str(name);
             cell.bindings[scope_id].insert(name, symbol_id);
         });
+        self.bloom.insert(name);
     }
 
     /// Remove an existing binding from a scope.
@@ -937,6 +1020,7 @@ impl Scoping {
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
+        self.bloom.insert(new_name);
     }
 
     /// Rename symbol.
@@ -959,6 +1043,20 @@ impl Scoping {
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
             let existing_symbol_id = bindings.insert(new_name.as_str(), symbol_id);
             debug_assert!(existing_symbol_id.is_none());
+            // Update bloom filter with new binding name (old name remains; bloom has no deletes)
+            // We can safely mutate `self.bloom` here because we hold &mut self overall.
+            // Use the updated name stored in symbol_names.
+            // (Cannot reuse `new_name` after move operations above outside this closure.)
+            // At this point cell.symbol_names[symbol_id] is the Atom we just inserted.
+            // Equivalent to self.symbol_name(symbol_id) but avoids borrow overlap.
+            let updated_name: &str = cell.symbol_names[symbol_id.index()].as_str();
+            // Access bloom via raw pointer to avoid borrow checker conflicts inside closure.
+            // Simpler: just call through &mut * (allowed because &mut self is held).
+            // (No unsafe needed.)
+            // Insert into bloom filter.
+            // borrow of self.bloom is fine here.
+            // NOTE: we are inside the closure capturing &mut self, so fine.
+            self.bloom.insert(updated_name);
         });
     }
 
@@ -1019,6 +1117,7 @@ impl Scoping {
                         .clone_in_with_semantic_ids(allocator),
                 })
             },
+            bloom: self.bloom, // Copy bloom filter bits
         }
     }
 }
