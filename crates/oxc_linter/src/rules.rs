@@ -40,7 +40,8 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
-    pub mod array_callback_return;
+        pub mod constructor_super;
+pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
     pub mod class_methods_use_this;
@@ -664,6 +665,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::arrow_body_style,
     eslint::block_scoped_var,
     eslint::class_methods_use_this,
+    eslint::constructor_super,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
