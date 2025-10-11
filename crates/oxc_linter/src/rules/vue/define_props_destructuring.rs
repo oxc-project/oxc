@@ -119,7 +119,7 @@ impl Rule for DefinePropsDestructuring {
         }
 
         let parent = &ctx.nodes().parent_node(node.id());
-        let with_defaults_span = get_parent_with_defaults_call_expression_span(parent, ctx);
+        let with_defaults_span = get_parent_with_defaults_call_expression_span(parent);
         let has_destructuring = is_parent_destructuring_variable(parent, ctx);
 
         if self.destructure == Destructure::Never {
@@ -138,13 +138,8 @@ impl Rule for DefinePropsDestructuring {
     }
 }
 
-fn get_parent_with_defaults_call_expression_span(
-    parent: &AstNode<'_>,
-    ctx: &LintContext<'_>,
-) -> Option<Span> {
-    let AstKind::Argument(_) = parent.kind() else { return None };
-    let parent = &ctx.nodes().parent_kind(parent.id());
-    let AstKind::CallExpression(call_expr) = parent else { return None };
+fn get_parent_with_defaults_call_expression_span(parent: &AstNode<'_>) -> Option<Span> {
+    let AstKind::CallExpression(call_expr) = parent.kind() else { return None };
 
     call_expr.callee.get_identifier_reference().and_then(|reference| {
         if reference.name == "withDefaults" { Some(reference.span) } else { None }
