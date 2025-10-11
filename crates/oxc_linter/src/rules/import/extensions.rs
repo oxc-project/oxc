@@ -539,6 +539,20 @@ fn test() {
             r"import { Something } from './something.hooks'; import SomeComponent from './SomeComponent.vue';",
             Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/12220
+        (
+            r#"
+                import { A } from './something';
+            "#,
+            Some(json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/12220
+        (
+            r#"
+                import { D } from '~/common/something';
+            "#,
+            Some(json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}])),
+        ),
     ];
 
     let fail = vec![
