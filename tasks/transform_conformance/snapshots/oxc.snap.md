@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 188/316
+Passed: 188/317
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -544,7 +544,7 @@ x Output mismatch
 x Output mismatch
 
 
-# legacy-decorators (6/85)
+# legacy-decorators (6/86)
 * oxc/class-without-name-with-decorated_class/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["dec"]
@@ -697,6 +697,26 @@ rebuilt        : SymbolId(15): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "ComputedEnum":
 after transform: SymbolId(25): [ReferenceId(19), ReferenceId(72)]
 rebuilt        : SymbolId(15): [ReferenceId(52)]
+
+* oxc/metadata/getter-setter-method/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "dec"]
+rebuilt        : ScopeId(0): ["C"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Function", "PropertyDescriptor", "String", "babelHelpers"]
+rebuilt        : ["Function", "String", "babelHelpers", "dec"]
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:

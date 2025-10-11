@@ -999,7 +999,8 @@ impl<'a> LegacyDecorator<'a, '_> {
                     decorations.push(ArrayExpressionElement::from(metadata));
                 }
             } else if let Some(metadata) = self.metadata.pop_method_metadata() {
-                decorations.extend(metadata.map(ArrayExpressionElement::from));
+                decorations
+                    .extend(metadata.into_iter().flatten().map(ArrayExpressionElement::from));
             }
         }
 

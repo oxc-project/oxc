@@ -39221,10 +39221,10 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "dec", "method3"]
 rebuilt        : ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "method3"]
 Reference flags mismatch for "_method":
-after transform: ReferenceId(39): ReferenceFlags(Read | Write)
+after transform: ReferenceId(34): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 Reference flags mismatch for "_method2":
-after transform: ReferenceId(48): ReferenceFlags(Read | Write)
+after transform: ReferenceId(42): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -39267,10 +39267,10 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "dec", "method3"]
 rebuilt        : ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "method3"]
 Reference flags mismatch for "_method":
-after transform: ReferenceId(39): ReferenceFlags(Read | Write)
+after transform: ReferenceId(34): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 Reference flags mismatch for "_method2":
-after transform: ReferenceId(48): ReferenceFlags(Read | Write)
+after transform: ReferenceId(42): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -39302,13 +39302,13 @@ Symbol span mismatch for "D":
 after transform: SymbolId(3): Span { start: 137, end: 138 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(3): [ReferenceId(23), ReferenceId(25)]
-rebuilt        : SymbolId(9): [ReferenceId(20), ReferenceId(30), ReferenceId(33)]
+after transform: SymbolId(3): [ReferenceId(21), ReferenceId(23)]
+rebuilt        : SymbolId(9): [ReferenceId(18), ReferenceId(28), ReferenceId(31)]
 Symbol span mismatch for "D":
 after transform: SymbolId(14): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(10): Span { start: 137, end: 138 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(14): [ReferenceId(28)]
+after transform: SymbolId(14): [ReferenceId(26)]
 rebuilt        : SymbolId(10): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -40331,7 +40331,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["_C", "_decorateMetadata", "_defineProperty", "_get_x", "_method", "_set_x", "_y", "dec"]
 rebuilt        : ScopeId(0): ["_C", "_decorateMetadata", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
 Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(10): [ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(32), ReferenceId(34), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(41), ReferenceId(42), ReferenceId(43), ReferenceId(45), ReferenceId(46), ReferenceId(47), ReferenceId(49), ReferenceId(51), ReferenceId(52), ReferenceId(54), ReferenceId(56)]
+after transform: SymbolId(10): [ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(31), ReferenceId(33), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(40), ReferenceId(41), ReferenceId(43), ReferenceId(44), ReferenceId(46), ReferenceId(48), ReferenceId(50), ReferenceId(52)]
 rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
