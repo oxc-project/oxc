@@ -75,9 +75,10 @@ pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
 
     match parent {
         AstNodes::ArrayExpression(_)
+        | AstNodes::CallExpression(_)
+        | AstNodes::NewExpression(_)
         | AstNodes::JSXAttribute(_)
         | AstNodes::JSXExpressionContainer(_)
-        | AstNodes::Argument(_)
         | AstNodes::ConditionalExpression(_) => WrapState::NoWrap,
         AstNodes::StaticMemberExpression(member) => {
             if member.optional {

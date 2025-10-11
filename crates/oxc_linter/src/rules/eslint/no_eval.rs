@@ -131,13 +131,12 @@ impl Rule for NoEval {
                     for reference_id in references {
                         let reference = ctx.scoping().get_reference(*reference_id);
                         let node = ctx.nodes().get_node(reference.node_id());
-                        let mut parent = Self::outermost_mem_expr(node, ctx).unwrap();
 
                         if name == "eval" {
-                            if !matches!(parent.kind(), AstKind::CallExpression(_)) {
-                                ctx.diagnostic(no_eval_diagnostic(node.span()));
-                            }
+                            ctx.diagnostic(no_eval_diagnostic(node.span()));
                         } else {
+                            let mut parent = Self::outermost_mem_expr(node, ctx).unwrap();
+
                             loop {
                                 match parent.kind() {
                                     AstKind::StaticMemberExpression(mem_expr) => {

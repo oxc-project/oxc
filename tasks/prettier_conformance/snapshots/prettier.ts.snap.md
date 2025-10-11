@@ -14,9 +14,9 @@ ts compatibility: 533/573 (93.02%)
 | typescript/angular-component-examples/test.component.ts | 💥💥 | 41.18% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
-| typescript/chain-expression/call-expression.ts | 💥 | 68.75% |
-| typescript/chain-expression/member-expression.ts | 💥 | 65.67% |
-| typescript/chain-expression/test.ts | 💥 | 0.00% |
+| typescript/chain-expression/call-expression.ts | 💥 | 82.81% |
+| typescript/chain-expression/member-expression.ts | 💥 | 82.09% |
+| typescript/chain-expression/test.ts | 💥 | 50.00% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/method_types.ts | 💥 | 84.62% |
@@ -35,7 +35,7 @@ ts compatibility: 533/573 (93.02%)
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 69.77% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
-| typescript/non-null/optional-chain.ts | 💥 | 72.22% |
+| typescript/non-null/optional-chain.ts | 💥 | 88.89% |
 | typescript/object-multiline/multiline.ts | 💥✨ | 23.21% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 63.16% |
 | typescript/prettier-ignore/prettier-ignore-nested-unions.ts | 💥 | 68.00% |
