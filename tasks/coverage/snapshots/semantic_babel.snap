@@ -2,7 +2,7 @@ commit: 41d96516
 
 semantic_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2006/2423 (82.79%)
+Positive Passed: 2005/2423 (82.75%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -37,6 +37,9 @@ A 'return' statement can only be used within a function body.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return-asi/input.js
 A 'return' statement can only be used within a function body.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-using/input.js
+Using declaration cannot appear in the top level when source type is `script`.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
