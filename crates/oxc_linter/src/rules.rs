@@ -40,11 +40,11 @@ pub(crate) mod import {
 }
 
 pub(crate) mod eslint {
-        pub mod constructor_super;
-pub mod array_callback_return;
+    pub mod array_callback_return;
     pub mod arrow_body_style;
     pub mod block_scoped_var;
     pub mod class_methods_use_this;
+    pub mod constructor_super;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;

@@ -1,0 +1,324 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:40]
+ 1 │ class A extends null { constructor() { super(); } }
+   ·                                        ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:24]
+ 1 │ class A extends null { constructor() { } }
+   ·                        ─────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:39]
+ 1 │ class A extends 100 { constructor() { super(); } }
+   ·                                       ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:42]
+ 1 │ class A extends 'test' { constructor() { super(); } }
+   ·                                          ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:43]
+ 1 │ class A extends (B = 5) { constructor() { super(); } }
+   ·                                           ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:44]
+ 1 │ class A extends (B && 5) { constructor() { super(); } }
+   ·                                            ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:45]
+ 1 │ class A extends (B &&= 5) { constructor() { super(); } }
+   ·                                             ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:44]
+ 1 │ class A extends (B += C) { constructor() { super(); } }
+   ·                                            ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:44]
+ 1 │ class A extends (B -= C) { constructor() { super(); } }
+   ·                                            ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:45]
+ 1 │ class A extends (B **= C) { constructor() { super(); } }
+   ·                                             ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:44]
+ 1 │ class A extends (B |= C) { constructor() { super(); } }
+   ·                                            ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor
+   ╭─[constructor_super.tsx:1:44]
+ 1 │ class A extends (B &= C) { constructor() { super(); } }
+   ·                                            ───────
+   ╰────
+  help: Remove the 'super()' call or check the class declaration
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { } }
+   ·                     ─────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { for (var a of b) super.foo(); } }
+   ·                     ───────────────────────────────────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { for (var i = 1; i < 10; i++) super.foo(); } }
+   ·                     ───────────────────────────────────────────────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { var c = class extends D { constructor() { super(); } } } }
+   ·                     ────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { var c = () => super(); } }
+   ·                     ────────────────────────────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { class C extends D { constructor() { super(); } } } }
+   ·                     ──────────────────────────────────────────────────────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { var C = class extends D { constructor() { super(); } } } }
+   ·                     ────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:66]
+ 1 │ class A extends B { constructor() { super(); class C extends D { constructor() { } } } }
+   ·                                                                  ─────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:1:72]
+ 1 │ class A extends B { constructor() { super(); var C = class extends D { constructor() { } } } }
+   ·                                                                        ─────────────────
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { if (a) super(); } }
+   ·                     ─────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { if (a); else super(); } }
+   ·                     ───────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { a && super(); } }
+   ·                     ───────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { switch (a) { case 0: super(); } } }
+   ·                     ─────────────────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { switch (a) { case 0: break; default: super(); } } }
+   ·                     ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { super(); } catch (err) {} } }
+   ·                     ─────────────────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { try { a; } catch (err) { super(); } } }
+   ·                     ─────────────────────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { if (a) return; super(); } }
+   ·                     ─────────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'
+   ╭─[constructor_super.tsx:1:46]
+ 1 │ class A extends B { constructor() { super(); super(); } }
+   ·                                              ───────
+   ╰────
+  help: Remove the duplicate 'super()' call
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { super() || super(); } }
+   ·                     ─────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'
+   ╭─[constructor_super.tsx:1:48]
+ 1 │ class A extends B { constructor() { super() || super(); } }
+   ·                                                ───────
+   ╰────
+  help: Remove the duplicate 'super()' call
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { if (a) super(); super(); } }
+   ·                     ──────────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { switch (a) { case 0: super(); default: super(); } } }
+   ·                     ───────────────────────────────────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'
+   ╭─[constructor_super.tsx:1:76]
+ 1 │ class A extends B { constructor() { switch (a) { case 0: super(); default: super(); } } }
+   ·                                                                            ───────
+   ╰────
+  help: Remove the duplicate 'super()' call
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor(a) { while (a) super(); } }
+   ·                     ─────────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:1:21]
+ 1 │ class A extends B { constructor() { return; super(); } }
+   ·                     ──────────────────────────────────
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:2:20]
+ 1 │     class Foo extends Bar {
+ 2 │ ╭─▶                             constructor() {
+ 3 │ │                                   for (a in b) for (c in d);
+ 4 │ ╰─▶                             }
+ 5 │                             }
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+   ╭─[constructor_super.tsx:3:20]
+ 2 │     
+ 3 │ ╭─▶                             constructor() {
+ 4 │ │                                   do {
+ 5 │ │                                       something();
+ 6 │ │                                   } while (foo);
+ 7 │ ╰─▶                             }
+ 8 │     
+   ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'
+    ╭─[constructor_super.tsx:3:20]
+  2 │     
+  3 │ ╭─▶                             constructor() {
+  4 │ │                                   for (let i = 1;;i++) {
+  5 │ │                                       if (bar) {
+  6 │ │                                           break;
+  7 │ │                                       }
+  8 │ │                                   }
+  9 │ ╰─▶                             }
+ 10 │     
+    ╰────
+  help: Add a 'super()' call to the constructor
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+   ╭─[constructor_super.tsx:3:20]
+ 2 │     
+ 3 │ ╭─▶                             constructor() {
+ 4 │ │                                   do {
+ 5 │ │                                       super();
+ 6 │ │                                   } while (foo);
+ 7 │ ╰─▶                             }
+ 8 │     
+   ╰────
+  help: Ensure 'super()' is called in all code paths
+
+  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths
+    ╭─[constructor_super.tsx:3:20]
+  2 │     
+  3 │ ╭─▶                             constructor() {
+  4 │ │                                   while (foo) {
+  5 │ │                                       if (bar) {
+  6 │ │                                           super();
+  7 │ │                                           break;
+  8 │ │                                       }
+  9 │ │                                   }
+ 10 │ ╰─▶                             }
+ 11 │     
+    ╰────
+  help: Ensure 'super()' is called in all code paths
