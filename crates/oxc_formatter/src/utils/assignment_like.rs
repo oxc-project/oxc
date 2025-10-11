@@ -324,6 +324,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     .callee
                     .get_identifier_reference()
                     .is_some_and(|ident| ident.name == "require")
+                && !f.comments().has_leading_own_line_comment(call_expression.span.start)
             {
                 return AssignmentLikeLayout::NeverBreakAfterOperator;
             }
