@@ -6,9 +6,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_new_require(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected use of new with require")
+    OxcDiagnostic::warn("Unexpected use of `new` operator with `require`")
+        .with_help("Separate `require()` from `new` operator")
         .with_label(span)
-        .with_help("Initialise the constructor separate from the import statement")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -46,12 +46,9 @@ impl Rule for NoNewRequire {
         let AstKind::NewExpression(new_expression) = node.kind() else {
             return;
         };
-
-        if !new_expression.callee.is_specific_id("require") {
-            return;
+        if new_expression.callee.is_specific_id("require") {
+            ctx.diagnostic(no_new_require(new_expression.span));
         }
-
-        ctx.diagnostic(no_new_require(new_expression.span));
     }
 }
 
