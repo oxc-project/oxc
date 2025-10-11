@@ -131,10 +131,10 @@ impl Rule for ConstructorSuper {
 
         // Find the constructor in the class body
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
-            if let ClassElement::MethodDefinition(method) = elem {
-                if matches!(method.kind, MethodDefinitionKind::Constructor) {
-                    return Some(method);
-                }
+            if let ClassElement::MethodDefinition(method) = elem
+                && matches!(method.kind, MethodDefinitionKind::Constructor)
+            {
+                return Some(method);
             }
             None
         }) else {
@@ -235,12 +235,6 @@ impl ConstructorSuper {
     /// Check if an expression is definitely an invalid superclass
     fn is_invalid_super_class(expr: &Expression) -> bool {
         match expr {
-            // Literal values are invalid
-            Expression::NumericLiteral(_)
-            | Expression::StringLiteral(_)
-            | Expression::BooleanLiteral(_)
-            | Expression::BigIntLiteral(_) => true,
-
             // Parenthesized: unwrap and check inner expression
             Expression::ParenthesizedExpression(paren) => {
                 Self::is_invalid_super_class(&paren.expression)
@@ -250,7 +244,10 @@ impl ConstructorSuper {
             Expression::AssignmentExpression(assign) => {
                 match assign.operator {
                     // Direct assignment to literal is invalid: extends (B = 5)
-                    AssignmentOperator::Assign => Self::is_invalid_super_class(&assign.right),
+                    // &&= is invalid if right side is invalid
+                    AssignmentOperator::Assign | AssignmentOperator::LogicalAnd => {
+                        Self::is_invalid_super_class(&assign.right)
+                    }
 
                     // Arithmetic/bitwise assignments are invalid
                     AssignmentOperator::Addition
@@ -266,10 +263,7 @@ impl ConstructorSuper {
                     | AssignmentOperator::BitwiseAnd
                     | AssignmentOperator::Exponential => true,
 
-                    // Logical assignments: extends (B &&= C)
-                    // &&= is invalid if right side is invalid
                     // ||= and ??= are valid (could short-circuit to left)
-                    AssignmentOperator::LogicalAnd => Self::is_invalid_super_class(&assign.right),
                     AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => false,
                 }
             }
@@ -291,12 +285,6 @@ impl ConstructorSuper {
                 }
             }
 
-            // Binary expressions with operators
-            Expression::BinaryExpression(_) => {
-                // Binary operations could produce invalid values
-                true
-            }
-
             // Conditional: extends (a ? B : C) - valid if either branch could be valid
             Expression::ConditionalExpression(cond) => {
                 Self::is_invalid_super_class(&cond.consequent)
@@ -305,8 +293,15 @@ impl ConstructorSuper {
 
             // Sequence: extends (B, C) - result is last expression
             Expression::SequenceExpression(seq) => {
-                seq.expressions.last().map_or(true, |e| Self::is_invalid_super_class(e))
+                seq.expressions.last().is_none_or(|e| Self::is_invalid_super_class(e))
             }
+
+            // Literal values are invalid, as are binary expressions with operators
+            Expression::NumericLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::BinaryExpression(_) => true,
 
             // Everything else could potentially be a valid class
             _ => false,
@@ -322,24 +317,24 @@ impl ConstructorSuper {
         ctx.nodes()
             .iter()
             .filter_map(|node| {
-                if let AstKind::CallExpression(call_expr) = node.kind() {
-                    if matches!(&call_expr.callee, Expression::Super(_)) {
-                        // Check if this call is within our class
-                        let in_our_class = ctx.nodes().ancestors(node.id()).any(|ancestor| {
-                            if ancestor.id() == class_node_id {
-                                return true;
-                            }
-                            // Stop if we hit another class
-                            matches!(ancestor.kind(), AstKind::Class(_))
-                                && ancestor.id() != class_node_id
-                        });
-
-                        if in_our_class {
-                            return Some(SuperCallInfo {
-                                span: call_expr.span,
-                                node_id: node.id(),
-                            });
+                if let AstKind::CallExpression(call_expr) = node.kind()
+                    && matches!(&call_expr.callee, Expression::Super(_))
+                {
+                    // Check if this call is within our class
+                    let in_our_class = ctx.nodes().ancestors(node.id()).any(|ancestor| {
+                        if ancestor.id() == class_node_id {
+                            return true;
                         }
+                        // Stop if we hit another class
+                        matches!(ancestor.kind(), AstKind::Class(_))
+                            && ancestor.id() != class_node_id
+                    });
+
+                    if in_our_class {
+                        return Some(SuperCallInfo {
+                            span: call_expr.span,
+                            node_id: node.id(),
+                        });
                     }
                 }
                 None
@@ -358,10 +353,10 @@ impl ConstructorSuper {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     // Check if this function is the constructor itself
                     let parent = ctx.nodes().parent_node(ancestor.id());
-                    if let AstKind::MethodDefinition(method) = parent.kind() {
-                        if matches!(method.kind, MethodDefinitionKind::Constructor) {
-                            continue;
-                        }
+                    if let AstKind::MethodDefinition(method) = parent.kind()
+                        && matches!(method.kind, MethodDefinitionKind::Constructor)
+                    {
+                        continue;
                     }
                     return true;
                 }
@@ -389,10 +384,10 @@ impl ConstructorSuper {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     // Check if this is the constructor
                     let parent = ctx.nodes().parent_node(ancestor.id());
-                    if let AstKind::MethodDefinition(method) = parent.kind() {
-                        if matches!(method.kind, MethodDefinitionKind::Constructor) {
-                            continue;
-                        }
+                    if let AstKind::MethodDefinition(method) = parent.kind()
+                        && matches!(method.kind, MethodDefinitionKind::Constructor)
+                    {
+                        continue;
                     }
                     return false;
                 }
@@ -417,7 +412,7 @@ impl ConstructorSuper {
                     || if_stmt
                         .alternate
                         .as_ref()
-                        .map_or(false, |alt| Self::statement_contains_return(alt))
+                        .is_some_and(|alt| Self::statement_contains_return(alt))
             }
             Statement::SwitchStatement(switch) => {
                 switch.cases.iter().any(|case| Self::has_return_statement(&case.consequent))
@@ -427,11 +422,11 @@ impl ConstructorSuper {
                     || try_stmt
                         .handler
                         .as_ref()
-                        .map_or(false, |handler| Self::has_return_statement(&handler.body.body))
+                        .is_some_and(|handler| Self::has_return_statement(&handler.body.body))
                     || try_stmt
                         .finalizer
                         .as_ref()
-                        .map_or(false, |finalizer| Self::has_return_statement(&finalizer.body))
+                        .is_some_and(|finalizer| Self::has_return_statement(&finalizer.body))
             }
             Statement::WhileStatement(s) => Self::statement_contains_return(&s.body),
             Statement::DoWhileStatement(s) => Self::statement_contains_return(&s.body),
@@ -452,12 +447,13 @@ impl ConstructorSuper {
             }
             // If we hit a control flow statement that doesn't guarantee super(),
             // check if it's acceptable (exits acceptably or always exits)
-            if Self::is_control_flow_statement(stmt) {
-                if !Self::statement_always_exits(stmt) && !Self::exits_acceptably(stmt) {
-                    // Control flow that doesn't guarantee super(), doesn't always exit,
-                    // and doesn't exit acceptably -> can't trust super() after it
-                    return false;
-                }
+            if Self::is_control_flow_statement(stmt)
+                && !Self::statement_always_exits(stmt)
+                && !Self::exits_acceptably(stmt)
+            {
+                // Control flow that doesn't guarantee super(), doesn't always exit,
+                // and doesn't exit acceptably -> can't trust super() after it
+                return false;
             }
             // If we hit a statement that always returns/throws, stop checking
             // (statements after it are unreachable)
@@ -481,7 +477,7 @@ impl ConstructorSuper {
         match stmt {
             Statement::ReturnStatement(_) | Statement::ThrowStatement(_) => true,
             Statement::BlockStatement(block) => {
-                block.body.last().map_or(false, |s| Self::statement_always_exits(s))
+                block.body.last().is_some_and(|s| Self::statement_always_exits(s))
             }
             Statement::IfStatement(if_stmt) => {
                 // Both branches must always exit
@@ -489,7 +485,7 @@ impl ConstructorSuper {
                 let else_exits = if_stmt
                     .alternate
                     .as_ref()
-                    .map_or(false, |alt| Self::statement_always_exits(alt));
+                    .is_some_and(|alt| Self::statement_always_exits(alt));
                 then_exits && else_exits
             }
             _ => false,
@@ -498,7 +494,7 @@ impl ConstructorSuper {
 
     /// Check if statements end with break, return, or throw
     fn ends_with_break_or_exit(statements: &[Statement]) -> bool {
-        statements.last().map_or(false, |stmt| {
+        statements.last().is_some_and(|stmt| {
             matches!(
                 stmt,
                 Statement::BreakStatement(_)
@@ -517,7 +513,7 @@ impl ConstructorSuper {
                 ret.argument.is_some()
             }
             Statement::BlockStatement(block) => {
-                block.body.last().map_or(false, |s| Self::exits_acceptably(s))
+                block.body.last().is_some_and(|s| Self::exits_acceptably(s))
             }
             Statement::IfStatement(if_stmt) => {
                 // If the then branch exits acceptably, that's OK
@@ -562,7 +558,7 @@ impl ConstructorSuper {
                 let else_has_super = if_stmt
                     .alternate
                     .as_ref()
-                    .map_or(false, |alt| Self::contains_guaranteed_super(alt, ctx));
+                    .is_some_and(|alt| Self::contains_guaranteed_super(alt, ctx));
 
                 then_has_super && else_has_super
             }
@@ -601,7 +597,7 @@ impl ConstructorSuper {
             Statement::TryStatement(try_stmt) => try_stmt
                 .finalizer
                 .as_ref()
-                .map_or(false, |finalizer| Self::has_guaranteed_super_call(&finalizer.body, ctx)),
+                .is_some_and(|finalizer| Self::has_guaranteed_super_call(&finalizer.body, ctx)),
 
             // Block statement: recursively check
             Statement::BlockStatement(block) => Self::has_guaranteed_super_call(&block.body, ctx),
