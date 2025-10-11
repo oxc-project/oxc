@@ -100,7 +100,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
                         ctx.ast.export_specifier(span, local, exported_name, export_kind);
 
                     let export_named_decl = ctx.ast.alloc_export_named_declaration(
-                        SPAN,
+                        span,
                         None,
                         ctx.ast.vec1(export_specifier),
                         None,
