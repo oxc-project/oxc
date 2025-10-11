@@ -11,7 +11,7 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    ConcurrentHashMap,
+    ConcurrentHashMap, FORMAT_CONFIG_FILE,
     code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
     formatter::server_formatter::ServerFormatter,
     linter::{
@@ -99,6 +99,19 @@ impl WorkspaceWorker {
                     .config_path
                     .as_ref()
                     .unwrap_or(&"**/.oxlintrc.json".to_owned())
+                    .to_owned(),
+            }),
+            kind: Some(WatchKind::all()), // created, deleted, changed
+        });
+
+        watchers.push(FileSystemWatcher {
+            glob_pattern: GlobPattern::Relative(RelativePattern {
+                base_uri: OneOf::Right(self.root_uri.clone()),
+                pattern: options
+                    .lint
+                    .config_path
+                    .as_ref()
+                    .map_or(FORMAT_CONFIG_FILE, |v| v)
                     .to_owned(),
             }),
             kind: Some(WatchKind::all()), // created, deleted, changed
@@ -296,6 +309,7 @@ impl WorkspaceWorker {
         &self,
         _file_event: &FileEvent,
     ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+        // TODO: the tools should implement a helper function to detect if the changed file is relevant
         let files = {
             let server_linter_guard = self.server_linter.read().await;
             let server_linter = server_linter_guard.as_ref()?;
@@ -320,8 +334,8 @@ impl WorkspaceWorker {
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
-        // File system watcher for lint config changes
-        Option<FileSystemWatcher>,
+        // File system watcher for lint/fmt config changes
+        Vec<FileSystemWatcher>,
         // Is true, when the formatter was added to the workspace worker
         bool,
     ) {
@@ -346,6 +360,15 @@ impl WorkspaceWorker {
         }
 
         let mut formatting = false;
+
+        // create all watchers again, because maybe one tool configuration is changed
+        // and we unregister the workspace watcher and register a new one.
+        // Without adding the old watchers back, the client would not watch them anymore.
+        //
+        // TODO: create own watcher for each tool with its own id,
+        // so we can unregister only the watcher that changed.
+        let mut watchers = Vec::new();
+
         if current_option.format != changed_options.format {
             if changed_options.format.experimental {
                 debug!("experimental formatter enabled/restarted");
@@ -353,6 +376,19 @@ impl WorkspaceWorker {
                 *self.server_formatter.write().await =
                     Some(ServerFormatter::new(&self.root_uri, &changed_options.format));
                 formatting = true;
+
+                watchers.push(FileSystemWatcher {
+                    glob_pattern: GlobPattern::Relative(RelativePattern {
+                        base_uri: OneOf::Right(self.root_uri.clone()),
+                        pattern: current_option
+                            .format
+                            .config_path
+                            .as_ref()
+                            .map_or(FORMAT_CONFIG_FILE, |v| v)
+                            .to_owned(),
+                    }),
+                    kind: Some(WatchKind::all()), // created, deleted, changed
+                });
             } else {
                 debug!("experimental formatter disabled");
                 *self.server_formatter.write().await = None;
@@ -371,29 +407,23 @@ impl WorkspaceWorker {
             };
             self.refresh_server_linter(&changed_options.lint).await;
 
-            if current_option.lint.config_path != changed_options.lint.config_path {
-                return (
-                    Some(self.revalidate_diagnostics(files).await),
-                    Some(FileSystemWatcher {
-                        glob_pattern: GlobPattern::Relative(RelativePattern {
-                            base_uri: OneOf::Right(self.root_uri.clone()),
-                            pattern: changed_options
-                                .lint
-                                .config_path
-                                .as_ref()
-                                .unwrap_or(&"**/.oxlintrc.json".to_string())
-                                .to_owned(),
-                        }),
-                        kind: Some(WatchKind::all()), // created, deleted, changed
-                    }),
-                    formatting,
-                );
-            }
+            watchers.push(FileSystemWatcher {
+                glob_pattern: GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(self.root_uri.clone()),
+                    pattern: current_option
+                        .lint
+                        .config_path
+                        .as_ref()
+                        .unwrap_or(&"**/.oxlintrc.json".to_string())
+                        .to_owned(),
+                }),
+                kind: Some(WatchKind::all()), // created, deleted, changed
+            });
 
-            return (Some(self.revalidate_diagnostics(files).await), None, formatting);
+            return (Some(self.revalidate_diagnostics(files).await), watchers, formatting);
         }
 
-        (None, None, formatting)
+        (None, watchers, formatting)
     }
 }
 
