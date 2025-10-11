@@ -87,6 +87,16 @@ impl<'a> GatherNodeParts<'a> for ExportSpecifier<'a> {
     }
 }
 
+impl<'a> GatherNodeParts<'a> for ModuleExportName<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        match self {
+            ModuleExportName::IdentifierName(ident) => ident.gather(f),
+            ModuleExportName::IdentifierReference(ident) => ident.gather(f),
+            ModuleExportName::StringLiteral(lit) => lit.gather(f),
+        }
+    }
+}
+
 impl<'a> GatherNodeParts<'a> for ImportSpecifier<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         self.local.gather(f);
