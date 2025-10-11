@@ -402,9 +402,11 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
+        // Default config: no extension requirements
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),
         (r#"import dot from "./file.with.dot""#, None),
+        // 'always': require extensions for all imports
         (r#"import a from "a/index.js""#, Some(json!(["always"]))),
         (r#"import dot from "./file.with.dot.js""#, Some(json!(["always"]))),
         (
@@ -444,7 +446,10 @@ fn test() {
         (r#"import path from "path";"#, Some(json!(["never"]))),
         (r#"import path from "path";"#, Some(json!(["always"]))),
         (r#"import thing from "./fake-file.js";"#, Some(json!(["always"]))),
+        // 'never': no extensions allowed
         (r#"import thing from "non-package";"#, Some(json!(["never"]))),
+        // 'ignorePackages': require extensions for relative imports, not for packages
+        // Packages are detected using string heuristics (not filesystem resolution)
         (
             r#"
                 import foo from "./foo.js";
@@ -490,7 +495,8 @@ fn test() {
             "#,
             Some(json!(["never"])),
         ),
-        // Root packages should be ignored and they are names not files
+        // Package detection: Root packages are names, not files
+        // Note: @name/pkg.js is treated as scoped package, not a file
         (
             r#"
                 import lib from "pkg.js";
@@ -499,7 +505,8 @@ fn test() {
             "#,
             Some(json!(["never"])),
         ),
-        // Query strings.
+        // Query strings: extensions are extracted before the '?' character
+        // This behavior matches ESLint
         (
             r#"
                 import bare from "./foo?a=True.ext";
@@ -520,7 +527,7 @@ fn test() {
             "#,
             Some(json!(["always"])),
         ),
-        // Type import tests
+        // TypeScript type imports: ignored by default (checkTypeImports: false)
         (
             r#"import type T from "./typescript-declare";"#,
             Some(
@@ -533,6 +540,7 @@ fn test() {
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
             ),
         ),
+        // TypeScript type imports with checkTypeImports: true - extensions are checked
         (
             r#"
                 import type { MyType } from "./typescript-declare.ts";
@@ -545,13 +553,17 @@ fn test() {
             "#,
             Some(json!(["always", {"checkTypeImports": true}])),
         ),
+        // Edge cases: empty imports and unicode
         (r"import''", None),
         (r"export *from 'íìc'", None),
         (
             r"import { Something } from './something.hooks'; import SomeComponent from './SomeComponent.vue';",
             Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
         ),
-        // https://github.com/oxc-project/oxc/issues/12220
+        // Configuration inheritance: when first arg is 'ignorePackages', per-extension configs
+        // inherit IgnorePackages unless explicitly overridden. When overridden to 'never',
+        // missing extensions are OK for those file types.
+        // This matches ESLint behavior. https://github.com/oxc-project/oxc/issues/12220
         (
             r#"
                 import { A } from './something';
@@ -560,6 +572,8 @@ fn test() {
                 json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
             ),
         ),
+        // Path alias ~/: correctly identified as non-package
+        // Note: @/ is currently treated as scoped package (bug, will be fixed in Phase 2)
         // https://github.com/oxc-project/oxc/issues/12220
         (
             r#"
@@ -569,10 +583,28 @@ fn test() {
                 json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
             ),
         ),
+        // Scoped package subpaths should be treated as packages
+        (
+            r#"
+                import { foo } from '@scope/package/deep/nested/path';
+            "#,
+            Some(json!(["ignorePackages"])),
+        ),
+        // Mixed configuration: relative with extension, package without, scoped package subpath
+        (
+            r#"
+                import a from './relative.js';
+                import b from 'package';
+                import c from '@org/pkg/sub';
+            "#,
+            Some(json!(["ignorePackages", { "js": "always" }])),
+        ),
     ];
 
     let fail = vec![
+        // Default config: package subpaths with extensions should fail
         (r#"import a from "a/index.js""#, None),
+        // 'always' config: missing extensions should fail
         (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
         (
             r#"
@@ -605,6 +637,13 @@ fn test() {
             Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
         ),
         (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
+        // https://github.com/oxc-project/oxc/issues/12220
+        (
+            r#"
+                import { B } from './something.ts';
+            "#,
+            Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
+        ),
         (
             r#"
                 import barjs from "./bar.js";
@@ -708,10 +747,10 @@ fn test() {
             "#,
             Some(json!(["never"])),
         ),
-        // Query strings
+        // Query strings: extension detected before '?' should fail
         (r#"import withExtension from "./foo.js?a=True";"#, Some(json!(["never"]))),
         (r#"import withoutExtension from "./foo?a=True.ext";"#, Some(json!(["always"]))),
-        // Require
+        // Require statements: same rules apply as import statements
         (
             r#"
                 const { foo } = require("./foo");
@@ -773,7 +812,8 @@ fn test() {
             ",
             Some(json!(["never",{ "ignorePackages": false }])),
         ),
-        // Relative imports
+        // Directory imports: '.' and '..' are treated as relative imports without extensions
+        // These fail with 'ignorePackages' because they're not packages and lack extensions
         (
             r#"
                 import * as test from ".";
@@ -830,6 +870,40 @@ fn test() {
                 export type { MyType } from "./typescript-declare";
             "#,
             Some(json!(["always", { "checkTypeImports": true }])),
+        ),
+        // Directory imports with 'always' should fail
+        (
+            r#"
+                import x from '.';
+            "#,
+            Some(json!(["always"])),
+        ),
+        (
+            r#"
+                import y from '..';
+            "#,
+            Some(json!(["always"])),
+        ),
+        // Scoped package subpaths with 'never' should fail when they have extensions (ignorePackages: false)
+        (
+            r#"
+                import { bar } from '@scope/pkg/file.js';
+            "#,
+            Some(json!(["never", { "ignorePackages": false }])),
+        ),
+        (
+            r#"
+                import { baz } from '@org/lib/sub/index.ts';
+            "#,
+            Some(json!(["never", { "ignorePackages": false }])),
+        ),
+        // Mixed configuration: some should pass, some should fail
+        (
+            r#"
+                import x from './foo';
+                import y from './bar.ts';
+            "#,
+            Some(json!(["always", { "ts": "never" }])),
         ),
     ];
 
