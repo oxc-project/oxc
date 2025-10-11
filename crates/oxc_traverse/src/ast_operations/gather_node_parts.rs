@@ -87,7 +87,6 @@ impl<'a> GatherNodeParts<'a> for ExportSpecifier<'a> {
     }
 }
 
-
 impl<'a> GatherNodeParts<'a> for ModuleExportName<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
         match self {

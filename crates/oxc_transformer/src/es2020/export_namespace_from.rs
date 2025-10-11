@@ -49,9 +49,9 @@ impl<'a, 'ctx> ExportNamespaceFrom<'a, 'ctx> {
 impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // Early return if there's no `export * as ns from "mod"` to transform
-        let has_export_namespace = program.body.iter().any(|stmt| {
-            matches!(stmt, Statement::ExportAllDeclaration(decl) if decl.exported.is_some())
-        });
+        let has_export_namespace = program.body.iter().any(
+            |stmt| matches!(stmt, Statement::ExportAllDeclaration(decl) if decl.exported.is_some()),
+        );
         if !has_export_namespace {
             return;
         }
