@@ -50,12 +50,12 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// let foo = if (condition) {
+    /// if (condition) {
     ///     console.log("Hello");
-    ///     13
+    ///     return 13;
     /// } else {
     ///     console.log("Hello");
-    ///     42
+    ///     return 42;
     /// };
     ///
     /// if (condition) {
@@ -70,10 +70,10 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// console.log("Hello");
-    /// let foo = if (condition) {
-    ///     13
+    /// if (condition) {
+    ///     return 13;
     /// } else {
-    ///     42
+    ///     return 42;
     /// };
     ///
     /// if (condition) {
