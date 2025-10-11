@@ -129,13 +129,24 @@ impl<'a> SourceText<'a> {
         self.text_for(&span).chars().count()
     }
 
-    /// Count consecutive line breaks after position
+    /// Count consecutive line breaks after position, returning `0` if only whitespace follows
     pub fn lines_after(&self, end: u32) -> usize {
-        self.slice_from(end)
-            .chars()
-            .filter(|&c| !is_white_space_single_line(c))
-            .take_while(|&c| is_line_terminator(c))
-            .count()
+        let mut count = 0;
+        for char in self.slice_from(end).chars() {
+            if is_white_space_single_line(char) {
+                continue;
+            }
+
+            if is_line_terminator(char) {
+                count += 1;
+                continue;
+            }
+
+            return count;
+        }
+
+        // No non-whitespace characters found after position, so return `0` to avoid adding extra new lines
+        0
     }
 
     /// Count line breaks between syntax nodes, considering comments and parentheses
@@ -146,7 +157,7 @@ impl<'a> SourceText<'a> {
 
         // Should skip the leading comments of the node.
         if let Some(comment) = comments.first()
-            && comment.span.end < start
+            && comment.span.end <= start
         {
             start = comment.span.start;
         }
@@ -188,7 +199,7 @@ impl<'a> SourceText<'a> {
             count += 1;
         }
 
-        count
+        0
     }
 
     pub fn is_own_line_comment(&self, comment: &Comment) -> bool {
