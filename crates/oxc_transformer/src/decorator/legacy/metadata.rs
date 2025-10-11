@@ -115,14 +115,18 @@ enum EnumType {
 
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
-    /// Stack of method metadata arrays, each array contains 3 expressions:
-    /// `[design:type, design:paramtypes, design:returntype]`
+    /// Stack of method metadata arrays.
+    /// Each array contains metadata expressions in order:
+    /// `[design:type, design:paramtypes, design:returntype (optional)]`
+    ///
+    /// Note: `design:returntype` is omitted for getter and setter methods.
     ///
     /// Only the method that needs to be pushed onto a stack is the method metadata,
     /// which should be inserted after all real decorators. However, method parameters
     /// will be processed before the metadata generation, so we need to temporarily store
     /// them in a stack and pop them when in exit_method_definition.
-    method_metadata_stack: SparseStack<[Expression<'a>; 3]>,
+    // method_metadata_stack: SparseStack<[Option<Expression<'a>>; 3]>,
+    method_metadata_stack: SparseStack<[Option<Expression<'a>>; 3]>,
     /// Stack of constructor metadata expressions, each expression
     /// is the `design:paramtypes`.
     ///
@@ -208,16 +212,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
                 || method.value.params.items.iter().any(|param| !param.decorators.is_empty()));
 
         let metadata = is_decorated.then(|| {
+            // TypeScript only emits `design:returntype` for regular methods,
+            // not for getters or setters.
+            let should_add_return_type = !method.kind.is_get() && !method.kind.is_set();
+
             [
-                self.create_metadata("design:type", Self::global_function(ctx), ctx),
+                Some(self.create_metadata("design:type", Self::global_function(ctx), ctx)),
                 {
                     let serialized_type =
                         self.serialize_parameter_types_of_node(&method.value.params, ctx);
-                    self.create_metadata("design:paramtypes", serialized_type, ctx)
+                    Some(self.create_metadata("design:paramtypes", serialized_type, ctx))
                 },
                 {
-                    let serialized_type = self.serialize_return_type_of_node(&method.value, ctx);
-                    self.create_metadata("design:returntype", serialized_type, ctx)
+                    if should_add_return_type {
+                        let serialized_type =
+                            self.serialize_return_type_of_node(&method.value, ctx);
+                        Some(self.create_metadata("design:returntype", serialized_type, ctx))
+                    } else {
+                        None
+                    }
                 },
             ]
         });
@@ -302,7 +315,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         enum_type
     }
 
-    pub fn pop_method_metadata(&mut self) -> Option<[Expression<'a>; 3]> {
+    pub fn pop_method_metadata(&mut self) -> Option<[Option<Expression<'a>>; 3]> {
         self.method_metadata_stack.pop()
     }
 
