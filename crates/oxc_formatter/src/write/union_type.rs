@@ -130,7 +130,7 @@ pub struct FormatTSType<'a, 'b> {
 }
 
 impl<'a> Format<'a> for FormatTSType<'a, '_> {
-    fn fmt(&self, f: &mut crate::formatter::Formatter<'_, 'a>) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_element = format_once(|f| {
             self.element.fmt(f)?;
             Ok(())
@@ -158,7 +158,7 @@ impl<'a> Format<'a> for FormatTSType<'a, '_> {
             // // comment
             // | B
             // ```
-            // If there is a leading own line comment between `|` and the next node, we need to put print comments
+            // If there is a leading own line comment between `|` and the next node, we need to put printing comments
             // before `|` instead of after it.
             if f.comments().has_leading_own_line_comment(next_node_span.start) {
                 let comments = f.context().comments().comments_before(next_node_span.start);
@@ -171,7 +171,9 @@ impl<'a> Format<'a> for FormatTSType<'a, '_> {
                 write!(f, [soft_line_break_or_space()])?;
             }
             write!(f, ["|"])
-        } else {
+        } else if let AstNodes::TSUnionType(parent) = self.element.parent
+            && parent.needs_parentheses(f)
+        {
             // ```ts
             // type Foo = (
             // | "thing1" // comment1
@@ -183,6 +185,8 @@ impl<'a> Format<'a> for FormatTSType<'a, '_> {
             let comments =
                 f.context().comments().end_of_line_comments_after(self.element.span().end);
             FormatTrailingComments::Comments(comments).fmt(f)
+        } else {
+            Ok(())
         }
     }
 }

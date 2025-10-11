@@ -1,0 +1,14 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+interface _KeywordDef {
+  type?: JSONType | JSONType[] // data types that keyword applies to
+}
+
+==================== Output ====================
+interface _KeywordDef {
+  type?: JSONType | JSONType[]; // data types that keyword applies to
+}
+
+===================== End =====================
