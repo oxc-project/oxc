@@ -69,9 +69,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom<'a, '_> {
                     let exported_name = exported.unwrap();
 
                     // Create a unique binding for the import based on the exported name
-                    let name = exported_name.name();
-                    let binding = ctx.generate_uid(
-                        name.as_str(),
+                    let binding = ctx.generate_uid_based_on_node(
+                        &exported_name,
                         program.scope_id(),
                         SymbolFlags::Import,
                     );
