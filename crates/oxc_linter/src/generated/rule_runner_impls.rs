@@ -2321,6 +2321,10 @@ impl RuleRunner for crate::rules::unicorn::explicit_length_check::ExplicitLength
         Some(&AstTypesBitset::from_types(&[AstType::StaticMemberExpression]));
 }
 
+impl RuleRunner for crate::rules::unicorn::expiring_todo_comments::ExpiringTodoComments {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+}
+
 impl RuleRunner for crate::rules::unicorn::filename_case::FilenameCase {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
