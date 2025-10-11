@@ -638,6 +638,7 @@ pub(crate) mod vitest {
 }
 
 pub(crate) mod node {
+    pub mod no_process_env;
     pub mod no_exports_assign;
     pub mod no_new_require;
 }
@@ -961,6 +962,7 @@ oxc_macros::declare_all_lint_rules! {
     nextjs::no_typos,
     nextjs::no_unwanted_polyfillio,
     nextjs::no_html_link_for_pages,
+    node::no_process_env,
     node::no_exports_assign,
     node::no_new_require,
     oxc::approx_constant,
