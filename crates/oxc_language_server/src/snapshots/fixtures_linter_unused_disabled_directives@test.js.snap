@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/unused_disabled_directives/test.js
@@ -128,24 +127,7 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 0,
-                character: 2,
-            },
-            end: Position {
-                line: 0,
-                character: 56,
-            },
-        },
-    },
-)
+fixed: None
 
 
 code: ""
@@ -158,24 +140,7 @@ related_information[0].location.range: Range { start: Position { line: 5, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 5,
-                character: 39,
-            },
-            end: Position {
-                line: 5,
-                character: 52,
-            },
-        },
-    },
-)
+fixed: None
 
 
 code: ""
@@ -188,21 +153,4 @@ related_information[0].location.range: Range { start: Position { line: 8, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Single(
-    FixedContent {
-        message: Some(
-            "remove unused disable directive",
-        ),
-        code: "",
-        range: Range {
-            start: Position {
-                line: 8,
-                character: 2,
-            },
-            end: Position {
-                line: 8,
-                character: 52,
-            },
-        },
-    },
-)
+fixed: None
