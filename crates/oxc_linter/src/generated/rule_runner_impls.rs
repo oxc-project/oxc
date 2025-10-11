@@ -1638,6 +1638,11 @@ impl RuleRunner for crate::rules::react::exhaustive_deps::ExhaustiveDeps {
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
 }
 
+impl RuleRunner for crate::rules::react::forbid_dom_props::ForbidDomProps {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXOpeningElement]));
+}
+
 impl RuleRunner for crate::rules::react::forbid_elements::ForbidElements {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
 }
