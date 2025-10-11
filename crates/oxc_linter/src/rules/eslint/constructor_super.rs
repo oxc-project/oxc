@@ -331,10 +331,7 @@ impl ConstructorSuper {
                     });
 
                     if in_our_class {
-                        return Some(SuperCallInfo {
-                            span: call_expr.span,
-                            node_id: node.id(),
-                        });
+                        return Some(SuperCallInfo { span: call_expr.span, node_id: node.id() });
                     }
                 }
                 None
@@ -482,10 +479,8 @@ impl ConstructorSuper {
             Statement::IfStatement(if_stmt) => {
                 // Both branches must always exit
                 let then_exits = Self::statement_always_exits(&if_stmt.consequent);
-                let else_exits = if_stmt
-                    .alternate
-                    .as_ref()
-                    .is_some_and(|alt| Self::statement_always_exits(alt));
+                let else_exits =
+                    if_stmt.alternate.as_ref().is_some_and(|alt| Self::statement_always_exits(alt));
                 then_exits && else_exits
             }
             _ => false,
