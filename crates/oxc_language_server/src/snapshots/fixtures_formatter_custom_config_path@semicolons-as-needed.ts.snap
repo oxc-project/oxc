@@ -1,0 +1,16 @@
+---
+source: crates/oxc_language_server/src/formatter/tester.rs
+---
+========================================
+File: fixtures/formatter/custom_config_path/semicolons-as-needed.ts
+========================================
+Range: Range {
+    start: Position {
+        line: 1,
+        character: 8,
+    },
+    end: Position {
+        line: 1,
+        character: 9,
+    },
+}

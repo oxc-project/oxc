@@ -10,17 +10,17 @@ use tower_lsp_server::{
     lsp_types::{Position, Range, TextEdit, Uri},
 };
 
-use crate::FORMAT_CONFIG_FILE;
-
+use crate::formatter::options::FormatOptions as LSPFormatOptions;
+use crate::{FORMAT_CONFIG_FILE, utils::normalize_path};
 pub struct ServerFormatter {
     options: FormatOptions,
 }
 
 impl ServerFormatter {
-    pub fn new(root_uri: &Uri) -> Self {
+    pub fn new(root_uri: &Uri, options: &LSPFormatOptions) -> Self {
         let root_path = root_uri.to_file_path().unwrap();
 
-        Self { options: Self::get_format_options(&root_path) }
+        Self { options: Self::get_format_options(&root_path, options.config_path.as_ref()) }
     }
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
@@ -75,9 +75,9 @@ impl ServerFormatter {
         )])
     }
 
-    fn get_format_options(root_path: &Path) -> FormatOptions {
-        let config_path = FORMAT_CONFIG_FILE;
-        let config = root_path.join(config_path); // normalize_path when supporting `oxc.fmt.configPath`
+    fn get_format_options(root_path: &Path, config_path: Option<&String>) -> FormatOptions {
+        let config_path = config_path.map_or(FORMAT_CONFIG_FILE, |v| v);
+        let config = normalize_path(root_path.join(config_path));
         let oxfmtrc = if config.try_exists().is_ok_and(|exists| exists) {
             if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
                 oxfmtrc
@@ -232,13 +232,31 @@ mod tests {
 
     #[test]
     fn test_formatter() {
-        Tester::new("fixtures/formatter/basic", Some(FormatOptions { experimental: true }))
-            .format_and_snapshot_single_file("basic.ts");
+        Tester::new(
+            "fixtures/formatter/basic",
+            Some(FormatOptions { experimental: true, ..Default::default() }),
+        )
+        .format_and_snapshot_single_file("basic.ts");
     }
 
     #[test]
     fn test_root_config_detection() {
-        Tester::new("fixtures/formatter/root_config", Some(FormatOptions { experimental: true }))
-            .format_and_snapshot_single_file("semicolons-as-needed.ts");
+        Tester::new(
+            "fixtures/formatter/root_config",
+            Some(FormatOptions { experimental: true, ..Default::default() }),
+        )
+        .format_and_snapshot_single_file("semicolons-as-needed.ts");
+    }
+
+    #[test]
+    fn test_custom_config_path() {
+        Tester::new(
+            "fixtures/formatter/custom_config_path",
+            Some(FormatOptions {
+                experimental: true,
+                config_path: Some("./format.json".to_string()),
+            }),
+        )
+        .format_and_snapshot_single_file("semicolons-as-needed.ts");
     }
 }
