@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/issue_9958/issue.ts
@@ -57,7 +56,7 @@ fixed: Multiple(
 code: "typescript-eslint(no-non-null-asserted-optional-chain)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-non-null-asserted-optional-chain.html"
 message: "Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.\nhelp: Remove the non-null assertion."
-range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
+range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
 related_information[0].message: "non-null assertion made after optional chain"
 related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
 related_information[0].location.range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
@@ -107,11 +106,11 @@ fixed: Multiple(
 
 code: "None"
 code_description.href: "None"
-message: "non-null assertion made after optional chain"
-range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
+message: "optional chain used"
+range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
 related_information[0].message: "original diagnostic"
 related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
-related_information[0].location.range: Range { start: Position { line: 11, character: 18 }, end: Position { line: 11, character: 19 } }
+related_information[0].location.range: Range { start: Position { line: 11, character: 21 }, end: Position { line: 11, character: 22 } }
 severity: Some(Hint)
 source: Some("oxc")
 tags: None
