@@ -71,7 +71,7 @@ impl WorkspaceWorker {
         *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
         if options.format.experimental {
             debug!("experimental formatter enabled");
-            *self.server_formatter.write().await = Some(ServerFormatter::new());
+            *self.server_formatter.write().await = Some(ServerFormatter::new(&self.root_uri));
         }
     }
 
@@ -341,7 +341,7 @@ impl WorkspaceWorker {
         if current_option.format.experimental != changed_options.format.experimental {
             if changed_options.format.experimental {
                 debug!("experimental formatter enabled");
-                *self.server_formatter.write().await = Some(ServerFormatter::new());
+                *self.server_formatter.write().await = Some(ServerFormatter::new(&self.root_uri));
                 formatting = true;
             } else {
                 debug!("experimental formatter disabled");
