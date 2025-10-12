@@ -9,7 +9,10 @@ use crate::{
         Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{
+            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
+            FormatTrailingComments,
+        },
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
@@ -40,15 +43,27 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        // `try {} /* comment */ catch (e) {}`
-        // should be formatted like:
-        // `try {} catch (e) { /* comment */ }`
-        //
-        // Comments before the catch clause should be printed in the block statement.
-        // We cache them here to avoid the `params` printing them accidentally.
-        let printed_comments = f.intern(&format_leading_comments(self.span));
-        if let Ok(Some(comments)) = printed_comments {
-            f.context_mut().cache_element(&self.span, comments);
+        let comments = f.context().comments().comments_before(self.span.start);
+        let has_line_comment = comments.iter().any(|comment| {
+            comment.is_line()
+                || f.source_text().is_own_line_comment(comment)
+                || f.source_text().is_end_of_line_comment(comment)
+        });
+
+        if has_line_comment {
+            // `try {} /* comment */\n catch (e) {}`
+            // should be formatted like:
+            // `try {} catch (e) { /* comment */ }`
+            //
+            // Comments before the catch clause should be printed in the block statement.
+            // We cache them here to avoid the `params` printing them accidentally.
+            let printed_comments = f.intern(&FormatLeadingComments::Comments(comments));
+            if let Ok(Some(comments)) = printed_comments {
+                f.context_mut().cache_element(&self.span, comments);
+            }
+        } else if !comments.is_empty() {
+            // otherwise, print them before `catch`
+            write!(f, [FormatTrailingComments::Comments(comments), space()]);
         }
 
         write!(f, ["catch", space(), self.param(), space()])?;
