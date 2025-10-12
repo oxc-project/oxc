@@ -5,7 +5,7 @@ use std::sync::Arc;
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use oxc_linter::{AllowWarnDeny, LintIgnoreMatcher};
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tokio::sync::Mutex;
 use tower_lsp_server::lsp_types::Uri;
 
@@ -40,7 +40,7 @@ pub struct ServerLinter {
     gitignore_glob: Vec<Gitignore>,
     lint_on_run: Run,
     diagnostics: ServerLinterDiagnostics,
-    pub extended_paths: Vec<PathBuf>,
+    pub extended_paths: FxHashSet<PathBuf>,
 }
 
 #[derive(Debug, Default)]
@@ -189,8 +189,8 @@ impl ServerLinter {
         root_path: &Path,
         options: &LSPLintOptions,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
-    ) -> (ConcurrentHashMap<PathBuf, Config>, Vec<PathBuf>) {
-        let mut extended_paths = Vec::new();
+    ) -> (ConcurrentHashMap<PathBuf, Config>, FxHashSet<PathBuf>) {
+        let mut extended_paths = FxHashSet::default();
         // nested config is disabled, no need to search for configs
         if !options.use_nested_configs() {
             return (ConcurrentHashMap::default(), extended_paths);

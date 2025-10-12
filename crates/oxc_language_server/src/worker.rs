@@ -516,9 +516,8 @@ mod test_init_watchers {
         let tester = Tester::new("fixtures/watcher/linter_extends", &Options::default());
         let watchers = tester.init_watchers();
 
-        // The root `.oxlintrc.json` extends `./lint.json -> 2 watchers
-        // The nested configs are enabled, so it finds `.oxlintrc.json` a second time -> 3 watchers
-        assert_eq!(watchers.len(), 3);
+        // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
+        assert_eq!(watchers.len(), 2);
 
         // nested configs pattern
         assert_eq!(
@@ -529,19 +528,9 @@ mod test_init_watchers {
             })
         );
 
-        // nested config extends
+        // extends of root config
         assert_eq!(
             watchers[1].glob_pattern,
-            GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                pattern: "lint.json".to_string(),
-            })
-        );
-
-        // base config extends
-        // TODO: filter duplicates
-        assert_eq!(
-            watchers[2].glob_pattern,
             GlobPattern::Relative(RelativePattern {
                 base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
                 pattern: "lint.json".to_string(),
