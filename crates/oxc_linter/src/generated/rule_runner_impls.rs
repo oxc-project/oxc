@@ -381,7 +381,11 @@ impl RuleRunner
 }
 
 impl RuleRunner for crate::rules::eslint::no_multi_assign::NoMultiAssign {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::PropertyDefinition,
+        AstType::VariableDeclarator,
+    ]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_multi_str::NoMultiStr {

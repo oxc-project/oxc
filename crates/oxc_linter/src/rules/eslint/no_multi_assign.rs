@@ -117,30 +117,32 @@ impl Rule for NoMultiAssign {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // e.g. `var a = b = c;`
-        if let AstKind::VariableDeclarator(declarator) = node.kind() {
-            let Some(Expression::AssignmentExpression(assign_expr)) = &declarator.init else {
-                return;
-            };
-            ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
-        }
-
-        // e.g. `class A { a = b = 1; }`
-        if let AstKind::PropertyDefinition(prop_def) = node.kind() {
-            let Some(Expression::AssignmentExpression(assign_expr)) = &prop_def.value else {
-                return;
-            };
-            ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
-        }
-
-        // e.g. `let a; let b; a = b = 1;`
-        if !self.ignore_non_declaration
-            && let AstKind::AssignmentExpression(parent_expr) = node.kind()
-        {
-            let Expression::AssignmentExpression(expr) = &parent_expr.right else {
-                return;
-            };
-            ctx.diagnostic(no_multi_assign_diagnostic(expr.span));
+        match node.kind() {
+            // e.g. `var a = b = c;`
+            AstKind::VariableDeclarator(declarator) => {
+                let Some(Expression::AssignmentExpression(assign_expr)) = &declarator.init else {
+                    return;
+                };
+                ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
+            }
+            // e.g. `class A { a = b = 1; }`
+            AstKind::PropertyDefinition(prop_def) => {
+                let Some(Expression::AssignmentExpression(assign_expr)) = &prop_def.value else {
+                    return;
+                };
+                ctx.diagnostic(no_multi_assign_diagnostic(assign_expr.span));
+            }
+            // e.g. `let a; let b; a = b = 1;`
+            AstKind::AssignmentExpression(parent_expr) => {
+                if self.ignore_non_declaration {
+                    return;
+                }
+                let Expression::AssignmentExpression(expr) = &parent_expr.right else {
+                    return;
+                };
+                ctx.diagnostic(no_multi_assign_diagnostic(expr.span));
+            }
+            _ => {}
         }
     }
 }
