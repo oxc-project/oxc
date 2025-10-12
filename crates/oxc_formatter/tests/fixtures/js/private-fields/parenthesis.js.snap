@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+class F {
+  #target = null
+  next () {
+    !(#target in this);
+    -(#target in this);
+    +(#target in this);
+  }
+}
+
+==================== Output ====================
+class F {
+  #target = null;
+  next() {
+    !(#target in this);
+    -(#target in this);
+    +(#target in this);
+  }
+}
+
+===================== End =====================

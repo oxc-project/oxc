@@ -416,6 +416,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
         }
 
         is_class_extends(self.span, self.parent)
+            || matches!(self.parent, AstNodes::UnaryExpression(_))
     }
 }
 
