@@ -428,7 +428,8 @@ impl RuleRunner for crate::rules::eslint::no_nonoctal_decimal_escape::NoNonoctal
 }
 
 impl RuleRunner for crate::rules::eslint::no_obj_calls::NoObjCalls {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_object_constructor::NoObjectConstructor {
