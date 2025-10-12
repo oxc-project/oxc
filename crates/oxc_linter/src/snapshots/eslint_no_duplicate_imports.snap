@@ -1,27 +1,14 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-duplicate-imports): 'foo' export is duplicated
-   ╭─[no_duplicate_imports.tsx:2:26]
- 1 │ 
- 2 │                 export { a } from 'foo';
-   ·                          ┬
-   ·                          ╰── This export is duplicated
- 3 │                 import { f } from 'foo';
-   ·                                   ──┬──
-   ·                                     ╰── Can be merged with this
- 4 │             
-   ╰────
-  help: Merge the duplicated exports into a single export statement
-
   ⚠ eslint(no-duplicate-imports): 'fs' import is duplicated
    ╭─[no_duplicate_imports.tsx:1:8]
  1 │ import "fs";
    ·        ──┬─
    ·          ╰── Can be merged with this import
- 2 │         import "fs"
-   ·                ──┬─
-   ·                  ╰── This import is duplicated
+ 2 │             import "fs"
+   ·                    ──┬─
+   ·                      ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
 
@@ -30,9 +17,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import { merge } from "lodash-es";
    ·                       ─────┬─────
    ·                            ╰── Can be merged with this import
- 2 │         import { find } from "lodash-es";
-   ·                              ─────┬─────
-   ·                                   ╰── This import is duplicated
+ 2 │             import { find } from "lodash-es";
+   ·                                  ─────┬─────
+   ·                                       ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
 
@@ -41,9 +28,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import { merge } from "lodash-es";
    ·                       ─────┬─────
    ·                            ╰── Can be merged with this import
- 2 │           import _ from "lodash-es";
-   ·                         ─────┬─────
-   ·                              ╰── This import is duplicated
+ 2 │             import _ from "lodash-es";
+   ·                           ─────┬─────
+   ·                                ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
 
@@ -52,22 +39,22 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import os from "os";
    ·                ──┬─
    ·                  ╰── Can be merged with this import
- 2 │           import { something } from "os";
+ 2 │             import { something } from "os";
+   ·                                       ──┬─
+   ·                                         ╰── This import is duplicated
+ 3 │             import * as foobar from "os";
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:16]
+ 1 │ import os from "os";
+   ·                ──┬─
+   ·                  ╰── Can be merged with this import
+ 2 │             import { something } from "os";
+ 3 │             import * as foobar from "os";
    ·                                     ──┬─
    ·                                       ╰── This import is duplicated
- 3 │           import * as foobar from "os";
-   ╰────
-  help: Merge the duplicated import into a single import statement
-
-  ⚠ eslint(no-duplicate-imports): 'os' import is duplicated
-   ╭─[no_duplicate_imports.tsx:1:16]
- 1 │ import os from "os";
-   ·                ──┬─
-   ·                  ╰── Can be merged with this import
- 2 │           import { something } from "os";
- 3 │           import * as foobar from "os";
-   ·                                   ──┬─
-   ·                                     ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
 
@@ -76,10 +63,10 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import * as modns from "lodash-es";
    ·                        ─────┬─────
    ·                             ╰── Can be merged with this import
- 2 │           import { merge } from "lodash-es";
- 3 │           import { baz } from "lodash-es";
-   ·                               ─────┬─────
-   ·                                    ╰── This import is duplicated
+ 2 │             import { merge } from "lodash-es";
+ 3 │             import { baz } from "lodash-es";
+   ·                                 ─────┬─────
+   ·                                      ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
 
@@ -88,21 +75,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export { os } from "os";
    ·          ─┬
    ·           ╰── Can be merged with this
- 2 │           export { something } from "os";
-   ·                    ────┬────
-   ·                        ╰── This export is duplicated
-   ╰────
-  help: Merge the duplicated exports into a single export statement
-
-  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
-   ╭─[no_duplicate_imports.tsx:1:16]
- 1 │ import os from "os";
-   ·                ──┬─
-   ·                  ╰── Can be merged with this
- 2 │           export { os as foobar } from "os";
-   ·                    ──────┬─────
+ 2 │             export { something } from "os";
+   ·                      ────┬────
    ·                          ╰── This export is duplicated
- 3 │           export { something } from "os";
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -111,10 +86,10 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import os from "os";
    ·                ──┬─
    ·                  ╰── Can be merged with this
- 2 │           export { os as foobar } from "os";
- 3 │           export { something } from "os";
-   ·                    ────┬────
-   ·                        ╰── This export is duplicated
+ 2 │             export { os as foobar } from "os";
+   ·                      ──────┬─────
+   ·                            ╰── This export is duplicated
+ 3 │             export { something } from "os";
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -123,9 +98,10 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import os from "os";
    ·                ──┬─
    ·                  ╰── Can be merged with this
- 2 │           export { something } from "os";
-   ·                    ────┬────
-   ·                        ╰── This export is duplicated
+ 2 │             export { os as foobar } from "os";
+ 3 │             export { something } from "os";
+   ·                      ────┬────
+   ·                          ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -134,9 +110,20 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import os from "os";
    ·                ──┬─
    ·                  ╰── Can be merged with this
- 2 │         export * as os from "os";
-   ·         ────────────┬────────────
-   ·                     ╰── This export is duplicated
+ 2 │             export { something } from "os";
+   ·                      ────┬────
+   ·                          ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:16]
+ 1 │ import os from "os";
+   ·                ──┬─
+   ·                  ╰── Can be merged with this
+ 2 │             export * as os from "os";
+   ·             ────────────┬────────────
+   ·                         ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -145,9 +132,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export * as os from "os";
    · ────────────┬────────────
    ·             ╰── This export is duplicated
- 2 │         import os from "os";
-   ·                        ──┬─
-   ·                          ╰── Can be merged with this
+ 2 │             import os from "os";
+   ·                            ──┬─
+   ·                              ╰── Can be merged with this
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -156,9 +143,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import * as modns from "mod";
    ·                        ──┬──
    ·                          ╰── Can be merged with this
- 2 │         export * as  modns from "mod";
-   ·         ───────────────┬──────────────
-   ·                        ╰── This export is duplicated
+ 2 │             export * as  modns from "mod";
+   ·             ───────────────┬──────────────
+   ·                            ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -167,9 +154,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export * from "os";
    · ─────────┬─────────
    ·          ╰── Can be merged with this
- 2 │         export * from "os";
-   ·         ─────────┬─────────
-   ·                  ╰── This export is duplicated
+ 2 │             export * from "os";
+   ·             ─────────┬─────────
+   ·                      ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
 
@@ -178,45 +165,330 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import "os";
    ·        ──┬─
    ·          ╰── Can be merged with this
- 2 │         export * from "os";
-   ·         ─────────┬─────────
-   ·                  ╰── This export is duplicated
+ 2 │             export * from "os";
+   ·             ─────────┬─────────
+   ·                      ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
 
-  ⚠ eslint(no-duplicate-imports): './HostEditDialogs' import is duplicated
-   ╭─[no_duplicate_imports.tsx:1:83]
- 1 │ import type { PriorityDialogCustomClassNames, WeightDialogCustomClassNames } from "./HostEditDialogs";
-   ·                                                                                   ─────────┬─────────
-   ·                                                                                            ╰── Can be merged with this import
- 2 │             import { PriorityDialog, WeightDialog } from "./HostEditDialogs";
-   ·                                                          ─────────┬─────────
-   ·                                                                   ╰── This import is duplicated
+  ⚠ eslint(no-duplicate-imports): 'fs' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:8]
+ 1 │ import "fs";
+   ·        ──┬─
+   ·          ╰── Can be merged with this import
+ 2 │             import "fs"
+   ·                    ──┬─
+   ·                      ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
 
-  ⚠ eslint(no-duplicate-imports): 'foo' import is duplicated
-   ╭─[no_duplicate_imports.tsx:2:31]
- 1 │ 
- 2 │                 import b from 'foo';
-   ·                               ──┬──
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:28]
+ 1 │ import { type Merge } from "lodash-es";
+   ·                            ─────┬─────
    ·                                 ╰── Can be merged with this import
- 3 │                 import { a } from 'foo';
-   ·                                   ──┬──
-   ·                                     ╰── This import is duplicated
- 4 │             
+ 2 │             import { type Find } from "lodash-es";
+   ·                                       ─────┬─────
+   ·                                            ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
 
-  ⚠ eslint(no-duplicate-imports): 'foo' import is duplicated
-   ╭─[no_duplicate_imports.tsx:2:38]
- 1 │ 
- 2 │                 import * as bar from 'foo';
-   ·                                      ──┬──
-   ·                                        ╰── Can be merged with this import
- 3 │                 import b from 'foo';
-   ·                               ──┬──
-   ·                                 ╰── This import is duplicated
- 4 │                 import { a } from 'foo';
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:28]
+ 1 │ import { type Merge } from "lodash-es";
+   ·                            ─────┬─────
+   ·                                 ╰── Can be merged with this import
+ 2 │             import type { Find } from "lodash-es";
+   ·                                       ─────┬─────
+   ·                                            ╰── This import is duplicated
    ╰────
   help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:28]
+ 1 │ import type { Merge } from "lodash-es";
+   ·                            ─────┬─────
+   ·                                 ╰── Can be merged with this import
+ 2 │             import type { Find } from "lodash-es";
+   ·                                       ─────┬─────
+   ·                                            ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:21]
+ 1 │ import type Os from "os";
+   ·                     ──┬─
+   ·                       ╰── Can be merged with this import
+ 2 │             import type { Something } from "os";
+ 3 │             import type * as Foobar from "os";
+   ·                                          ──┬─
+   ·                                            ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:29]
+ 1 │ import type * as Modns from "lodash-es";
+   ·                             ─────┬─────
+   ·                                  ╰── Can be merged with this import
+ 2 │             import type { Merge } from "lodash-es";
+ 3 │             import type { Baz } from "lodash-es";
+   ·                                      ─────┬─────
+   ·                                           ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             export type { Bar } from "module";
+   ·                           ─┬─
+   ·                            ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:10]
+ 1 │ export { os } from "os";
+   ·          ─┬
+   ·           ╰── Can be merged with this
+ 2 │             export type { Something } from "os";
+   ·                           ────┬────
+   ·                               ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:15]
+ 1 │ export type { Os } from "os";
+   ·               ─┬
+   ·                ╰── Can be merged with this
+ 2 │             export type { Something } from "os";
+   ·                           ────┬────
+   ·                               ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:25]
+ 1 │ import type { Os } from "os";
+   ·                         ──┬─
+   ·                           ╰── Can be merged with this
+ 2 │             export type { Os as Foobar } from "os";
+   ·                           ──────┬─────
+   ·                                 ╰── This export is duplicated
+ 3 │             export type { Something } from "os";
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:25]
+ 1 │ import type { Os } from "os";
+   ·                         ──┬─
+   ·                           ╰── Can be merged with this
+ 2 │             export type { Os as Foobar } from "os";
+ 3 │             export type { Something } from "os";
+   ·                           ────┬────
+   ·                               ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:25]
+ 1 │ import type { Os } from "os";
+   ·                         ──┬─
+   ·                           ╰── Can be merged with this
+ 2 │             export type { Something } from "os";
+   ·                           ────┬────
+   ·                               ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:21]
+ 1 │ import type Os from "os";
+   ·                     ──┬─
+   ·                       ╰── Can be merged with this
+ 2 │             export type * as Os from "os";
+   ·             ───────────────┬──────────────
+   ·                            ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'mod' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:29]
+ 1 │ import type * as Modns from "mod";
+   ·                             ──┬──
+   ·                               ╰── Can be merged with this
+ 2 │             export type * as Modns from "mod";
+   ·             ─────────────────┬────────────────
+   ·                              ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:1]
+ 1 │ export type * from "os";
+   · ────────────┬───────────
+   ·             ╰── Can be merged with this
+ 2 │             export type * from "os";
+   ·             ────────────┬───────────
+   ·                         ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'os' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:8]
+ 1 │ import "os";
+   ·        ──┬─
+   ·          ╰── Can be merged with this
+ 2 │             export type { Os } from "os";
+   ·                           ─┬
+   ·                            ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:27]
+ 1 │ import { someValue } from 'module';
+   ·                           ────┬───
+   ·                               ╰── Can be merged with this import
+ 2 │             import { anotherValue } from 'module';
+   ·                                          ────┬───
+   ·                                              ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'lodash-es' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:28]
+ 1 │ import type { Merge } from "lodash-es";
+   ·                            ─────┬─────
+   ·                                 ╰── Can be merged with this import
+ 2 │             import type { Find } from "lodash-es";
+   ·                                       ─────┬─────
+   ·                                            ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:37]
+ 1 │ import { someValue, type Foo } from 'module';
+   ·                                     ────┬───
+   ·                                         ╰── Can be merged with this import
+ 2 │             import type { SomeType } from 'module';
+ 3 │             import type { AnotherType } from 'module';
+   ·                                              ────┬───
+   ·                                                  ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from 'module';
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this import
+ 2 │             import { type Bar } from 'module';
+   ·                                      ────┬───
+   ·                                          ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:15]
+ 1 │ export type { Foo } from "module";
+   ·               ─┬─
+   ·                ╰── Can be merged with this
+ 2 │             export type { Bar } from "module";
+   ·                           ─┬─
+   ·                            ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             export { type Bar } from "module";
+   ·                      ────┬───
+   ·                          ╰── This export is duplicated
+ 3 │             export { type Baz } from "module";
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             export { type Bar } from "module";
+ 3 │             export { type Baz } from "module";
+   ·                      ────┬───
+   ·                          ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             export { type Bar } from "module";
+   ·                      ────┬───
+   ·                          ╰── This export is duplicated
+ 3 │             export { regular } from "module";
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             export { type Bar } from "module";
+ 3 │             export { regular } from "module";
+   ·                      ───┬───
+   ·                         ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this import
+ 2 │             import { regular } from "module";
+   ·                                     ────┬───
+   ·                                         ╰── This import is duplicated
+ 3 │             export { type Bar } from "module";
+   ╰────
+  help: Merge the duplicated import into a single import statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             import { regular } from "module";
+ 3 │             export { type Bar } from "module";
+   ·                      ────┬───
+   ·                          ╰── This export is duplicated
+ 4 │             export { regular as other } from "module";
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import { type Foo } from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             import { regular } from "module";
+ 3 │             export { type Bar } from "module";
+ 4 │             export { regular as other } from "module";
+   ·                      ────────┬───────
+   ·                              ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
