@@ -68,19 +68,19 @@ declare_oxc_lint!(
 
 impl Rule for NoFuncAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::Function(func) = node.kind() {
-            let (func_name, symbol_id) = match &func.id {
-                Some(id) => (id.name.as_str(), id.symbol_id()),
-                None => return,
-            };
-            let symbol_table = ctx.scoping();
-            for reference in symbol_table.get_resolved_references(symbol_id) {
-                if reference.is_write() {
-                    ctx.diagnostic(no_func_assign_diagnostic(
-                        func_name,
-                        ctx.semantic().reference_span(reference),
-                    ));
-                }
+        let AstKind::Function(func) = node.kind() else { return };
+
+        let (func_name, symbol_id) = match &func.id {
+            Some(id) => (id.name.as_str(), id.symbol_id()),
+            None => return,
+        };
+        let symbol_table = ctx.scoping();
+        for reference in symbol_table.get_resolved_references(symbol_id) {
+            if reference.is_write() {
+                ctx.diagnostic(no_func_assign_diagnostic(
+                    func_name,
+                    ctx.semantic().reference_span(reference),
+                ));
             }
         }
     }
