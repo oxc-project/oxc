@@ -338,12 +338,46 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
+    #[inline]
+    fn ast_vec_with_list_hint<T>(&mut self, close: Kind) -> Vec<'a, T> {
+        let hint = self.state.list_capacity_hint(close);
+        if hint == 0 { self.ast.vec() } else { self.ast.vec_with_capacity(hint) }
+    }
+
+    #[inline]
+    fn finish_ast_vec<T>(&mut self, list: Vec<'a, T>, close: Kind) -> Vec<'a, T> {
+        self.state.update_list_capacity_hint(close, list.capacity());
+        list
+    }
+
+    #[inline]
+    fn finish_ast_vec_with_trailing<T>(
+        &mut self,
+        list: Vec<'a, T>,
+        trailing: Option<u32>,
+        close: Kind,
+    ) -> (Vec<'a, T>, Option<u32>) {
+        self.state.update_list_capacity_hint(close, list.capacity());
+        (list, trailing)
+    }
+
+    #[inline]
+    fn finish_ast_vec_with_rest<A>(
+        &mut self,
+        list: Vec<'a, A>,
+        rest: Option<BindingRestElement<'a>>,
+        close: Kind,
+    ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>) {
+        self.state.update_list_capacity_hint(close, list.capacity());
+        (list, rest)
+    }
+
     pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>
     where
         F: Fn(&mut Self) -> T,
     {
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = self.ast_vec_with_list_hint(close);
         loop {
             let kind = self.cur_kind();
             if kind == close
@@ -355,7 +389,7 @@ impl<'a> ParserImpl<'a> {
             list.push(f(self));
         }
         self.expect(close);
-        list
+        self.finish_ast_vec(list, close)
     }
 
     pub(crate) fn parse_normal_list_breakable<F, T>(
@@ -368,7 +402,7 @@ impl<'a> ParserImpl<'a> {
         F: Fn(&mut Self) -> Option<T>,
     {
         self.expect(open);
-        let mut list = self.ast.vec();
+        let mut list = self.ast_vec_with_list_hint(close);
         loop {
             if self.at(close) || self.has_fatal_error() {
                 break;
@@ -380,7 +414,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
         self.expect(close);
-        list
+        self.finish_ast_vec(list, close)
     }
 
     pub(crate) fn parse_delimited_list<F, T>(
@@ -392,28 +426,32 @@ impl<'a> ParserImpl<'a> {
     where
         F: Fn(&mut Self) -> T,
     {
-        let mut list = self.ast.vec();
+        let mut list = self.ast_vec_with_list_hint(close);
         // Cache cur_kind() to avoid redundant calls in compound checks
-        let kind = self.cur_kind();
+        let mut kind = self.cur_kind();
         if kind == close
             || matches!(kind, Kind::Eof | Kind::Undetermined)
             || self.fatal_error.is_some()
         {
-            return (list, None);
+            return self.finish_ast_vec_with_trailing(list, None, close);
         }
         list.push(f(self));
         loop {
-            let kind = self.cur_kind();
+            kind = self.cur_kind();
             if kind == close
                 || matches!(kind, Kind::Eof | Kind::Undetermined)
                 || self.fatal_error.is_some()
             {
-                return (list, None);
+                return self.finish_ast_vec_with_trailing(list, None, close);
             }
-            self.expect(separator);
+            if !self.eat(separator) {
+                self.handle_expect_failure(separator);
+                self.advance(separator);
+                return self.finish_ast_vec_with_trailing(list, None, close);
+            }
             if self.cur_kind() == close {
                 let trailing_separator = self.prev_token_end - 1;
-                return (list, Some(trailing_separator));
+                return self.finish_ast_vec_with_trailing(list, Some(trailing_separator), close);
             }
             list.push(f(self));
         }
@@ -429,7 +467,7 @@ impl<'a> ParserImpl<'a> {
         E: Fn(&mut Self) -> A,
         D: Fn(Span) -> OxcDiagnostic,
     {
-        let mut list = self.ast.vec();
+        let mut list = self.ast_vec_with_list_hint(close);
         let mut rest: Option<BindingRestElement<'a>> = None;
         let mut first = true;
         loop {
@@ -475,6 +513,6 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        (list, rest)
+        self.finish_ast_vec_with_rest(list, rest, close)
     }
 }
