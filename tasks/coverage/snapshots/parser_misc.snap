@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 92/92 (100.00%)
+Negative Passed: 93/93 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -396,6 +396,12 @@ Negative Passed: 92/92 (100.00%)
    ╭─[misc/fail/oxc-11789-2.ts:1:14]
  1 │ interface i<>implements K {}
    ·              ──────────
+   ╰────
+
+  × Using declaration cannot appear in the top level when source type is `script`.
+   ╭─[misc/fail/oxc-11862.cjs:1:1]
+ 1 │ using a = { [Symbol.dispose]() {} }
+   · ───────────────────────────────────
    ╰────
 
   × Unterminated regular expression
