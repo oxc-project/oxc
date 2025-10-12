@@ -270,7 +270,8 @@ impl RuleRunner for crate::rules::eslint::no_empty_function::NoEmptyFunction {
 }
 
 impl RuleRunner for crate::rules::eslint::no_empty_pattern::NoEmptyPattern {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrayPattern, AstType::ObjectPattern]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_empty_static_block::NoEmptyStaticBlock {
@@ -288,7 +289,8 @@ impl RuleRunner for crate::rules::eslint::no_eval::NoEval {
 }
 
 impl RuleRunner for crate::rules::eslint::no_ex_assign::NoExAssign {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CatchParameter]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_extend_native::NoExtendNative {
@@ -305,7 +307,8 @@ impl RuleRunner for crate::rules::eslint::no_extra_boolean_cast::NoExtraBooleanC
 }
 
 impl RuleRunner for crate::rules::eslint::no_extra_label::NoExtraLabel {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::BreakStatement, AstType::ContinueStatement]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_fallthrough::NoFallthrough {
@@ -314,7 +317,8 @@ impl RuleRunner for crate::rules::eslint::no_fallthrough::NoFallthrough {
 }
 
 impl RuleRunner for crate::rules::eslint::no_func_assign::NoFuncAssign {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Function]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_global_assign::NoGlobalAssign {
@@ -322,11 +326,13 @@ impl RuleRunner for crate::rules::eslint::no_global_assign::NoGlobalAssign {
 }
 
 impl RuleRunner for crate::rules::eslint::no_import_assign::NoImportAssign {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ImportDeclaration]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_inner_declarations::NoInnerDeclarations {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Function, AstType::VariableDeclaration]));
 }
 
 impl RuleRunner for crate::rules::eslint::no_invalid_regexp::NoInvalidRegexp {

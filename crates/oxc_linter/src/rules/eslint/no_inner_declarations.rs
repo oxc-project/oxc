@@ -100,6 +100,8 @@ impl Rule for NoInnerDeclarations {
                 if self.config == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
                     return;
                 }
+
+                check_rule(node, ctx);
             }
             AstKind::Function(func) => {
                 if !func.is_function_declaration() {
@@ -118,53 +120,57 @@ impl Rule for NoInnerDeclarations {
                         return;
                     }
                 }
+
+                check_rule(node, ctx);
             }
-            _ => return,
+            _ => {}
         }
-
-        let parent_node = ctx.nodes().parent_node(node.id());
-        if matches!(
-            parent_node.kind(),
-            AstKind::Program(_)
-                | AstKind::FunctionBody(_)
-                | AstKind::StaticBlock(_)
-                | AstKind::ExportNamedDeclaration(_)
-                | AstKind::ExportDefaultDeclaration(_)
-        ) {
-            return;
-        }
-
-        let mut body = "program";
-        let mut parent = ctx.nodes().parent_node(parent_node.id());
-        loop {
-            match parent.kind() {
-                AstKind::Program(_) => break,
-                AstKind::StaticBlock(_) => {
-                    body = "class static block body";
-                    break;
-                }
-                AstKind::Function(_) => {
-                    body = "function body";
-                    break;
-                }
-                _ => parent = ctx.nodes().parent_node(parent.id()),
-            }
-        }
-
-        let (decl_type, span) = match node.kind() {
-            AstKind::VariableDeclaration(decl) => {
-                let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
-                ("variable", span)
-            }
-            AstKind::Function(func) => {
-                let span = Span::sized(func.span.start, 8); // 8 for "function".len()
-                ("function", span)
-            }
-            _ => unreachable!(),
-        };
-
-        ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
     }
+}
+
+fn check_rule<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    let parent_node = ctx.nodes().parent_node(node.id());
+    if matches!(
+        parent_node.kind(),
+        AstKind::Program(_)
+            | AstKind::FunctionBody(_)
+            | AstKind::StaticBlock(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDefaultDeclaration(_)
+    ) {
+        return;
+    }
+
+    let mut body = "program";
+    let mut parent = ctx.nodes().parent_node(parent_node.id());
+    loop {
+        match parent.kind() {
+            AstKind::Program(_) => break,
+            AstKind::StaticBlock(_) => {
+                body = "class static block body";
+                break;
+            }
+            AstKind::Function(_) => {
+                body = "function body";
+                break;
+            }
+            _ => parent = ctx.nodes().parent_node(parent.id()),
+        }
+    }
+
+    let (decl_type, span) = match node.kind() {
+        AstKind::VariableDeclaration(decl) => {
+            let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
+            ("variable", span)
+        }
+        AstKind::Function(func) => {
+            let span = Span::sized(func.span.start, 8); // 8 for "function".len()
+            ("function", span)
+        }
+        _ => unreachable!(),
+    };
+
+    ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
 }
 
 #[test]
