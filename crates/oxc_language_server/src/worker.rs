@@ -432,13 +432,13 @@ mod tests {
 }
 
 #[cfg(test)]
-mod test_init_watchers {
+mod test_watchers {
     use tower_lsp_server::{
         UriExt,
-        lsp_types::{GlobPattern, OneOf, RelativePattern, Uri},
+        lsp_types::{FileSystemWatcher, Uri},
     };
 
-    use crate::{linter::options::LintOptions, options::Options, worker::WorkspaceWorker};
+    use crate::{options::Options, worker::WorkspaceWorker};
 
     struct Tester {
         pub worker: WorkspaceWorker,
@@ -465,107 +465,172 @@ mod test_init_watchers {
             worker
         }
 
-        fn init_watchers(&self) -> Vec<tower_lsp_server::lsp_types::FileSystemWatcher> {
+        fn init_watchers(&self) -> Vec<FileSystemWatcher> {
             tokio::runtime::Runtime::new()
                 .unwrap()
                 .block_on(async { self.worker.init_watchers().await })
         }
+
+        fn did_change_configuration(&self, options: &Options) -> Option<FileSystemWatcher> {
+            let (_, watchers, _) = tokio::runtime::Runtime::new()
+                .unwrap()
+                .block_on(async { self.worker.did_change_configuration(options).await });
+            watchers
+        }
     }
 
-    #[test]
-    fn test_default_options() {
-        let tester = Tester::new("fixtures/watcher/default", &Options::default());
-        let watchers = tester.init_watchers();
+    mod init_watchers {
+        use tower_lsp_server::lsp_types::{GlobPattern, OneOf, RelativePattern};
 
-        assert_eq!(watchers.len(), 1);
-        assert_eq!(
-            watchers[0].glob_pattern,
-            GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                pattern: "**/.oxlintrc.json".to_string(),
-            })
-        );
-    }
+        use crate::{
+            linter::options::LintOptions, options::Options, worker::test_watchers::Tester,
+        };
 
-    #[test]
-    fn test_custom_config_path() {
-        let tester = Tester::new(
-            "fixtures/watcher/default",
-            &Options {
-                lint: LintOptions {
-                    config_path: Some("configs/lint.json".to_string()),
+        #[test]
+        fn test_default_options() {
+            let tester = Tester::new("fixtures/watcher/default", &Options::default());
+            let watchers = tester.init_watchers();
+
+            assert_eq!(watchers.len(), 1);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_custom_config_path() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    lint: LintOptions {
+                        config_path: Some("configs/lint.json".to_string()),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
-                ..Default::default()
-            },
-        );
-        let watchers = tester.init_watchers();
+            );
+            let watchers = tester.init_watchers();
 
-        assert_eq!(watchers.len(), 1);
-        assert_eq!(
-            watchers[0].glob_pattern,
-            GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                pattern: "configs/lint.json".to_string(),
-            })
-        );
-    }
+            assert_eq!(watchers.len(), 1);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "configs/lint.json".to_string(),
+                })
+            );
+        }
 
-    #[test]
-    fn test_linter_extends_configs() {
-        let tester = Tester::new("fixtures/watcher/linter_extends", &Options::default());
-        let watchers = tester.init_watchers();
+        #[test]
+        fn test_linter_extends_configs() {
+            let tester = Tester::new("fixtures/watcher/linter_extends", &Options::default());
+            let watchers = tester.init_watchers();
 
-        // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
-        assert_eq!(watchers.len(), 2);
+            // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
+            assert_eq!(watchers.len(), 2);
 
-        // nested configs pattern
-        assert_eq!(
-            watchers[0].glob_pattern,
-            GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                pattern: "**/.oxlintrc.json".to_string(),
-            })
-        );
+            // nested configs pattern
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
 
-        // extends of root config
-        assert_eq!(
-            watchers[1].glob_pattern,
-            GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                pattern: "lint.json".to_string(),
-            })
-        );
-    }
+            // extends of root config
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "lint.json".to_string(),
+                })
+            );
+        }
 
-    #[test]
-    fn test_linter_extends_custom_config_path() {
-        let tester = Tester::new(
-            "fixtures/watcher/linter_extends",
-            &Options {
-                lint: LintOptions {
-                    config_path: Some(".oxlintrc.json".to_string()),
+        #[test]
+        fn test_linter_extends_custom_config_path() {
+            let tester = Tester::new(
+                "fixtures/watcher/linter_extends",
+                &Options {
+                    lint: LintOptions {
+                        config_path: Some(".oxlintrc.json".to_string()),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
-                ..Default::default()
-            },
-        );
-        let watchers = tester.init_watchers();
+            );
+            let watchers = tester.init_watchers();
 
-        assert_eq!(watchers.len(), 2);
-        assert_eq!(
-            watchers[0].glob_pattern,
-            GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                pattern: ".oxlintrc.json".to_string(),
-            })
-        );
-        assert_eq!(
-            watchers[1].glob_pattern,
-            GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                pattern: "lint.json".to_string(),
-            })
-        );
+            assert_eq!(watchers.len(), 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: ".oxlintrc.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "lint.json".to_string(),
+                })
+            );
+        }
+    }
+
+    mod did_change_configuration {
+        use tower_lsp_server::lsp_types::{GlobPattern, OneOf, RelativePattern};
+
+        use crate::{
+            linter::options::{LintOptions, Run},
+            options::Options,
+            worker::test_watchers::Tester,
+        };
+
+        #[test]
+        fn test_no_change() {
+            let tester = Tester::new("fixtures/watcher/default", &Options::default());
+            let watchers = tester.did_change_configuration(&Options::default());
+            assert!(watchers.is_none());
+        }
+
+        #[test]
+        fn test_lint_config_path_change() {
+            let tester = Tester::new("fixtures/watcher/default", &Options::default());
+            let watchers = tester
+                .did_change_configuration(&Options {
+                    lint: LintOptions {
+                        config_path: Some("configs/lint.json".to_string()),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .unwrap();
+
+            assert_eq!(
+                watchers.glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "configs/lint.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_lint_other_option_change() {
+            let tester = Tester::new("fixtures/watcher/default", &Options::default());
+            let watchers = tester.did_change_configuration(&Options {
+                // run is the only option that does not require a restart
+                lint: LintOptions { run: Run::OnSave, ..Default::default() },
+                ..Default::default()
+            });
+            assert!(watchers.is_none());
+        }
     }
 }
