@@ -52,20 +52,22 @@ declare_oxc_lint!(
 
 impl Rule for NoExAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CatchParameter(catch_param) = node.kind() {
-            let idents = catch_param.pattern.get_binding_identifiers();
-            let symbol_table = ctx.scoping();
-            for ident in idents {
-                let symbol_id = ident.symbol_id();
-                // This symbol _should_ always be considered a catch variable (since we got it from a catch param),
-                // but we check in debug mode just to be sure.
-                debug_assert!(symbol_table.symbol_flags(symbol_id).is_catch_variable());
-                for reference in symbol_table.get_resolved_references(symbol_id) {
-                    if reference.is_write() {
-                        ctx.diagnostic(no_ex_assign_diagnostic(
-                            ctx.semantic().reference_span(reference),
-                        ));
-                    }
+        let AstKind::CatchParameter(catch_param) = node.kind() else {
+            return;
+        };
+
+        let idents = catch_param.pattern.get_binding_identifiers();
+        let symbol_table = ctx.scoping();
+        for ident in idents {
+            let symbol_id = ident.symbol_id();
+            // This symbol _should_ always be considered a catch variable (since we got it from a catch param),
+            // but we check in debug mode just to be sure.
+            debug_assert!(symbol_table.symbol_flags(symbol_id).is_catch_variable());
+            for reference in symbol_table.get_resolved_references(symbol_id) {
+                if reference.is_write() {
+                    ctx.diagnostic(no_ex_assign_diagnostic(
+                        ctx.semantic().reference_span(reference),
+                    ));
                 }
             }
         }
