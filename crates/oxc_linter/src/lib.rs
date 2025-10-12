@@ -184,7 +184,7 @@ impl Linter {
             let should_run_on_jest_node =
                 ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-            let execute_rules = |with_ast_kind_filtering: bool| {
+            let execute_rules = |with_runtime_optimization: bool| {
                 // IMPORTANT: We have two branches here for performance reasons:
                 //
                 // 1) Branch where we iterate over each node, then each rule
@@ -217,9 +217,13 @@ impl Linter {
 
                     for (rule, ctx) in &rules {
                         let rule = *rule;
+                        let run_info = rule.run_info();
                         // Collect node type information for rules. In large files, benchmarking showed it was worth
                         // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                        if with_ast_kind_filtering && let Some(ast_types) = rule.types_info() {
+                        if with_runtime_optimization
+                            && let Some(ast_types) = rule.types_info()
+                            && run_info.is_run_implemented()
+                        {
                             for ty in ast_types {
                                 rules_by_ast_type[ty as usize].push((rule, ctx));
                             }
@@ -227,12 +231,18 @@ impl Linter {
                             rules_any_ast_type.push((rule, ctx));
                         }
 
-                        rule.run_once(ctx);
+                        if !with_runtime_optimization || run_info.is_run_once_implemented() {
+                            rule.run_once(ctx);
+                        }
                     }
 
                     for symbol in semantic.scoping().symbol_ids() {
                         for (rule, ctx) in &rules {
-                            rule.run_on_symbol(symbol, ctx);
+                            if !with_runtime_optimization
+                                || rule.run_info().is_run_on_symbol_implemented()
+                            {
+                                rule.run_on_symbol(symbol, ctx);
+                            }
                         }
                     }
 
@@ -249,33 +259,48 @@ impl Linter {
                     if should_run_on_jest_node {
                         for jest_node in iter_possible_jest_call_node(semantic) {
                             for (rule, ctx) in &rules {
-                                rule.run_on_jest_node(&jest_node, ctx);
+                                if !with_runtime_optimization
+                                    || rule.run_info().is_run_on_jest_node_implemented()
+                                {
+                                    rule.run_on_jest_node(&jest_node, ctx);
+                                }
                             }
                         }
                     }
                 } else {
                     for (rule, ctx) in &rules {
-                        rule.run_once(ctx);
-
-                        for symbol in semantic.scoping().symbol_ids() {
-                            rule.run_on_symbol(symbol, ctx);
+                        let run_info = rule.run_info();
+                        if !with_runtime_optimization || run_info.is_run_once_implemented() {
+                            rule.run_once(ctx);
                         }
 
-                        // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
-                        // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                        if with_ast_kind_filtering && let Some(ast_types) = rule.types_info() {
-                            for node in semantic.nodes() {
-                                if ast_types.has(node.kind().ty()) {
+                        if !with_runtime_optimization || run_info.is_run_on_symbol_implemented() {
+                            for symbol in semantic.scoping().symbol_ids() {
+                                rule.run_on_symbol(symbol, ctx);
+                            }
+                        }
+
+                        if !with_runtime_optimization || run_info.is_run_implemented() {
+                            // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
+                            // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
+                            if with_runtime_optimization && let Some(ast_types) = rule.types_info()
+                            {
+                                for node in semantic.nodes() {
+                                    if ast_types.has(node.kind().ty()) {
+                                        rule.run(node, ctx);
+                                    }
+                                }
+                            } else {
+                                for node in semantic.nodes() {
                                     rule.run(node, ctx);
                                 }
                             }
-                        } else {
-                            for node in semantic.nodes() {
-                                rule.run(node, ctx);
-                            }
                         }
 
-                        if should_run_on_jest_node {
+                        if should_run_on_jest_node
+                            && (!with_runtime_optimization
+                                || run_info.is_run_on_jest_node_implemented())
+                        {
                             for jest_node in iter_possible_jest_call_node(semantic) {
                                 rule.run_on_jest_node(&jest_node, ctx);
                             }

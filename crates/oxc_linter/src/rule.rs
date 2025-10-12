@@ -100,6 +100,24 @@ pub enum RuleRunFunctionsImplemented {
     RunOnJestNode,
 }
 
+impl RuleRunFunctionsImplemented {
+    pub fn is_run_implemented(self) -> bool {
+        matches!(self, Self::Run | Self::Unknown)
+    }
+
+    pub fn is_run_once_implemented(self) -> bool {
+        matches!(self, Self::RunOnce | Self::Unknown)
+    }
+
+    pub fn is_run_on_symbol_implemented(self) -> bool {
+        matches!(self, Self::RunOnSymbol | Self::Unknown)
+    }
+
+    pub fn is_run_on_jest_node_implemented(self) -> bool {
+        matches!(self, Self::RunOnJestNode | Self::Unknown)
+    }
+}
+
 pub trait RuleMeta {
     const NAME: &'static str;
 
