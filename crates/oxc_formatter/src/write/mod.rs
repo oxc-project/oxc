@@ -857,17 +857,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let mut left = self.left().memoized();
+        // Format `left` early before writing leading comments, so that comments
+        // inside `left` are not treated as leading comments of `= right`
+        left.inspect(f)?;
         let comments = f.context().comments().own_line_comments_before(self.right.span().start);
         write!(
             f,
-            [
-                FormatLeadingComments::Comments(comments),
-                self.left(),
-                space(),
-                "=",
-                space(),
-                self.right(),
-            ]
+            [FormatLeadingComments::Comments(comments), left, space(), "=", space(), self.right()]
         )
     }
 }
