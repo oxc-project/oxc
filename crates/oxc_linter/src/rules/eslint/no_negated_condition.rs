@@ -58,7 +58,7 @@ declare_oxc_lint!(
 
 impl Rule for NoNegatedCondition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let stmt_test = match node.kind() {
+        match node.kind() {
             AstKind::IfStatement(if_stmt) => {
                 let Some(if_stmt_alternate) = &if_stmt.alternate else {
                     return;
@@ -68,32 +68,30 @@ impl Rule for NoNegatedCondition {
                     return;
                 }
 
-                if_stmt.test.without_parentheses()
+                let test = if_stmt.test.without_parentheses();
+                if is_negated_expression(test) {
+                    ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
+                }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                conditional_expr.test.without_parentheses()
-            }
-            _ => return,
-        };
-
-        match stmt_test {
-            Expression::UnaryExpression(unary_expr) => {
-                if unary_expr.operator != UnaryOperator::LogicalNot {
-                    return;
+                let test = conditional_expr.test.without_parentheses();
+                if is_negated_expression(test) {
+                    ctx.diagnostic(no_negated_condition_diagnostic(test.span()));
                 }
             }
-            Expression::BinaryExpression(binary_expr) => {
-                if !matches!(
-                    binary_expr.operator,
-                    BinaryOperator::Inequality | BinaryOperator::StrictInequality
-                ) {
-                    return;
-                }
-            }
-            _ => return,
+            _ => {}
         }
+    }
+}
 
-        ctx.diagnostic(no_negated_condition_diagnostic(stmt_test.span()));
+fn is_negated_expression(expr: &Expression) -> bool {
+    match expr {
+        Expression::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::LogicalNot,
+        Expression::BinaryExpression(binary_expr) => matches!(
+            binary_expr.operator,
+            BinaryOperator::Inequality | BinaryOperator::StrictInequality
+        ),
+        _ => false,
     }
 }
 
