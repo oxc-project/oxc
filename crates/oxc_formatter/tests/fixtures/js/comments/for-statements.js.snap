@@ -1,0 +1,31 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+for (let i in [
+  // comment1
+  1, 2, 3
+  // comment2
+]);
+
+for (let i of [
+  // comment1
+  1, 2, 3
+  // comment2
+]);
+==================== Output ====================
+for (let i in [
+  // comment1
+  1, 2,
+  3,
+  // comment2
+]);
+
+for (let i of [
+  // comment1
+  1, 2,
+  3,
+  // comment2
+]);
+
+===================== End =====================
