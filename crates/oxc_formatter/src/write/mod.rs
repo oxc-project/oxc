@@ -83,6 +83,7 @@ use self::{
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     parameters::{ParameterLayout, ParameterList},
+    return_or_throw_statement::FormatAdjacentArgument,
     semicolon::OptionalSemicolon,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
     utils::{
@@ -935,12 +936,9 @@ impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
 
 impl<'a> FormatWrite<'a> for AstNode<'a, YieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "yield")?;
-        if self.delegate() {
-            write!(f, "*")?;
-        }
+        write!(f, ["yield", self.delegate().then_some("*")])?;
         if let Some(argument) = &self.argument() {
-            write!(f, [space(), argument])?;
+            write!(f, [space(), FormatAdjacentArgument(argument)])?;
         }
         Ok(())
     }
