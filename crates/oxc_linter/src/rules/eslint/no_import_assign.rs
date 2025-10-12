@@ -55,92 +55,91 @@ const REFLECT_MUTATION_METHODS: [&str; 4] =
 
 impl Rule for NoImportAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ImportDeclaration(import_decl) = node.kind() {
-            let symbol_table = ctx.scoping();
-            if let Some(specifiers) = &import_decl.specifiers {
-                for specifier in specifiers {
-                    let symbol_id = specifier.local().symbol_id();
-                    let is_namespace_specifier = matches!(
-                        specifier,
-                        oxc_ast::ast::ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)
-                    );
-                    for reference in symbol_table.get_resolved_references(symbol_id) {
-                        if is_namespace_specifier {
-                            let parent_node = ctx.nodes().parent_node(reference.node_id());
-                            if parent_node.kind().is_member_expression_kind() {
-                                let expr = parent_node.kind();
-                                let parent_parent_node = ctx.nodes().parent_node(parent_node.id());
-                                let is_unary_expression_with_delete_operator = |kind| {
-                                    matches!(
-                                        kind,
-                                        AstKind::UnaryExpression(expr)
-                                        if expr.operator == UnaryOperator::Delete
-                                    )
-                                };
-                                let parent_parent_kind = parent_parent_node.kind();
-                                if (matches!(parent_parent_kind, AstKind::IdentifierReference(_))
-                                    || is_unary_expression_with_delete_operator(parent_parent_kind)
-                                    || matches!(parent_parent_kind, AstKind::ChainExpression(_) if is_unary_expression_with_delete_operator(ctx.nodes().parent_kind(parent_parent_node.id()))))
-                                    && let Some((span, _)) = match expr {
-                                        AstKind::StaticMemberExpression(expr) => {
-                                            Some(expr.static_property_info())
-                                        }
-                                        AstKind::ComputedMemberExpression(expr) => {
-                                            expr.static_property_info()
-                                        }
-                                        _ => return,
+        let AstKind::ImportDeclaration(import_decl) = node.kind() else { return };
+
+        let symbol_table = ctx.scoping();
+        if let Some(specifiers) = &import_decl.specifiers {
+            for specifier in specifiers {
+                let symbol_id = specifier.local().symbol_id();
+                let is_namespace_specifier = matches!(
+                    specifier,
+                    oxc_ast::ast::ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)
+                );
+                for reference in symbol_table.get_resolved_references(symbol_id) {
+                    if is_namespace_specifier {
+                        let parent_node = ctx.nodes().parent_node(reference.node_id());
+                        if parent_node.kind().is_member_expression_kind() {
+                            let expr = parent_node.kind();
+                            let parent_parent_node = ctx.nodes().parent_node(parent_node.id());
+                            let is_unary_expression_with_delete_operator = |kind| {
+                                matches!(
+                                    kind,
+                                    AstKind::UnaryExpression(expr)
+                                    if expr.operator == UnaryOperator::Delete
+                                )
+                            };
+                            let parent_parent_kind = parent_parent_node.kind();
+                            if (matches!(parent_parent_kind, AstKind::IdentifierReference(_))
+                                || is_unary_expression_with_delete_operator(parent_parent_kind)
+                                || matches!(parent_parent_kind, AstKind::ChainExpression(_) if is_unary_expression_with_delete_operator(ctx.nodes().parent_kind(parent_parent_node.id()))))
+                                && let Some((span, _)) = match expr {
+                                    AstKind::StaticMemberExpression(expr) => {
+                                        Some(expr.static_property_info())
                                     }
-                                    && span != ctx.semantic().reference_span(reference)
-                                {
-                                    return ctx
-                                        .diagnostic(no_import_assign_diagnostic(expr.span()));
+                                    AstKind::ComputedMemberExpression(expr) => {
+                                        expr.static_property_info()
+                                    }
+                                    _ => return,
                                 }
-                                // Check for assignment to namespace property
-                                match expr {
-                                    AstKind::StaticMemberExpression(member_expr) => {
-                                        let condition_met = is_assignment_condition_met(
-                                            &parent_parent_kind,
-                                            parent_node.span(),
-                                            true, // is_static
-                                        );
-                                        check_namespace_member_assignment(
-                                            &member_expr.object,
-                                            parent_node,
-                                            reference,
-                                            ctx,
-                                            condition_met,
-                                        );
-                                    }
-                                    AstKind::ComputedMemberExpression(member_expr) => {
-                                        let condition_met = is_assignment_condition_met(
-                                            &parent_parent_kind,
-                                            parent_node.span(),
-                                            false, // is_static
-                                        );
-                                        check_namespace_member_assignment(
-                                            &member_expr.object,
-                                            parent_node,
-                                            reference,
-                                            ctx,
-                                            condition_met,
-                                        );
-                                    }
-                                    _ => {}
+                                && span != ctx.semantic().reference_span(reference)
+                            {
+                                return ctx.diagnostic(no_import_assign_diagnostic(expr.span()));
+                            }
+                            // Check for assignment to namespace property
+                            match expr {
+                                AstKind::StaticMemberExpression(member_expr) => {
+                                    let condition_met = is_assignment_condition_met(
+                                        &parent_parent_kind,
+                                        parent_node.span(),
+                                        true, // is_static
+                                    );
+                                    check_namespace_member_assignment(
+                                        &member_expr.object,
+                                        parent_node,
+                                        reference,
+                                        ctx,
+                                        condition_met,
+                                    );
                                 }
+                                AstKind::ComputedMemberExpression(member_expr) => {
+                                    let condition_met = is_assignment_condition_met(
+                                        &parent_parent_kind,
+                                        parent_node.span(),
+                                        false, // is_static
+                                    );
+                                    check_namespace_member_assignment(
+                                        &member_expr.object,
+                                        parent_node,
+                                        reference,
+                                        ctx,
+                                        condition_met,
+                                    );
+                                }
+                                _ => {}
                             }
                         }
+                    }
 
-                        if reference.is_write()
-                            || (is_namespace_specifier
-                                && is_argument_of_well_known_mutation_function(
-                                    reference.node_id(),
-                                    ctx,
-                                ))
-                        {
-                            ctx.diagnostic(no_import_assign_diagnostic(
-                                ctx.semantic().reference_span(reference),
-                            ));
-                        }
+                    if reference.is_write()
+                        || (is_namespace_specifier
+                            && is_argument_of_well_known_mutation_function(
+                                reference.node_id(),
+                                ctx,
+                            ))
+                    {
+                        ctx.diagnostic(no_import_assign_diagnostic(
+                            ctx.semantic().reference_span(reference),
+                        ));
                     }
                 }
             }
