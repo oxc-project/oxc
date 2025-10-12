@@ -16,6 +16,7 @@ use crate::{
     formatter::server_formatter::ServerFormatter,
     linter::{
         error_with_position::DiagnosticReport,
+        options::LintOptions,
         server_linter::{ServerLinter, ServerLinterRun},
     },
     options::Options,
@@ -155,10 +156,7 @@ impl WorkspaceWorker {
     /// Refresh the server linter with the current options
     /// This will recreate the linter and re-read the config files.
     /// Call this when the options have changed and the linter needs to be updated.
-    async fn refresh_server_linter(&self) {
-        let options = self.options.lock().await;
-        let default_options = Options::default();
-        let lint_options = &options.as_ref().unwrap_or(&default_options).lint;
+    async fn refresh_server_linter(&self, lint_options: &LintOptions) {
         let server_linter = ServerLinter::new(&self.root_uri, lint_options);
 
         *self.server_linter.write().await = Some(server_linter);
@@ -303,7 +301,15 @@ impl WorkspaceWorker {
             let server_linter = server_linter_guard.as_ref()?;
             server_linter.get_cached_files_of_diagnostics()
         };
-        self.refresh_server_linter().await;
+        let lint_options = self
+            .options
+            .lock()
+            .await
+            .as_ref()
+            .map(|option| option.lint.clone())
+            .unwrap_or_default();
+
+        self.refresh_server_linter(&lint_options).await;
         Some(self.revalidate_diagnostics(files).await)
     }
 
@@ -363,7 +369,7 @@ impl WorkspaceWorker {
                     vec![]
                 }
             };
-            self.refresh_server_linter().await;
+            self.refresh_server_linter(&changed_options.lint).await;
 
             if current_option.lint.config_path != changed_options.lint.config_path {
                 return (
