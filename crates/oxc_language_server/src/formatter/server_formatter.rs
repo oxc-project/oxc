@@ -1,20 +1,28 @@
+use std::path::Path;
+
+use log::warn;
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_formatter::{FormatOptions, Formatter, get_supported_source_type};
+use oxc_formatter::{FormatOptions, Formatter, Oxfmtrc, get_supported_source_type};
 use oxc_parser::{ParseOptions, Parser};
 use tower_lsp_server::{
     UriExt,
     lsp_types::{Position, Range, TextEdit, Uri},
 };
 
-pub struct ServerFormatter;
+use crate::FORMAT_CONFIG_FILE;
+
+pub struct ServerFormatter {
+    options: FormatOptions,
+}
 
 impl ServerFormatter {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(root_uri: &Uri) -> Self {
+        let root_path = root_uri.to_file_path().unwrap();
+
+        Self { options: Self::get_format_options(&root_path) }
     }
 
-    #[expect(clippy::unused_self)]
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
         let path = uri.to_file_path()?;
         let source_type = get_supported_source_type(&path)?;
@@ -46,8 +54,7 @@ impl ServerFormatter {
             return None;
         }
 
-        let options = FormatOptions::default();
-        let code = Formatter::new(&allocator, options).build(&ret.program);
+        let code = Formatter::new(&allocator, self.options.clone()).build(&ret.program);
 
         // nothing has changed
         if code == source_text {
@@ -66,6 +73,33 @@ impl ServerFormatter {
             ),
             replacement.to_string(),
         )])
+    }
+
+    fn get_format_options(root_path: &Path) -> FormatOptions {
+        let config_path = FORMAT_CONFIG_FILE;
+        let config = root_path.join(config_path); // normalize_path when supporting `oxc.fmt.configPath`
+        let oxfmtrc = if config.try_exists().is_ok_and(|exists| exists) {
+            if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
+                oxfmtrc
+            } else {
+                warn!("Failed to initialize oxfmtrc config: {}", config.to_string_lossy());
+                Oxfmtrc::default()
+            }
+        } else {
+            warn!(
+                "Config file not found: {}, fallback to default config",
+                config.to_string_lossy()
+            );
+            Oxfmtrc::default()
+        };
+
+        match oxfmtrc.into_format_options() {
+            Ok(options) => options,
+            Err(err) => {
+                warn!("Failed to parse oxfmtrc config: {err}, fallback to default config");
+                FormatOptions::default()
+            }
+        }
     }
 }
 
@@ -200,5 +234,11 @@ mod tests {
     fn test_formatter() {
         Tester::new("fixtures/formatter/basic", Some(FormatOptions { experimental: true }))
             .format_and_snapshot_single_file("basic.ts");
+    }
+
+    #[test]
+    fn test_root_config_detection() {
+        Tester::new("fixtures/formatter/root_config", Some(FormatOptions { experimental: true }))
+            .format_and_snapshot_single_file("semicolons-as-needed.ts");
     }
 }

@@ -17,7 +17,8 @@ use crate::backend::Backend;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
-const OXC_CONFIG_FILE: &str = ".oxlintrc.json";
+const LINT_CONFIG_FILE: &str = ".oxlintrc.json";
+const FORMAT_CONFIG_FILE: &str = ".oxfmtrc.json";
 
 #[tokio::main]
 async fn main() {
