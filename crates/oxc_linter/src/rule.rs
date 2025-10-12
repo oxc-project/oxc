@@ -71,9 +71,33 @@ pub trait RuleRunner: Rule {
     /// can't figure it out and the linter should call `run` on every node.
     const NODE_TYPES: Option<&AstTypesBitset>;
 
+    /// What `Rule` functions are implemented by this `Rule`. For example, if a rule only
+    /// implements `run_on_symbol`, then the linter can skip calling `run` and `run_once`, so
+    /// this value would be tagged as [`RuleRunFunctionsImplemented::RunOnSymbol`].
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+
     fn types_info(&self) -> Option<&'static AstTypesBitset> {
         Self::NODE_TYPES
     }
+
+    fn run_info(&self) -> RuleRunFunctionsImplemented {
+        Self::RUN_FUNCTIONS
+    }
+}
+
+/// Enum approximating a bitset of which `Rule` functions are implemented.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum RuleRunFunctionsImplemented {
+    /// Unknown which functions are implemented.
+    Unknown,
+    /// Only `run` is implemented
+    Run,
+    /// Only `run_once` is implemented
+    RunOnce,
+    /// Only `run_on_symbol` is implemented
+    RunOnSymbol,
+    /// Only `run_on_jest_node` is implemented
+    RunOnJestNode,
 }
 
 pub trait RuleMeta {
