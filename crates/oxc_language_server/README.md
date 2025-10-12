@@ -28,6 +28,7 @@ These options can be passed with [initialize](#initialize), [workspace/didChange
 | `typeAware`               | `true` \| `false`              | `false`    | Enables type-aware linting                                                                                                                             |
 | `flags`                   | `Map<string, string>`          | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config`                                                   |
 | `fmt.experimental`        | `true` \| `false`              | `false`    | Enables experimental formatting with `oxc_formatter`                                                                                                   |
+| `fmt.configPath`          | `<string>` \| `null`           | `null`     | Path to a oxfmt configuration file, when `null` is passed, the server will use `.oxfmtrc.json` and the workspace root                                  |
 
 ## Supported LSP Specifications from Server
 
@@ -47,7 +48,8 @@ The client can pass the workspace options like following:
       "unusedDisableDirectives": "allow",
       "typeAware": false,
       "flags": {},
-      "fmt.experimental": false
+      "fmt.experimental": false,
+      "fmt.configPath": null
     }
   }]
 }
@@ -84,7 +86,8 @@ The client can pass the workspace options like following:
       "unusedDisableDirectives": "allow",
       "typeAware": false,
       "flags": {},
-      "fmt.experimental": false
+      "fmt.experimental": false,
+      "fmt.configPath": null
     }
   }]
 }
@@ -178,6 +181,7 @@ The client can return a response like:
   "unusedDisableDirectives": "allow",
   "typeAware": false,
   "flags": {},
-  "fmt.experimental": false
+  "fmt.experimental": false,
+  "fmt.configPath": null
 }]
 ```

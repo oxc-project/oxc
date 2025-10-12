@@ -16,9 +16,10 @@ use crate::{
     formatter::server_formatter::ServerFormatter,
     linter::{
         error_with_position::DiagnosticReport,
-        server_linter::{ServerLinter, ServerLinterRun, normalize_path},
+        server_linter::{ServerLinter, ServerLinterRun},
     },
     options::Options,
+    utils::normalize_path,
 };
 
 /// A worker that manages the individual tools for a specific workspace
@@ -71,7 +72,8 @@ impl WorkspaceWorker {
         *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
         if options.format.experimental {
             debug!("experimental formatter enabled");
-            *self.server_formatter.write().await = Some(ServerFormatter::new(&self.root_uri));
+            *self.server_formatter.write().await =
+                Some(ServerFormatter::new(&self.root_uri, &options.format));
         }
     }
 
@@ -338,10 +340,12 @@ impl WorkspaceWorker {
         }
 
         let mut formatting = false;
-        if current_option.format.experimental != changed_options.format.experimental {
+        if current_option.format != changed_options.format {
             if changed_options.format.experimental {
-                debug!("experimental formatter enabled");
-                *self.server_formatter.write().await = Some(ServerFormatter::new(&self.root_uri));
+                debug!("experimental formatter enabled/restarted");
+                // restart the formatter
+                *self.server_formatter.write().await =
+                    Some(ServerFormatter::new(&self.root_uri, &changed_options.format));
                 formatting = true;
             } else {
                 debug!("experimental formatter disabled");

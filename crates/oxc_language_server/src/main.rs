@@ -11,6 +11,7 @@ mod linter;
 mod options;
 #[cfg(test)]
 mod tester;
+mod utils;
 mod worker;
 
 use crate::backend::Backend;

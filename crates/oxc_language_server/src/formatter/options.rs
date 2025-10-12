@@ -1,10 +1,11 @@
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
-#[derive(Debug, Default, Serialize, Clone)]
+#[derive(Debug, Default, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct FormatOptions {
     pub experimental: bool,
+    pub config_path: Option<String>,
 }
 
 impl<'de> Deserialize<'de> for FormatOptions {
@@ -29,6 +30,9 @@ impl TryFrom<Value> for FormatOptions {
             experimental: object
                 .get("fmt.experimental")
                 .is_some_and(|run| serde_json::from_value::<bool>(run.clone()).unwrap_or_default()),
+            config_path: object
+                .get("fmt.configPath")
+                .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
         })
     }
 }
@@ -43,10 +47,12 @@ mod test {
     fn test_valid_options_json() {
         let json = json!({
             "fmt.experimental": true,
+            "fmt.configPath": "./.oxfmtrc.json"
         });
 
         let options = FormatOptions::try_from(json).unwrap();
         assert!(options.experimental);
+        assert_eq!(options.config_path.unwrap(), "./.oxfmtrc.json");
     }
 
     #[test]
@@ -55,15 +61,18 @@ mod test {
 
         let options = FormatOptions::try_from(json).unwrap();
         assert!(!options.experimental);
+        assert!(options.config_path.is_none());
     }
 
     #[test]
     fn test_invalid_options_json() {
         let json = json!({
             "fmt.experimental": "what", // should be bool
+            "fmt.configPath": "./.oxfmtrc.json"
         });
 
         let options = FormatOptions::try_from(json).unwrap();
         assert!(!options.experimental);
+        assert_eq!(options.config_path.unwrap(), "./.oxfmtrc.json");
     }
 }
