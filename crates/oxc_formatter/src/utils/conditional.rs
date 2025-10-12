@@ -144,13 +144,13 @@ fn format_trailing_comments<'a>(
             if source_text.contains_newline_between(start, comment.span.start) {
                 return &comments[..index];
             }
-            // If this comment is a line comment, then it is a end of line comment, so we stop here and return the comments with this comment
-            else if comment.is_line() {
+            // If this comment is a line comment or an end of line comment, so we stop here and return the comments with this comment
+            else if comment.is_line() || source_text.is_end_of_line_comment(comment) {
                 return &comments[..=index];
             }
             // Store the index of the comment before the operator, if no line comment or no new line is found, then return all comments before operator
             else if source_text.bytes_contain(start, comment.span.start, operator) {
-                index_before_operator = Some(index + 1);
+                index_before_operator = Some(index);
             }
 
             // Update the start position for the next iteration
@@ -161,9 +161,7 @@ fn format_trailing_comments<'a>(
     };
 
     let comments = get_comments(f);
-    FormatTrailingComments::Comments(comments).fmt(f)?;
-
-    Ok(())
+    FormatTrailingComments::Comments(comments).fmt(f)
 }
 
 impl<'a> FormatConditionalLike<'a, '_> {
