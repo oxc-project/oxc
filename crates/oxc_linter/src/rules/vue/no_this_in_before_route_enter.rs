@@ -1,15 +1,14 @@
-use oxc_ast::{AstKind, ast::{Argument, Expression, Function, ThisExpression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, Expression, Function, ThisExpression},
+};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_this_in_before_route_enter_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -60,8 +59,6 @@ impl Rule for NoThisInBeforeRouteEnter {
         if ident.name != "beforeRouteEnter" {
             return;
         }
-
-
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
