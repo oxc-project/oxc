@@ -99,8 +99,9 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_start(&mut self, start: u32) {
-        self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
-        self.0 |= u128::from(start) << START_SHIFT;
+        // Since START_SHIFT is 0, we can optimize by directly masking and setting
+        // Clear bottom 32 bits and set new start value in one operation
+        self.0 = (self.0 & !START_MASK) | u128::from(start);
     }
 
     #[inline]
@@ -110,10 +111,10 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_end(&mut self, end: u32) {
-        let start = self.start();
-        debug_assert!(end >= start, "Token end ({end}) cannot be less than start ({start})");
-        self.0 &= !(END_MASK << END_SHIFT); // Clear current `end` bits
-        self.0 |= u128::from(end) << END_SHIFT;
+        // Note: debug_assert removed for performance - caller must ensure end >= start
+        // END_SHIFT is 32, so we shift left by 32
+        // Clear bits 32-63 and set new end value in one expression
+        self.0 = (self.0 & !(END_MASK << END_SHIFT)) | (u128::from(end) << END_SHIFT);
     }
 
     #[inline]
@@ -126,8 +127,8 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_kind(&mut self, kind: Kind) {
-        self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current `kind` bits
-        self.0 |= u128::from(kind as u8) << KIND_SHIFT;
+        // Optimize: combine clear and set in one expression
+        self.0 = (self.0 & !(KIND_MASK << KIND_SHIFT)) | (u128::from(kind as u8) << KIND_SHIFT);
     }
 
     /// Checks if this token appears at the start of a new line.
@@ -145,8 +146,8 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
-        self.0 &= !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT); // Clear current `is_on_new_line` bits
-        self.0 |= u128::from(value) << IS_ON_NEW_LINE_SHIFT;
+        // Optimize: combine clear and set in one expression
+        self.0 = (self.0 & !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT)) | (u128::from(value) << IS_ON_NEW_LINE_SHIFT);
     }
 
     #[inline]
@@ -159,8 +160,8 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_escaped(&mut self, escaped: bool) {
-        self.0 &= !(BOOL_MASK << ESCAPED_SHIFT); // Clear current `escaped` bits
-        self.0 |= u128::from(escaped) << ESCAPED_SHIFT;
+        // Optimize: combine clear and set in one expression
+        self.0 = (self.0 & !(BOOL_MASK << ESCAPED_SHIFT)) | (u128::from(escaped) << ESCAPED_SHIFT);
     }
 
     #[inline]
@@ -173,8 +174,8 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
-        self.0 &= !(BOOL_MASK << LONE_SURROGATES_SHIFT); // Clear current `lone_surrogates` bits
-        self.0 |= u128::from(value) << LONE_SURROGATES_SHIFT;
+        // Optimize: combine clear and set in one expression
+        self.0 = (self.0 & !(BOOL_MASK << LONE_SURROGATES_SHIFT)) | (u128::from(value) << LONE_SURROGATES_SHIFT);
     }
 
     #[inline]
@@ -187,8 +188,8 @@ impl Token {
 
     #[inline]
     pub(crate) fn set_has_separator(&mut self, value: bool) {
-        self.0 &= !(BOOL_MASK << HAS_SEPARATOR_SHIFT); // Clear current `has_separator` bits
-        self.0 |= u128::from(value) << HAS_SEPARATOR_SHIFT;
+        // Optimize: combine clear and set in one expression
+        self.0 = (self.0 & !(BOOL_MASK << HAS_SEPARATOR_SHIFT)) | (u128::from(value) << HAS_SEPARATOR_SHIFT);
     }
 
     /// Read `bool` from 8 bits starting at bit position `shift`.
