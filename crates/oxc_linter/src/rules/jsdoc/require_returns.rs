@@ -1109,6 +1109,19 @@ fn test() {
             None,
             None,
         ),
+        (
+            "
+			          /**
+                       * Has single quote ' in comment.
+			           * @returns Foo.
+			           */
+			          function quux () {
+			            return foo;
+			          }
+			      ",
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
