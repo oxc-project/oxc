@@ -15,6 +15,8 @@ interface TestOptions {
   snapshotName?: string;
   // Function to get extra data to include in the snapshot
   getExtraSnapshotData?: (dirPath: string) => Promise<{ [key: string]: string }>;
+
+  overrideFiles?: string;
 }
 
 /**
@@ -29,7 +31,7 @@ async function testFixture(fixtureName: string, options?: TestOptions): Promise<
     // Use current NodeJS executable, rather than `node`, to avoid problems with a Node version manager
     // installed on system resulting in using wrong NodeJS version
     command: process.execPath,
-    args: [CLI_PATH, ...args, 'files'],
+    args: [CLI_PATH, ...args, options?.overrideFiles ?? 'files'],
     fixtureName,
     snapshotName: options?.snapshotName ?? 'output',
     getExtraSnapshotData: options?.getExtraSnapshotData,
@@ -71,6 +73,12 @@ describe('oxlint CLI', () => {
 
   it('should load a custom plugin with multiple files', async () => {
     await testFixture('basic_custom_plugin_many_files');
+  });
+
+  it('should load a custom plugin correctly when extending in a nested config', async () => {
+    await testFixture('custom_plugin_nested_config', {
+      overrideFiles: '.',
+    });
   });
 
   it('should load a custom plugin when configured in overrides', async () => {
