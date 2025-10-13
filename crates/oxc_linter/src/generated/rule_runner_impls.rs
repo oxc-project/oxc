@@ -1795,6 +1795,7 @@ impl RuleRunner for crate::rules::node::no_new_require::NoNewRequire {
 
 impl RuleRunner for crate::rules::node::no_process_env::NoProcessEnv {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::oxc::approx_constant::ApproxConstant {
