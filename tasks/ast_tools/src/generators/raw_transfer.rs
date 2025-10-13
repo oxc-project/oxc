@@ -136,6 +136,9 @@ fn generate_deserializers(
     let mut code = format!("
         let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 
+        let parent = null;
+        let getLoc;
+
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
@@ -148,9 +151,6 @@ fn generate_deserializers(
                 enumerable: true,
             }}
         }});
-
-        let parent = null;
-        let getLoc;
 
         export function deserialize(buffer, sourceText, sourceByteLen) {{
             return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);

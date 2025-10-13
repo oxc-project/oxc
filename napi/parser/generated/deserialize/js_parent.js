@@ -1,11 +1,10 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, parent = null;
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
-let parent = null;
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
   return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
