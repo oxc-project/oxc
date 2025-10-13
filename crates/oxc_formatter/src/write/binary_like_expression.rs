@@ -3,12 +3,16 @@ use std::mem::transmute_copy;
 use oxc_allocator::{Address, CloneIn, GetAddress};
 use oxc_ast::{ast::*, precedence};
 use oxc_span::GetSpan;
-use oxc_syntax::precedence::{GetPrecedence, Precedence};
+use oxc_syntax::{
+    operator,
+    precedence::{GetPrecedence, Precedence},
+};
 
 use crate::{
     Format,
     formatter::{FormatResult, Formatter, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, AstNodes},
+    parentheses::NeedsParentheses,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
 };
 
@@ -405,7 +409,12 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                     }
 
                     if *root {
-                        write!(f, FormatNodeWithoutTrailingComments(right))
+                        write!(f, FormatNodeWithoutTrailingComments(right))?;
+                        let comments = f
+                            .context()
+                            .comments()
+                            .comments_before(binary_like_expression.span().end);
+                        write!(f, FormatTrailingComments::Comments(comments))
                     } else {
                         write!(f, right)
                     }
