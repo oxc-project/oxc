@@ -55,7 +55,8 @@ impl RuleRunner for crate::rules::eslint::default_case_last::DefaultCaseLast {
 }
 
 impl RuleRunner for crate::rules::eslint::default_param_last::DefaultParamLast {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -83,12 +84,18 @@ impl RuleRunner for crate::rules::eslint::func_style::FuncStyle {
 }
 
 impl RuleRunner for crate::rules::eslint::getter_return::GetterReturn {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::eslint::grouped_accessor_pairs::GroupedAccessorPairs {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ClassBody,
+        AstType::ObjectExpression,
+        AstType::TSInterfaceBody,
+        AstType::TSTypeLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -204,7 +211,14 @@ impl RuleRunner for crate::rules::eslint::no_compare_neg_zero::NoCompareNegZero 
 }
 
 impl RuleRunner for crate::rules::eslint::no_cond_assign::NoCondAssign {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::ConditionalExpression,
+        AstType::DoWhileStatement,
+        AstType::ForStatement,
+        AstType::IfStatement,
+        AstType::WhileStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -306,7 +320,8 @@ impl RuleRunner for crate::rules::eslint::no_else_return::NoElseReturn {
 }
 
 impl RuleRunner for crate::rules::eslint::no_empty::NoEmpty {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::BlockStatement, AstType::SwitchStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -341,7 +356,11 @@ impl RuleRunner for crate::rules::eslint::no_eq_null::NoEqNull {
 }
 
 impl RuleRunner for crate::rules::eslint::no_eval::NoEval {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::Program,
+        AstType::ThisExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -363,7 +382,8 @@ impl RuleRunner for crate::rules::eslint::no_extra_bind::NoExtraBind {
 }
 
 impl RuleRunner for crate::rules::eslint::no_extra_boolean_cast::NoExtraBooleanCast {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::UnaryExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -441,7 +461,8 @@ impl RuleRunner for crate::rules::eslint::no_lonely_if::NoLonelyIf {
 }
 
 impl RuleRunner for crate::rules::eslint::no_loss_of_precision::NoLossOfPrecision {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::NumericLiteral]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -552,7 +573,11 @@ impl RuleRunner for crate::rules::eslint::no_redeclare::NoRedeclare {
 }
 
 impl RuleRunner for crate::rules::eslint::no_regex_spaces::NoRegexSpaces {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::NewExpression,
+        AstType::RegExpLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -575,7 +600,8 @@ impl RuleRunner for crate::rules::eslint::no_return_assign::NoReturnAssign {
 }
 
 impl RuleRunner for crate::rules::eslint::no_script_url::NoScriptUrl {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::StringLiteral, AstType::TemplateLiteral]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -683,7 +709,25 @@ impl RuleRunner for crate::rules::eslint::no_unsafe_negation::NoUnsafeNegation {
 }
 
 impl RuleRunner for crate::rules::eslint::no_unsafe_optional_chaining::NoUnsafeOptionalChaining {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::Argument,
+        AstType::ArrayExpression,
+        AstType::AssignmentExpression,
+        AstType::AssignmentPattern,
+        AstType::AssignmentTargetWithDefault,
+        AstType::BinaryExpression,
+        AstType::CallExpression,
+        AstType::Class,
+        AstType::ComputedMemberExpression,
+        AstType::ForOfStatement,
+        AstType::NewExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+        AstType::TaggedTemplateExpression,
+        AstType::UnaryExpression,
+        AstType::VariableDeclarator,
+        AstType::WithStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -728,7 +772,12 @@ impl RuleRunner for crate::rules::eslint::no_useless_catch::NoUselessCatch {
 }
 
 impl RuleRunner for crate::rules::eslint::no_useless_computed_key::NoUselessComputedKey {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BindingProperty,
+        AstType::MethodDefinition,
+        AstType::ObjectProperty,
+        AstType::PropertyDefinition,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -745,7 +794,11 @@ impl RuleRunner for crate::rules::eslint::no_useless_constructor::NoUselessConst
 }
 
 impl RuleRunner for crate::rules::eslint::no_useless_escape::NoUselessEscape {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::RegExpLiteral,
+        AstType::StringLiteral,
+        AstType::TemplateLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -784,7 +837,10 @@ impl RuleRunner for crate::rules::eslint::operator_assignment::OperatorAssignmen
 }
 
 impl RuleRunner for crate::rules::eslint::prefer_destructuring::PreferDestructuring {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::VariableDeclarator,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -966,7 +1022,8 @@ impl RuleRunner for crate::rules::import::namespace::Namespace {
 }
 
 impl RuleRunner for crate::rules::import::no_absolute_path::NoAbsolutePath {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ImportDeclaration]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2033,7 +2090,8 @@ impl RuleRunner for crate::rules::react::jsx_filename_extension::JsxFilenameExte
 }
 
 impl RuleRunner for crate::rules::react::jsx_fragments::JsxFragments {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::JSXElement, AstType::JSXFragment]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2300,7 +2358,11 @@ impl RuleRunner
 impl RuleRunner
     for crate::rules::typescript::consistent_type_definitions::ConsistentTypeDefinitions
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportDefaultDeclaration,
+        AstType::TSInterfaceDeclaration,
+        AstType::TSTypeAliasDeclaration,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2341,7 +2403,10 @@ impl RuleRunner for crate::rules::typescript::no_base_to_string::NoBaseToString 
 impl RuleRunner
     for crate::rules::typescript::no_confusing_non_null_assertion::NoConfusingNonNullAssertion
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::BinaryExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2378,7 +2443,10 @@ impl RuleRunner for crate::rules::typescript::no_empty_interface::NoEmptyInterfa
 }
 
 impl RuleRunner for crate::rules::typescript::no_empty_object_type::NoEmptyObjectType {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::TSInterfaceDeclaration,
+        AstType::TSTypeLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3134,7 +3202,8 @@ impl RuleRunner for crate::rules::unicorn::no_useless_switch_case::NoUselessSwit
 }
 
 impl RuleRunner for crate::rules::unicorn::no_useless_undefined::NoUselessUndefined {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::IdentifierReference]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

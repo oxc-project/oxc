@@ -52,15 +52,12 @@ impl MatchDetector {
     }
 
     fn extract_variants_from_match_arm(&mut self, arm: &Arm) -> CollectionResult {
-        // If there are any guards, we can't be 100% sure which variants this runs on, as it may
-        // run on any node type depending on the guard condition.
-        if arm.guard.is_some() {
-            return CollectionResult::Incomplete;
-        }
         let pat = &arm.pat;
         match pat {
             Pat::TupleStruct(ts) => {
                 if let Some(variant) = astkind_variant_from_path(&ts.path) {
+                    // NOTE: If there is a guard, we assume that it may or may not be taken and collect all AST kinds
+                    // regardless of the guard condition.
                     self.node_types.insert(variant);
                     CollectionResult::Complete
                 } else {
