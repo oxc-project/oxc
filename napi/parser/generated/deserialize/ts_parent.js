@@ -242,11 +242,10 @@ function deserializeLabelIdentifier(pos) {
 }
 
 function deserializeThisExpression(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'ThisExpression',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
@@ -1238,11 +1237,10 @@ function deserializeSequenceExpression(pos) {
 }
 
 function deserializeSuper(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'Super',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
@@ -1506,11 +1504,10 @@ function deserializeVariableDeclarator(pos) {
 }
 
 function deserializeEmptyStatement(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'EmptyStatement',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
@@ -1955,11 +1952,10 @@ function deserializeCatchParameter(pos) {
 }
 
 function deserializeDebuggerStatement(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'DebuggerStatement',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
@@ -3122,11 +3118,10 @@ function deserializeJSXOpeningFragment(pos) {
 }
 
 function deserializeJSXClosingFragment(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'JSXClosingFragment',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
@@ -3337,11 +3332,10 @@ function deserializeJSXExpression(pos) {
 }
 
 function deserializeJSXEmptyExpression(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'JSXEmptyExpression',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
@@ -3986,141 +3980,127 @@ function deserializeTSTupleElement(pos) {
 }
 
 function deserializeTSAnyKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSAnyKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSStringKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSStringKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSBooleanKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSBooleanKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSNumberKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSNumberKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSNeverKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSNeverKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSIntrinsicKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSIntrinsicKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSUnknownKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSUnknownKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSNullKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSNullKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSUndefinedKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSUndefinedKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSVoidKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSVoidKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSSymbolKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSSymbolKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSThisType(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSThisType',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSObjectKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSObjectKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
 
 function deserializeTSBigIntKeyword(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSBigIntKeyword',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
@@ -5170,11 +5150,10 @@ function deserializeJSDocNonNullableType(pos) {
 }
 
 function deserializeJSDocUnknownType(pos) {
-  let start = deserializeU32(pos), end = deserializeU32(pos + 4);
   return {
     type: 'TSJSDocUnknownType',
-    start,
-    end,
+    start: deserializeU32(pos),
+    end: deserializeU32(pos + 4),
     parent,
   };
 }
