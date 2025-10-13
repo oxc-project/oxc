@@ -29,7 +29,7 @@ fn generate_cli() -> String {
     // Hack usage line
     let markdown = markdown.replacen("**Usage**:", "## Usage\n", 1);
 
-    markdown
+    let markdown = markdown
         .split('\n')
         .flat_map(|line| {
             // Hack the bug on the line containing `###`
@@ -50,5 +50,12 @@ fn generate_cli() -> String {
             }
         })
         .collect::<Vec<_>>()
-        .join("\n")
+        .join("\n");
+
+    // Add note about .gitignore only being respected inside Git repositories
+    // This note should appear after the ignore options and before "Handle Warnings"
+    markdown.replace(
+        "\n\n## Handle Warnings\n",
+        "\n\n> [!NOTE]\n> `.gitignore` is only respected inside a Git repository.\n\n## Handle Warnings\n"
+    )
 }
