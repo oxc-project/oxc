@@ -104,7 +104,8 @@ fn function_like_type_needs_parentheses<'a>(
             }
             false
         }
-        AstNodes::TSUnionType(_) | AstNodes::TSIntersectionType(_) => true,
+        AstNodes::TSUnionType(union) => union.types.len() > 1,
+        AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
         _ => operator_type_or_higher_needs_parens(span, parent),
     }
 }
@@ -142,7 +143,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSConditionalType<'a>> {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
-            AstNodes::TSUnionType(_) | AstNodes::TSIntersectionType(_) => true,
+            AstNodes::TSUnionType(union) => union.types.len() > 1,
+            AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
             _ => operator_type_or_higher_needs_parens(self.span, self.parent),
         }
     }
