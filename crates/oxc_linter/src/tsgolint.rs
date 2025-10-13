@@ -292,7 +292,7 @@ impl TsGoLintState {
         &self,
         path: &Arc<OsStr>,
         source_text: String,
-    ) -> Result<Vec<Message<'_>>, String> {
+    ) -> Result<Vec<Message<'static>>, String> {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         let json_input = self.json_input(std::slice::from_ref(path), &mut resolved_configs);
