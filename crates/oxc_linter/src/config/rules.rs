@@ -230,9 +230,7 @@ impl<'de> Deserialize<'de> for OxlintRules {
 fn parse_rule_key(name: &str) -> (String, String) {
     // Find the last '/' to split plugin name and rule name.
     // This handles plugin names with slashes like "@eslint-react/eslint-plugin".
-    let slash_idx = name.rfind('/');
-
-    let Some(slash_idx) = slash_idx else {
+    let Some((plugin_name, rule_name)) = name.rsplit_once('/') else {
         return (
             RULES
                 .iter()
@@ -244,9 +242,6 @@ fn parse_rule_key(name: &str) -> (String, String) {
             name.to_string(),
         );
     };
-
-    let plugin_name = &name[..slash_idx];
-    let rule_name = &name[slash_idx + 1..];
 
     let (oxlint_plugin_name, rule_name) = match plugin_name {
         "@typescript-eslint" => ("typescript", rule_name),
