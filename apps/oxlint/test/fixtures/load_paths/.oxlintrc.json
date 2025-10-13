@@ -8,7 +8,8 @@
     "./plugins/plugin6.mts",
     "./plugins/plugin7",
     "plugin8",
-    "plugin9"
+    "plugin9",
+    "plugin10"
   ],
   "rules": {
     "plugin1/no-debugger": "error",
@@ -19,6 +20,7 @@
     "plugin6/no-debugger": "error",
     "plugin7/no-debugger": "error",
     "plugin8/no-debugger": "error",
-    "plugin9/no-debugger": "error"
+    "plugin9/no-debugger": "error",
+    "plugin10/no-debugger": "error"
   }
 }

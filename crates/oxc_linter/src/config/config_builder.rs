@@ -4,7 +4,7 @@ use std::{
 };
 
 use itertools::Itertools;
-use oxc_resolver::Resolver;
+use oxc_resolver::{ResolveOptions, Resolver};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_span::{CompactStr, format_compact_str};
@@ -169,7 +169,11 @@ impl ConfigStoreBuilder {
                 return Err(ConfigBuilderError::NoExternalLinterConfigured { plugin_specifier });
             };
 
-            let resolver = Resolver::default();
+            let resolver = Resolver::new(ResolveOptions {
+                main_fields: vec!["module".into(), "main".into()],
+                condition_names: vec!["module".into(), "import".into()],
+                ..Default::default()
+            });
 
             #[expect(clippy::missing_panics_doc, reason = "oxlintrc.path is always a file path")]
             let oxlintrc_dir = oxlintrc.path.parent().unwrap();
