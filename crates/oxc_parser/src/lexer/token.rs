@@ -147,7 +147,8 @@ impl Token {
     #[inline]
     pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
         // Optimize: combine clear and set in one expression
-        self.0 = (self.0 & !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT)) | (u128::from(value) << IS_ON_NEW_LINE_SHIFT);
+        self.0 = (self.0 & !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT))
+            | (u128::from(value) << IS_ON_NEW_LINE_SHIFT);
     }
 
     #[inline]
@@ -175,7 +176,8 @@ impl Token {
     #[inline]
     pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
         // Optimize: combine clear and set in one expression
-        self.0 = (self.0 & !(BOOL_MASK << LONE_SURROGATES_SHIFT)) | (u128::from(value) << LONE_SURROGATES_SHIFT);
+        self.0 = (self.0 & !(BOOL_MASK << LONE_SURROGATES_SHIFT))
+            | (u128::from(value) << LONE_SURROGATES_SHIFT);
     }
 
     #[inline]
@@ -189,7 +191,8 @@ impl Token {
     #[inline]
     pub(crate) fn set_has_separator(&mut self, value: bool) {
         // Optimize: combine clear and set in one expression
-        self.0 = (self.0 & !(BOOL_MASK << HAS_SEPARATOR_SHIFT)) | (u128::from(value) << HAS_SEPARATOR_SHIFT);
+        self.0 = (self.0 & !(BOOL_MASK << HAS_SEPARATOR_SHIFT))
+            | (u128::from(value) << HAS_SEPARATOR_SHIFT);
     }
 
     /// Read `bool` from 8 bits starting at bit position `shift`.
