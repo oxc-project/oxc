@@ -18,14 +18,14 @@ doctest = false
 # If AST is updated, the local versions of these crates may not compile until after the codegen has run.
 # So the codegen itself (this crate) can't use local versions.
 # `features = ["serialize"]` on `oxc_span` and `oxc_syntax` is needed to work around a bug in `oxc_index`.
-oxc_allocator = { version = "0.93.0" }
-oxc_ast = { version = "0.93.0" }
-oxc_ast_visit = { version = "0.93.0" }
-oxc_codegen = { version = "0.93.0" }
-oxc_minifier = { version = "0.93.0" }
-oxc_parser = { version = "0.93.0" }
-oxc_span = { version = "0.93.0", features = ["serialize"] }
-oxc_syntax = { version = "0.93.0", features = ["serialize"] }
+oxc_allocator = { version = "0.94.0" }
+oxc_ast = { version = "0.94.0" }
+oxc_ast_visit = { version = "0.94.0" }
+oxc_codegen = { version = "0.94.0" }
+oxc_minifier = { version = "0.94.0" }
+oxc_parser = { version = "0.94.0" }
+oxc_span = { version = "0.94.0", features = ["serialize"] }
+oxc_syntax = { version = "0.94.0", features = ["serialize"] }
 
 oxc_data_structures = { workspace = true, features = ["slice_iter"] }
 
