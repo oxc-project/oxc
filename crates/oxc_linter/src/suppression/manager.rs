@@ -72,24 +72,6 @@ impl SuppressionManager {
         Ok(())
     }
 
-    /// Convert absolute path to relative path from project root
-    #[allow(dead_code)]
-    fn make_relative_path(&self, file_path: &Path, project_root: &Path) -> PathBuf {
-        // If the path is already relative, return as-is
-        if file_path.is_relative() {
-            return file_path.to_path_buf();
-        }
-
-        // Try to make the path relative to the project root
-        match file_path.strip_prefix(project_root) {
-            Ok(relative_path) => relative_path.to_path_buf(),
-            Err(_) => {
-                // If we can't make it relative, keep the original path
-                // This handles cases where the file is outside the project
-                file_path.to_path_buf()
-            }
-        }
-    }
 
     /// Normalize file path to use forward slashes and be relative to project root
     fn normalize_file_path(&self, file_path: &Path) -> String {
