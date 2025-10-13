@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, AstType};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
@@ -143,13 +143,6 @@ impl Rule for NoProcessEnv {
             ctx.diagnostic(no_process_env_diagnostic(current_span));
         }
     }
-}
-
-impl crate::rule::RuleRunner for NoProcessEnv {
-    const NODE_TYPES: Option<&'static AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::StaticMemberExpression,
-        AstType::ComputedMemberExpression,
-    ]));
 }
 
 #[test]
