@@ -343,4 +343,14 @@ impl OxcDiagnostic {
     pub fn inner_owned(self) -> OxcDiagnosticInner {
         *self.inner
     }
+
+    /// Get the error code scope (plugin prefix).
+    pub fn code_scope(&self) -> Option<&str> {
+        self.inner.code.scope.as_deref()
+    }
+
+    /// Get the error code number (rule name).
+    pub fn code_number(&self) -> Option<&str> {
+        self.inner.code.number.as_deref()
+    }
 }

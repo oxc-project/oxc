@@ -216,4 +216,103 @@ describe('oxlint CLI', () => {
       await fs.writeFile(fixtureFilePath, codeBefore);
     }
   });
+
+  describe('Bulk Suppression', () => {
+    it('should generate suppressions with --suppress-all', async () => {
+      const suppressionFilePath = pathJoin(FIXTURES_DIR_PATH, 'bulk_suppression/oxlint-suppressions.json');
+
+      try {
+        await testFixture('bulk_suppression', {
+          args: ['--suppress-all'],
+          snapshotName: 'suppress_all',
+          async getExtraSnapshotData() {
+            try {
+              const suppressionContent = await fs.readFile(suppressionFilePath, 'utf8');
+              return { 'Generated suppression file': suppressionContent };
+            } catch {
+              return { 'Generated suppression file': 'File not created' };
+            }
+          },
+        });
+      } finally {
+        // Clean up generated suppression file
+        try {
+          await fs.unlink(suppressionFilePath);
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+    });
+
+    it('should use custom suppression file path', async () => {
+      const customSuppressionPath = pathJoin(FIXTURES_DIR_PATH, 'bulk_suppression/custom-suppressions.json');
+
+      try {
+        await testFixture('bulk_suppression', {
+          args: ['--suppress-all', '--suppression-file', 'custom-suppressions.json'],
+          snapshotName: 'custom_suppression_file',
+          async getExtraSnapshotData() {
+            try {
+              const suppressionContent = await fs.readFile(customSuppressionPath, 'utf8');
+              return { 'Custom suppression file': suppressionContent };
+            } catch {
+              return { 'Custom suppression file': 'File not created' };
+            }
+          },
+        });
+      } finally {
+        // Clean up generated suppression file
+        try {
+          await fs.unlink(customSuppressionPath);
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+    });
+
+    it('should lint with existing suppressions', async () => {
+      await testFixture('bulk_suppression', {
+        args: ['--suppression-file', 'existing-suppressions.json'],
+        snapshotName: 'with_existing_suppressions',
+      });
+    });
+
+    it('should prune unused suppressions', async () => {
+      const testSuppressionPath = pathJoin(FIXTURES_DIR_PATH, 'bulk_suppression/test-suppressions.json');
+
+      try {
+        // Create a test suppression file with some unused entries
+        const testSuppressions = {
+          version: "0.1.0",
+          suppressions: {
+            "test.js": {
+              "eslint/no-console": { count: 2 },
+              "eslint/no-unused-vars": { count: 1 }  // This should be pruned
+            }
+          }
+        };
+        await fs.writeFile(testSuppressionPath, JSON.stringify(testSuppressions, null, 2));
+
+        await testFixture('bulk_suppression', {
+          args: ['--prune-suppressions', '--suppression-file', 'test-suppressions.json'],
+          snapshotName: 'prune_suppressions',
+          async getExtraSnapshotData() {
+            try {
+              const prunedContent = await fs.readFile(testSuppressionPath, 'utf8');
+              return { 'Pruned suppression file': prunedContent };
+            } catch {
+              return { 'Pruned suppression file': 'File not found after pruning' };
+            }
+          },
+        });
+      } finally {
+        // Clean up test suppression file
+        try {
+          await fs.unlink(testSuppressionPath);
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+    });
+  });
 });

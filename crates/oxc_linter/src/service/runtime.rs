@@ -60,6 +60,8 @@ pub struct Runtime {
     modules_by_path: ModulesByPath,
     /// Collected disable directives from linted files
     disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
+    /// Bulk suppression manager for suppressing violations based on counts
+    suppression_manager: Option<crate::suppression::ThreadSafeSuppressionManager>,
 }
 
 /// Output of `Runtime::process_path`
@@ -304,6 +306,7 @@ impl Runtime {
                 .resize_mode(papaya::ResizeMode::Blocking)
                 .build(),
             disable_directives_map: Arc::new(Mutex::new(FxHashMap::default())),
+            suppression_manager: None,
         }
     }
 
@@ -326,6 +329,13 @@ impl Runtime {
         map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
     ) {
         self.disable_directives_map = map;
+    }
+
+    pub fn set_suppression_manager(
+        &mut self,
+        suppression_manager: crate::suppression::ThreadSafeSuppressionManager,
+    ) {
+        self.suppression_manager = Some(suppression_manager);
     }
 
     fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {

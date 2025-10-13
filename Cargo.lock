@@ -2223,6 +2223,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "tempfile",
 ]
 
 [[package]]

@@ -95,6 +95,13 @@ impl LintService {
         self.runtime.set_disable_directives_map(map);
     }
 
+    pub fn set_suppression_manager(
+        &mut self,
+        suppression_manager: crate::suppression::ThreadSafeSuppressionManager,
+    ) {
+        self.runtime.set_suppression_manager(suppression_manager);
+    }
+
     #[cfg(feature = "language_server")]
     pub fn run_source<'a>(
         &mut self,
