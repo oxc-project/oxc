@@ -22,23 +22,14 @@ impl<'a> ParserImpl<'a> {
             && !self.cur_token().is_on_new_line()
             && self.eat(Kind::Extends)
         {
-            let extends_type = self.context(
-                Context::DisallowConditionalTypes,
-                Context::empty(),
-                Self::parse_ts_type,
-            );
+            let extends_type =
+                self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
             self.expect(Kind::Question);
-            let true_type = self.context(
-                Context::empty(),
-                Context::DisallowConditionalTypes,
-                Self::parse_ts_type,
-            );
+            let true_type =
+                self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
             self.expect(Kind::Colon);
-            let false_type = self.context(
-                Context::empty(),
-                Context::DisallowConditionalTypes,
-                Self::parse_ts_type,
-            );
+            let false_type =
+                self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
             return self.ast.ts_type_conditional_type(
                 self.end_span(span),
                 ty,
@@ -258,8 +249,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Unique => self.parse_type_operator(TSTypeOperatorOperator::Unique),
             Kind::Readonly => self.parse_type_operator(TSTypeOperatorOperator::Readonly),
             Kind::Infer => self.parse_infer_type(),
-            _ => self.context(
-                Context::empty(),
+            _ => self.context_remove(
                 Context::DisallowConditionalTypes,
                 Self::parse_postfix_type_or_higher,
             ),
@@ -1042,11 +1032,8 @@ impl<'a> ParserImpl<'a> {
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Option<TSType<'a>> {
         if self.eat(Kind::Extends) {
-            let constraint = self.context(
-                Context::DisallowConditionalTypes,
-                Context::empty(),
-                Self::parse_ts_type,
-            );
+            let constraint =
+                self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
             if self.ctx.has_disallow_conditional_types() || !self.at(Kind::Question) {
                 return Some(constraint);
             }
@@ -1067,11 +1054,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_return_type(&mut self) -> TSType<'a> {
         self.bump_any();
-        self.context(
-            Context::empty(),
-            Context::DisallowConditionalTypes,
-            Self::parse_type_or_type_predicate,
-        )
+        self.context_remove(Context::DisallowConditionalTypes, Self::parse_type_or_type_predicate)
     }
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {

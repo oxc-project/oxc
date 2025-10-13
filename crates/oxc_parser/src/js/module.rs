@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
-    Context, ParserImpl, StatementContext, diagnostics,
+    ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
 };
@@ -281,7 +281,7 @@ impl<'a> ParserImpl<'a> {
         import_kind: ImportOrExportKind,
     ) -> Vec<'a, ImportDeclarationSpecifier<'a>> {
         self.expect(Kind::LCurly);
-        let (list, _) = self.context(Context::empty(), self.ctx, |p| {
+        let (list, _) = self.context_remove(self.ctx, |p| {
             p.parse_delimited_list(Kind::RCurly, Kind::Comma, |parser| {
                 parser.parse_import_specifier(import_kind)
             })
@@ -302,7 +302,7 @@ impl<'a> ParserImpl<'a> {
 
         let span = self.start_span();
         self.expect(Kind::LCurly);
-        let (with_entries, _) = self.context(Context::empty(), self.ctx, |p| {
+        let (with_entries, _) = self.context_remove(self.ctx, |p| {
             p.parse_delimited_list(Kind::RCurly, Kind::Comma, Self::parse_import_attribute)
         });
         self.expect(Kind::RCurly);
@@ -478,7 +478,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         self.expect(Kind::LCurly);
-        let (mut specifiers, _) = self.context(Context::empty(), self.ctx, |p| {
+        let (mut specifiers, _) = self.context_remove(self.ctx, |p| {
             p.parse_delimited_list(Kind::RCurly, Kind::Comma, |parser| {
                 parser.parse_export_specifier(export_kind)
             })
