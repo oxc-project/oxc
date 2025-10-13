@@ -108,3 +108,13 @@ async function f() { await fetch('/'); }
 async function f() {
 	await fetch('/');
 }
+
+########## 14 es2021
+{ await fetch('/'); }
+----------
+
+  ! Top-level await is not available in the configured target environment.
+   ,----
+ 1 | { await fetch('/'); }
+   :   ^^^^^^^^^^^^^^^^
+   `----
