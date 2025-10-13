@@ -12,8 +12,7 @@ use rustc_hash::FxHashSet;
 use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use crate::linter::error_with_position::{
-    DiagnosticReport, generate_inverted_diagnostics, message_to_message_with_position,
-    message_with_position_to_lsp_diagnostic_report,
+    DiagnosticReport, generate_inverted_diagnostics, message_to_lsp_diagnostic,
 };
 
 pub struct TsgoLinter {
@@ -41,13 +40,8 @@ impl TsgoLinter {
             self.state.lint_source(&Arc::from(path.as_os_str()), source_text.clone()).ok()?;
 
         let mut diagnostics: Vec<DiagnosticReport> = messages
-            .into_iter()
-            .map(|e| {
-                message_with_position_to_lsp_diagnostic_report(
-                    &message_to_message_with_position(e, &source_text, &rope),
-                    uri,
-                )
-            })
+            .iter()
+            .map(|e| message_to_lsp_diagnostic(e, uri, &source_text, &rope))
             .collect();
 
         let mut inverted_diagnostics = generate_inverted_diagnostics(&diagnostics, uri);
