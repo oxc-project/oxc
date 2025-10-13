@@ -183,6 +183,14 @@ impl Rule for FilenameCase {
                         _ => (),
                     }
                 }
+                // If all cases are disabled, enable kebab_case as default
+                if !config.kebab_case
+                    && !config.camel_case
+                    && !config.snake_case
+                    && !config.pascal_case
+                {
+                    config.kebab_case = true;
+                }
                 return Self(Box::new(config));
             }
         }
@@ -225,7 +233,8 @@ impl Rule for FilenameCase {
                     .remove_boundaries(&[Boundary::LOWER_DIGIT, Boundary::DIGIT_LOWER]);
                 let converter = converter.to_case(case);
 
-                if converter.convert(trimmed_filename) == trimmed_filename {
+                let converted = converter.convert(trimmed_filename);
+                if converted == trimmed_filename {
                     return;
                 }
 
@@ -315,6 +324,8 @@ fn test() {
     let pass = vec![
         test_case("src/foo/bar.js", "camelCase"),
         test_case("src/foo/fooBar.js", "camelCase"),
+        // Test with empty cases object - should default to kebab-case
+        test_case_with_options("src/foo/foo-bar.js", serde_json::json!([{ "cases": {} }])),
         test_case("src/foo/bar.test.js", "camelCase"),
         test_case("src/foo/fooBar.test.js", "camelCase"),
         test_case("src/foo/fooBar.test-utils.js", "camelCase"),
@@ -402,6 +413,8 @@ fn test() {
         // todo: linter does not support uppercase JS files
         // test_case("src/foo/foo_bar.JS", "camelCase"),
         test_case("src/foo/foo_bar.test.js", "camelCase"),
+        // Test with empty cases object - should fail for non-kebab-case files
+        test_case_with_options("src/foo/FooBar.js", serde_json::json!([{ "cases": {} }])),
         test_case("test/foo/foo_bar.test_utils.js", "camelCase"),
         test_case("test/foo/fooBar.js", "snakeCase"),
         test_case("test/foo/fooBar.test.js", "snakeCase"),
