@@ -22,7 +22,7 @@ jobs:
       - uses: oxc-project/setup-rust@1ff88fdaffd6ae35c0fb32ccc159340b37d0beac # v1.0.7
 
       - name: Install cargo-llvm-lines
-        uses: taiki-e/install-action@f355b1dcaf1a1c56ccead97cc540a259faf4bd5a # v2.62.20
+        uses: taiki-e/install-action@e7ef886cf8f69c25ecef6bbc2858a42e273496ec # v2.62.28
         with:
           tool: cargo-llvm-lines
 
