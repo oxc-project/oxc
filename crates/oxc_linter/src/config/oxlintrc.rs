@@ -152,6 +152,29 @@ impl Oxlintrc {
 
         config.path = path.to_path_buf();
 
+        // resolve relative paths
+        if let Some(external_plugins) = &mut config.external_plugins {
+            if let Some(config_dir) = config.path.parent() {
+                // external_plugins, but relative paths resolved to absolute paths, package names unchanged
+                let mut normalized = FxHashSet::default();
+                normalized.reserve(external_plugins.len());
+
+                // we can safely consume external_plugins while iterating over it since its going to be replaced soon
+                for plugin in std::mem::take(external_plugins) {
+                    let is_relative = plugin.starts_with("./") || plugin.starts_with("../");
+                    if is_relative {
+                        let absolute = config_dir.join(&plugin);
+                        // TODO: non utf8 path compatibility
+                        normalized.insert(absolute.to_string_lossy().into_owned());
+                    } else {
+                        normalized.insert(plugin);
+                    }
+                }
+
+                config.external_plugins = Some(normalized);
+            }
+        }
+
         Ok(config)
     }
 
