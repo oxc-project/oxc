@@ -261,7 +261,18 @@ impl Rule for OnlyExportComponents {
             return false;
         };
 
-        Self::should_scan(filename, self.check_js) && !Self::should_skip(filename)
+        let should_scan = {
+            let ext = Path::new(filename).extension().and_then(|e| e.to_str());
+            matches!(ext, Some(e) if e.eq_ignore_ascii_case("tsx") || e.eq_ignore_ascii_case("jsx"))
+                || (self.check_js && matches!(ext, Some(e) if e.eq_ignore_ascii_case("js")))
+        };
+
+        let should_skip = filename.contains(".test.")
+            || filename.contains(".spec.")
+            || filename.contains(".cy.")
+            || filename.contains(".stories.");
+
+        should_scan && !should_skip
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -274,38 +285,23 @@ impl Rule for OnlyExportComponents {
             return;
         }
 
-        let react_hocs: Vec<&str> = DEFAULT_REACT_HOCS
-            .iter()
-            .copied()
-            .chain(self.custom_hocs.iter().map(String::as_str))
-            .collect();
-
-        let export_info = self.analyze_exports(ctx, &react_hocs);
-        let local_components = Self::find_local_components(ctx, &react_hocs);
+        let export_info = self.analyze_exports(ctx);
+        let local_components = self.find_local_components(ctx);
 
         Self::report_diagnostics(ctx, &export_info, &local_components);
     }
 }
 
 impl OnlyExportComponents {
-    fn should_skip(f: &str) -> bool {
-        f.contains(".test.")
-            || f.contains(".spec.")
-            || f.contains(".cy.")
-            || f.contains(".stories.")
-    }
-
-    fn should_scan(f: &str, check_js: bool) -> bool {
-        let ext = Path::new(f).extension().and_then(|e| e.to_str());
-        matches!(ext, Some(e) if e.eq_ignore_ascii_case("tsx") || e.eq_ignore_ascii_case("jsx"))
-            || (check_js && matches!(ext, Some(e) if e.eq_ignore_ascii_case("js")))
+    fn is_react_hoc(&self, name: &str) -> bool {
+        DEFAULT_REACT_HOCS.contains(&name) || self.custom_hocs.iter().any(|h| h.as_str() == name)
     }
 
     fn starts_with_ascii_upper(s: &str) -> bool {
         matches!(s.as_bytes().first(), Some(b'A'..=b'Z'))
     }
 
-    fn can_be_react_function_component(init: Option<&Expression>, react_hocs: &[&str]) -> bool {
+    fn can_be_react_function_component(&self, init: Option<&Expression>) -> bool {
         if let Some(raw_init) = init {
             let js_init = Self::skip_ts_expression(raw_init);
 
@@ -313,7 +309,7 @@ impl OnlyExportComponents {
                 Expression::ArrowFunctionExpression(_) => true,
                 Expression::CallExpression(call_expr) => {
                     if let Expression::Identifier(callee) = &call_expr.callee {
-                        react_hocs.contains(&callee.name.as_str())
+                        self.is_react_hoc(&callee.name)
                     } else {
                         false
                     }
@@ -349,7 +345,7 @@ impl OnlyExportComponents {
         })
     }
 
-    fn analyze_exports(&self, ctx: &LintContext, react_hocs: &[&str]) -> ExportAnalysis {
+    fn analyze_exports(&self, ctx: &LintContext) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
         let module_record = ctx.module_record();
 
@@ -368,7 +364,7 @@ impl OnlyExportComponents {
                     ctx.diagnostic(export_all_components_diagnostic(export_all.span));
                 }
                 AstKind::ExportDefaultDeclaration(export_default) => {
-                    let result = self.analyze_export_default(export_default, react_hocs);
+                    let result = self.analyze_export_default(export_default);
                     if let Some(span) = result.anonymous_span {
                         ctx.diagnostic(anonymous_components_diagnostic(span));
                     }
@@ -377,7 +373,7 @@ impl OnlyExportComponents {
                 AstKind::ExportNamedDeclaration(export_named)
                     if export_named.export_kind.is_value() =>
                 {
-                    let result = self.analyze_export_named(ctx, export_named, react_hocs);
+                    let result = self.analyze_export_named(ctx, export_named);
                     analysis.merge(result);
                 }
                 _ => {}
@@ -387,7 +383,7 @@ impl OnlyExportComponents {
         analysis
     }
 
-    fn find_local_components(ctx: &LintContext, react_hocs: &[&str]) -> Vec<Span> {
+    fn find_local_components(&self, ctx: &LintContext) -> Vec<Span> {
         ctx.semantic()
             .nodes()
             .iter()
@@ -397,10 +393,7 @@ impl OnlyExportComponents {
                         if let BindingPatternKind::BindingIdentifier(binding_id) =
                             &declarator.id.kind
                             && Self::starts_with_ascii_upper(&binding_id.name)
-                            && Self::can_be_react_function_component(
-                                declarator.init.as_ref(),
-                                react_hocs,
-                            )
+                            && self.can_be_react_function_component(declarator.init.as_ref())
                             && !Self::is_exported(ctx, node.id())
                         {
                             return Some(binding_id.span);
@@ -451,11 +444,7 @@ impl OnlyExportComponents {
         }
     }
 
-    fn analyze_export_default(
-        &self,
-        export_default: &ExportDefaultDeclaration,
-        react_hocs: &[&str],
-    ) -> ExportAnalysis {
+    fn analyze_export_default(&self, export_default: &ExportDefaultDeclaration) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
 
         match &export_default.declaration {
@@ -477,7 +466,7 @@ impl OnlyExportComponents {
                 }
             }
             ExportDefaultDeclarationKind::CallExpression(call_expr) => {
-                if Self::is_hoc_call_expression(call_expr, react_hocs) {
+                if self.is_hoc_call_expression(call_expr) {
                     analysis.has_react_export = true;
                 } else {
                     analysis.anonymous_span = Some(export_default.span);
@@ -489,17 +478,13 @@ impl OnlyExportComponents {
                 analysis.add_export(export_type);
             }
             ExportDefaultDeclarationKind::TSAsExpression(ts_as_expr) => {
-                return self.analyze_export_default_expression(
-                    &ts_as_expr.expression,
-                    export_default,
-                    react_hocs,
-                );
+                return self
+                    .analyze_export_default_expression(&ts_as_expr.expression, export_default);
             }
             ExportDefaultDeclarationKind::TSSatisfiesExpression(ts_satisfies_expr) => {
                 return self.analyze_export_default_expression(
                     &ts_satisfies_expr.expression,
                     export_default,
-                    react_hocs,
                 );
             }
             _ => {
@@ -514,13 +499,12 @@ impl OnlyExportComponents {
         &self,
         expr: &Expression,
         export_default: &ExportDefaultDeclaration,
-        react_hocs: &[&str],
     ) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
 
         match expr {
             Expression::CallExpression(call_expr) => {
-                if Self::is_hoc_call_expression(call_expr, react_hocs) {
+                if self.is_hoc_call_expression(call_expr) {
                     analysis.has_react_export = true;
                 } else {
                     analysis.anonymous_span = Some(export_default.span);
@@ -543,7 +527,6 @@ impl OnlyExportComponents {
         &self,
         ctx: &LintContext,
         export_named: &ExportNamedDeclaration,
-        react_hocs: &[&str],
     ) -> ExportAnalysis {
         let mut analysis = ExportAnalysis::default();
         if let Some(declaration) = &export_named.declaration {
@@ -553,10 +536,8 @@ impl OnlyExportComponents {
                     .iter()
                     .map(|declarator| match &declarator.id.kind {
                         BindingPatternKind::BindingIdentifier(binding_id) => {
-                            let is_func = Self::can_be_react_function_component(
-                                declarator.init.as_ref(),
-                                react_hocs,
-                            );
+                            let is_func =
+                                self.can_be_react_function_component(declarator.init.as_ref());
                             self.classify_export(
                                 binding_id.name.as_str(),
                                 binding_id.span,
@@ -695,7 +676,7 @@ impl OnlyExportComponents {
         }
     }
 
-    fn is_hoc_call_expression(call_expr: &CallExpression, react_hocs: &[&str]) -> bool {
+    fn is_hoc_call_expression(&self, call_expr: &CallExpression) -> bool {
         let is_callee_hoc = match &call_expr.callee {
             Expression::CallExpression(inner_call) => {
                 if let Expression::Identifier(ident) = &inner_call.callee {
@@ -706,12 +687,12 @@ impl OnlyExportComponents {
             }
             Expression::StaticMemberExpression(member) => {
                 if let Expression::Identifier(_) = &member.object {
-                    react_hocs.contains(&member.property.name.as_str())
+                    self.is_react_hoc(&member.property.name)
                 } else {
                     false
                 }
             }
-            Expression::Identifier(ident) => react_hocs.contains(&ident.name.as_str()),
+            Expression::Identifier(ident) => self.is_react_hoc(&ident.name),
             _ => false,
         };
 
@@ -728,9 +709,7 @@ impl OnlyExportComponents {
             match expr_without_ts {
                 Expression::Identifier(_) => true,
                 Expression::FunctionExpression(func) => func.id.is_some(),
-                Expression::CallExpression(inner_call) => {
-                    Self::is_hoc_call_expression(inner_call, react_hocs)
-                }
+                Expression::CallExpression(inner_call) => self.is_hoc_call_expression(inner_call),
                 _ => false,
             }
         })
