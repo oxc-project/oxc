@@ -642,7 +642,8 @@ pub(crate) mod node {
 }
 
 pub(crate) mod vue {
-    pub mod define_emits_declaration;
+        pub mod no_this_in_before_route_enter;
+pub mod define_emits_declaration;
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
     pub mod max_props;
@@ -1258,6 +1259,7 @@ oxc_macros::declare_all_lint_rules! {
     vue::no_export_in_script_setup,
     vue::no_multiple_slot_args,
     vue::no_required_prop_with_default,
+    vue::no_this_in_before_route_enter,
     vue::prefer_import_from_vue,
     vue::require_default_export,
     vue::require_typed_ref,
