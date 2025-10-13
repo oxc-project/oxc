@@ -88,7 +88,7 @@ jobs:
           rm target/codspeed/instrumentation/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@3959e9e296ef25296e93e32afcc97196f966e57f # v4.1.0
+        uses: CodSpeedHQ/action@6b43a0cd438f6ca5ad26f9ed03ed159ed2df7da9 # v4.1.1
         timeout-minutes: 30
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
