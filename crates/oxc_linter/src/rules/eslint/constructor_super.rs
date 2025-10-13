@@ -104,7 +104,7 @@ declare_oxc_lint!(
     /// ```
     ConstructorSuper,
     eslint,
-    correctness
+    nursery,
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
