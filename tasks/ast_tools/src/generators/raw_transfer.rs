@@ -10,10 +10,9 @@ use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, NONE,
+    AstBuilder,
     ast::{
-        Argument, Expression, FormalParameterKind, FunctionType, LogicalOperator, ObjectExpression,
-        ObjectPropertyKind, Program, PropertyKind,
+        Expression, LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKind,
     },
 };
 use oxc_ast_visit::VisitMut;
@@ -140,6 +139,15 @@ fn generate_deserializers(
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
             {{ fromCodePoint }} = String;
+
+        const NodeProto = Object.create(null, {{
+            loc: {{
+                get() {{
+                    return getLoc(this);
+                }},
+                enumerable: true,
+            }}
+        }});
 
         let parent = null;
         let getLoc;
@@ -1269,7 +1277,8 @@ fn get_constants(schema: &Schema) -> Constants {
     }
 }
 
-/// Visitor to add `loc` field after `range` in all deserialize functions.
+/// Visitor to add `__proto__` field to all objects with `range` field in all deserialize functions,
+/// to give access to `loc`.
 ///
 /// Works on AST pre-minification.
 struct LocFieldAdder<'a> {
@@ -1284,8 +1293,8 @@ impl<'a> LocFieldAdder<'a> {
 
 impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
     fn visit_object_expression(&mut self, obj_expr: &mut ObjectExpression<'a>) {
-        // Locate `range` field
-        let index = obj_expr.properties.iter().position(|prop| {
+        // Check if object has `range` field (`...(RANGE && { range: [start, end] })`)
+        let has_range_field = obj_expr.properties.iter().any(|prop| {
             if let ObjectPropertyKind::SpreadProperty(spread) = prop
                 && let Expression::ParenthesizedExpression(paren_expr) = &spread.argument
                 && let Expression::LogicalExpression(logical_expr) = &paren_expr.expression
@@ -1298,50 +1307,20 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
                 false
             }
         });
-        let Some(index) = index else { return };
+        if !has_range_field {
+            return;
+        }
 
-        // Insert `get loc() { return getLoc(this) }` after `range` field
-        let ast = self.ast;
-        let prop = ast.object_property_kind_object_property(
+        // Insert `__proto__: NodeProto` as first field
+        let prop = self.ast.object_property_kind_object_property(
             SPAN,
-            PropertyKind::Get,
-            ast.property_key_static_identifier(SPAN, "loc"),
-            ast.expression_function(
-                SPAN,
-                FunctionType::FunctionExpression,
-                None,
-                false,
-                false,
-                false,
-                NONE,
-                NONE,
-                ast.formal_parameters(
-                    SPAN,
-                    FormalParameterKind::UniqueFormalParameters,
-                    ast.vec(),
-                    NONE,
-                ),
-                NONE,
-                Some(ast.function_body(
-                    SPAN,
-                    ast.vec(),
-                    ast.vec1(ast.statement_return(
-                        SPAN,
-                        Some(ast.expression_call(
-                            SPAN,
-                            ast.expression_identifier(SPAN, "getLoc"),
-                            NONE,
-                            ast.vec1(Argument::from(ast.expression_this(SPAN))),
-                            false,
-                        )),
-                    )),
-                )),
-            ),
+            PropertyKind::Init,
+            self.ast.property_key_static_identifier(SPAN, "__proto__"),
+            self.ast.expression_identifier(SPAN, "NodeProto"),
             false,
             false,
             false,
         );
-
-        obj_expr.properties.insert(index + 1, prop);
+        obj_expr.properties.insert(0, prop);
     }
 }
