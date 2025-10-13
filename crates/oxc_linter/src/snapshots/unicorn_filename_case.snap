@@ -16,6 +16,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Rename the file to 'foo-bar.js'
 
+  ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the file to 'pascal-case.js'
+
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in camel case
    ╭─[filename_case.tsx:1:1]
    ╰────

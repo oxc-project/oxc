@@ -326,6 +326,18 @@ fn test() {
         test_case("src/foo/fooBar.js", "camelCase"),
         // Test with empty cases object - should default to kebab-case
         test_case_with_options("src/foo/foo-bar.js", serde_json::json!([{ "cases": {} }])),
+        // Test with all cases explicitly false - should also default to kebab-case
+        test_case_with_options(
+            "src/foo/kebab-case.js",
+            serde_json::json!([{
+                "cases": {
+                    "kebabCase": false,
+                    "camelCase": false,
+                    "snakeCase": false,
+                    "pascalCase": false
+                }
+            }]),
+        ),
         test_case("src/foo/bar.test.js", "camelCase"),
         test_case("src/foo/fooBar.test.js", "camelCase"),
         test_case("src/foo/fooBar.test-utils.js", "camelCase"),
@@ -415,6 +427,18 @@ fn test() {
         test_case("src/foo/foo_bar.test.js", "camelCase"),
         // Test with empty cases object - should fail for non-kebab-case files
         test_case_with_options("src/foo/FooBar.js", serde_json::json!([{ "cases": {} }])),
+        // Test with all cases explicitly false - should also fail for non-kebab-case
+        test_case_with_options(
+            "src/foo/PascalCase.js",
+            serde_json::json!([{
+                "cases": {
+                    "kebabCase": false,
+                    "camelCase": false,
+                    "snakeCase": false,
+                    "pascalCase": false
+                }
+            }]),
+        ),
         test_case("test/foo/foo_bar.test_utils.js", "camelCase"),
         test_case("test/foo/fooBar.js", "snakeCase"),
         test_case("test/foo/fooBar.test.js", "snakeCase"),
