@@ -24,6 +24,24 @@ mod tests {
     }
 
     #[test]
+    fn test_add_suppression_with_zero_count() {
+        let mut manager = SuppressionManager::new();
+        let file_path = Path::new("src/test.js");
+
+        // Adding suppression with count 0 should be ignored
+        manager.add_suppression(file_path, "eslint", "no-console", 0);
+
+        // Should not be added to suppressions
+        assert_eq!(manager.get_suppression_count(file_path, "eslint", "no-console"), None);
+        assert_eq!(manager.get_all_files().len(), 0);
+
+        // Adding valid suppression should work
+        manager.add_suppression(file_path, "eslint", "no-console", 2);
+        assert_eq!(manager.get_suppression_count(file_path, "eslint", "no-console"), Some(2));
+        assert_eq!(manager.get_all_files().len(), 1);
+    }
+
+    #[test]
     fn test_is_suppressed() {
         let mut manager = SuppressionManager::new();
         let file_path = Path::new("src/test.js");

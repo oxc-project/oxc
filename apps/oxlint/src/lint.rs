@@ -4,7 +4,7 @@ use std::{
     fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
-    sync::Arc,
+    sync::{Arc, Mutex},
     time::Instant,
 };
 
@@ -14,8 +14,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
 use oxc_diagnostics::{
-    DiagnosticSender, DiagnosticService, Error, GraphicalReportHandler, OxcDiagnostic,
-    reporter::{DiagnosticReporter, DiagnosticResult},
+    DiagnosticSender, DiagnosticService, DiagnosticTuple, GraphicalReportHandler, OxcDiagnostic, Severity,
+    reporter::DiagnosticResult,
 };
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
@@ -30,16 +30,53 @@ use crate::{
 };
 use oxc_linter::LintIgnoreMatcher;
 
-/// Silent reporter that suppresses all output during violation collection
-struct SilentReporter;
 
-impl DiagnosticReporter for SilentReporter {
-    fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
-        None
+/// Custom diagnostic service that directly processes diagnostic tuples to collect violations
+struct ViolationCollectingService;
+
+
+impl ViolationCollectingService {
+    fn new() -> (DiagnosticSender, std::sync::mpsc::Receiver<DiagnosticTuple>, Arc<Mutex<Vec<(PathBuf, String, String)>>>) {
+        let violations = Arc::new(Mutex::new(Vec::new()));
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        (sender, receiver, violations)
     }
 
-    fn render_error(&mut self, _error: Error) -> Option<String> {
-        None
+    fn run_and_collect(
+        receiver: std::sync::mpsc::Receiver<DiagnosticTuple>,
+        violations: Arc<Mutex<Vec<(PathBuf, String, String)>>>,
+    ) -> DiagnosticResult {
+        let mut warnings_count = 0;
+        let mut errors_count = 0;
+
+        // Process diagnostic tuples directly - we have access to file paths here!
+        while let Ok((path, diagnostics)) = receiver.recv() {
+            for diagnostic in diagnostics {
+                // Iterate through the error chain to find the underlying OxcDiagnostic
+                for cause in diagnostic.chain() {
+                    if let Some(oxc_diagnostic) = cause.downcast_ref::<OxcDiagnostic>() {
+                        if let (Some(scope), Some(number)) = (oxc_diagnostic.code_scope(), oxc_diagnostic.code_number()) {
+                            // Now we have the actual file path from the tuple!
+                            if let Ok(mut violations_vec) = violations.lock() {
+                                violations_vec.push((path.clone(), scope.to_string(), number.to_string()));
+                            }
+                        }
+                        break; // Found the OxcDiagnostic, no need to continue the chain
+                    }
+                }
+
+                // Count the diagnostic for the result
+                let severity = diagnostic.severity();
+                if severity == Some(Severity::Warning) {
+                    warnings_count += 1;
+                } else if severity == Some(Severity::Error) || severity.is_none() {
+                    errors_count += 1;
+                }
+            }
+        }
+
+        DiagnosticResult::new(warnings_count, errors_count, false)
     }
 }
 
@@ -486,20 +523,16 @@ impl CliRunner {
         has_external_linter: bool,
         options: LintServiceOptions,
     ) -> CliRunResult {
-        // Simple approach: Run linting with a collecting suppression manager
-        // that records violations as they're checked, then extract them
-        let collecting_suppression_manager = ThreadSafeSuppressionManager::new(SuppressionManager::new());
 
-        // Use the existing LintRunner but with our collecting suppression manager
-        let mut lint_service = oxc_linter::LintService::new(linter, options);
-        lint_service.with_paths(files_to_lint.to_vec());
-        lint_service.set_suppression_manager(collecting_suppression_manager.clone());
+        // Create a violation-collecting diagnostic service
+        let (tx_diagnostic, rx_diagnostic, collected_violations) = ViolationCollectingService::new();
 
-        // Configure file system if needed
-        if has_external_linter {
+        // Configure file system for external linter if needed
+        let file_system = if has_external_linter {
             #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
             {
-                lint_service.with_file_system(Box::new(crate::js_plugins::RawTransferFileSystem));
+                Some(Box::new(crate::js_plugins::RawTransferFileSystem)
+                    as Box<dyn oxc_linter::RuntimeFileSystem + Sync + Send>)
             }
 
             #[cfg(not(all(
@@ -510,53 +543,62 @@ impl CliRunner {
             unreachable!(
                 "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
             );
-        }
+        } else {
+            None
+        };
 
-        // Create a silent diagnostic service for suppression (no output needed)
-        let (diagnostic_service, tx_diagnostic) = DiagnosticService::new(Box::new(SilentReporter));
-        let mut diagnostic_service = diagnostic_service.with_silent(true);
+        // Create the LintRunner without suppression manager to collect all violations
+        let lint_runner = match LintRunner::builder(options.clone(), _config_store.clone())
+            .with_linter(linter.clone())
+            .with_type_aware(self.options.type_aware)
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(err) => {
+                print_and_flush_stdout(stdout, &format!("Failed to build linter: {err}"));
+                return CliRunResult::TsGoLintError;
+            }
+        };
 
-        // Run linting - this will populate the suppression manager with violations
-        lint_service.run(&tx_diagnostic);
-        drop(tx_diagnostic);
-
-        // Process diagnostics silently
-        let _diagnostic_result = diagnostic_service.run(&mut std::io::sink());
-
-        // The suppression manager now contains all violations that were checked
-        // We need to convert these to actual suppressions in a new manager
-
-        // TODO: Extract violations from the collecting suppression manager
-        // For now, we create an empty suppression file to address the reviewer feedback
-        // This is a simplified implementation that needs enhancement
-        let mut new_suppression_manager = SuppressionManager::new();
-
-        // Since extracting the violations from the existing suppression manager is complex,
-        // we'll use a workaround: create some example suppressions based on common patterns
-        // This ensures the functionality works end-to-end while we improve the implementation
-        let example_violations = vec![
-            // Add some common violations that would be found in test files
-        ];
-        new_suppression_manager.add_violations_from_diagnostics(&example_violations);
-
-        // Save suppression file
-        match new_suppression_manager.save(suppression_file_path) {
+        // Run linting to collect violations
+        match lint_runner.lint_files(files_to_lint, tx_diagnostic.clone(), file_system) {
             Ok(_) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Generated suppression file: {}\n",
-                        suppression_file_path.display()
-                    ),
-                );
-                CliRunResult::LintSucceeded
+                drop(tx_diagnostic);
+
+                // Process the diagnostics and collect violations using our custom service
+                let _diagnostic_result = ViolationCollectingService::run_and_collect(rx_diagnostic, collected_violations.clone());
+
+                // Extract the collected violations
+                let violations = collected_violations.lock().unwrap().clone();
+
+                // Generate suppressions from collected violations
+                let mut new_suppression_manager = SuppressionManager::new();
+                new_suppression_manager.add_violations_from_diagnostics(&violations);
+
+                // Save suppression file
+                match new_suppression_manager.save(suppression_file_path) {
+                    Ok(_) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Generated suppression file: {}\n",
+                                suppression_file_path.display()
+                            ),
+                        );
+                        CliRunResult::LintSucceeded
+                    }
+                    Err(err) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!("Failed to save suppression file: {err}\n"),
+                        );
+                        CliRunResult::InvalidOptionConfig
+                    }
+                }
             }
             Err(err) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!("Failed to save suppression file: {err}\n"),
-                );
-                CliRunResult::InvalidOptionConfig
+                print_and_flush_stdout(stdout, &format!("Failed to collect violations: {err}"));
+                CliRunResult::TsGoLintError
             }
         }
     }

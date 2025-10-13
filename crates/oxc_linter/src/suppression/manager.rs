@@ -148,6 +148,10 @@ impl SuppressionManager {
         rule_name: &str,
         count: u32,
     ) {
+        if count == 0 {
+            return; // Skip suppressions with count of 0
+        }
+
         let rule_key = self.create_rule_key(plugin_prefix, rule_name);
         let file_key = self.normalize_file_path(file_path);
 
@@ -220,10 +224,13 @@ impl SuppressionManager {
         // Add suppressions based on violation counts
         for (file_key, rules) in violation_counts {
             for (rule_key, count) in rules {
-                self.suppressions_by_file
-                    .entry(file_key.clone())
-                    .or_default()
-                    .insert(rule_key, SuppressionEntry { count });
+                // Only add suppressions with count > 0
+                if count > 0 {
+                    self.suppressions_by_file
+                        .entry(file_key.clone())
+                        .or_default()
+                        .insert(rule_key, SuppressionEntry { count });
+                }
             }
         }
     }
