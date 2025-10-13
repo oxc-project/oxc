@@ -311,7 +311,7 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
-        let linter = Linter::new(LintOptions::default(), config_store.clone(), external_linter)
+        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 
@@ -340,8 +340,7 @@ impl CliRunner {
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        let lint_runner = match LintRunner::builder(options, config_store)
-            .with_linter(linter)
+        let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(self.options.type_aware)
             .with_silent(misc_options.silent)
             .build()

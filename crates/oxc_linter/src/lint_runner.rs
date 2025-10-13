@@ -10,21 +10,20 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_span::Span;
 
 use crate::{
-    AllowWarnDeny, ConfigStore, DisableDirectives, LintService, LintServiceOptions, Linter,
-    TsGoLintState,
+    AllowWarnDeny, DisableDirectives, LintService, LintServiceOptions, Linter, TsGoLintState,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
 /// with centralized disable directives handling.
 pub struct LintRunner {
     /// Regular oxc linter
-    regular_linter: Option<Linter>,
+    lint_service: LintService,
     /// Type-aware tsgolint
     type_aware_linter: Option<TsGoLintState>,
     /// Shared disable directives coordinator
     directives_store: DirectivesStore,
-    /// Lint service options
-    lint_service_options: LintServiceOptions,
+    /// Current working directory
+    cwd: PathBuf,
 }
 
 /// Manages disable directives across all linting engines.
@@ -126,28 +125,20 @@ impl Default for DirectivesStore {
 
 /// Builder for LintRunner
 pub struct LintRunnerBuilder {
-    regular_linter: Option<Linter>,
+    regular_linter: Linter,
     type_aware_enabled: bool,
-    config_store: ConfigStore,
     lint_service_options: LintServiceOptions,
     silent: bool,
 }
 
 impl LintRunnerBuilder {
-    pub fn new(lint_service_options: LintServiceOptions, config_store: ConfigStore) -> Self {
+    pub fn new(lint_service_options: LintServiceOptions, linter: Linter) -> Self {
         Self {
-            regular_linter: None,
+            regular_linter: linter,
             type_aware_enabled: false,
-            config_store,
             lint_service_options,
             silent: false,
         }
-    }
-
-    #[must_use]
-    pub fn with_linter(mut self, linter: Linter) -> Self {
-        self.regular_linter = Some(linter);
-        self
     }
 
     #[must_use]
@@ -168,8 +159,10 @@ impl LintRunnerBuilder {
         let directives_coordinator = DirectivesStore::new();
 
         let type_aware_linter = if self.type_aware_enabled {
-            match TsGoLintState::try_new(self.lint_service_options.cwd(), self.config_store.clone())
-            {
+            match TsGoLintState::try_new(
+                self.lint_service_options.cwd(),
+                self.regular_linter.config.clone(),
+            ) {
                 Ok(state) => Some(state.with_silent(self.silent)),
                 Err(e) => return Err(e),
             }
@@ -177,22 +170,23 @@ impl LintRunnerBuilder {
             None
         };
 
+        let cwd = self.lint_service_options.cwd().to_path_buf();
+        let mut lint_service = LintService::new(self.regular_linter, self.lint_service_options);
+        lint_service.set_disable_directives_map(directives_coordinator.map());
+
         Ok(LintRunner {
-            regular_linter: self.regular_linter,
+            lint_service,
             type_aware_linter,
             directives_store: directives_coordinator,
-            lint_service_options: self.lint_service_options,
+            cwd,
         })
     }
 }
 
 impl LintRunner {
     /// Create a new builder for LintRunner
-    pub fn builder(
-        lint_service_options: LintServiceOptions,
-        config_store: ConfigStore,
-    ) -> LintRunnerBuilder {
-        LintRunnerBuilder::new(lint_service_options, config_store)
+    pub fn builder(lint_service_options: LintServiceOptions, linter: Linter) -> LintRunnerBuilder {
+        LintRunnerBuilder::new(lint_service_options, linter)
     }
 
     /// Run both regular and type-aware linting on files
@@ -205,22 +199,14 @@ impl LintRunner {
         file_system: Option<Box<dyn crate::RuntimeFileSystem + Sync + Send>>,
     ) -> Result<Self, String> {
         // Phase 1: Regular linting (collects disable directives)
-        if let Some(linter) = self.regular_linter.take() {
-            let files = files.to_owned();
-            let directives_map = self.directives_store.map();
-            let lint_service_options = self.lint_service_options.clone();
+        self.lint_service.with_paths(files.to_owned());
 
-            let mut lint_service = LintService::new(linter, lint_service_options);
-            lint_service.with_paths(files);
-            lint_service.set_disable_directives_map(directives_map);
-
-            // Set custom file system if provided
-            if let Some(fs) = file_system {
-                lint_service.with_file_system(fs);
-            }
-
-            lint_service.run(&tx_error);
+        // Set custom file system if provided
+        if let Some(fs) = file_system {
+            self.lint_service.with_file_system(fs);
         }
+
+        self.lint_service.run(&tx_error);
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
             type_aware_linter.lint(files, self.directives_store.map(), tx_error)?;
@@ -238,11 +224,7 @@ impl LintRunner {
         tx_error: &DiagnosticSender,
     ) {
         if let Some(severity) = severity {
-            self.directives_store.report_unused(
-                severity,
-                self.lint_service_options.cwd(),
-                tx_error,
-            );
+            self.directives_store.report_unused(severity, &self.cwd, tx_error);
         }
     }
 
