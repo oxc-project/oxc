@@ -228,7 +228,11 @@ impl<'de> Deserialize<'de> for OxlintRules {
 }
 
 fn parse_rule_key(name: &str) -> (String, String) {
-    let Some((plugin_name, rule_name)) = name.split_once('/') else {
+    // Find the last '/' to split plugin name and rule name.
+    // This handles plugin names with slashes like "@eslint-react/eslint-plugin".
+    let slash_idx = name.rfind('/');
+
+    let Some(slash_idx) = slash_idx else {
         return (
             RULES
                 .iter()
@@ -241,6 +245,9 @@ fn parse_rule_key(name: &str) -> (String, String) {
         );
     };
 
+    let plugin_name = &name[..slash_idx];
+    let rule_name = &name[slash_idx + 1..];
+
     let (oxlint_plugin_name, rule_name) = match plugin_name {
         "@typescript-eslint" => ("typescript", rule_name),
         // import-x has the same rules but better performance
@@ -248,7 +255,7 @@ fn parse_rule_key(name: &str) -> (String, String) {
         "jsx-a11y" => ("jsx_a11y", rule_name),
         "react-perf" => ("react_perf", rule_name),
         // e.g. "@next/next/google-font-display"
-        "@next" => ("nextjs", rule_name.trim_start_matches("next/")),
+        "@next/next" => ("nextjs", rule_name),
         // For backwards compatibility, react hook rules reside in the react plugin.
         "react-hooks" => ("react", rule_name),
         // For backwards compatibility, deepscan rules reside in the oxc plugin.
@@ -363,6 +370,35 @@ mod test {
         assert_eq!(r4.plugin_name, "nextjs");
         assert!(r4.severity.is_warn_deny());
         assert!(r4.config.is_none());
+    }
+
+    #[test]
+    fn test_parse_rules_with_slashes_in_plugin_name() {
+        let rules = OxlintRules::deserialize(&json!({
+            "@eslint-react/eslint-plugin/jsx-props-no-spread-multi": "error",
+            "@some/scoped-plugin/rule-name": "warn",
+            "plugin/with/multiple/slashes/rule": 1,
+        }))
+        .unwrap();
+        let mut rules = rules.rules.iter();
+
+        let r1 = rules.next().unwrap();
+        assert_eq!(r1.rule_name, "jsx-props-no-spread-multi");
+        assert_eq!(r1.plugin_name, "@eslint-react/eslint-plugin");
+        assert!(r1.severity.is_warn_deny());
+        assert!(r1.config.is_none());
+
+        let r2 = rules.next().unwrap();
+        assert_eq!(r2.rule_name, "rule-name");
+        assert_eq!(r2.plugin_name, "@some/scoped-plugin");
+        assert!(r2.severity.is_warn_deny());
+        assert!(r2.config.is_none());
+
+        let r3 = rules.next().unwrap();
+        assert_eq!(r3.rule_name, "rule");
+        assert_eq!(r3.plugin_name, "plugin/with/multiple/slashes");
+        assert!(r3.severity.is_warn_deny());
+        assert!(r3.config.is_none());
     }
 
     #[test]
