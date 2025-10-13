@@ -4,6 +4,51 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.23.0] - 2025-10-13
+
+### 🚀 Features
+
+- 452d128 linter: Node/no_process_env (#14536) (Kenneth Skovhus)
+- a9e1261 linter: Implement react-refresh/only-export-components (#14122) (Rintaro Itokawa)
+- a8d542b linter/no-duplicate-imports: Support `allowSeparateTypeImports` option (#14527) (camc314)
+- 75a529c linter: Add run info about what functions rules implement (#13839) (camchenry)
+
+### 🐛 Bug Fixes
+
+- 74e52f3 linter/plugins: Resolve JS plugins with ESM condition names (#14541) (magic-akari)
+- 9965676 linter/exhaustive-deps: Ignore empty strings passed to `additionalHooks` option (#14464) (Redas)
+- d0a8e3e linter: `vue/no_required_prop_with_default` called `Option::unwrap()` on a `None` value (#14491) (Sysix)
+- 1192ea2 linter: Correct `nextjs/no-typos` path handling (#14480) (shulaoda)
+- 2796b16 tsgolint: Pipe tsgolints stderr (#14477) (camc314)
+
+### 🚜 Refactor
+
+- 6440cde linter: Remove lifetime of `Message` (#14481) (Sysix)
+- 20e884e linter: Store `LintService` in `LintRunner` (#14471) (Sysix)
+- 9e9c5ba linter: Simplify built-in lint plugin checks (#14518) (camchenry)
+- 1986e0f linter/no-ex-assign: Use let-else chain (#14526) (camc314)
+- ce9bcf0 linter/no-func-assign: Use let-else chain (#14525) (camc314)
+- ea5838e linter/no-import-assign: Use let-else chain (#14524) (camc314)
+- 54b001f linter/no-new-require: Improve diagnostic message clarity (#14511) (shulaoda)
+- 650ea68 linter: Improve nextjs/no-typos rule (#14476) (shulaoda)
+
+### 📚 Documentation
+
+- 198f2e9 linter: Fix code example for `branches-sharing-code` (#14514) (camc314)
+- d776a17 linter: Improve `nextjs/no-typos` rule documentation (#14470) (shulaoda)
+
+### ⚡ Performance
+
+- aec0c08 linter: Allow analyzing node types in match blocks with guards (#14459) (camchenry)
+- 9044187 linter: Skip running node-specific rule if file contains no relevant nodes (#14457) (camchenry)
+- 422f54e linter: Only run rule run functions if implemented (#14454) (camchenry)
+- 2c228ae liner: Use top-level match for `no_obj_calls` (#14523) (camchenry)
+- c49d891 linter: Use match for `no_negated_condition` (#14522) (camchenry)
+- e222fc2 linter: Use match for `no_multi_assign` (#14521) (camchenry)
+- 4440516 linter: Refactor rules to take advantage of node type skipping (#14519) (camchenry)
+- 78261d6 linter: Refactor `no-invalid-fetch-options` to be more easily analyzed (#14458) (camchenry)
+
+
 ## [1.22.0] - 2025-10-08
 
 ### 🚀 Features

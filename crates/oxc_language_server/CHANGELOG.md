@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.23.0] - 2025-10-13
+
+### 🚀 Features
+
+- 4fbdef2 language_server: Support `fmt.configPath` configuration (#14502) (Sysix)
+- 4d3ce2e language_server: Autodetect root `.oxfmtrc.json` (#14466) (Sysix)
+
+### 🐛 Bug Fixes
+
+- fb4a20d language_server: Add whitespace for `// oxlint-disable-next-line` fix (#14356) (Sysix)
+
+### 🚜 Refactor
+
+- 6440cde linter: Remove lifetime of `Message` (#14481) (Sysix)
+- f599bef language_server: Move `Message` to `DiagnosticReport` transformation to one place (#14447) (Sysix)
+- a9cea7c language_server: Use `FxHashSet` for `ServerLinter::extended_paths` (#14517) (Sysix)
+- f977700 language_server: Pass `LintOptions` to `Worker::refresh_server_linter` (#14510) (Sysix)
+
+### ⚡ Performance
+
+- b44a30e language_server: Transform `Message` to `DiagnosticReport` with one call (#14448) (Sysix)
+
+### 🧪 Testing
+
+- 33b6cde language_server: Add basic tests for `WorkspaceWorker::did_change_configuration` (#14531) (Sysix)
+- bfe1ecd language_server: Add tests for `WorkspaceWorker::init_watchers` (#14516) (Sysix)
+
+
 
 ## [1.21.0] - 2025-10-08
 

@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.23.0] - 2025-10-13
+
+### 🐛 Bug Fixes
+
+- 6fce7f4 oxlint/changelog: Remove duplicate changelog entries (#14528) (camc314)
+- 74e52f3 linter/plugins: Resolve JS plugins with ESM condition names (#14541) (magic-akari)
+
+### 🚜 Refactor
+
+- 4f301de napi/parser, linter/plugins: Improve formatting of generated code (#14554) (overlookmotel)
+- 68c0252 napi/parser, linter/plugins: Shorten generated raw transfer deserializer code (#14553) (overlookmotel)
+- 20e884e linter: Store `LintService` in `LintRunner` (#14471) (Sysix)
+
+### ⚡ Performance
+
+- 31766fd linter/plugins: Provide `loc` via prototype (#14552) (overlookmotel)
+
+### 🧪 Testing
+
+- 8d8881d linter/plugins: Expand tests for module resolution of plugins (#14559) (overlookmotel)
+
+
 ## [1.22.0] - 2025-10-08
 
 ### 🐛 Bug Fixes
