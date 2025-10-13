@@ -39,7 +39,7 @@ working directory:
   help: Consider using this expression or removing it
 
 Found 3 warnings and 1 error.
-Finished in <variable>ms on 1 file with 65 rules using 1 threads.
+Finished in <variable>ms on 1 file with 64 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

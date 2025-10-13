@@ -23,7 +23,7 @@ working directory:
   help: Remove the appending `.skip`
 
 Found 1 warning and 1 error.
-Finished in <variable>ms on 1 file with 102 rules using 1 threads.
+Finished in <variable>ms on 1 file with 101 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

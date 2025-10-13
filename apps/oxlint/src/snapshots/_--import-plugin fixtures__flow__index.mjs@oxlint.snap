@@ -6,7 +6,7 @@ arguments: --import-plugin fixtures/flow/index.mjs
 working directory: 
 ----------
 Found 0 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 92 rules using 1 threads.
+Finished in <variable>ms on 1 file with 91 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
