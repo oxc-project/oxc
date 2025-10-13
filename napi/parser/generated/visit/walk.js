@@ -2,6 +2,7 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/estree_visit.rs`.
 
 export { walkProgram };
+
 const { isArray } = Array;
 
 function walkNode(node, visitors) {

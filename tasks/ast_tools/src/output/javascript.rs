@@ -266,12 +266,18 @@ pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -
 
     // Add back line breaks between function declarations and exports, to aid readability
     #[expect(clippy::items_after_statements)]
-    static REGEX: Lazy<Regex> = lazy_regex!(r"\n(function|export) ");
+    static REGEX: Lazy<Regex> = lazy_regex!(r"\n(export|function|class|const|let) ");
 
     REGEX
         .replace_all(&code, |caps: &Captures| {
             // `format!("\n\n{} ", &caps[1])` would be simpler, but this avoids allocations
-            if &caps[1] == "function" { "\n\nfunction " } else { "\n\nexport " }
+            match &caps[1] {
+                "export" => "\n\nexport ",
+                "function" => "\n\nfunction ",
+                "class" => "\n\nclass ",
+                "const" => "\n\nconst ",
+                _ => "\n\nlet ",
+            }
         })
         .into_owned()
 }

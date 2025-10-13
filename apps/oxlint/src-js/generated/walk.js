@@ -4,6 +4,7 @@
 export { walkProgram };
 
 export const ancestors = [];
+
 const { isArray } = Array;
 
 function walkNode(node, visitors) {
