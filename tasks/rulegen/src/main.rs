@@ -1597,6 +1597,27 @@ fn main() {
     if let Err(err) = add_rules_entry(&context, rule_kind) {
         eprintln!("failed to add {rule_name} to rules file: {err}");
     }
+
+    if let Err(err) = generate_rule_runner_impl() {
+        eprintln!("failed to generate RuleRunner impl for {rule_name}: {err}");
+    }
+}
+
+fn generate_rule_runner_impl() -> Result<(), Box<dyn std::error::Error>> {
+    use std::process::{Command, Stdio};
+
+    println!("Generating RuleRunner impl...");
+    let output = Command::new("cargo")
+        .args(["run", "-p", "oxc_linter_codegen"])
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .output()?;
+
+    if !output.status.success() {
+        return Err("Failed to run oxc_linter_codegen".into());
+    }
+
+    Ok(())
 }
 
 fn get_mod_name(rule_kind: RuleKind) -> String {
