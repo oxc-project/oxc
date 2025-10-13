@@ -159,7 +159,7 @@ fn fix_fragment_element<'a>(
     elem: &JSXElement,
     ctx: &LintContext<'a>,
     fixer: RuleFixer<'_, 'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let replacement = if let Some(closing_elem) = &elem.closing_element {
         trim_like_react(
             Span::new(elem.opening_element.span.end, closing_elem.span.start)
@@ -169,20 +169,21 @@ fn fix_fragment_element<'a>(
         ""
     };
 
-    fixer.replace(elem.span(), trim_like_react(replacement))
+    fixer.replace(elem.span(), trim_like_react(replacement).to_owned())
 }
 
 fn fix_jsx_fragment<'a>(
     elem: &JSXFragment,
     ctx: &LintContext<'a>,
     fixer: RuleFixer<'_, 'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     fixer.replace(
         elem.span(),
         trim_like_react(
             Span::new(elem.opening_fragment.span.end, elem.closing_fragment.span.start)
                 .source_text(ctx.source_text()),
-        ),
+        )
+        .to_owned(),
     )
 }
 

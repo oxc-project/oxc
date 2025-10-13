@@ -98,7 +98,7 @@ impl Rule for AnchorHasContent {
     }
 }
 
-fn remove_hidden_attributes<'a>(element: &JSXElement<'a>) -> RuleFix<'a> {
+fn remove_hidden_attributes(element: &JSXElement<'_>) -> RuleFix {
     element
         .opening_element
         .attributes

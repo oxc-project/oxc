@@ -292,7 +292,7 @@ impl TsGoLintState {
         &self,
         path: &Arc<OsStr>,
         source_text: String,
-    ) -> Result<Vec<Message<'_>>, String> {
+    ) -> Result<Vec<Message>, String> {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
         let json_input = self.json_input(std::slice::from_ref(path), &mut resolved_configs);
@@ -332,7 +332,7 @@ impl TsGoLintState {
             // Stream diagnostics as they are emitted, rather than waiting for all output
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
 
-            let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message<'_>>, String> {
+            let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
                 let msg_iter = TsGoLintMessageStream::new(stdout);
 
                 let mut result = vec![];
@@ -554,7 +554,7 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
 }
 
 #[cfg(feature = "language_server")]
-impl Message<'_> {
+impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintDiagnostic, source_text: &str) -> Self {
         use std::{borrow::Cow, mem};

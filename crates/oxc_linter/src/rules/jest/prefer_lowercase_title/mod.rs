@@ -298,7 +298,7 @@ impl PreferLowercaseTitle {
         let replacement_len = replacement.len() as u32;
 
         ctx.diagnostic_with_fix(prefer_lowercase_title_diagnostic(literal, span), |fixer| {
-            fixer.replace(Span::sized(span.start + 1, replacement_len), replacement)
+            fixer.replace(Span::sized(span.start + 1, replacement_len), replacement.into_owned())
         });
     }
 

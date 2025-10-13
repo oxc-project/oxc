@@ -11,7 +11,7 @@ impl NoUnusedVars {
         fixer: RuleFixer<'_, 'a>,
         symbol: &Symbol<'_, 'a>,
         import: &ImportDeclaration<'a>,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         let specifiers = import
                 .specifiers
                 .as_ref()

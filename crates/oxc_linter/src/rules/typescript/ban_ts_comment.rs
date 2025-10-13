@@ -187,7 +187,8 @@ impl Rule for BanTsComment {
                                     |fixer| {
                                         fixer.replace(
                                             comm.content_span(),
-                                            raw.cow_replace("@ts-ignore", "@ts-expect-error"),
+                                            raw.cow_replace("@ts-ignore", "@ts-expect-error")
+                                                .into_owned(),
                                         )
                                     },
                                 );

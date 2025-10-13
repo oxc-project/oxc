@@ -155,16 +155,16 @@ impl Rule for PreferStructuredClone {
     }
 }
 
-fn replace_with_structured_clone<'a>(
-    fixer: RuleFixer<'_, 'a>,
+fn replace_with_structured_clone(
+    fixer: RuleFixer<'_, '_>,
     call_expr: &CallExpression<'_>,
     first_argument: &Expression<'_>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let mut codegen = fixer.codegen();
     codegen.print_str("structuredClone(");
     codegen.print_expression(first_argument);
     codegen.print_str(")");
-    fixer.replace(call_expr.span, codegen)
+    fixer.replace(call_expr.span, codegen.into_source_text())
 }
 
 #[test]

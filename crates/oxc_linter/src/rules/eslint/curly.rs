@@ -424,7 +424,7 @@ fn apply_rule_fix<'a>(
     body: &Statement<'a>,
     should_have_braces: bool,
     ctx: &LintContext<'a>,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let source = ctx.source_range(body.span());
 
     let fixed = if should_have_braces {

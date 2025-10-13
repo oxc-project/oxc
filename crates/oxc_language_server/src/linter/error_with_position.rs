@@ -35,7 +35,7 @@ pub enum PossibleFixContent {
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn message_to_lsp_diagnostic(
-    message: &Message<'_>,
+    message: &Message,
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
@@ -134,7 +134,7 @@ pub fn message_to_lsp_diagnostic(
     DiagnosticReport { diagnostic, fixed_content }
 }
 
-fn fix_to_fixed_content(fix: &Fix<'_>, rope: &Rope, source_text: &str) -> FixedContent {
+fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedContent {
     let start_position = offset_to_position(rope, fix.span.start, source_text);
     let end_position = offset_to_position(rope, fix.span.end, source_text);
 

@@ -1524,7 +1524,7 @@ mod fix {
         fixer: RuleFixer<'c, 'a>,
         names: &[Name<'a>],
         deps: &ArrayExpression<'a>,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
@@ -1548,7 +1548,7 @@ mod fix {
         fixer: RuleFixer<'c, 'a>,
         dependency: &Dependency,
         deps: &ArrayExpression<'a>,
-    ) -> RuleFix<'a> {
+    ) -> RuleFix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();

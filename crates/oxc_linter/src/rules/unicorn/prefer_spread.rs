@@ -251,7 +251,7 @@ fn report_with_spread_fixer(
         codegen.print_str("[...");
         codegen.print_expression(expr_to_spread);
         codegen.print_str("]");
-        fixer.replace(span, codegen)
+        fixer.replace(span, codegen.into_source_text())
     });
 }
 

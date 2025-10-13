@@ -140,7 +140,7 @@ fn report_diagnostic<'a>(
         } else {
             Cow::Borrowed(literal_raw.trim())
         };
-        fixer.replace(span, content)
+        fixer.replace(span, content.to_string())
     });
 }
 

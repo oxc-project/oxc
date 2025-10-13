@@ -575,13 +575,13 @@ fn report_unnecessary_curly<'a>(
                 let mut fix = fixer.codegen();
                 fix.print_str(template_lit.single_quasi().unwrap().as_str());
 
-                fixer.replace(container.span, fix)
+                fixer.replace(container.span, fix.into_source_text())
             }
             JSXExpression::StringLiteral(string_literal) => {
                 let mut fix = fixer.codegen();
                 fix.print_str(string_literal.value.as_str());
 
-                fixer.replace(container.span, fix)
+                fixer.replace(container.span, fix.into_source_text())
             }
             _ => {
                 let mut fix = fixer.new_fix_with_capacity(2);
@@ -608,7 +608,7 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
             JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi().unwrap(),
             JSXExpression::StringLiteral(string_lit) => string_lit.value,
             JSXExpression::JSXElement(el) => {
-                return fixer.replace(container.span, ctx.source_range(el.span));
+                return fixer.replace(container.span, ctx.source_range(el.span).to_owned());
             }
             _ => unreachable!(),
         };
@@ -625,7 +625,7 @@ fn report_unnecessary_curly_for_attribute_value<'a>(
             None,
         ));
 
-        fixer.replace(container.span, fix)
+        fixer.replace(container.span, fix.into_source_text())
     });
 }
 
@@ -658,7 +658,7 @@ fn report_missing_curly_for_string_attribute_value(
         let mut fix = fixer.new_fix_with_capacity(3);
         fix.push(fixer.insert_text_before(&span, "{"));
         fix.push(fixer.insert_text_after(&span, "}"));
-        fix.push(fixer.replace(span, replace));
+        fix.push(fixer.replace(span, replace.into_source_text()));
         fix.with_message("add the missing curly braces")
     });
 }
@@ -695,7 +695,7 @@ fn report_missing_curly_for_text_node(ctx: &LintContext, span: Span, string_valu
                 text,
                 None,
             ));
-            fix.push(fixer.replace(span_from_first_char, replace));
+            fix.push(fixer.replace(span_from_first_char, replace.into_source_text()));
             fix.push(fixer.insert_text_before(&span_from_first_char, "{"));
             fix.push(fixer.insert_text_after(&span_from_first_char, "}"));
         }

@@ -118,7 +118,7 @@ impl Rule for NoAwaitExpressionMember {
                     }
                     // (await b())[0] => await b()
                     // (await b()).a => await b()
-                    rule_fixes.push(fixer.replace(member_expr.span(), inner_text));
+                    rule_fixes.push(fixer.replace(member_expr.span(), inner_text.to_owned()));
                     rule_fixes.with_message("Assign the result of the await expression to a variable, then access the member from that variable.")
                 },
             );

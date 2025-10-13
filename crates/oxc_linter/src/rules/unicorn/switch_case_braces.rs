@@ -130,7 +130,7 @@ impl Rule for SwitchCaseBraces {
                             |fixer| {
                                 fixer.replace(
                                     block_stmt.span,
-                                    fixer.source_range(block_stmt.span.shrink(1)),
+                                    fixer.source_range(block_stmt.span.shrink(1)).to_owned(),
                                 )
                             },
                         );

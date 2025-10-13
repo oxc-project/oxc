@@ -545,12 +545,12 @@ fn extract_length_minus_pattern<'a>(expr: &'a Expression<'a>) -> Option<(&'a Exp
 }
 
 // Unified fix creation
-fn create_at_fix<'a>(
-    fixer: &RuleFixer<'_, 'a>,
+fn create_at_fix(
+    fixer: &RuleFixer<'_, '_>,
     object_span: Span,
     full_span: Span,
     index: i64,
-) -> RuleFix<'a> {
+) -> RuleFix {
     let new_code = format!("{}.at({})", fixer.source_range(object_span), index);
     fixer.replace(full_span, new_code)
 }

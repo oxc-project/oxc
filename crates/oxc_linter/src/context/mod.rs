@@ -222,7 +222,7 @@ impl<'a> LintContext<'a> {
 
     /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
     /// name, severity, and a link to the rule's documentation URL.
-    fn add_diagnostic(&self, mut message: Message<'a>) {
+    fn add_diagnostic(&self, mut message: Message) {
         if self.parent.disable_directives().contains(self.current_rule_name, message.span()) {
             return;
         }
@@ -272,7 +272,7 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn diagnostic_with_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
-        C: Into<RuleFix<'a>>,
+        C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::SafeFix, fix);
@@ -293,7 +293,7 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn diagnostic_with_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
-        C: Into<RuleFix<'a>>,
+        C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::Suggestion, fix);
@@ -314,7 +314,7 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn diagnostic_with_dangerous_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
-        C: Into<RuleFix<'a>>,
+        C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousSuggestion, fix);
@@ -342,7 +342,7 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn diagnostic_with_dangerous_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
-        C: Into<RuleFix<'a>>,
+        C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousFix, fix);
@@ -360,7 +360,7 @@ impl<'a> LintContext<'a> {
         fix_kind: FixKind,
         fix: F,
     ) where
-        C: Into<RuleFix<'a>>,
+        C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         let (diagnostic, fix) = self.create_fix(fix_kind, fix, diagnostic);
@@ -386,11 +386,11 @@ impl<'a> LintContext<'a> {
         fix_one: (FixKind, F1),
         fix_two: (FixKind, F2),
     ) where
-        C: Into<RuleFix<'a>>,
+        C: Into<RuleFix>,
         F1: FnOnce(RuleFixer<'_, 'a>) -> C,
         F2: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
-        let fixes_result: Vec<Fix<'a>> = vec![
+        let fixes_result: Vec<Fix> = vec![
             self.create_fix(fix_one.0, fix_one.1, diagnostic.clone()).1,
             self.create_fix(fix_two.0, fix_two.1, diagnostic.clone()).1,
         ]
@@ -417,13 +417,13 @@ impl<'a> LintContext<'a> {
         fix_kind: FixKind,
         fix: F,
         diagnostic: OxcDiagnostic,
-    ) -> (OxcDiagnostic, Option<Fix<'a>>)
+    ) -> (OxcDiagnostic, Option<Fix>)
     where
-        C: Into<RuleFix<'a>>,
+        C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         let fixer = RuleFixer::new(fix_kind, self);
-        let rule_fix: RuleFix<'a> = fix(fixer).into();
+        let rule_fix: RuleFix = fix(fixer).into();
         #[cfg(debug_assertions)]
         debug_assert!(
             self.current_rule_fix_capabilities.supports_fix(fix_kind),

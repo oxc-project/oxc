@@ -188,74 +188,6 @@ impl RuntimeFileSystem for OsFileSystem {
     }
 }
 
-/// [`MessageCloner`] is a wrapper around an `&Allocator` which allows it to be safely shared across threads,
-/// in order to clone [`crate::fixer::Message`]s into it.
-///
-/// `Allocator` is not thread safe (it is not `Sync`), so cannot be shared across threads.
-/// It would be undefined behavior to allocate into an `Allocator` from multiple threads simultaneously.
-///
-/// `MessageCloner` ensures only one thread at a time can utilize the `Allocator`, by taking an
-/// exclusive `&mut Allocator` to start with, and synchronising access to the `Allocator` with a `Mutex`.
-///
-/// This type is wrapped in a module so that other code cannot access the inner `UnsafeAllocatorRef`
-/// directly, and must go via the [`MessageCloner::clone_message`] method.
-#[cfg(any(feature = "language_server", test))]
-mod message_cloner {
-    use std::sync::Mutex;
-
-    use oxc_allocator::{Allocator, CloneIn};
-
-    use crate::Message;
-
-    /// Unsafe wrapper around an `&Allocator` which makes it `Send`.
-    struct UnsafeAllocatorRef<'a>(&'a Allocator);
-
-    // SAFETY: It is sound to implement `Send` for `UnsafeAllocatorRef` because:
-    // * The only way to construct an `UnsafeAllocatorRef` is via `MessageCloner::new`, which takes
-    //   an exclusive `&mut Allocator`, ensuring no other references to the same `Allocator` exist.
-    // * The lifetime `'a` ensures that the reference to the `Allocator` cannot outlive the original
-    //   mutable borrow, preventing aliasing or concurrent mutation.
-    // * All access to the `Allocator` via `UnsafeAllocatorRef` is synchronized by a `Mutex` inside
-    //   `MessageCloner`, so only one thread can access the allocator at a time.
-    // * The module encapsulation prevents direct access to `UnsafeAllocatorRef`, so it cannot be
-    //   misused outside of the intended, synchronized context.
-    //
-    // Therefore, although `Allocator` is not `Sync`, it is safe to send `UnsafeAllocatorRef` between
-    // threads as long as it is only accessed via the `Mutex` in `MessageCloner`.
-    unsafe impl Send for UnsafeAllocatorRef<'_> {}
-
-    /// Wrapper around an [`Allocator`] which allows safely using it on multiple threads to
-    /// clone [`Message`]s into.
-    pub struct MessageCloner<'a>(Mutex<UnsafeAllocatorRef<'a>>);
-
-    impl<'a> MessageCloner<'a> {
-        /// Wrap an [`Allocator`] in a [`MessageCloner`].
-        ///
-        /// This method takes a `&mut Allocator`, to ensure that no other references to the `Allocator`
-        /// can exist, which guarantees no other threads can allocate with the `Allocator` while this
-        /// `MessageCloner` exists.
-        #[inline]
-        #[expect(clippy::needless_pass_by_ref_mut)]
-        pub fn new(allocator: &'a mut Allocator) -> Self {
-            Self(Mutex::new(UnsafeAllocatorRef(allocator)))
-        }
-
-        /// Clone a [`Message`] into the [`Allocator`] held by this [`MessageCloner`].
-        ///
-        /// # Panics
-        /// Panics if the underlying `Mutex` is poisoned.
-        pub fn clone_message(&self, message: &Message) -> Message<'a> {
-            // Obtain an exclusive lock on the `Mutex` during `clone_in` operation,
-            // to ensure no other thread can be simultaneously using the `Allocator`
-            let guard = self.0.lock().unwrap();
-            let allocator = guard.0;
-            message.clone_in(allocator)
-        }
-    }
-}
-#[cfg(any(feature = "language_server", test))]
-use message_cloner::MessageCloner;
-
 impl Runtime {
     pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
         // If global thread pool wasn't already initialized, do it now.
@@ -705,16 +637,10 @@ impl Runtime {
     // the struct not using `oxc_diagnostic::Error, because we are just collecting information
     // and returning it to the client to let him display it.
     #[cfg(feature = "language_server")]
-    pub(super) fn run_source<'a>(
-        &mut self,
-        allocator: &'a mut oxc_allocator::Allocator,
-    ) -> Vec<Message<'a>> {
+    pub(super) fn run_source(&mut self, _allocator: &mut oxc_allocator::Allocator) -> Vec<Message> {
         use std::sync::Mutex;
 
-        // Wrap allocator in `MessageCloner` so can clone `Message`s into it
-        let message_cloner = MessageCloner::new(allocator);
-
-        let messages = Mutex::new(Vec::<Message<'a>>::new());
+        let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, None, |me, mut module_to_lint| {
                 module_to_lint.content.with_dependent_mut(
@@ -768,8 +694,6 @@ impl Runtime {
 
                         messages.lock().unwrap().extend(
                             section_messages
-                                .iter()
-                                .map(|message| message_cloner.clone_message(message)),
                         );
                     },
                 );
@@ -780,18 +704,15 @@ impl Runtime {
     }
 
     #[cfg(test)]
-    pub(super) fn run_test_source<'a>(
+    pub(super) fn run_test_source(
         &mut self,
-        allocator: &'a mut Allocator,
+        _allocator: &mut Allocator,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
-    ) -> Vec<Message<'a>> {
+    ) -> Vec<Message> {
         use std::sync::Mutex;
 
-        // Wrap allocator in `MessageCloner` so can clone `Message`s into it
-        let message_cloner = MessageCloner::new(allocator);
-
-        let messages = Mutex::new(Vec::<Message<'a>>::new());
+        let messages = Mutex::new(Vec::<Message>::new());
         rayon::scope(|scope| {
             self.resolve_modules(scope, check_syntax_errors, Some(tx_error), |me, mut module| {
                 module.content.with_dependent_mut(
@@ -833,10 +754,8 @@ impl Runtime {
                                 Path::new(&module.path),
                                 context_sub_hosts,
                                 allocator_guard
-                            ).iter_mut()
-                                .map(|message| {
-                                    message_cloner.clone_message(message)
-                                }),
+                            )
+                            ,
                         );
                     },
                 );

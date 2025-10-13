@@ -145,7 +145,7 @@ impl IsolatedLintHandler {
         &self,
         directives: &DisableDirectives,
         severity: AllowWarnDeny,
-    ) -> Vec<Message<'_>> {
+    ) -> Vec<Message> {
         let diagnostics = create_unused_directives_diagnostics(directives, severity);
         diagnostics
             .into_iter()

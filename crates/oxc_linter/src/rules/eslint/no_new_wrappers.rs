@@ -104,7 +104,7 @@ fn remove_new_operator<'a>(
     fixer: RuleFixer<'_, 'a>,
     expr: &NewExpression<'a>,
     name: &'a str,
-) -> RuleFix<'a> {
+) -> RuleFix {
     debug_assert!(expr.callee.is_identifier_reference());
     let remove_new_fix = fixer.delete_range(Span::new(expr.span.start, expr.callee.span().start));
 

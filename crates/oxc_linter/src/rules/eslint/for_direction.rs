@@ -202,7 +202,7 @@ fn get_fixer_replace_span(update: &Expression) -> Span {
     }
 }
 
-fn apply_rule_fix<'a>(fixer: &RuleFixer<'_, 'a>, update: &Expression) -> RuleFix<'a> {
+fn apply_rule_fix(fixer: &RuleFixer<'_, '_>, update: &Expression) -> RuleFix {
     let span = get_fixer_replace_span(update);
     let replacement = get_fixer_replace_operator(update);
 
