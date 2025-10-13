@@ -34,6 +34,7 @@ pub(crate) mod import {
     pub mod no_namespace;
     pub mod no_self_import;
     pub mod no_unassigned_import;
+    pub mod no_useless_path_segments;
     pub mod no_webpack_loader_syntax;
     pub mod prefer_default_export;
     pub mod unambiguous;
@@ -823,6 +824,7 @@ oxc_macros::declare_all_lint_rules! {
     import::group_exports,
     import::no_named_export,
     import::no_unassigned_import,
+    import::no_useless_path_segments,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
     import::no_absolute_path,
