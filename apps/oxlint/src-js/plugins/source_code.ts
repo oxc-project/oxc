@@ -137,9 +137,9 @@ export const SOURCE_CODE = Object.freeze({
    * @returns Source text representing the AST node.
    */
   getText(
-    node?: Ranged | null | undefined,
-    beforeCount?: number | null | undefined,
-    afterCount?: number | null | undefined,
+    node?: Ranged,
+    beforeCount?: number,
+    afterCount?: number,
   ): string {
     if (sourceText === null) initSourceText();
 
@@ -228,7 +228,7 @@ export const SOURCE_CODE = Object.freeze({
    * @param afterCount? - The number of tokens after the node to retrieve.
    * @returns Array of `Token`s.
    */
-  /* oxlint-disable no-unused-vars */
+  /* oxlint-disable no-unused-vars typescript/no-duplicate-type-constituents */
   getTokens(
     node: Node,
     countOptions?: CountOptions | number | FilterFn | null | undefined,
@@ -236,7 +236,7 @@ export const SOURCE_CODE = Object.freeze({
   ): Token[] {
     throw new Error('`sourceCode.getTokens` not implemented yet'); // TODO
   },
-  /* oxlint-enable no-unused-vars */
+  /* oxlint-enable no-unused-vars typescript/no-duplicate-type-constituents */
 
   /**
    * Get the first token of the given node.
@@ -246,7 +246,7 @@ export const SOURCE_CODE = Object.freeze({
    * @returns `Token`, or `null` if all were skipped.
    */
   // oxlint-disable-next-line no-unused-vars
-  getFirstToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null | undefined): Token | null {
+  getFirstToken(node: Node, skipOptions?: SkipOptions | number | FilterFn): Token | null {
     throw new Error('`sourceCode.getFirstToken` not implemented yet'); // TODO
   },
 
@@ -258,7 +258,7 @@ export const SOURCE_CODE = Object.freeze({
    * @returns Array of `Token`s.
    */
   // oxlint-disable-next-line no-unused-vars
-  getFirstTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null | undefined): Token[] {
+  getFirstTokens(node: Node, countOptions?: CountOptions | number | FilterFn): Token[] {
     throw new Error('`sourceCode.getFirstTokens` not implemented yet'); // TODO
   },
 
@@ -269,7 +269,7 @@ export const SOURCE_CODE = Object.freeze({
    * @returns `Token`, or `null` if all were skipped.
    */
   // oxlint-disable-next-line no-unused-vars
-  getLastToken(node: Node, skipOptions?: SkipOptions | number | FilterFn | null | undefined): Token | null {
+  getLastToken(node: Node, skipOptions?: SkipOptions | number | FilterFn): Token | null {
     throw new Error('`sourceCode.getLastToken` not implemented yet'); // TODO
   },
 
@@ -280,7 +280,7 @@ export const SOURCE_CODE = Object.freeze({
    * @returns Array of `Token`s.
    */
   // oxlint-disable-next-line no-unused-vars
-  getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn | null | undefined): Token[] {
+  getLastTokens(node: Node, countOptions?: CountOptions | number | FilterFn): Token[] {
     throw new Error('`sourceCode.getLastTokens` not implemented yet'); // TODO
   },
 
@@ -293,7 +293,7 @@ export const SOURCE_CODE = Object.freeze({
   /* oxlint-disable no-unused-vars */
   getTokenBefore(
     nodeOrToken: NodeOrToken | Comment,
-    skipOptions?: SkipOptions | number | FilterFn | null | undefined,
+    skipOptions?: SkipOptions | number | FilterFn,
   ): Token | null {
     throw new Error('`sourceCode.getTokenBefore` not implemented yet'); // TODO
   },
@@ -308,7 +308,7 @@ export const SOURCE_CODE = Object.freeze({
   /* oxlint-disable no-unused-vars */
   getTokensBefore(
     nodeOrToken: NodeOrToken | Comment,
-    countOptions?: CountOptions | number | FilterFn | null | undefined,
+    countOptions?: CountOptions | number | FilterFn,
   ): Token[] {
     throw new Error('`sourceCode.getTokensBefore` not implemented yet'); // TODO
   },
@@ -323,7 +323,7 @@ export const SOURCE_CODE = Object.freeze({
   /* oxlint-disable no-unused-vars */
   getTokenAfter(
     nodeOrToken: NodeOrToken | Comment,
-    skipOptions?: SkipOptions | number | FilterFn | null | undefined,
+    skipOptions?: SkipOptions | number | FilterFn,
   ): Token | null {
     throw new Error('`sourceCode.getTokenAfter` not implemented yet'); // TODO
   },
@@ -338,7 +338,7 @@ export const SOURCE_CODE = Object.freeze({
   /* oxlint-disable no-unused-vars */
   getTokensAfter(
     nodeOrToken: NodeOrToken | Comment,
-    countOptions?: CountOptions | number | FilterFn | null | undefined,
+    countOptions?: CountOptions | number | FilterFn,
   ): Token[] {
     throw new Error('`sourceCode.getTokensAfter` not implemented yet'); // TODO
   },
@@ -362,7 +362,7 @@ export const SOURCE_CODE = Object.freeze({
   getTokensBetween(
     nodeOrToken1: NodeOrToken | Comment,
     nodeOrToken2: NodeOrToken | Comment,
-    countOptions?: CountOptions | number | FilterFn | null | undefined,
+    countOptions?: CountOptions | number | FilterFn,
   ): Token[] {
     throw new Error('`sourceCode.getTokensBetween` not implemented yet'); // TODO
   },
@@ -379,7 +379,7 @@ export const SOURCE_CODE = Object.freeze({
   getFirstTokenBetween(
     nodeOrToken1: NodeOrToken | Comment,
     nodeOrToken2: NodeOrToken | Comment,
-    skipOptions?: SkipOptions | null | undefined,
+    skipOptions?: SkipOptions,
   ): Token | null {
     throw new Error('`sourceCode.getFirstTokenBetween` not implemented yet'); // TODO
   },
@@ -396,7 +396,7 @@ export const SOURCE_CODE = Object.freeze({
   getFirstTokensBetween(
     nodeOrToken1: NodeOrToken | Comment,
     nodeOrToken2: NodeOrToken | Comment,
-    countOptions?: CountOptions | number | FilterFn | null | undefined,
+    countOptions?: CountOptions | number | FilterFn,
   ): Token[] {
     throw new Error('`sourceCode.getFirstTokensBetween` not implemented yet'); // TODO
   },
@@ -413,7 +413,7 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokenBetween(
     nodeOrToken1: NodeOrToken | Comment,
     nodeOrToken2: NodeOrToken | Comment,
-    skipOptions?: SkipOptions | null | undefined,
+    skipOptions?: SkipOptions,
   ): Token | null {
     throw new Error('`sourceCode.getLastTokenBetween` not implemented yet'); // TODO
   },
@@ -430,7 +430,7 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokensBetween(
     nodeOrToken1: NodeOrToken | Comment,
     nodeOrToken2: NodeOrToken | Comment,
-    countOptions?: CountOptions | number | FilterFn | null | undefined,
+    countOptions?: CountOptions | number | FilterFn,
   ): Token[] {
     throw new Error('`sourceCode.getLastTokensBetween` not implemented yet'); // TODO
   },
@@ -443,7 +443,7 @@ export const SOURCE_CODE = Object.freeze({
    * @returns The token starting at index, or `null` if no such token.
    */
   // oxlint-disable-next-line no-unused-vars
-  getTokenByRangeStart(index: number, rangeOptions?: RangeOptions | null | undefined): Token | null {
+  getTokenByRangeStart(index: number, rangeOptions?: RangeOptions): Token | null {
     throw new Error('`sourceCode.getTokenByRangeStart` not implemented yet'); // TODO
   },
 

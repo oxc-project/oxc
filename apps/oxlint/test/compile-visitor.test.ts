@@ -53,8 +53,8 @@ describe('compile visitor', () => {
   });
 
   it('accepts unknown visitor key', () => {
-    addVisitorToCompiled({ Foo() {} });
-    addVisitorToCompiled({ 'Foo:exit'() {} });
+    expect(() => addVisitorToCompiled({ Foo() {} })).not.toThrow();
+    expect(() => addVisitorToCompiled({ 'Foo:exit'() {} })).not.toThrow();
   });
 
   describe('registers enter visitor', () => {
