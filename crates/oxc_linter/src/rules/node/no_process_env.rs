@@ -120,7 +120,7 @@ impl Rule for NoProcessEnv {
                     && obj_mem.span() == current_span
                 {
                     let (.., prop_name) = parent_mem.static_property_info();
-                        if self.0.allowed_variables.contains(&CompactStr::new(prop_name)) {
+                    if self.0.allowed_variables.contains(&CompactStr::new(prop_name)) {
                         should_report = false;
                     }
                 }
