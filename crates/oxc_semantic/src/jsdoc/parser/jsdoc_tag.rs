@@ -243,7 +243,7 @@ mod test {
                  * @import {T} from '@k6'
                  */",
                 "@import {T} from '@k6'\n                 ",
-            )
+            ),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);

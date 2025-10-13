@@ -81,7 +81,7 @@ pub fn parse_jsdoc(
             '\n' => {
                 in_double_quotes = false;
                 in_single_quotes = false;
-            },
+            }
             '{' => curly_brace_depth += 1,
             '}' => curly_brace_depth = curly_brace_depth.saturating_sub(1),
             '(' => brace_depth += 1,
