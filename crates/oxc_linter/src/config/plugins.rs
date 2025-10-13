@@ -75,31 +75,34 @@ impl LintPlugins {
     }
 }
 
-impl From<&str> for LintPlugins {
-    fn from(value: &str) -> Self {
+impl TryFrom<&str> for LintPlugins {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            "react" | "react-hooks" | "react_hooks" => LintPlugins::REACT,
-            "unicorn" => LintPlugins::UNICORN,
+            "react" | "react-hooks" | "react_hooks" => Ok(LintPlugins::REACT),
+            "unicorn" => Ok(LintPlugins::UNICORN),
             "typescript" | "typescript-eslint" | "typescript_eslint" | "@typescript-eslint" => {
-                LintPlugins::TYPESCRIPT
+                Ok(LintPlugins::TYPESCRIPT)
             }
             // deepscan for backwards compatibility. Those rules have been moved into oxc
-            "oxc" | "deepscan" => LintPlugins::OXC,
+            "oxc" | "deepscan" => Ok(LintPlugins::OXC),
             // import-x has the same rules but better performance
-            "import" | "import-x" => LintPlugins::IMPORT,
-            "jsdoc" => LintPlugins::JSDOC,
-            "jest" => LintPlugins::JEST,
-            "vitest" => LintPlugins::VITEST,
-            "jsx-a11y" | "jsx_a11y" => LintPlugins::JSX_A11Y,
-            "nextjs" => LintPlugins::NEXTJS,
-            "react-perf" | "react_perf" => LintPlugins::REACT_PERF,
-            "promise" => LintPlugins::PROMISE,
-            "node" => LintPlugins::NODE,
-            "regex" => LintPlugins::REGEX,
-            "vue" => LintPlugins::VUE,
+            "import" | "import-x" => Ok(LintPlugins::IMPORT),
+            "jsdoc" => Ok(LintPlugins::JSDOC),
+            "jest" => Ok(LintPlugins::JEST),
+            "vitest" => Ok(LintPlugins::VITEST),
+            "jsx-a11y" | "jsx_a11y" => Ok(LintPlugins::JSX_A11Y),
+            "nextjs" => Ok(LintPlugins::NEXTJS),
+            "react-perf" | "react_perf" => Ok(LintPlugins::REACT_PERF),
+            "promise" => Ok(LintPlugins::PROMISE),
+            "node" => Ok(LintPlugins::NODE),
+            "regex" => Ok(LintPlugins::REGEX),
+            "vue" => Ok(LintPlugins::VUE),
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
-            _ => LintPlugins::empty(),
+            "eslint" => Ok(LintPlugins::ESLINT),
+            _ => Err(()),
         }
     }
 }
@@ -134,15 +137,11 @@ impl<'de> Deserialize<'de> for LintPlugins {
         let mut lint_plugins = LintPlugins::empty();
 
         for plugin in &plugin_names {
-            if plugin == "eslint" {
-                continue;
-            }
-
-            let plugin_flag = LintPlugins::from(plugin.as_str());
-            if plugin_flag == LintPlugins::empty() {
+            if let Ok(plugin_flag) = LintPlugins::try_from(plugin.as_str()) {
+                lint_plugins |= plugin_flag;
+            } else {
                 return Err(serde::de::Error::custom(format!("Unknown plugin: '{plugin}'.")));
             }
-            lint_plugins |= plugin_flag;
         }
 
         Ok(lint_plugins)
@@ -243,10 +242,10 @@ mod tests {
 
     #[test]
     fn test_plugin_from_str() {
-        assert_eq!(LintPlugins::from("react"), LintPlugins::REACT);
-        assert_eq!(LintPlugins::from("typescript-eslint"), LintPlugins::TYPESCRIPT);
-        assert_eq!(LintPlugins::from("deepscan"), LintPlugins::OXC);
-        assert_eq!(LintPlugins::from("unknown"), LintPlugins::empty());
+        assert_eq!(LintPlugins::try_from("react"), Ok(LintPlugins::REACT));
+        assert_eq!(LintPlugins::try_from("typescript-eslint"), Ok(LintPlugins::TYPESCRIPT));
+        assert_eq!(LintPlugins::try_from("deepscan"), Ok(LintPlugins::OXC));
+        assert_eq!(LintPlugins::try_from("unknown"), Err(()));
     }
 
     #[test]

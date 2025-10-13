@@ -172,8 +172,7 @@ fn rule_source(rule: &RuleTableRow) -> String {
 /// - Example: `eslint` => true
 /// - Example: `jest` => false
 fn is_default_plugin(plugin: &str) -> bool {
-    let plugin = LintPlugins::from(plugin);
-    LintPlugins::default().contains(plugin)
+    LintPlugins::try_from(plugin).is_ok_and(|plugin| LintPlugins::default().contains(plugin))
 }
 
 /// Returns the normalized plugin name.
@@ -181,7 +180,7 @@ fn is_default_plugin(plugin: &str) -> bool {
 /// - Example: `eslint` -> `eslint`
 /// - Example: `jsx_a11y` -> `jsx-a11y`
 fn get_normalized_plugin_name(plugin: &str) -> &str {
-    LintPlugins::from(plugin).into()
+    LintPlugins::try_from(plugin).unwrap_or(LintPlugins::empty()).into()
 }
 
 fn how_to_use(rule: &RuleTableRow) -> String {

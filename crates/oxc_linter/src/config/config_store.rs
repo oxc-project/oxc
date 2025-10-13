@@ -167,13 +167,19 @@ impl Config {
         let mut rules = self
             .base_rules
             .iter()
-            .filter(|(rule, _)| plugins.contains(LintPlugins::from(rule.plugin_name())))
+            .filter(|(rule, _)| {
+                LintPlugins::try_from(rule.plugin_name())
+                    .is_ok_and(|plugin| plugins.contains(plugin))
+            })
             .cloned()
             .collect::<FxHashMap<_, _>>();
 
         let all_rules = RULES
             .iter()
-            .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
+            .filter(|rule| {
+                LintPlugins::try_from(rule.plugin_name())
+                    .is_ok_and(|plugin| plugins.contains(plugin))
+            })
             .cloned()
             .collect::<Vec<_>>();
 
@@ -194,7 +200,8 @@ impl Config {
 
                 if !unconfigured_plugins.is_empty() {
                     for (rule, severity) in all_rules.iter().filter_map(|rule| {
-                        let rule_plugin = LintPlugins::from(rule.plugin_name());
+                        let rule_plugin = LintPlugins::try_from(rule.plugin_name())
+                            .unwrap_or(LintPlugins::empty());
                         // Only apply categories to rules from unconfigured plugins
                         if unconfigured_plugins.contains(rule_plugin) {
                             self.categories

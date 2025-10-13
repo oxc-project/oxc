@@ -86,8 +86,7 @@ impl OxlintRules {
                 let config = rule_config.config.clone().unwrap_or_default();
                 let severity = rule_config.severity;
 
-                // TODO(camc314): remove the `plugin_name == "eslint"`
-                if plugin_name == "eslint" || !LintPlugins::from(plugin_name).is_empty() {
+                if LintPlugins::try_from(plugin_name).is_ok() {
                     let rule = rules_map.get(&plugin_name).copied().or_else(|| {
                         all_rules
                             .iter()
