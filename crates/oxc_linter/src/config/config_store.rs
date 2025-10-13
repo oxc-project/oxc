@@ -691,7 +691,7 @@ mod test {
         // reproduction for https://github.com/oxc-project/oxc/issues/14504
         // the bug occurred due to a simple omission and the fix was simple.
         // this test is just to communicate what was going wrong and to avoid a regression.
-        // i noticed js plugins arent considered stable yet, so feel free edit or remove this test
+        // i noticed js plugins aren't considered stable yet, so feel free to edit or remove this test
 
         let mut external_plugin_store = ExternalPluginStore::default();
         external_plugin_store.register_plugin(
