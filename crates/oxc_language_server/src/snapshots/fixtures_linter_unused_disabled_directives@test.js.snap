@@ -85,7 +85,7 @@ fixed: Multiple(
             message: Some(
                 "Disable no-debugger for this line",
             ),
-            code: "// oxlint-disable-next-line no-debugger\n",
+            code: "  // oxlint-disable-next-line no-debugger\n",
             range: Range {
                 start: Position {
                     line: 2,

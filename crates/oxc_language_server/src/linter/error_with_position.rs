@@ -187,7 +187,6 @@ impl<'a> SpanPositionMessage<'a> {
         Self { start, end, message: None }
     }
 
-    #[must_use]
     pub fn with_message(mut self, message: Option<Cow<'a, str>>) -> Self {
         self.message = message;
         self
@@ -362,7 +361,13 @@ fn add_ignore_fixes<'a>(
 
     if let Some(rule_name) = code.number.as_ref() {
         // TODO:  doesn't support disabling multiple rules by name for a given line.
-        new_fixes.push(disable_for_this_line(rule_name, error_offset, rope, source_text));
+        new_fixes.push(disable_for_this_line(
+            rule_name,
+            error_offset,
+            section_offset,
+            rope,
+            source_text,
+        ));
         new_fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
     }
 
@@ -378,15 +383,43 @@ fn add_ignore_fixes<'a>(
 fn disable_for_this_line<'a>(
     rule_name: &str,
     error_offset: u32,
+    section_offset: u32,
     rope: &Rope,
     source_text: &str,
 ) -> FixWithPosition<'a> {
-    let mut start_position = offset_to_position(rope, error_offset, source_text);
-    start_position.character = 0; // TODO: character should be set to match the first non-whitespace character in the source text to match the existing indentation.
-    let end_position = start_position.clone();
+    let bytes = source_text.as_bytes();
+    // Find the line break before the error
+    let mut line_break_offset = error_offset;
+    for byte in bytes[section_offset as usize..error_offset as usize].iter().rev() {
+        if *byte == b'\n' || *byte == b'\r' {
+            break;
+        }
+        line_break_offset -= 1;
+    }
+
+    // For framework files, ensure we don't go before the section start
+    if section_offset > 0 && line_break_offset < section_offset {
+        line_break_offset = section_offset;
+    }
+
+    let (content_prefix, insert_offset) =
+        get_section_insert_position(section_offset, line_break_offset, bytes);
+
+    let whitespace_range = {
+        let start = insert_offset as usize;
+        let end = error_offset as usize;
+        let slice = &bytes[start..end];
+        let whitespace_len = slice.iter().take_while(|c| matches!(c, b' ' | b'\t')).count();
+        &slice[..whitespace_len]
+    };
+    let whitespace_string = String::from_utf8_lossy(whitespace_range);
+
+    let position = offset_to_position(rope, insert_offset, source_text);
     FixWithPosition {
-        content: Cow::Owned(format!("// oxlint-disable-next-line {rule_name}\n")),
-        span: SpanPositionMessage::new(start_position, end_position)
+        content: Cow::Owned(format!(
+            "{content_prefix}{whitespace_string}// oxlint-disable-next-line {rule_name}\n"
+        )),
+        span: SpanPositionMessage::new(position.clone(), position)
             .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this line")))),
     }
 }
@@ -399,37 +432,57 @@ fn disable_for_this_section<'a>(
 ) -> FixWithPosition<'a> {
     let comment = format!("// oxlint-disable {rule_name}\n");
 
-    let (content, offset) = if section_offset == 0 {
-        // JS files - insert at the beginning
-        (Cow::Owned(comment), section_offset)
-    } else {
+    let (content_prefix, insert_offset) =
+        get_section_insert_position(section_offset, section_offset, source_text.as_bytes());
+
+    let content = Cow::Owned(format!("{content_prefix}{comment}"));
+    let position = offset_to_position(rope, insert_offset, source_text);
+
+    FixWithPosition {
+        content,
+        span: SpanPositionMessage::new(position.clone(), position)
+            .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this file")))),
+    }
+}
+
+/// Get the insert position and content prefix for section-based insertions.
+///
+/// For framework files (section_offset > 0), this handles proper line break detection.
+/// For regular JS files (section_offset == 0), it returns the offset as-is.
+///
+/// Returns (content_prefix, insert_offset) where:
+/// - content_prefix: "\n" if we need to add a line break, "" otherwise
+/// - insert_offset: the byte offset where the content should be inserted
+fn get_section_insert_position(
+    section_offset: u32,
+    target_offset: u32,
+    bytes: &[u8],
+) -> (&'static str, u32) {
+    if section_offset == 0 {
+        // Regular JS files - insert at target offset
+        ("", target_offset)
+    } else if target_offset == section_offset {
         // Framework files - check for line breaks at section_offset
-        let bytes = source_text.as_bytes();
         let current = bytes.get(section_offset as usize);
         let next = bytes.get((section_offset + 1) as usize);
 
         match (current, next) {
             (Some(b'\n'), _) => {
                 // LF at offset, insert after it
-                (Cow::Owned(comment), section_offset + 1)
+                ("", section_offset + 1)
             }
             (Some(b'\r'), Some(b'\n')) => {
                 // CRLF at offset, insert after both
-                (Cow::Owned(comment), section_offset + 2)
+                ("", section_offset + 2)
             }
             _ => {
                 // Not at line start, prepend newline
-                (Cow::Owned("\n".to_owned() + &comment), section_offset)
+                ("\n", section_offset)
             }
         }
-    };
-
-    let position = offset_to_position(rope, offset, source_text);
-
-    FixWithPosition {
-        content,
-        span: SpanPositionMessage::new(position.clone(), position)
-            .with_message(Some(Cow::Owned(format!("Disable {rule_name} for this file")))),
+    } else {
+        // Framework files where target_offset != section_offset (line was found)
+        ("", target_offset)
     }
 }
 
@@ -516,6 +569,186 @@ mod test {
         assert_eq!(fix.content, "\n// oxlint-disable no-unused-vars\n");
         assert_eq!(fix.span.start.line, 0);
         assert_eq!(fix.span.start.character, 6);
+    }
+
+    #[test]
+    fn disable_for_this_line_single_line() {
+        let source = "console.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_with_spaces() {
+        let source = "  console.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source);
+
+        assert_eq!(fix.content, "  // oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_with_tabs() {
+        let source = "\t\tconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 10, 0, &rope, source);
+
+        assert_eq!(fix.content, "\t\t// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_mixed_tabs_spaces() {
+        let source = "\t  \tconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 12, 0, &rope, source);
+
+        assert_eq!(fix.content, "\t  \t// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_multiline_with_tabs() {
+        let source = "function test() {\n\tconsole.log('hello');\n}";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 27, 0, &rope, source);
+
+        assert_eq!(fix.content, "\t// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_multiline_with_spaces() {
+        let source = "function test() {\n    console.log('hello');\n}";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 30, 0, &rope, source);
+
+        assert_eq!(fix.content, "    // oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_complex_indentation() {
+        let source = "function test() {\n\t  \t  console.log('hello');\n}";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 33, 0, &rope, source);
+
+        assert_eq!(fix.content, "\t  \t  // oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_no_indentation() {
+        let source = "function test() {\nconsole.log('hello');\n}";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 26, 0, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_crlf_with_tabs() {
+        let source = "function test() {\r\n\tconsole.log('hello');\r\n}";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 28, 0, &rope, source);
+
+        assert_eq!(fix.content, "\t// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_deeply_nested() {
+        let source = "if (true) {\n\t\tif (nested) {\n\t\t\tconsole.log('deep');\n\t\t}\n}";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 40, 0, &rope, source);
+
+        assert_eq!(fix.content, "\t\t\t// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 2);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_at_start_of_file() {
+        let source = "console.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_whitespace_only_continuous() {
+        // Test that only continuous whitespace from line start is captured
+        let source = "function test() {\n  \tcode  \there\n}";
+        let rope = Rope::from_str(source);
+        // Error at position of 'code' (after "  \t")
+        let fix = super::disable_for_this_line("no-console", 21, 0, &rope, source);
+
+        // Should only capture "  \t" at the beginning, not the spaces around "here"
+        assert_eq!(fix.content, "  \t// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_with_section_offset() {
+        // Test framework file with section offset (like Vue/Svelte)
+        let source = "<script>\nconsole.log('hello');\n</script>";
+        let rope = Rope::from_str(source);
+        let section_offset = 8; // At the \n after "<script>"
+        let error_offset = 17; // At 'console'
+        let fix =
+            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+
+        assert_eq!(fix.content, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 1);
+        assert_eq!(fix.span.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_section_offset_mid_line() {
+        // Test framework file where section starts mid-line
+        let source = "<script>console.log('hello');\n</script>";
+        let rope = Rope::from_str(source);
+        let section_offset = 8; // After "<script>"
+        let error_offset = 16; // At 'console'
+        let fix =
+            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+
+        assert_eq!(fix.content, "\n// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 0);
+        assert_eq!(fix.span.start.character, 8);
+    }
+
+    #[test]
+    fn disable_for_this_line_section_offset_with_indentation() {
+        // Test framework file with indented code
+        let source = "<template>\n</template>\n<script>\n  console.log('hello');\n</script>";
+        let rope = Rope::from_str(source);
+        let section_offset = 31; // At \n after "<script>"
+        let error_offset = 36; // At 'console' (after "  ")
+        let fix =
+            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+
+        assert_eq!(fix.content, "  // oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.span.start.line, 3);
+        assert_eq!(fix.span.start.character, 0);
     }
 
     fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {

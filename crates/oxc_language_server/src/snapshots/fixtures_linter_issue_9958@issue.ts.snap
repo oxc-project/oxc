@@ -21,7 +21,7 @@ fixed: Multiple(
             message: Some(
                 "Disable no-extra-boolean-cast for this line",
             ),
-            code: "// oxlint-disable-next-line no-extra-boolean-cast\n",
+            code: "  // oxlint-disable-next-line no-extra-boolean-cast\n",
             range: Range {
                 start: Position {
                     line: 3,
@@ -72,7 +72,7 @@ fixed: Multiple(
             message: Some(
                 "Disable no-non-null-asserted-optional-chain for this line",
             ),
-            code: "// oxlint-disable-next-line no-non-null-asserted-optional-chain\n",
+            code: "  // oxlint-disable-next-line no-non-null-asserted-optional-chain\n",
             range: Range {
                 start: Position {
                     line: 11,
