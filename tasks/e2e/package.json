@@ -28,7 +28,7 @@
     "oxc-transform": "link:../../napi/transform",
     "preact": "^10.26.7",
     "qs": "^6.13.1",
-    "ramda": "^0.31.0",
+    "ramda": "^0.32.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "rxjs": "^7.8.2",
