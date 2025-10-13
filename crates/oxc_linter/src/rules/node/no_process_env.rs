@@ -128,12 +128,10 @@ impl Rule for NoProcessEnv {
             AstKind::ComputedMemberExpression(parent_mem) => {
                 if let Some(obj_mem) = parent_mem.object.as_member_expression()
                     && obj_mem.span() == current_span
+                    && let Some((_, name)) = parent_mem.static_property_info()
+                    && self.0.allowed_variables.contains(name)
                 {
-                    if let Some((_, name)) = parent_mem.static_property_info() {
-                        if self.0.allowed_variables.contains(name) {
-                            should_report = false;
-                        }
-                    }
+                    should_report = false;
                 }
             }
             _ => {}
