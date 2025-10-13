@@ -5,4 +5,4 @@ mod manager;
 mod tests;
 
 pub use file_format::{SuppressionEntry, SuppressionFile};
-pub use manager::SuppressionManager;
+pub use manager::{SuppressionManager, ThreadSafeSuppressionManager};

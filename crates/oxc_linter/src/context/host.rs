@@ -19,7 +19,7 @@ use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     rules::RuleEnum,
-    suppression::SuppressionManager,
+    suppression::ThreadSafeSuppressionManager,
 };
 
 use super::{LintContext, plugin_name_to_prefix};
@@ -148,7 +148,7 @@ pub struct ContextHost<'a> {
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
     /// Bulk suppression manager for suppressing violations based on counts.
-    pub(super) suppression_manager: Option<Rc<RefCell<SuppressionManager>>>,
+    pub(super) suppression_manager: Option<ThreadSafeSuppressionManager>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -166,16 +166,15 @@ impl<'a> ContextHost<'a> {
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
-        Self::with_suppression_manager(file_path, semantic, module_record, options, config, None)
+        Self::with_suppression_manager(file_path, sub_hosts, options, config, None)
     }
 
     pub fn with_suppression_manager<P: AsRef<Path>>(
         file_path: P,
-        semantic: Rc<Semantic<'a>>,
-        module_record: Arc<ModuleRecord>,
+        sub_hosts: Vec<ContextSubHost<'a>>,
         options: LintOptions,
         config: Arc<LintConfig>,
-        suppression_manager: Option<Rc<RefCell<SuppressionManager>>>,
+        suppression_manager: Option<ThreadSafeSuppressionManager>,
     ) -> Self {
         const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
 

@@ -73,7 +73,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
-    suppression::{SuppressionEntry, SuppressionFile, SuppressionManager},
+    suppression::{SuppressionEntry, SuppressionFile, SuppressionManager, ThreadSafeSuppressionManager},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
@@ -162,9 +162,34 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> (Vec<Message<'a>>, Option<DisableDirectives>) {
+        self.run_with_disable_directives_and_suppression_manager(
+            path,
+            context_sub_hosts,
+            allocator,
+            None,
+        )
+    }
+
+    /// Same as `run_with_disable_directives` but also accepts a suppression manager
+    ///
+    /// # Panics
+    /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
+    pub fn run_with_disable_directives_and_suppression_manager<'a>(
+        &self,
+        path: &Path,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+        suppression_manager: Option<ThreadSafeSuppressionManager>,
+    ) -> (Vec<Message<'a>>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host = Rc::new(ContextHost::with_suppression_manager(
+            path,
+            context_sub_hosts,
+            self.options,
+            config,
+            suppression_manager,
+        ));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;

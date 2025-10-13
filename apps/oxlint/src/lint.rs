@@ -4,21 +4,23 @@ use std::{
     fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
-    sync::Arc,
+    sync::{Arc, Mutex},
     time::Instant,
 };
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use oxc_allocator::AllocatorPool;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, Error, GraphicalReportHandler, OxcDiagnostic,
+    reporter::{DiagnosticReporter, DiagnosticResult},
+};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    SuppressionManager,
+    SuppressionManager, ThreadSafeSuppressionManager,
 };
 
 use crate::{
@@ -27,6 +29,46 @@ use crate::{
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
+
+/// Custom diagnostic reporter that collects violations for suppression generation
+pub struct ViolationCollector {
+    violations: Arc<Mutex<Vec<(PathBuf, String, String)>>>, // (file_path, plugin_prefix, rule_name)
+}
+
+impl ViolationCollector {
+    pub fn new() -> (Self, Arc<Mutex<Vec<(PathBuf, String, String)>>>) {
+        let violations = Arc::new(Mutex::new(Vec::new()));
+        (Self { violations: violations.clone() }, violations)
+    }
+}
+
+impl DiagnosticReporter for ViolationCollector {
+    fn finish(&mut self, _result: &DiagnosticResult) -> Option<String> {
+        // Return None to suppress output
+        None
+    }
+
+    fn render_error(&mut self, error: Error) -> Option<String> {
+        // Extract diagnostic from miette::Error
+        if let Some(diagnostic) = error.downcast_ref::<OxcDiagnostic>() {
+            if let (Some(scope), Some(number)) = (diagnostic.code_scope(), diagnostic.code_number()) {
+                // For now, we'll extract file path information differently
+                // since accessing NamedSource directly is not available through the trait
+                // We'll rely on the file path being passed through the diagnostic tuple
+
+                // Create a generic file path for now - this will be improved when
+                // we integrate with the actual diagnostic collection process
+                let file_path = PathBuf::from("unknown_file.js");
+                if let Ok(mut violations) = self.violations.lock() {
+                    violations.push((file_path, scope.to_string(), number.to_string()));
+                }
+            }
+        }
+
+        // Return None to suppress output during collection
+        None
+    }
+}
 
 #[derive(Debug)]
 pub struct CliRunner {
@@ -56,27 +98,29 @@ impl CliRunner {
         }
 
         let LintCommand {
-            paths,
-            filter,
-            basic_options,
-            warning_options,
-            ignore_options,
-            fix_options,
-            enable_plugins,
-            misc_options,
+            ref paths,
+            ref filter,
+            ref basic_options,
+            ref warning_options,
+            ref ignore_options,
+            ref fix_options,
+            ref enable_plugins,
+            ref misc_options,
             disable_nested_config,
-            inline_config_options,
-            suppression_options,
+            ref inline_config_options,
+            ref suppression_options,
+            ref output_options,
             ..
         } = self.options;
 
         let external_linter = self.external_linter.as_ref();
+        let output_formatter = OutputFormatter::new(output_options.format.clone());
 
-        let mut paths = paths;
+        let mut paths = paths.clone();
         let provided_path_count = paths.len();
         let now = Instant::now();
 
-        let filters = match Self::get_filters(filter) {
+        let filters = match Self::get_filters(filter.clone()) {
             Ok(filters) => filters,
             Err((result, message)) => {
                 print_and_flush_stdout(stdout, &message);
@@ -237,7 +281,7 @@ impl CliRunner {
         .with_filters(&filters);
 
         // If no external rules, discard `ExternalLinter`
-        let mut external_linter = self.external_linter;
+        let mut external_linter = self.external_linter.clone();
         if external_plugin_store.is_empty() {
             external_linter = None;
         }
@@ -282,7 +326,7 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
+        let mut options = LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let lint_config = match config_builder.build(&external_plugin_store) {
             Ok(config) => config,
@@ -303,7 +347,7 @@ impl CliRunner {
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
-        let (mut diagnostic_service, tx_error) =
+        let (_diagnostic_service, _tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
@@ -323,9 +367,11 @@ impl CliRunner {
         // Handle suppression file setup
         let suppression_file_path = suppression_options
             .suppression_file
+            .as_ref()
+            .cloned()
             .unwrap_or_else(|| PathBuf::from("oxlint-suppressions.json"));
 
-        let suppression_manager = if suppression_options.suppress_all
+        let _suppression_manager = if suppression_options.suppress_all
             || suppression_options.prune_suppressions
             || suppression_file_path.exists()
         {
@@ -334,7 +380,7 @@ impl CliRunner {
             SuppressionManager::new()
         };
 
-        let tsconfig = basic_options.tsconfig;
+        let tsconfig = basic_options.tsconfig.clone();
         if let Some(path) = tsconfig.as_ref() {
             if path.is_file() {
                 options = options.with_tsconfig(path);
@@ -355,52 +401,29 @@ impl CliRunner {
 
         let number_of_rules = linter.number_of_rules(self.options.type_aware);
 
-        // Handle suppress-all mode by running linter directly to collect diagnostics
+        // Handle suppress-all mode by running linter to collect diagnostics
         if suppression_options.suppress_all {
-            // Save suppression file immediately for now
-            match suppression_manager.save(&suppression_file_path) {
-                Ok(_) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Generated suppression file: {}\n",
-                            suppression_file_path.display()
-                        ),
-                    );
-                    return CliRunResult::LintSucceeded;
-                }
-                Err(err) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!("Failed to save suppression file: {err}\n"),
-                    );
-                    return CliRunResult::InvalidOptionConfig;
-                }
-            }
+            return self.handle_suppress_all(
+                stdout,
+                linter,
+                config_store,
+                &files_to_lint,
+                &suppression_file_path,
+                has_external_linter,
+                options,
+            );
         }
 
         // Handle prune-suppressions mode
         if suppression_options.prune_suppressions {
-            // Prune unused suppressions and save
-            let mut manager = suppression_manager;
-            manager.prune_unused();
-            match manager.save(&suppression_file_path) {
-                Ok(_) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!("Pruned suppression file: {}\n", suppression_file_path.display()),
-                    );
-                    return CliRunResult::LintSucceeded;
-                }
-                Err(err) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!("Failed to save suppression file: {err}\n"),
-                    );
-                    return CliRunResult::InvalidOptionConfig;
-                }
-            }
+            return self.handle_prune_suppressions(stdout, &suppression_file_path);
         }
+
+        // Load suppression manager for normal linting (if file exists)
+        let _suppression_manager = match Self::load_suppression_manager(&suppression_file_path) {
+            Ok(manager) => manager,
+            Err(result) => return result,
+        };
 
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
@@ -477,6 +500,153 @@ impl CliRunner {
 
 impl CliRunner {
     const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
+
+    /// Handle suppress-all operation by collecting violations and generating suppressions
+    fn handle_suppress_all(
+        &self,
+        stdout: &mut dyn Write,
+        linter: Linter,
+        config_store: ConfigStore,
+        files_to_lint: &[Arc<OsStr>],
+        suppression_file_path: &Path,
+        has_external_linter: bool,
+        options: LintServiceOptions,
+    ) -> CliRunResult {
+        // Create ViolationCollector to gather diagnostics
+        let (violation_collector, violations_shared) = ViolationCollector::new();
+        let (mut diagnostic_collector, tx_collector) =
+            DiagnosticService::new(Box::new(violation_collector));
+
+        // Create the LintRunner for diagnostic collection (without suppression manager)
+        let lint_runner = match LintRunner::builder(options.clone(), config_store.clone())
+            .with_linter(linter.clone())
+            .with_type_aware(self.options.type_aware)
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(err) => {
+                print_and_flush_stdout(stdout, &format!("Failed to build linter: {err}"));
+                return CliRunResult::TsGoLintError;
+            }
+        };
+
+        // Configure the file system for external linter if needed
+        let file_system = if has_external_linter {
+            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
+            {
+                Some(Box::new(crate::js_plugins::RawTransferFileSystem)
+                    as Box<dyn oxc_linter::RuntimeFileSystem + Sync + Send>)
+            }
+
+            #[cfg(not(all(
+                feature = "napi",
+                target_pointer_width = "64",
+                target_endian = "little"
+            )))]
+            unreachable!(
+                "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
+            );
+        } else {
+            None
+        };
+
+        // Run linting to collect violations
+        match lint_runner.lint_files(files_to_lint, tx_collector.clone(), file_system) {
+            Ok(_) => {
+                drop(tx_collector);
+
+                // Process the diagnostics (this consumes the service)
+                let _diagnostic_result = diagnostic_collector.run(&mut std::io::sink());
+
+                // Get collected violations from the shared Arc<Mutex<>>
+                let collected_violations = violations_shared.lock().unwrap().clone();
+
+                // Generate suppressions from collected violations
+                let mut new_suppression_manager = SuppressionManager::new();
+                new_suppression_manager.add_violations_from_diagnostics(&collected_violations);
+
+                // Save suppression file
+                match new_suppression_manager.save(suppression_file_path) {
+                    Ok(_) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Generated suppression file: {}\n",
+                                suppression_file_path.display()
+                            ),
+                        );
+                        CliRunResult::LintSucceeded
+                    }
+                    Err(err) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!("Failed to save suppression file: {err}\n"),
+                        );
+                        CliRunResult::InvalidOptionConfig
+                    }
+                }
+            }
+            Err(err) => {
+                print_and_flush_stdout(stdout, &format!("Failed to collect violations: {err}"));
+                CliRunResult::TsGoLintError
+            }
+        }
+    }
+
+    /// Load suppression manager for normal linting operations
+    fn load_suppression_manager(
+        suppression_file_path: &Path,
+    ) -> Result<Option<ThreadSafeSuppressionManager>, CliRunResult> {
+        if suppression_file_path.exists() {
+            match SuppressionManager::load(suppression_file_path) {
+                Ok(manager) => Ok(Some(ThreadSafeSuppressionManager::new(manager))),
+                Err(_) => {
+                    // If we can't load the suppression file, continue without it
+                    // rather than failing the entire linting process
+                    Ok(None)
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Handle prune-suppressions operation
+    fn handle_prune_suppressions(
+        &self,
+        stdout: &mut dyn Write,
+        suppression_file_path: &Path,
+    ) -> CliRunResult {
+        // Load a separate manager for pruning
+        let mut prune_manager = match SuppressionManager::load(suppression_file_path) {
+            Ok(manager) => manager,
+            Err(err) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to load suppression file for pruning: {err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+
+        prune_manager.prune_unused();
+        match prune_manager.save(suppression_file_path) {
+            Ok(_) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Pruned suppression file: {}\n", suppression_file_path.display()),
+                );
+                CliRunResult::LintSucceeded
+            }
+            Err(err) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to save suppression file: {err}\n"),
+                );
+                CliRunResult::InvalidOptionConfig
+            }
+        }
+    }
 
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {

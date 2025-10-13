@@ -229,7 +229,6 @@ impl<'a> LintContext<'a> {
 
         // Check bulk suppression
         if let Some(suppression_manager) = &self.parent.suppression_manager {
-            let mut suppression_manager = suppression_manager.borrow_mut();
             if suppression_manager.is_suppressed(
                 &self.parent.file_path,
                 self.current_plugin_prefix,
