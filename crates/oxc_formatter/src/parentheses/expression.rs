@@ -249,7 +249,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, MemberExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        false
+        matches!(self.parent, AstNodes::NewExpression(_))
+            && (!self.optional || member_chain_callee_needs_parens(&self.expression))
     }
 }
 
@@ -797,7 +798,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSNonNullExpression<'a>> {
         let parent = self.parent;
         is_class_extends(self.span, parent)
             || (matches!(parent, AstNodes::NewExpression(_))
-                && member_chain_callee_needs_parens(self.expression()))
+                && member_chain_callee_needs_parens(&self.expression))
     }
 }
 

@@ -1,0 +1,12 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+new (get(win))[ty](xxx);
+new (get(win))[ty][ty](xxx);
+
+==================== Output ====================
+new (get(win)[ty])(xxx);
+new (get(win)[ty][ty])(xxx);
+
+===================== End =====================
