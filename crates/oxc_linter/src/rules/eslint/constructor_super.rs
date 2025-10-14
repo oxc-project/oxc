@@ -5,10 +5,15 @@ use oxc_ast::{
         Statement,
     },
 };
+use oxc_cfg::{
+    BlockNodeId, ControlFlowGraph, EdgeType,
+    graph::{Direction, visit::{neighbors_filtered_by_edge_weight, EdgeRef}},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -115,101 +120,128 @@ enum SuperClassType {
     Valid,   // extends <potentially valid class expression>
 }
 
-#[derive(Debug, Clone)]
-struct SuperCallInfo {
-    span: Span,
-    node_id: NodeId,
+/// Result of analyzing control flow paths for super() calls
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PathResult {
+    /// super() was not called in this path
+    NoSuper,
+    /// super() was called exactly once in this path
+    CalledOnce,
+    /// super() was called multiple times in this path (duplicate)
+    CalledMultiple,
+    /// Path exited early (return/throw) without calling super()
+    ExitedWithoutSuper,
 }
 
 impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Match on Class declarations/expressions
+        // Only process Class nodes
         let AstKind::Class(class) = node.kind() else { return };
 
         // Classify the superclass
         let super_class_type = Self::classify_super_class(class.super_class.as_ref());
 
-        // Find the constructor in the class body
+        // Find constructor in class body
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
-            if let ClassElement::MethodDefinition(method) = elem
-                && matches!(method.kind, MethodDefinitionKind::Constructor)
-            {
-                return Some(method);
+            if let ClassElement::MethodDefinition(method) = elem {
+                if matches!(method.kind, MethodDefinitionKind::Constructor) {
+                    return Some(method);
+                }
             }
             None
         }) else {
-            // No constructor defined - this is OK
             return;
         };
 
-        // Get the constructor body
         let Some(body) = &constructor.value.body else { return };
 
-        // Find all super() calls in the constructor
-        let super_calls = Self::find_super_calls(body, ctx, node.id());
+        // Get CFG for analysis
+        let cfg = ctx.cfg();
 
-        // Filter out super() calls in nested scopes (functions, classes)
-        let direct_super_calls: Vec<_> = super_calls
-            .iter()
-            .filter(|call| !Self::is_in_nested_scope(call.node_id, ctx, node.id()))
-            .collect();
+        // Find the constructor function's CFG entry block
+        // We need to find the Function node that corresponds to this method
+        let constructor_func_node = ctx.nodes().iter().find(|n| {
+            matches!(n.kind(), AstKind::Function(func) if func.span == constructor.value.span)
+        });
+
+        let Some(constructor_func_node) = constructor_func_node else { return };
+        let constructor_block_id = ctx.nodes().cfg_id(constructor_func_node.id());
+
+        // Analyze the CFG starting from constructor entry
+        let (super_call_counts, super_call_spans) = Self::find_super_calls_in_cfg(
+            cfg,
+            constructor_block_id,
+            node.id(),
+            ctx,
+        );
 
         // Apply validation based on superclass type
         match super_class_type {
             SuperClassType::None | SuperClassType::Invalid => {
                 // Should NOT have super() calls
-                for call in direct_super_calls {
-                    ctx.diagnostic(bad_super(call.span));
+                for &span in super_call_spans.values() {
+                    ctx.diagnostic(bad_super(span));
                 }
             }
             SuperClassType::Null => {
-                // extends null: must have super() call OR return statement
-                // But super() call is invalid (null is not a constructor)
-                if direct_super_calls.is_empty() {
-                    // No super() - check if there's a return statement
-                    if !Self::has_return_statement(&body.statements) {
+                // extends null: must return or will error, but super() is invalid
+                if super_call_counts.is_empty() {
+                    let has_return_with_value = Self::has_return_with_value(&body.statements);
+                    if !has_return_with_value {
                         ctx.diagnostic(missing_super_all(constructor.span));
                     }
                 } else {
                     // Has super() call - this is invalid
-                    for call in direct_super_calls {
-                        ctx.diagnostic(bad_super(call.span));
+                    for &span in super_call_spans.values() {
+                        ctx.diagnostic(bad_super(span));
                     }
                 }
             }
             SuperClassType::Valid => {
-                // MUST have super() call(s)
-                if direct_super_calls.is_empty() {
+                // MUST have super() call
+                if super_call_counts.is_empty() {
                     ctx.diagnostic(missing_super_all(constructor.span));
                     return;
                 }
 
-                // Check if super() is guaranteed to execute in all paths
-                let has_guaranteed = Self::has_guaranteed_super_call(&body.statements, ctx);
+                // Use CFG to analyze paths
+                let path_results = Self::analyze_super_paths(
+                    cfg,
+                    constructor_block_id,
+                    &super_call_counts,
+                );
 
-                if !has_guaranteed {
-                    ctx.diagnostic(missing_super_some(constructor.span));
-                }
-
-                // Check for duplicate super() calls
-                if direct_super_calls.len() > 1 {
-                    let calls_in_control_flow: Vec<bool> = direct_super_calls
-                        .iter()
-                        .map(|call| Self::is_inside_control_flow(call.node_id, ctx, node.id()))
-                        .collect();
-
-                    let all_in_control_flow = calls_in_control_flow.iter().all(|&x| x);
-                    let none_in_control_flow = calls_in_control_flow.iter().all(|&x| !x);
-
-                    // Duplicate if:
-                    // - All calls are sequential (none in control flow) - definitely duplicate
-                    // - All calls are in control flow but has_guaranteed is false - not mutually exclusive
-                    if none_in_control_flow || (all_in_control_flow && !has_guaranteed) {
-                        ctx.diagnostic(duplicate_super(direct_super_calls[1].span));
+                // Check for violations based on path analysis
+                // path_results now only contains results from actual path terminations
+                if path_results.is_empty() {
+                    // This shouldn't happen after our fixes
+                    // Simple case: treat as single path
+                    if super_call_counts.len() > 1 {
+                        if let Some(&span) = super_call_spans.values().next() {
+                            ctx.diagnostic(duplicate_super(span));
+                        }
                     }
-                    // OK if:
-                    // - All calls in control flow AND has_guaranteed - mutually exclusive branches
-                    // - Mixed (some in, some out) - fallback pattern like loop with super() after
+                } else {
+                    // Check if all paths have super() or exit early
+                    // A path is valid if it either:
+                    // 1. Calls super() exactly once (CalledOnce)
+                    // 2. Exits early via throw/return (ExitedWithoutSuper)
+                    let all_paths_valid = path_results.iter().all(|r| {
+                        matches!(r, PathResult::CalledOnce | PathResult::ExitedWithoutSuper)
+                    });
+
+                    let some_missing = path_results.iter().any(|r| matches!(r, PathResult::NoSuper));
+
+                    if !all_paths_valid && some_missing {
+                        ctx.diagnostic(missing_super_some(constructor.span));
+                    }
+
+                    // Check for duplicates
+                    if path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple)) {
+                        if let Some(&span) = super_call_spans.values().next() {
+                            ctx.diagnostic(duplicate_super(span));
+                        }
+                    }
                 }
             }
         }
@@ -230,6 +262,277 @@ impl ConstructorSuper {
                 }
             }
         }
+    }
+
+    /// Find all super() calls within the CFG reachable from constructor entry
+    /// Returns (map of blocks to super() call count, map of blocks to first super() span)
+    fn find_super_calls_in_cfg(
+        cfg: &ControlFlowGraph,
+        constructor_block: BlockNodeId,
+        class_node_id: NodeId,
+        ctx: &LintContext,
+    ) -> (FxHashMap<BlockNodeId, usize>, FxHashMap<BlockNodeId, Span>) {
+        let mut super_call_counts = FxHashMap::default();
+        let mut super_call_spans = FxHashMap::default();
+
+        // Walk all reachable blocks from constructor
+        let _results = neighbors_filtered_by_edge_weight(
+            &cfg.graph,
+            constructor_block,
+            &|edge| match edge {
+                // Follow normal control flow
+                EdgeType::Jump | EdgeType::Normal => None,
+                // Stop at function boundaries (nested functions)
+                EdgeType::NewFunction => Some(()),
+                // Follow other edges to explore all paths
+                EdgeType::Backedge
+                | EdgeType::Unreachable
+                | EdgeType::Join
+                | EdgeType::Error(_)
+                | EdgeType::Finalize => None,
+            },
+            &mut |block_id, _: ()| {
+                let block = cfg.basic_block(*block_id);
+
+                // Check each instruction in this block
+                for instruction in block.instructions() {
+                    if let Some(node_id) = instruction.node_id {
+                        let node = ctx.nodes().get_node(node_id);
+
+                        // CFG instructions typically point to statements
+                        // We only need to look one level down - no deep recursion
+                        match node.kind() {
+                            // Direct call expression
+                            AstKind::CallExpression(call) => {
+                                if matches!(&call.callee, Expression::Super(_)) {
+                                    if !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id) {
+                                        *super_call_counts.entry(*block_id).or_insert(0) += 1;
+                                        super_call_spans.entry(*block_id).or_insert(call.span);
+                                    }
+                                }
+                            }
+                            // Expression statement wrapping a call or conditional
+                            AstKind::ExpressionStatement(expr_stmt) => {
+                                match &expr_stmt.expression {
+                                    // Direct call expression: super()
+                                    Expression::CallExpression(call) => {
+                                        if matches!(&call.callee, Expression::Super(_)) {
+                                            if !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id) {
+                                                *super_call_counts.entry(*block_id).or_insert(0) += 1;
+                                                super_call_spans.entry(*block_id).or_insert(call.span);
+                                            }
+                                        }
+                                    }
+                                    // Conditional expression: a ? super() : super()
+                                    // For ternary expressions, both branches are in the same basic block
+                                    // but only one executes. We mark the block as having super() but don't
+                                    // count it as multiple calls since they're mutually exclusive.
+                                    Expression::ConditionalExpression(cond) => {
+                                        let has_consequent_super = if let Expression::CallExpression(call) = &cond.consequent {
+                                            matches!(&call.callee, Expression::Super(_))
+                                                && !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id)
+                                        } else {
+                                            false
+                                        };
+
+                                        let has_alternate_super = if let Expression::CallExpression(call) = &cond.alternate {
+                                            matches!(&call.callee, Expression::Super(_))
+                                                && !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id)
+                                        } else {
+                                            false
+                                        };
+
+                                        // Mark block as having super() if either branch has it
+                                        // Count is 1 even if both branches have super (they're mutually exclusive)
+                                        if has_consequent_super || has_alternate_super {
+                                            *super_call_counts.entry(*block_id).or_insert(0) += 1;
+                                            if has_consequent_super {
+                                                if let Expression::CallExpression(call) = &cond.consequent {
+                                                    super_call_spans.entry(*block_id).or_insert(call.span);
+                                                }
+                                            } else if let Expression::CallExpression(call) = &cond.alternate {
+                                                super_call_spans.entry(*block_id).or_insert(call.span);
+                                            }
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+
+                // Continue traversing
+                ((), true)
+            },
+        );
+
+        (super_call_counts, super_call_spans)
+    }
+
+    /// Analyze control flow paths to determine super() call patterns
+    /// Returns a vector of path results indicating super() call patterns
+    fn analyze_super_paths(
+        cfg: &ControlFlowGraph,
+        constructor_block: BlockNodeId,
+        super_call_counts: &FxHashMap<BlockNodeId, usize>,
+    ) -> Vec<PathResult> {
+        // Use DFS to explore all paths from entry to exit
+        // Track super() count per path
+        let mut path_results = Vec::new();
+        let mut visited_in_path = FxHashSet::default();
+
+        Self::dfs_analyze_paths(
+            cfg,
+            constructor_block,
+            super_call_counts,
+            &mut visited_in_path,
+            0,
+            &mut path_results,
+        );
+
+        path_results
+    }
+
+    /// DFS helper for path analysis
+    fn dfs_analyze_paths(
+        cfg: &ControlFlowGraph,
+        block_id: BlockNodeId,
+        super_call_counts: &FxHashMap<BlockNodeId, usize>,
+        visited_in_path: &mut FxHashSet<BlockNodeId>,
+        super_count: usize,
+        path_results: &mut Vec<PathResult>,
+    ) {
+        // Avoid infinite loops - if we've visited this block in the current path, stop
+        if visited_in_path.contains(&block_id) {
+            return;
+        }
+
+        visited_in_path.insert(block_id);
+
+        let block = cfg.basic_block(block_id);
+
+        // Skip unreachable blocks
+        if block.is_unreachable() {
+            visited_in_path.remove(&block_id);
+            return;
+        }
+
+        // Update count based on how many super() calls are in this block
+        // Cap at 2 to distinguish: 0 (none), 1 (once), 2+ (multiple)
+        let block_super_count = super_call_counts.get(&block_id).copied().unwrap_or(0);
+        let new_count = if block_super_count > 0 {
+            (super_count + block_super_count).min(2)
+        } else {
+            super_count
+        };
+
+        // Check if this block terminates a path
+        let has_exit = block.instructions().iter().any(|inst| {
+            matches!(
+                inst.kind,
+                oxc_cfg::InstructionKind::Return(_)
+                | oxc_cfg::InstructionKind::Throw
+                | oxc_cfg::InstructionKind::ImplicitReturn
+            )
+        });
+
+        if has_exit {
+            // Path terminates here - record result
+            // Check if this is an acceptable early exit:
+            // - throw is always acceptable
+            // - return with value is acceptable
+            // - return without value (implicit undefined) is NOT acceptable
+            let is_acceptable_exit = block.instructions().iter().any(|inst| {
+                matches!(
+                    inst.kind,
+                    oxc_cfg::InstructionKind::Throw
+                    | oxc_cfg::InstructionKind::Return(oxc_cfg::ReturnInstructionKind::NotImplicitUndefined)
+                )
+            });
+
+            let result = match new_count {
+                0 if is_acceptable_exit => {
+                    // Early exit without super() is acceptable only for throw or return <value>
+                    PathResult::ExitedWithoutSuper
+                }
+                0 => PathResult::NoSuper,
+                1 => PathResult::CalledOnce,
+                _ => PathResult::CalledMultiple,
+            };
+            path_results.push(result);
+            visited_in_path.remove(&block_id);
+            return;
+        }
+
+        // Get outgoing edges, filtering by edge type
+        for edge in cfg.graph.edges_directed(block_id, Direction::Outgoing) {
+            match edge.weight() {
+                // Follow these edges with accumulated super count
+                EdgeType::Jump | EdgeType::Normal | EdgeType::Join => {
+                    Self::dfs_analyze_paths(
+                        cfg,
+                        edge.target(),
+                        super_call_counts,
+                        visited_in_path,
+                        new_count,
+                        path_results,
+                    );
+                }
+                // Backedge: loop back edge
+                // If the loop body contains super(), this means super() could be called 0 times
+                // (for while/for loops) or multiple times (for any loop that iterates)
+                // Both scenarios violate the "exactly once" requirement
+                EdgeType::Backedge => {
+                    // Backedge indicates a loop back to a previously visited block (the loop header).
+                    // If super() is called within the loop body, it's problematic because:
+                    // 1. Loop might execute 0 times (while/for) -> no super()
+                    // 2. Loop might execute multiple times -> duplicate super()
+                    //
+                    // Check if super() was called in the current iteration by checking if
+                    // new_count > super_count (super called in this block or predecessors in this iteration)
+                    let loop_iteration_has_super = new_count > super_count;
+
+                    if loop_iteration_has_super {
+                        // Super() called in loop iteration - flag as problematic
+                        path_results.push(PathResult::NoSuper);
+                    }
+
+                    // Don't follow the backedge (would cause infinite loop in DFS)
+                }
+                // Stop at function boundaries
+                EdgeType::NewFunction => {}
+                // Stop at unreachable
+                EdgeType::Unreachable => {}
+                // Follow error edges to catch blocks
+                // Error edges represent exception paths - if an exception occurs,
+                // any super() calls in the try block don't count (execution didn't complete)
+                EdgeType::Error(_) => {
+                    Self::dfs_analyze_paths(
+                        cfg,
+                        edge.target(),
+                        super_call_counts,
+                        visited_in_path,
+                        super_count, // Use super_count BEFORE this block, not new_count
+                        path_results,
+                    );
+                }
+                // Finalize edges (for finally blocks) should preserve the count
+                EdgeType::Finalize => {
+                    Self::dfs_analyze_paths(
+                        cfg,
+                        edge.target(),
+                        super_call_counts,
+                        visited_in_path,
+                        new_count,
+                        path_results,
+                    );
+                }
+            }
+        }
+
+        visited_in_path.remove(&block_id);
     }
 
     /// Check if an expression is definitely an invalid superclass
@@ -308,39 +611,8 @@ impl ConstructorSuper {
         }
     }
 
-    /// Find all super() calls in the constructor body
-    fn find_super_calls(
-        _body: &oxc_ast::ast::FunctionBody,
-        ctx: &LintContext,
-        class_node_id: NodeId,
-    ) -> Vec<SuperCallInfo> {
-        ctx.nodes()
-            .iter()
-            .filter_map(|node| {
-                if let AstKind::CallExpression(call_expr) = node.kind()
-                    && matches!(&call_expr.callee, Expression::Super(_))
-                {
-                    // Check if this call is within our class
-                    let in_our_class = ctx.nodes().ancestors(node.id()).any(|ancestor| {
-                        if ancestor.id() == class_node_id {
-                            return true;
-                        }
-                        // Stop if we hit another class
-                        matches!(ancestor.kind(), AstKind::Class(_))
-                            && ancestor.id() != class_node_id
-                    });
-
-                    if in_our_class {
-                        return Some(SuperCallInfo { span: call_expr.span, node_id: node.id() });
-                    }
-                }
-                None
-            })
-            .collect()
-    }
-
-    /// Check if a node is inside a nested function or class
-    fn is_in_nested_scope(node_id: NodeId, ctx: &LintContext, class_node_id: NodeId) -> bool {
+    /// Check if a node is inside a nested function or class (CFG-aware version)
+    fn is_in_nested_scope_cfg(node_id: NodeId, ctx: &LintContext, class_node_id: NodeId) -> bool {
         for ancestor in ctx.nodes().ancestors(node_id) {
             if ancestor.id() == class_node_id {
                 return false;
@@ -349,11 +621,10 @@ impl ConstructorSuper {
             match ancestor.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     // Check if this function is the constructor itself
-                    let parent = ctx.nodes().parent_node(ancestor.id());
-                    if let AstKind::MethodDefinition(method) = parent.kind()
-                        && matches!(method.kind, MethodDefinitionKind::Constructor)
-                    {
-                        continue;
+                    if let Some(parent) = ctx.nodes().parent_node(ancestor.id()).kind().as_method_definition() {
+                        if matches!(parent.kind, MethodDefinitionKind::Constructor) {
+                            continue;
+                        }
                     }
                     return true;
                 }
@@ -364,243 +635,46 @@ impl ConstructorSuper {
         false
     }
 
-    /// Check if a node is inside a control flow statement or conditional expression
-    fn is_inside_control_flow(node_id: NodeId, ctx: &LintContext, class_node_id: NodeId) -> bool {
-        for ancestor in ctx.nodes().ancestors(node_id) {
-            if ancestor.id() == class_node_id {
-                return false;
-            }
-
-            match ancestor.kind() {
-                AstKind::IfStatement(_)
-                | AstKind::SwitchStatement(_)
-                | AstKind::TryStatement(_)
-                | AstKind::ConditionalExpression(_) => {
-                    return true;
-                }
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                    // Check if this is the constructor
-                    let parent = ctx.nodes().parent_node(ancestor.id());
-                    if let AstKind::MethodDefinition(method) = parent.kind()
-                        && matches!(method.kind, MethodDefinitionKind::Constructor)
-                    {
-                        continue;
-                    }
-                    return false;
-                }
-                _ => {}
-            }
-        }
-        false
+    /// Check if statements contain a return statement with a value
+    fn has_return_with_value(statements: &[Statement]) -> bool {
+        statements.iter().any(|stmt| Self::statement_returns_value(stmt))
     }
 
-    /// Check if statements contain a return statement
-    fn has_return_statement(statements: &[Statement]) -> bool {
-        statements.iter().any(|stmt| Self::statement_contains_return(stmt))
-    }
-
-    /// Recursively check if a statement contains a return
-    fn statement_contains_return(stmt: &Statement) -> bool {
+    /// Recursively check if a statement contains a return with a value
+    fn statement_returns_value(stmt: &Statement) -> bool {
         match stmt {
-            Statement::ReturnStatement(_) => true,
-            Statement::BlockStatement(block) => Self::has_return_statement(&block.body),
+            Statement::ReturnStatement(ret) => ret.argument.is_some(),
+            Statement::BlockStatement(block) => Self::has_return_with_value(&block.body),
             Statement::IfStatement(if_stmt) => {
-                Self::statement_contains_return(&if_stmt.consequent)
+                Self::statement_returns_value(&if_stmt.consequent)
                     || if_stmt
                         .alternate
                         .as_ref()
-                        .is_some_and(|alt| Self::statement_contains_return(alt))
+                        .is_some_and(|alt| Self::statement_returns_value(alt))
             }
             Statement::SwitchStatement(switch) => {
-                switch.cases.iter().any(|case| Self::has_return_statement(&case.consequent))
+                switch.cases.iter().any(|case| Self::has_return_with_value(&case.consequent))
             }
             Statement::TryStatement(try_stmt) => {
-                Self::has_return_statement(&try_stmt.block.body)
+                Self::has_return_with_value(&try_stmt.block.body)
                     || try_stmt
                         .handler
                         .as_ref()
-                        .is_some_and(|handler| Self::has_return_statement(&handler.body.body))
+                        .is_some_and(|handler| Self::has_return_with_value(&handler.body.body))
                     || try_stmt
                         .finalizer
                         .as_ref()
-                        .is_some_and(|finalizer| Self::has_return_statement(&finalizer.body))
+                        .is_some_and(|finalizer| Self::has_return_with_value(&finalizer.body))
             }
-            Statement::WhileStatement(s) => Self::statement_contains_return(&s.body),
-            Statement::DoWhileStatement(s) => Self::statement_contains_return(&s.body),
-            Statement::ForStatement(s) => Self::statement_contains_return(&s.body),
-            Statement::ForInStatement(s) => Self::statement_contains_return(&s.body),
-            Statement::ForOfStatement(s) => Self::statement_contains_return(&s.body),
+            Statement::WhileStatement(s) => Self::statement_returns_value(&s.body),
+            Statement::DoWhileStatement(s) => Self::statement_returns_value(&s.body),
+            Statement::ForStatement(s) => Self::statement_returns_value(&s.body),
+            Statement::ForInStatement(s) => Self::statement_returns_value(&s.body),
+            Statement::ForOfStatement(s) => Self::statement_returns_value(&s.body),
             _ => false,
         }
     }
 
-    /// Check if super() is guaranteed to execute in all code paths
-    fn has_guaranteed_super_call(statements: &[Statement], ctx: &LintContext) -> bool {
-        // Check if any statement guarantees super() execution
-        // This handles sequential statements - if any guarantees super(), we're good
-        for stmt in statements {
-            if Self::contains_guaranteed_super(stmt, ctx) {
-                return true;
-            }
-            // If we hit a control flow statement that doesn't guarantee super(),
-            // check if it's acceptable (exits acceptably or always exits)
-            if Self::is_control_flow_statement(stmt)
-                && !Self::statement_always_exits(stmt)
-                && !Self::exits_acceptably(stmt)
-            {
-                // Control flow that doesn't guarantee super(), doesn't always exit,
-                // and doesn't exit acceptably -> can't trust super() after it
-                return false;
-            }
-            // If we hit a statement that always returns/throws, stop checking
-            // (statements after it are unreachable)
-            if Self::statement_always_exits(stmt) {
-                break;
-            }
-        }
-        false
-    }
-
-    /// Check if a statement is a control flow statement that prevents reaching code after it
-    fn is_control_flow_statement(stmt: &Statement) -> bool {
-        matches!(
-            stmt,
-            Statement::IfStatement(_) | Statement::SwitchStatement(_) | Statement::TryStatement(_)
-        )
-    }
-
-    /// Check if a statement always exits (return/throw) without falling through
-    fn statement_always_exits(stmt: &Statement) -> bool {
-        match stmt {
-            Statement::ReturnStatement(_) | Statement::ThrowStatement(_) => true,
-            Statement::BlockStatement(block) => {
-                block.body.last().is_some_and(|s| Self::statement_always_exits(s))
-            }
-            Statement::IfStatement(if_stmt) => {
-                // Both branches must always exit
-                let then_exits = Self::statement_always_exits(&if_stmt.consequent);
-                let else_exits =
-                    if_stmt.alternate.as_ref().is_some_and(|alt| Self::statement_always_exits(alt));
-                then_exits && else_exits
-            }
-            _ => false,
-        }
-    }
-
-    /// Check if statements end with break, return, or throw
-    fn ends_with_break_or_exit(statements: &[Statement]) -> bool {
-        statements.last().is_some_and(|stmt| {
-            matches!(
-                stmt,
-                Statement::BreakStatement(_)
-                    | Statement::ReturnStatement(_)
-                    | Statement::ThrowStatement(_)
-            ) || matches!(stmt, Statement::BlockStatement(block) if Self::ends_with_break_or_exit(&block.body))
-        })
-    }
-
-    /// Check if a statement exits via throw or return-with-value (acceptable for constructor)
-    fn exits_acceptably(stmt: &Statement) -> bool {
-        match stmt {
-            Statement::ThrowStatement(_) => true,
-            Statement::ReturnStatement(ret) => {
-                // Return with a value is acceptable
-                ret.argument.is_some()
-            }
-            Statement::BlockStatement(block) => {
-                block.body.last().is_some_and(|s| Self::exits_acceptably(s))
-            }
-            Statement::IfStatement(if_stmt) => {
-                // If the then branch exits acceptably, that's OK
-                Self::exits_acceptably(&if_stmt.consequent)
-            }
-            _ => false,
-        }
-    }
-
-    /// Check if an expression guarantees super() execution
-    fn expression_guarantees_super(expr: &Expression) -> bool {
-        match expr {
-            // Direct super() call
-            Expression::CallExpression(call) => matches!(&call.callee, Expression::Super(_)),
-
-            // Conditional: both branches must have super()
-            Expression::ConditionalExpression(cond) => {
-                Self::expression_guarantees_super(&cond.consequent)
-                    && Self::expression_guarantees_super(&cond.alternate)
-            }
-
-            // Parenthesized: check inner expression
-            Expression::ParenthesizedExpression(paren) => {
-                Self::expression_guarantees_super(&paren.expression)
-            }
-
-            _ => false,
-        }
-    }
-
-    /// Recursively check if a statement guarantees super() execution
-    fn contains_guaranteed_super(stmt: &Statement, ctx: &LintContext) -> bool {
-        match stmt {
-            // Direct super() call as an expression statement
-            Statement::ExpressionStatement(expr_stmt) => {
-                Self::expression_guarantees_super(&expr_stmt.expression)
-            }
-
-            // If-else: BOTH branches must have guaranteed super()
-            Statement::IfStatement(if_stmt) => {
-                let then_has_super = Self::contains_guaranteed_super(&if_stmt.consequent, ctx);
-                let else_has_super = if_stmt
-                    .alternate
-                    .as_ref()
-                    .is_some_and(|alt| Self::contains_guaranteed_super(alt, ctx));
-
-                then_has_super && else_has_super
-            }
-
-            // Switch: ALL cases including default must have super()
-            // Also check for fallthrough - if a case has super() but no break, it's a problem
-            Statement::SwitchStatement(switch) => {
-                // Must have a default case
-                let has_default = switch.cases.iter().any(|case| case.test.is_none());
-                if !has_default {
-                    return false;
-                }
-
-                // Check each case: must have super() AND must not fall through after super()
-                for (i, case) in switch.cases.iter().enumerate() {
-                    let has_super = Self::has_guaranteed_super_call(&case.consequent, ctx);
-                    let has_break = Self::ends_with_break_or_exit(&case.consequent);
-
-                    if has_super {
-                        // If this case has super() but no break/return/throw,
-                        // and it's not the last case, it could fall through
-                        if !has_break && i < switch.cases.len() - 1 {
-                            // Fallthrough after super() - not valid
-                            return false;
-                        }
-                    } else {
-                        // Case doesn't have super() - not guaranteed in all paths
-                        return false;
-                    }
-                }
-
-                true
-            }
-
-            // Try-finally: super() in finally block is guaranteed
-            Statement::TryStatement(try_stmt) => try_stmt
-                .finalizer
-                .as_ref()
-                .is_some_and(|finalizer| Self::has_guaranteed_super_call(&finalizer.body, ctx)),
-
-            // Block statement: recursively check
-            Statement::BlockStatement(block) => Self::has_guaranteed_super_call(&block.body, ctx),
-
-            // Loops, returns, throws, etc. do not guarantee execution
-            _ => false,
-        }
-    }
 }
 
 #[test]
