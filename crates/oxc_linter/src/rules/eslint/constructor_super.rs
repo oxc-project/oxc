@@ -138,13 +138,10 @@ enum PathResult {
 
 impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Only process Class nodes
         let AstKind::Class(class) = node.kind() else { return };
 
-        // Classify the superclass
         let super_class_type = Self::classify_super_class(class.super_class.as_ref());
 
-        // Find constructor in class body
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
             if let ClassElement::MethodDefinition(method) = elem
                 && matches!(method.kind, MethodDefinitionKind::Constructor)
@@ -158,11 +155,9 @@ impl Rule for ConstructorSuper {
 
         let Some(body) = &constructor.value.body else { return };
 
-        // Get CFG for analysis
         let cfg = ctx.cfg();
 
-        // Find the constructor function's CFG entry block
-        // We need to find the Function node that corresponds to this method
+        // Find constructor's CFG entry block
         let constructor_func_node = ctx.nodes().iter().find(
             |n| matches!(n.kind(), AstKind::Function(func) if func.span == constructor.value.span),
         );
@@ -170,21 +165,16 @@ impl Rule for ConstructorSuper {
         let Some(constructor_func_node) = constructor_func_node else { return };
         let constructor_block_id = ctx.nodes().cfg_id(constructor_func_node.id());
 
-        // First, check for LogicalExpression with super() using AST
-        // This is needed because the CFG doesn't create proper instructions for these
+        // Check AST for LogicalExpression with super() (CFG doesn't handle these properly)
         let has_conditional_super =
             Self::has_logical_expression_super(&body.statements, node.id(), ctx);
 
-        // Analyze the CFG starting from constructor entry
         let (super_call_counts, super_call_spans, has_conditional_super_from_cfg) =
             Self::find_super_calls_in_cfg(cfg, constructor_block_id, node.id(), ctx);
 
         let has_conditional_super = has_conditional_super || has_conditional_super_from_cfg;
-
-        // Apply validation based on superclass type
         match super_class_type {
             SuperClassType::None | SuperClassType::Invalid => {
-                // Should NOT have super() calls
                 for &span in &super_call_spans {
                     ctx.diagnostic(bad_super(span));
                 }
@@ -197,50 +187,38 @@ impl Rule for ConstructorSuper {
                         ctx.diagnostic(missing_super_all(constructor.span));
                     }
                 } else {
-                    // Has super() call - this is invalid
                     for &span in &super_call_spans {
                         ctx.diagnostic(bad_super(span));
                     }
                 }
             }
             SuperClassType::Valid => {
-                // If we detected a conditional super() (from LogicalExpression),
-                // we know it's not in all paths
+                // Conditional super() (from LogicalExpression) can't be in all paths
                 if has_conditional_super {
                     ctx.diagnostic(missing_super_some(constructor.span));
                     return;
                 }
 
-                // MUST have super() call
                 if super_call_counts.is_empty() {
                     ctx.diagnostic(missing_super_all(constructor.span));
                     return;
                 }
 
-                // Use CFG to analyze paths
                 let path_results =
                     Self::analyze_super_paths(cfg, constructor_block_id, &super_call_counts);
 
-                // Check for violations based on path analysis
-                // path_results now only contains results from actual path terminations
                 if path_results.is_empty() {
-                    // This shouldn't happen after our fixes
-                    // Simple case: treat as single path
+                    // Treat as single path
                     if super_call_spans.len() > 1 {
-                        // Sort spans by source position to report duplicates in order
                         let mut sorted_spans = super_call_spans;
                         sorted_spans.sort_by_key(|s| s.start);
 
-                        // Report all duplicates (all except the first)
                         for &span in sorted_spans.iter().skip(1) {
                             ctx.diagnostic(duplicate_super(span));
                         }
                     }
                 } else {
-                    // Check if all paths have super() or exit early
-                    // A path is valid if it either:
-                    // 1. Calls super() exactly once (CalledOnce)
-                    // 2. Exits early via throw/return (ExitedWithoutSuper)
+                    // Valid paths: CalledOnce or ExitedWithoutSuper
                     let all_paths_valid = path_results.iter().all(|r| {
                         matches!(r, PathResult::CalledOnce | PathResult::ExitedWithoutSuper)
                     });
@@ -252,11 +230,9 @@ impl Rule for ConstructorSuper {
                         ctx.diagnostic(missing_super_some(constructor.span));
                     }
 
-                    // Check for duplicates - report all but the first in source order
                     if path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple))
                         && super_call_spans.len() > 1
                     {
-                        // Sort spans by source position to report duplicates in order
                         let mut sorted_spans = super_call_spans;
                         sorted_spans.sort_by_key(|s| s.start);
 
@@ -272,17 +248,15 @@ impl Rule for ConstructorSuper {
 
 impl ConstructorSuper {
     /// Check if constructor body contains a LogicalExpression with super()
-    /// This is needed because CFG doesn't create proper instructions for logical expressions
+    /// CFG doesn't create proper instructions for logical expressions, so we check AST
     fn has_logical_expression_super(
         statements: &[Statement],
         _class_node_id: NodeId,
         _ctx: &LintContext,
     ) -> bool {
-        // Recursively search for LogicalExpression containing super()
         fn check_expression(expr: &Expression) -> bool {
             match expr {
                 Expression::LogicalExpression(logical) => {
-                    // Check if either side has super()
                     let has_left_super = if let Expression::CallExpression(call) = &logical.left {
                         matches!(&call.callee, Expression::Super(_))
                     } else {
@@ -339,8 +313,8 @@ impl ConstructorSuper {
         }
     }
 
-    /// Find all super() calls within the CFG reachable from constructor entry
-    /// Returns (map of blocks to super() call count, vector of all super() call spans, has conditional super)
+    /// Find all super() calls in CFG reachable from constructor
+    /// Returns (block counts, all spans, has conditional super)
     fn find_super_calls_in_cfg(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
@@ -351,7 +325,6 @@ impl ConstructorSuper {
         let mut super_call_spans = Vec::new();
         let mut has_conditional_super = false;
 
-        // Walk all reachable blocks from constructor
         neighbors_filtered_by_edge_weight(
             &cfg.graph,
             constructor_block,
@@ -359,31 +332,26 @@ impl ConstructorSuper {
             &mut |block_id, (): ()| {
                 let block = cfg.basic_block(*block_id);
 
-                // Check each instruction in this block
                 for instruction in block.instructions() {
                     let Some(node_id) = instruction.node_id else { continue };
 
-                    // Skip if in nested scope (check once per instruction)
                     if Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id) {
                         continue;
                     }
 
                     let node = ctx.nodes().get_node(node_id);
 
-                    // Helper to record a super() call
                     let mut record_super = |span: Span| {
                         *super_call_counts.entry(*block_id).or_insert(0) += 1;
                         super_call_spans.push(span);
                     };
 
                     match node.kind() {
-                        // Direct call expression
                         AstKind::CallExpression(call) => {
                             if matches!(&call.callee, Expression::Super(_)) {
                                 record_super(call.span);
                             }
                         }
-                        // Expression statement wrapping a call or conditional
                         AstKind::ExpressionStatement(expr_stmt) => {
                             match &expr_stmt.expression {
                                 Expression::CallExpression(call) => {
@@ -391,8 +359,7 @@ impl ConstructorSuper {
                                         record_super(call.span);
                                     }
                                 }
-                                // Ternary: a ? super() : super()
-                                // Both branches in same block but only one executes
+                                // Ternary: both branches in same block but only one executes
                                 Expression::ConditionalExpression(cond) => {
                                     let check_super = |expr: &Expression| -> Option<Span> {
                                         if let Expression::CallExpression(call) = expr
@@ -410,9 +377,7 @@ impl ConstructorSuper {
                                         record_super(span);
                                     }
                                 }
-                                // Logical: a && super() or super() || super()
-                                // The CFG creates separate blocks, but we use AST detection
-                                // and mark it as conditional for proper path analysis.
+                                // Logical expressions need AST detection for proper path analysis
                                 Expression::LogicalExpression(logical) => {
                                     let check_super = |expr: &Expression| -> Option<Span> {
                                         if let Expression::CallExpression(call) = expr
@@ -438,7 +403,6 @@ impl ConstructorSuper {
                     }
                 }
 
-                // Continue traversing
                 ((), true)
             },
         );
@@ -446,15 +410,12 @@ impl ConstructorSuper {
         (super_call_counts, super_call_spans, has_conditional_super)
     }
 
-    /// Analyze control flow paths to determine super() call patterns
-    /// Returns a vector of path results indicating super() call patterns
+    /// Analyze CFG paths to determine super() call patterns
     fn analyze_super_paths(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
         super_call_counts: &FxHashMap<BlockNodeId, usize>,
     ) -> Vec<PathResult> {
-        // Use DFS to explore all paths from entry to exit
-        // Track super() count per path
         let mut path_results = Vec::new();
         let mut visited_in_path = FxHashSet::default();
 
@@ -470,7 +431,7 @@ impl ConstructorSuper {
         path_results
     }
 
-    /// DFS helper for path analysis
+    /// DFS through CFG to track super() calls per path
     fn dfs_analyze_paths(
         cfg: &ControlFlowGraph,
         block_id: BlockNodeId,
@@ -479,7 +440,7 @@ impl ConstructorSuper {
         super_count: usize,
         path_results: &mut Vec<PathResult>,
     ) {
-        // Avoid infinite loops - if we've visited this block in the current path, stop
+        // Avoid cycles
         if visited_in_path.contains(&block_id) {
             return;
         }
@@ -488,17 +449,14 @@ impl ConstructorSuper {
 
         let block = cfg.basic_block(block_id);
 
-        // Skip unreachable blocks
         if block.is_unreachable() {
             visited_in_path.remove(&block_id);
             return;
         }
 
-        // Update count based on how many super() calls are in this block
         let block_super_count = super_call_counts.get(&block_id).copied().unwrap_or(0);
         let new_count = super_count + block_super_count;
 
-        // Check if this block terminates a path
         let has_exit = block.instructions().iter().any(|inst| {
             matches!(
                 inst.kind,
@@ -509,11 +467,7 @@ impl ConstructorSuper {
         });
 
         if has_exit {
-            // Path terminates here - record result
-            // Check if this is an acceptable early exit:
-            // - throw is always acceptable
-            // - return with value is acceptable
-            // - return without value (implicit undefined) is NOT acceptable
+            // Acceptable exits: throw or return with value (not implicit undefined)
             let is_acceptable_exit = block.instructions().iter().any(|inst| {
                 matches!(
                     inst.kind,
@@ -535,64 +489,38 @@ impl ConstructorSuper {
             return;
         }
 
-        // Get outgoing edges, filtering by edge type
         let mut has_outgoing_edges = false;
         for edge in cfg.graph.edges_directed(block_id, Direction::Outgoing) {
             has_outgoing_edges = true;
             match edge.weight() {
-                // Backedge: loop back edge
-                // If the loop body contains super(), this means super() could be called 0 times
-                // (for while/for loops) or multiple times (for any loop that iterates)
-                // Both scenarios violate the "exactly once" requirement
+                // Backedge: super() in loops violates "exactly once" (0 or multiple times)
                 EdgeType::Backedge => {
                     let target = edge.target();
-
-                    // Backedge indicates a loop back to a previously visited block (the loop header).
-                    // To detect if super() is called within the loop body, we need to know if
-                    // super() was called after entering the loop header (target).
-                    //
-                    // The problem: we don't track the super_count when we first entered `target`.
-                    // However, we can detect this by checking if the current block or target block
-                    // itself contains super(). This is an approximation but catches most cases.
-                    //
-                    // Better approach: check if current block or any immediate predecessor in
-                    // the loop contains super().
                     let current_block_has_super = super_call_counts.contains_key(&block_id);
                     let target_has_super = super_call_counts.contains_key(&target);
-
-                    // If either the loop header or the block with backedge contains super(),
-                    // then super() is in the loop body
                     let loop_contains_super = current_block_has_super || target_has_super;
 
                     if loop_contains_super {
-                        // Super() called in loop - flag as problematic
                         path_results.push(PathResult::NoSuper);
                     }
-
-                    // Don't follow the backedge (would cause infinite loop in DFS)
                 }
-                // Follow explicit error edges (try/catch) but not implicit ones
-                // Explicit errors (try/catch) represent real execution paths that need analysis
-                // Implicit errors are just error propagation/escape routes that don't represent
-                // actual execution paths within the constructor
+                // Explicit error edges (try/catch) represent real execution paths
                 EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit) => {
-                    // For explicit error edges (exception thrown → catch handler),
-                    // use super_count from BEFORE this block because if an exception
-                    // is thrown, the rest of the try block doesn't execute
+                    // Use super_count from before this block (exception skips rest of try)
                     Self::dfs_analyze_paths(
                         cfg,
                         edge.target(),
                         super_call_counts,
                         visited_in_path,
-                        super_count, // Use super_count BEFORE this block
+                        super_count,
                         path_results,
                     );
                 }
-                // Stop at these edge types - don't follow them
+                // Don't follow these edges
                 EdgeType::NewFunction
                 | EdgeType::Unreachable
                 | EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {}
-                // Follow these edges with accumulated super count
+                // Follow normal edges with accumulated count
                 EdgeType::Jump | EdgeType::Normal | EdgeType::Join | EdgeType::Finalize => {
                     Self::dfs_analyze_paths(
                         cfg,
@@ -606,8 +534,7 @@ impl ConstructorSuper {
             }
         }
 
-        // If this block has NO outgoing edges and didn't hit an explicit exit,
-        // it's a dead-end (shouldn't normally happen in valid CFG, but handle it)
+        // Dead-end block (shouldn't happen in valid CFG, but handle it)
         if !has_outgoing_edges {
             let result = match new_count {
                 0 => PathResult::NoSuper,
@@ -623,16 +550,13 @@ impl ConstructorSuper {
     /// Check if an expression is definitely an invalid superclass
     fn is_invalid_super_class(expr: &Expression) -> bool {
         match expr {
-            // Parenthesized: unwrap and check inner expression
             Expression::ParenthesizedExpression(paren) => {
                 Self::is_invalid_super_class(&paren.expression)
             }
 
-            // Assignment expressions
             Expression::AssignmentExpression(assign) => {
                 match assign.operator {
-                    // Direct assignment to literal is invalid: extends (B = 5)
-                    // &&= is invalid if right side is invalid
+                    // = and &&= invalid if right side is invalid
                     AssignmentOperator::Assign | AssignmentOperator::LogicalAnd => {
                         Self::is_invalid_super_class(&assign.right)
                     }
@@ -651,52 +575,43 @@ impl ConstructorSuper {
                     | AssignmentOperator::BitwiseAnd
                     | AssignmentOperator::Exponential => true,
 
-                    // ||= and ??= are valid (could short-circuit to left)
+                    // ||= and ??= valid (short-circuit to left)
                     AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish => false,
                 }
             }
 
-            // Logical expressions
             Expression::LogicalExpression(logical) => {
                 match logical.operator {
-                    // extends (A && B)
-                    // Result is A if A is falsy, otherwise B
-                    // Invalid if B is invalid (could be the result if A is truthy)
-                    // Exception: if A is a falsy literal, result is always A
-                    LogicalOperator::And => {
-                        // If right is invalid, the whole expression could be invalid
-                        // unless we can prove left is falsy
-                        Self::is_invalid_super_class(&logical.right)
-                    }
-                    // extends (B || 5) or (B ?? 5) - could be valid if left is valid
+                    // extends (A && B): invalid if B is invalid
+                    LogicalOperator::And => Self::is_invalid_super_class(&logical.right),
+                    // extends (B || 5) or (B ?? 5): valid if left could be valid
                     LogicalOperator::Or | LogicalOperator::Coalesce => false,
                 }
             }
 
-            // Conditional: extends (a ? B : C) - valid if either branch could be valid
+            // Conditional: valid if either branch could be valid
             Expression::ConditionalExpression(cond) => {
                 Self::is_invalid_super_class(&cond.consequent)
                     && Self::is_invalid_super_class(&cond.alternate)
             }
 
-            // Sequence: extends (B, C) - result is last expression
+            // Sequence: result is last expression
             Expression::SequenceExpression(seq) => {
                 seq.expressions.last().is_none_or(|e| Self::is_invalid_super_class(e))
             }
 
-            // Literal values are invalid, as are binary expressions with operators
+            // Literals and binary expressions are invalid
             Expression::NumericLiteral(_)
             | Expression::StringLiteral(_)
             | Expression::BooleanLiteral(_)
             | Expression::BigIntLiteral(_)
             | Expression::BinaryExpression(_) => true,
 
-            // Everything else could potentially be a valid class
             _ => false,
         }
     }
 
-    /// Check if a node is inside a nested function or class (CFG-aware version)
+    /// Check if a node is inside a nested function or class
     fn is_in_nested_scope_cfg(node_id: NodeId, ctx: &LintContext, class_node_id: NodeId) -> bool {
         for ancestor in ctx.nodes().ancestors(node_id) {
             if ancestor.id() == class_node_id {
@@ -705,7 +620,7 @@ impl ConstructorSuper {
 
             match ancestor.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                    // Check if this function is the constructor itself
+                    // Skip if this function is the constructor itself
                     if let Some(parent) =
                         ctx.nodes().parent_node(ancestor.id()).kind().as_method_definition()
                         && matches!(parent.kind, MethodDefinitionKind::Constructor)
@@ -721,12 +636,12 @@ impl ConstructorSuper {
         false
     }
 
-    /// Check if statements contain a return statement with a value
+    /// Check if statements contain a return with value
     fn has_return_with_value(statements: &[Statement]) -> bool {
         statements.iter().any(|stmt| Self::statement_returns_value(stmt))
     }
 
-    /// Recursively check if a statement contains a return with a value
+    /// Recursively check if statement contains return with value
     fn statement_returns_value(stmt: &Statement) -> bool {
         match stmt {
             Statement::ReturnStatement(ret) => ret.argument.is_some(),
