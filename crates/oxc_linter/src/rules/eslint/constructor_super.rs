@@ -7,7 +7,10 @@ use oxc_ast::{
 };
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType,
-    graph::{Direction, visit::{neighbors_filtered_by_edge_weight, EdgeRef}},
+    graph::{
+        Direction,
+        visit::{EdgeRef, neighbors_filtered_by_edge_weight},
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -160,20 +163,16 @@ impl Rule for ConstructorSuper {
 
         // Find the constructor function's CFG entry block
         // We need to find the Function node that corresponds to this method
-        let constructor_func_node = ctx.nodes().iter().find(|n| {
-            matches!(n.kind(), AstKind::Function(func) if func.span == constructor.value.span)
-        });
+        let constructor_func_node = ctx.nodes().iter().find(
+            |n| matches!(n.kind(), AstKind::Function(func) if func.span == constructor.value.span),
+        );
 
         let Some(constructor_func_node) = constructor_func_node else { return };
         let constructor_block_id = ctx.nodes().cfg_id(constructor_func_node.id());
 
         // Analyze the CFG starting from constructor entry
-        let (super_call_counts, super_call_spans) = Self::find_super_calls_in_cfg(
-            cfg,
-            constructor_block_id,
-            node.id(),
-            ctx,
-        );
+        let (super_call_counts, super_call_spans) =
+            Self::find_super_calls_in_cfg(cfg, constructor_block_id, node.id(), ctx);
 
         // Apply validation based on superclass type
         match super_class_type {
@@ -205,11 +204,8 @@ impl Rule for ConstructorSuper {
                 }
 
                 // Use CFG to analyze paths
-                let path_results = Self::analyze_super_paths(
-                    cfg,
-                    constructor_block_id,
-                    &super_call_counts,
-                );
+                let path_results =
+                    Self::analyze_super_paths(cfg, constructor_block_id, &super_call_counts);
 
                 // Check for violations based on path analysis
                 // path_results now only contains results from actual path terminations
@@ -230,7 +226,8 @@ impl Rule for ConstructorSuper {
                         matches!(r, PathResult::CalledOnce | PathResult::ExitedWithoutSuper)
                     });
 
-                    let some_missing = path_results.iter().any(|r| matches!(r, PathResult::NoSuper));
+                    let some_missing =
+                        path_results.iter().any(|r| matches!(r, PathResult::NoSuper));
 
                     if !all_paths_valid && some_missing {
                         ctx.diagnostic(missing_super_some(constructor.span));
@@ -317,9 +314,16 @@ impl ConstructorSuper {
                                     // Direct call expression: super()
                                     Expression::CallExpression(call) => {
                                         if matches!(&call.callee, Expression::Super(_)) {
-                                            if !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id) {
-                                                *super_call_counts.entry(*block_id).or_insert(0) += 1;
-                                                super_call_spans.entry(*block_id).or_insert(call.span);
+                                            if !Self::is_in_nested_scope_cfg(
+                                                node_id,
+                                                ctx,
+                                                class_node_id,
+                                            ) {
+                                                *super_call_counts.entry(*block_id).or_insert(0) +=
+                                                    1;
+                                                super_call_spans
+                                                    .entry(*block_id)
+                                                    .or_insert(call.span);
                                             }
                                         }
                                     }
@@ -328,30 +332,52 @@ impl ConstructorSuper {
                                     // but only one executes. We mark the block as having super() but don't
                                     // count it as multiple calls since they're mutually exclusive.
                                     Expression::ConditionalExpression(cond) => {
-                                        let has_consequent_super = if let Expression::CallExpression(call) = &cond.consequent {
-                                            matches!(&call.callee, Expression::Super(_))
-                                                && !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id)
-                                        } else {
-                                            false
-                                        };
+                                        let has_consequent_super =
+                                            if let Expression::CallExpression(call) =
+                                                &cond.consequent
+                                            {
+                                                matches!(&call.callee, Expression::Super(_))
+                                                    && !Self::is_in_nested_scope_cfg(
+                                                        node_id,
+                                                        ctx,
+                                                        class_node_id,
+                                                    )
+                                            } else {
+                                                false
+                                            };
 
-                                        let has_alternate_super = if let Expression::CallExpression(call) = &cond.alternate {
-                                            matches!(&call.callee, Expression::Super(_))
-                                                && !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id)
-                                        } else {
-                                            false
-                                        };
+                                        let has_alternate_super =
+                                            if let Expression::CallExpression(call) =
+                                                &cond.alternate
+                                            {
+                                                matches!(&call.callee, Expression::Super(_))
+                                                    && !Self::is_in_nested_scope_cfg(
+                                                        node_id,
+                                                        ctx,
+                                                        class_node_id,
+                                                    )
+                                            } else {
+                                                false
+                                            };
 
                                         // Mark block as having super() if either branch has it
                                         // Count is 1 even if both branches have super (they're mutually exclusive)
                                         if has_consequent_super || has_alternate_super {
                                             *super_call_counts.entry(*block_id).or_insert(0) += 1;
                                             if has_consequent_super {
-                                                if let Expression::CallExpression(call) = &cond.consequent {
-                                                    super_call_spans.entry(*block_id).or_insert(call.span);
+                                                if let Expression::CallExpression(call) =
+                                                    &cond.consequent
+                                                {
+                                                    super_call_spans
+                                                        .entry(*block_id)
+                                                        .or_insert(call.span);
                                                 }
-                                            } else if let Expression::CallExpression(call) = &cond.alternate {
-                                                super_call_spans.entry(*block_id).or_insert(call.span);
+                                            } else if let Expression::CallExpression(call) =
+                                                &cond.alternate
+                                            {
+                                                super_call_spans
+                                                    .entry(*block_id)
+                                                    .or_insert(call.span);
                                             }
                                         }
                                     }
@@ -433,8 +459,8 @@ impl ConstructorSuper {
             matches!(
                 inst.kind,
                 oxc_cfg::InstructionKind::Return(_)
-                | oxc_cfg::InstructionKind::Throw
-                | oxc_cfg::InstructionKind::ImplicitReturn
+                    | oxc_cfg::InstructionKind::Throw
+                    | oxc_cfg::InstructionKind::ImplicitReturn
             )
         });
 
@@ -448,7 +474,9 @@ impl ConstructorSuper {
                 matches!(
                     inst.kind,
                     oxc_cfg::InstructionKind::Throw
-                    | oxc_cfg::InstructionKind::Return(oxc_cfg::ReturnInstructionKind::NotImplicitUndefined)
+                        | oxc_cfg::InstructionKind::Return(
+                            oxc_cfg::ReturnInstructionKind::NotImplicitUndefined
+                        )
                 )
             });
 
@@ -467,7 +495,9 @@ impl ConstructorSuper {
         }
 
         // Get outgoing edges, filtering by edge type
+        let mut has_outgoing_edges = false;
         for edge in cfg.graph.edges_directed(block_id, Direction::Outgoing) {
+            has_outgoing_edges = true;
             match edge.weight() {
                 // Follow these edges with accumulated super count
                 EdgeType::Jump | EdgeType::Normal | EdgeType::Join => {
@@ -485,38 +515,56 @@ impl ConstructorSuper {
                 // (for while/for loops) or multiple times (for any loop that iterates)
                 // Both scenarios violate the "exactly once" requirement
                 EdgeType::Backedge => {
-                    // Backedge indicates a loop back to a previously visited block (the loop header).
-                    // If super() is called within the loop body, it's problematic because:
-                    // 1. Loop might execute 0 times (while/for) -> no super()
-                    // 2. Loop might execute multiple times -> duplicate super()
-                    //
-                    // Check if super() was called in the current iteration by checking if
-                    // new_count > super_count (super called in this block or predecessors in this iteration)
-                    let loop_iteration_has_super = new_count > super_count;
+                    let target = edge.target();
 
-                    if loop_iteration_has_super {
-                        // Super() called in loop iteration - flag as problematic
+                    // Backedge indicates a loop back to a previously visited block (the loop header).
+                    // To detect if super() is called within the loop body, we need to know if
+                    // super() was called after entering the loop header (target).
+                    //
+                    // The problem: we don't track the super_count when we first entered `target`.
+                    // However, we can detect this by checking if the current block or target block
+                    // itself contains super(). This is an approximation but catches most cases.
+                    //
+                    // Better approach: check if current block or any immediate predecessor in
+                    // the loop contains super().
+                    let current_block_has_super = super_call_counts.contains_key(&block_id);
+                    let target_has_super = super_call_counts.contains_key(&target);
+
+                    // If either the loop header or the block with backedge contains super(),
+                    // then super() is in the loop body
+                    let loop_contains_super = current_block_has_super || target_has_super;
+
+                    if loop_contains_super {
+                        // Super() called in loop - flag as problematic
                         path_results.push(PathResult::NoSuper);
                     }
 
                     // Don't follow the backedge (would cause infinite loop in DFS)
                 }
-                // Stop at function boundaries
+                // Stop at function boundaries - but don't follow
                 EdgeType::NewFunction => {}
-                // Stop at unreachable
+                // Stop at unreachable - but don't follow
                 EdgeType::Unreachable => {}
-                // Follow error edges to catch blocks
-                // Error edges represent exception paths - if an exception occurs,
-                // any super() calls in the try block don't count (execution didn't complete)
-                EdgeType::Error(_) => {
+                // Follow explicit error edges (try/catch) but not implicit ones
+                // Explicit errors (try/catch) represent real execution paths that need analysis
+                // Implicit errors are just error propagation/escape routes that don't represent
+                // actual execution paths within the constructor
+                EdgeType::Error(oxc_cfg::ErrorEdgeKind::Explicit) => {
+                    // For explicit error edges (exception thrown → catch handler),
+                    // use super_count from BEFORE this block because if an exception
+                    // is thrown, the rest of the try block doesn't execute
                     Self::dfs_analyze_paths(
                         cfg,
                         edge.target(),
                         super_call_counts,
                         visited_in_path,
-                        super_count, // Use super_count BEFORE this block, not new_count
+                        super_count, // Use super_count BEFORE this block
                         path_results,
                     );
+                }
+                EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {
+                    // Don't follow implicit error edges - these are error propagation
+                    // paths that escape the constructor scope, not real execution paths
                 }
                 // Finalize edges (for finally blocks) should preserve the count
                 EdgeType::Finalize => {
@@ -530,6 +578,17 @@ impl ConstructorSuper {
                     );
                 }
             }
+        }
+
+        // If this block has NO outgoing edges at all and didn't hit an explicit exit,
+        // it's a true dead-end (shouldn't normally happen in valid CFG, but handle it)
+        if !has_outgoing_edges && !has_exit {
+            let result = match new_count {
+                0 => PathResult::NoSuper,
+                1 => PathResult::CalledOnce,
+                _ => PathResult::CalledMultiple,
+            };
+            path_results.push(result);
         }
 
         visited_in_path.remove(&block_id);
@@ -621,7 +680,9 @@ impl ConstructorSuper {
             match ancestor.kind() {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                     // Check if this function is the constructor itself
-                    if let Some(parent) = ctx.nodes().parent_node(ancestor.id()).kind().as_method_definition() {
+                    if let Some(parent) =
+                        ctx.nodes().parent_node(ancestor.id()).kind().as_method_definition()
+                    {
                         if matches!(parent.kind, MethodDefinitionKind::Constructor) {
                             continue;
                         }
@@ -674,7 +735,6 @@ impl ConstructorSuper {
             _ => false,
         }
     }
-
 }
 
 #[test]
