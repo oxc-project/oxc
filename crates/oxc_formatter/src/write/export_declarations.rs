@@ -12,7 +12,10 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
-    write::semicolon::OptionalSemicolon,
+    write::{
+        import_declaration::format_import_and_export_source_with_clause,
+        semicolon::OptionalSemicolon,
+    },
 };
 
 use super::FormatWrite;
@@ -78,7 +81,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
         if let Some(name) = &self.exported() {
             write!(f, ["as", space(), name, space()])?;
         }
-        write!(f, ["from", space(), self.source(), self.with_clause(), OptionalSemicolon])
+        write!(f, ["from", space()]);
+
+        format_import_and_export_source_with_clause(self.source(), self.with_clause(), f)?;
+        write!(f, [OptionalSemicolon])
     }
 }
 
@@ -88,7 +94,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
         let export_kind = self.export_kind();
         let specifiers = self.specifiers();
         let source = self.source();
-        let with_clause = self.with_clause();
 
         if let Some(decl) = declaration {
             format_export_keyword_with_class_decorators(
@@ -147,12 +152,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
             }
             write!(f, "}")?;
 
+            let with_clause = self.with_clause();
             if let Some(source) = source {
-                write!(f, [space(), "from", space(), source])?;
-            }
-
-            if let Some(with_clause) = with_clause {
-                write!(f, [space(), with_clause])?;
+                write!(f, [space(), "from", space()])?;
+                format_import_and_export_source_with_clause(source, with_clause, f)?;
             }
         }
 

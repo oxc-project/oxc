@@ -25,6 +25,25 @@ impl<'a> Format<'a> for ImportOrExportKind {
     }
 }
 
+pub fn format_import_and_export_source_with_clause<'a>(
+    source: &AstNode<'a, StringLiteral>,
+    with_clause: Option<&AstNode<'a, WithClause>>,
+    f: &mut Formatter<'_, 'a>,
+) -> FormatResult<()> {
+    source.format_leading_comments(f)?;
+    source.write(f)?;
+
+    if let Some(with_clause) = with_clause {
+        if f.comments().has_comment_before(with_clause.span.start) {
+            write!(f, [space()])?;
+        }
+
+        write!(f, [with_clause])?;
+    }
+
+    Ok(())
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let decl = &format_once(|f| {
@@ -34,7 +53,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
                 write!(f, [specifiers, space(), "from", space()])?;
             }
 
-            write!(f, [self.source(), self.with_clause(), OptionalSemicolon])
+            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f)?;
+
+            write!(f, [OptionalSemicolon])
         });
 
         write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)])

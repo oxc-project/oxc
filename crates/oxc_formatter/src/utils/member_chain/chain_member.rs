@@ -7,7 +7,7 @@ use crate::{
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 use oxc_ast::{AstKind, ast::*};
@@ -77,15 +77,20 @@ impl<'a> Format<'a> for ChainMember<'a, '_> {
                         member.property()
                     ]
                 )?;
-                member.format_trailing_comments(f)
-            }
 
+                // `A.b /* comment */ (c)` -> `A.b(/* comment */ c)`
+                if !matches!(member.parent, AstNodes::CallExpression(call) if call.type_arguments.is_none())
+                {
+                    member.format_trailing_comments(f)?;
+                }
+
+                Ok(())
+            }
             Self::TSNonNullExpression(e) => {
                 e.format_leading_comments(f)?;
                 write!(f, ["!"])?;
                 e.format_trailing_comments(f)
             }
-
             Self::CallExpression { expression, position } => match *position {
                 CallExpressionPosition::Start => write!(f, expression),
                 CallExpressionPosition::Middle => {

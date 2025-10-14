@@ -9,10 +9,11 @@ use crate::{
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
-        trivia::{FormatLeadingComments, format_dangling_comments},
+        trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
+    parentheses::NeedsParentheses,
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
@@ -149,20 +150,66 @@ pub enum AssignmentLikeLayout {
     SuppressedInitializer,
 }
 
-const MIN_OVERLAP_FOR_BREAK: u8 = 3;
+/// Based on Prettier's behavior:
+/// <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L853-L883>
+fn format_left_trailing_comments(
+    start: u32,
+    should_print_as_leading: bool,
+    f: &mut Formatter<'_, '_>,
+) -> FormatResult<()> {
+    let end_of_line_comments = f.context().comments().end_of_line_comments_after(start);
+
+    let comments = if end_of_line_comments.is_empty() {
+        let comments = f.context().comments().comments_before_character(start, b'=');
+        if comments.iter().any(|c| f.source_text().is_own_line_comment(c)) { &[] } else { comments }
+    } else if should_print_as_leading || end_of_line_comments.last().is_some_and(|c| c.is_block()) {
+        // No trailing comments for these expressions or if the trailing comment is a block comment
+        &[]
+    } else {
+        end_of_line_comments
+    };
+
+    FormatTrailingComments::Comments(comments).fmt(f)
+}
+
+fn should_print_as_leading(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::TaggedTemplateExpression(_)
+    )
+}
 
 impl<'a> AssignmentLike<'a, '_> {
     fn write_left(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
         match self {
-            AssignmentLike::VariableDeclarator(variable_declarator) => {
-                write!(f, variable_declarator.id())?;
+            AssignmentLike::VariableDeclarator(declarator) => {
+                if let Some(init) = &declarator.init {
+                    write!(f, [FormatNodeWithoutTrailingComments(&declarator.id())])?;
+                    format_left_trailing_comments(
+                        declarator.id.span().end,
+                        should_print_as_leading(init),
+                        f,
+                    )?;
+                } else {
+                    write!(f, declarator.id())?;
+                }
                 Ok(false)
             }
             AssignmentLike::AssignmentExpression(assignment) => {
-                write!(f, [assignment.left()]);
+                write!(f, [FormatNodeWithoutTrailingComments(&assignment.left()),])?;
+                format_left_trailing_comments(
+                    assignment.left.span().end,
+                    should_print_as_leading(&assignment.right),
+                    f,
+                )?;
                 Ok(false)
             }
             AssignmentLike::ObjectProperty(property) => {
+                const MIN_OVERLAP_FOR_BREAK: u8 = 3;
+
                 let text_width_for_break =
                     (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
 
@@ -226,15 +273,25 @@ impl<'a> AssignmentLike<'a, '_> {
                 Ok(false) // Class properties don't use "short" key logic
             }
             AssignmentLike::TSTypeAliasDeclaration(declaration) => {
-                write!(
+                write!(f, [declaration.declare.then_some("declare "), "type "])?;
+
+                let start = if let Some(type_parameters) = &declaration.type_parameters() {
+                    write!(
+                        f,
+                        [declaration.id(), FormatNodeWithoutTrailingComments(type_parameters)]
+                    )?;
+                    type_parameters.span.end
+                } else {
+                    write!(f, [FormatNodeWithoutTrailingComments(declaration.id())])?;
+                    declaration.id.span.end
+                };
+
+                format_left_trailing_comments(
+                    start,
+                    matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
                     f,
-                    [
-                        declaration.declare.then_some("declare "),
-                        "type ",
-                        declaration.id(),
-                        declaration.type_parameters()
-                    ]
                 )?;
+
                 Ok(false)
             }
         }

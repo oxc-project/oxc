@@ -28,7 +28,7 @@ ts compatibility: 533/573 (93.02%)
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
 | typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/definite/without-annotation.ts | 💥 | 83.33% |
+| typescript/definite/without-annotation.ts | 💥 | 91.67% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/interface/ignore.ts | 💥✨ | 40.09% |
 | typescript/intersection/intersection-parens.ts | 💥💥 | 86.17% |
