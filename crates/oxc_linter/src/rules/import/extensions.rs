@@ -590,60 +590,60 @@ fn test() {
         // Configuration inheritance: per-extension configs inherit from first arg unless
         // explicitly overridden. See https://github.com/oxc-project/oxc/issues/12220
         (
-            r#"
+            r"
                 import { A } from './something';
-            "#,
+            ",
             Some(
                 json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
             ),
         ),
         // Path alias ~/
         (
-            r#"
+            r"
                 import { D } from '~/common/something';
-            "#,
+            ",
             Some(
                 json!(["ignorePackages", { "js": "never", "ts": "never", "jsx": "never", "tsx": "never"}]),
             ),
         ),
         // Scoped package subpaths should be treated as packages
         (
-            r#"
+            r"
                 import { foo } from '@scope/package/deep/nested/path';
-            "#,
+            ",
             Some(json!(["ignorePackages"])),
         ),
         // Mixed configuration: relative with extension, package without, scoped package subpath
         (
-            r#"
+            r"
                 import a from './relative.js';
                 import b from 'package';
                 import c from '@org/pkg/sub';
-            "#,
+            ",
             Some(json!(["ignorePackages", { "js": "always" }])),
         ),
         // Path alias @/ (not a scoped package)
         (
-            r#"
+            r"
                 import foo from '@/components/Foo.js';
                 import bar from '@/utils/bar.ts';
-            "#,
+            ",
             Some(json!(["always", { "ignorePackages": false }])),
         ),
         // Other single-char path aliases
         (
-            r#"
+            r"
                 import a from '~/config.js';
                 import b from '#/internal.ts';
-            "#,
+            ",
             Some(json!(["always", { "ignorePackages": false }])),
         ),
         // Scoped packages (distinguished from path aliases)
         (
-            r#"
+            r"
                 import babel from '@babel/core';
                 import types from '@types/node';
-            "#,
+            ",
             Some(json!(["ignorePackages"])),
         ),
     ];
@@ -686,9 +686,9 @@ fn test() {
         (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
         // https://github.com/oxc-project/oxc/issues/12220
         (
-            r#"
+            r"
                 import { B } from './something.ts';
-            "#,
+            ",
             Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
         ),
         (
@@ -913,36 +913,36 @@ fn test() {
         ),
         // Directory imports with 'always' should fail
         (
-            r#"
+            r"
                 import x from '.';
-            "#,
+            ",
             Some(json!(["always"])),
         ),
         (
-            r#"
+            r"
                 import y from '..';
-            "#,
+            ",
             Some(json!(["always"])),
         ),
         // Scoped package subpaths with extensions fail when ignorePackages: false
         (
-            r#"
+            r"
                 import { bar } from '@scope/pkg/file.js';
-            "#,
+            ",
             Some(json!(["never", { "ignorePackages": false }])),
         ),
         (
-            r#"
+            r"
                 import { baz } from '@org/lib/sub/index.ts';
-            "#,
+            ",
             Some(json!(["never", { "ignorePackages": false }])),
         ),
         // Mixed configuration: some should pass, some should fail
         (
-            r#"
+            r"
                 import x from './foo';
                 import y from './bar.ts';
-            "#,
+            ",
             Some(json!(["always", { "ts": "never" }])),
         ),
     ];
