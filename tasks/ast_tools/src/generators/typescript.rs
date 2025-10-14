@@ -40,8 +40,6 @@ impl Generator for TypescriptGenerator {
 }
 
 /// Generate Typescript type definitions for all types.
-/// todo: investigate why it leaves out the Comment interface imported by
-/// src-js/generated/types.d.ts
 fn generate_ts_type_defs(schema: &Schema, codegen: &Codegen) -> String {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let program_type_id = schema.type_names["Program"];
@@ -472,8 +470,8 @@ fn amend_oxlint_types(code: &str) -> String {
 
     #[rustfmt::skip]
     code.insert_str(0, "
-        import { Span, Comment } from '../plugins/types.ts';
-        export { Span, Comment };
+        import { Span } from '../plugins/types.ts';
+        export { Span };
 
     ");
 
