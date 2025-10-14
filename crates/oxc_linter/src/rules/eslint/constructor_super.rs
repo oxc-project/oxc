@@ -185,7 +185,7 @@ impl Rule for ConstructorSuper {
         match super_class_type {
             SuperClassType::None | SuperClassType::Invalid => {
                 // Should NOT have super() calls
-                for &span in super_call_spans.values() {
+                for &span in &super_call_spans {
                     ctx.diagnostic(bad_super(span));
                 }
             }
@@ -198,7 +198,7 @@ impl Rule for ConstructorSuper {
                     }
                 } else {
                     // Has super() call - this is invalid
-                    for &span in super_call_spans.values() {
+                    for &span in &super_call_spans {
                         ctx.diagnostic(bad_super(span));
                     }
                 }
@@ -226,10 +226,15 @@ impl Rule for ConstructorSuper {
                 if path_results.is_empty() {
                     // This shouldn't happen after our fixes
                     // Simple case: treat as single path
-                    if super_call_counts.len() > 1
-                        && let Some(&span) = super_call_spans.values().next()
-                    {
-                        ctx.diagnostic(duplicate_super(span));
+                    if super_call_spans.len() > 1 {
+                        // Sort spans by source position to report duplicates in order
+                        let mut sorted_spans = super_call_spans.clone();
+                        sorted_spans.sort_by_key(|s| s.start);
+
+                        // Report all duplicates (all except the first)
+                        for &span in sorted_spans.iter().skip(1) {
+                            ctx.diagnostic(duplicate_super(span));
+                        }
                     }
                 } else {
                     // Check if all paths have super() or exit early
@@ -247,11 +252,17 @@ impl Rule for ConstructorSuper {
                         ctx.diagnostic(missing_super_some(constructor.span));
                     }
 
-                    // Check for duplicates
+                    // Check for duplicates - report all but the first in source order
                     if path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple))
-                        && let Some(&span) = super_call_spans.values().next()
+                        && super_call_spans.len() > 1
                     {
-                        ctx.diagnostic(duplicate_super(span));
+                        // Sort spans by source position to report duplicates in order
+                        let mut sorted_spans = super_call_spans.clone();
+                        sorted_spans.sort_by_key(|s| s.start);
+
+                        for &span in sorted_spans.iter().skip(1) {
+                            ctx.diagnostic(duplicate_super(span));
+                        }
                     }
                 }
             }
@@ -336,15 +347,15 @@ impl ConstructorSuper {
     }
 
     /// Find all super() calls within the CFG reachable from constructor entry
-    /// Returns (map of blocks to super() call count, map of blocks to first super() span, has conditional super)
+    /// Returns (map of blocks to super() call count, vector of all super() call spans, has conditional super)
     fn find_super_calls_in_cfg(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
         class_node_id: NodeId,
         ctx: &LintContext,
-    ) -> (FxHashMap<BlockNodeId, usize>, FxHashMap<BlockNodeId, Span>, bool) {
+    ) -> (FxHashMap<BlockNodeId, usize>, Vec<Span>, bool) {
         let mut super_call_counts = FxHashMap::default();
-        let mut super_call_spans = FxHashMap::default();
+        let mut super_call_spans = Vec::new();
         let mut has_conditional_super = false;
 
         // Walk all reachable blocks from constructor
@@ -369,7 +380,7 @@ impl ConstructorSuper {
                     // Helper to record a super() call
                     let mut record_super = |span: Span| {
                         *super_call_counts.entry(*block_id).or_insert(0) += 1;
-                        super_call_spans.entry(*block_id).or_insert(span);
+                        super_call_spans.push(span);
                     };
 
                     match node.kind() {
