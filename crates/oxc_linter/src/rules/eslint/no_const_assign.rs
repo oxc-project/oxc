@@ -1,6 +1,7 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -50,18 +51,53 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.scoping();
-        if symbol_table.symbol_flags(symbol_id).is_const_variable() {
-            for reference in symbol_table.get_resolved_references(symbol_id) {
-                if reference.is_write() {
-                    ctx.diagnostic(no_const_assign_diagnostic(
-                        symbol_table.symbol_name(symbol_id),
-                        symbol_table.symbol_span(symbol_id),
-                        ctx.semantic().reference_span(reference),
-                    ));
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
+                for decl in &var_decl.declarations {
+                    for ident in decl.id.get_binding_identifiers() {
+                        check_symbol(ident.symbol_id(), ctx);
+                    }
                 }
             }
+            AstKind::ArrayPattern(pat) => {
+                let Some(idents) = &pat.rest else {
+                    return;
+                };
+                for ident in idents.argument.get_binding_identifiers() {
+                    let symbol_id = ident.symbol_id();
+                    let symbol_table = ctx.scoping();
+                    if symbol_table.symbol_flags(symbol_id).is_const_variable() {
+                        check_symbol(symbol_id, ctx);
+                    }
+                }
+            }
+            AstKind::AssignmentPattern(pat) => {
+                for ident in pat.left.get_binding_identifiers() {
+                    let symbol_id = ident.symbol_id();
+                    let symbol_table = ctx.scoping();
+                    if symbol_table.symbol_flags(symbol_id).is_const_variable() {
+                        check_symbol(symbol_id, ctx);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn check_symbol(symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    let symbol_table = ctx.scoping();
+    // This symbol _should_ always be considered a const variable (since we got it from a const declaration),
+    // but we check in debug mode just to be sure.
+    debug_assert!(symbol_table.symbol_flags(symbol_id).is_const_variable());
+    for reference in symbol_table.get_resolved_references(symbol_id) {
+        if reference.is_write() {
+            ctx.diagnostic(no_const_assign_diagnostic(
+                symbol_table.symbol_name(symbol_id),
+                symbol_table.symbol_span(symbol_id),
+                ctx.semantic().reference_span(reference),
+            ));
         }
     }
 }

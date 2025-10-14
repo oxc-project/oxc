@@ -229,8 +229,12 @@ impl RuleRunner for crate::rules::eslint::no_console::NoConsole {
 }
 
 impl RuleRunner for crate::rules::eslint::no_const_assign::NoConstAssign {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnSymbol;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrayPattern,
+        AstType::AssignmentPattern,
+        AstType::VariableDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner
