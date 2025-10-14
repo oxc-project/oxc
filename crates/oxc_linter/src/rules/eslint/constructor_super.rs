@@ -146,10 +146,10 @@ impl Rule for ConstructorSuper {
 
         // Find constructor in class body
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
-            if let ClassElement::MethodDefinition(method) = elem {
-                if matches!(method.kind, MethodDefinitionKind::Constructor) {
-                    return Some(method);
-                }
+            if let ClassElement::MethodDefinition(method) = elem
+                && matches!(method.kind, MethodDefinitionKind::Constructor)
+            {
+                return Some(method);
             }
             None
         }) else {
@@ -212,10 +212,10 @@ impl Rule for ConstructorSuper {
                 if path_results.is_empty() {
                     // This shouldn't happen after our fixes
                     // Simple case: treat as single path
-                    if super_call_counts.len() > 1 {
-                        if let Some(&span) = super_call_spans.values().next() {
-                            ctx.diagnostic(duplicate_super(span));
-                        }
+                    if super_call_counts.len() > 1
+                        && let Some(&span) = super_call_spans.values().next()
+                    {
+                        ctx.diagnostic(duplicate_super(span));
                     }
                 } else {
                     // Check if all paths have super() or exit early
@@ -234,10 +234,10 @@ impl Rule for ConstructorSuper {
                     }
 
                     // Check for duplicates
-                    if path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple)) {
-                        if let Some(&span) = super_call_spans.values().next() {
-                            ctx.diagnostic(duplicate_super(span));
-                        }
+                    if path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple))
+                        && let Some(&span) = super_call_spans.values().next()
+                    {
+                        ctx.diagnostic(duplicate_super(span));
                     }
                 }
             }
@@ -277,18 +277,18 @@ impl ConstructorSuper {
             &cfg.graph,
             constructor_block,
             &|edge| match edge {
-                // Follow normal control flow
-                EdgeType::Jump | EdgeType::Normal => None,
                 // Stop at function boundaries (nested functions)
                 EdgeType::NewFunction => Some(()),
                 // Follow other edges to explore all paths
-                EdgeType::Backedge
+                EdgeType::Jump
+                | EdgeType::Normal
+                | EdgeType::Backedge
                 | EdgeType::Unreachable
                 | EdgeType::Join
                 | EdgeType::Error(_)
                 | EdgeType::Finalize => None,
             },
-            &mut |block_id, _: ()| {
+            &mut |block_id, (): ()| {
                 let block = cfg.basic_block(*block_id);
 
                 // Check each instruction in this block
@@ -301,11 +301,11 @@ impl ConstructorSuper {
                         match node.kind() {
                             // Direct call expression
                             AstKind::CallExpression(call) => {
-                                if matches!(&call.callee, Expression::Super(_)) {
-                                    if !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id) {
-                                        *super_call_counts.entry(*block_id).or_insert(0) += 1;
-                                        super_call_spans.entry(*block_id).or_insert(call.span);
-                                    }
+                                if matches!(&call.callee, Expression::Super(_))
+                                    && !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id)
+                                {
+                                    *super_call_counts.entry(*block_id).or_insert(0) += 1;
+                                    super_call_spans.entry(*block_id).or_insert(call.span);
                                 }
                             }
                             // Expression statement wrapping a call or conditional
@@ -313,18 +313,15 @@ impl ConstructorSuper {
                                 match &expr_stmt.expression {
                                     // Direct call expression: super()
                                     Expression::CallExpression(call) => {
-                                        if matches!(&call.callee, Expression::Super(_)) {
-                                            if !Self::is_in_nested_scope_cfg(
+                                        if matches!(&call.callee, Expression::Super(_))
+                                            && !Self::is_in_nested_scope_cfg(
                                                 node_id,
                                                 ctx,
                                                 class_node_id,
-                                            ) {
-                                                *super_call_counts.entry(*block_id).or_insert(0) +=
-                                                    1;
-                                                super_call_spans
-                                                    .entry(*block_id)
-                                                    .or_insert(call.span);
-                                            }
+                                            )
+                                        {
+                                            *super_call_counts.entry(*block_id).or_insert(0) += 1;
+                                            super_call_spans.entry(*block_id).or_insert(call.span);
                                         }
                                     }
                                     // Conditional expression: a ? super() : super()
@@ -499,17 +496,6 @@ impl ConstructorSuper {
         for edge in cfg.graph.edges_directed(block_id, Direction::Outgoing) {
             has_outgoing_edges = true;
             match edge.weight() {
-                // Follow these edges with accumulated super count
-                EdgeType::Jump | EdgeType::Normal | EdgeType::Join => {
-                    Self::dfs_analyze_paths(
-                        cfg,
-                        edge.target(),
-                        super_call_counts,
-                        visited_in_path,
-                        new_count,
-                        path_results,
-                    );
-                }
                 // Backedge: loop back edge
                 // If the loop body contains super(), this means super() could be called 0 times
                 // (for while/for loops) or multiple times (for any loop that iterates)
@@ -541,10 +527,6 @@ impl ConstructorSuper {
 
                     // Don't follow the backedge (would cause infinite loop in DFS)
                 }
-                // Stop at function boundaries - but don't follow
-                EdgeType::NewFunction => {}
-                // Stop at unreachable - but don't follow
-                EdgeType::Unreachable => {}
                 // Follow explicit error edges (try/catch) but not implicit ones
                 // Explicit errors (try/catch) represent real execution paths that need analysis
                 // Implicit errors are just error propagation/escape routes that don't represent
@@ -562,12 +544,12 @@ impl ConstructorSuper {
                         path_results,
                     );
                 }
-                EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {
-                    // Don't follow implicit error edges - these are error propagation
-                    // paths that escape the constructor scope, not real execution paths
-                }
-                // Finalize edges (for finally blocks) should preserve the count
-                EdgeType::Finalize => {
+                // Stop at these edge types - don't follow them
+                EdgeType::NewFunction
+                | EdgeType::Unreachable
+                | EdgeType::Error(oxc_cfg::ErrorEdgeKind::Implicit) => {}
+                // Follow these edges with accumulated super count
+                EdgeType::Jump | EdgeType::Normal | EdgeType::Join | EdgeType::Finalize => {
                     Self::dfs_analyze_paths(
                         cfg,
                         edge.target(),
@@ -682,10 +664,9 @@ impl ConstructorSuper {
                     // Check if this function is the constructor itself
                     if let Some(parent) =
                         ctx.nodes().parent_node(ancestor.id()).kind().as_method_definition()
+                        && matches!(parent.kind, MethodDefinitionKind::Constructor)
                     {
-                        if matches!(parent.kind, MethodDefinitionKind::Constructor) {
-                            continue;
-                        }
+                        continue;
                     }
                     return true;
                 }
