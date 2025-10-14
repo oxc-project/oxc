@@ -32,7 +32,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
 
-        let (directives, statements) = self.context(Context::Return, Context::empty(), |p| {
+        let (directives, statements) = self.context_add(Context::Return, |p| {
             p.parse_directives_and_statements(/* is_top_level */ false)
         });
 

@@ -384,7 +384,7 @@ impl<'a> ParserImpl<'a> {
         let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
         let expr_span = self.start_span();
 
-        let init_expression = self.context(Context::empty(), Context::In, ParserImpl::parse_expr);
+        let init_expression = self.context_remove(Context::In, ParserImpl::parse_expr);
 
         match self.cur_kind() {
             Kind::In => {
@@ -418,7 +418,7 @@ impl<'a> ParserImpl<'a> {
         decl_kind: VariableDeclarationKind,
         r#await: bool,
     ) -> Statement<'a> {
-        let init_declaration = self.context(Context::empty(), Context::In, |p| {
+        let init_declaration = self.context_remove(Context::In, |p| {
             p.parse_variable_declaration(
                 start_span,
                 decl_kind,
@@ -495,13 +495,13 @@ impl<'a> ParserImpl<'a> {
         let test = if matches!(self.cur_kind(), Kind::Semicolon | Kind::RParen) {
             None
         } else {
-            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr))
+            Some(self.context_add(Context::In, ParserImpl::parse_expr))
         };
         self.expect(Kind::Semicolon);
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr))
+            Some(self.context_add(Context::In, ParserImpl::parse_expr))
         };
         self.expect(Kind::RParen);
         if r#await {
@@ -575,7 +575,7 @@ impl<'a> ParserImpl<'a> {
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
         } else {
-            let expr = self.context(Context::In, Context::empty(), ParserImpl::parse_expr);
+            let expr = self.context_add(Context::In, ParserImpl::parse_expr);
             self.asi();
             Some(expr)
         };

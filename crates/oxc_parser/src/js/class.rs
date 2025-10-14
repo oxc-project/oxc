@@ -303,7 +303,7 @@ impl<'a> ParserImpl<'a> {
         if kind.is_identifier_or_keyword() || kind == Kind::Star || kind == Kind::LBrack {
             let is_ambient = modifiers.contains(ModifierKind::Declare);
             return if is_ambient {
-                self.context(Context::Ambient, Context::empty(), |p| {
+                self.context_add(Context::Ambient, |p| {
                     p.parse_property_or_method_declaration(span, r#type, &modifiers, decorators)
                 })
             } else {
