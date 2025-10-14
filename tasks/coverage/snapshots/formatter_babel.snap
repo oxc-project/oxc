@@ -1,43 +1,9 @@
-commit: 4cc3d888
+commit: 41d96516
 
 formatter_babel Summary:
-AST Parsed     : 2440/2440 (100.00%)
-Positive Passed: 2421/2440 (99.22%)
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
-Cannot assign to this expression
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
-Cannot assign to this expression
+AST Parsed     : 2423/2423 (100.00%)
+Positive Passed: 2421/2423 (99.92%)
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/class/division/input.js
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
-Keywords cannot contain escape charactersExpected `)` but found `of`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
-Keywords cannot contain escape charactersExpected `)` but found `of`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-Unexpected token
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
-Unexpected token. Did you mean `{'>'}` or `&gt;`?
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-Unexpected token
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
-Expected `,` but found `extends`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts
-Expected `,` but found `extends`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
-Expected `{` but found `<<`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage-babel-7/input.ts
-Expected `{` but found `<<`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts
-Expected `{` but found `<<`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
-Unexpected token
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element-babel-7/input.tsx
-Unexpected token
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts
-Expected `{` but found `<<`
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx
-Unexpected token
