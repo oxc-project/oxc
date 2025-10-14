@@ -244,8 +244,9 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
 
 impl ESTree for CommentValue<'_> {
-    #[expect(clippy::unimplemented)]
-    fn serialize<S: Serializer>(&self, _serializer: S) {
-        unimplemented!();
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        // TODO: this is just to get the tests to run.
+        // needs to be looked into more. serialization should be handled by rawdatatransfer.
+        "".serialize(serializer);
     }
 }
