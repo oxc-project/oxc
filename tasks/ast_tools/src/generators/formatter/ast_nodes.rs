@@ -79,26 +79,18 @@ impl Generator for FormatterAstNodesGenerator {
         };
 
         let span_match_arms = ast_nodes_names.iter().map(|(name, _)| {
-            quote! { Self::#name(n) => n.span(), }
+            if name == "Argument" {
+                // This is an enum, so its span is the same as its inner node's span.
+                // From experience, we should get the real parent's span.
+                quote! { Self::#name(n) => n.parent.span(), }
+            } else {
+                quote! { Self::#name(n) => n.span(), }
+            }
         });
 
         let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
             quote! { Self::#name(n) => n.parent, }
         });
-
-        let as_sibling_node_match_arms =
-            schema.types.iter().filter_map(|type_def| match type_def {
-                TypeDef::Struct(struct_def) if struct_def.kind.has_kind => {
-                    let ident = struct_def.ident();
-                    Some(quote! { Self::#ident(n) => SiblingNode::from(n.inner), })
-                }
-                TypeDef::Enum(enum_def) if enum_def.kind.has_kind => {
-                    let ident = enum_def.ident();
-                    // This is a workaround for some enums have a AstKind.
-                    Some(quote! { Self::#ident(n) => n.parent.as_sibling_node(), })
-                }
-                _ => None,
-            });
 
         let ast_nodes_debug_names = ast_nodes_names.iter().map(|(name, _)| {
             let debug_name = name.to_string();
@@ -115,13 +107,9 @@ impl Generator for FormatterAstNodesGenerator {
 
         let ast_node_ast_nodes_impls = ast_node_and_ast_nodes_impls();
         let ast_node_iterator_impls = ast_node_iterator_impls(schema);
-        let sibling_node_enum = generate_sibling_node(schema);
 
         let output = quote! {
-            #![expect(
-                clippy::elidable_lifetime_names,
-                clippy::match_same_arms
-            )]
+            #![expect(clippy::elidable_lifetime_names)]
 
             use std::{mem::transmute, ops::Deref, fmt};
             ///@@line_break
@@ -148,8 +136,6 @@ impl Generator for FormatterAstNodesGenerator {
                 #(#ast_nodes_variants)*
             }
 
-            #sibling_node_enum
-
             impl <'a> AstNodes<'a> {
                 #[inline]
                 pub fn span(&self) -> Span {
@@ -168,14 +154,6 @@ impl Generator for FormatterAstNodesGenerator {
                 }
 
                 #[inline]
-                pub fn as_sibling_node(&self) -> SiblingNode<'a> {
-                    match self {
-                        #dummy_variant
-                        #(#as_sibling_node_match_arms)*
-                    }
-                }
-
-                #[inline]
                 pub fn debug_name(&self) -> &'static str {
                     match self {
                         Self::Dummy() => "Dummy",
@@ -189,7 +167,7 @@ impl Generator for FormatterAstNodesGenerator {
                 pub(super) inner: &'a T,
                 pub parent: &'a AstNodes<'a>,
                 pub(super) allocator: &'a Allocator,
-                pub(super) following_node: Option<SiblingNode<'a>>,
+                pub(super) following_span: Option<Span>,
             }
 
 
@@ -316,13 +294,13 @@ fn generate_struct_impls(
 
             let should_not_have_following_node =
                 no_following_node_type_ids.contains(&struct_def.id);
-            let mut following_node = if should_not_have_following_node {
+            let mut following_span = if should_not_have_following_node {
                 quote! {
                     None
                 }
             } else {
                 quote! {
-                    self.following_node
+                    self.following_span
                 }
             };
 
@@ -332,7 +310,7 @@ fn generate_struct_impls(
                 if let Some(next_following_node_tmp) =
                     generate_next_following_node(next_field, next_field_type_def, schema)
                 {
-                    following_node = if next_field_type_def.is_option()
+                    following_span = if next_field_type_def.is_option()
                         || next_field_type_def.is_vec()
                     {
                         let or_else_following_nodes = build_following_node_chain_until_non_option(
@@ -354,22 +332,22 @@ fn generate_struct_impls(
 
             if is_option {
                 quote! {
-                    let following_node = #following_node;
+                    let following_span = #following_span;
                     self.allocator.alloc(self.inner.#field_name.as_ref().map(|inner| AstNode {
                         inner: #inner_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
-                        following_node
+                        following_span
                     })).as_ref()
                 }
             } else {
                 quote! {
-                    let following_node = #following_node;
+                    let following_span = #following_span;
                     self.allocator.alloc(AstNode {
                         inner: #field_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
-                        following_node
+                        following_span
                     })
                 }
             }
@@ -412,9 +390,9 @@ fn generate_struct_impls(
             ///@@line_break
             pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                 format_trailing_comments(
-                    &self.parent.as_sibling_node(),
-                    &SiblingNode::from(self.inner),
-                    self.following_node.as_ref(),
+                    self.parent.span(),
+                    self.inner.span(),
+                    self.following_span,
                 )
                 .fmt(f)
             }
@@ -449,9 +427,9 @@ fn generate_next_following_node(
         return None;
     }
 
-    let following_node = match next_field_type_def {
-        TypeDef::Struct(_) | TypeDef::Enum(_) => {
-            quote! { Some(SiblingNode::from(&#next_field_accessor)) }
+    let following_span = match next_field_type_def {
+        TypeDef::Box(_) | TypeDef::Struct(_) | TypeDef::Enum(_) => {
+            quote! { Some(#next_field_accessor.span()) }
         }
         TypeDef::Option(option_def) => {
             let inner_type = option_def.inner_type(schema);
@@ -460,18 +438,15 @@ fn generate_next_following_node(
             } else {
                 quote! { as_ref() }
             };
-            quote! { #next_field_accessor.#inner_type_call.map(SiblingNode::from) }
-        }
-        TypeDef::Box(_) => {
-            quote! { Some(SiblingNode::from(#next_field_accessor.as_ref())) }
+            quote! { #next_field_accessor.#inner_type_call.map(GetSpan::span) }
         }
         TypeDef::Vec(_) => {
-            quote! { #next_field_accessor.first().as_ref().copied().map(SiblingNode::from) }
+            quote! { #next_field_accessor.first().map(GetSpan::span) }
         }
         _ => return None,
     };
 
-    Some(following_node)
+    Some(following_span)
 }
 
 fn build_following_node_chain_until_non_option(
@@ -483,9 +458,9 @@ fn build_following_node_chain_until_non_option(
 
     for field in fields {
         let field_type_def = field.type_def(schema);
-        if let Some(following_node) = generate_next_following_node(field, field_type_def, schema) {
+        if let Some(following_span) = generate_next_following_node(field, field_type_def, schema) {
             result = quote! {
-                #result.or_else(|| #following_node)
+                #result.or_else(|| #following_span)
             };
             if !field_type_def.is_option() && !field_type_def.is_vec() {
                 return result;
@@ -496,7 +471,7 @@ fn build_following_node_chain_until_non_option(
     if should_not_have_following_node {
         result
     } else {
-        quote! { #result.or(self.following_node) }
+        quote! { #result.or(self.following_span) }
     }
 }
 
@@ -526,7 +501,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: #inner_expr,
                     parent,
                     allocator: self.allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 }))
             }
         } else {
@@ -554,7 +529,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: it.#to_fn_ident(),
                     parent,
                     allocator: self.allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 }))
             }
         } else {
@@ -563,7 +538,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: it.#to_fn_ident(),
                     parent,
                     allocator: self.allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 }).as_ast_nodes();
             }
         };
@@ -647,7 +622,7 @@ fn ast_node_and_ast_nodes_impls() -> TokenStream {
         ///@@line_break
         impl<'a> AstNode<'a, Program<'a>> {
             pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
-                AstNode { inner, parent, allocator, following_node: None }
+                AstNode { inner, parent, allocator, following_span: None }
             }
         }
 
@@ -659,7 +634,7 @@ fn ast_node_and_ast_nodes_impls() -> TokenStream {
                         inner,
                         parent: self.parent,
                         allocator: self.allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     }))
                     .as_ref()
             }
@@ -715,9 +690,9 @@ fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
         let type_def = &schema.types[type_id];
 
         let next_to_following_node = if type_def.is_option() {
-            quote! { .map(|next| next.as_ref().map(SiblingNode::from)).unwrap_or_default() }
+            quote! { .map(|next| next.as_ref().map(GetSpan::span)).unwrap_or_default() }
         } else {
-            quote! { .map(SiblingNode::from) }
+            quote! { .map(GetSpan::span) }
         };
 
         let type_ty = type_def.ty(schema);
@@ -740,7 +715,7 @@ fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
                             inner,
                             parent: self.parent,
                             allocator: self.allocator,
-                            following_node: inner_iter
+                            following_span: inner_iter
                                 .next()
                                 #next_to_following_node,
                         }))
@@ -754,7 +729,7 @@ fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
                             inner,
                             parent: self.parent,
                             allocator: self.allocator,
-                            following_node: None,
+                            following_span: None,
                         }))
                         .as_ref()
                 }
@@ -767,14 +742,14 @@ fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
                     let allocator = self.allocator;
                     allocator
                         .alloc(self.inner.next().map(|inner| {
-                            let following_node = self.inner.peek()
+                            let following_span = self.inner.peek()
                                 .copied()
                                 #next_to_following_node;
                             AstNode {
                                 parent: self.parent,
                                 inner,
                                 allocator,
-                                following_node,
+                                following_span,
                             }
                         }))
                         .as_ref()
@@ -806,107 +781,5 @@ fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
         }
 
         #(#impls)*
-    }
-}
-
-fn generate_sibling_node(schema: &Schema) -> TokenStream {
-    let types = &schema.types;
-    let structs = types
-        .iter()
-        .filter_map(|type_def| match type_def {
-            TypeDef::Struct(struct_def)
-                if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
-            {
-                Some(struct_def)
-            }
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    let following_node_variants = structs.iter().map(|struct_def| {
-        let name = struct_def.ident();
-        let param = struct_def.ty_with_lifetime(schema, false);
-        quote! { #name(&'a #param), }
-    });
-
-    let following_node_span_match_arms = structs.iter().map(|struct_def| {
-        let name = struct_def.ident();
-        quote! { Self::#name(n) => n.span(), }
-    });
-
-    let struct_from_impls = structs.iter().map(|struct_def| {
-        let struct_ident = struct_def.ident();
-        let struct_ty = struct_def.ty_with_lifetime(schema, false);
-        quote! {
-            ///@@line_break
-            impl<'a> From<&'a #struct_ty> for SiblingNode<'a> {
-                fn from(node: &'a #struct_ty) -> Self {
-                    SiblingNode::#struct_ident(node)
-                }
-            }
-        }
-    });
-
-    let enum_from_impls = types.iter().filter_map(|type_def| {
-        if let TypeDef::Enum(enum_def) = type_def {
-            if !enum_def.visit.has_visitor() {
-                return None;
-            }
-            let enum_ident = enum_def.ident();
-            let enum_ty = enum_def.ty(schema);
-
-            let variants = enum_def.variants.iter().map(|variant| {
-                let variant_name = variant.ident();
-                let variant_innermost_type = variant.field_type(schema).unwrap().innermost_type(schema);
-                let variant_innermost_ident = variant_innermost_type.ident();
-                quote! { #enum_ident::#variant_name(inner) => SiblingNode::#variant_innermost_ident(inner), }
-            });
-
-            let inherits_variants = enum_def.inherits_types(schema).map(|inherited_type| {
-                let inherited_enum_def = inherited_type.as_enum().unwrap();
-
-                let inherits_snake_name = inherited_enum_def.snake_name();
-                let match_ident = format_ident!("match_{inherits_snake_name}");
-                let to_fn_ident = format_ident!("to_{inherits_snake_name}");
-
-                quote! { it @ #match_ident!(#enum_ident) => { SiblingNode::from(it.#to_fn_ident()) }, }
-            });
-
-            let from_impl = quote! {
-                ///@@line_break
-                impl <'a>From<&'a #enum_ty> for SiblingNode<'a> {
-                    fn from(node: &'a #enum_ty) -> Self {
-                        match node {
-                            #(#variants)*
-                            #(#inherits_variants)*
-                        }
-                    }
-                }
-            };
-            Some(from_impl)
-        } else {
-            None
-        }
-    });
-
-    quote! {
-        ///@@line_break
-        #[derive(Debug, Copy, Clone)]
-        pub enum SiblingNode<'a> {
-            #(#following_node_variants)*
-        }
-
-        #(#struct_from_impls)*
-        #(#enum_from_impls)*
-
-        ///@@line_break
-        impl SiblingNode<'_> {
-            ///@@line_break
-            pub fn span(&self) -> oxc_span::Span {
-                match self {
-                    #(#following_node_span_match_arms)*
-                }
-            }
-        }
     }
 }

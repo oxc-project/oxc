@@ -63,7 +63,7 @@ use oxc_ast::{
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::comment_node;
 
-use crate::{generated::ast_nodes::SiblingNode, write};
+use crate::write;
 
 use super::{Argument, Arguments, GroupId, SourceText, SyntaxToken, prelude::*};
 
@@ -161,23 +161,23 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 }
 
 /// Formats the trailing comments of `node`.
-pub const fn format_trailing_comments<'a, 'b>(
-    enclosing_node: &'b SiblingNode<'a>,
-    preceding_node: &'b SiblingNode<'a>,
-    following_node: Option<&'b SiblingNode<'a>>,
-) -> FormatTrailingComments<'a, 'b> {
-    FormatTrailingComments::Node((enclosing_node, preceding_node, following_node))
+pub const fn format_trailing_comments<'a>(
+    enclosing_span: Span,
+    preceding_span: Span,
+    following_span: Option<Span>,
+) -> FormatTrailingComments<'a> {
+    FormatTrailingComments::Node((enclosing_span, preceding_span, following_span))
 }
 
 /// Formats the trailing comments of `node`
 #[derive(Debug, Clone, Copy)]
-pub enum FormatTrailingComments<'a, 'b> {
-    // (enclosing_node, preceding_node, following_node)
-    Node((&'b SiblingNode<'a>, &'b SiblingNode<'a>, Option<&'b SiblingNode<'a>>)),
+pub enum FormatTrailingComments<'a> {
+    // (enclosing_span, preceding_span, following_span)
+    Node((Span, Span, Option<Span>)),
     Comments(&'a [Comment]),
 }
 
-impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
+impl<'a> Format<'a> for FormatTrailingComments<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         fn format_trailing_comments_impl<'a>(
             comments: impl IntoIterator<Item = &'a Comment>,
@@ -256,11 +256,11 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
         }
 
         match self {
-            Self::Node((enclosing_node, preceding_node, following_node)) => {
+            Self::Node((enclosing_span, preceding_span, following_span)) => {
                 let comments = f.context().comments().get_trailing_comments(
-                    enclosing_node,
-                    preceding_node,
-                    *following_node,
+                    *enclosing_span,
+                    *preceding_span,
+                    *following_span,
                 );
 
                 format_trailing_comments_impl(comments, f)

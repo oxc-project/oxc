@@ -109,7 +109,6 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     Format, FormatResult, SyntaxTriviaPieceComments,
     formatter::{Formatter, SourceText},
-    generated::ast_nodes::SiblingNode,
 };
 
 #[derive(Debug, Clone)]
@@ -296,9 +295,9 @@ impl<'a> Comments<'a> {
     /// Returns comments that should be printed as trailing comments for `preceding_node`.
     pub fn get_trailing_comments(
         &self,
-        enclosing_node: &SiblingNode<'a>,
-        preceding_node: &SiblingNode<'a>,
-        mut following_node: Option<&SiblingNode<'a>>,
+        enclosing_span: Span,
+        preceding_span: Span,
+        mut following_span: Option<Span>,
     ) -> &'a [Comment] {
         let comments = self.unprinted_comments();
         if comments.is_empty() {
@@ -306,16 +305,15 @@ impl<'a> Comments<'a> {
         }
 
         let source_text = self.source_text;
-        let preceding_span = preceding_node.span();
 
         // All of the comments before this node are printed already.
         debug_assert!(
             comments.first().is_none_or(|comment| comment.span.end > preceding_span.start)
         );
 
-        let Some(following_node) = following_node else {
+        let Some(following_span) = following_span else {
             // Find dangling comments at the end of the enclosing node
-            let comments = self.comments_before(enclosing_node.span().end);
+            let comments = self.comments_before(enclosing_span.end);
 
             let mut start = preceding_span.end;
             for (idx, comment) in comments.iter().enumerate() {
@@ -335,8 +333,6 @@ impl<'a> Comments<'a> {
 
             return comments;
         };
-
-        let following_span = following_node.span();
 
         let mut comment_index = 0;
         while let Some(comment) = comments.get(comment_index) {

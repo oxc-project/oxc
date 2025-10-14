@@ -30,7 +30,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::NullLiteral(inner) => allocator
@@ -38,7 +38,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::NumericLiteral(inner) => allocator
@@ -46,7 +46,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::BigIntLiteral(inner) => allocator
@@ -54,7 +54,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::RegExpLiteral(inner) => allocator
@@ -62,7 +62,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::StringLiteral(inner) => allocator
@@ -70,7 +70,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::TemplateLiteral(inner) => allocator
@@ -78,7 +78,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::Identifier(inner) => allocator
@@ -86,7 +86,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::MetaProperty(inner) => allocator
@@ -94,7 +94,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::Super(inner) => allocator
@@ -102,7 +102,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ArrayExpression(inner) => allocator
@@ -110,7 +110,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ArrowFunctionExpression(inner) => allocator
@@ -118,7 +118,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::AssignmentExpression(inner) => allocator
@@ -126,7 +126,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::AwaitExpression(inner) => allocator
@@ -134,7 +134,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::BinaryExpression(inner) => allocator
@@ -142,7 +142,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::CallExpression(inner) => allocator
@@ -150,7 +150,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ChainExpression(inner) => allocator
@@ -158,7 +158,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ClassExpression(inner) => allocator
@@ -166,7 +166,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ConditionalExpression(inner) => allocator
@@ -174,7 +174,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::FunctionExpression(inner) => allocator
@@ -182,7 +182,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ImportExpression(inner) => allocator
@@ -190,7 +190,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::LogicalExpression(inner) => allocator
@@ -198,7 +198,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::NewExpression(inner) => allocator
@@ -206,7 +206,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ObjectExpression(inner) => allocator
@@ -214,7 +214,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ParenthesizedExpression(inner) => allocator
@@ -222,7 +222,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::SequenceExpression(inner) => allocator
@@ -230,7 +230,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::TaggedTemplateExpression(inner) => allocator
@@ -238,7 +238,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::ThisExpression(inner) => allocator
@@ -246,7 +246,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::UnaryExpression(inner) => allocator
@@ -254,7 +254,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::UpdateExpression(inner) => allocator
@@ -262,7 +262,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::YieldExpression(inner) => allocator
@@ -270,7 +270,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::PrivateInExpression(inner) => allocator
@@ -278,7 +278,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::JSXElement(inner) => allocator
@@ -286,7 +286,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::JSXFragment(inner) => allocator
@@ -294,7 +294,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::TSAsExpression(inner) => allocator
@@ -302,7 +302,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::TSSatisfiesExpression(inner) => allocator
@@ -310,7 +310,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::TSTypeAssertion(inner) => allocator
@@ -318,7 +318,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::TSNonNullExpression(inner) => allocator
@@ -326,7 +326,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::TSInstantiationExpression(inner) => allocator
@@ -334,7 +334,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Expression::V8IntrinsicExpression(inner) => allocator
@@ -342,7 +342,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_member_expression!(Expression) => {
@@ -352,7 +352,7 @@ impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -467,7 +467,7 @@ impl<'a> Format<'a> for AstNode<'a, ArrayExpressionElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ArrayExpressionElement::Elision(inner) => allocator
@@ -475,7 +475,7 @@ impl<'a> Format<'a> for AstNode<'a, ArrayExpressionElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_expression!(ArrayExpressionElement) => {
@@ -485,7 +485,7 @@ impl<'a> Format<'a> for AstNode<'a, ArrayExpressionElement<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -536,7 +536,7 @@ impl<'a> Format<'a> for AstNode<'a, ObjectPropertyKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ObjectPropertyKind::SpreadProperty(inner) => allocator
@@ -544,7 +544,7 @@ impl<'a> Format<'a> for AstNode<'a, ObjectPropertyKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -573,7 +573,7 @@ impl<'a> Format<'a> for AstNode<'a, PropertyKey<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             PropertyKey::PrivateIdentifier(inner) => allocator
@@ -581,7 +581,7 @@ impl<'a> Format<'a> for AstNode<'a, PropertyKey<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_expression!(PropertyKey) => {
@@ -591,7 +591,7 @@ impl<'a> Format<'a> for AstNode<'a, PropertyKey<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -665,7 +665,7 @@ impl<'a> Format<'a> for AstNode<'a, MemberExpression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             MemberExpression::StaticMemberExpression(inner) => allocator
@@ -673,7 +673,7 @@ impl<'a> Format<'a> for AstNode<'a, MemberExpression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             MemberExpression::PrivateFieldExpression(inner) => allocator
@@ -681,7 +681,7 @@ impl<'a> Format<'a> for AstNode<'a, MemberExpression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -836,7 +836,7 @@ impl<'a> Format<'a> for AstNode<'a, Argument<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_expression!(Argument) => {
@@ -846,7 +846,7 @@ impl<'a> Format<'a> for AstNode<'a, Argument<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1014,7 +1014,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTarget<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1025,7 +1025,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTarget<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1044,7 +1044,7 @@ impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             SimpleAssignmentTarget::TSAsExpression(inner) => allocator
@@ -1052,7 +1052,7 @@ impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             SimpleAssignmentTarget::TSSatisfiesExpression(inner) => allocator
@@ -1060,7 +1060,7 @@ impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             SimpleAssignmentTarget::TSNonNullExpression(inner) => allocator
@@ -1068,7 +1068,7 @@ impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             SimpleAssignmentTarget::TSTypeAssertion(inner) => allocator
@@ -1076,7 +1076,7 @@ impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_member_expression!(SimpleAssignmentTarget) => {
@@ -1086,7 +1086,7 @@ impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1105,7 +1105,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             AssignmentTargetPattern::ObjectAssignmentTarget(inner) => allocator
@@ -1113,7 +1113,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -1164,7 +1164,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
@@ -1174,7 +1174,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1204,7 +1204,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetProperty<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(inner) => allocator
@@ -1212,7 +1212,7 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetProperty<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -1336,7 +1336,7 @@ impl<'a> Format<'a> for AstNode<'a, ChainElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ChainElement::TSNonNullExpression(inner) => allocator
@@ -1344,7 +1344,7 @@ impl<'a> Format<'a> for AstNode<'a, ChainElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_member_expression!(ChainElement) => {
@@ -1354,7 +1354,7 @@ impl<'a> Format<'a> for AstNode<'a, ChainElement<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1394,7 +1394,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::BreakStatement(inner) => allocator
@@ -1402,7 +1402,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::ContinueStatement(inner) => allocator
@@ -1410,7 +1410,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::DebuggerStatement(inner) => allocator
@@ -1418,7 +1418,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::DoWhileStatement(inner) => allocator
@@ -1426,7 +1426,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::EmptyStatement(inner) => allocator
@@ -1434,7 +1434,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::ExpressionStatement(inner) => allocator
@@ -1442,7 +1442,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::ForInStatement(inner) => allocator
@@ -1450,7 +1450,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::ForOfStatement(inner) => allocator
@@ -1458,7 +1458,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::ForStatement(inner) => allocator
@@ -1466,7 +1466,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::IfStatement(inner) => allocator
@@ -1474,7 +1474,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::LabeledStatement(inner) => allocator
@@ -1482,7 +1482,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::ReturnStatement(inner) => allocator
@@ -1490,7 +1490,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::SwitchStatement(inner) => allocator
@@ -1498,7 +1498,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::ThrowStatement(inner) => allocator
@@ -1506,7 +1506,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::TryStatement(inner) => allocator
@@ -1514,7 +1514,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::WhileStatement(inner) => allocator
@@ -1522,7 +1522,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Statement::WithStatement(inner) => allocator
@@ -1530,7 +1530,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_declaration!(Statement) => {
@@ -1540,7 +1540,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1551,7 +1551,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1603,7 +1603,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Declaration::FunctionDeclaration(inner) => allocator
@@ -1611,7 +1611,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Declaration::ClassDeclaration(inner) => allocator
@@ -1619,7 +1619,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Declaration::TSTypeAliasDeclaration(inner) => allocator
@@ -1627,7 +1627,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Declaration::TSInterfaceDeclaration(inner) => allocator
@@ -1635,7 +1635,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Declaration::TSEnumDeclaration(inner) => allocator
@@ -1643,7 +1643,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Declaration::TSModuleDeclaration(inner) => allocator
@@ -1651,7 +1651,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             Declaration::TSImportEqualsDeclaration(inner) => allocator
@@ -1659,7 +1659,7 @@ impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -1763,7 +1763,7 @@ impl<'a> Format<'a> for AstNode<'a, ForStatementInit<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_expression!(ForStatementInit) => {
@@ -1773,7 +1773,7 @@ impl<'a> Format<'a> for AstNode<'a, ForStatementInit<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1803,7 +1803,7 @@ impl<'a> Format<'a> for AstNode<'a, ForStatementLeft<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_assignment_target!(ForStatementLeft) => {
@@ -1813,7 +1813,7 @@ impl<'a> Format<'a> for AstNode<'a, ForStatementLeft<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -1990,7 +1990,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             BindingPatternKind::ObjectPattern(inner) => allocator
@@ -1998,7 +1998,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             BindingPatternKind::ArrayPattern(inner) => allocator
@@ -2006,7 +2006,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             BindingPatternKind::AssignmentPattern(inner) => allocator
@@ -2014,7 +2014,7 @@ impl<'a> Format<'a> for AstNode<'a, BindingPatternKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -2275,7 +2275,7 @@ impl<'a> Format<'a> for AstNode<'a, ClassElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ClassElement::MethodDefinition(inner) => allocator
@@ -2283,7 +2283,7 @@ impl<'a> Format<'a> for AstNode<'a, ClassElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ClassElement::PropertyDefinition(inner) => allocator
@@ -2291,7 +2291,7 @@ impl<'a> Format<'a> for AstNode<'a, ClassElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ClassElement::AccessorProperty(inner) => allocator
@@ -2299,7 +2299,7 @@ impl<'a> Format<'a> for AstNode<'a, ClassElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ClassElement::TSIndexSignature(inner) => allocator
@@ -2307,7 +2307,7 @@ impl<'a> Format<'a> for AstNode<'a, ClassElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -2369,7 +2369,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ModuleDeclaration::ExportAllDeclaration(inner) => allocator
@@ -2377,7 +2377,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ModuleDeclaration::ExportDefaultDeclaration(inner) => allocator
@@ -2385,7 +2385,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ModuleDeclaration::ExportNamedDeclaration(inner) => allocator
@@ -2393,7 +2393,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ModuleDeclaration::TSExportAssignment(inner) => allocator
@@ -2401,7 +2401,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ModuleDeclaration::TSNamespaceExportDeclaration(inner) => allocator
@@ -2409,7 +2409,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -2470,7 +2470,7 @@ impl<'a> Format<'a> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ImportDeclarationSpecifier::ImportDefaultSpecifier(inner) => allocator
@@ -2478,7 +2478,7 @@ impl<'a> Format<'a> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(inner) => allocator
@@ -2486,7 +2486,7 @@ impl<'a> Format<'a> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -2565,7 +2565,7 @@ impl<'a> Format<'a> for AstNode<'a, ImportAttributeKey<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ImportAttributeKey::StringLiteral(inner) => allocator
@@ -2573,7 +2573,7 @@ impl<'a> Format<'a> for AstNode<'a, ImportAttributeKey<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -2641,7 +2641,7 @@ impl<'a> Format<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ExportDefaultDeclarationKind::ClassDeclaration(inner) => allocator
@@ -2649,7 +2649,7 @@ impl<'a> Format<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner) => allocator
@@ -2657,7 +2657,7 @@ impl<'a> Format<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_expression!(ExportDefaultDeclarationKind) => {
@@ -2667,7 +2667,7 @@ impl<'a> Format<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -2686,7 +2686,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleExportName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ModuleExportName::IdentifierReference(inner) => allocator
@@ -2694,7 +2694,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleExportName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             ModuleExportName::StringLiteral(inner) => allocator
@@ -2702,7 +2702,7 @@ impl<'a> Format<'a> for AstNode<'a, ModuleExportName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -2945,7 +2945,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXElementName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXElementName::IdentifierReference(inner) => allocator
@@ -2953,7 +2953,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXElementName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXElementName::NamespacedName(inner) => allocator
@@ -2961,7 +2961,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXElementName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXElementName::MemberExpression(inner) => allocator
@@ -2969,7 +2969,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXElementName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXElementName::ThisExpression(inner) => allocator
@@ -2977,7 +2977,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXElementName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3017,7 +3017,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXMemberExpressionObject<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXMemberExpressionObject::MemberExpression(inner) => allocator
@@ -3025,7 +3025,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXMemberExpressionObject<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXMemberExpressionObject::ThisExpression(inner) => allocator
@@ -3033,7 +3033,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXMemberExpressionObject<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3062,7 +3062,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXExpression<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_expression!(JSXExpression) => {
@@ -3072,7 +3072,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXExpression<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -3102,7 +3102,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeItem<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXAttributeItem::SpreadAttribute(inner) => allocator
@@ -3110,7 +3110,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeItem<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3150,7 +3150,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXAttributeName::NamespacedName(inner) => allocator
@@ -3158,7 +3158,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3176,7 +3176,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeValue<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXAttributeValue::ExpressionContainer(inner) => allocator
@@ -3184,7 +3184,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeValue<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXAttributeValue::Element(inner) => allocator
@@ -3192,7 +3192,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeValue<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXAttributeValue::Fragment(inner) => allocator
@@ -3200,7 +3200,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeValue<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3229,7 +3229,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXChild<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXChild::Element(inner) => allocator
@@ -3237,7 +3237,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXChild<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXChild::Fragment(inner) => allocator
@@ -3245,7 +3245,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXChild<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXChild::ExpressionContainer(inner) => allocator
@@ -3253,7 +3253,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXChild<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             JSXChild::Spread(inner) => allocator
@@ -3261,7 +3261,7 @@ impl<'a> Format<'a> for AstNode<'a, JSXChild<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3345,7 +3345,7 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumMemberName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSEnumMemberName::String(inner) => allocator
@@ -3353,7 +3353,7 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumMemberName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSEnumMemberName::ComputedString(inner) => allocator
@@ -3361,7 +3361,7 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumMemberName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSEnumMemberName::ComputedTemplateString(inner) => allocator
@@ -3369,7 +3369,7 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumMemberName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3409,7 +3409,7 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSLiteral::NumericLiteral(inner) => allocator
@@ -3417,7 +3417,7 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSLiteral::BigIntLiteral(inner) => allocator
@@ -3425,7 +3425,7 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSLiteral::StringLiteral(inner) => allocator
@@ -3433,7 +3433,7 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSLiteral::TemplateLiteral(inner) => allocator
@@ -3441,7 +3441,7 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSLiteral::UnaryExpression(inner) => allocator
@@ -3449,7 +3449,7 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3467,7 +3467,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSBigIntKeyword(inner) => allocator
@@ -3475,7 +3475,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSBooleanKeyword(inner) => allocator
@@ -3483,7 +3483,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSIntrinsicKeyword(inner) => allocator
@@ -3491,7 +3491,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSNeverKeyword(inner) => allocator
@@ -3499,7 +3499,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSNullKeyword(inner) => allocator
@@ -3507,7 +3507,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSNumberKeyword(inner) => allocator
@@ -3515,7 +3515,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSObjectKeyword(inner) => allocator
@@ -3523,7 +3523,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSStringKeyword(inner) => allocator
@@ -3531,7 +3531,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSSymbolKeyword(inner) => allocator
@@ -3539,7 +3539,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSUndefinedKeyword(inner) => allocator
@@ -3547,7 +3547,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSUnknownKeyword(inner) => allocator
@@ -3555,7 +3555,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSVoidKeyword(inner) => allocator
@@ -3563,7 +3563,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSArrayType(inner) => allocator
@@ -3571,7 +3571,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSConditionalType(inner) => allocator
@@ -3579,7 +3579,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSConstructorType(inner) => allocator
@@ -3587,7 +3587,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSFunctionType(inner) => allocator
@@ -3595,7 +3595,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSImportType(inner) => allocator
@@ -3603,7 +3603,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSIndexedAccessType(inner) => allocator
@@ -3611,7 +3611,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSInferType(inner) => allocator
@@ -3619,7 +3619,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSIntersectionType(inner) => allocator
@@ -3627,7 +3627,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSLiteralType(inner) => allocator
@@ -3635,7 +3635,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSMappedType(inner) => allocator
@@ -3643,7 +3643,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSNamedTupleMember(inner) => allocator
@@ -3651,7 +3651,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSTemplateLiteralType(inner) => allocator
@@ -3659,7 +3659,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSThisType(inner) => allocator
@@ -3667,7 +3667,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSTupleType(inner) => allocator
@@ -3675,7 +3675,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSTypeLiteral(inner) => allocator
@@ -3683,7 +3683,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSTypeOperatorType(inner) => allocator
@@ -3691,7 +3691,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSTypePredicate(inner) => allocator
@@ -3699,7 +3699,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSTypeQuery(inner) => allocator
@@ -3707,7 +3707,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSTypeReference(inner) => allocator
@@ -3715,7 +3715,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSUnionType(inner) => allocator
@@ -3723,7 +3723,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::TSParenthesizedType(inner) => allocator
@@ -3731,7 +3731,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::JSDocNullableType(inner) => allocator
@@ -3739,7 +3739,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::JSDocNonNullableType(inner) => allocator
@@ -3747,7 +3747,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSType::JSDocUnknownType(inner) => allocator
@@ -3755,7 +3755,7 @@ impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -3924,7 +3924,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTupleElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSTupleElement::TSRestType(inner) => allocator
@@ -3932,7 +3932,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTupleElement<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_ts_type!(TSTupleElement) => {
@@ -3942,7 +3942,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTupleElement<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -4126,7 +4126,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSTypeName::QualifiedName(inner) => allocator
@@ -4134,7 +4134,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSTypeName::ThisExpression(inner) => allocator
@@ -4142,7 +4142,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -4261,7 +4261,7 @@ impl<'a> Format<'a> for AstNode<'a, TSSignature<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSSignature::TSPropertySignature(inner) => allocator
@@ -4269,7 +4269,7 @@ impl<'a> Format<'a> for AstNode<'a, TSSignature<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSSignature::TSCallSignatureDeclaration(inner) => allocator
@@ -4277,7 +4277,7 @@ impl<'a> Format<'a> for AstNode<'a, TSSignature<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSSignature::TSConstructSignatureDeclaration(inner) => allocator
@@ -4285,7 +4285,7 @@ impl<'a> Format<'a> for AstNode<'a, TSSignature<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSSignature::TSMethodSignature(inner) => allocator
@@ -4293,7 +4293,7 @@ impl<'a> Format<'a> for AstNode<'a, TSSignature<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -4388,7 +4388,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTypePredicateName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSTypePredicateName::This(inner) => allocator
@@ -4396,7 +4396,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTypePredicateName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -4425,7 +4425,7 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSModuleDeclarationName::StringLiteral(inner) => allocator
@@ -4433,7 +4433,7 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -4451,7 +4451,7 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationBody<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSModuleDeclarationBody::TSModuleBlock(inner) => allocator
@@ -4459,7 +4459,7 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationBody<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -4541,7 +4541,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_ts_type_name!(TSTypeQueryExprName) => {
@@ -4551,7 +4551,7 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }
@@ -4581,7 +4581,7 @@ impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifier<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             TSImportTypeQualifier::QualifiedName(inner) => allocator
@@ -4589,7 +4589,7 @@ impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifier<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
         }
@@ -4756,7 +4756,7 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleReference<'a>> {
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 })
                 .fmt(f),
             it @ match_ts_type_name!(TSModuleReference) => {
@@ -4766,7 +4766,7 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleReference<'a>> {
                         inner,
                         parent,
                         allocator,
-                        following_node: self.following_node,
+                        following_span: self.following_span,
                     })
                     .fmt(f)
             }

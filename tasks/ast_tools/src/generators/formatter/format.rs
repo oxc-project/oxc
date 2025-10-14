@@ -291,7 +291,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 }).fmt(f)
             },
         })
@@ -314,7 +314,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_node: self.following_node,
+                    following_span: self.following_span,
                 }).fmt(f)
             },
         };
