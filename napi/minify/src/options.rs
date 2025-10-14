@@ -38,6 +38,21 @@ pub struct CompressOptions {
 
     /// Keep function / class names.
     pub keep_names: Option<CompressOptionsKeepNames>,
+
+    /// Join consecutive var, let and const statements.
+    ///
+    /// @default true
+    pub join_vars: Option<bool>,
+
+    /// Join consecutive simple statements using the comma operator.
+    ///
+    /// `a; b` -> `a, b`
+    ///
+    /// @default true
+    pub sequences: Option<bool>,
+
+    /// Limit the maximum number of iterations for debugging purpose.
+    pub passes: Option<u8>,
 }
 
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
@@ -52,14 +67,13 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             },
             drop_console: o.drop_console.unwrap_or(default.drop_console),
             drop_debugger: o.drop_debugger.unwrap_or(default.drop_debugger),
-            // TODO
-            join_vars: true,
-            sequences: true,
+            join_vars: o.join_vars.unwrap_or(true),
+            sequences: o.sequences.unwrap_or(true),
             // TODO
             unused: oxc_minifier::CompressOptionsUnused::Keep,
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
-            max_iterations: None,
+            max_iterations: o.passes,
         })
     }
 }

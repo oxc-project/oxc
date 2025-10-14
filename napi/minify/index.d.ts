@@ -45,6 +45,22 @@ export interface CompressOptions {
   unused?: true | false | 'keep_assign'
   /** Keep function / class names. */
   keepNames?: CompressOptionsKeepNames
+  /**
+   * Join consecutive var, let and const statements.
+   *
+   * @default true
+   */
+  joinVars?: boolean
+  /**
+   * Join consecutive simple statements using the comma operator.
+   *
+   * `a; b` -> `a, b`
+   *
+   * @default true
+   */
+  sequences?: boolean
+  /** Limit the maximum number of iterations for debugging purpose. */
+  passes?: number
 }
 
 export interface CompressOptionsKeepNames {
