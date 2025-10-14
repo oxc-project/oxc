@@ -146,7 +146,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
                     [
                         export_kind,
                         "{",
-                        group(&soft_block_indent_with_maybe_space(&specifiers, needs_space))
+                        group(&soft_block_indent_with_maybe_space(specifiers, needs_space))
                     ]
                 )?;
             }
@@ -177,15 +177,12 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
                     .map(|specifier| {
                         format_once(move |f| {
                             // Should add empty line before the specifier if there are comments before it.
-                            let comments =
-                                f.context().comments().comments_before(specifier.span().start);
-                            if !comments.is_empty() {
-                                if f.source_text().get_lines_before(comments[0].span, f.comments())
+                            let specifier_span = specifier.span();
+                            if f.context().comments().has_comment_before(specifier_span.start)
+                                && f.source_text().get_lines_before(specifier_span, f.comments())
                                     > 1
-                                {
-                                    write!(f, [empty_line()])?;
-                                }
-                                write!(f, [FormatLeadingComments::Comments(comments)])?;
+                            {
+                                write!(f, [empty_line()])?;
                             }
 
                             write!(f, specifier)
@@ -209,18 +206,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
 
         write!(f, [self.export_kind()]);
         if self.local.span() == self.exported.span() {
-            write!(f, self.exported())?;
+            write!(f, self.exported())
         } else {
-            write!(f, [self.local(), space(), "as", space(), self.exported()])?;
-        }
-
-        if f.source_text().next_non_whitespace_byte_is(self.span.end, b'}') {
-            // `export { a as b /* comment */ } from 'mod'
-            //                  ^^^^^^^^^^^^ get comments that before `}` to print
-            let comments = f.context().comments().comments_before_character(self.span.end, b'}');
-            write!(f, [FormatTrailingComments::Comments(comments)])
-        } else {
-            self.format_trailing_comments(f)
+            write!(f, [self.local(), space(), "as", space(), self.exported()])
         }
     }
 }
