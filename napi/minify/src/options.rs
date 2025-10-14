@@ -73,10 +73,11 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             unused: match &o.unused {
                 Some(Either::A(true)) => oxc_minifier::CompressOptionsUnused::Remove,
                 Some(Either::A(false)) => oxc_minifier::CompressOptionsUnused::Keep,
-                Some(Either::B(s)) if s == "keep_assign" => {
-                    oxc_minifier::CompressOptionsUnused::KeepAssign
-                }
-                None | Some(Either::B(_)) => default.unused,
+                Some(Either::B(s)) => match s.as_str() {
+                    "keep_assign" => oxc_minifier::CompressOptionsUnused::KeepAssign,
+                    _ => return Err(format!("Invalid unused option: `{s}`.")),
+                },
+                None => default.unused,
             },
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
