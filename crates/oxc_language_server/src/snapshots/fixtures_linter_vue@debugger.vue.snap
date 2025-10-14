@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_language_server/src/tester.rs
-assertion_line: 193
 ---
 ########## 
 file: fixtures/linter/vue/debugger.vue
@@ -38,15 +37,15 @@ fixed: Multiple(
             message: Some(
                 "Disable no-debugger for this line",
             ),
-            code: "// oxlint-disable-next-line no-debugger\n",
+            code: "\n// oxlint-disable-next-line no-debugger\n",
             range: Range {
                 start: Position {
                     line: 4,
-                    character: 0,
+                    character: 8,
                 },
                 end: Position {
                     line: 4,
-                    character: 0,
+                    character: 8,
                 },
             },
         },
@@ -102,7 +101,7 @@ fixed: Multiple(
             message: Some(
                 "Disable no-debugger for this line",
             ),
-            code: "// oxlint-disable-next-line no-debugger\n",
+            code: "    // oxlint-disable-next-line no-debugger\n",
             range: Range {
                 start: Position {
                     line: 8,
