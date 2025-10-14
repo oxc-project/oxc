@@ -69,7 +69,11 @@ const source = `{}`;
         self.page.div(r#"class="rule-meta""#, |p| {
             if *turned_on_by_default {
                 p.Alert(r#"class="default-on" type="success""#, |p| {
-                    p.writeln(r#"<span class="emoji">✅</span> This rule is turned on by default."#)
+                    if *is_tsgolint_rule {
+                        p.writeln(r#"<span class="emoji">✅</span> This rule is turned on by default when type-aware linting is enabled."#)
+                    } else {
+                        p.writeln(r#"<span class="emoji">✅</span> This rule is turned on by default."#)
+                    }
                 })?;
             }
             if *is_tsgolint_rule {
