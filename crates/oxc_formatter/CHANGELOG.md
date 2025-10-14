@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.5.0] - 2025-10-14
+
+### 🚀 Features
+
+- 8077f9b oxfmt: Provide JSON schema for `.oxfmtrc.json` (#14399) (leaysgur)
+- 51ddfa8 oxfmt: Support `.oxfmtrc.json(c)` config file (#14398) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- c4e12df formatter: Correct checking comments around the return argument (#14585) (Dunqing)
+- 454303b formatter: Check empty lines between arguments incorrectly (#14584) (Dunqing)
+- a5554a8 formatter: Print a line break incorrectly for directives (#14577) (Dunqing)
+- 5db9774 formatter: Correct printing comments that are around the `StaticMemberExpression` (#14543) (Dunqing)
+- 620dbac formatter: No need to wrap a parenthesis for `TSConditionalType` and `TSFunctionType` when its parent is `TSUnionType` and it only has one element (#14540) (Dunqing)
+- 1aec74f formatter: Missing parenthesis for `ComputedMemberExpression` when its parent is an `NewExpression` (#14530) (Dunqing)
+- 59f1d8f formatter: Missing parenthesis for `PrivateInExpression` when its parent is an `UnaryExpression` (#14529) (Dunqing)
+- b06059e formatter: Correct printing comments for logical expression (#14500) (Dunqing)
+- be38095 formatter: Should break even if the right side of the assignment is a require when it has a leading own line comment (#14499) (Dunqing)
+- 4d55654 formatter: Correct printing comments for the end of union type (#14498) (Dunqing)
+- 4994872 formatter: Correct printing comments for `try` statement (#14497) (Dunqing)
+- 9a4da3d formatter: Should expand the parent if the member chain will break (#14487) (Dunqing)
+- bba9689 formatter: Correct printing comments around the expression of `ComputedMemberExpression` (#14486) (Dunqing)
+- dc5e08a formatter: Correct printing yield argument (#14485) (Dunqing)
+- b8a0905 formatter: No need to wrap with parentheses for a type cast node (#14484) (Dunqing)
+- b159215 formatter: Ignore the leading line break for the first argument of the call expression (#14483) (Dunqing)
+- ea8f9ed formatter: Correct checking comments between the operator and the right side for assignment like nodes (#14482) (Dunqing)
+- 4f19504 formatter: Block comments without a leading linebreak that are around the operator of the conditional expression should be printed as-is (#14474) (Dunqing)
+- ef77997 formatter: Correct printing comments for `for` statements (#14473) (Dunqing)
+- 31595c3 formatter: Correct printing comments for assignment pattern (#14469) (Dunqing)
+- 0f19be0 oxfmt: Normalize path delimiter on Windows (#14463) (leaysgur)
+- 5856bc9 oxc_formatter: Fix arrow_parentheses: 'avoid' > 'as-needed' (#14462) (leaysgur)
+
+### 🚜 Refactor
+
+- 7bc86f4 formatter: Simplify foramtting import and export (#14576) (Dunqing)
+- 29c3cf2 formatter: Remove `SiblingNode` (#14551) (Dunqing)
+- 893bdac formatter: Improve printing comments for special nodes (#14544) (Dunqing)
+- 97bb964 formatter: Improve line break detaching logic in SourceText (#14539) (Dunqing)
+
+### 🧪 Testing
+
+- bb43dc5 formatter: Add snapshot-based test infrastructure (#14400) (Dunqing)
+
+
 ## [0.4.0] - 2025-10-09
 
 ### 🚀 Features
