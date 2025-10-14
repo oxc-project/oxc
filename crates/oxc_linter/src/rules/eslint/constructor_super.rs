@@ -228,7 +228,7 @@ impl Rule for ConstructorSuper {
                     // Simple case: treat as single path
                     if super_call_spans.len() > 1 {
                         // Sort spans by source position to report duplicates in order
-                        let mut sorted_spans = super_call_spans.clone();
+                        let mut sorted_spans = super_call_spans;
                         sorted_spans.sort_by_key(|s| s.start);
 
                         // Report all duplicates (all except the first)
@@ -257,7 +257,7 @@ impl Rule for ConstructorSuper {
                         && super_call_spans.len() > 1
                     {
                         // Sort spans by source position to report duplicates in order
-                        let mut sorted_spans = super_call_spans.clone();
+                        let mut sorted_spans = super_call_spans;
                         sorted_spans.sort_by_key(|s| s.start);
 
                         for &span in sorted_spans.iter().skip(1) {
@@ -275,60 +275,53 @@ impl ConstructorSuper {
     /// This is needed because CFG doesn't create proper instructions for logical expressions
     fn has_logical_expression_super(
         statements: &[Statement],
-        class_node_id: NodeId,
-        ctx: &LintContext,
+        _class_node_id: NodeId,
+        _ctx: &LintContext,
     ) -> bool {
         // Recursively search for LogicalExpression containing super()
-        fn check_expression(expr: &Expression, class_node_id: NodeId, ctx: &LintContext) -> bool {
+        fn check_expression(expr: &Expression) -> bool {
             match expr {
                 Expression::LogicalExpression(logical) => {
                     // Check if either side has super()
                     let has_left_super = if let Expression::CallExpression(call) = &logical.left {
                         matches!(&call.callee, Expression::Super(_))
                     } else {
-                        check_expression(&logical.left, class_node_id, ctx)
+                        check_expression(&logical.left)
                     };
 
                     let has_right_super = if let Expression::CallExpression(call) = &logical.right {
                         matches!(&call.callee, Expression::Super(_))
                     } else {
-                        check_expression(&logical.right, class_node_id, ctx)
+                        check_expression(&logical.right)
                     };
 
                     has_left_super || has_right_super
                 }
                 Expression::ConditionalExpression(cond) => {
-                    check_expression(&cond.test, class_node_id, ctx)
-                        || check_expression(&cond.consequent, class_node_id, ctx)
-                        || check_expression(&cond.alternate, class_node_id, ctx)
+                    check_expression(&cond.test)
+                        || check_expression(&cond.consequent)
+                        || check_expression(&cond.alternate)
                 }
-                Expression::ParenthesizedExpression(paren) => {
-                    check_expression(&paren.expression, class_node_id, ctx)
-                }
+                Expression::ParenthesizedExpression(paren) => check_expression(&paren.expression),
                 _ => false,
             }
         }
 
-        fn check_statement(stmt: &Statement, class_node_id: NodeId, ctx: &LintContext) -> bool {
+        fn check_statement(stmt: &Statement) -> bool {
             match stmt {
                 Statement::ExpressionStatement(expr_stmt) => {
-                    check_expression(&expr_stmt.expression, class_node_id, ctx)
+                    check_expression(&expr_stmt.expression)
                 }
-                Statement::BlockStatement(block) => {
-                    block.body.iter().any(|s| check_statement(s, class_node_id, ctx))
-                }
+                Statement::BlockStatement(block) => block.body.iter().any(|s| check_statement(s)),
                 Statement::IfStatement(if_stmt) => {
-                    check_statement(&if_stmt.consequent, class_node_id, ctx)
-                        || if_stmt
-                            .alternate
-                            .as_ref()
-                            .is_some_and(|alt| check_statement(alt, class_node_id, ctx))
+                    check_statement(&if_stmt.consequent)
+                        || if_stmt.alternate.as_ref().is_some_and(|alt| check_statement(alt))
                 }
                 _ => false,
             }
         }
 
-        statements.iter().any(|stmt| check_statement(stmt, class_node_id, ctx))
+        statements.iter().any(|stmt| check_statement(stmt))
     }
 
     /// Classify the superclass expression to determine if super() is needed/valid
