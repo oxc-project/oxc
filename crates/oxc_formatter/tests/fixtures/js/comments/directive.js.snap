@@ -1,0 +1,15 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+"use strict";
+
+// comment
+(() => {});
+==================== Output ====================
+"use strict";
+
+// comment
+() => {};
+
+===================== End =====================

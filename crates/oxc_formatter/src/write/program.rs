@@ -113,7 +113,15 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         //```
         // so we should keep an extra empty line after JsDirectiveList
 
-        let need_extra_empty_line = f.source_text().lines_after(last_directive.span.end) > 1;
+        let end = if let Some(last_printed_comment) = f.comments().printed_comments().last()
+            && last_printed_comment.span.end > last_directive.span.end
+        {
+            last_printed_comment.span.end
+        } else {
+            last_directive.span.end
+        };
+
+        let need_extra_empty_line = f.source_text().lines_after(end) > 1;
         write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() })
     }
 }
