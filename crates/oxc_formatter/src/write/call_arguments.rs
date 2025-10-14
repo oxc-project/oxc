@@ -44,6 +44,8 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let r_paren_token = ")";
         let call_like_span = self.parent.span();
 
+        let arguments = self.as_ref();
+
         if self.is_empty() {
             return write!(
                 f,
@@ -69,7 +71,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             || (is_test_call && {
                 self.len() != 2
                     || matches!(
-                        self.as_ref().first(),
+                        arguments.first(),
                         Some(
                             Argument::StringLiteral(_)
                                 | Argument::TemplateLiteral(_)
@@ -96,10 +98,21 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
             );
         }
 
-        let has_empty_line = self
-            .iter()
-            .skip(1)
-            .any(|arg| f.source_text().get_lines_before(arg.span(), f.comments()) > 1);
+        // Check if there's an empty line (2+ newlines) between any consecutive arguments.
+        // This is used to preserve intentional blank lines in the original source.
+        let has_empty_line = arguments.windows(2).any(|window| {
+            let (cur_arg, next_arg) = (&window[0], &window[1]);
+
+            // Count newlines between arguments, short-circuiting at 2 for performance
+            // Check if there are at least two newlines between arguments
+            f.source_text()
+                .bytes_range(cur_arg.span().end, next_arg.span().start)
+                .iter()
+                .filter(|&&b| b == b'\n')
+                .nth(1)
+                .is_some()
+        });
+
         if has_empty_line
             || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
                 && is_function_composition_args(self))
