@@ -129,6 +129,7 @@ impl Program<'_> {
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: null,
+        ...(COMMENTS && { comments: DESER[Vec<Comment>](POS_OFFSET.comments) }),
         start,
         end,
         ...(RANGE && { range: [start, end] }),

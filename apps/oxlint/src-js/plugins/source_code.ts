@@ -159,7 +159,11 @@ export const SOURCE_CODE = Object.freeze({
    * @returns Array of `Comment`s in occurrence order.
    */
   getAllComments(): Comment[] {
-    throw new Error('`sourceCode.getAllComments` not implemented yet'); // TODO
+    if (ast === null) initAst();
+    // TODO: Deserializing strings is expensive, make this access lazy
+    // @ts-expect-error types are generated from `Program` attributes
+    // which are also twinned with ESTree generation so can't touch it
+    return ast.comments;
   },
 
   /**

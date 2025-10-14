@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "test-getAllComments/test-getAllComments": "error"
+  }
+}

@@ -48,6 +48,7 @@ function deserializeProgram(pos) {
       body: null,
       sourceType: deserializeModuleKind(pos + 125),
       hashbang: null,
+      comments: deserializeVecComment(pos + 24),
       start: 0,
       end,
       range: [0, end],

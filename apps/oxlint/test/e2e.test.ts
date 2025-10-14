@@ -216,4 +216,8 @@ describe('oxlint CLI', () => {
       await fs.writeFile(fixtureFilePath, codeBefore);
     }
   });
+
+  it('SourceCode.getAllComments() should return all comments', async () => {
+    await testFixture('getAllComments');
+  });
 });
