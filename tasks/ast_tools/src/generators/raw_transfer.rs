@@ -209,18 +209,21 @@ fn generate_deserializers(
         }
     }
 
-    // Create deserializers with various settings, by setting `IS_TS`, `RANGE`, `LOC`, `PARENT`
-    // and `PRESERVE_PARENS` consts, and running through minifier to shake out irrelevant code
+    // Create deserializers with various settings, by setting `IS_TS`, `RANGE`, `LOC`, `PARENT`,
+    // `PRESERVE_PARENS`, and `COMMENTS` consts, and running through minifier to shake out
+    // irrelevant code
     struct VariantGen {
         variant_paths: Vec<String>,
     }
 
-    impl VariantGenerator<5> for VariantGen {
-        const FLAG_NAMES: [&str; 5] = ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS"];
+    impl VariantGenerator<6> for VariantGen {
+        const FLAG_NAMES: [&str; 6] =
+            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "COMMENTS"];
 
-        fn variants(&mut self) -> Vec<[bool; 5]> {
+        fn variants(&mut self) -> Vec<[bool; 6]> {
             let mut variants = Vec::with_capacity(9);
 
+            // parser deserializers
             for is_ts in [false, true] {
                 for range in [false, true] {
                     for parent in [false, true] {
@@ -233,16 +236,17 @@ fn generate_deserializers(
 
                         variants.push([
                             is_ts, range, /* loc */ false, parent,
-                            /* preserve_parens */ true,
+                            /* preserve_parens */ true, /* comments */ false,
                         ]);
                     }
                 }
             }
 
             self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
+            // linter deserializer
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
-                /* parent */ true, /* preserve_parens */ false,
+                /* parent */ true, /* preserve_parens */ false, /* comments */ true,
             ]);
 
             variants
@@ -251,7 +255,7 @@ fn generate_deserializers(
         fn pre_process_variant<'a>(
             &mut self,
             program: &mut Program<'a>,
-            flags: [bool; 5],
+            flags: [bool; 6],
             allocator: &'a Allocator,
         ) {
             if flags[2] {
