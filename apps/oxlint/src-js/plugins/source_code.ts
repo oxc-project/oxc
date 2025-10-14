@@ -160,6 +160,9 @@ export const SOURCE_CODE = Object.freeze({
    */
   getAllComments(): Comment[] {
     if (ast === null) initAst();
+    // TODO: deserializing strings is expensive, make this access lazy
+    // @ts-expect-error types are generated from Program attributes
+    // which are also twined with estree generation so cant touch it
     return ast.comments;
   },
 

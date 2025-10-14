@@ -103,7 +103,6 @@ describe('parse', () => {
         },
       ],
       sourceType: 'module',
-      comments: [],
       hashbang: null,
     };
 
@@ -134,7 +133,6 @@ describe('parse', () => {
         },
       ],
       sourceType: 'module',
-      comments: [],
       hashbang: null,
     };
 

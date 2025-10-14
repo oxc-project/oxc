@@ -20,7 +20,7 @@ export class Program {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $comments: void 0, $body: void 0 };
+    this.#internal = { pos, ast, $body: void 0 };
     nodes.set(pos, this);
   }
 
@@ -37,13 +37,6 @@ export class Program {
   get sourceType() {
     const internal = this.#internal;
     return new SourceType(internal.pos + 124, internal.ast);
-  }
-
-  get comments() {
-    const internal = this.#internal,
-      cached = internal.$comments;
-    if (cached !== void 0) return cached;
-    return internal.$comments = constructVecComment(internal.pos + 24, internal.ast);
   }
 
   get hashbang() {
@@ -64,7 +57,6 @@ export class Program {
       start: this.start,
       end: this.end,
       sourceType: this.sourceType,
-      comments: this.comments,
       hashbang: this.hashbang,
       body: this.body,
     };

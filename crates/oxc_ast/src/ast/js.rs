@@ -46,7 +46,7 @@ use super::{macros::inherit_variants, *};
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(body, source_type, comments, hashbang, span), via = ProgramConverter)]
+#[estree(field_order(body, source_type, hashbang, span), via = ProgramConverter)]
 pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
@@ -55,6 +55,7 @@ pub struct Program<'a> {
     pub source_text: &'a str,
     /// Sorted comments
     #[content_eq(skip)]
+    #[estree(skip)]
     pub comments: Vec<'a, Comment>,
     pub hashbang: Option<Hashbang<'a>>,
     #[estree(prepend_to = body)]
