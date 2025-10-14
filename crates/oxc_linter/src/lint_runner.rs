@@ -203,6 +203,7 @@ impl LintRunner {
         files: &[Arc<OsStr>],
         tx_error: DiagnosticSender,
         file_system: Option<Box<dyn crate::RuntimeFileSystem + Sync + Send>>,
+        suppression_manager: Option<crate::suppression::ThreadSafeSuppressionManager>,
     ) -> Result<Self, String> {
         // Phase 1: Regular linting (collects disable directives)
         if let Some(linter) = self.regular_linter.take() {
@@ -213,6 +214,11 @@ impl LintRunner {
             let mut lint_service = LintService::new(linter, lint_service_options);
             lint_service.with_paths(files);
             lint_service.set_disable_directives_map(directives_map);
+
+            // Set suppression manager if provided
+            if let Some(suppression_mgr) = suppression_manager.clone() {
+                lint_service.set_suppression_manager(suppression_mgr);
+            }
 
             // Set custom file system if provided
             if let Some(fs) = file_system {

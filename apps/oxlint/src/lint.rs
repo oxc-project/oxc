@@ -420,12 +420,11 @@ impl CliRunner {
             return self.handle_prune_suppressions(stdout, &suppression_file_path);
         }
 
-        // TODO: Integrate suppression manager into regular linting flow
-        // Currently only suppress-all and prune-suppressions modes use the suppression manager
-        let _result = Self::load_suppression_manager(&suppression_file_path);
-        if let Err(result) = _result {
-            return result;
-        }
+        // Load suppression manager for regular linting (if file exists)
+        let suppression_manager = match Self::load_suppression_manager(&suppression_file_path) {
+            Ok(manager) => manager,
+            Err(result) => return result,
+        };
 
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
@@ -465,7 +464,7 @@ impl CliRunner {
             None
         };
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
+        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system, suppression_manager) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
@@ -552,7 +551,7 @@ impl CliRunner {
         };
 
         // Run linting to collect violations
-        match lint_runner.lint_files(files_to_lint, tx_diagnostic.clone(), file_system) {
+        match lint_runner.lint_files(files_to_lint, tx_diagnostic.clone(), file_system, None) {
             Ok(_) => {
                 drop(tx_diagnostic);
 
