@@ -304,7 +304,8 @@ impl RuleRunner for crate::rules::eslint::no_dupe_keys::NoDupeKeys {
 }
 
 impl RuleRunner for crate::rules::eslint::no_duplicate_case::NoDuplicateCase {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::SwitchStatement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -1967,12 +1968,14 @@ impl RuleRunner for crate::rules::promise::catch_or_return::CatchOrReturn {
 }
 
 impl RuleRunner for crate::rules::promise::no_callback_in_promise::NoCallbackInPromise {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::promise::no_multiple_resolved::NoMultipleResolved {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::NewExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

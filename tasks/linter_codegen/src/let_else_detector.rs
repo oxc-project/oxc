@@ -21,7 +21,7 @@ impl LetElseDetector {
         let Stmt::Local(local) = first_stmt else { return None };
         // Must have an initializer that is a `node.kind()` call
         let Some(init) = &local.init else { return None };
-        if !is_node_kind_call(&init.expr) {
+        if !(is_node_kind_call(&init.expr) || is_node_kind_as_call(&init.expr)) {
             return None;
         }
         // Must have a diverging `else` block
@@ -38,8 +38,23 @@ impl LetElseDetector {
         }
 
         let mut detector = Self { node_types: NodeTypeSet::new() };
-        let result = detector.extract_variants_from_pat(&local.pat);
-        if detector.node_types.is_empty() || result == CollectionResult::Incomplete {
+
+        if is_node_kind_as_call(&init.expr) {
+            // If the initializer is `node.kind().as_<variant>()`, extract that variant.
+            if let Expr::MethodCall(mc) = &*init.expr
+                && let Some(variant) = extract_variant_from_as_call(mc)
+            {
+                detector.node_types.insert(variant);
+            }
+        } else {
+            // Otherwise, the initializer is `node.kind()`, so extract from the pattern.
+            // Expecting `AstKind::Variant` pattern
+            let result = detector.extract_variants_from_pat(&local.pat);
+            if result == CollectionResult::Incomplete {
+                return None;
+            }
+        }
+        if detector.node_types.is_empty() {
             return None;
         }
 
@@ -59,4 +74,46 @@ impl LetElseDetector {
             _ => CollectionResult::Incomplete,
         }
     }
+}
+
+/// Checks if is `node.kind().as_some_ast_kind()`
+pub fn is_node_kind_as_call(expr: &Expr) -> bool {
+    if let Expr::MethodCall(mc) = expr
+        && mc.method.to_string().starts_with("as_")
+        && mc.args.is_empty()
+        && is_node_kind_call(&mc.receiver)
+    {
+        return true;
+    }
+    false
+}
+
+fn extract_variant_from_as_call(mc: &syn::ExprMethodCall) -> Option<String> {
+    // Looking for `node.kind().as_<snake_case_variant>()`
+    let method_ident = mc.method.to_string();
+    if !method_ident.starts_with("as_") || !mc.args.is_empty() {
+        return None;
+    }
+    // Receiver must be `node.kind()`
+    if !is_node_kind_call(&mc.receiver) {
+        return None;
+    }
+    let snake_variant = &method_ident[3..]; // strip `as_`
+    if snake_variant == "member_expression_kind" {
+        return None;
+    }
+    Some(snake_to_pascal_case(snake_variant))
+}
+
+fn snake_to_pascal_case(s: &str) -> String {
+    s.split('_')
+        .filter(|seg| !seg.is_empty())
+        .map(|seg| {
+            let mut chars = seg.chars();
+            match chars.next() {
+                Some(first) => first.to_ascii_uppercase().to_string() + chars.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect()
 }
