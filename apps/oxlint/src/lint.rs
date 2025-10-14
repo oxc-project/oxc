@@ -358,8 +358,6 @@ impl CliRunner {
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
-        let (_diagnostic_service, _tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
@@ -382,14 +380,6 @@ impl CliRunner {
             .cloned()
             .unwrap_or_else(|| PathBuf::from("oxlint-suppressions.json"));
 
-        let _suppression_manager = if suppression_options.suppress_all
-            || suppression_options.prune_suppressions
-            || suppression_file_path.exists()
-        {
-            SuppressionManager::load(&suppression_file_path).unwrap_or_default()
-        } else {
-            SuppressionManager::new()
-        };
 
         let tsconfig = basic_options.tsconfig.clone();
         if let Some(path) = tsconfig.as_ref() {
@@ -430,11 +420,12 @@ impl CliRunner {
             return self.handle_prune_suppressions(stdout, &suppression_file_path);
         }
 
-        // Load suppression manager for normal linting (if file exists)
-        let _suppression_manager = match Self::load_suppression_manager(&suppression_file_path) {
-            Ok(manager) => manager,
-            Err(result) => return result,
-        };
+        // TODO: Integrate suppression manager into regular linting flow
+        // Currently only suppress-all and prune-suppressions modes use the suppression manager
+        let _result = Self::load_suppression_manager(&suppression_file_path);
+        if let Err(result) = _result {
+            return result;
+        }
 
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);

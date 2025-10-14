@@ -24,12 +24,6 @@ impl SuppressionManager {
         Self { suppressions_by_file: HashMap::new(), counts: HashMap::new() }
     }
 
-    /// Create a new SuppressionManager with project-root-relative paths
-    pub fn new_with_project_root(_project_root: PathBuf) -> Self {
-        // Store the project root for path normalization
-        // For now, we'll normalize paths during operations
-        Self::new()
-    }
 
     pub fn load(path: &Path) -> Result<Self, OxcDiagnostic> {
         if !path.exists() {
