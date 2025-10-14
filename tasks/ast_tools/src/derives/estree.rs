@@ -87,7 +87,6 @@ impl Derive for DeriveESTree {
 
 /// Parse `#[estree]` attr.
 fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
-    // No need to check attr name is `estree`, because that's the only attribute this derive handles
     match location {
         // `#[estree]` attr on struct
         AttrLocation::Struct(struct_def) => match part {
