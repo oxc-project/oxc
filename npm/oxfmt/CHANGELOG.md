@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.5.0] - 2025-10-14
+
+### 🚀 Features
+
+- 8077f9b oxfmt: Provide JSON schema for `.oxfmtrc.json` (#14399) (leaysgur)
+
+
 ## [0.4.0] - 2025-10-09
 
 ### 🐛 Bug Fixes
