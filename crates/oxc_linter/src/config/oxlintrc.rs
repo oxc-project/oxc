@@ -155,26 +155,28 @@ impl Oxlintrc {
         // resolve relative paths
         if let Some(external_plugins) = &mut config.external_plugins {
             if let Some(config_dir) = config.path.parent() {
-                // external_plugins, but relative paths resolved to absolute paths, package names unchanged
-                let mut normalized = FxHashSet::default();
-                normalized.reserve(external_plugins.len());
-
-                // we can safely consume external_plugins while iterating over it since its going to be replaced soon
-                for plugin in std::mem::take(external_plugins) {
-                    let is_relative = plugin.starts_with("./") || plugin.starts_with("../");
-                    if is_relative {
-                        let absolute = config_dir.join(&plugin);
-                        // TODO: non utf8 path compatibility
-                        normalized.insert(absolute.to_string_lossy().into_owned());
-                    } else {
-                        normalized.insert(plugin);
-                    }
-                }
-
-                config.external_plugins = Some(normalized);
+                *external_plugins = std::mem::take(external_plugins)
+                    .into_iter()
+                    .map(|specifier| {
+                        let is_relative =
+                            specifier.starts_with("./") || specifier.starts_with("../");
+                        if is_relative {
+                            config_dir
+                                .join(&specifier)
+                                .into_os_string()
+                                .into_string()
+                                // there is a corner case where this can fail
+                                // for non-utf8 paths, this relative plugin specifier
+                                // may be resolved relative to the wrong config file
+                                // when two are merged.
+                                .unwrap_or(specifier.clone())
+                        } else {
+                            specifier
+                        }
+                    })
+                    .collect();
             }
         }
-
         Ok(config)
     }
 
