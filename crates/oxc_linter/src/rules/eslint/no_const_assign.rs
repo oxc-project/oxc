@@ -53,7 +53,9 @@ declare_oxc_lint!(
 impl Rule for NoConstAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
+            AstKind::VariableDeclaration(var_decl)
+                if var_decl.kind.is_const() || var_decl.kind.is_using() =>
+            {
                 for decl in &var_decl.declarations {
                     for ident in decl.id.get_binding_identifiers() {
                         check_symbol(ident.symbol_id(), ctx);
@@ -122,6 +124,10 @@ fn test() {
         ("const a = 1; { let a = 2; { a += 1; } }", None),
         ("const foo = 1;let bar;bar[foo ?? foo] = 42;", None),
         ("const FOO = 1; ({ files = FOO } = arg1); ", None),
+        ("using x = foo();", None),
+        ("await using x = foo();", None),
+        ("using x = foo(); bar(x);", None),
+        ("await using x = foo(); bar(x);", None),
     ];
 
     let fail = vec![
@@ -143,6 +149,12 @@ fn test() {
         ("const [a, b, ...[c, ...d]] = [1, 2, 3, 4, 5]; d = 123", None),
         ("const d = 123; [a, b, ...[c, ...d]] = [1, 2, 3, 4, 5]", None),
         ("const b = 0; ({a, ...b} = {a: 1, c: 2, d: 3})", None),
+        ("using x = foo(); x = 1;", None),
+        ("await using x = foo(); x = 1;", None),
+        ("using x = foo(); x ??= bar();", None),
+        ("await using x = foo(); x ||= bar();", None),
+        ("using x = foo(); [x, y] = bar();", None),
+        ("await using x = foo(); [x = baz, y] = bar();", None),
     ];
 
     Tester::new(NoConstAssign::NAME, NoConstAssign::PLUGIN, pass, fail).test_and_snapshot();
