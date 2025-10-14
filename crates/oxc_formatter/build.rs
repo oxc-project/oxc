@@ -3,7 +3,7 @@ use std::{
     env,
     fs::{self, File},
     io::Write,
-    path::{Path, PathBuf},
+    path::{MAIN_SEPARATOR, Path, PathBuf},
 };
 
 use oxc_span::SourceType;
@@ -108,6 +108,7 @@ fn is_test_file(path: &Path) -> bool {
     }
 }
 
+#[expect(clippy::disallowed_methods)]
 fn generate_test_function(
     f: &mut File,
     relative_path: &Path,
@@ -123,7 +124,7 @@ fn generate_test_function(
         f,
         "{}    let path = std::path::Path::new(\"tests/fixtures/{}\");",
         indent,
-        relative_path.display()
+        relative_path.display().to_string().replace(MAIN_SEPARATOR, "/")
     )?;
     writeln!(f, "{indent}    test_file(path);")?;
     writeln!(f, "{indent}}}")?;
