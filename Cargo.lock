@@ -1304,6 +1304,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "json-escape-simd"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3c2a6c0b4b5637c41719973ef40c6a1cf564f9db6958350de6193fbee9c23f5"
+
+[[package]]
 name = "json-strip-comments"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1926,7 +1932,7 @@ dependencies = [
  "oxc_index",
  "oxc_parser 0.94.0",
  "oxc_semantic 0.94.0",
- "oxc_sourcemap",
+ "oxc_sourcemap 6.0.0",
  "oxc_span 0.94.0",
  "oxc_syntax 0.94.0",
  "pico-args",
@@ -1948,7 +1954,7 @@ dependencies = [
  "oxc_data_structures 0.94.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "oxc_index",
  "oxc_semantic 0.94.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "oxc_sourcemap",
+ "oxc_sourcemap 4.2.1",
  "oxc_span 0.94.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "oxc_syntax 0.94.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-hash",
@@ -2298,7 +2304,7 @@ dependencies = [
  "oxc_parser 0.94.0",
  "oxc_regular_expression 0.94.0",
  "oxc_semantic 0.94.0",
- "oxc_sourcemap",
+ "oxc_sourcemap 6.0.0",
  "oxc_span 0.94.0",
  "oxc_syntax 0.94.0",
  "oxc_traverse 0.94.0",
@@ -2345,7 +2351,7 @@ dependencies = [
  "oxc_minifier 0.94.0",
  "oxc_napi",
  "oxc_parser 0.94.0",
- "oxc_sourcemap",
+ "oxc_sourcemap 6.0.0",
  "oxc_span 0.94.0",
 ]
 
@@ -2594,7 +2600,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05ff280f25901ac054ad8552395ecd6a455e4b9352a94debbc34c433760586ef"
 dependencies = [
  "base64-simd",
- "json-escape-simd",
+ "json-escape-simd 1.1.0",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "oxc_sourcemap"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bd56ed0ec53da593c43d9ea65ced157fe319e454888eb65b239a275e3696499"
+dependencies = [
+ "base64-simd",
+ "json-escape-simd 3.0.1",
  "napi",
  "napi-build",
  "napi-derive",
@@ -2734,7 +2753,7 @@ dependencies = [
  "napi-derive",
  "oxc",
  "oxc_napi",
- "oxc_sourcemap",
+ "oxc_sourcemap 6.0.0",
  "rustc-hash",
 ]
 
@@ -2785,7 +2804,7 @@ dependencies = [
  "oxc_minifier 0.94.0",
  "oxc_parser 0.94.0",
  "oxc_semantic 0.94.0",
- "oxc_sourcemap",
+ "oxc_sourcemap 6.0.0",
  "oxc_span 0.94.0",
  "oxc_syntax 0.94.0",
  "oxc_tasks_common",
