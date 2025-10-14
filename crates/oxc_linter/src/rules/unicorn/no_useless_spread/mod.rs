@@ -219,18 +219,19 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
                     Span::new(first.span().start, last.span().end)
                 }) && call_expr_args_span.contains_inclusive(array_expr.span)
                 {
-                    ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
-                        let replacer = if let Some(first) = array_expr.elements.first() {
-                            let mut span = first.span();
-                            if array_expr.elements.len() != 1 {
-                                let last = array_expr.elements.last().unwrap();
-                                span = Span::new(first.span().start, last.span().end);
-                            }
-                            ctx.source_range(span)
-                        } else {
-                            ""
-                        };
+                    // compute replacer before the closure so we don't capture `ctx` by reference inside the fixer closure
+                    let replacer = if let Some(first) = array_expr.elements.first() {
+                        let mut snippet_span = first.span();
+                        if array_expr.elements.len() != 1 {
+                            let last = array_expr.elements.last().unwrap();
+                            snippet_span = Span::new(first.span().start, last.span().end);
+                        }
+                        ctx.source_range(snippet_span).to_string()
+                    } else {
+                        String::new()
+                    };
 
+                    ctx.diagnostic_with_fix(spread_in_arguments(span), move |fixer| {
                         fixer.replace(spread_elem.span(), replacer)
                     });
                     return true;
