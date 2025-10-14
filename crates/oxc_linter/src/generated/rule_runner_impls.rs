@@ -2155,6 +2155,7 @@ impl RuleRunner for crate::rules::react::checked_requires_onchange_or_readonly::
 
 impl RuleRunner for crate::rules::react::display_name::DisplayName {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::react::exhaustive_deps::ExhaustiveDeps {
