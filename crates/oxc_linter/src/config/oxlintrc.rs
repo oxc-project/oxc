@@ -153,29 +153,28 @@ impl Oxlintrc {
         config.path = path.to_path_buf();
 
         // resolve relative paths
-        if let Some(external_plugins) = &mut config.external_plugins {
-            if let Some(config_dir) = config.path.parent() {
-                *external_plugins = std::mem::take(external_plugins)
-                    .into_iter()
-                    .map(|specifier| {
-                        let is_relative =
-                            specifier.starts_with("./") || specifier.starts_with("../");
-                        if is_relative {
-                            config_dir
-                                .join(&specifier)
-                                .into_os_string()
-                                .into_string()
-                                // there is a corner case where this can fail
-                                // for non-utf8 paths, this relative plugin specifier
-                                // may be resolved relative to the wrong config file
-                                // when two are merged.
-                                .unwrap_or(specifier.clone())
-                        } else {
-                            specifier
-                        }
-                    })
-                    .collect();
-            }
+        if let Some(external_plugins) = &mut config.external_plugins
+            && let Some(config_dir) = config.path.parent()
+        {
+            *external_plugins = std::mem::take(external_plugins)
+                .into_iter()
+                .map(|specifier| {
+                    let is_relative = specifier.starts_with("./") || specifier.starts_with("../");
+                    if is_relative {
+                        config_dir
+                            .join(&specifier)
+                            .into_os_string()
+                            .into_string()
+                            // there is a corner case where this can fail
+                            // for non-utf8 paths, this relative plugin specifier
+                            // may be resolved relative to the wrong config file
+                            // when two are merged.
+                            .unwrap_or(specifier)
+                    } else {
+                        specifier
+                    }
+                })
+                .collect();
         }
         Ok(config)
     }
