@@ -172,7 +172,7 @@ describe('helpers', () => {
 });
 
 describe('modules', () => {
-  it('should transform export = and import ', () => {
+  it('should transform `export =` and `import =`', () => {
     const code = `
 export = function foo (): void {}
 import bar = require('bar')
