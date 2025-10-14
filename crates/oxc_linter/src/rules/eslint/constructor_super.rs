@@ -170,9 +170,16 @@ impl Rule for ConstructorSuper {
         let Some(constructor_func_node) = constructor_func_node else { return };
         let constructor_block_id = ctx.nodes().cfg_id(constructor_func_node.id());
 
+        // First, check for LogicalExpression with super() using AST
+        // This is needed because the CFG doesn't create proper instructions for these
+        let has_conditional_super =
+            Self::has_logical_expression_super(&body.statements, node.id(), ctx);
+
         // Analyze the CFG starting from constructor entry
-        let (super_call_counts, super_call_spans) =
+        let (super_call_counts, super_call_spans, has_conditional_super_from_cfg) =
             Self::find_super_calls_in_cfg(cfg, constructor_block_id, node.id(), ctx);
+
+        let has_conditional_super = has_conditional_super || has_conditional_super_from_cfg;
 
         // Apply validation based on superclass type
         match super_class_type {
@@ -197,6 +204,13 @@ impl Rule for ConstructorSuper {
                 }
             }
             SuperClassType::Valid => {
+                // If we detected a conditional super() (from LogicalExpression),
+                // we know it's not in all paths
+                if has_conditional_super {
+                    ctx.diagnostic(missing_super_some(constructor.span));
+                    return;
+                }
+
                 // MUST have super() call
                 if super_call_counts.is_empty() {
                     ctx.diagnostic(missing_super_all(constructor.span));
@@ -246,6 +260,66 @@ impl Rule for ConstructorSuper {
 }
 
 impl ConstructorSuper {
+    /// Check if constructor body contains a LogicalExpression with super()
+    /// This is needed because CFG doesn't create proper instructions for logical expressions
+    fn has_logical_expression_super(
+        statements: &[Statement],
+        class_node_id: NodeId,
+        ctx: &LintContext,
+    ) -> bool {
+        // Recursively search for LogicalExpression containing super()
+        fn check_expression(expr: &Expression, class_node_id: NodeId, ctx: &LintContext) -> bool {
+            match expr {
+                Expression::LogicalExpression(logical) => {
+                    // Check if either side has super()
+                    let has_left_super = if let Expression::CallExpression(call) = &logical.left {
+                        matches!(&call.callee, Expression::Super(_))
+                    } else {
+                        check_expression(&logical.left, class_node_id, ctx)
+                    };
+
+                    let has_right_super = if let Expression::CallExpression(call) = &logical.right {
+                        matches!(&call.callee, Expression::Super(_))
+                    } else {
+                        check_expression(&logical.right, class_node_id, ctx)
+                    };
+
+                    has_left_super || has_right_super
+                }
+                Expression::ConditionalExpression(cond) => {
+                    check_expression(&cond.test, class_node_id, ctx)
+                        || check_expression(&cond.consequent, class_node_id, ctx)
+                        || check_expression(&cond.alternate, class_node_id, ctx)
+                }
+                Expression::ParenthesizedExpression(paren) => {
+                    check_expression(&paren.expression, class_node_id, ctx)
+                }
+                _ => false,
+            }
+        }
+
+        fn check_statement(stmt: &Statement, class_node_id: NodeId, ctx: &LintContext) -> bool {
+            match stmt {
+                Statement::ExpressionStatement(expr_stmt) => {
+                    check_expression(&expr_stmt.expression, class_node_id, ctx)
+                }
+                Statement::BlockStatement(block) => {
+                    block.body.iter().any(|s| check_statement(s, class_node_id, ctx))
+                }
+                Statement::IfStatement(if_stmt) => {
+                    check_statement(&if_stmt.consequent, class_node_id, ctx)
+                        || if_stmt
+                            .alternate
+                            .as_ref()
+                            .is_some_and(|alt| check_statement(alt, class_node_id, ctx))
+                }
+                _ => false,
+            }
+        }
+
+        statements.iter().any(|stmt| check_statement(stmt, class_node_id, ctx))
+    }
+
     /// Classify the superclass expression to determine if super() is needed/valid
     fn classify_super_class(super_class: Option<&Expression>) -> SuperClassType {
         match super_class {
@@ -262,15 +336,16 @@ impl ConstructorSuper {
     }
 
     /// Find all super() calls within the CFG reachable from constructor entry
-    /// Returns (map of blocks to super() call count, map of blocks to first super() span)
+    /// Returns (map of blocks to super() call count, map of blocks to first super() span, has conditional super)
     fn find_super_calls_in_cfg(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
         class_node_id: NodeId,
         ctx: &LintContext,
-    ) -> (FxHashMap<BlockNodeId, usize>, FxHashMap<BlockNodeId, Span>) {
+    ) -> (FxHashMap<BlockNodeId, usize>, FxHashMap<BlockNodeId, Span>, bool) {
         let mut super_call_counts = FxHashMap::default();
         let mut super_call_spans = FxHashMap::default();
+        let mut has_conditional_super = false;
 
         // Walk all reachable blocks from constructor
         neighbors_filtered_by_edge_weight(
@@ -331,6 +406,27 @@ impl ConstructorSuper {
                                         record_super(span);
                                     }
                                 }
+                                // Logical: a && super() or super() || super()
+                                // The CFG creates separate blocks, but we use AST detection
+                                // and mark it as conditional for proper path analysis.
+                                Expression::LogicalExpression(logical) => {
+                                    let check_super = |expr: &Expression| -> Option<Span> {
+                                        if let Expression::CallExpression(call) = expr
+                                            && matches!(&call.callee, Expression::Super(_))
+                                        {
+                                            Some(call.span)
+                                        } else {
+                                            None
+                                        }
+                                    };
+
+                                    if let Some(span) = check_super(&logical.left)
+                                        .or_else(|| check_super(&logical.right))
+                                    {
+                                        has_conditional_super = true;
+                                        record_super(span);
+                                    }
+                                }
                                 _ => {}
                             }
                         }
@@ -343,7 +439,7 @@ impl ConstructorSuper {
             },
         );
 
-        (super_call_counts, super_call_spans)
+        (super_call_counts, super_call_spans, has_conditional_super)
     }
 
     /// Analyze control flow paths to determine super() call patterns
