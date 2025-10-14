@@ -123,17 +123,19 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
         let start = left_side.span().start;
         let comments = f.comments().comments_before(start);
 
-        let is_line_comment_or_multi_line_comment = |comments: &[Comment]| {
-            comments.iter().any(|comment| {
-                comment.is_line()
-                    || source_text.contains_newline(comment.span)
-                    || source_text.is_end_of_line_comment(comment)
-            })
-        };
-
-        if is_line_comment_or_multi_line_comment(comments) {
+        if f.comments().comments_before_iter(start).any(|comment| {
+            source_text.contains_newline(comment.span)
+                || source_text.is_end_of_line_comment(comment)
+        }) {
             return true;
         }
+
+        let is_own_line_comment_or_multi_line_comment = |comments: &[Comment]| {
+            comments.iter().any(|comment| {
+                source_text.is_own_line_comment(comment)
+                    || source_text.contains_newline(comment.span)
+            })
+        };
 
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
@@ -141,21 +143,19 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
             let has_leading_own_line_comment = match left_side.as_ref() {
                 Expression::ChainExpression(chain) => {
                     if let ChainElement::StaticMemberExpression(member) = &chain.expression {
-                        is_line_comment_or_multi_line_comment(
-                            f.comments().comments_in_range(
-                                member.object.span().end,
-                                member.property.span.end,
-                            ),
-                        )
+                        let comments = f
+                            .comments()
+                            .comments_in_range(member.object.span().end, member.property.span.end);
+                        is_own_line_comment_or_multi_line_comment(comments)
                     } else {
                         false
                     }
                 }
                 Expression::StaticMemberExpression(member) => {
-                    is_line_comment_or_multi_line_comment(
-                        f.comments()
-                            .comments_in_range(member.object.span().end, member.property.span.end),
-                    )
+                    let comments = f
+                        .comments()
+                        .comments_in_range(member.object.span().end, member.property.span.end);
+                    is_own_line_comment_or_multi_line_comment(comments)
                 }
                 _ => false,
             };
