@@ -149,6 +149,7 @@ export class NodeArray extends Array {
   }
 }
 
+// oxlint-disable-next-line typescript/unbound-method
 NodeArray.prototype[Symbol.iterator] = NodeArray.prototype.values;
 
 /**

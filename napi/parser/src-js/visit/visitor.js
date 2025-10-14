@@ -368,6 +368,7 @@ function createMerger(fnCount) {
   }
   body += '}';
   args.push(body);
+  // oxlint-disable-next-line typescript/no-implied-eval
   return new Function(...args);
 }
 

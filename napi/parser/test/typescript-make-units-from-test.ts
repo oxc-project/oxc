@@ -126,6 +126,7 @@ function getErrorFiles(filePath, options) {
  * @param {string} code - Content of the test file
  * @returns {Object} TestCaseContent object
  */
+// oxlint-disable-next-line jest/no-export
 export function makeUnitsFromTest(filePath, code) {
   const currentFileOptions = new Map();
   let currentFileName = null;
