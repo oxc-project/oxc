@@ -32,11 +32,16 @@ impl ignore::ParallelVisitor for WalkVisitor {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                // Skip if we can't get file type or if it's a directory
-                if let Some(file_type) = entry.file_type()
-                    && !file_type.is_dir()
-                    && let Some(source_type) = get_supported_source_type(entry.path())
-                {
+                let Some(file_type) = entry.file_type() else {
+                    return ignore::WalkState::Continue;
+                };
+                if file_type.is_dir() {
+                    // Skip traversing `.git` directories because `.git` is not a special case for `.hidden(false)`.
+                    // <https://github.com/BurntSushi/ripgrep/issues/3099#issuecomment-3052460027>
+                    if entry.file_name() == ".git" {
+                        return ignore::WalkState::Skip;
+                    }
+                } else if let Some(source_type) = get_supported_source_type(entry.path()) {
                     let walk_entry =
                         WalkEntry { path: entry.path().as_os_str().into(), source_type };
                     // Send each entry immediately through the channel

@@ -52,6 +52,11 @@ impl ignore::ParallelVisitor for WalkCollector {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
+                // Skip traversing `.git` directories because `.git` is not a special case for `.hidden(false)`.
+                // <https://github.com/BurntSushi/ripgrep/issues/3099#issuecomment-3052460027>
+                if entry.file_type().is_some_and(|ty| ty.is_dir()) && entry.file_name() == ".git" {
+                    return ignore::WalkState::Skip;
+                }
                 if Walk::is_wanted_entry(&entry, &self.extensions) {
                     self.paths.push(entry.path().as_os_str().into());
                 }
