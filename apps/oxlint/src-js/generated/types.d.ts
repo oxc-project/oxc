@@ -1,13 +1,14 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
-import { Span } from '../plugins/types.ts';
-export { Span };
+import { Comment, Span } from '../plugins/types.ts';
+export { Comment, Span };
 
 export interface Program extends Span {
   type: 'Program';
   body: Array<Directive | Statement>;
   sourceType: ModuleKind;
+  comments: Array<Comment>;
   hashbang: Hashbang | null;
   parent?: null;
 }

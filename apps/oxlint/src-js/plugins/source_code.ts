@@ -159,7 +159,8 @@ export const SOURCE_CODE = Object.freeze({
    * @returns Array of `Comment`s in occurrence order.
    */
   getAllComments(): Comment[] {
-    throw new Error('`sourceCode.getAllComments` not implemented yet'); // TODO
+    if (ast === null) initAst();
+    return ast.comments;
   },
 
   /**

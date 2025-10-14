@@ -128,6 +128,7 @@ impl Program<'_> {
         type: 'Program',
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
+        comments: DESER[Vec<Comment>](POS_OFFSET.comments),
         hashbang: null,
         start,
         end,
@@ -180,6 +181,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("type", &JsonSafeString("Program"));
         state.serialize_field("body", &Concat2(&program.directives, &program.body));
         state.serialize_field("sourceType", &program.source_type.module_kind());
+        state.serialize_field("comments", &program.comments);
         state.serialize_field("hashbang", &program.hashbang);
 
         let span = if S::INCLUDE_TS_FIELDS {

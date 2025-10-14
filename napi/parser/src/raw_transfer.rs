@@ -1,5 +1,5 @@
 use std::{
-    mem::{self, ManuallyDrop},
+    mem::ManuallyDrop,
     ptr::{self, NonNull},
     str,
 };
@@ -11,7 +11,7 @@ use napi::{
 use napi_derive::napi;
 
 use oxc::{
-    allocator::{Allocator, FromIn, Vec as ArenaVec},
+    allocator::{Allocator, CloneIn, FromIn, Vec as ArenaVec},
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };
@@ -222,7 +222,6 @@ unsafe fn parse_raw_impl(
 
         let ret = parse(&allocator, source_type, source_text, &options);
         let mut program = ret.program;
-        let mut comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
         let mut module_record = ret.module_record;
 
         // Convert errors.
@@ -252,7 +251,7 @@ unsafe fn parse_raw_impl(
         // Convert spans to UTF-16
         let span_converter = Utf8ToUtf16::new(source_text);
         span_converter.convert_program(&mut program);
-        span_converter.convert_comments(&mut comments);
+        span_converter.convert_comments(&mut program.comments);
         span_converter.convert_module_record(&mut module_record);
         if let Some(mut converter) = span_converter.converter() {
             for error in &mut errors {
@@ -266,6 +265,9 @@ unsafe fn parse_raw_impl(
         let module = EcmaScriptModule::from_in(module_record, &allocator);
 
         // Write `RawTransferData` to arena, and return pointer to it
+        // TODO: we can probably avoid this clone with a little refactor
+        // currently, some deserializers read dat.comments, some read data.program.comments
+        let comments = program.comments.clone_in(&allocator);
         let data = RawTransferData { program, comments, module, errors };
         let data = allocator.alloc(data);
         ptr::from_ref(data).cast::<u8>()

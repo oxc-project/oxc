@@ -5,6 +5,7 @@ export interface Program extends Span {
   type: 'Program';
   body: Array<Directive | Statement>;
   sourceType: ModuleKind;
+  comments: Array<Comment>;
   hashbang: Hashbang | null;
   parent?: null;
 }
