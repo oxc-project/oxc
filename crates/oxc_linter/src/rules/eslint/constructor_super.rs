@@ -273,116 +273,68 @@ impl ConstructorSuper {
         let mut super_call_spans = FxHashMap::default();
 
         // Walk all reachable blocks from constructor
-        let _results = neighbors_filtered_by_edge_weight(
+        neighbors_filtered_by_edge_weight(
             &cfg.graph,
             constructor_block,
-            &|edge| match edge {
-                // Stop at function boundaries (nested functions)
-                EdgeType::NewFunction => Some(()),
-                // Follow other edges to explore all paths
-                EdgeType::Jump
-                | EdgeType::Normal
-                | EdgeType::Backedge
-                | EdgeType::Unreachable
-                | EdgeType::Join
-                | EdgeType::Error(_)
-                | EdgeType::Finalize => None,
-            },
+            &|edge| if matches!(edge, EdgeType::NewFunction) { Some(()) } else { None },
             &mut |block_id, (): ()| {
                 let block = cfg.basic_block(*block_id);
 
                 // Check each instruction in this block
                 for instruction in block.instructions() {
-                    if let Some(node_id) = instruction.node_id {
-                        let node = ctx.nodes().get_node(node_id);
+                    let Some(node_id) = instruction.node_id else { continue };
 
-                        // CFG instructions typically point to statements
-                        // We only need to look one level down - no deep recursion
-                        match node.kind() {
-                            // Direct call expression
-                            AstKind::CallExpression(call) => {
-                                if matches!(&call.callee, Expression::Super(_))
-                                    && !Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id)
-                                {
-                                    *super_call_counts.entry(*block_id).or_insert(0) += 1;
-                                    super_call_spans.entry(*block_id).or_insert(call.span);
-                                }
+                    // Skip if in nested scope (check once per instruction)
+                    if Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id) {
+                        continue;
+                    }
+
+                    let node = ctx.nodes().get_node(node_id);
+
+                    // Helper to record a super() call
+                    let mut record_super = |span: Span| {
+                        *super_call_counts.entry(*block_id).or_insert(0) += 1;
+                        super_call_spans.entry(*block_id).or_insert(span);
+                    };
+
+                    match node.kind() {
+                        // Direct call expression
+                        AstKind::CallExpression(call) => {
+                            if matches!(&call.callee, Expression::Super(_)) {
+                                record_super(call.span);
                             }
-                            // Expression statement wrapping a call or conditional
-                            AstKind::ExpressionStatement(expr_stmt) => {
-                                match &expr_stmt.expression {
-                                    // Direct call expression: super()
-                                    Expression::CallExpression(call) => {
-                                        if matches!(&call.callee, Expression::Super(_))
-                                            && !Self::is_in_nested_scope_cfg(
-                                                node_id,
-                                                ctx,
-                                                class_node_id,
-                                            )
-                                        {
-                                            *super_call_counts.entry(*block_id).or_insert(0) += 1;
-                                            super_call_spans.entry(*block_id).or_insert(call.span);
-                                        }
-                                    }
-                                    // Conditional expression: a ? super() : super()
-                                    // For ternary expressions, both branches are in the same basic block
-                                    // but only one executes. We mark the block as having super() but don't
-                                    // count it as multiple calls since they're mutually exclusive.
-                                    Expression::ConditionalExpression(cond) => {
-                                        let has_consequent_super =
-                                            if let Expression::CallExpression(call) =
-                                                &cond.consequent
-                                            {
-                                                matches!(&call.callee, Expression::Super(_))
-                                                    && !Self::is_in_nested_scope_cfg(
-                                                        node_id,
-                                                        ctx,
-                                                        class_node_id,
-                                                    )
-                                            } else {
-                                                false
-                                            };
-
-                                        let has_alternate_super =
-                                            if let Expression::CallExpression(call) =
-                                                &cond.alternate
-                                            {
-                                                matches!(&call.callee, Expression::Super(_))
-                                                    && !Self::is_in_nested_scope_cfg(
-                                                        node_id,
-                                                        ctx,
-                                                        class_node_id,
-                                                    )
-                                            } else {
-                                                false
-                                            };
-
-                                        // Mark block as having super() if either branch has it
-                                        // Count is 1 even if both branches have super (they're mutually exclusive)
-                                        if has_consequent_super || has_alternate_super {
-                                            *super_call_counts.entry(*block_id).or_insert(0) += 1;
-                                            if has_consequent_super {
-                                                if let Expression::CallExpression(call) =
-                                                    &cond.consequent
-                                                {
-                                                    super_call_spans
-                                                        .entry(*block_id)
-                                                        .or_insert(call.span);
-                                                }
-                                            } else if let Expression::CallExpression(call) =
-                                                &cond.alternate
-                                            {
-                                                super_call_spans
-                                                    .entry(*block_id)
-                                                    .or_insert(call.span);
-                                            }
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                            _ => {}
                         }
+                        // Expression statement wrapping a call or conditional
+                        AstKind::ExpressionStatement(expr_stmt) => {
+                            match &expr_stmt.expression {
+                                Expression::CallExpression(call) => {
+                                    if matches!(&call.callee, Expression::Super(_)) {
+                                        record_super(call.span);
+                                    }
+                                }
+                                // Ternary: a ? super() : super()
+                                // Both branches in same block but only one executes
+                                Expression::ConditionalExpression(cond) => {
+                                    let check_super = |expr: &Expression| -> Option<Span> {
+                                        if let Expression::CallExpression(call) = expr
+                                            && matches!(&call.callee, Expression::Super(_))
+                                        {
+                                            Some(call.span)
+                                        } else {
+                                            None
+                                        }
+                                    };
+
+                                    if let Some(span) = check_super(&cond.consequent)
+                                        .or_else(|| check_super(&cond.alternate))
+                                    {
+                                        record_super(span);
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        _ => {}
                     }
                 }
 
@@ -443,13 +395,8 @@ impl ConstructorSuper {
         }
 
         // Update count based on how many super() calls are in this block
-        // Cap at 2 to distinguish: 0 (none), 1 (once), 2+ (multiple)
         let block_super_count = super_call_counts.get(&block_id).copied().unwrap_or(0);
-        let new_count = if block_super_count > 0 {
-            (super_count + block_super_count).min(2)
-        } else {
-            super_count
-        };
+        let new_count = super_count + block_super_count;
 
         // Check if this block terminates a path
         let has_exit = block.instructions().iter().any(|inst| {
@@ -478,10 +425,7 @@ impl ConstructorSuper {
             });
 
             let result = match new_count {
-                0 if is_acceptable_exit => {
-                    // Early exit without super() is acceptable only for throw or return <value>
-                    PathResult::ExitedWithoutSuper
-                }
+                0 if is_acceptable_exit => PathResult::ExitedWithoutSuper,
                 0 => PathResult::NoSuper,
                 1 => PathResult::CalledOnce,
                 _ => PathResult::CalledMultiple,
@@ -562,9 +506,9 @@ impl ConstructorSuper {
             }
         }
 
-        // If this block has NO outgoing edges at all and didn't hit an explicit exit,
-        // it's a true dead-end (shouldn't normally happen in valid CFG, but handle it)
-        if !has_outgoing_edges && !has_exit {
+        // If this block has NO outgoing edges and didn't hit an explicit exit,
+        // it's a dead-end (shouldn't normally happen in valid CFG, but handle it)
+        if !has_outgoing_edges {
             let result = match new_count {
                 0 => PathResult::NoSuper,
                 1 => PathResult::CalledOnce,
