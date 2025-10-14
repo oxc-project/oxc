@@ -223,7 +223,7 @@ fn generate_deserializers(
         fn variants(&mut self) -> Vec<[bool; 6]> {
             let mut variants = Vec::with_capacity(9);
 
-            // parser deserializers
+            // Parser deserializers
             for is_ts in [false, true] {
                 for range in [false, true] {
                     for parent in [false, true] {
@@ -242,8 +242,8 @@ fn generate_deserializers(
                 }
             }
 
+            // Linter deserializer
             self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
-            // linter deserializer
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
                 /* parent */ true, /* preserve_parens */ false, /* comments */ true,
