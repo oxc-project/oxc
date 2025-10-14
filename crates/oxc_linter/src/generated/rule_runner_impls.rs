@@ -1854,7 +1854,8 @@ impl RuleRunner for crate::rules::oxc::branches_sharing_code::BranchesSharingCod
 }
 
 impl RuleRunner for crate::rules::oxc::const_comparisons::ConstComparisons {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression, AstType::LogicalExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

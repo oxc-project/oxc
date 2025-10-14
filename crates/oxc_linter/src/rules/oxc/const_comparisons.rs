@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, LogicalExpression, NumericLiteral, UnaryOperator},
+    ast::{BinaryExpression, Expression, LogicalExpression, NumericLiteral, UnaryOperator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -111,17 +111,20 @@ declare_oxc_lint!(
 
 impl Rule for ConstComparisons {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        Self::check_logical_expression(node, ctx);
-        Self::check_binary_expression(node, ctx);
+        match node.kind() {
+            AstKind::LogicalExpression(logical_expr) => {
+                Self::check_logical_expression(logical_expr, ctx);
+            }
+            AstKind::BinaryExpression(bin_expr) => {
+                Self::check_binary_expression(bin_expr, ctx);
+            }
+            _ => {}
+        }
     }
 }
 
 impl ConstComparisons {
-    fn check_logical_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::LogicalExpression(logical_expr) = node.kind() else {
-            return;
-        };
-
+    fn check_logical_expression<'a>(logical_expr: &LogicalExpression<'a>, ctx: &LintContext<'a>) {
         Self::check_logical_expression_const_literal_comparison(logical_expr, ctx);
         Self::check_redundant_logical_expression(logical_expr, ctx);
     }
@@ -256,11 +259,7 @@ impl ConstComparisons {
         }
     }
 
-    fn check_binary_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(bin_expr) = node.kind() else {
-            return;
-        };
-
+    fn check_binary_expression<'a>(bin_expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
         if matches!(
             bin_expr.operator,
             BinaryOperator::LessEqualThan
