@@ -129,7 +129,7 @@ impl ConfigStoreBuilder {
                         // I'm not sure if "/" is a viable fallback, but it's very unlikely that the oxlint file does not have a parent directory.
                         let base_dir = root_path.unwrap_or(Path::new("/"));
                         let resolved = resolver
-                            .resolve(base_dir, &scoped_package_name.to_string())
+                            .resolve(base_dir, scoped_package_name.as_ref())
                             .map_err(|err| ConfigBuilderError::InvalidConfigFile {
                                 file: scoped_package_name.to_string(),
                                 reason: err.to_string(),
