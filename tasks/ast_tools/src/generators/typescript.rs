@@ -453,10 +453,9 @@ fn get_single_field<'s>(struct_def: &'s StructDef, schema: &Schema) -> Option<&'
 }
 
 /// Amend version of types for Oxlint.
-///
-/// Remove `export interface Span`, and instead import local version of same interface,
-/// which includes non-optional `range` and `loc` fields.
 fn amend_oxlint_types(code: &str) -> String {
+    // Remove `export interface Span`, and instead import local version of same interface,
+    // which includes non-optional `range` and `loc` fields.
     static SPAN_REGEX: Lazy<Regex> = lazy_regex!(r"export interface Span \{.+?\}");
 
     struct SpanReplacer;
@@ -468,10 +467,16 @@ fn amend_oxlint_types(code: &str) -> String {
 
     let mut code = SPAN_REGEX.replace(code, SpanReplacer).into_owned();
 
+    // Add `comments` field to `Program`
+    #[expect(clippy::items_after_statements)]
+    const HASHBANG_FIELD: &str = "hashbang: Hashbang | null;";
+    let index = code.find(HASHBANG_FIELD).unwrap();
+    code.insert_str(index + HASHBANG_FIELD.len(), "comments: Comment[];");
+
     #[rustfmt::skip]
     code.insert_str(0, "
-        import { Span } from '../plugins/types.ts';
-        export { Span };
+        import { Span, Comment } from '../plugins/types.ts';
+        export { Span, Comment };
 
     ");
 
