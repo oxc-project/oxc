@@ -84,31 +84,21 @@ impl Rule for NoProcessEnv {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // Match `process.env` as either static `process.env` or computed `process["env"]`
-        let mut is_process_env_member = false;
-        let mut current_span = Span::default();
-
-        match node.kind() {
-            AstKind::StaticMemberExpression(mem) => {
-                if mem.property.name.as_str() == "env" && is_process_global_object(&mem.object, ctx)
-                {
-                    is_process_env_member = true;
-                    current_span = mem.span;
-                }
+        let span = match node.kind() {
+            AstKind::StaticMemberExpression(mem)
+                if mem.property.name.as_str() == "env"
+                    && is_process_global_object(&mem.object, ctx) =>
+            {
+                mem.span
             }
-            AstKind::ComputedMemberExpression(mem) => {
+            AstKind::ComputedMemberExpression(mem)
                 if mem.static_property_name().is_some_and(|name| name.as_str() == "env")
-                    && is_process_global_object(&mem.object, ctx)
-                {
-                    is_process_env_member = true;
-                    current_span = mem.span;
-                }
+                    && is_process_global_object(&mem.object, ctx) =>
+            {
+                mem.span
             }
-            _ => {}
-        }
-
-        if !is_process_env_member {
-            return;
-        }
+            _ => return,
+        };
 
         // Default: report any `process.env` usage
         let mut should_report = true;
@@ -117,7 +107,7 @@ impl Rule for NoProcessEnv {
         match ctx.nodes().parent_kind(node.id()) {
             AstKind::StaticMemberExpression(parent_mem) => {
                 if let Some(obj_mem) = parent_mem.object.as_member_expression()
-                    && obj_mem.span() == current_span
+                    && obj_mem.span() == span
                 {
                     let (.., prop_name) = parent_mem.static_property_info();
                     if self.0.allowed_variables.contains(prop_name) {
@@ -127,7 +117,7 @@ impl Rule for NoProcessEnv {
             }
             AstKind::ComputedMemberExpression(parent_mem) => {
                 if let Some(obj_mem) = parent_mem.object.as_member_expression()
-                    && obj_mem.span() == current_span
+                    && obj_mem.span() == span
                     && let Some((_, name)) = parent_mem.static_property_info()
                     && self.0.allowed_variables.contains(name)
                 {
@@ -138,7 +128,7 @@ impl Rule for NoProcessEnv {
         }
 
         if should_report {
-            ctx.diagnostic(no_process_env_diagnostic(current_span));
+            ctx.diagnostic(no_process_env_diagnostic(span));
         }
     }
 }

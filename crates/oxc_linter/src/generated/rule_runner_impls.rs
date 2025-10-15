@@ -1820,7 +1820,10 @@ impl RuleRunner for crate::rules::node::no_new_require::NoNewRequire {
 }
 
 impl RuleRunner for crate::rules::node::no_process_env::NoProcessEnv {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
