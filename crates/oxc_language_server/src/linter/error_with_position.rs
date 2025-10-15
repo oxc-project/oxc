@@ -122,6 +122,14 @@ pub fn message_to_lsp_diagnostic(
     // Add ignore fixes
     let error_offset = message.span().start;
     let section_offset = message.section_offset;
+
+    // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
+    // and attaching a ignore comment would not ignore the error.
+    // This is because the ignore comment would need to be placed before the error offset, which is not possible.
+    if error_offset == section_offset && message.span().end == section_offset {
+        return DiagnosticReport { diagnostic, fixed_content };
+    }
+
     let fixed_content = add_ignore_fixes(
         fixed_content,
         &message.error.code,
@@ -265,6 +273,9 @@ fn disable_for_this_line(
     let whitespace_range = {
         let start = insert_offset as usize;
         let end = error_offset as usize;
+
+        // make sure that end is at least start to avoid panic
+        let end = end.max(start);
         let slice = &bytes[start..end];
         let whitespace_len = slice.iter().take_while(|c| matches!(c, b' ' | b'\t')).count();
         &slice[..whitespace_len]
@@ -605,6 +616,21 @@ mod test {
 
         assert_eq!(fix.code, "  // oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 3);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_section_offset_start() {
+        // Test framework file where error is exactly at section offset
+        let source = "<script>\nconsole.log('hello');\n</script>";
+        let rope = Rope::from_str(source);
+        let section_offset = 8; // At the \n after "<script>"
+        let error_offset = 8; // Error exactly at section offset
+        let fix =
+            super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.range.start.line, 1);
         assert_eq!(fix.range.start.character, 0);
     }
 

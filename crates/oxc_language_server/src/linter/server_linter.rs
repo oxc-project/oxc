@@ -646,4 +646,14 @@ mod test {
         );
         tester.test_and_snapshot_single_file("index.js");
     }
+
+    // https://github.com/oxc-project/oxc/issues/14565
+    #[test]
+    fn test_issue_14565() {
+        let tester = Tester::new(
+            "fixtures/linter/issue_14565",
+            Some(LintOptions { run: Run::OnSave, ..Default::default() }),
+        );
+        tester.test_and_snapshot_single_file("foo-bar.astro");
+    }
 }
