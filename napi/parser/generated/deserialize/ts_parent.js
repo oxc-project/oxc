@@ -5170,20 +5170,13 @@ function deserializeCommentKind(pos) {
 }
 
 function deserializeComment(pos) {
-  let type = deserializeCommentKind(pos + 12),
-    start = deserializeU32(pos),
-    end = deserializeU32(pos + 4),
-    previousParent = parent,
-    node = parent = {
-      type,
-      value: null,
-      start,
-      end,
-      parent,
-    };
-  node.value = sourceText.slice(start + 2, end - (type === 'Line' ? 0 : 2));
-  parent = previousParent;
-  return node;
+  let type = deserializeCommentKind(pos + 12), start = deserializeU32(pos), end = deserializeU32(pos + 4);
+  return {
+    type,
+    value: sourceText.slice(start + 2, end - (type === 'Line' ? 0 : 2)),
+    start,
+    end,
+  };
 }
 
 function deserializeNameSpan(pos) {
