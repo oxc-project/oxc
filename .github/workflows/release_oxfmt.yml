@@ -197,10 +197,8 @@ jobs:
           body: ${{ steps.run.outputs.CHANGELOG }}
           prerelease: true
           draft: false
-          files: oxfmt-*
           name: oxfmt v${{ needs.check.outputs.version }}
           tag_name: oxfmt_v${{ needs.check.outputs.version }}
-          fail_on_unmatched_files: true
           target_commitish: ${{ github.sha }}
 
       - name: wait 3 minutes for smoke test
