@@ -48,3 +48,23 @@ pub fn get_supported_source_type(path: &std::path::Path) -> Option<SourceType> {
 
     None
 }
+
+#[must_use]
+pub fn enable_jsx_source_type(source_type: SourceType) -> SourceType {
+    if source_type.is_jsx() {
+        return source_type;
+    }
+
+    // Always enable JSX for JavaScript files, no syntax conflict
+    if source_type.is_javascript() {
+        return source_type.with_jsx(true);
+    }
+
+    // Prettier uses `regexp.test(source_text)` to detect JSX in TypeScript files.
+    // But we don't follow it for now, since it hurts the performance.
+    // if source_type.is_typescript() {
+    //   // See https://github.com/prettier/prettier/blob/0d1e7abd5037a1fe8fbcf88a4d8cd13ec4d13a78/src/language-js/parse/utils/jsx-regexp.evaluate.js
+    // }
+
+    source_type
+}

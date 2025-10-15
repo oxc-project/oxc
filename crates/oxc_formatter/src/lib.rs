@@ -35,7 +35,10 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use write::FormatWrite;
 
 pub use crate::options::*;
-pub use crate::service::{oxfmtrc::Oxfmtrc, source_type::get_supported_source_type};
+pub use crate::service::{
+    oxfmtrc::Oxfmtrc,
+    source_type::{enable_jsx_source_type, get_supported_source_type},
+};
 use crate::{
     formatter::{FormatContext, Formatted, format_element::document::Document},
     generated::ast_nodes::{AstNode, AstNodes},

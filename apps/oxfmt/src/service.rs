@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
-use oxc_formatter::{FormatOptions, Formatter};
+use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type};
 use oxc_parser::{ParseOptions, Parser};
 
 use crate::{command::OutputOptions, walk::WalkEntry};
@@ -45,7 +45,7 @@ impl FormatService {
         let start_time = Instant::now();
 
         let path = Path::new(&entry.path);
-        let source_type = entry.source_type;
+        let source_type = enable_jsx_source_type(entry.source_type);
 
         // TODO: Use `read_to_arena_str()` like `oxlint`?
         let source_text = fs::read_to_string(path).expect("Failed to read file");

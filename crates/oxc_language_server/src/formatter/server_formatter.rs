@@ -3,7 +3,9 @@ use std::path::Path;
 use log::warn;
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_formatter::{FormatOptions, Formatter, Oxfmtrc, get_supported_source_type};
+use oxc_formatter::{
+    FormatOptions, Formatter, Oxfmtrc, enable_jsx_source_type, get_supported_source_type,
+};
 use oxc_parser::{ParseOptions, Parser};
 use tower_lsp_server::{
     UriExt,
@@ -25,7 +27,7 @@ impl ServerFormatter {
 
     pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<TextEdit>> {
         let path = uri.to_file_path()?;
-        let source_type = get_supported_source_type(&path)?;
+        let source_type = get_supported_source_type(&path).map(enable_jsx_source_type)?;
         let source_text = if let Some(content) = content {
             content
         } else {
