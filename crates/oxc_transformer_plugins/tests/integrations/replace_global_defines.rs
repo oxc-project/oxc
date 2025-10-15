@@ -18,6 +18,7 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let mut program = ret.program;
     let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
+    assert_eq!(ret.changed, source_text != expected);
     // Use the updated scoping, instead of recreating one.
     scoping = ret.scoping;
     AssertAst.visit_program(&program);
@@ -82,18 +83,18 @@ fn dot() {
 #[test]
 fn dot_with_overlap() {
     let config =
-        config(&[("import.meta.env.FOO", "import.meta.env.FOO"), ("import.meta.env", "__foo__")]);
+        config(&[("import.meta.env.FOO", "import.meta.env.BAR"), ("import.meta.env", "__foo__")]);
     test("const _ = import.meta.env", "__foo__", &config);
-    test("const _ = import.meta.env.FOO", "import.meta.env.FOO", &config);
+    test("const _ = import.meta.env.FOO", "import.meta.env.BAR", &config);
     test("const _ = import.meta.env.NODE_ENV", "__foo__.NODE_ENV", &config);
 
     test("_ = import.meta.env", "_ = __foo__", &config);
-    test("_ = import.meta.env.FOO", "_ = import.meta.env.FOO", &config);
+    test("_ = import.meta.env.FOO", "_ = import.meta.env.BAR", &config);
     test("_ = import.meta.env.NODE_ENV", "_ = __foo__.NODE_ENV", &config);
 
     test("import.meta.env = 0", "__foo__ = 0", &config);
     test("import.meta.env.NODE_ENV = 0", "__foo__.NODE_ENV = 0", &config);
-    test("import.meta.env.FOO = 0", "import.meta.env.FOO = 0", &config);
+    test("import.meta.env.FOO = 0", "import.meta.env.BAR = 0", &config);
 }
 
 #[test]

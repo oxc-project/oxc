@@ -208,6 +208,7 @@ impl ReplaceGlobalDefinesConfig {
 #[must_use]
 pub struct ReplaceGlobalDefinesReturn {
     pub scoping: Scoping,
+    pub changed: bool,
 }
 
 /// Replace Global Defines.
@@ -227,6 +228,7 @@ pub struct ReplaceGlobalDefines<'a> {
     /// When `exit` the node, reset the `Lock` to `None` to make sure not affect other
     /// transformation.
     ast_node_lock: Option<Address>,
+    changed: bool,
 }
 
 impl<'a> Traverse<'a, ()> for ReplaceGlobalDefines<'a> {
@@ -237,6 +239,7 @@ impl<'a> Traverse<'a, ()> for ReplaceGlobalDefines<'a> {
         let is_replaced =
             self.replace_identifier_defines(expr, ctx) || self.replace_dot_defines(expr, ctx);
         if is_replaced {
+            self.mark_as_changed();
             self.ast_node_lock = Some(expr.address());
         }
     }
@@ -256,6 +259,7 @@ impl<'a> Traverse<'a, ()> for ReplaceGlobalDefines<'a> {
             return;
         }
         if self.replace_define_with_assignment_expr(node, ctx) {
+            self.mark_as_changed();
             // `AssignmentExpression` is stored in a `Box`, so we can use `from_ptr` to get
             // the stable address
             self.ast_node_lock = Some(Address::from_ptr(node));
@@ -275,7 +279,11 @@ impl<'a> Traverse<'a, ()> for ReplaceGlobalDefines<'a> {
 
 impl<'a> ReplaceGlobalDefines<'a> {
     pub fn new(allocator: &'a Allocator, config: ReplaceGlobalDefinesConfig) -> Self {
-        Self { allocator, config, ast_node_lock: None }
+        Self { allocator, config, ast_node_lock: None, changed: false }
+    }
+
+    fn mark_as_changed(&mut self) {
+        self.changed = true;
     }
 
     pub fn build(
@@ -284,7 +292,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         program: &mut Program<'a>,
     ) -> ReplaceGlobalDefinesReturn {
         let scoping = traverse_mut(self, self.allocator, program, scoping, ());
-        ReplaceGlobalDefinesReturn { scoping }
+        ReplaceGlobalDefinesReturn { scoping, changed: self.changed }
     }
 
     // Construct a new expression because we don't have ast clone right now.
