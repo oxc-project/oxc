@@ -41,7 +41,7 @@ importers:
         version: 1.6.0
       happy-dom:
         specifier: ^20.0.0
-        version: 20.0.0
+        version: 20.0.2
       immer:
         specifier: ^10.1.1
         version: 10.1.3
@@ -101,7 +101,7 @@ importers:
         version: 5.44.0
       vitest:
         specifier: ^3.1.4
-        version: 3.2.4(@types/node@24.7.2)(happy-dom@20.0.0)(terser@5.44.0)
+        version: 3.2.4(@types/node@24.7.2)(happy-dom@20.0.2)(terser@5.44.0)
       vue:
         specifier: ^3.5.14
         version: 3.5.22
@@ -1179,8 +1179,8 @@ packages:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
 
-  happy-dom@20.0.0:
-    resolution: {integrity: sha512-GkWnwIFxVGCf2raNrxImLo397RdGhLapj5cT3R2PT7FwL62Ze1DROhzmYW7+J3p9105DYMVenEejEbnq5wA37w==}
+  happy-dom@20.0.2:
+    resolution: {integrity: sha512-pYOyu624+6HDbY+qkjILpQGnpvZOusItCk+rvF5/V+6NkcgTKnbOldpIy22tBnxoaLtlM9nXgoqAcW29/B7CIw==}
     engines: {node: '>=20.0.0'}
 
   has-symbols@1.1.0:
@@ -3087,7 +3087,7 @@ snapshots:
 
   gopd@1.2.0: {}
 
-  happy-dom@20.0.0:
+  happy-dom@20.0.2:
     dependencies:
       '@types/node': 20.19.21
       '@types/whatwg-mimetype': 3.0.2
@@ -3919,7 +3919,7 @@ snapshots:
       fsevents: 2.3.3
       terser: 5.44.0
 
-  vitest@3.2.4(@types/node@24.7.2)(happy-dom@20.0.0)(terser@5.44.0):
+  vitest@3.2.4(@types/node@24.7.2)(happy-dom@20.0.2)(terser@5.44.0):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
@@ -3946,7 +3946,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.7.2
-      happy-dom: 20.0.0
+      happy-dom: 20.0.2
     transitivePeerDependencies:
       - jiti
       - less
