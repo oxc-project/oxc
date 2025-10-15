@@ -160,7 +160,7 @@ json-strip-comments = "3"
 oxc-browserslist = "2"
 oxc_index = { version = "4", features = ["nonmax", "serde"] }
 oxc_resolver = "11"
-oxc_sourcemap = "4"
+oxc_sourcemap = "6"
 
 #
 allocator-api2 = "=0.2.21"
