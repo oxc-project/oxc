@@ -1,8 +1,14 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_jest_file};
+use crate::context::LintContext;
+use crate::rule::Rule;
+use crate::utils::{
+    JestFnKind, JestGeneralFnKind, collect_possible_jest_call_node, is_jest_file,
+    parse_general_jest_fn_call,
+};
 
 fn no_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not export from a test file.")
@@ -38,6 +44,10 @@ declare_oxc_lint!(
     correctness
 );
 
+// Emits a diagnostic if the file matches all of these criteria:
+// 1. name ends with test.ts, spec.ts, or similar
+// 2. at least one test fn call: it, test, etc.
+// 3. at least one export
 impl Rule for NoExport {
     fn run_once(&self, ctx: &LintContext) {
         // only used in jest files
@@ -45,12 +55,27 @@ impl Rule for NoExport {
             return;
         }
 
-        for span in ctx.module_record().exported_bindings.values() {
-            ctx.diagnostic(no_export_diagnostic(*span));
-        }
+        // `collect_possible_jest_call_node` yields uses of `JEST_METHOD_NAMES`.
+        // We focus on "fit", "it", "test", "xit", and "xtest" (JestGeneralFnKind::Test).
+        // Presence of any of these is taken to mean the module has tests, and the rule should enforce no exports.
+        let has_tests = collect_possible_jest_call_node(ctx).into_iter().any(|possible_node| {
+            let AstKind::CallExpression(call_expr) = possible_node.node.kind() else {
+                return false;
+            };
+            let Some(general) = parse_general_jest_fn_call(call_expr, &possible_node, ctx) else {
+                return false;
+            };
+            matches!(general.kind, JestFnKind::General(JestGeneralFnKind::Test))
+        });
 
-        if let Some(span) = ctx.module_record().export_default {
-            ctx.diagnostic(no_export_diagnostic(span));
+        if has_tests {
+            for span in ctx.module_record().exported_bindings.values() {
+                ctx.diagnostic(no_export_diagnostic(*span));
+            }
+
+            if let Some(span) = ctx.module_record().export_default {
+                ctx.diagnostic(no_export_diagnostic(span));
+            }
         }
     }
 }
@@ -70,6 +95,7 @@ fn test() {
         ),
         ("window.location = 'valid'", None, None, None),
         ("module.somethingElse = 'foo';", None, None, None),
+        ("export const myThing = 'valid'", None, None, Some(PathBuf::from("foo.test.js"))),
         ("export const myThing = 'valid'", None, None, Some(PathBuf::from("foo.js"))),
         ("export default function () {}", None, None, Some(PathBuf::from("foo.js"))),
         ("module.exports = function(){}", None, None, None),
