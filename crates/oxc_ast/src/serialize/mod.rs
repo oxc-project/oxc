@@ -235,10 +235,7 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 #[ast_meta]
 #[estree(
     ts_type = "string",
-    raw_deser = "
-        const endCut = THIS.type === 'Line' ? 0 : 2;
-        SOURCE_TEXT.slice(THIS.start + 2, THIS.end - endCut)
-    "
+    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))"
 )]
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);
 

@@ -4914,9 +4914,8 @@ function deserializeComment(pos) {
       start,
       end,
       parent,
-    },
-    endCut = type === 'Line' ? 0 : 2;
-  node.value = sourceText.slice(start + 2, end - endCut);
+    };
+  node.value = sourceText.slice(start + 2, end - (type === 'Line' ? 0 : 2));
   parent = previousParent;
   return node;
 }
