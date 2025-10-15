@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- c19c9ec napi/minify: Expose join_vars, sequences, and max_iterations options (#14545) (IWANABETHATGUY)
+
+### 🐛 Bug Fixes
+
+- 32a41cf napi/minify: S/passes/max_iterations to avoid confusion (#14608) (Boshen)
+- 14686a4 napi/minify: Handle boolean values for `compress.unused` option (#14513) (Kentaro Suzuki)
+
+
 
 
 

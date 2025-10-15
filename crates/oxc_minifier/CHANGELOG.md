@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- bce31b5 napi/playground: Call `with_private_member_mappings()` for private class member mangling (#14380) (copilot-swe-agent)
+
+### 🐛 Bug Fixes
+
+- 1bf83eb minifier: Bail out `arguments` copy loop substitution if the temporary variables are referenced outside the for loop (#14613) (sapphi-red)
+
+
 ## [0.94.0] - 2025-10-06
 
 ### 🚀 Features

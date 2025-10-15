@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- 2f85b31 transformer_plugins: Add changed field to InjectGlobalVariablesReturn (#14618) (Boshen)
+- a81267e transformer_plugins: Add changed field to ReplaceGlobalDefinesReturn (#14617) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 5e0ab1b tranformer_plugins: Define plugin need to add reference to scoping (#14615) (Boshen)
+
+
 
 
 

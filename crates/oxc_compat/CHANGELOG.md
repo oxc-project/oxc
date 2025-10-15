@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- d1ff718 tasks/compat_data: Add custom compat data for export namespace from (#14317) (sapphi-red)
+
+
 ## [0.94.0] - 2025-10-06
 
 ### 🚀 Features

@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- b1a9a03 linter/plugins: Implement `SourceCode#getAllComments` (#14589) (Arsh)
+- 368829b ast: Show `JSXText({value})` in `debug_name()` (#14461) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- a86ca0b ast: Skip `source_text` and `comments` fields in `ContentEq` for `Program` (#14370) (overlookmotel)
+
+
 ## [0.94.0] - 2025-10-06
 
 ### 🚀 Features
