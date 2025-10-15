@@ -6,14 +6,14 @@ use oxc_ast::{
     ast::{
         AssignmentExpression, AssignmentTargetPropertyIdentifier, AssignmentTargetPropertyProperty,
         CallExpression, ChainExpression, ComputedMemberExpression, ForInStatement, ForOfStatement,
-        FormalParameter, ObjectProperty, ParenthesizedExpression, StaticMemberExpression,
-        TSAsExpression, TSNonNullExpression, TSSatisfiesExpression, TSTypeAssertion,
-        UnaryExpression, UpdateExpression,
+        ObjectProperty, ParenthesizedExpression, StaticMemberExpression, TSAsExpression,
+        TSNonNullExpression, TSSatisfiesExpression, TSTypeAssertion, UnaryExpression,
+        UpdateExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{NodeId, Reference, SymbolId};
+use oxc_semantic::{AstNode, NodeId, Reference};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use serde_json::Value;
@@ -112,55 +112,46 @@ impl Rule for NoParamReassign {
         rule
     }
 
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        if !is_parameter_symbol(symbol_id, ctx) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::FormalParameter(param) = node.kind() else {
             return;
-        }
+        };
 
         let symbol_table = ctx.scoping();
-        let declaration_id = symbol_table.symbol_declaration(symbol_id);
-        let name = symbol_table.symbol_name(symbol_id);
-
-        let mut seen_nodes: FxHashSet<NodeId> = FxHashSet::default();
-
-        for reference in symbol_table.get_resolved_references(symbol_id) {
-            let node_id = reference.node_id();
-            if !seen_nodes.insert(node_id) {
+        for ident in param.pattern.get_binding_identifiers() {
+            let Some(symbol_id) = ident.symbol_id.get() else {
                 continue;
-            }
+            };
 
-            if ctx.nodes().ancestor_ids(node_id).any(|ancestor| ancestor == declaration_id) {
-                continue;
-            }
+            let declaration_id = symbol_table.symbol_declaration(symbol_id);
+            let name = symbol_table.symbol_name(symbol_id);
 
-            let span = ctx.semantic().reference_span(reference);
+            let mut seen_nodes: FxHashSet<NodeId> = FxHashSet::default();
 
-            if reference.is_write() {
-                ctx.diagnostic(assignment_to_param_diagnostic(name, span));
-                continue;
-            }
+            for reference in symbol_table.get_resolved_references(symbol_id) {
+                let node_id = reference.node_id();
+                if !seen_nodes.insert(node_id) {
+                    continue;
+                }
 
-            if self.0.props && !self.0.is_ignored(name) && is_modifying_property(reference, ctx) {
-                ctx.diagnostic(assignment_to_param_property_diagnostic(name, span));
+                if ctx.nodes().ancestor_ids(node_id).any(|ancestor| ancestor == declaration_id) {
+                    continue;
+                }
+
+                let span = ctx.semantic().reference_span(reference);
+
+                if reference.is_write() {
+                    ctx.diagnostic(assignment_to_param_diagnostic(name, span));
+                    continue;
+                }
+
+                if self.0.props && !self.0.is_ignored(name) && is_modifying_property(reference, ctx)
+                {
+                    ctx.diagnostic(assignment_to_param_property_diagnostic(name, span));
+                }
             }
         }
     }
-}
-
-fn is_parameter_symbol(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
-    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
-    for ancestor_id in
-        std::iter::once(declaration_id).chain(ctx.nodes().ancestor_ids(declaration_id))
-    {
-        match ctx.nodes().kind(ancestor_id) {
-            AstKind::FormalParameter(FormalParameter { .. }) => return true,
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Program(_) => {
-                return false;
-            }
-            _ => {}
-        }
-    }
-    false
 }
 
 fn is_modifying_property(reference: &Reference, ctx: &LintContext<'_>) -> bool {
