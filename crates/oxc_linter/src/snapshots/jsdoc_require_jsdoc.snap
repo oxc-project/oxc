@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 413
+---
+  ⚠ eslint-plugin-jsdoc(require-jsdoc): Missing JSDoc for public export.
+   ╭─[require_jsdoc.tsx:1:8]
+ 1 │ export const bar = () => {};
+   ·        ─────────────────────
+   ╰────
+  help: Add a JSDoc comment for this exported API.
+
+  ⚠ eslint-plugin-jsdoc(require-jsdoc): Missing JSDoc for public export.
+   ╭─[require_jsdoc.tsx:1:8]
+ 1 │ export class Foo {}
+   ·        ────────────
+   ╰────
+  help: Add a JSDoc comment for this exported API.
+
+  ⚠ eslint-plugin-jsdoc(require-jsdoc): Missing JSDoc for public export.
+   ╭─[require_jsdoc.tsx:1:8]
+ 1 │ export const Foo = class {}
+   ·        ────────────────────
+   ╰────
+  help: Add a JSDoc comment for this exported API.
+
+  ⚠ eslint-plugin-jsdoc(require-jsdoc): Missing JSDoc for public export.
+   ╭─[require_jsdoc.tsx:1:8]
+ 1 │ export function quux() {}
+   ·        ──────────────────
+   ╰────
+  help: Add a JSDoc comment for this exported API.
+
+  ⚠ eslint-plugin-jsdoc(require-jsdoc): Missing JSDoc for public export.
+   ╭─[require_jsdoc.tsx:1:8]
+ 1 │ export const quux = function () {}
+   ·        ───────────────────────────
+   ╰────
+  help: Add a JSDoc comment for this exported API.
