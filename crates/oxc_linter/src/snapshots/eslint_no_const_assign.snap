@@ -136,3 +136,67 @@ source: crates/oxc_linter/src/tester.rs
    ·       │              ╰── b is re-assigned here
    ·       ╰── b is declared here as const
    ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); x = 1;
+   ·       ┬          ┬
+   ·       │          ╰── x is re-assigned here
+   ·       ╰── x is declared here as const
+   ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); x = 1;
+   ·             ┬          ┬
+   ·             │          ╰── x is re-assigned here
+   ·             ╰── x is declared here as const
+   ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); x ??= bar();
+   ·       ┬          ┬
+   ·       │          ╰── x is re-assigned here
+   ·       ╰── x is declared here as const
+   ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); x ||= bar();
+   ·             ┬          ┬
+   ·             │          ╰── x is re-assigned here
+   ·             ╰── x is declared here as const
+   ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); [x, y] = bar();
+   ·       ┬           ┬
+   ·       │           ╰── x is re-assigned here
+   ·       ╰── x is declared here as const
+   ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); [x = baz, y] = bar();
+   ·             ┬           ┬
+   ·             │           ╰── x is re-assigned here
+   ·             ╰── x is declared here as const
+   ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:7]
+ 1 │ using x = foo(); ({a: x} = bar());
+   ·       ┬               ┬
+   ·       │               ╰── x is re-assigned here
+   ·       ╰── x is declared here as const
+   ╰────
+
+  ⚠ eslint(no-const-assign): Unexpected re-assignment of const variable x
+   ╭─[no_const_assign.tsx:1:13]
+ 1 │ await using x = foo(); ({a: x = baz} = bar());
+   ·             ┬               ┬
+   ·             │               ╰── x is re-assigned here
+   ·             ╰── x is declared here as const
+   ╰────

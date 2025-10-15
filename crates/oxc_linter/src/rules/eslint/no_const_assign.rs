@@ -1,6 +1,7 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -50,17 +51,33 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.scoping();
-        if symbol_table.symbol_flags(symbol_id).is_const_variable() {
-            for reference in symbol_table.get_resolved_references(symbol_id) {
-                if reference.is_write() {
-                    ctx.diagnostic(no_const_assign_diagnostic(
-                        symbol_table.symbol_name(symbol_id),
-                        symbol_table.symbol_span(symbol_id),
-                        ctx.semantic().reference_span(reference),
-                    ));
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::VariableDeclarator(decl) if decl.kind.is_const() || decl.kind.is_using() => {
+                for ident in decl.id.get_binding_identifiers() {
+                    check_symbol_id(ident.symbol_id(), ctx);
                 }
+            }
+            AstKind::BindingRestElement(rest) => {
+                for ident in rest.argument.get_binding_identifiers() {
+                    check_symbol_id(ident.symbol_id(), ctx);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn check_symbol_id(symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    let symbol_table = ctx.scoping();
+    if symbol_table.symbol_flags(symbol_id).is_const_variable() {
+        for reference in symbol_table.get_resolved_references(symbol_id) {
+            if reference.is_write() {
+                ctx.diagnostic(no_const_assign_diagnostic(
+                    symbol_table.symbol_name(symbol_id),
+                    symbol_table.symbol_span(symbol_id),
+                    ctx.semantic().reference_span(reference),
+                ));
             }
         }
     }
@@ -86,6 +103,11 @@ fn test() {
         ("const a = 1; { let a = 2; { a += 1; } }", None),
         ("const foo = 1;let bar;bar[foo ?? foo] = 42;", None),
         ("const FOO = 1; ({ files = FOO } = arg1); ", None),
+        // using + await using
+        ("using x = foo();", None),
+        ("await using x = foo();", None),
+        ("using x = foo(); bar(x);", None),
+        ("await using x = foo(); bar(x);", None),
     ];
 
     let fail = vec![
@@ -107,6 +129,15 @@ fn test() {
         ("const [a, b, ...[c, ...d]] = [1, 2, 3, 4, 5]; d = 123", None),
         ("const d = 123; [a, b, ...[c, ...d]] = [1, 2, 3, 4, 5]", None),
         ("const b = 0; ({a, ...b} = {a: 1, c: 2, d: 3})", None),
+        // using + await using
+        ("using x = foo(); x = 1;", None),
+        ("await using x = foo(); x = 1;", None),
+        ("using x = foo(); x ??= bar();", None),
+        ("await using x = foo(); x ||= bar();", None),
+        ("using x = foo(); [x, y] = bar();", None),
+        ("await using x = foo(); [x = baz, y] = bar();", None),
+        ("using x = foo(); ({a: x} = bar());", None),
+        ("await using x = foo(); ({a: x = baz} = bar());", None),
     ];
 
     Tester::new(NoConstAssign::NAME, NoConstAssign::PLUGIN, pass, fail).test_and_snapshot();
