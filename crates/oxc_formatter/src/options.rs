@@ -66,6 +66,7 @@ pub struct FormatOptions {
     // TODO: `FormatOptions`? Split out as `TransformOptions`?
     /// Sort import statements. By default disabled.
     pub experimental_sort_imports: Option<SortImports>,
+    pub experimental_sort_imports_ir: Option<SortImports>,
 }
 
 impl FormatOptions {
@@ -87,6 +88,7 @@ impl FormatOptions {
             expand: Expand::default(),
             experimental_operator_position: OperatorPosition::default(),
             experimental_sort_imports: None,
+            experimental_sort_imports_ir: None,
         }
     }
 

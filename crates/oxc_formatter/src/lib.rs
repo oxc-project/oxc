@@ -77,9 +77,10 @@ impl<'a> Formatter<'a> {
         let source_text = program.source_text;
         self.source_text = source_text;
 
-        let experimental_sort_imports = self.options.experimental_sort_imports;
+        let experimental_sort_imports_ir = self.options.experimental_sort_imports_ir;
 
         let context = FormatContext::new(program, self.allocator, self.options);
+
         let mut formatted = formatter::format(
             program,
             context,
@@ -89,7 +90,9 @@ impl<'a> Formatter<'a> {
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
-        if let Some(sort_imports_options) = experimental_sort_imports {
+        // NOTE: Temporarily commented out for refactoring
+        // TODO: Replace with new approach that sorts during AST-to-IR conversion
+        if let Some(sort_imports_options) = experimental_sort_imports_ir {
             let sort_imports = SortImportsTransform::new(sort_imports_options);
             formatted.apply_transform(|doc| sort_imports.transform(doc));
         }
