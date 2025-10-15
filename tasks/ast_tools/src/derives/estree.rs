@@ -94,6 +94,7 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::Tag("flatten") => struct_def.estree.flatten = true,
             AttrPart::Tag("no_type") => struct_def.estree.no_type = true,
             AttrPart::Tag("no_ts_def") => struct_def.estree.no_ts_def = true,
+            AttrPart::Tag("no_parent") => struct_def.estree.no_parent = true,
             AttrPart::List("add_fields", list) => {
                 for list_element in list {
                     let (name, value) = list_element.try_into_string()?;

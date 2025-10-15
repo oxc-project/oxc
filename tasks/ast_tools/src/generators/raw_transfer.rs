@@ -319,7 +319,8 @@ fn generate_struct(
 
         generator.generate_struct_fields(struct_def, 0, DeserializerType::Both);
 
-        let has_type_field = generator.fields.contains_key("type");
+        let needs_parent_field =
+            generator.fields.contains_key("type") && !struct_def.estree.no_parent;
 
         let mut all_fields_inline = true;
         for (field_name, StructFieldValue { value, deser_type, inline }) in generator.fields {
@@ -330,7 +331,7 @@ fn generate_struct(
                     DeserializerType::JsOnly => write_it!(fields_str, "...(!IS_TS && {value}),"),
                     DeserializerType::TsOnly => write_it!(fields_str, "...(IS_TS && {value}),"),
                 }
-            } else if inline || !has_type_field {
+            } else if inline || !needs_parent_field {
                 let value = if generator.dependent_field_names.contains(&field_name) {
                     write_it!(inline_preamble_str, "const {field_name} = {value};\n");
                     &field_name
@@ -378,7 +379,7 @@ fn generate_struct(
         }
 
         let mut parent_assignment_str = "";
-        if has_type_field {
+        if needs_parent_field {
             fields_str.push_str("...(PARENT && { parent }),\n");
 
             if !all_fields_inline {

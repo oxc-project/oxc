@@ -31,6 +31,8 @@ pub struct ESTreeStruct {
     /// Additional custom TS type definition to add along with the generated one.
     /// Does not include `export`.
     pub add_ts_def: Option<String>,
+    /// If `true`
+    pub no_parent: bool,
 }
 
 /// Configuration for ESTree generator on an enum.
