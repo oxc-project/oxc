@@ -22,22 +22,15 @@ fn require_jsdoc_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct RequireJsdoc {
     config: RequireJsdocConfig,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 struct RequireJsdocConfig {
     require: Require,
 }
-
-impl Default for RequireJsdocConfig {
-    fn default() -> Self {
-        Self { require: Require::default() }
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 struct Require {
     arrow_function_expression: bool,
@@ -58,12 +51,6 @@ impl Default for Require {
             function_expression: true,
             method_definition: false,
         }
-    }
-}
-
-impl Default for RequireJsdoc {
-    fn default() -> Self {
-        Self { config: RequireJsdocConfig::default() }
     }
 }
 
@@ -118,7 +105,7 @@ impl Rule for RequireJsdoc {
                 if let Some(flag) = value.as_bool() {
                     match key.as_str() {
                         "ArrowFunctionExpression" => {
-                            config.require.arrow_function_expression = flag
+                            config.require.arrow_function_expression = flag;
                         }
                         "ClassDeclaration" => config.require.class_declaration = flag,
                         "ClassExpression" => config.require.class_expression = flag,
@@ -177,20 +164,18 @@ impl Rule for RequireJsdoc {
                 },
                 AstKind::Function(func) => match func.r#type {
                     FunctionType::FunctionDeclaration => require.function_declaration,
-                    FunctionType::FunctionExpression => false,
                     _ => false,
                 },
                 AstKind::MethodDefinition(_) => require.method_definition,
                 AstKind::VariableDeclarator(decl) => decl
                     .init
                     .as_ref()
-                    .map(|init| match init {
+                    .is_some_and(|init| match init {
                         Expression::ArrowFunctionExpression(_) => require.arrow_function_expression,
                         Expression::ClassExpression(_) => require.class_expression,
                         Expression::FunctionExpression(_) => require.function_expression,
                         _ => false,
-                    })
-                    .unwrap_or(false),
+                    }),
                 _ => false,
             };
 
