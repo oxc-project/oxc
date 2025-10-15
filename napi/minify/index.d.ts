@@ -38,11 +38,12 @@ export interface CompressOptions {
    */
   dropDebugger?: boolean
   /**
-   * Drop unreferenced functions and variables.
+   * Pass `true` to drop unreferenced functions and variables.
    *
-   * Simple direct variable assignments do not count as references unless set to "keep_assign".
+   * Simple direct variable assignments do not count as references unless set to `keep_assign`.
+   * @default true
    */
-  unused?: true | false | 'keep_assign'
+  unused?: boolean | 'keep_assign'
   /** Keep function / class names. */
   keepNames?: CompressOptionsKeepNames
   /**
