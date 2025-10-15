@@ -90,8 +90,6 @@ impl<'a> Formatter<'a> {
 
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
-        // NOTE: Temporarily commented out for refactoring
-        // TODO: Replace with new approach that sorts during AST-to-IR conversion
         if let Some(sort_imports_options) = experimental_sort_imports_ir {
             let sort_imports = SortImportsTransform::new(sort_imports_options);
             formatted.apply_transform(|doc| sort_imports.transform(doc));
