@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### 🚜 Refactor
+
+- 496dd62 parser: Introduce `context_add` and `context_remove` functions (#14567) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 8f056ad parser: Cache cur_kind() to eliminate redundant calls (#14411) (Boshen)
+- 2b6a3b4 parser: Use range checks for is_any_keyword() and is_number() (#14410) (Boshen)
+- 1f5167a parser: Inline escaped keyword check in advance() (#14408) (Boshen)
+- 791c72a parser: Add separate token kinds for BigInt literals (#14405) (Boshen)
+- 266b982 parser: Cache `has_separator()` result in literal parsing (#14403) (Boshen)
+- beeb129 parser: Optimize comment annotation parsing (#14397) (Boshen)
+
+
 ## [0.94.0] - 2025-10-06
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### ⚡ Performance
+
+- ea3f362 codegen: Reorder match arms based on usage patterns (#14496) (Boshen)
+
+
 ## [0.94.0] - 2025-10-06
 
 ### 🚀 Features

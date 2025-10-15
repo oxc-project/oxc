@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.95.0] - 2025-10-15
+
+### 🚀 Features
+
+- 0ec0847 ci: Run napi tests on windows (#14383) (camc314)
+- b3c5132 parser: Use typescript for raw transfer tests (#14390) (camc314)
+
+### 🚜 Refactor
+
+- 4f301de napi/parser, linter/plugins: Improve formatting of generated code (#14554) (overlookmotel)
+- 68c0252 napi/parser, linter/plugins: Shorten generated raw transfer deserializer code (#14553) (overlookmotel)
+- f6d890a napi/parser: Re-run `ast_tools` codegen (#14547) (overlookmotel)
+- 52f35c6 napi/parser, linter/plugins: Rename `types.js` to `type_ids.js` (#14384) (overlookmotel)
+
+### 🧪 Testing
+
+- f293e3e napi/parser: Disable raw transfer tests on `antd.js` fixture (#14446) (overlookmotel)
+- 994c099 napi/parser: Skip slow test (#14424) (overlookmotel)
+- 0b076b4 napi/parser: Fix and clarify exclude tests logic (#14409) (overlookmotel)
+- 56274a5 napi/parser: Increase timeout on slow test (#14391) (overlookmotel)
+
+
 ## [0.94.0] - 2025-10-06
 
 ### 🚀 Features
