@@ -194,6 +194,11 @@ impl<'a> ContextHost<'a> {
         &mut self.sub_hosts[self.current_sub_host_index.get()]
     }
 
+    // Whether the current sub host is the first one.
+    pub fn is_first_sub_host(&self) -> bool {
+        self.current_sub_host_index.get() == 0
+    }
+
     /// Shared reference to the [`Semantic`] analysis of current script block.
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {

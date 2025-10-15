@@ -6,7 +6,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn filename_case_diagnostic(message: String, help_message: String) -> OxcDiagnostic {
     OxcDiagnostic::warn(message).with_label(Span::default()).with_help(help_message)
@@ -258,6 +261,10 @@ impl Rule for FilenameCase {
 
         ctx.diagnostic(filename_case_diagnostic(message, help_message));
     }
+
+    fn should_run(&self, ctx: &ContextHost<'_>) -> bool {
+        ctx.is_first_sub_host()
+    }
 }
 
 #[test]
@@ -441,6 +448,8 @@ fn test() {
             serde_json::json!([{ "case": "snakeCase", "multipleFileExtensions": false }]),
         ),
         ("", None, None, Some(PathBuf::from("FooBar.tsx"))),
+        // should only report once
+        ("<script></script><script setup></script>", None, None, Some(PathBuf::from("FooBar.vue"))),
     ];
 
     Tester::new(FilenameCase::NAME, FilenameCase::PLUGIN, pass, fail).test_and_snapshot();
