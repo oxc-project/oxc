@@ -8,7 +8,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
@@ -223,7 +223,7 @@ impl<'a> LintContext<'a> {
     /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
     /// name, severity, and a link to the rule's documentation URL.
     fn add_diagnostic(&self, mut message: Message) {
-        if self.parent.disable_directives().contains(self.current_rule_name, message.span()) {
+        if self.parent.disable_directives().contains(self.current_rule_name, message.span) {
             return;
         }
         message.error = message

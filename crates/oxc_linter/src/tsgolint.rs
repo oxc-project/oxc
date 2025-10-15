@@ -855,7 +855,7 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
 #[cfg(feature = "language_server")]
 mod test {
     use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
-    use oxc_span::{GetSpan, Span};
+    use oxc_span::Span;
 
     use crate::{
         fixer::{Message, PossibleFixes},
@@ -881,7 +881,7 @@ mod test {
 
         assert_eq!(message.error.message, "Some description");
         assert_eq!(message.error.severity, Severity::Warning);
-        assert_eq!(message.span(), Span::new(0, 10));
+        assert_eq!(message.span, Span::new(0, 10));
         assert_eq!(
             message.error.code,
             OxcCode { scope: Some("typescript-eslint".into()), number: Some("some_rule".into()) }

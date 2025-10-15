@@ -8,7 +8,6 @@ use tower_lsp_server::lsp_types::{
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::{OxcCode, Severity};
 use oxc_linter::{Fix, Message, PossibleFixes};
-use oxc_span::GetSpan;
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -67,8 +66,8 @@ pub fn message_to_lsp_diagnostic(
             .collect()
     });
 
-    let start_position = offset_to_position(rope, message.span().start, source_text);
-    let end_position = offset_to_position(rope, message.span().end, source_text);
+    let start_position = offset_to_position(rope, message.span.start, source_text);
+    let end_position = offset_to_position(rope, message.span.end, source_text);
     let range = Range::new(start_position, end_position);
 
     let code = message.error.code.to_string();
@@ -114,13 +113,13 @@ pub fn message_to_lsp_diagnostic(
     };
 
     // Add ignore fixes
-    let error_offset = message.span().start;
+    let error_offset = message.span.start;
     let section_offset = message.section_offset;
 
     // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
     // and attaching a ignore comment would not ignore the error.
     // This is because the ignore comment would need to be placed before the error offset, which is not possible.
-    if error_offset == section_offset && message.span().end == section_offset {
+    if error_offset == section_offset && message.span.end == section_offset {
         return DiagnosticReport { diagnostic, fixed_content };
     }
 

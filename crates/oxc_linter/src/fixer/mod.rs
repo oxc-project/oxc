@@ -221,7 +221,7 @@ pub struct FixResult<'a> {
 pub struct Message {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
-    span: Span,
+    pub span: Span,
     fixed: bool,
     #[cfg(feature = "language_server")]
     pub section_offset: u32,
