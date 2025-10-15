@@ -200,8 +200,9 @@ impl RuleRunner for crate::rules::eslint::no_case_declarations::NoCaseDeclaratio
 }
 
 impl RuleRunner for crate::rules::eslint::no_class_assign::NoClassAssign {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnSymbol;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Class]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::eslint::no_compare_neg_zero::NoCompareNegZero {

@@ -1,6 +1,7 @@
+use oxc_ast::{AstKind, ast::BindingIdentifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -82,17 +83,27 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoClassAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::Class(class) = node.kind() else {
+            return;
+        };
+
+        let Some(symbol_id) = class.id.as_ref().map(BindingIdentifier::symbol_id) else {
+            return;
+        };
+
         let symbol_table = ctx.scoping();
-        if symbol_table.symbol_flags(symbol_id).is_class() {
-            for reference in symbol_table.get_resolved_references(symbol_id) {
-                if reference.is_write() {
-                    ctx.diagnostic(no_class_assign_diagnostic(
-                        symbol_table.symbol_name(symbol_id),
-                        symbol_table.symbol_span(symbol_id),
-                        ctx.semantic().reference_span(reference),
-                    ));
-                }
+        // This should always be considered a class (since we got it from a class declaration),
+        // but we check in debug mode just to be sure.
+        debug_assert!(symbol_table.symbol_flags(symbol_id).is_class());
+
+        for reference in symbol_table.get_resolved_references(symbol_id) {
+            if reference.is_write() {
+                ctx.diagnostic(no_class_assign_diagnostic(
+                    symbol_table.symbol_name(symbol_id),
+                    symbol_table.symbol_span(symbol_id),
+                    ctx.semantic().reference_span(reference),
+                ));
             }
         }
     }
@@ -119,6 +130,9 @@ fn test() {
         ("if (foo) { class A {} } else { class A {} } A = 1;", None),
         // Sequence expression
         ("(class A {}, A = 1)", None),
+        // Class expressions
+        ("let A = class { }; A = 1;", None),
+        ("let A = class B { }; A = 1;", None),
     ];
 
     let fail = vec![
