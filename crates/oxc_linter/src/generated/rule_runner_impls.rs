@@ -2984,7 +2984,8 @@ impl RuleRunner for crate::rules::unicorn::no_array_for_each::NoArrayForEach {
 impl RuleRunner
     for crate::rules::unicorn::no_array_method_this_argument::NoArrayMethodThisArgument
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

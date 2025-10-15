@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -56,14 +56,14 @@ declare_oxc_lint!(
 
 impl Rule for NoArrayMethodThisArgument {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        check_array_prototype_methods(node, ctx);
-        check_array_from(node, ctx);
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+
+        check_array_prototype_methods(call_expr, ctx);
+        check_array_from(call_expr, ctx);
     }
 }
 
-fn check_array_prototype_methods<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    let AstKind::CallExpression(call_expr) = node.kind() else { return };
-
+fn check_array_prototype_methods(call_expr: &CallExpression, ctx: &LintContext) {
     if !is_method_call(
         call_expr,
         None,
@@ -96,9 +96,7 @@ fn check_array_prototype_methods<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) 
     ));
 }
 
-fn check_array_from<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    let AstKind::CallExpression(call_expr) = node.kind() else { return };
-
+fn check_array_from(call_expr: &CallExpression, ctx: &LintContext) {
     if !is_method_call(call_expr, Some(&["Array"]), Some(&["from", "fromAsync"]), Some(3), Some(3))
         || call_expr.arguments.first().is_some_and(|arg| matches!(arg, Argument::SpreadElement(_)))
         || call_expr.arguments.get(2).is_some_and(|arg| matches!(arg, Argument::SpreadElement(_)))
