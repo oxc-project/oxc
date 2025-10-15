@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::context::LintContext;
 use crate::rule::Rule;
 use crate::utils::{
-    JestFnKind, JestGeneralFnKind, collect_possible_jest_call_node, is_jest_file,
+    JestFnKind, JestGeneralFnKind, is_jest_file, iter_possible_jest_call_node,
     parse_general_jest_fn_call,
 };
 
@@ -55,10 +55,10 @@ impl Rule for NoExport {
             return;
         }
 
-        // `collect_possible_jest_call_node` yields uses of `JEST_METHOD_NAMES`.
+        // `iter_possible_jest_call_node` yields uses of `JEST_METHOD_NAMES`.
         // We focus on "fit", "it", "test", "xit", and "xtest" (JestGeneralFnKind::Test).
         // Presence of any of these is taken to mean the module has tests, and the rule should enforce no exports.
-        let has_tests = collect_possible_jest_call_node(ctx).into_iter().any(|possible_node| {
+        let has_tests = iter_possible_jest_call_node(ctx).any(|possible_node| {
             let AstKind::CallExpression(call_expr) = possible_node.node.kind() else {
                 return false;
             };
