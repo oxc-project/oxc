@@ -1,6 +1,7 @@
 #![allow(clippy::print_stdout)]
 
 use crate::{
+    early_diverge_detector::EarlyDivergeDetector,
     if_else_detector::IfElseKindDetector,
     let_else_detector::LetElseDetector,
     match_detector::MatchDetector,
@@ -17,6 +18,7 @@ use std::{
 };
 use syn::File;
 
+mod early_diverge_detector;
 mod if_else_detector;
 mod let_else_detector;
 mod match_detector;
@@ -125,6 +127,13 @@ fn detect_top_level_node_types(file: &File, rule: &RuleEntry) -> Option<NodeType
     }
 
     let node_types = IfElseKindDetector::from_run_func(run_func);
+    if let Some(node_types) = node_types
+        && !node_types.is_empty()
+    {
+        return Some(node_types);
+    }
+
+    let node_types = EarlyDivergeDetector::from_run_func(run_func);
     if let Some(node_types) = node_types
         && !node_types.is_empty()
     {
