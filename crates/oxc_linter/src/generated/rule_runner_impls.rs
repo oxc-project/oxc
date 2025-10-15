@@ -1714,8 +1714,9 @@ impl RuleRunner for crate::rules::nextjs::no_document_import_in_page::NoDocument
 }
 
 impl RuleRunner for crate::rules::nextjs::no_duplicate_head::NoDuplicateHead {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnSymbol;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ImportDeclaration]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::nextjs::no_head_element::NoHeadElement {
