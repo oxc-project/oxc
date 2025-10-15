@@ -53,7 +53,7 @@ pub struct CompressOptions {
     pub sequences: Option<bool>,
 
     /// Limit the maximum number of iterations for debugging purpose.
-    pub passes: Option<u8>,
+    pub max_iterations: Option<u8>,
 }
 
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
@@ -81,7 +81,7 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             },
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
-            max_iterations: o.passes,
+            max_iterations: o.max_iterations,
         })
     }
 }

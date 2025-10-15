@@ -61,7 +61,7 @@ export interface CompressOptions {
    */
   sequences?: boolean
   /** Limit the maximum number of iterations for debugging purpose. */
-  passes?: number
+  maxIterations?: number
 }
 
 export interface CompressOptionsKeepNames {
