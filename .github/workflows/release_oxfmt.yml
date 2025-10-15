@@ -191,17 +191,26 @@ jobs:
             echo '----'
           done
 
-      - name: Create GitHub Release
+      # For immutable releases, you cannot set `draft: false` while uploading assets.
+      # The workaround is to split the workflow into 2 steps.
+      # See also https://github.com/softprops/action-gh-release/issues/653
+      - name: Create Draft Release with Assets
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
         with:
           body: ${{ steps.run.outputs.CHANGELOG }}
           prerelease: true
-          draft: false
+          draft: true # This must be true for step1
           files: oxfmt-*
+          fail_on_unmatched_files: true
           name: oxfmt v${{ needs.check.outputs.version }}
           tag_name: oxfmt_v${{ needs.check.outputs.version }}
-          fail_on_unmatched_files: true
           target_commitish: ${{ github.sha }}
+      - name: Publish Release
+        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
+        with:
+          draft: false # Make it public
+          prerelease: true
+          tag_name: oxfmt_v${{ needs.check.outputs.version }}
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
