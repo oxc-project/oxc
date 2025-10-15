@@ -102,6 +102,7 @@ impl ConfigStoreBuilder {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
+            resolver: &Resolver,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
             let path = config.path.clone();
             let root_path = path.parent();
@@ -117,13 +118,28 @@ impl ConfigStoreBuilder {
                 }
                 // if path does not include a ".", then we will heuristically skip it since it
                 // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') {
+                if !path.to_string_lossy().contains('.') && !path.to_string_lossy().starts_with('@') {
                     continue;
                 }
-
-                let path = match root_path {
-                    Some(p) => &p.join(path),
-                    None => path,
+                let path = {
+                    let scoped_package_name: std::borrow::Cow<'_, str> = path.to_string_lossy();
+                    // I am limiting to scoped packages to test the waters, but this would work the same for unscoped npm packages too.
+                    if scoped_package_name.starts_with('@') {
+                        // I'm not sure if "/" is a viable fallback, but it's very unlikely that the oxlint file does not have a parent directory.
+                        let base_dir = root_path.unwrap_or(Path::new("/"));
+                        let resolved = resolver.resolve(base_dir, &scoped_package_name.to_string()).map_err(|err| {
+                            ConfigBuilderError::InvalidConfigFile {
+                                file: scoped_package_name.to_string(),
+                                reason: err.to_string(),
+                            }
+                        })?;
+                        &resolved.full_path()
+                    } else {
+                        match root_path {
+                            Some(p) => &p.join(path),
+                            None => path,
+                        }
+                    }
                 };
 
                 let extends_oxlintrc = Oxlintrc::from_file(path).map_err(|e| {
@@ -135,7 +151,7 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, resolver)?;
 
                 oxlintrc = oxlintrc.merge(&extends);
                 extended_paths.extend(extends_paths);
@@ -144,7 +160,15 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
+        let resolver = Resolver::new(ResolveOptions {
+            // We probably want to encourage the simpler "exports" fields for our new config, so we leave this empty.
+            main_fields: vec![],
+            // TODO: look into tsconfig extension behavior - what conditions should oxlint.json use?
+            condition_names: vec!["import".into(), "default".into()],
+            ..Default::default()
+        });
+
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, &resolver)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<(&PathBuf, &str)> = FxHashSet::default();
@@ -1302,5 +1326,30 @@ mod test {
         .unwrap()
         .build(&external_plugin_store)
         .unwrap()
+    }
+
+    #[test]
+    fn test_extends_scoped_package_subpath() {
+        let config =
+            config_store_from_path("fixtures/extends_config/packages/extends_scoped_package.json");
+        assert!(config.rules().iter().any(|(rule, awd)| rule.plugin_name() == "eslint"
+            && rule.name() == "no-console"
+            && awd == &AllowWarnDeny::Warn));
+    }
+
+    #[test]
+    fn test_extends_scoped_package_root() {
+        // Create a config on the fly which extends the package root
+        let config = config_store_from_str(
+            r#"{
+                "extends": ["fixtures/extends_config/packages/extends_scoped_package.json"],
+                "rules": {}
+            }"#,
+        );
+        // The nested config extends @acme/x via package root (".") exports
+        // Verify inherited rule is present
+        assert!(config.rules().iter().any(|(rule, awd)| rule.plugin_name() == "eslint"
+            && rule.name() == "no-console"
+            && awd == &AllowWarnDeny::Warn));
     }
 }
