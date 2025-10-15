@@ -1,6 +1,7 @@
 use std::path::{Component, Path, PathBuf};
 
-use oxc_ast::AstKind;
+use cow_utils::CowUtils;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Span, VALID_EXTENSIONS};
@@ -20,16 +21,10 @@ fn no_useless_path_segments_diagnostic(
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-useless-path-segments.md>
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct NoUselessPathSegments {
     commonjs: bool,
     no_useless_index: bool,
-}
-
-impl Default for NoUselessPathSegments {
-    fn default() -> Self {
-        Self { commonjs: false, no_useless_index: false }
-    }
 }
 
 declare_oxc_lint!(
@@ -129,59 +124,57 @@ impl Rule for NoUselessPathSegments {
                         _ => continue,
                     };
 
-                    if import_path.starts_with('.') {
-                        if let Some(proposed) = self.check_path(
+                    if import_path.starts_with('.')
+                        && let Some(proposed) = self.check_path(
                             import_path,
                             ctx.file_path(),
                             module_record,
                             false,
                             current_file_canonical.as_ref(),
-                        ) {
-                            ctx.diagnostic(no_useless_path_segments_diagnostic(
-                                import_expr.span,
-                                import_path,
-                                &proposed,
-                            ));
-                        }
+                        )
+                    {
+                        ctx.diagnostic(no_useless_path_segments_diagnostic(
+                            import_expr.span,
+                            import_path,
+                            &proposed,
+                        ));
                     }
                 }
                 // Check CommonJS require() calls if enabled
                 AstKind::CallExpression(call_expr) if self.commonjs => {
-                    if call_expr.callee.is_specific_id("require") && call_expr.arguments.len() == 1
-                    {
-                        if let Some(arg) =
+                    if call_expr.callee.is_specific_id("require")
+                        && call_expr.arguments.len() == 1
+                        && let Some(arg) =
                             call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                        {
-                            use oxc_ast::ast::Expression;
-                            let import_path = match arg {
-                                Expression::StringLiteral(str_lit) => &str_lit.value,
-                                Expression::TemplateLiteral(tpl)
-                                    if tpl.is_no_substitution_template() =>
-                                {
-                                    if let Some(quasi) = tpl.quasis.first() {
-                                        &quasi.value.raw
-                                    } else {
-                                        continue;
-                                    }
-                                }
-                                _ => continue,
-                            };
-
-                            if import_path.starts_with('.') {
-                                if let Some(proposed) = self.check_path(
-                                    import_path,
-                                    ctx.file_path(),
-                                    module_record,
-                                    true,
-                                    current_file_canonical.as_ref(),
-                                ) {
-                                    ctx.diagnostic(no_useless_path_segments_diagnostic(
-                                        call_expr.span,
-                                        import_path,
-                                        &proposed,
-                                    ));
+                    {
+                        let import_path = match arg {
+                            Expression::StringLiteral(str_lit) => &str_lit.value,
+                            Expression::TemplateLiteral(tpl)
+                                if tpl.is_no_substitution_template() =>
+                            {
+                                if let Some(quasi) = tpl.quasis.first() {
+                                    &quasi.value.raw
+                                } else {
+                                    continue;
                                 }
                             }
+                            _ => continue,
+                        };
+
+                        if import_path.starts_with('.')
+                            && let Some(proposed) = self.check_path(
+                                import_path,
+                                ctx.file_path(),
+                                module_record,
+                                true,
+                                current_file_canonical.as_ref(),
+                            )
+                        {
+                            ctx.diagnostic(no_useless_path_segments_diagnostic(
+                                call_expr.span,
+                                import_path,
+                                &proposed,
+                            ));
                         }
                     }
                 }
@@ -231,16 +224,7 @@ impl NoUselessPathSegments {
         resolved_path
             .file_name()
             .and_then(|name| name.to_str())
-            .map(Self::is_index_filename)
-            .unwrap_or(false)
-    }
-
-    /// Check if a path exists in the module record (fast, uses pre-resolved data).
-    ///
-    /// This is preferred over filesystem checks for ESM imports since the
-    /// module_record already contains resolution information from parsing.
-    fn path_exists_in_module_record(&self, path: &str, module_record: &ModuleRecord) -> bool {
-        module_record.get_loaded_module(path).is_some()
+            .is_some_and(Self::is_index_filename)
     }
 
     /// Check if a file exists with JavaScript/TypeScript extensions.
@@ -251,14 +235,13 @@ impl NoUselessPathSegments {
     ///
     /// This is only used as a fallback for ambiguous cases.
     fn file_exists_with_extensions(
-        &self,
         path: &str,
         current_file: &Path,
         module_record: &ModuleRecord,
         is_require: bool,
     ) -> bool {
         // For ESM: prefer module_record lookup (much faster)
-        if !is_require && self.path_exists_in_module_record(path, module_record) {
+        if !is_require && module_record.get_loaded_module(path).is_some() {
             return true;
         }
 
@@ -293,7 +276,7 @@ impl NoUselessPathSegments {
         is_require: bool,
     ) -> String {
         if self.no_useless_index {
-            self.remove_useless_index(&path, module_record, is_require).unwrap_or(path)
+            Self::remove_useless_index(&path, module_record, is_require).unwrap_or(path)
         } else {
             path
         }
@@ -307,7 +290,6 @@ impl NoUselessPathSegments {
     ///
     /// Returns `true` if the slash should be kept, `false` if it can be removed.
     fn is_trailing_slash_meaningful(
-        &self,
         import_path: &str,
         without_slash: &str,
         current_file: &Path,
@@ -327,7 +309,7 @@ impl NoUselessPathSegments {
                 // 1. It resolved to a directory (index file), AND
                 // 2. There's a sibling file that the other variant would resolve to
                 Self::resolved_to_index_file(&module.resolved_absolute_path)
-                    && self.file_exists_with_extensions(
+                    && Self::file_exists_with_extensions(
                         without_slash,
                         current_file,
                         module_record,
@@ -336,7 +318,7 @@ impl NoUselessPathSegments {
             }
             (None, None) => {
                 // Neither in module_record - slash is meaningful if sibling file exists
-                self.file_exists_with_extensions(
+                Self::file_exists_with_extensions(
                     without_slash,
                     current_file,
                     module_record,
@@ -371,9 +353,8 @@ impl NoUselessPathSegments {
         is_require: bool,
         current_file_canonical: Option<&PathBuf>,
     ) -> Option<String> {
-        let Some(current_dir) = current_file.parent() else {
-            return None;
-        };
+        let current_dir = current_file.parent()?;
+
         let resolved = current_dir.join(import_path);
 
         // Try to resolve to an actual file using VALID_EXTENSIONS
@@ -415,14 +396,6 @@ impl NoUselessPathSegments {
         Some(self.maybe_remove_index(suggested, module_record, is_require))
     }
 
-    /// Check if an import path is already optimal and needs no simplification.
-    ///
-    /// A path is considered optimal if it starts with "./" and is already normalized.
-    /// This matches the behavior of the original JavaScript implementation.
-    fn is_already_optimal(&self, import_path: &str) -> bool {
-        import_path.starts_with("./")
-    }
-
     /// Main entry point for checking an import path for useless segments.
     ///
     /// This follows the original JavaScript implementation's checking order:
@@ -455,17 +428,16 @@ impl NoUselessPathSegments {
         }
 
         // Step 2: Try removing useless index (if enabled and normalization didn't trigger)
-        if self.no_useless_index {
-            if let Some(without_index) =
-                self.remove_useless_index(import_path, module_record, is_require)
-            {
-                return Some(without_index);
-            }
+        if self.no_useless_index
+            && let Some(without_index) =
+                Self::remove_useless_index(import_path, module_record, is_require)
+        {
+            return Some(without_index);
         }
 
         // Step 3: Early return for already-optimal paths
         // If path starts with "./" and is already normalized, it's optimal
-        if self.is_already_optimal(import_path) {
+        if import_path.starts_with("./") {
             return None;
         }
 
@@ -512,7 +484,7 @@ impl NoUselessPathSegments {
 
                 // For ESM: Check if trailing slash is meaningful
                 // (e.g., ./bar.js and ./bar/index.js both exist)
-                if self.is_trailing_slash_meaningful(
+                if Self::is_trailing_slash_meaningful(
                     import_path,
                     without_slash,
                     current_file,
@@ -539,11 +511,11 @@ impl NoUselessPathSegments {
         let normalized_module = module_record.get_loaded_module(&normalized);
 
         // Only skip if both are in module_record AND resolve to different files
-        if let (Some(orig), Some(norm)) = (original_module, normalized_module) {
-            if orig.resolved_absolute_path != norm.resolved_absolute_path {
-                // They resolve to different files - normalization would break it
-                return None;
-            }
+        if let (Some(orig), Some(norm)) = (original_module, normalized_module)
+            && orig.resolved_absolute_path != norm.resolved_absolute_path
+        {
+            // They resolve to different files - normalization would break it
+            return None;
         }
 
         // Otherwise, suggest normalization
@@ -650,10 +622,8 @@ impl NoUselessPathSegments {
         for parents_to_remove in 1..=original_parents {
             let remaining_parents = original_parents - parents_to_remove;
 
-            let mut new_segments = Vec::new();
-            for _ in 0..remaining_parents {
-                new_segments.push("..");
-            }
+            let mut new_segments: Vec<&str> =
+                std::iter::repeat_n("..", remaining_parents).collect();
 
             for seg in import_segments.iter().skip(original_parents + parents_to_remove) {
                 new_segments.push(*seg);
@@ -663,13 +633,13 @@ impl NoUselessPathSegments {
                 ".".to_string()
             } else {
                 let joined = new_segments.join("/");
-                if joined.starts_with("..") { joined } else { format!("./{}", joined) }
+                if joined.starts_with("..") { joined } else { format!("./{joined}") }
             };
 
-            if let Some(suggested_module) = module_record.get_loaded_module(&suggested) {
-                if suggested_module.resolved_absolute_path == resolved_path {
-                    return Some(self.maybe_remove_index(suggested, module_record, is_require));
-                }
+            if let Some(suggested_module) = module_record.get_loaded_module(&suggested)
+                && suggested_module.resolved_absolute_path == resolved_path
+            {
+                return Some(self.maybe_remove_index(suggested, module_record, is_require));
             }
         }
 
@@ -690,7 +660,6 @@ impl NoUselessPathSegments {
     /// import '../index.ts'     // → '..'
     /// ```
     fn remove_useless_index(
-        &self,
         import_path: &str,
         module_record: &ModuleRecord,
         is_require: bool,
@@ -702,7 +671,7 @@ impl NoUselessPathSegments {
 
         if !has_index_suffix {
             // Check bare "index" cases: ./index, ../index, ./index.ext, ../index.ext
-            return self.try_remove_bare_index(import_path, module_record, is_require);
+            return Self::try_remove_bare_index(import_path, module_record, is_require);
         }
 
         let parent = import_path.rsplit_once('/').map(|(p, _)| p)?;
@@ -723,11 +692,9 @@ impl NoUselessPathSegments {
 
             match (without_index, with_trailing_slash) {
                 // Parent resolves - suggest it
-                (Some(_), _) => Some(parent.to_string()),
+                (Some(_), _) | (None, None) => Some(parent.to_string()),
                 // Parent/ resolves - suggest it
                 (_, Some(_)) => Some(format!("{parent}/")),
-                // Neither in map - suggest parent anyway (resolver will handle it)
-                (None, None) => Some(parent.to_string()),
             }
         } else {
             // /index path doesn't resolve, don't suggest anything
@@ -740,7 +707,6 @@ impl NoUselessPathSegments {
     /// Handles special cases where the import is directly to an index file
     /// without a parent directory in the path.
     fn try_remove_bare_index(
-        &self,
         import_path: &str,
         module_record: &ModuleRecord,
         is_require: bool,
@@ -749,8 +715,7 @@ impl NoUselessPathSegments {
         let is_bare_index = import_path == "./index"
             || import_path == "../index"
             || VALID_EXTENSIONS.iter().any(|ext| {
-                import_path == &format!("./index.{ext}")
-                    || import_path == &format!("../index.{ext}")
+                import_path == format!("./index.{ext}") || import_path == format!("../index.{ext}")
             });
 
         if !is_bare_index {
@@ -767,10 +732,9 @@ impl NoUselessPathSegments {
         // For ESM, check if parent resolves to same location
         if let (Some(index_mod), Some(parent_mod)) =
             (module_record.get_loaded_module(import_path), module_record.get_loaded_module(parent))
+            && index_mod.resolved_absolute_path == parent_mod.resolved_absolute_path
         {
-            if index_mod.resolved_absolute_path == parent_mod.resolved_absolute_path {
-                return Some(parent.to_string());
-            }
+            return Some(parent.to_string());
         }
 
         None
@@ -813,7 +777,7 @@ fn normalize_path(path: &str) -> String {
                 if let Some(Component::Normal(_)) = components.last() {
                     // Can go up: "./foo/../bar" → "./bar"
                     components.pop();
-                } else if let Some(Component::CurDir) = components.last() {
+                } else if matches!(components.last(), Some(Component::CurDir)) {
                     // Convert "./.." to just ".."
                     components.pop();
                     components.push(component);
@@ -831,16 +795,12 @@ fn normalize_path(path: &str) -> String {
         components.iter().map(|c| c.as_os_str().to_string_lossy()).collect::<Vec<_>>().join("/");
 
     // Clean up double slashes and trailing slashes
-    let result = result.replace("//", "/");
+    let result = result.cow_replace("//", "/");
     let trimmed = result.trim_end_matches('/');
 
     // Return the trimmed result, but preserve ".", "..", or empty
     // (trailing slashes are handled separately by check_path with resolution checks)
-    if trimmed.is_empty() || trimmed == "." || trimmed == ".." {
-        trimmed.to_string()
-    } else {
-        trimmed.to_string()
-    }
+    trimmed.to_string()
 }
 
 #[test]
