@@ -8,3 +8,11 @@ source: crates/oxc_linter/src/tester.rs
    ·       ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ await using a = 1;
+   ·             ┬
+   ·             ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.

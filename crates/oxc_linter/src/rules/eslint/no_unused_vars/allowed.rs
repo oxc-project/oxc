@@ -111,6 +111,10 @@ impl NoUnusedVars {
             return true;
         }
 
+        if self.ignore_using_declarations && decl.kind.is_using() {
+            return true;
+        }
+
         false
     }
 

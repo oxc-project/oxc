@@ -177,6 +177,26 @@ pub struct NoUnusedVarsOptions {
     /// ```
     pub ignore_class_with_static_init_block: bool,
 
+    /// The `ignoreUsingDeclarations` option is a boolean (default: `false`).
+    /// When set to `true`, the rule will ignore variables declared with
+    /// `using` or `await using` declarations, even if they are unused.
+    ///
+    /// This is useful when working with resources that need to be disposed
+    /// via the explicit resource management proposal, where the primary
+    /// purpose is the disposal side effect rather than using the resource.
+    ///
+    /// ## Example
+    ///
+    /// Examples of **correct** code for the `{ "ignoreUsingDeclarations": true }` option:
+    ///
+    /// ```javascript
+    /// /*eslint no-unused-vars: ["error", { "ignoreUsingDeclarations": true }]*/
+    ///
+    /// using resource = getResource();
+    /// await using anotherResource = getAnotherResource();
+    /// ```
+    pub ignore_using_declarations: bool,
+
     /// The `reportUsedIgnorePattern` option is a boolean (default: `false`).
     /// Using this option will report variables that match any of the valid
     /// ignore pattern options (`varsIgnorePattern`, `argsIgnorePattern`,
@@ -341,6 +361,7 @@ impl Default for NoUnusedVarsOptions {
             caught_errors_ignore_pattern: IgnorePattern::None,
             destructured_array_ignore_pattern: IgnorePattern::None,
             ignore_class_with_static_init_block: false,
+            ignore_using_declarations: false,
             report_used_ignore_pattern: false,
             report_vars_only_used_as_types: false,
         }
@@ -579,6 +600,11 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     .map_or(Some(false), Value::as_bool)
                     .unwrap_or(false);
 
+                let ignore_using_declarations: bool = config
+                    .get("ignoreUsingDeclarations")
+                    .map_or(Some(false), Value::as_bool)
+                    .unwrap_or(false);
+
                 let report_used_ignore_pattern: bool = config
                     .get("reportUsedIgnorePattern")
                     .map_or(Some(false), Value::as_bool)
@@ -599,6 +625,7 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     caught_errors_ignore_pattern,
                     destructured_array_ignore_pattern,
                     ignore_class_with_static_init_block,
+                    ignore_using_declarations,
                     report_used_ignore_pattern,
                     report_vars_only_used_as_types,
                 })
@@ -629,6 +656,7 @@ mod tests {
         assert!(rule.destructured_array_ignore_pattern.is_none());
         assert!(!rule.ignore_rest_siblings);
         assert!(!rule.ignore_class_with_static_init_block);
+        assert!(!rule.ignore_using_declarations);
         assert!(!rule.report_used_ignore_pattern);
     }
 
@@ -668,6 +696,7 @@ mod tests {
         assert!(rule.destructured_array_ignore_pattern.is_default());
         assert!(rule.ignore_rest_siblings);
         assert!(!rule.ignore_class_with_static_init_block);
+        assert!(!rule.ignore_using_declarations);
         assert!(rule.report_used_ignore_pattern);
     }
 
@@ -707,6 +736,7 @@ mod tests {
         .try_into()
         .unwrap();
         assert!(rule.ignore_rest_siblings);
+        assert!(!rule.ignore_using_declarations);
         // an options object is provided, so no default pattern is set.
         assert!(rule.vars_ignore_pattern.is_none());
     }

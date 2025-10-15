@@ -526,15 +526,20 @@ fn test_vars_catch() {
 
 #[test]
 fn test_vars_using() {
-    let pass = vec![("using a = 1; console.log(a)", None)];
+    let pass = vec![
+        ("using a = 1; console.log(a)", None),
+        ("using a = 1;", Some(serde_json::json!([{ "ignoreUsingDeclarations": true }]))),
+        ("await using a = 1;", Some(serde_json::json!([{ "ignoreUsingDeclarations": true }]))),
+    ];
 
-    let fail = vec![("using a = 1;", None)];
+    let fail = vec![("using a = 1;", None), ("await using a = 1;", None)];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-using")
         .test_and_snapshot();
 }
+
 #[test]
 fn test_functions() {
     let pass = vec![

@@ -514,6 +514,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this declaration.
 
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ for ( var { foo } in bar ) { }
+   ·             ─┬─
+   ·              ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ for ( var [ foo ] in bar ) { }
+   ·             ─┬─
+   ·              ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
   ⚠ eslint(no-unused-vars): Variable 'name' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:23]
  1 │ (function(iter) { var name; for ( name of iter ) { i(); return; } })({});
@@ -1522,3 +1538,920 @@ source: crates/oxc_linter/src/tester.rs
  3 │                         
    ╰────
   help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:11]
+ 1 │ const [a, b, c] = foo; alert(a + c);
+   ·           ┬
+   ·           ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ const [a = aDefault] = foo;
+   ·        ┬
+   ·        ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:9]
+ 1 │ const [[a = aDefault]]= foo;
+   ·         ┬
+   ·         ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:9]
+ 1 │ const [[a = aDefault], b]= foo;
+   ·         ┬
+   ·         ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:24]
+ 1 │ const [[a = aDefault], b]= foo;
+   ·                        ┬
+   ·                        ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ const [a = aDefault, b] = foo; alert(b);
+   ·        ┬
+   ·        ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ function a([a = aDefault]) { } a();
+   ·             ┬
+   ·             ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function a([[a = aDefault]]) { } a();
+   ·              ┬
+   ·              ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ function a([a = aDefault, b]) { alert(b); } a();
+   ·             ┬
+   ·             ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function a([[a = aDefault, b]]) { alert(b); } a();
+   ·              ┬
+   ·              ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'a1' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const { a: a1 } = foo
+   ·            ─┬
+   ·             ╰── 'a1' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a1' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const { a: a1, b: b1 } = foo; alert(b1);
+   ·            ─┬
+   ·             ╰── 'a1' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b1' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:19]
+ 1 │ const { a: a1, b: b1 } = foo; alert(a1);
+   ·                   ─┬
+   ·                    ╰── 'b1' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a1' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ function a({ a: a1 }) {} a();
+   ·                 ─┬
+   ·                  ╰── 'a1' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'a1' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const { a: a1 = aDefault } = foo;
+   ·            ─┬
+   ·             ╰── 'a1' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a1' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ const [{ a: a1 = aDefault }] = foo;
+   ·             ─┬
+   ·              ╰── 'a1' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:9]
+ 1 │ const { a = aDefault } = foo;
+   ·         ┬
+   ·         ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:9]
+ 1 │ const { a = aDefault, b } = foo; alert(b);
+   ·         ┬
+   ·         ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const { a, b = bDefault } = foo; alert(a);
+   ·            ┬
+   ·            ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const { a, b = bDefault, c } = foo; alert(a + c);
+   ·            ┬
+   ·            ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:16]
+ 1 │ const { [key]: a } = foo;
+   ·                ┬
+   ·                ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:16]
+ 1 │ const [...{ a, b }] = array; alert(a);
+   ·                ┬
+   ·                ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ function foo (...rest) {} foo();
+   ·               ───┬───
+   ·                  ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:18]
+ 1 │ function foo (a, ...rest) { alert(a); } foo();
+   ·                  ───┬───
+   ·                     ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:11]
+ 1 │ const {...rest} = foo;
+   ·           ──┬─
+   ·             ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ const {a, ...rest} = foo; alert(a);
+   ·              ──┬─
+   ·                ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:11]
+ 1 │ const {...rest} = foo, a = bar; alert(a);
+   ·           ──┬─
+   ·             ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:20]
+ 1 │ const a = bar, {...rest} = foo; alert(a);
+   ·                    ──┬─
+   ·                      ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:19]
+ 1 │ function foo ({...rest}) { } foo();
+   ·                   ──┬─
+   ·                     ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:22]
+ 1 │ function foo (a, {...rest}) { alert(a); } foo();
+   ·                      ──┬─
+   ·                        ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:19]
+ 1 │ function foo ({...rest}, a) { alert(a); } foo();
+   ·                   ──┬─
+   ·                     ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:11]
+ 1 │ const [...rest] = foo;
+   ·           ──┬─
+   ·             ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const [[...rest]] = foo;
+   ·            ──┬─
+   ·              ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ const [a, ...rest] = foo; alert(a);
+   ·              ──┬─
+   ·                ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:19]
+ 1 │ function foo ([...rest]) { } foo();
+   ·                   ──┬─
+   ·                     ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:16]
+ 1 │ const [a, ...{ b }] = array; alert(a);
+   ·                ┬
+   ·                ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ const [[a, ...{ b }]] = array; alert(a);
+   ·                 ┬
+   ·                 ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const [...[a]] = array;
+   ·            ┬
+   ·            ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ const [[...[a]]] = array;
+   ·             ┬
+   ·             ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ const [...[a, b]] = array; alert(a);
+   ·               ┬
+   ·               ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ const [a, ...[b]] = array; alert(a);
+   ·               ┬
+   ·               ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:16]
+ 1 │ const [[a, ...[b]]] = array; alert(a);
+   ·                ┬
+   ·                ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ const [a, ...[b]] = array; alert(b);
+   ·        ┬
+   ·        ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ const [a, ...[[ b ]]] = array; alert(a);
+   ·                 ┬
+   ·                 ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ const [a, ...[{ b }]] = array; alert(a);
+   ·                 ┬
+   ·                 ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ function foo([a, ...[[ b ]]]) {} foo();
+   ·               ┬
+   ·               ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:24]
+ 1 │ function foo([a, ...[[ b ]]]) {} foo();
+   ·                        ┬
+   ·                        ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ function foo([a, ...[{ b }]]) {} foo();
+   ·               ┬
+   ·               ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:24]
+ 1 │ function foo([a, ...[{ b }]]) {} foo();
+   ·                        ┬
+   ·                        ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(...[[ a ]]) {} foo();
+   ·              ─────┬────
+   ·                   ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(...[{ a }]) {} foo();
+   ·              ─────┬────
+   ·                   ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ function foo(a, ...[b]) { alert(a); } foo();
+   ·                 ───┬──
+   ·                    ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:12]
+ 1 │ const [a, [b]] = array; alert(a);
+   ·            ┬
+   ·            ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ const [[a, [b]]] = array; alert(a);
+   ·             ┬
+   ·             ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ const [a, [[b]]] = array; alert(a);
+   ·             ┬
+   ·             ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function a([[b]]) {} a();
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function a([[b], c]) { alert(c); } a();
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:9]
+ 1 │ const [{b}, a] = array; alert(a);
+   ·         ┬
+   ·         ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:10]
+ 1 │ const [[{b}, a]] = array; alert(a);
+   ·          ┬
+   ·          ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:11]
+ 1 │ const [[[{b}], a]] = array; alert(a);
+   ·           ┬
+   ·           ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function a([{b}]) {} a();
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function a([{b}, c]) { alert(c); } a();
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ const { a: { b }, c } = foo; alert(c);
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:17]
+ 1 │ const { c, a: { b } } = foo; alert(c);
+   ·                 ┬
+   ·                 ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'c' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:19]
+ 1 │ const { a: { b: { c }, d } } = foo; alert(d);
+   ·                   ┬
+   ·                   ╰── 'c' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'e' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:24]
+ 1 │ const { a: { b: { c: { e } }, d } } = foo; alert(d);
+   ·                        ┬
+   ·                        ╰── 'e' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ const [{ a: { b }, c }] = foo; alert(c);
+   ·               ┬
+   ·               ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ const { a: [{ b }]} = foo;
+   ·               ┬
+   ·               ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ const { a: [[ b ]]} = foo;
+   ·               ┬
+   ·               ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:16]
+ 1 │ const [{ a: [{ b }]}] = foo;
+   ·                ┬
+   ·                ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ const { a: [{ b }], c} = foo; alert(c);
+   ·               ┬
+   ·               ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:22]
+ 1 │ function foo({ a: [{ b }]}) {} foo();
+   ·                      ┬
+   ·                      ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:22]
+ 1 │ function foo({ a: [[ b ]]}) {} foo();
+   ·                      ┬
+   ·                      ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let a = foo, b = 'bar'; alert(b);
+   ·     ┬
+   ·     ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ let a = foo, b = 'bar'; alert(a);
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ let { a } = foo, bar = 'hello'; alert(bar);
+   ·       ┬
+   ·       ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:22]
+ 1 │ let bar = 'hello', { a } = foo; alert(bar);
+   ·                      ┬
+   ·                      ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ import a from 'module';
+   ·        ┬
+   ·        ╰── 'a' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ import * as foo from 'module';
+   ·             ─┬─
+   ·              ╰── 'foo' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:16]
+ 1 │ import a, * as foo from 'module'; a();
+   ·                ─┬─
+   ·                 ╰── 'foo' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ import a, * as foo from 'module'; foo.hello;
+   ·        ┬
+   ·        ╰── 'a' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:10]
+ 1 │ import { a } from 'module';
+   ·          ┬
+   ·          ╰── 'a' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:10]
+ 1 │ import { a, b } from 'module'; alert(b);
+   ·          ┬
+   ·          ╰── 'a' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'b' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ import { a, b } from 'module'; alert(a);
+   ·             ┬
+   ·             ╰── 'b' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ import { a as foo } from 'module';
+   ·               ─┬─
+   ·                ╰── 'foo' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ import { a as foo, b } from 'module'; alert(b);
+   ·               ─┬─
+   ·                ╰── 'foo' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:18]
+ 1 │ import { a, b as foo } from 'module'; alert(a);
+   ·                  ─┬─
+   ·                   ╰── 'foo' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:21]
+ 1 │ import { default as foo, a } from 'module'; alert(a);
+   ·                     ─┬─
+   ·                      ╰── 'foo' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ import foo, { a } from 'module'; alert(a);
+   ·        ─┬─
+   ·         ╰── 'foo' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ import foo, { a } from 'module'; foo();
+   ·               ┬
+   ·               ╰── 'a' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let a; a = foo;
+   ·     ┬  ┬
+   ·     │  ╰── it was last assigned here
+   ·     ╰── 'a' is declared here
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ array.forEach(a => {})
+   ·               ┬
+   ·               ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'bar' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:16]
+ 1 │ if (foo()) var bar;
+   ·                ─┬─
+   ·                 ╰── 'bar' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ for (;;) var foo;
+   ·              ─┬─
+   ·               ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:18]
+ 1 │ for (a in b) var foo;
+   ·                  ─┬─
+   ·                   ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:18]
+ 1 │ for (a of b) var foo;
+   ·                  ─┬─
+   ·                   ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ while (a) var foo;
+   ·               ─┬─
+   ·                ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ do var foo; while (b);
+   ·        ─┬─
+   ·         ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ with (a) var foo;
+   ·              ─┬─
+   ·               ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ var a;'use strict';b(00);
+   ·     ┬
+   ·     ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:6]
+ 1 │ var [a] = foo;'use strict';b(00);
+   ·      ┬
+   ·      ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:9]
+ 1 │ var [...a] = foo;'use strict';b(00);
+   ·         ┬
+   ·         ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:6]
+ 1 │ var {a} = foo;'use strict';b(00);
+   ·      ┬
+   ·      ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:8]
+ 1 │ console.log('foo')
+ 2 │             var a
+   ·                 ┬
+   ·                 ╰── 'a' is declared here
+ 3 │             +b > 0 ? bar() : baz()
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:9]
+ 1 │ console.log('foo')
+ 2 │             var [a] = foo;
+   ·                  ┬
+   ·                  ╰── 'a' is declared here
+ 3 │             +b > 0 ? bar() : baz()
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:9]
+ 1 │ console.log('foo')
+ 2 │             var {a} = foo;
+   ·                  ┬
+   ·                  ╰── 'a' is declared here
+ 3 │             +b > 0 ? bar() : baz()
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let x;
+   ·     ┬
+   ·     ╰── 'x' is declared here
+ 2 │             () => x = 1;
+   ·                   ┬
+   ·                   ╰── it was last assigned here
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:6]
+ 1 │ let [a = 1] = arr;
+   ·      ┬
+   ·      ╰── 'a' is declared here
+ 2 │             a = 2;
+   ·             ┬
+   ·             ╰── it was last assigned here
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(a = 1) {a = 2;} foo();
+   ·              ──┬──
+   ·                ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(a = 1, b) {a = 2;} foo();
+   ·              ──┬──
+   ·                ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'b' is declared but never used. Unused parameters should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:21]
+ 1 │ function foo(a = 1, b) {a = 2;} foo();
+   ·                     ┬
+   ·                     ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'resource' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ using resource = getResource();
+   ·       ────┬───
+   ·           ╰── 'resource' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'resource' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ await using resource = getResource();
+   ·             ────┬───
+   ·                 ╰── 'resource' is declared here
+   ╰────
+  help: Consider removing this declaration.
