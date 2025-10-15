@@ -28,7 +28,7 @@ fn constructor_super_diagnostic_unexpected_super(span: Span) -> OxcDiagnostic {
 fn constructor_super_diagnostic_missing_some_super(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Missing a call of 'super()' in some code paths.")
-        .with_help("Add a 'super()' call to the some code paths")
+        .with_help("Add a 'super()' call to some code paths")
         .with_label(span)
 }
 
@@ -93,7 +93,7 @@ declare_oxc_lint!(
     /// ```
     ConstructorSuper,
     eslint,
-    correctness, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
+    correctness,
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
@@ -195,7 +195,7 @@ impl Rule for ConstructorSuper {
                             {
                                 state.loop_ends_at = None;
 
-                                for span in state.spans_in_loop.clone().unwrap_or_default() {
+                                for span in state.spans_in_loop.take().unwrap_or_default() {
                                     ctx.diagnostic(constructor_super_diagnostic_duplicate_super(
                                         span,
                                     ));
@@ -347,7 +347,7 @@ impl ConstructorSuper {
                     || Self::is_constructor_like(&cond.consequent)
             }
             ast::Expression::SequenceExpression(seq) => {
-                Self::is_constructor_like(seq.expressions.last().unwrap())
+                seq.expressions.last().is_some_and(|expr| Self::is_constructor_like(expr))
             }
             _ => false,
         }

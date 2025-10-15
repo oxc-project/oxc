@@ -153,35 +153,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ class A extends B { constructor() { if (a) super(); } }
    ·                     ─────────────────────────────────
    ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
 
   ⚠ eslint(constructor-super): Missing a call of 'super()' in some code paths.
    ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { if (a); else super(); } }
    ·                     ───────────────────────────────────────
    ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
 
   ⚠ eslint(constructor-super): Missing a call of 'super()' in some code paths.
    ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { a && super(); } }
    ·                     ───────────────────────────────
    ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
 
   ⚠ eslint(constructor-super): Missing a call of 'super()' in some code paths.
    ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { switch (a) { case 0: super(); } } }
    ·                     ─────────────────────────────────────────────────
    ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
 
   ⚠ eslint(constructor-super): Missing a call of 'super()' in some code paths.
    ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { switch (a) { case 0: break; default: super(); } } }
    ·                     ─────────────────────────────────────────────────────────────────
    ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
 
   ⚠ eslint(constructor-super): Missing a call of 'super()' in the constructor.
    ╭─[constructor_super.tsx:1:21]
@@ -195,14 +195,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ class A extends B { constructor() { try { a; } catch (err) { super(); } } }
    ·                     ─────────────────────────────────────────────────────
    ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
 
   ⚠ eslint(constructor-super): Missing a call of 'super()' in some code paths.
    ╭─[constructor_super.tsx:1:21]
  1 │ class A extends B { constructor() { if (a) return; super(); } }
    ·                     ─────────────────────────────────────────
    ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
 
   ⚠ eslint(constructor-super): Duplicate 'super()' call in the constructor.
    ╭─[constructor_super.tsx:1:46]
@@ -311,4 +311,4 @@ source: crates/oxc_linter/src/tester.rs
  10 │ ╰─▶                             }
  11 │     
     ╰────
-  help: Add a 'super()' call to the some code paths
+  help: Add a 'super()' call to some code paths
