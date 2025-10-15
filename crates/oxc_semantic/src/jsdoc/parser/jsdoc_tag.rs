@@ -229,6 +229,21 @@ mod test {
                 "@k3 c3\n                 ",
             ),
             ("/** single line @k4 c4 */", "@k4 c4 "),
+            (
+                "
+                /**
+                 * Has single quote ' in comment
+                 * @k5 c5
+                 */",
+                "@k5 c5\n                 ",
+            ),
+            (
+                "
+                /**
+                 * @import {T} from '@k6'
+                 */",
+                "@import {T} from '@k6'\n                 ",
+            ),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);
