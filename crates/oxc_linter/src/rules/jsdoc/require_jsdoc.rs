@@ -167,15 +167,14 @@ impl Rule for RequireJsdoc {
                     _ => false,
                 },
                 AstKind::MethodDefinition(_) => require.method_definition,
-                AstKind::VariableDeclarator(decl) => decl
-                    .init
-                    .as_ref()
-                    .is_some_and(|init| match init {
+                AstKind::VariableDeclarator(decl) => {
+                    decl.init.as_ref().is_some_and(|init| match init {
                         Expression::ArrowFunctionExpression(_) => require.arrow_function_expression,
                         Expression::ClassExpression(_) => require.class_expression,
                         Expression::FunctionExpression(_) => require.function_expression,
                         _ => false,
-                    }),
+                    })
+                }
                 _ => false,
             };
 
