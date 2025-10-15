@@ -65,9 +65,15 @@ impl MatchDetector {
                 }
             }
             Pat::Wild(_) => {
-                // Body must be completely empty.
+                // Body must be completely empty, or return empty type only `()`
                 if let Expr::Block(block) = &*arm.body {
                     if block.block.stmts.is_empty() {
+                        CollectionResult::Complete
+                    } else {
+                        CollectionResult::Incomplete
+                    }
+                } else if let Expr::Tuple(tuple) = &*arm.body {
+                    if tuple.elems.is_empty() {
                         CollectionResult::Complete
                     } else {
                         CollectionResult::Incomplete
