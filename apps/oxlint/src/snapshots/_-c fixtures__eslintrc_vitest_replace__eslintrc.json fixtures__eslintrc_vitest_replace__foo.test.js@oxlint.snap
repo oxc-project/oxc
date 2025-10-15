@@ -6,7 +6,7 @@ arguments: -c fixtures/eslintrc_vitest_replace/eslintrc.json fixtures/eslintrc_v
 working directory: 
 ----------
 Found 0 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 89 rules using 1 threads.
+Finished in <variable>ms on 1 file with 90 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

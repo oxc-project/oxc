@@ -14,6 +14,7 @@ pub fn neighbors_filtered_by_edge_weight<State: Default + Clone, NodeWeight, Edg
     node: BlockNodeId,
     edge_filter: &F,
     visitor: &mut G,
+    allow_revisit: bool,
 ) -> Vec<State>
 where
     F: Fn(&EdgeWeight) -> Option<State>,
@@ -36,7 +37,7 @@ where
         let mut edges = 0;
 
         for edge in graph.edges_directed(graph_ix, Direction::Outgoing) {
-            if visited.contains(&edge.target()) {
+            if !allow_revisit && visited.contains(&edge.target()) {
                 continue;
             }
             if let Some(result_of_edge_filtering) = edge_filter(edge.weight()) {

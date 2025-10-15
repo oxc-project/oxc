@@ -207,6 +207,7 @@ impl NoThisBeforeSuper {
                     (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
                 }
             },
+            false,
         )
     }
 

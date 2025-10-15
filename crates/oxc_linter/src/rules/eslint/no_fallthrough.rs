@@ -298,6 +298,7 @@ impl Rule for NoFallthrough {
                     (fallthrough, fallthrough.is_none())
                 }
             },
+            false,
         )
         .into_iter()
         .flatten()

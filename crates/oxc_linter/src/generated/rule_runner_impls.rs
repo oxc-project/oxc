@@ -30,6 +30,11 @@ impl RuleRunner for crate::rules::eslint::class_methods_use_this::ClassMethodsUs
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::constructor_super::ConstructorSuper {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Class]));
+}
+
 impl RuleRunner for crate::rules::eslint::curly::Curly {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::DoWhileStatement,

@@ -156,6 +156,7 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
 
             (FoundReturn::No, KEEP_WALKING_ON_THIS_PATH)
         },
+        false,
     );
 
     state.contains(&FoundReturn::Yes)

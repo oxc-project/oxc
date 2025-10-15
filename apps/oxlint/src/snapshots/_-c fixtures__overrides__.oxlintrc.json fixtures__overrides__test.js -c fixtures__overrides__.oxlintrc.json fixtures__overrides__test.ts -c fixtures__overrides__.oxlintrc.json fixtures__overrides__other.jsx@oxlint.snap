@@ -15,7 +15,7 @@ working directory:
   help: Replace var with let or const
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file with 91 rules using 1 threads.
+Finished in <variable>ms on 1 file with 92 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
@@ -42,7 +42,7 @@ working directory:
   help: Delete this console statement.
 
 Found 1 warning and 1 error.
-Finished in <variable>ms on 1 file with 91 rules using 1 threads.
+Finished in <variable>ms on 1 file with 92 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
@@ -61,7 +61,7 @@ working directory:
   help: Replace var with let or const
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file with 91 rules using 1 threads.
+Finished in <variable>ms on 1 file with 92 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
