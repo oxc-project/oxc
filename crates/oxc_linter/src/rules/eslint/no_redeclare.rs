@@ -3,7 +3,6 @@ use javascript_globals::GLOBALS;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ModuleKind, Span};
-use oxc_syntax::symbol::SymbolId;
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -81,48 +80,50 @@ impl Rule for NoRedeclare {
         Self { built_in_globals }
     }
 
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
-        let name = ctx.scoping().symbol_name(symbol_id);
-        let decl_span = ctx.scoping().symbol_span(symbol_id);
-        let is_builtin = self.built_in_globals
-            && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
+    fn run_once(&self, ctx: &LintContext) {
+        for symbol_id in ctx.scoping().symbol_ids() {
+            let name = ctx.scoping().symbol_name(symbol_id);
+            let decl_span = ctx.scoping().symbol_span(symbol_id);
+            let is_builtin = self.built_in_globals
+                && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
 
-        if is_builtin {
-            ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
-        }
-
-        if ctx.source_type().is_typescript() {
-            let mut iter = ctx.scoping().symbol_redeclarations(symbol_id).iter().filter(|rd| {
-                if is_builtin {
-                    if rd.span != decl_span {
-                        ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, rd.span));
-                    }
-                    return false;
-                }
-                if rd.flags.is_function() {
-                    let node = ctx.nodes().get_node(rd.declaration);
-                    if let Some(func) = node.kind().as_function() {
-                        return !func.is_ts_declare_function();
-                    }
-                }
-                true
-            });
-
-            if let Some(first) = iter.next() {
-                iter.fold(first, |prev, next| {
-                    ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
-                    next
-                });
+            if is_builtin {
+                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
             }
 
-            return;
-        }
+            if ctx.source_type().is_typescript() {
+                let mut iter = ctx.scoping().symbol_redeclarations(symbol_id).iter().filter(|rd| {
+                    if is_builtin {
+                        if rd.span != decl_span {
+                            ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, rd.span));
+                        }
+                        return false;
+                    }
+                    if rd.flags.is_function() {
+                        let node = ctx.nodes().get_node(rd.declaration);
+                        if let Some(func) = node.kind().as_function() {
+                            return !func.is_ts_declare_function();
+                        }
+                    }
+                    true
+                });
 
-        for windows in ctx.scoping().symbol_redeclarations(symbol_id).windows(2) {
-            if is_builtin {
-                ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, windows[1].span));
-            } else {
-                ctx.diagnostic(no_redeclare_diagnostic(name, windows[0].span, windows[1].span));
+                if let Some(first) = iter.next() {
+                    iter.fold(first, |prev, next| {
+                        ctx.diagnostic(no_redeclare_diagnostic(name, prev.span, next.span));
+                        next
+                    });
+                }
+
+                continue;
+            }
+
+            for windows in ctx.scoping().symbol_redeclarations(symbol_id).windows(2) {
+                if is_builtin {
+                    ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, windows[1].span));
+                } else {
+                    ctx.diagnostic(no_redeclare_diagnostic(name, windows[0].span, windows[1].span));
+                }
             }
         }
     }

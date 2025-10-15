@@ -575,7 +575,7 @@ impl RuleRunner for crate::rules::eslint::no_prototype_builtins::NoPrototypeBuil
 
 impl RuleRunner for crate::rules::eslint::no_redeclare::NoRedeclare {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnSymbol;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::eslint::no_regex_spaces::NoRegexSpaces {
@@ -631,7 +631,7 @@ impl RuleRunner for crate::rules::eslint::no_setter_return::NoSetterReturn {
 
 impl RuleRunner for crate::rules::eslint::no_shadow_restricted_names::NoShadowRestrictedNames {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnSymbol;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::eslint::no_sparse_arrays::NoSparseArrays {
@@ -757,7 +757,7 @@ impl RuleRunner
 
 impl RuleRunner for crate::rules::eslint::no_unused_vars::NoUnusedVars {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnSymbol;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::eslint::no_useless_backreference::NoUselessBackreference {

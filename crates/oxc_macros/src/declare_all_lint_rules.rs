@@ -150,12 +150,6 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub(super) fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
-                match self {
-                    #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
-                }
-            }
-
             pub(super) fn run_once<'a>(&self, ctx: &LintContext<'a>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run_once(ctx)),*

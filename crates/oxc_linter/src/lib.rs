@@ -250,16 +250,6 @@ impl Linter {
                         }
                     }
 
-                    for symbol in semantic.scoping().symbol_ids() {
-                        for (rule, ctx) in &rules {
-                            if !with_runtime_optimization
-                                || rule.run_info().is_run_on_symbol_implemented()
-                            {
-                                rule.run_on_symbol(symbol, ctx);
-                            }
-                        }
-                    }
-
                     // Run rules on nodes
                     for node in semantic.nodes() {
                         for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
@@ -286,12 +276,6 @@ impl Linter {
                         let run_info = rule.run_info();
                         if !with_runtime_optimization || run_info.is_run_once_implemented() {
                             rule.run_once(ctx);
-                        }
-
-                        if !with_runtime_optimization || run_info.is_run_on_symbol_implemented() {
-                            for symbol in semantic.scoping().symbol_ids() {
-                                rule.run_on_symbol(symbol, ctx);
-                            }
                         }
 
                         if !with_runtime_optimization || run_info.is_run_implemented() {

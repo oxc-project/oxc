@@ -14,7 +14,7 @@ use std::ops::Deref;
 use options::{IgnorePattern, NoUnusedVarsOptions};
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags};
 use oxc_span::GetSpan;
 use symbol::Symbol;
 
@@ -205,13 +205,15 @@ impl Rule for NoUnusedVars {
         Self(Box::new(NoUnusedVarsOptions::try_from(value).unwrap()))
     }
 
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol = Symbol::new(ctx, ctx.module_record(), symbol_id);
-        if Self::should_skip_symbol(&symbol) {
-            return;
-        }
+    fn run_once(&self, ctx: &LintContext) {
+        for symbol in ctx.scoping().symbol_ids() {
+            let symbol = Symbol::new(ctx, ctx.module_record(), symbol);
+            if Self::should_skip_symbol(&symbol) {
+                continue;
+            }
 
-        self.run_on_symbol_internal(&symbol, ctx);
+            self.run_on_symbol_internal(&symbol, ctx);
+        }
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {

@@ -70,7 +70,6 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
         let rule_run_info_init = if rule_run_info.len() == 1 {
             match rule_run_info.iter().next().map(String::as_str) {
                 Some("run") => "RuleRunFunctionsImplemented::Run".to_string(),
-                Some("run_on_symbol") => "RuleRunFunctionsImplemented::RunOnSymbol".to_string(),
                 Some("run_once") => "RuleRunFunctionsImplemented::RunOnce".to_string(),
                 Some("run_on_jest_node") => {
                     "RuleRunFunctionsImplemented::RunOnJestNode".to_string()
