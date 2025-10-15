@@ -61,20 +61,22 @@ impl Rule for PreferEs6Class {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always) {
-            if is_es5_component(node) {
-                let AstKind::CallExpression(call_expr) = node.kind() else {
-                    return;
-                };
+        match node.kind() {
+            AstKind::CallExpression(call_expr)
+                if matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always)
+                    && is_es5_component(node) =>
+            {
                 ctx.diagnostic(expected_es6_class_diagnostic(call_expr.callee.span()));
             }
-        } else if is_es6_component(node) {
-            let AstKind::Class(class_expr) = node.kind() else {
-                return;
-            };
-            ctx.diagnostic(unexpected_es6_class_diagnostic(
-                class_expr.id.as_ref().map_or(class_expr.span, |id| id.span),
-            ));
+            AstKind::Class(class_expr)
+                if !matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always)
+                    && is_es6_component(node) =>
+            {
+                ctx.diagnostic(unexpected_es6_class_diagnostic(
+                    class_expr.id.as_ref().map_or(class_expr.span, |id| id.span),
+                ));
+            }
+            _ => {}
         }
     }
 

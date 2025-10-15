@@ -2263,7 +2263,8 @@ impl RuleRunner for crate::rules::react::only_export_components::OnlyExportCompo
 }
 
 impl RuleRunner for crate::rules::react::prefer_es6_class::PreferEs6Class {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::Class]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
