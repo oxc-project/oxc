@@ -67,15 +67,9 @@ pub fn message_to_lsp_diagnostic(
             .collect()
     });
 
-    let range = message.error.labels.as_ref().map_or(Range::default(), |labels| {
-        let offset = labels.first().map(|span| span.offset() as u32).unwrap_or_default();
-        let length = labels.first().map(|span| span.len() as u32).unwrap_or_default();
-
-        let start_position = offset_to_position(rope, offset, source_text);
-        let end_position = offset_to_position(rope, offset + length, source_text);
-
-        Range::new(start_position, end_position)
-    });
+    let start_position = offset_to_position(rope, message.span().start, source_text);
+    let end_position = offset_to_position(rope, message.span().end, source_text);
+    let range = Range::new(start_position, end_position);
 
     let code = message.error.code.to_string();
     let code_description = message
