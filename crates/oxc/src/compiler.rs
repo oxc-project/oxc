@@ -185,16 +185,10 @@ pub trait CompilerInterface {
         }
 
         if let Some(options) = define_options {
-            let _ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
+            let ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
+            scoping = ret.scoping;
             // Run DCE if minification is disabled.
             if self.compress_options().is_none() {
-                // Rebuild semantic because define plugin changed the AST.
-                // DCE assumes semantic data to be correct, it will crash otherwise.
-                scoping = SemanticBuilder::new()
-                    .with_stats(stats)
-                    .build(&program)
-                    .semantic
-                    .into_scoping();
                 Compressor::new(&allocator).dead_code_elimination_with_scoping(
                     &mut program,
                     scoping,
