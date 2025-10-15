@@ -118,7 +118,8 @@ impl ConfigStoreBuilder {
                 }
                 // if path does not include a ".", then we will heuristically skip it since it
                 // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') && !path.to_string_lossy().starts_with('@') {
+                if !path.to_string_lossy().contains('.') && !path.to_string_lossy().starts_with('@')
+                {
                     continue;
                 }
                 let path = {
@@ -127,12 +128,12 @@ impl ConfigStoreBuilder {
                     if scoped_package_name.starts_with('@') {
                         // I'm not sure if "/" is a viable fallback, but it's very unlikely that the oxlint file does not have a parent directory.
                         let base_dir = root_path.unwrap_or(Path::new("/"));
-                        let resolved = resolver.resolve(base_dir, &scoped_package_name.to_string()).map_err(|err| {
-                            ConfigBuilderError::InvalidConfigFile {
+                        let resolved = resolver
+                            .resolve(base_dir, &scoped_package_name.to_string())
+                            .map_err(|err| ConfigBuilderError::InvalidConfigFile {
                                 file: scoped_package_name.to_string(),
                                 reason: err.to_string(),
-                            }
-                        })?;
+                            })?;
                         &resolved.full_path()
                     } else {
                         match root_path {
