@@ -111,6 +111,7 @@ impl From<&InjectImport> for DotDefineState<'_> {
 #[must_use]
 pub struct InjectGlobalVariablesReturn {
     pub scoping: Scoping,
+    pub changed: bool,
 }
 
 /// Injects import statements for global variables.
@@ -129,6 +130,8 @@ pub struct InjectGlobalVariables<'a> {
     /// Identifiers for which dot define replaced a member expression.
     replaced_dot_defines:
         Vec<(/* identifier of member expression */ CompactStr, /* local */ CompactStr)>,
+
+    changed: bool,
 }
 
 impl<'a> Traverse<'a, ()> for InjectGlobalVariables<'a> {
@@ -144,7 +147,12 @@ impl<'a> InjectGlobalVariables<'a> {
             config,
             dot_defines: vec![],
             replaced_dot_defines: vec![],
+            changed: false,
         }
+    }
+
+    fn mark_as_changed(&mut self) {
+        self.changed = true;
     }
 
     pub fn build(
@@ -193,15 +201,15 @@ impl<'a> InjectGlobalVariables<'a> {
             .collect::<Vec<_>>();
 
         if injects.is_empty() {
-            return InjectGlobalVariablesReturn { scoping };
+            return InjectGlobalVariablesReturn { scoping, changed: self.changed };
         }
 
         self.inject_imports(&injects, program);
 
-        InjectGlobalVariablesReturn { scoping }
+        InjectGlobalVariablesReturn { scoping, changed: self.changed }
     }
 
-    fn inject_imports(&self, injects: &[InjectImport], program: &mut Program<'a>) {
+    fn inject_imports(&mut self, injects: &[InjectImport], program: &mut Program<'a>) {
         let imports = injects.iter().map(|inject| {
             let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
             let source = self.ast.string_literal(SPAN, self.ast.atom(&inject.source), None);
@@ -212,6 +220,7 @@ impl<'a> InjectGlobalVariables<'a> {
             Statement::from(import_decl)
         });
         program.body.splice(0..0, imports);
+        self.mark_as_changed();
     }
 
     fn inject_import_to_specifier(&self, inject: &InjectImport) -> ImportDeclarationSpecifier<'a> {
@@ -269,6 +278,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
                     let value = self.ast.expression_identifier(SPAN, value_atom);
                     *expr = value;
+                    self.mark_as_changed();
                     break;
                 }
             }
