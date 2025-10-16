@@ -1,3 +1,5 @@
+use std::ptr;
+
 use oxc_allocator::Address;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack;
@@ -313,9 +315,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, CallExpression<'a>> {
                 // when the leftmost expression is not a class expression or a function expression
                 callee_span != leftmost.span()
                     && matches!(
-                        leftmost,
-                        ExpressionLeftSide::Expression(e)
-                         if matches!(e.as_ref(), Expression::ClassExpression(_) | Expression::FunctionExpression(_))
+                        leftmost.as_ref(),
+                        Expression::ClassExpression(_) | Expression::FunctionExpression(_)
                     )
             }
             _ => false,

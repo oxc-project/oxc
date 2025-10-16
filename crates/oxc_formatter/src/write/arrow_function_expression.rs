@@ -710,12 +710,18 @@ impl<'a, 'b> From<&'b AstNode<'a, SimpleAssignmentTarget<'a>>> for ExpressionLef
 }
 
 impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
-    pub fn leftmost(expression: &'b AstNode<'a, Expression<'a>>) -> Self {
+    pub fn leftmost(
+        expression: &'b AstNode<'a, Expression<'a>>,
+    ) -> &'b AstNode<'a, Expression<'a>> {
         let mut current: Self = expression.into();
         loop {
             match current.left_expression() {
                 None => {
-                    break current;
+                    break if let ExpressionLeftSide::Expression(expression) = current {
+                        expression
+                    } else {
+                        unreachable!()
+                    };
                 }
                 Some(left) => {
                     current = left;
@@ -820,14 +826,10 @@ fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
     // case and added by the object expression itself
     if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(stmt.expression()),
-            ExpressionLeftSide::Expression(
-                e
-            ) if matches!(e.as_ref(),
-                Expression::ObjectExpression(_)
+            ExpressionLeftSide::leftmost(stmt.expression()).as_ref(),
+            Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)
-            )
         )
     } else {
         false

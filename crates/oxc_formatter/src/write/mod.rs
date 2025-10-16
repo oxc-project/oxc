@@ -420,7 +420,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
 
         if is_callee_or_object {
             let mut parent = self.parent.parent();
-            let mut ancestor_is_await = false;
             loop {
                 match parent {
                     AstNodes::AwaitExpression(_)
@@ -436,7 +435,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
             let indented = format_with(|f| write!(f, [soft_block_indent(&format_inner)]));
 
             return if let AstNodes::AwaitExpression(expr) = parent {
-                if !expr.needs_parentheses(f) {
+                if !expr.needs_parentheses(f)
+                    && ExpressionLeftSide::leftmost(expr.argument()).span() != self.span()
+                {
                     return write!(f, [group(&indented)]);
                 }
 
