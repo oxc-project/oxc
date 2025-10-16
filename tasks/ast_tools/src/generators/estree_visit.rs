@@ -349,7 +349,7 @@ fn generate(codegen: &Codegen) -> Codes {
 
         // Remove extraneous `export const ancestors = [];` statement from parser version
         fn pre_process_variant<'a>(
-            &mut self,
+            &self,
             program: &mut oxc_ast::ast::Program<'a>,
             flags: [bool; 1],
             _allocator: &'a oxc_allocator::Allocator,

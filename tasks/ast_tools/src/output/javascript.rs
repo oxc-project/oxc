@@ -4,6 +4,7 @@ use std::{
 };
 
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex};
+use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{
@@ -135,7 +136,7 @@ fn format(source_text: &str) -> String {
 ///     // ... modify AST ...
 /// }
 /// ```
-pub trait VariantGenerator<const FLAG_COUNT: usize> {
+pub trait VariantGenerator<const FLAG_COUNT: usize>: Sync {
     /// Names of flag consts in code.
     const FLAG_NAMES: [&str; FLAG_COUNT];
 
@@ -163,7 +164,7 @@ pub trait VariantGenerator<const FLAG_COUNT: usize> {
     #[expect(unused_variables)]
     #[inline]
     fn pre_process_variant<'a>(
-        &mut self,
+        &self,
         program: &mut Program<'a>,
         flags: [bool; FLAG_COUNT],
         allocator: &'a Allocator,
@@ -181,12 +182,11 @@ pub trait VariantGenerator<const FLAG_COUNT: usize> {
         let code_len = code.len() + flags_len;
 
         // Generate variants
-        let mut allocator = Allocator::new();
         let input_code = code;
 
         let variants = self.variants();
         variants
-            .into_iter()
+            .into_par_iter()
             .map(|flags| {
                 // Add flags consts to top of file
                 let mut code = String::with_capacity(code_len);
@@ -198,13 +198,10 @@ pub trait VariantGenerator<const FLAG_COUNT: usize> {
                 code.push_str(input_code);
 
                 // Parse, preprocess, minify, and print
+                let allocator = Allocator::new();
                 let mut program = parse_js(&code, &allocator);
                 self.pre_process_variant(&mut program, flags, &allocator);
-                code = print_minified(&mut program, &allocator);
-
-                allocator.reset();
-
-                code
+                print_minified(&mut program, &allocator)
             })
             .collect()
     }

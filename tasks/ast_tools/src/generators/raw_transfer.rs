@@ -253,7 +253,7 @@ fn generate_deserializers(
         }
 
         fn pre_process_variant<'a>(
-            &mut self,
+            &self,
             program: &mut Program<'a>,
             flags: [bool; 6],
             allocator: &'a Allocator,
