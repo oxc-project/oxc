@@ -197,6 +197,13 @@ impl<'a> PeepholeOptimizations {
     pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
         let Statement::LabeledStatement(s) = stmt else { return };
         let id = s.label.name.as_str();
+
+        if ctx.options().drop_labels.contains(id) {
+            *stmt = ctx.ast.statement_empty(s.span);
+            ctx.state.changed = true;
+            return;
+        }
+
         // Check the first statement in the block, or just the `break [id] ` statement.
         // Check if we need to remove the whole block.
         match &mut s.body {

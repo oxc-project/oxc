@@ -1,4 +1,5 @@
 use cow_utils::CowUtils;
+use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
@@ -34,6 +35,18 @@ fn test(source_text: &str, expected: &str) {
 #[track_caller]
 fn test_same(source_text: &str) {
     test(source_text, source_text);
+}
+
+#[track_caller]
+fn test_with_options(source_text: &str, expected: &str, options: CompressOptions) {
+    let allocator = Allocator::default();
+    let source_type = SourceType::default();
+    let mut ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = &mut ret.program;
+    Compressor::new(&allocator).dead_code_elimination(program, options);
+    let result = Codegen::new().build(program).code;
+    let expected = run(expected, source_type, None);
+    assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
 }
 
 #[test]
@@ -345,4 +358,49 @@ console.log([
 ])
         ",
     );
+}
+
+#[test]
+fn drop_labels() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options("PURE: { foo(); bar(); }", "", options);
+}
+
+#[test]
+fn drop_multiple_labels() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    drop_labels.insert("TEST".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options(
+        "PURE: { foo(); } TEST: { bar(); } OTHER: { baz(); }",
+        "OTHER: baz();",
+        options,
+    );
+}
+
+#[test]
+fn drop_labels_nested() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options("PURE: { PURE: { foo(); } }", "", options);
+}
+
+#[test]
+fn drop_labels_with_vars() {
+    let mut options = CompressOptions::dce();
+    let mut drop_labels = FxHashSet::default();
+    drop_labels.insert("PURE".to_string());
+    options.drop_labels = drop_labels;
+
+    test_with_options("PURE: { var x = 1; foo(x); }", "", options);
 }

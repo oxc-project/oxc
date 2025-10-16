@@ -1,4 +1,5 @@
 use oxc_compat::EngineTargets;
+use rustc_hash::FxHashSet;
 
 pub use oxc_ecmascript::side_effects::PropertyReadSideEffects;
 
@@ -44,6 +45,13 @@ pub struct CompressOptions {
     /// <https://rollupjs.org/configuration-options/#treeshake>
     pub treeshake: TreeShakeOptions,
 
+    /// Set of label names to drop from the code.
+    ///
+    /// Labeled statements matching these names will be removed during minification.
+    ///
+    /// Default: empty (no labels dropped)
+    pub drop_labels: FxHashSet<String>,
+
     /// Limit the maximum number of iterations for debugging purpose.
     pub max_iterations: Option<u8>,
 }
@@ -65,6 +73,7 @@ impl CompressOptions {
             sequences: true,
             unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
+            drop_labels: FxHashSet::default(),
             max_iterations: None,
         }
     }
@@ -79,6 +88,7 @@ impl CompressOptions {
             sequences: true,
             unused: CompressOptionsUnused::Keep,
             treeshake: TreeShakeOptions::default(),
+            drop_labels: FxHashSet::default(),
             max_iterations: None,
         }
     }
@@ -93,6 +103,7 @@ impl CompressOptions {
             sequences: false,
             unused: CompressOptionsUnused::Remove,
             treeshake: TreeShakeOptions::default(),
+            drop_labels: FxHashSet::default(),
             max_iterations: None,
         }
     }

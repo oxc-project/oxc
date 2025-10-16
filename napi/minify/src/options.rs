@@ -3,6 +3,7 @@ use napi_derive::napi;
 
 use oxc_compat::EngineTargets;
 use oxc_minifier::TreeShakeOptions;
+use rustc_hash::FxHashSet;
 
 #[napi(object)]
 pub struct CompressOptions {
@@ -81,6 +82,7 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             },
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
+            drop_labels: FxHashSet::default(),
             max_iterations: o.max_iterations,
         })
     }

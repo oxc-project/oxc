@@ -34,6 +34,7 @@ oxc_span = { workspace = true }
 
 napi = { workspace = true }
 napi-derive = { workspace = true }
+rustc-hash = { workspace = true }
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
