@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+const a = 1
+
+;(function() {
+  const b = 2;
+})()
+
+==================== Output ====================
+--------------
+{ semi: true }
+--------------
+const a = 1;
+
+(function () {
+  const b = 2;
+})();
+
+---------------
+{ semi: false }
+---------------
+const a = 1
+
+;(function () {
+  const b = 2
+})()
+
+===================== End =====================
