@@ -250,8 +250,7 @@ impl<'a> FormatProgramBody<'a, '_> {
         // Use Vec since import indices are sequential (0, 1, 2, ...)
         let max_import_idx =
             import_groups.iter().flat_map(|g| g.imports.iter()).max().copied().unwrap_or(0);
-        let mut import_to_group: std::vec::Vec<Option<usize>> =
-            vec![None; max_import_idx + 1];
+        let mut import_to_group: std::vec::Vec<Option<usize>> = vec![None; max_import_idx + 1];
         for (g_idx, group) in import_groups.iter().enumerate() {
             for &import_idx in &group.imports {
                 import_to_group[import_idx] = Some(g_idx);
@@ -271,8 +270,7 @@ impl<'a> FormatProgramBody<'a, '_> {
                 continue;
             }
 
-            let is_import =
-                stmt_idx < import_to_group.len() && import_to_group[stmt_idx].is_some();
+            let is_import = stmt_idx < import_to_group.len() && import_to_group[stmt_idx].is_some();
             let current_idx = all_stmts.len();
 
             if !is_import && first_non_import_idx.is_none() {
@@ -373,9 +371,9 @@ impl<'a> FormatProgramBody<'a, '_> {
                     if target_printed_count > current_printed_count {
                         // Temporarily remove view_limit to maintain invariant
                         f.context_mut().comments_mut().view_limit = None;
-                        f.context_mut()
-                            .comments_mut()
-                            .increase_printed_count_by(target_printed_count - current_printed_count);
+                        f.context_mut().comments_mut().increase_printed_count_by(
+                            target_printed_count - current_printed_count,
+                        );
                     }
                 }
 
@@ -491,11 +489,7 @@ impl<'a> FormatProgramBody<'a, '_> {
     /// Common helper: Counts newlines (line terminators) between two positions
     #[inline]
     fn count_newlines_between(&self, source_text: &SourceText, start: u32, end: u32) -> usize {
-        source_text
-            .slice_range(start, end)
-            .chars()
-            .filter(|&c| is_line_terminator(c))
-            .count()
+        source_text.slice_range(start, end).chars().filter(|&c| is_line_terminator(c)).count()
     }
 
     /// Checks for newlines before and after separator comments
