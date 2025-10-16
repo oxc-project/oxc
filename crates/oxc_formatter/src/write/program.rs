@@ -3,14 +3,14 @@ use std::ops::Deref;
 use cow_utils::CowUtils;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use oxc_allocator::{Address, Vec};
+use oxc_allocator::{Address, Vec as ArenaVec};
 use oxc_ast::{Comment, ast::*, match_expression};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{ZWNBSP, is_line_terminator};
 
 use crate::{
     Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator, format_args,
-    formatter::{SourceText, prelude::*, trivia::FormatTrailingComments},
+    formatter::{SourceText, VecBuffer, prelude::*, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, AstNodes},
     options::SortImports,
     utils::{
@@ -47,10 +47,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     }
 }
 
-struct FormatProgramBody<'a, 'b>(&'b AstNode<'a, Vec<'a, Statement<'a>>>);
+struct FormatProgramBody<'a, 'b>(&'b AstNode<'a, ArenaVec<'a, Statement<'a>>>);
 
 impl<'a> Deref for FormatProgramBody<'a, '_> {
-    type Target = AstNode<'a, Vec<'a, Statement<'a>>>;
+    type Target = AstNode<'a, ArenaVec<'a, Statement<'a>>>;
     fn deref(&self) -> &Self::Target {
         self.0
     }
@@ -78,412 +78,93 @@ impl<'a> FormatProgramBody<'a, '_> {
 
     fn fmt_with_sorted_imports(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let sort_options = f.options().experimental_sort_imports.unwrap();
-        let source_text = f.source_text();
-        let all_comments = f.comments().all_comments();
+        let statements: Vec<_> = self.iter().collect();
 
-        // Collect import statements and their indices
-        let mut import_groups: std::vec::Vec<ImportGroup> = std::vec::Vec::new();
-        let mut current_group = ImportGroup::new();
-        let mut last_import_end: Option<u32> = None;
+        // Detect all import blocks in the program
+        let import_blocks = self.detect_import_blocks(&statements, sort_options, f)?;
 
-        // Track separator comments to exclude them from leading comments
-        let mut separator_comment_spans: CommentSpanSet = CommentSpanSet::default();
-        // Track all import-related comments (will grow dynamically)
-        let mut all_import_comment_spans: CommentSpanSet = CommentSpanSet::default();
-
-        for (idx, stmt) in self.iter().enumerate() {
-            match stmt.as_ref() {
-                Statement::ImportDeclaration(import_decl) => {
-                    // Check if we should start a new group
-                    let partition_info = if let Some(prev_end) = last_import_end {
-                        self.check_partition(
-                            sort_options,
-                            &source_text,
-                            all_comments,
-                            prev_end,
-                            import_decl.span.start,
-                        )
-                    } else {
-                        PartitionInfo::no_partition()
-                    };
-
-                    if partition_info.should_partition && !current_group.imports.is_empty() {
-                        import_groups.push(std::mem::take(&mut current_group));
-
-                        // Store separator comments and newline info in the new group
-                        // Move instead of clone since PartitionInfo is temporary
-                        current_group.separator_comment_spans = partition_info.separator_comments;
-                        current_group.has_newline_before_comments =
-                            partition_info.newline_before_comments;
-                        current_group.has_newline_after_comments =
-                            partition_info.newline_after_comments;
-
-                        // Track separator comment spans
-                        for span in &current_group.separator_comment_spans {
-                            separator_comment_spans.insert(*span);
-                        }
-                    }
-
-                    current_group.imports.push(idx);
-                    last_import_end = Some(import_decl.span.end);
-                }
-                Statement::EmptyStatement(_) => {
-                    // Skip empty statements
-                }
-                _ => {
-                    // Non-import statement - finalize current group
-                    if !current_group.imports.is_empty() {
-                        import_groups.push(std::mem::take(&mut current_group));
-                    }
-                    break;
-                }
-            }
-        }
-        // Don't forget the last group
-        if !current_group.imports.is_empty() {
-            import_groups.push(current_group);
-        }
-
-        // If no imports to sort, use default formatting
-        if import_groups.is_empty() {
+        if import_blocks.is_empty() {
             return self.fmt_default(f);
         }
 
-        // Sort each group and collect sorted imports with their comments
-        let mut sorted_groups: std::vec::Vec<std::vec::Vec<ImportWithComments>> =
-            std::vec::Vec::with_capacity(import_groups.len());
-        for group in &mut import_groups {
-            let sorted = group.sort_with_comments(
-                self,
-                sort_options,
-                &source_text,
-                all_comments,
-                &separator_comment_spans,
-            );
-            sorted_groups.push(sorted);
-        }
-
-        // Track all import-related comments for view_limit and printed_count
-        for group in &sorted_groups {
-            for import_with_comments in group {
-                // Track leading comments
-                for span in &import_with_comments.leading_comment_spans {
-                    all_import_comment_spans.insert(*span);
-                }
-                // Track trailing comments
-                if let Some(span) = import_with_comments.trailing_comment_span {
-                    all_import_comment_spans.insert(span);
-                }
-            }
-        }
-        // Also track separator comments
-        for group in &import_groups {
-            for span in &group.separator_comment_spans {
-                all_import_comment_spans.insert(*span);
-            }
-        }
-
-        // Release the borrow on f
-        let _ = all_comments;
-
-        // Find the span range covering all imports (for view_limit)
-        let first_import_idx = import_groups[0].imports[0];
-        let last_group = &import_groups[import_groups.len() - 1];
-        let last_import_idx = last_group.imports[last_group.imports.len() - 1];
-
-        let first_import_start = if let Some(stmt) = self.iter().nth(first_import_idx) {
-            if let Statement::ImportDeclaration(import) = stmt.as_ref() {
-                // Find the earliest comment or import span
-                let mut start = import.span.start;
-                for comment_span in &all_import_comment_spans {
-                    if comment_span.start < start {
-                        start = comment_span.start;
-                    }
-                }
-                start
-            } else {
-                0
-            }
-        } else {
-            0
-        };
-
-        let last_import_end = if let Some(stmt) = self.iter().nth(last_import_idx) {
-            let import_end = stmt.span().end;
-            // Check if the last import has a trailing comment
-            let mut end = import_end;
-            for import_with_comments in sorted_groups.iter().flat_map(|g| g.iter()) {
-                if import_with_comments.index == last_import_idx {
-                    if let Some(trailing_span) = import_with_comments.trailing_comment_span {
-                        end = trailing_span.end;
-                    }
-                    break;
-                }
-            }
-            end
-        } else {
-            u32::MAX
-        };
-
-        // Find the index in the comments array where our import-related comments end
-        // This will be used to set view_limit
-        let mut last_import_comment_idx = None;
-        for (idx, comment) in f.comments().all_comments().iter().enumerate() {
-            if all_import_comment_spans.contains(&comment.span) {
-                last_import_comment_idx = Some(idx);
-            }
-        }
-
-        // Set view_limit to hide all import-related comments from automatic processing
-        let original_limit = if last_import_comment_idx.is_some() {
-            let current_printed = f.comments().printed_count();
-            f.context_mut().comments_mut().view_limit.replace(current_printed)
-        } else {
-            f.context_mut().comments_mut().view_limit
-        };
-
-        // Track which comments we've manually output to skip them later (preallocate)
-        let mut manually_output_comments =
-            CommentSpanSet::with_capacity_and_hasher(all_import_comment_spans.len(), FxBuildHasher);
-
-        // Build import_idx -> group_idx mapping for O(1) lookup
-        // Use Vec since import indices are sequential (0, 1, 2, ...)
-        let max_import_idx =
-            import_groups.iter().flat_map(|g| g.imports.iter()).max().copied().unwrap_or(0);
-        let mut import_to_group: std::vec::Vec<Option<usize>> = vec![None; max_import_idx + 1];
-        for (g_idx, group) in import_groups.iter().enumerate() {
-            for &import_idx in &group.imports {
-                import_to_group[import_idx] = Some(g_idx);
-            }
-        }
-
-        // Track which import group we've already output (use Vec for small sizes)
-        let mut output_import_groups = std::vec::Vec::with_capacity(import_groups.len());
-        let mut is_first_statement = true;
-
-        // Single pass: collect statements and find first non-import in one iteration
-        let mut all_stmts = std::vec::Vec::new();
-        let mut first_non_import_idx = None;
-
-        for (stmt_idx, stmt) in self.iter().enumerate() {
-            if matches!(stmt.as_ref(), Statement::EmptyStatement(_)) {
-                continue;
-            }
-
-            let is_import = stmt_idx < import_to_group.len() && import_to_group[stmt_idx].is_some();
-            let current_idx = all_stmts.len();
-
-            if !is_import && first_non_import_idx.is_none() {
-                first_non_import_idx = Some(current_idx);
-            }
-
-            all_stmts.push((stmt_idx, stmt));
-        }
-
-        // Output imports
-        for (i, (stmt_idx, stmt)) in all_stmts.iter().enumerate() {
-            // Find which group this import belongs to (O(1) lookup)
-            let is_import_in_group =
-                if *stmt_idx < import_to_group.len() { import_to_group[*stmt_idx] } else { None };
-
-            if let Some(g_idx) = is_import_in_group {
-                // If this is the first import from this group, output all sorted imports
-                if !output_import_groups.contains(&g_idx) {
-                    output_import_groups.push(g_idx);
-                    // Add spacing/separator before this group
-                    if !import_groups[g_idx].separator_comment_spans.is_empty() {
-                        // This group has separator comments
-                        if g_idx == 0 && !is_first_statement {
-                            write!(f, [hard_line_break()])?;
-                        }
-
-                        // Add empty line before comments if needed
-                        if import_groups[g_idx].has_newline_before_comments {
-                            write!(f, [empty_line()])?;
-                        }
-
-                        // Output separator comments (read from source_text) and mark as manually output
-                        for separator_span in &import_groups[g_idx].separator_comment_spans {
-                            let comment_text = source_text.text_for(separator_span);
-                            write!(f, [dynamic_text(comment_text), hard_line_break()])?;
-                            manually_output_comments.insert(*separator_span);
-                        }
-
-                        // Add empty line after comments if needed
-                        if import_groups[g_idx].has_newline_after_comments {
-                            write!(f, [empty_line()])?;
-                        }
-                    } else if g_idx > 0 {
-                        // This group was separated by newlines only (no comments)
-                        write!(f, [empty_line()])?;
-                    } else if !is_first_statement {
-                        write!(f, [hard_line_break()])?;
-                    }
-
-                    // Output all imports in this group in sorted order with their comments
-                    for (imp_idx, import_with_comments) in sorted_groups[g_idx].iter().enumerate() {
-                        let import_idx = import_with_comments.index;
-                        let import_stmt = self.iter().nth(import_idx).unwrap();
-
-                        // Output leading comments (read from source_text) and mark as manually output
-                        for comment_span in &import_with_comments.leading_comment_spans {
-                            let comment_text = source_text.text_for(comment_span);
-                            write!(f, [dynamic_text(comment_text), hard_line_break()])?;
-                            manually_output_comments.insert(*comment_span);
-                        }
-
-                        // Output the import statement itself (without formatter processing comments)
-                        write!(f, [import_stmt])?;
-
-                        // Output trailing inline comment if exists and mark as manually output
-                        if let Some(trailing_span) = import_with_comments.trailing_comment_span {
-                            let comment_text = source_text.text_for(&trailing_span);
-                            write!(f, [dynamic_text(" "), dynamic_text(comment_text)])?;
-                            manually_output_comments.insert(trailing_span);
-                        }
-
-                        write!(f, [hard_line_break()])?;
-
-                        is_first_statement = false;
-                    }
-                }
-                // Skip this import as it's already been output
-            } else if first_non_import_idx.is_some() && i == first_non_import_idx.unwrap() {
-                // CRITICAL: Restore view_limit BEFORE processing non-import statements
-                // This prevents invariant violation (printed_count > view_limit) when
-                // formatting non-import statements that may call unprinted_comments()
-
-                // Mark all manually output comments as printed
-                let mut last_import_region_comment_idx = None;
-                for (idx, comment) in f.comments().all_comments().iter().enumerate() {
-                    if comment.span.start < last_import_end
-                        && manually_output_comments.contains(&comment.span)
-                    {
-                        last_import_region_comment_idx = Some(idx);
-                    } else if comment.span.start >= last_import_end {
-                        break;
-                    }
-                }
-
-                if let Some(last_idx) = last_import_region_comment_idx {
-                    let target_printed_count = last_idx + 1;
-                    let current_printed_count = f.comments().printed_count();
-                    if target_printed_count > current_printed_count {
-                        // Temporarily remove view_limit to maintain invariant
-                        f.context_mut().comments_mut().view_limit = None;
-                        f.context_mut().comments_mut().increase_printed_count_by(
-                            target_printed_count - current_printed_count,
-                        );
-                    }
-                }
-
-                // Restore view_limit with invariant check
-                let current_printed = f.comments().printed_count();
-                match original_limit {
-                    Some(limit) if limit >= current_printed => {
-                        f.context_mut().comments_mut().view_limit = Some(limit);
-                    }
-                    _ => {
-                        f.context_mut().comments_mut().view_limit = None;
-                    }
-                }
-
-                // This is the first non-import statement
-                // Add spacing after imports
-                if !is_first_statement {
-                    let lines_after_imports = source_text.lines_after(last_import_end);
-                    if lines_after_imports > 1 {
-                        write!(f, [empty_line()])?;
-                    } else {
-                        write!(f, [hard_line_break()])?;
-                    }
-                }
-
-                // Now use join_nodes_with_hardline for all remaining non-import statements
+        // Output statements and sorted import blocks
+        let mut current_idx = 0;
+        for (block_idx, block) in import_blocks.iter().enumerate() {
+            // Output statements before this import block
+            if current_idx < block.start_idx {
                 let mut join = f.join_nodes_with_hardline();
-                for (j, (_, non_import_stmt)) in all_stmts[i..].iter().enumerate() {
-                    let span = self.get_statement_span(non_import_stmt);
-                    join.entry(span, non_import_stmt);
+                for stmt in &statements[current_idx..block.start_idx] {
+                    if matches!(stmt.as_ref(), Statement::EmptyStatement(_)) {
+                        continue;
+                    }
+                    let span = self.get_statement_span(stmt);
+                    join.entry(span, stmt);
                 }
                 join.finish()?;
-                break;
+
+                // Add line break before the import block
+                write!(f, [hard_line_break()])?;
             }
+
+            // Output this import block (already includes trailing line break)
+            self.output_import_block(block, &statements, f)?;
+
+            current_idx = block.end_idx;
+        }
+
+        // Output remaining statements
+        if current_idx < statements.len() {
+            // Check if we need to add empty lines before remaining statements
+            if let Some(last_block) = import_blocks.last() {
+                // Get the end position of the last import block
+                let last_import_idx = last_block.end_idx - 1;
+                if let Some(last_import_stmt) = statements.get(last_import_idx) {
+                    let last_import_end = last_import_stmt.span().end;
+
+                    // Get the start position of the first remaining statement
+                    if let Some(first_remaining_stmt) = statements[current_idx..]
+                        .iter()
+                        .find(|s| !matches!(s.as_ref(), Statement::EmptyStatement(_)))
+                    {
+                        let source_text = f.source_text();
+
+                        // Check for comments before the first remaining statement
+                        let all_comments = f.comments().all_comments();
+                        let leading_comments = self.find_adjacent_leading_comments(
+                            all_comments,
+                            &source_text,
+                            first_remaining_stmt.span().start,
+                        );
+
+                        // Use the first leading comment's start if there are any, otherwise use statement start
+                        let check_start = if let Some(first_comment) = leading_comments.last() {
+                            first_comment.span.start
+                        } else {
+                            first_remaining_stmt.span().start
+                        };
+
+                        // Count newlines between last import and the check position
+                        let newline_count =
+                            self.count_newlines_between(&source_text, last_import_end, check_start);
+                        if newline_count >= 2 {
+                            write!(f, [empty_line()])?;
+                        }
+                    }
+                }
+            }
+
+            let mut join = f.join_nodes_with_hardline();
+            for stmt in &statements[current_idx..] {
+                if matches!(stmt.as_ref(), Statement::EmptyStatement(_)) {
+                    continue;
+                }
+                let span = self.get_statement_span(stmt);
+                join.entry(span, stmt);
+            }
+            join.finish()?;
         }
 
         Ok(())
-    }
-
-    /// Checks if we should partition import groups based on the content between two imports
-    fn check_partition(
-        &self,
-        sort_options: SortImports,
-        source_text: &SourceText,
-        all_comments: &[Comment],
-        prev_end: u32,
-        next_start: u32,
-    ) -> PartitionInfo {
-        // Step 1: Check for partition_by_comment (takes precedence)
-        if sort_options.partition_by_comment {
-            let separator_comments =
-                self.find_separator_comments(all_comments, source_text, prev_end, next_start);
-
-            if !separator_comments.is_empty() {
-                // Found separator comments - also check for newlines around them
-                let (nl_before, nl_after) = if sort_options.partition_by_newline {
-                    self.check_newlines_around_comments(
-                        source_text,
-                        &separator_comments,
-                        prev_end,
-                        next_start,
-                    )
-                } else {
-                    (false, false)
-                };
-
-                return PartitionInfo::with_separator_comments(
-                    separator_comments,
-                    nl_before,
-                    nl_after,
-                );
-            }
-        }
-
-        // Step 2: Check for partition_by_newline (if no separator comments found)
-        if sort_options.partition_by_newline
-            && self.has_empty_line_between(source_text, all_comments, prev_end, next_start)
-        {
-            return PartitionInfo::with_newline();
-        }
-
-        PartitionInfo::no_partition()
-    }
-
-    /// Finds separator comments between two positions
-    fn find_separator_comments(
-        &self,
-        all_comments: &[Comment],
-        source_text: &SourceText,
-        start: u32,
-        end: u32,
-    ) -> std::vec::Vec<Span> {
-        // Binary search to find the first comment that could be in range
-        let start_idx = all_comments
-            .binary_search_by(|c| {
-                if c.span.end < start {
-                    std::cmp::Ordering::Less
-                } else {
-                    std::cmp::Ordering::Greater
-                }
-            })
-            .unwrap_or_else(|idx| idx);
-
-        // Collect comments in range
-        all_comments[start_idx..]
-            .iter()
-            .take_while(|c| c.span.start < end)
-            .filter(|c| c.span.end <= end && self.is_own_line_comment(c, source_text))
-            .map(|c| c.span)
-            .collect()
     }
 
     /// Common helper: Counts newlines (line terminators) between two positions
@@ -492,21 +173,343 @@ impl<'a> FormatProgramBody<'a, '_> {
         source_text.slice_range(start, end).chars().filter(|&c| is_line_terminator(c)).count()
     }
 
-    /// Checks for newlines before and after separator comments
-    fn check_newlines_around_comments(
+    /// Finds adjacent leading comments for an import statement
+    fn find_adjacent_leading_comments(
+        &self,
+        all_comments: &[Comment],
+        source_text: &SourceText,
+        import_start: u32,
+    ) -> Vec<Comment> {
+        // Binary search to find comments before import_start
+        let end_idx = all_comments
+            .binary_search_by(|c| {
+                if c.span.end <= import_start {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Greater
+                }
+            })
+            .unwrap_or_else(|idx| idx);
+
+        // Work backwards to find adjacent own-line comments
+        let mut result = vec![];
+        let mut search_pos = import_start;
+
+        for comment in all_comments[..end_idx].iter().rev() {
+            if !self.is_own_line_comment(comment, source_text) {
+                continue;
+            }
+
+            let text_between = source_text.slice_range(comment.span.end, search_pos);
+            if text_between.chars().all(char::is_whitespace) {
+                result.push(*comment);
+                search_pos = comment.span.start;
+            } else {
+                break;
+            }
+        }
+
+        result
+    }
+
+    /// Checks if a comment is on its own line (not inline)
+    ///
+    /// Note: This differs from `SourceText::is_own_line_comment()` in handling
+    /// file-start comments. This version considers comments at the start of the file
+    /// as own-line comments, while SourceText's version requires a preceding newline.
+    #[inline]
+    fn is_own_line_comment(&self, comment: &Comment, source_text: &SourceText) -> bool {
+        if comment.span.start == 0 {
+            return true;
+        }
+
+        // Check if there's only whitespace from line start to comment
+        let text_before = source_text.slice_range(0, comment.span.start);
+        #[expect(clippy::cast_possible_truncation)]
+        if let Some(line_start) = text_before.rfind(is_line_terminator) {
+            !source_text
+                .slice_range(line_start as u32 + 1, comment.span.start)
+                .chars()
+                .any(|c| !c.is_whitespace())
+        } else {
+            // Comment is on the first line, check from start of file
+            !source_text.slice_range(0, comment.span.start).chars().any(|c| !c.is_whitespace())
+        }
+    }
+
+    /// Detect all import blocks in the program
+    fn detect_import_blocks(
+        &self,
+        statements: &[&AstNode<'a, Statement<'a>>],
+        sort_options: SortImports,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<Vec<ImportBlock<'a>>> {
+        let mut blocks = vec![];
+        let mut block_start: Option<usize> = None;
+        let mut block_imports = vec![];
+
+        for (idx, stmt) in statements.iter().enumerate() {
+            match stmt.as_ref() {
+                Statement::ImportDeclaration(_) => {
+                    if block_start.is_none() {
+                        block_start = Some(idx);
+                    }
+                    block_imports.push(idx);
+                }
+                Statement::EmptyStatement(_) => {
+                    // Skip empty statements
+                }
+                _ => {
+                    // Non-import statement found, finish current block if any
+                    if let Some(start) = block_start {
+                        let block = self.build_import_block(
+                            start,
+                            idx,
+                            &block_imports,
+                            statements,
+                            sort_options,
+                            f,
+                        )?;
+                        blocks.push(block);
+                        block_start = None;
+                        block_imports.clear();
+                    }
+                }
+            }
+        }
+
+        // Don't forget the last block if program ends with imports
+        if let Some(start) = block_start {
+            let block = self.build_import_block(
+                start,
+                statements.len(),
+                &block_imports,
+                statements,
+                sort_options,
+                f,
+            )?;
+            blocks.push(block);
+        }
+
+        Ok(blocks)
+    }
+
+    /// Build an import block from import indices
+    fn build_import_block(
+        &self,
+        start_idx: usize,
+        end_idx: usize,
+        import_indices: &[usize],
+        statements: &[&AstNode<'a, Statement<'a>>],
+        sort_options: SortImports,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<ImportBlock<'a>> {
+        // Format imports to IR with all comments included
+        let mut import_irs = Vec::with_capacity(import_indices.len());
+        for &idx in import_indices {
+            let stmt = statements[idx];
+            if let Statement::ImportDeclaration(import_decl) = stmt.as_ref() {
+                let mut buffer = VecBuffer::new(f.state_mut());
+                write!(&mut buffer, [stmt])?;
+                let ir_elements = buffer.into_vec();
+
+                let source = import_decl.source.value.as_str().to_string();
+                let is_side_effect = import_decl.specifiers.is_none()
+                    || import_decl.specifiers.as_ref().unwrap().is_empty();
+
+                // Detect leading comments in IR (don't split, just mark the boundary)
+                let leading_comment_end_idx = self.find_leading_comment_boundary(&ir_elements);
+
+                import_irs.push(ImportIR {
+                    index: idx,
+                    source,
+                    ir_elements,
+                    leading_comment_end_idx,
+                    is_side_effect,
+                });
+            }
+        }
+
+        // Partition and sort based on IR structure
+        let groups =
+            self.partition_imports_by_ir_structure(import_irs, sort_options, statements, f);
+        let sorted_groups = self.sort_import_groups(groups, sort_options);
+
+        Ok(ImportBlock { start_idx, end_idx, groups: sorted_groups })
+    }
+
+    /// Find the boundary between leading comments and the actual import statement
+    /// Returns the index where the actual import starts (after leading comments)
+    fn find_leading_comment_boundary(&self, ir_elements: &[FormatElement<'a>]) -> usize {
+        let mut tag_depth = 0;
+        let mut last_comment_or_line_idx = 0;
+
+        for (idx, element) in ir_elements.iter().enumerate() {
+            match element {
+                FormatElement::Tag(tag) if tag.is_start() => {
+                    tag_depth += 1;
+                }
+                FormatElement::Tag(tag) if tag.is_end() => {
+                    tag_depth -= 1;
+                }
+                FormatElement::Line(_) => {
+                    if tag_depth == 0 {
+                        last_comment_or_line_idx = idx + 1;
+                    }
+                }
+                FormatElement::DynamicText { text } | FormatElement::StaticText { text } => {
+                    // Check if this looks like a comment
+                    let trimmed = text.trim_start();
+                    if trimmed.starts_with("//") || trimmed.starts_with("/*") {
+                        // This is a comment, continue
+                        if tag_depth == 0 {
+                            last_comment_or_line_idx = idx + 1;
+                        }
+                    } else if tag_depth == 0 {
+                        // Non-comment text at depth 0 means the import body has started
+                        return last_comment_or_line_idx;
+                    }
+                }
+                FormatElement::LocatedTokenText { .. } => {
+                    if tag_depth == 0 {
+                        // Start of actual import statement
+                        return last_comment_or_line_idx;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        last_comment_or_line_idx
+    }
+
+    /// Partition imports into groups based on IR structure (comments) and source text (empty lines)
+    fn partition_imports_by_ir_structure(
+        &self,
+        mut import_irs: Vec<ImportIR<'a>>,
+        sort_options: SortImports,
+        statements: &[&AstNode<'a, Statement<'a>>],
+        f: &Formatter<'_, 'a>,
+    ) -> Vec<ImportGroupIR<'a>> {
+        if import_irs.is_empty() {
+            return vec![];
+        }
+
+        let source_text = f.source_text();
+        let all_comments = f.comments().all_comments();
+        let mut groups = vec![];
+        let mut current_group = ImportGroupIR::default();
+        let mut prev_import_end: Option<u32> = None;
+
+        for mut import_ir in import_irs {
+            let stmt = statements[import_ir.index];
+            let import_span = stmt.span();
+
+            // Get leading comment IR slice
+            let leading_comment_end_idx = import_ir.leading_comment_end_idx;
+            let leading_comment_slice = &import_ir.ir_elements[..leading_comment_end_idx];
+
+            // Check for separator comments from IR
+            let has_separator_comment = if sort_options.partition_by_comment {
+                self.has_own_line_comment_in_ir(leading_comment_slice)
+            } else {
+                false
+            };
+
+            // Check for empty lines from source text
+            let has_empty_line = if sort_options.partition_by_newline
+                && let Some(prev_end) = prev_import_end
+            {
+                self.has_empty_line_between(&source_text, all_comments, prev_end, import_span.start)
+            } else {
+                false
+            };
+
+            let should_partition = has_separator_comment || has_empty_line;
+
+            if should_partition && !current_group.imports.is_empty() {
+                // Save the current group and start a new one
+                groups.push(std::mem::take(&mut current_group));
+
+                if has_separator_comment {
+                    // New group starts with these separator comments
+                    current_group.separator_comment_irs = leading_comment_slice.to_vec();
+
+                    // Check for empty lines around separator comments from source text
+                    if sort_options.partition_by_newline
+                        && let Some(prev_end) = prev_import_end
+                    {
+                        let (has_nl_before, has_nl_after) = self
+                            .check_newlines_around_separator_from_source(
+                                &source_text,
+                                all_comments,
+                                prev_end,
+                                import_span.start,
+                            );
+                        current_group.has_newline_before_comments = has_nl_before;
+                        current_group.has_newline_after_comments = has_nl_after;
+                    }
+                    // Leading comments were used as separator - skip them in import output
+                    // (keep leading_comment_end_idx as is)
+                } else {
+                    // Empty line partition without separator comment
+                    // Leading comments are NOT separators, keep them with the import
+                    import_ir.leading_comment_end_idx = 0;
+                }
+            } else {
+                // Leading comments are NOT separators, keep them with the import
+                import_ir.leading_comment_end_idx = 0;
+            }
+
+            // Add this import to current group
+            current_group.imports.push(import_ir);
+            prev_import_end = Some(import_span.end);
+        }
+
+        // Don't forget to push the last group
+        if !current_group.imports.is_empty() {
+            groups.push(current_group);
+        }
+
+        groups
+    }
+
+    /// Check for empty lines around separator comments from source text
+    fn check_newlines_around_separator_from_source(
         &self,
         source_text: &SourceText,
-        separator_comments: &[Span],
-        prev_end: u32,
-        next_start: u32,
+        all_comments: &[Comment],
+        prev_import_end: u32,
+        next_import_start: u32,
     ) -> (bool, bool) {
-        let first_comment_start = separator_comments[0].start;
-        let last_comment_end = separator_comments.last().unwrap().end;
+        // Binary search to find the first comment that could be in range
+        let start_idx = all_comments
+            .binary_search_by(|c| {
+                if c.span.end < prev_import_end {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Greater
+                }
+            })
+            .unwrap_or_else(|idx| idx);
+
+        // Find own-line comments between the two imports
+        let mut separator_comments = all_comments[start_idx..]
+            .iter()
+            .take_while(|c| c.span.start < next_import_start)
+            .filter(|c| c.span.end <= next_import_start && self.is_own_line_comment(c, source_text))
+            .map(|c| c.span);
+
+        let Some(first_comment) = separator_comments.next() else {
+            return (false, false);
+        };
+
+        let last_comment = separator_comments.last().unwrap_or(first_comment);
 
         let newline_before =
-            self.count_newlines_between(source_text, prev_end, first_comment_start) >= 2;
+            self.count_newlines_between(source_text, prev_import_end, first_comment.start) >= 2;
         let newline_after =
-            self.count_newlines_between(source_text, last_comment_end, next_start) >= 2;
+            self.count_newlines_between(source_text, last_comment.end, next_import_start) >= 2;
 
         (newline_before, newline_after)
     }
@@ -536,145 +539,151 @@ impl<'a> FormatProgramBody<'a, '_> {
         self.count_newlines_between(source_text, prev_end, check_end) >= 2
     }
 
-    /// Common helper: Finds adjacent leading comments by working backwards from a position.
-    /// Returns comments that are only separated by whitespace, in reverse order (most recent first).
-    #[inline]
-    fn find_adjacent_comments_backwards<'c>(
-        &self,
-        candidates: &[&'c Comment],
-        source_text: &SourceText,
-        start_pos: u32,
-    ) -> std::vec::Vec<&'c Comment> {
-        let mut leading = std::vec::Vec::new();
-        let mut search_pos = start_pos;
-
-        // Iterate in reverse without collecting
-        for &comment in candidates.iter().rev() {
-            let text_between = source_text.slice_range(comment.span.end, search_pos);
-            if text_between.chars().all(char::is_whitespace) {
-                leading.push(comment);
-                search_pos = comment.span.start;
-            } else {
-                break;
+    /// Check if IR contains own-line comments
+    fn has_own_line_comment_in_ir(&self, ir_elements: &[FormatElement<'a>]) -> bool {
+        // Look for patterns like: DynamicText/StaticText followed by Line
+        for window in ir_elements.windows(2) {
+            if let (
+                FormatElement::DynamicText { text } | FormatElement::StaticText { text },
+                FormatElement::Line(_),
+            ) = (&window[0], &window[1])
+            {
+                // Check if this looks like a comment
+                if text.trim_start().starts_with("//") || text.trim_start().starts_with("/*") {
+                    return true;
+                }
             }
         }
-        leading
+        false
     }
 
-    /// Finds adjacent leading comments for an import statement
-    fn find_adjacent_leading_comments(
+    /// Sort import groups
+    fn sort_import_groups(
         &self,
-        all_comments: &[Comment],
-        source_text: &SourceText,
-        import_start: u32,
-    ) -> std::vec::Vec<Comment> {
-        // Binary search to find comments before import_start
-        let end_idx = all_comments
-            .binary_search_by(|c| {
-                if c.span.end <= import_start {
-                    std::cmp::Ordering::Less
+        mut groups: Vec<ImportGroupIR<'a>>,
+        sort_options: SortImports,
+    ) -> Vec<ImportGroupIR<'a>> {
+        for group in &mut groups {
+            // Separate ignored (side-effect) imports from sortable imports
+            let sortable_len = group.imports.len();
+            let mut ignored = Vec::with_capacity(sortable_len);
+            let mut to_sort = Vec::with_capacity(sortable_len);
+
+            for (original_pos, import_ir) in
+                std::mem::take(&mut group.imports).into_iter().enumerate()
+            {
+                let is_ignored = !sort_options.sort_side_effects && import_ir.is_side_effect;
+                if is_ignored {
+                    ignored.push((original_pos, import_ir));
                 } else {
-                    std::cmp::Ordering::Greater
+                    to_sort.push(import_ir);
                 }
-            })
-            .unwrap_or_else(|idx| idx);
+            }
 
-        // Filter and collect own-line comments
-        let candidates: std::vec::Vec<&Comment> = all_comments[..end_idx]
-            .iter()
-            .filter(|c| self.is_own_line_comment(c, source_text))
-            .collect();
-
-        self.find_adjacent_comments_backwards(&candidates, source_text, import_start)
-            .into_iter()
-            .copied()
-            .collect()
-    }
-
-    /// Gets leading comment spans for an import (excluding separator comments)
-    #[inline]
-    fn get_leading_comment_spans_for_import(
-        &self,
-        import_span: Span,
-        all_comments: &[Comment],
-        source_text: &SourceText,
-        separator_comment_spans: &CommentSpanSet,
-    ) -> std::vec::Vec<Span> {
-        // Binary search to find comments before import_span.start
-        let end_idx = all_comments
-            .binary_search_by(|c| {
-                if c.span.end <= import_span.start {
-                    std::cmp::Ordering::Less
+            // Sort non-ignored imports
+            to_sort.sort_by(|a, b| {
+                let ord = if sort_options.ignore_case {
+                    use cow_utils::CowUtils;
+                    a.source.cow_to_lowercase().cmp(&b.source.cow_to_lowercase())
                 } else {
-                    std::cmp::Ordering::Greater
+                    a.source.cmp(&b.source)
+                };
+                if sort_options.order.is_desc() { ord.reverse() } else { ord }
+            });
+
+            // Merge back: place ignored imports at original positions
+            let total_len = ignored.len() + to_sort.len();
+            let mut result = Vec::with_capacity(total_len);
+            let mut to_sort_iter = to_sort.into_iter();
+            let mut ignored_iter = ignored.into_iter();
+            let mut next_ignored = ignored_iter.next();
+
+            for original_pos in 0..total_len {
+                if let Some((pos, _)) = next_ignored
+                    && pos == original_pos
+                {
+                    if let Some((_, import_ir)) = next_ignored.take() {
+                        result.push(import_ir);
+                        next_ignored = ignored_iter.next();
+                    }
+                    continue;
                 }
-            })
-            .unwrap_or_else(|idx| idx);
+                if let Some(import_ir) = to_sort_iter.next() {
+                    result.push(import_ir);
+                }
+            }
 
-        // Filter own-line comments that are not separator comments
-        let candidates: std::vec::Vec<&Comment> = all_comments[..end_idx]
-            .iter()
-            .filter(|c| {
-                !separator_comment_spans.contains(&c.span)
-                    && self.is_own_line_comment(c, source_text)
-            })
-            .collect();
-
-        // Use common helper to find adjacent comments, then extract spans
-        let mut leading_comment_spans: std::vec::Vec<Span> = self
-            .find_adjacent_comments_backwards(&candidates, source_text, import_span.start)
-            .into_iter()
-            .map(|c| c.span)
-            .collect();
-
-        // Reverse to get source order
-        leading_comment_spans.reverse();
-        leading_comment_spans
-    }
-
-    /// Checks if a comment is on its own line (not inline)
-    ///
-    /// Note: This differs from `SourceText::is_own_line_comment()` in handling
-    /// file-start comments. This version considers comments at the start of the file
-    /// as own-line comments, while SourceText's version requires a preceding newline.
-    #[inline]
-    fn is_own_line_comment(&self, comment: &Comment, source_text: &SourceText) -> bool {
-        if comment.span.start == 0 {
-            return true;
+            group.imports = result;
         }
 
-        // Check if there's only whitespace from line start to comment
-        let text_before = source_text.slice_range(0, comment.span.start);
-        #[expect(clippy::cast_possible_truncation)]
-        if let Some(line_start) = text_before.rfind(is_line_terminator) {
-            !source_text
-                .slice_range(line_start as u32 + 1, comment.span.start)
-                .chars()
-                .any(|c| !c.is_whitespace())
-        } else {
-            // Comment is on the first line, check from start of file
-            !source_text.slice_range(0, comment.span.start).chars().any(|c| !c.is_whitespace())
-        }
+        groups
     }
 
-    /// Gets trailing inline comment span for an import
-    #[inline]
-    fn get_trailing_comment_span_for_import(
+    /// Output a sorted import block
+    fn output_import_block(
         &self,
-        import_span: Span,
-        all_comments: &[Comment],
-        source_text: &SourceText,
-    ) -> Option<Span> {
-        // Binary search to find the first comment at or after import_span.end
-        let start_idx = all_comments
-            .binary_search_by_key(&import_span.end, |c| c.span.start)
-            .unwrap_or_else(|idx| idx);
+        block: &ImportBlock<'a>,
+        _statements: &[&AstNode<'a, Statement<'a>>],
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        let sort_options = f.options().experimental_sort_imports.unwrap();
+        let mut is_first_import = true;
 
-        // Check if the first candidate is on the same line
-        all_comments
-            .get(start_idx)
-            .filter(|c| !source_text.contains_newline_between(import_span.end, c.span.start))
-            .map(|c| c.span)
+        for (group_idx, group) in block.groups.iter().enumerate() {
+            // Output separator comments before this group
+            if !group.separator_comment_irs.is_empty() {
+                // Add empty line before separator comments if needed
+                if group_idx > 0
+                    && sort_options.partition_by_newline
+                    && group.has_newline_before_comments
+                {
+                    write!(f, [empty_line()])?;
+                }
+
+                // Output separator comment IR elements
+                if !is_first_import {
+                    write!(f, [hard_line_break()])?;
+                }
+                crate::formatter::buffer::BufferExtensions::write_elements(
+                    f,
+                    group.separator_comment_irs.iter().cloned(),
+                )?;
+                is_first_import = false;
+
+                // Add empty line after separator comments if needed
+                if sort_options.partition_by_newline
+                    && group.has_newline_after_comments
+                    && !group.imports.is_empty()
+                {
+                    write!(f, [empty_line()])?;
+                }
+            } else if group_idx > 0 {
+                // No separator comments, just add empty line between groups
+                write!(f, [empty_line()])?;
+            }
+
+            // Output each import in this group (skip leading comments, they're in separator_comment_irs)
+            for import_ir in &group.imports {
+                if !is_first_import {
+                    write!(f, [hard_line_break()])?;
+                }
+                is_first_import = false;
+
+                // Output only the import body (skip leading comments)
+                let import_body_slice = &import_ir.ir_elements[import_ir.leading_comment_end_idx..];
+                crate::formatter::buffer::BufferExtensions::write_elements(
+                    f,
+                    import_body_slice.iter().cloned(),
+                )?;
+            }
+        }
+
+        // Add line break after the import block
+        if !block.groups.is_empty() {
+            write!(f, [hard_line_break()])?;
+        }
+
+        Ok(())
     }
 
     fn get_statement_span(&self, stmt: &AstNode<'a, Statement<'a>>) -> Span {
@@ -708,206 +717,44 @@ impl<'a> FormatProgramBody<'a, '_> {
     }
 }
 
-type CommentSpanSet = FxHashSet<Span>;
-
-/// Information about how to partition an import group
-struct PartitionInfo {
-    should_partition: bool,
-    separator_comments: std::vec::Vec<Span>,
-    newline_before_comments: bool,
-    newline_after_comments: bool,
+/// A block of consecutive import statements
+struct ImportBlock<'a> {
+    /// Index of first statement in this block
+    start_idx: usize,
+    /// Index after last statement in this block
+    end_idx: usize,
+    /// Sorted import groups within this block
+    groups: Vec<ImportGroupIR<'a>>,
 }
 
-impl PartitionInfo {
-    fn no_partition() -> Self {
-        Self {
-            should_partition: false,
-            separator_comments: std::vec::Vec::new(),
-            newline_before_comments: false,
-            newline_after_comments: false,
-        }
-    }
-
-    fn with_separator_comments(
-        comments: std::vec::Vec<Span>,
-        newline_before: bool,
-        newline_after: bool,
-    ) -> Self {
-        Self {
-            should_partition: true,
-            separator_comments: comments,
-            newline_before_comments: newline_before,
-            newline_after_comments: newline_after,
-        }
-    }
-
-    fn with_newline() -> Self {
-        Self {
-            should_partition: true,
-            separator_comments: std::vec::Vec::new(),
-            newline_before_comments: false,
-            newline_after_comments: false,
-        }
-    }
+/// Import formatted to IR
+struct ImportIR<'a> {
+    /// Original index in statement list
+    index: usize,
+    /// Import source for sorting
+    source: String,
+    /// Formatted IR elements (including leading comments)
+    ir_elements: Vec<FormatElement<'a>>,
+    /// Index where actual import starts (after leading comments)
+    leading_comment_end_idx: usize,
+    /// Whether this is a side-effect import
+    is_side_effect: bool,
 }
 
-/// Group of import statements that should be sorted together
-#[derive(Debug, Default)]
-struct ImportGroup {
-    /// Original indices of import statements in the program body
-    imports: std::vec::Vec<usize>,
-    /// Separator comment spans that appear before this group (if partition_by_comment is enabled)
-    separator_comment_spans: std::vec::Vec<Span>,
-    /// Whether there's an empty line before the separator comments
+/// Group of imports within a block (separated by comments/newlines)
+#[derive(Default)]
+struct ImportGroupIR<'a> {
+    /// Imports in this group
+    imports: Vec<ImportIR<'a>>,
+    /// Separator comment IR elements before this group
+    separator_comment_irs: Vec<FormatElement<'a>>,
+    /// Whether there's an empty line before separator comments
     has_newline_before_comments: bool,
-    /// Whether there's an empty line after the separator comments
+    /// Whether there's an empty line after separator comments
     has_newline_after_comments: bool,
 }
 
-/// Information about an import and its associated comments
-#[derive(Debug, Clone)]
-struct ImportWithComments {
-    /// Index of the import in the program body
-    index: usize,
-    /// Source string for sorting
-    source: String,
-    /// Leading comment spans (to be read from source_text during output)
-    leading_comment_spans: std::vec::Vec<Span>,
-    /// Trailing comment span (inline comment at the end of the line)
-    trailing_comment_span: Option<Span>,
-    /// Whether this is a side-effect import (no specifiers)
-    is_side_effect: bool,
-    /// Whether this import should be ignored during sorting (keep original position)
-    is_ignored: bool,
-}
-
-impl ImportGroup {
-    fn new() -> Self {
-        Self::default()
-    }
-
-    fn sort_with_comments(
-        &mut self,
-        program_body: &FormatProgramBody<'_, '_>,
-        options: SortImports,
-        source_text: &SourceText,
-        all_comments: &[Comment],
-        separator_comment_spans: &CommentSpanSet,
-    ) -> std::vec::Vec<ImportWithComments> {
-        if self.imports.is_empty() {
-            return std::vec::Vec::new();
-        }
-
-        // Even for single import, we need to extract comments, so no early return
-
-        // Create sortable import entries with comment info
-        let mut sortable: std::vec::Vec<ImportWithComments> = self
-            .imports
-            .iter()
-            .filter_map(|&idx| {
-                let stmt = program_body.iter().nth(idx)?;
-                match stmt.as_ref() {
-                    Statement::ImportDeclaration(import) => {
-                        let import = import.as_ref();
-                        let source = import.source.value.as_str().to_string();
-
-                        // Get leading comment spans for this import
-                        let leading_comment_spans = program_body
-                            .get_leading_comment_spans_for_import(
-                                import.span,
-                                all_comments,
-                                source_text,
-                                separator_comment_spans,
-                            );
-
-                        // Get trailing inline comment span for this import
-                        let trailing_comment_span = program_body
-                            .get_trailing_comment_span_for_import(
-                                import.span,
-                                all_comments,
-                                source_text,
-                            );
-
-                        // Check if this is a side-effect import (no specifiers)
-                        let is_side_effect = import.specifiers.is_none()
-                            || import.specifiers.as_ref().unwrap().is_empty();
-
-                        // Determine if this import should be ignored during sorting
-                        let is_ignored = !options.sort_side_effects && is_side_effect;
-
-                        Some(ImportWithComments {
-                            index: idx,
-                            source,
-                            leading_comment_spans,
-                            trailing_comment_span,
-                            is_side_effect,
-                            is_ignored,
-                        })
-                    }
-                    _ => None,
-                }
-            })
-            .collect();
-
-        // Sort by import source, respecting is_ignored flag
-        // Avoid clones by using in-place sorting and moving values
-
-        // Partition: extract ignored imports (with their original positions)
-        // Preallocate capacity for worst case (all ignored or all to_sort)
-        let sortable_len = sortable.len();
-        let mut ignored = std::vec::Vec::with_capacity(sortable_len);
-        let mut to_sort = std::vec::Vec::with_capacity(sortable_len);
-
-        for (original_pos, import) in sortable.into_iter().enumerate() {
-            if import.is_ignored {
-                ignored.push((original_pos, import));
-            } else {
-                to_sort.push(import);
-            }
-        }
-
-        // Sort non-ignored imports
-        to_sort.sort_by(|a, b| {
-            let ord = if options.ignore_case {
-                a.source.cow_to_lowercase().cmp(&b.source.cow_to_lowercase())
-            } else {
-                a.source.cmp(&b.source)
-            };
-
-            if options.order.is_desc() { ord.reverse() } else { ord }
-        });
-
-        // Merge back: place ignored imports at original positions
-        // Ignored imports are already sorted by position, so we can merge efficiently
-        let total_len = ignored.len() + to_sort.len();
-        let mut result = std::vec::Vec::with_capacity(total_len);
-        let mut to_sort_iter = to_sort.into_iter();
-        let mut ignored_iter = ignored.into_iter();
-        let mut next_ignored = ignored_iter.next();
-
-        for original_pos in 0..total_len {
-            // Check if current position has an ignored import
-            if let Some((pos, _)) = next_ignored
-                && pos == original_pos
-            {
-                // Consume the ignored import
-                if let Some((_, import)) = next_ignored.take() {
-                    result.push(import);
-                    next_ignored = ignored_iter.next();
-                }
-                continue;
-            }
-            // Otherwise, take from sorted imports
-            if let Some(import) = to_sort_iter.next() {
-                result.push(import);
-            }
-        }
-
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Directive<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let Some(last_directive) = self.last() else {
             // No directives, no extra new line

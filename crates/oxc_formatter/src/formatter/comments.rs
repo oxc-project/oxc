@@ -167,12 +167,6 @@ impl<'a> Comments<'a> {
         self.comments
     }
 
-    /// Returns the current printed count cursor position.
-    #[inline]
-    pub fn printed_count(&self) -> usize {
-        self.printed_count
-    }
-
     /// Returns an iterator over comments that end before or at the given position.
     pub fn comments_before_iter(&self, pos: u32) -> impl Iterator<Item = &Comment> {
         self.unprinted_comments().iter().take_while(move |c| c.span.end <= pos)
