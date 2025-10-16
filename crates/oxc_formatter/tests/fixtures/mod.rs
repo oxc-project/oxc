@@ -187,7 +187,7 @@ fn generate_snapshot(path: &Path, source_text: &str) -> String {
         }
 
         let options = parse_format_options(&option_json);
-        let formatted = normalize_newlines(format_source(source_text, source_type, options));
+        let formatted = format_source(source_text, source_type, options);
         snapshot.push_str(&formatted);
         snapshot.push('\n');
     }
@@ -199,7 +199,7 @@ fn generate_snapshot(path: &Path, source_text: &str) -> String {
 
 /// Helper function to run a test for a single file
 fn test_file(path: &Path) {
-    let source_text = normalize_newlines(fs::read_to_string(path).unwrap());
+    let source_text = fs::read_to_string(path).unwrap();
     let snapshot = generate_snapshot(path, &source_text);
     let snapshot_path = current_dir().unwrap().join(path.parent().unwrap());
     let snapshot_name = path.file_name().unwrap().to_str().unwrap();
@@ -213,15 +213,6 @@ fn test_file(path: &Path) {
     }, {
         insta::assert_snapshot!(snapshot_name, snapshot);
     });
-}
-
-#[expect(clippy::disallowed_methods)]
-fn normalize_newlines(text: String) -> String {
-    if !text.contains('\r') {
-        return text;
-    }
-
-    text.replace("\r\n", "\n")
 }
 
 // Include auto-generated test functions from build.rs
