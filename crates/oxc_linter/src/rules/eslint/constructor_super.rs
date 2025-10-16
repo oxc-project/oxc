@@ -218,21 +218,32 @@ impl Rule for ConstructorSuper {
                         }
                     }
                 } else {
-                    // Valid paths: CalledOnce or ExitedWithoutSuper
-                    let all_paths_valid = path_results.iter().all(|r| {
-                        matches!(r, PathResult::CalledOnce | PathResult::ExitedWithoutSuper)
-                    });
+                    // Check if super() was called on any path (once or multiple times)
+                    let has_super_on_any_path = path_results
+                        .iter()
+                        .any(|r| matches!(r, PathResult::CalledOnce | PathResult::CalledMultiple));
 
+                    // Check if super() is missing on some paths
                     let some_missing =
                         path_results.iter().any(|r| matches!(r, PathResult::NoSuper));
 
-                    if !all_paths_valid && some_missing {
+                    // Check if ALL paths exit early (no normal completion)
+                    let all_paths_exit =
+                        path_results.iter().all(|r| matches!(r, PathResult::ExitedWithoutSuper));
+
+                    // Check for duplicate super() calls
+                    let has_duplicate =
+                        path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple));
+
+                    if !has_super_on_any_path && all_paths_exit {
+                        // super() was never called and all paths exit early (like "return; super();")
+                        ctx.diagnostic(missing_super_all(constructor.span));
+                    } else if some_missing && !has_duplicate {
+                        // super() was called on some paths but missing on others (not a duplicate issue)
                         ctx.diagnostic(missing_super_some(constructor.span));
                     }
 
-                    if path_results.iter().any(|r| matches!(r, PathResult::CalledMultiple))
-                        && super_call_spans.len() > 1
-                    {
+                    if has_duplicate && super_call_spans.len() > 1 {
                         let mut sorted_spans = super_call_spans;
                         sorted_spans.sort_by_key(|s| s.start);
 
@@ -335,7 +346,29 @@ impl ConstructorSuper {
             &mut |block_id, (): ()| {
                 let block = cfg.basic_block(*block_id);
 
+                // Skip unreachable blocks (e.g., code after return/throw)
+                if block.is_unreachable() {
+                    return ((), true);
+                }
+
+                // Track if we've hit a return/throw - anything after is unreachable
+                let mut hit_exit = false;
+
                 for instruction in block.instructions() {
+                    // Check if this instruction is an exit (return/throw)
+                    if matches!(
+                        instruction.kind,
+                        oxc_cfg::InstructionKind::Return(_) | oxc_cfg::InstructionKind::Throw
+                    ) {
+                        hit_exit = true;
+                        continue;
+                    }
+
+                    // Skip processing instructions after an exit
+                    if hit_exit {
+                        continue;
+                    }
+
                     let Some(node_id) = instruction.node_id else { continue };
 
                     if Self::is_in_nested_scope_cfg(node_id, ctx, class_node_id) {
