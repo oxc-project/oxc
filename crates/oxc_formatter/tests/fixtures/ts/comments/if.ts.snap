@@ -1,0 +1,25 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+if (true) {}
+
+// comment1
+else if (false) {}
+
+// comment2
+
+else {}
+==================== Output ====================
+if (true) {
+}
+
+// comment1
+else if (false) {
+}
+
+// comment2
+else {
+}
+
+===================== End =====================

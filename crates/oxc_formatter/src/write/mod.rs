@@ -836,14 +836,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             }
 
             if has_dangling_comments {
-                write!(
-                    f,
-                    FormatDanglingComments::Comments { comments, indent: DanglingIndentMode::None }
-                )?;
-
                 if has_line_comment {
+                    write!(f, FormatTrailingComments::Comments(comments))?;
                     write!(f, hard_line_break())?;
                 } else {
+                    write!(
+                        f,
+                        FormatDanglingComments::Comments {
+                            comments,
+                            indent: DanglingIndentMode::None
+                        }
+                    )?;
                     write!(f, space())?;
                 }
             }
