@@ -9,7 +9,6 @@ use std::{
 
 use serde::Deserialize;
 
-use oxc_ast::ast::{BindingPatternKind, Declaration, Statement, VariableDeclarationKind};
 use oxc_index::{IndexVec, define_index_type};
 
 use crate::{
@@ -188,7 +187,9 @@ fn generate(codegen: &Codegen) -> Codes {
     let mut walk = string!("
         export { walkProgram }
 
+        /* IF ANCESTORS */
         export const ancestors = [];
+        /* END_IF */
 
         const { isArray } = Array;
 
@@ -346,35 +347,6 @@ fn generate(codegen: &Codegen) -> Codes {
     struct WalkVariantGenerator;
     impl VariantGenerator<1> for WalkVariantGenerator {
         const FLAG_NAMES: [&str; 1] = ["ANCESTORS"];
-
-        // Remove extraneous `export const ancestors = [];` statement from parser version
-        fn pre_process_variant<'a>(
-            &self,
-            program: &mut oxc_ast::ast::Program<'a>,
-            flags: [bool; 1],
-            _allocator: &'a oxc_allocator::Allocator,
-        ) {
-            if flags[0] {
-                return;
-            }
-
-            let stmt_index = program.body.iter().position(|stmt| {
-                if let Statement::ExportNamedDeclaration(decl) = stmt
-                    && let Some(Declaration::VariableDeclaration(decl)) = &decl.declaration
-                    && decl.kind == VariableDeclarationKind::Const
-                    && decl.declarations.len() == 1
-                    && let BindingPatternKind::BindingIdentifier(ident) =
-                        &decl.declarations[0].id.kind
-                    && ident.name == "ancestors"
-                {
-                    true
-                } else {
-                    false
-                }
-            });
-            let stmt_index = stmt_index.unwrap();
-            program.body.remove(stmt_index);
-        }
     }
 
     let mut walk_variants = WalkVariantGenerator.generate(&walk).into_iter();
