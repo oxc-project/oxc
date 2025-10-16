@@ -60,6 +60,14 @@ export interface CompressOptions {
    * @default true
    */
   sequences?: boolean
+  /**
+   * Set of label names to drop from the code.
+   *
+   * Labeled statements matching these names will be removed during minification.
+   *
+   * @default []
+   */
+  dropLabels?: Array<string>
   /** Limit the maximum number of iterations for debugging purpose. */
   maxIterations?: number
 }

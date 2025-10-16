@@ -43,6 +43,15 @@ describe('simple', () => {
     expect(ret.code).toBe('');
     expect(ret.errors.length).toBe(1);
   });
+
+  it('supports drop_labels option', () => {
+    const code = 'PURE: { foo(); bar(); } OTHER: { baz(); }';
+    const ret = minify('test.js', code, {
+      compress: { dropLabels: ['PURE'] },
+    });
+    expect(ret.code).toBe('OTHER:baz();');
+    expect(ret.errors.length).toBe(0);
+  });
 });
 
 describe('worker', () => {

@@ -3,7 +3,6 @@ use napi_derive::napi;
 
 use oxc_compat::EngineTargets;
 use oxc_minifier::TreeShakeOptions;
-use rustc_hash::FxHashSet;
 
 #[napi(object)]
 pub struct CompressOptions {
@@ -53,6 +52,13 @@ pub struct CompressOptions {
     /// @default true
     pub sequences: Option<bool>,
 
+    /// Set of label names to drop from the code.
+    ///
+    /// Labeled statements matching these names will be removed during minification.
+    ///
+    /// @default []
+    pub drop_labels: Option<Vec<String>>,
+
     /// Limit the maximum number of iterations for debugging purpose.
     pub max_iterations: Option<u8>,
 }
@@ -82,7 +88,11 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
             },
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
             treeshake: TreeShakeOptions::default(),
-            drop_labels: FxHashSet::default(),
+            drop_labels: o
+                .drop_labels
+                .as_ref()
+                .map(|labels| labels.iter().cloned().collect())
+                .unwrap_or_default(),
             max_iterations: o.max_iterations,
         })
     }

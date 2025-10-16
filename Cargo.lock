@@ -2352,7 +2352,6 @@ dependencies = [
  "oxc_parser 0.95.0",
  "oxc_sourcemap 6.0.0",
  "oxc_span 0.95.0",
- "rustc-hash",
 ]
 
 [[package]]
