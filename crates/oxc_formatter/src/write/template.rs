@@ -220,6 +220,15 @@ pub(super) enum TemplateExpression<'a, 'b> {
     TSType(&'b AstNode<'a, TSType<'a>>),
 }
 
+impl GetSpan for TemplateExpression<'_, '_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Expression(e) => e.span(),
+            Self::TSType(t) => t.span(),
+        }
+    }
+}
+
 pub struct FormatTemplateExpression<'a, 'b> {
     expression: &'b TemplateExpression<'a, 'b>,
     options: FormatTemplateExpressionOptions,
@@ -332,29 +341,10 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
 
 impl<'a> TemplateExpression<'a, '_> {
     fn has_new_line_in_range(&self, f: &Formatter<'_, 'a>) -> bool {
-        match self {
-            TemplateExpression::Expression(e) => {
-                // Has potential newlines
-                matches!(
-                    e.as_ref(),
-                    Expression::ConditionalExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::FunctionExpression(_)
-                ) || f.source_text().has_newline_before(e.span().start)
-                    || f.source_text().has_newline_after(e.span().end)
-                    || f.source_text().contains_newline(e.span())
-            }
-            TemplateExpression::TSType(t) => {
-                matches!(
-                    t.as_ref(),
-                    TSType::TSConditionalType(_)
-                        | TSType::TSMappedType(_)
-                        | TSType::TSTypeLiteral(_)
-                        | TSType::TSIntersectionType(_)
-                        | TSType::TSUnionType(_)
-                )
-            }
-        }
+        let span = self.span();
+        f.source_text().has_newline_before(span.start)
+            || f.source_text().has_newline_after(span.end)
+            || f.source_text().contains_newline(span)
     }
 }
 
