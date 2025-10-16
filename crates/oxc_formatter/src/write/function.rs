@@ -108,9 +108,7 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
 
                 let group_parameters = should_group_function_parameters(
                     self.type_parameters.as_deref(),
-                    params.items.len()
-                        + usize::from(params.rest.is_some())
-                        + usize::from(self.this_param.is_some()),
+                    params.parameters_count() + usize::from(self.this_param.is_some()),
                     self.return_type.as_deref(),
                     &mut format_return_type,
                     f,

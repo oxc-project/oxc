@@ -173,16 +173,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
         };
 
         if self.method || is_accessor {
-            let AstNodes::Function(func) = self.value().as_ast_nodes() else {
+            let AstNodes::Function(value) = self.value().as_ast_nodes() else {
                 unreachable!(
                     "The `value` always be a function node if `method` or `accessor` is true"
                 )
             };
 
-            if func.r#async() {
+            if value.r#async() {
                 write!(f, ["async", space()])?;
             }
-            if func.generator() {
+            if value.generator() {
                 write!(f, "*")?;
             }
             if self.computed {
@@ -191,14 +191,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
                 format_property_key(self.key(), f)?;
             }
 
-            if let Some(type_parameters) = &func.type_parameters() {
-                write!(f, type_parameters)?;
-            }
-            write!(f, group(&func.params()))?;
-            if let Some(return_type) = &func.return_type() {
-                write!(f, return_type)?;
-            }
-            if let Some(body) = &func.body() {
+            format_grouped_parameters_with_return_type(
+                value.type_parameters(),
+                value.this_param.as_deref(),
+                value.params(),
+                value.return_type(),
+                f,
+            )?;
+
+            if let Some(body) = &value.body() {
                 write!(f, [space(), body])?;
             }
 
@@ -1561,7 +1562,13 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, group(&format_args!(self.type_parameters(), self.params(), self.return_type())))
+        format_grouped_parameters_with_return_type(
+            self.type_parameters(),
+            None,
+            self.params(),
+            self.return_type(),
+            f,
+        )
     }
 }
 
@@ -1600,7 +1607,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["new", space()])?;
-        write!(f, group(&format_args!(self.type_parameters(), self.params(), self.return_type())))
+        format_grouped_parameters_with_return_type(
+            self.type_parameters(),
+            None,
+            self.params(),
+            self.return_type(),
+            f,
+        )
     }
 }
 

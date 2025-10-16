@@ -1,0 +1,49 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+
+type A = {
+  new(...args): T<{
+    A
+  }
+  >
+};
+
+
+type A1 = {
+  (...args): T<{
+    A
+  }
+  >
+};
+
+type A2 = {
+  bar(
+    ...args
+  ): T<{
+    A
+  }>
+}
+
+
+==================== Output ====================
+type A = {
+  new (...args): T<{
+    A;
+  }>;
+};
+
+type A1 = {
+  (...args): T<{
+    A;
+  }>;
+};
+
+type A2 = {
+  bar(...args): T<{
+    A;
+  }>;
+};
+
+===================== End =====================
