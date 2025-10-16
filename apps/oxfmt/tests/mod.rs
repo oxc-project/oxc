@@ -75,3 +75,12 @@ fn config_file_explicit() {
         ],
     );
 }
+
+#[test]
+fn vcs_dirs_ignored() {
+    // Test that VCS directories (.git, .jj, .sl, .svn, .hg) are ignored
+    // but regular directories and root files are processed
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/vcs_dirs"))
+        .test_and_snapshot_multiple(&[&["--check"]]);
+}

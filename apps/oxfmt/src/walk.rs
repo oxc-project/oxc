@@ -35,10 +35,14 @@ impl ignore::ParallelVisitor for WalkVisitor {
                 let Some(file_type) = entry.file_type() else {
                     return ignore::WalkState::Continue;
                 };
+
                 if file_type.is_dir() {
-                    // Skip traversing `.git` directories because `.git` is not a special case for `.hidden(false)`.
-                    // <https://github.com/BurntSushi/ripgrep/issues/3099#issuecomment-3052460027>
-                    if entry.file_name() == ".git" {
+                    // We are setting `.hidden(false)` on the `WalkBuilder` below,
+                    // it means we want to include hidden files and directories.
+                    // However, we (and also Prettier) still skip traversing VCS directories.
+                    // https://prettier.io/docs/ignore#ignoring-files-prettierignore
+                    let dir_name = entry.file_name();
+                    if matches!(dir_name.to_str(), Some(".git" | ".jj" | ".sl" | ".svn" | ".hg")) {
                         return ignore::WalkState::Skip;
                     }
                 } else if let Some(source_type) = get_supported_source_type(entry.path()) {
