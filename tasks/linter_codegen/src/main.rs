@@ -5,6 +5,7 @@ use crate::{
     if_else_detector::IfElseKindDetector,
     let_else_detector::LetElseDetector,
     match_detector::MatchDetector,
+    member_expression_kinds::get_member_expression_kinds,
     node_type_set::NodeTypeSet,
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
     utils::{find_impl_function, find_rule_impl_block},
@@ -22,6 +23,7 @@ mod early_diverge_detector;
 mod if_else_detector;
 mod let_else_detector;
 mod match_detector;
+mod member_expression_kinds;
 mod node_type_set;
 mod rules;
 mod utils;
@@ -32,12 +34,18 @@ fn main() -> io::Result<()> {
 
 /// # Errors
 /// Returns `io::Error` if file operations fail.
+/// # Panics
+/// - Panics if member expression kinds could not be read from source
 pub fn generate_rule_runner_impls() -> io::Result<()> {
     let root = project_root::get_project_root()
         .map_err(|e| std::io::Error::other(format!("could not find project root: {e}")))?;
 
     let rules_file_contents = fs::read_to_string(root.join("crates/oxc_linter/src/rules.rs"))?;
     let rule_entries = get_all_rules(&rules_file_contents)?;
+
+    let member_expression_kinds =
+        get_member_expression_kinds().expect("Failed to get member expression kinds");
+    let rule_runner_data = RuleRunnerData { member_expression_kinds };
 
     let mut out = String::new();
     out.push_str("// Auto-generated code, DO NOT EDIT DIRECTLY!\n");
@@ -56,7 +64,7 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             && let Ok(src_contents) = fs::read_to_string(&src_path)
             && let Ok(file) = syn::parse_file(&src_contents)
         {
-            if let Some(node_types) = detect_top_level_node_types(&file, rule) {
+            if let Some(node_types) = detect_top_level_node_types(&file, rule, &rule_runner_data) {
                 detected_types.extend(node_types);
             }
 
@@ -108,11 +116,15 @@ impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} 
 
 /// Detect the top-level node types used in a lint rule file by analyzing the Rust AST with `syn`.
 /// Returns `Some(bitset)` if at least one node type can be determined, otherwise `None`.
-fn detect_top_level_node_types(file: &File, rule: &RuleEntry) -> Option<NodeTypeSet> {
+fn detect_top_level_node_types(
+    file: &File,
+    rule: &RuleEntry,
+    rule_runner_data: &RuleRunnerData,
+) -> Option<NodeTypeSet> {
     let rule_impl = find_rule_impl_block(file, &rule.rule_struct_name())?;
     let run_func = find_impl_function(rule_impl, "run")?;
 
-    let node_types = LetElseDetector::from_run_func(run_func);
+    let node_types = LetElseDetector::from_run_func(run_func, rule_runner_data);
     if let Some(node_types) = node_types
         && !node_types.is_empty()
     {
@@ -182,6 +194,11 @@ enum CollectionResult {
     /// Some syntax not recognized as supported, variants collected may be incomplete
     /// and should not be treated as valid. We should default to running on any node type.
     Incomplete,
+}
+
+/// Additional data collected for rule runner impl generation
+struct RuleRunnerData {
+    member_expression_kinds: NodeTypeSet,
 }
 
 /// Format Rust code with `rustfmt`.

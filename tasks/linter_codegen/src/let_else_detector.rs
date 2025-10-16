@@ -1,18 +1,22 @@
 use syn::{Expr, Pat, Stmt};
 
 use crate::{
-    CollectionResult,
+    CollectionResult, RuleRunnerData,
     node_type_set::NodeTypeSet,
     utils::{astkind_variant_from_path, is_node_kind_call},
 };
 
 /// Detects top-level `let AstKind::... = node.kind() else { return; }` patterns in the `run` method.
-pub struct LetElseDetector {
+pub struct LetElseDetector<'a> {
     node_types: NodeTypeSet,
+    rule_runner_data: &'a RuleRunnerData,
 }
 
-impl LetElseDetector {
-    pub fn from_run_func(run_func: &syn::ImplItemFn) -> Option<NodeTypeSet> {
+impl<'a> LetElseDetector<'a> {
+    pub fn from_run_func(
+        run_func: &syn::ImplItemFn,
+        rule_runner_data: &'a RuleRunnerData,
+    ) -> Option<NodeTypeSet> {
         // Only consider when the body's first statement is `let AstKind::... = node.kind() else { ... }`,
         // and the body of the `else` is just `return`.
         let block = &run_func.block;
@@ -37,14 +41,14 @@ impl LetElseDetector {
             return None;
         }
 
-        let mut detector = Self { node_types: NodeTypeSet::new() };
+        let mut detector = Self { node_types: NodeTypeSet::new(), rule_runner_data };
 
         if is_node_kind_as_call(&init.expr) {
             // If the initializer is `node.kind().as_<variant>()`, extract that variant.
             if let Expr::MethodCall(mc) = &*init.expr
-                && let Some(variant) = extract_variant_from_as_call(mc)
+                && let Some(variants) = detector.extract_variants_from_as_call(mc)
             {
-                detector.node_types.insert(variant);
+                detector.node_types.extend(variants);
             }
         } else {
             // Otherwise, the initializer is `node.kind()`, so extract from the pattern.
@@ -74,6 +78,25 @@ impl LetElseDetector {
             _ => CollectionResult::Incomplete,
         }
     }
+
+    fn extract_variants_from_as_call(&self, mc: &syn::ExprMethodCall) -> Option<NodeTypeSet> {
+        // Looking for `node.kind().as_<snake_case_variant>()`
+        let method_ident = mc.method.to_string();
+        if !method_ident.starts_with("as_") || !mc.args.is_empty() {
+            return None;
+        }
+        // Receiver must be `node.kind()`
+        if !is_node_kind_call(&mc.receiver) {
+            return None;
+        }
+        let snake_variant = &method_ident[3..]; // strip `as_`
+        if snake_variant == "member_expression_kind" {
+            return Some(self.rule_runner_data.member_expression_kinds.clone());
+        }
+        let mut node_type_set = NodeTypeSet::new();
+        node_type_set.insert(snake_to_pascal_case(snake_variant));
+        Some(node_type_set)
+    }
 }
 
 /// Checks if is `node.kind().as_some_ast_kind()`
@@ -86,23 +109,6 @@ pub fn is_node_kind_as_call(expr: &Expr) -> bool {
         return true;
     }
     false
-}
-
-fn extract_variant_from_as_call(mc: &syn::ExprMethodCall) -> Option<String> {
-    // Looking for `node.kind().as_<snake_case_variant>()`
-    let method_ident = mc.method.to_string();
-    if !method_ident.starts_with("as_") || !mc.args.is_empty() {
-        return None;
-    }
-    // Receiver must be `node.kind()`
-    if !is_node_kind_call(&mc.receiver) {
-        return None;
-    }
-    let snake_variant = &method_ident[3..]; // strip `as_`
-    if snake_variant == "member_expression_kind" {
-        return None;
-    }
-    Some(snake_to_pascal_case(snake_variant))
 }
 
 fn snake_to_pascal_case(s: &str) -> String {

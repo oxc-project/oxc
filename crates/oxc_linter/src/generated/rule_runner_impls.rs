@@ -446,7 +446,11 @@ impl RuleRunner for crate::rules::eslint::no_irregular_whitespace::NoIrregularWh
 }
 
 impl RuleRunner for crate::rules::eslint::no_iterator::NoIterator {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -572,7 +576,11 @@ impl RuleRunner for crate::rules::eslint::no_plusplus::NoPlusplus {
 }
 
 impl RuleRunner for crate::rules::eslint::no_proto::NoProto {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -1201,7 +1209,11 @@ impl RuleRunner for crate::rules::jest::no_confusing_set_timeout::NoConfusingSet
 }
 
 impl RuleRunner for crate::rules::jest::no_deprecated_functions::NoDeprecatedFunctions {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2066,7 +2078,11 @@ impl RuleRunner for crate::rules::promise::prefer_catch::PreferCatch {
 }
 
 impl RuleRunner for crate::rules::promise::spec_only::SpecOnly {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3011,7 +3027,11 @@ impl RuleRunner for crate::rules::unicorn::no_array_sort::NoArraySort {
 }
 
 impl RuleRunner for crate::rules::unicorn::no_await_expression_member::NoAwaitExpressionMember {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

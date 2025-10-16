@@ -2,6 +2,7 @@ use rustc_hash::FxHashSet;
 
 /// A set of AstKind variants, used for storing the unique node types detected in a rule,
 /// or a portion of the rule file.
+#[derive(Clone)]
 pub struct NodeTypeSet {
     node_types: FxHashSet<String>,
 }
