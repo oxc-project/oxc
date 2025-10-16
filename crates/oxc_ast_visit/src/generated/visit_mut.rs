@@ -3921,6 +3921,7 @@ pub mod walk_mut {
     ) {
         let kind = AstType::TSCallSignatureDeclaration;
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -3932,6 +3933,7 @@ pub mod walk_mut {
         if let Some(return_type) = &mut it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

@@ -1330,14 +1330,15 @@ const _: () = {
     assert!(offset_of!(TSIndexSignature, readonly) == 40);
     assert!(offset_of!(TSIndexSignature, r#static) == 41);
 
-    // Padding: 0 bytes
-    assert!(size_of::<TSCallSignatureDeclaration>() == 40);
+    // Padding: 4 bytes
+    assert!(size_of::<TSCallSignatureDeclaration>() == 48);
     assert!(align_of::<TSCallSignatureDeclaration>() == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0);
     assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 16);
     assert!(offset_of!(TSCallSignatureDeclaration, params) == 24);
     assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 32);
+    assert!(offset_of!(TSCallSignatureDeclaration, scope_id) == 40);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);
@@ -2936,13 +2937,14 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSIndexSignature, r#static) == 29);
 
     // Padding: 0 bytes
-    assert!(size_of::<TSCallSignatureDeclaration>() == 24);
+    assert!(size_of::<TSCallSignatureDeclaration>() == 28);
     assert!(align_of::<TSCallSignatureDeclaration>() == 4);
     assert!(offset_of!(TSCallSignatureDeclaration, span) == 0);
     assert!(offset_of!(TSCallSignatureDeclaration, type_parameters) == 8);
     assert!(offset_of!(TSCallSignatureDeclaration, this_param) == 12);
     assert!(offset_of!(TSCallSignatureDeclaration, params) == 16);
     assert!(offset_of!(TSCallSignatureDeclaration, return_type) == 20);
+    assert!(offset_of!(TSCallSignatureDeclaration, scope_id) == 24);
 
     assert!(size_of::<TSMethodSignatureKind>() == 1);
     assert!(align_of::<TSMethodSignatureKind>() == 1);

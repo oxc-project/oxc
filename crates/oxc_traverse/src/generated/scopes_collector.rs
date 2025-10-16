@@ -1799,16 +1799,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_call_signature_declaration(&mut self, it: &TSCallSignatureDeclaration<'a>) {
-        if let Some(type_parameters) = &it.type_parameters {
-            self.visit_ts_type_parameter_declaration(type_parameters);
-        }
-        if let Some(this_param) = &it.this_param {
-            self.visit_ts_this_parameter(this_param);
-        }
-        self.visit_formal_parameters(&it.params);
-        if let Some(return_type) = &it.return_type {
-            self.visit_ts_type_annotation(return_type);
-        }
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]

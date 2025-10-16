@@ -7046,6 +7046,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSCallSignatureDeclaration<'_> {
             this_param: CloneIn::clone_in(&self.this_param, allocator),
             params: CloneIn::clone_in(&self.params, allocator),
             return_type: CloneIn::clone_in(&self.return_type, allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -7056,6 +7057,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSCallSignatureDeclaration<'_> {
             this_param: CloneIn::clone_in_with_semantic_ids(&self.this_param, allocator),
             params: CloneIn::clone_in_with_semantic_ids(&self.params, allocator),
             return_type: CloneIn::clone_in_with_semantic_ids(&self.return_type, allocator),
+            scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
         }
     }
 }

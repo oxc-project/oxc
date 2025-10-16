@@ -2424,6 +2424,7 @@ impl<'a> Dummy<'a> for TSCallSignatureDeclaration<'a> {
             this_param: Dummy::dummy(allocator),
             params: Dummy::dummy(allocator),
             return_type: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
         }
     }
 }

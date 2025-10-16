@@ -3718,6 +3718,7 @@ pub mod walk {
     ) {
         let kind = AstKind::TSCallSignatureDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -3729,6 +3730,7 @@ pub mod walk {
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

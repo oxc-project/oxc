@@ -1027,6 +1027,7 @@ pub struct TSIndexSignature<'a> {
 }
 
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSCallSignatureDeclaration<'a> {
@@ -1037,6 +1038,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     #[estree(via = TSCallSignatureDeclarationParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[ast]

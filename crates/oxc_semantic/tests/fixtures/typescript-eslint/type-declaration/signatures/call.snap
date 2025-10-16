@@ -13,7 +13,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "symbols": []
       },
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSCallSignatureDeclaration",
+            "symbols": []
+          }
+        ],
         "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
