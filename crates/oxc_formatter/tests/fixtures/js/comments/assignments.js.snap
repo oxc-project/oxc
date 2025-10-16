@@ -9,13 +9,21 @@ const jestPackageJson =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require(jestPath);
 
-==================== Output ====================
-var longlonglonglonglonglong =
-  /*#__PURE__*/ _interopDefaultLegacy(aaaaaaaaaaaaaaa);
-var short = /*#__PURE__*/ _interopDefaultLegacy(b);
+{
+  sourcemap =
+  /** @type {'inline' | 'hidden' | 'sourcemap'} */ (
+      process.env.WORKER_MODE
+    ) || sourcemap;
+}
 
-const jestPackageJson =
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require(jestPath);
+class A {
+  #testerConfig;
+  constructor() {
+    let basePath: string | undefined =
+      this.#testerConfig.languageOptions.parserOptions?.tsconfigRootDir;
+  }
+}
+
+==================== Output ====================
 
 ===================== End =====================

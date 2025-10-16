@@ -644,7 +644,9 @@ fn should_break_after_operator<'a>(
     let comments = f.comments();
     let source_text = f.source_text();
     for comment in comments.comments_before(right.span().start) {
-        if source_text.lines_after(comment.span.end) > 0 {
+        if source_text.lines_after(comment.span.end) > 0
+            || f.source_text().has_newline_before(comment.span.start)
+        {
             return true;
         }
 
@@ -873,6 +875,10 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
                 node.object().as_ast_nodes()
             }
             AstNodes::ComputedMemberExpression(node) => {
+                is_chain = true;
+                node.object().as_ast_nodes()
+            }
+            AstNodes::PrivateFieldExpression(node) => {
                 is_chain = true;
                 node.object().as_ast_nodes()
             }
