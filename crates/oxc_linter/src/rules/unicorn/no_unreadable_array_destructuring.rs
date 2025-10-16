@@ -54,22 +54,24 @@ fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Opti
 
 impl Rule for NoUnreadableArrayDestructuring {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ArrayPattern(array_pattern) = node.kind()
-            && is_unreadable_array_destructuring(
-                &array_pattern.elements,
-                array_pattern.rest.as_ref(),
-            )
-        {
-            ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
-        }
-
-        if let AstKind::ArrayAssignmentTarget(array_pattern) = node.kind()
-            && is_unreadable_array_destructuring(
-                &array_pattern.elements,
-                array_pattern.rest.as_ref(),
-            )
-        {
-            ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
+        match node.kind() {
+            AstKind::ArrayPattern(array_pattern)
+                if is_unreadable_array_destructuring(
+                    &array_pattern.elements,
+                    array_pattern.rest.as_ref(),
+                ) =>
+            {
+                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
+            }
+            AstKind::ArrayAssignmentTarget(array_pattern)
+                if is_unreadable_array_destructuring(
+                    &array_pattern.elements,
+                    array_pattern.rest.as_ref(),
+                ) =>
+            {
+                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
+            }
+            _ => {}
         }
     }
 }

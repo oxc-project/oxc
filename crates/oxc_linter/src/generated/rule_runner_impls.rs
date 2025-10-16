@@ -3228,7 +3228,8 @@ impl RuleRunner for crate::rules::unicorn::no_unnecessary_slice_end::NoUnnecessa
 impl RuleRunner
     for crate::rules::unicorn::no_unreadable_array_destructuring::NoUnreadableArrayDestructuring
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrayAssignmentTarget, AstType::ArrayPattern]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3310,7 +3311,12 @@ impl RuleRunner for crate::rules::unicorn::prefer_add_event_listener::PreferAddE
 }
 
 impl RuleRunner for crate::rules::unicorn::prefer_array_find::PreferArrayFind {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AssignmentExpression,
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+        AstType::VariableDeclarator,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
