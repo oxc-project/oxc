@@ -1,0 +1,28 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+(
+  options,
+  { log, logger, messenger }: {
+    log: LogFun;
+    logger: Logger;
+    messenger: Messenger;
+  }) => {
+
+}
+==================== Output ====================
+(
+  options,
+  {
+    log,
+    logger,
+    messenger,
+  }: {
+    log: LogFun;
+    logger: Logger;
+    messenger: Messenger;
+  },
+) => {};
+
+===================== End =====================

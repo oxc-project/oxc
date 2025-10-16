@@ -9,7 +9,6 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     write,
-    write::parameters::{get_this_param, should_hug_function_parameters},
 };
 
 use super::{
@@ -54,7 +53,9 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
-            Self::ObjectPattern(node) => self.is_hug_parameter(f),
+            Self::ObjectPattern(node) => {
+                matches!(node.parent, AstNodes::FormalParameter(_))
+            }
             Self::ObjectAssignmentTarget(node) => false,
         }
     }
@@ -111,17 +112,6 @@ impl<'a> ObjectPatternLike<'a, '_> {
                 AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_)
             ),
         }
-    }
-
-    fn is_hug_parameter(&self, f: &Formatter<'_, 'a>) -> bool {
-        matches!(self, Self::ObjectPattern(node) if {
-            matches!(node.parent, AstNodes::FormalParameter(param) if {
-                matches!(param.parent, AstNodes::FormalParameters(params) if {
-                    let this_param = get_this_param(param.parent);
-                    should_hug_function_parameters(params, this_param, false, f)
-                })
-            })
-        })
     }
 
     fn layout(&self, f: &Formatter<'_, 'a>) -> ObjectPatternLayout {

@@ -111,9 +111,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
             write!(f, self.pattern())
         });
 
+        let is_hug_parameter = matches!(self.parent, AstNodes::FormalParameters(params) if {
+            let this_param = get_this_param(self.parent);
+            let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent {
+                can_avoid_parentheses(arrow, f)
+            } else {
+                false
+            };
+            should_hug_function_parameters(params, this_param, parentheses_not_needed, f)
+        });
+
         let decorators = self.decorators();
-        if decorators.is_empty() {
-            write!(f, [decorators, content])
+
+        if is_hug_parameter && decorators.is_empty() {
+            write!(f, [&content])
+        } else if decorators.is_empty() {
+            write!(f, [group(&content)])
         } else {
             write!(f, [group(&decorators), group(&content)])
         }
