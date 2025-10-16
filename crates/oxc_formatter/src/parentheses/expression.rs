@@ -99,10 +99,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
             }
             name => {
                 // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/needs-parens.js#L123-L133>
-                matches!(
-                    self.parent,
-                    AstNodes::TSSatisfiesExpression(_) | AstNodes::TSAsExpression(_)
-                ) && matches!(
+                if !matches!(
                     name,
                     "await"
                         | "interface"
@@ -112,6 +109,29 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                         | "component"
                         | "hook"
                         | "type"
+                ) {
+                    return false;
+                }
+
+                let mut parent = self.parent;
+                while matches!(
+                    parent,
+                    AstNodes::TSSatisfiesExpression(_) | AstNodes::TSAsExpression(_)
+                ) {
+                    parent = parent.parent();
+                }
+
+                // Early return if the parent isn't a `TSSatisfiesExpression` or `TSAsExpression`
+                if core::ptr::eq(self.parent, parent) {
+                    return false;
+                }
+
+                matches!(
+                    parent, AstNodes::ExpressionStatement(stmt) if
+                    !matches!(
+                        stmt.parent.parent(), AstNodes::ArrowFunctionExpression(arrow)
+                        if arrow.expression()
+                    )
                 )
             }
         }
