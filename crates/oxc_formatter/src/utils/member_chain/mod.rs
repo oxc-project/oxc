@@ -94,7 +94,13 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                 has_computed_property ||
                 is_factory(&identifier.name) ||
                 // If an identifier has a name that is shorter than the tab with, then we join it with the "head"
-                (matches!(parent, AstNodes::ExpressionStatement(_))
+                (matches!(parent, AstNodes::ExpressionStatement(stmt) if {
+                     if let AstNodes::ArrowFunctionExpression(arrow) = stmt.parent.parent() {
+                        !arrow.expression
+                     } else {
+                        true
+                     }
+                })
                     && has_short_name(&identifier.name, f.options().indent_width.value()))
             } else {
                 matches!(node.as_ref(), Expression::ThisExpression(_))
