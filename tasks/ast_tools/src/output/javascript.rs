@@ -5,10 +5,10 @@ use std::{
 
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::Allocator;
 use oxc_ast::{
     AstBuilder,
-    ast::{Expression, Program, Statement, UnaryOperator},
+    ast::{Expression, Program, UnaryOperator},
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::Codegen;
@@ -172,60 +172,41 @@ pub trait VariantGenerator<const FLAG_COUNT: usize> {
 
     /// Generate variants.
     fn generate(&mut self, code: &str) -> Vec<String> {
-        // Add `const` statements to top of file
-        let input_code = code;
-        let mut code = String::new();
+        // Calculate length of code including flags consts.
+        // Calculation of `flags_len` is const-folded.
+        let mut flags_len = 1;
         for flag_name in Self::FLAG_NAMES {
-            write_it!(code, "const {flag_name} = false;\n");
+            flags_len += "const ".len() + flag_name.len() + " = false;\n".len();
         }
-        code.push('\n');
-        code.push_str(input_code);
+        let code_len = code.len() + flags_len;
 
-        // Parse
-        let allocator = Allocator::new();
-        let mut program = parse_js(&code, &allocator);
+        // Generate variants
+        let mut allocator = Allocator::new();
+        let input_code = code;
 
-        // Get details of variants.
-        let mut variants = self.variants();
+        let variants = self.variants();
+        variants
+            .into_iter()
+            .map(|flags| {
+                // Add flags consts to top of file
+                let mut code = String::with_capacity(code_len);
+                for (i, &flag_name) in Self::FLAG_NAMES.iter().enumerate() {
+                    let value = if flags[i] { "true" } else { "false" };
+                    write_it!(code, "const {flag_name} = {value};\n");
+                }
+                code.push('\n');
+                code.push_str(input_code);
 
-        // Generate variants.
-        // Handle last separately to avoid cloning AST 1 more time than necessary.
-        let mut print_allocator = Allocator::new();
-        let mut outputs = Vec::with_capacity(variants.len());
+                // Parse, preprocess, minify, and print
+                let mut program = parse_js(&code, &allocator);
+                self.pre_process_variant(&mut program, flags, &allocator);
+                code = print_minified(&mut program, &allocator);
 
-        let Some(last_variant) = variants.pop() else { return outputs };
+                allocator.reset();
 
-        for flags in variants {
-            let mut program = program.clone_in(&print_allocator);
-            outputs.push(self.generate_variant(&mut program, flags, &print_allocator));
-            print_allocator.reset();
-        }
-
-        outputs.push(self.generate_variant(&mut program, last_variant, &print_allocator));
-
-        outputs
-    }
-
-    /// Generate variants for a set of flags.
-    fn generate_variant<'a>(
-        &mut self,
-        program: &mut Program<'a>,
-        flags: [bool; FLAG_COUNT],
-        allocator: &'a Allocator,
-    ) -> String {
-        for (stmt_index, value) in flags.into_iter().enumerate() {
-            let stmt = &mut program.body[stmt_index];
-            let Statement::VariableDeclaration(var_decl) = stmt else { unreachable!() };
-            let declarator = &mut var_decl.declarations[0];
-            let Some(Expression::BooleanLiteral(bool_lit)) = &mut declarator.init else {
-                unreachable!()
-            };
-            bool_lit.value = value;
-        }
-
-        self.pre_process_variant(program, flags, allocator);
-
-        print_minified(program, allocator)
+                code
+            })
+            .collect()
     }
 }
 
