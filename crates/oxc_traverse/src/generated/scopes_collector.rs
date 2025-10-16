@@ -831,7 +831,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_with_statement(&mut self, it: &WithStatement<'a>) {
         self.visit_expression(&it.object);
-        self.visit_statement(&it.body);
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]

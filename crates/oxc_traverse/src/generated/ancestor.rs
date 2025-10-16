@@ -5649,6 +5649,7 @@ impl<'a, 't> GetAddress for ReturnStatementWithoutArgument<'a, 't> {
 pub(crate) const OFFSET_WITH_STATEMENT_SPAN: usize = offset_of!(WithStatement, span);
 pub(crate) const OFFSET_WITH_STATEMENT_OBJECT: usize = offset_of!(WithStatement, object);
 pub(crate) const OFFSET_WITH_STATEMENT_BODY: usize = offset_of!(WithStatement, body);
+pub(crate) const OFFSET_WITH_STATEMENT_SCOPE_ID: usize = offset_of!(WithStatement, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -5666,6 +5667,14 @@ impl<'a, 't> WithStatementWithoutObject<'a, 't> {
     #[inline]
     pub fn body(self) -> &'t Statement<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_BODY) as *const Statement<'a>) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -5693,6 +5702,14 @@ impl<'a, 't> WithStatementWithoutBody<'a, 't> {
     pub fn object(self) -> &'t Expression<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_OBJECT) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_WITH_STATEMENT_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }

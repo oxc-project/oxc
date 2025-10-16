@@ -3201,6 +3201,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for WithStatement<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             object: CloneIn::clone_in(&self.object, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -3209,6 +3210,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for WithStatement<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             object: CloneIn::clone_in_with_semantic_ids(&self.object, allocator),
             body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
+            scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
         }
     }
 }

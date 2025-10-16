@@ -461,12 +461,13 @@ const _: () = {
     assert!(offset_of!(ReturnStatement, span) == 0);
     assert!(offset_of!(ReturnStatement, argument) == 8);
 
-    // Padding: 0 bytes
-    assert!(size_of::<WithStatement>() == 40);
+    // Padding: 4 bytes
+    assert!(size_of::<WithStatement>() == 48);
     assert!(align_of::<WithStatement>() == 8);
     assert!(offset_of!(WithStatement, span) == 0);
     assert!(offset_of!(WithStatement, object) == 8);
     assert!(offset_of!(WithStatement, body) == 24);
+    assert!(offset_of!(WithStatement, scope_id) == 40);
 
     // Padding: 4 bytes
     assert!(size_of::<SwitchStatement>() == 56);
@@ -2066,11 +2067,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ReturnStatement, argument) == 8);
 
     // Padding: 0 bytes
-    assert!(size_of::<WithStatement>() == 24);
+    assert!(size_of::<WithStatement>() == 28);
     assert!(align_of::<WithStatement>() == 4);
     assert!(offset_of!(WithStatement, span) == 0);
     assert!(offset_of!(WithStatement, object) == 8);
     assert!(offset_of!(WithStatement, body) == 16);
+    assert!(offset_of!(WithStatement, scope_id) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<SwitchStatement>() == 36);

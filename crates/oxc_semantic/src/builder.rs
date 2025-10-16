@@ -1678,6 +1678,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.visit_expression(&stmt.object);
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         /* cfg - body basic block */
         #[cfg(feature = "cfg")]
@@ -1697,6 +1698,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        self.leave_scope();
         self.leave_node(kind);
     }
 

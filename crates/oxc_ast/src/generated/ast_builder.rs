@@ -3742,6 +3742,28 @@ impl<'a> AstBuilder<'a> {
         Statement::WithStatement(self.alloc_with_statement(span, object, body))
     }
 
+    /// Build a [`Statement::WithStatement`] with `scope_id`.
+    ///
+    /// This node contains a [`WithStatement`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `object`
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn statement_with_with_scope_id(
+        self,
+        span: Span,
+        object: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Statement<'a> {
+        Statement::WithStatement(
+            self.alloc_with_statement_with_scope_id(span, object, body, scope_id),
+        )
+    }
+
     /// Build a [`Directive`].
     ///
     /// ## Parameters
@@ -5047,7 +5069,7 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> WithStatement<'a> {
-        WithStatement { span, object, body }
+        WithStatement { span, object, body, scope_id: Default::default() }
     }
 
     /// Build a [`WithStatement`], and store it in the memory arena.
@@ -5067,6 +5089,48 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
     ) -> Box<'a, WithStatement<'a>> {
         Box::new_in(self.with_statement(span, object, body), self.allocator)
+    }
+
+    /// Build a [`WithStatement`] with `scope_id`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_with_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `object`
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn with_statement_with_scope_id(
+        self,
+        span: Span,
+        object: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> WithStatement<'a> {
+        WithStatement { span, object, body, scope_id: Cell::new(Some(scope_id)) }
+    }
+
+    /// Build a [`WithStatement`] with `scope_id`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::with_statement_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `object`
+    /// * `body`
+    /// * `scope_id`
+    #[inline]
+    pub fn alloc_with_statement_with_scope_id(
+        self,
+        span: Span,
+        object: Expression<'a>,
+        body: Statement<'a>,
+        scope_id: ScopeId,
+    ) -> Box<'a, WithStatement<'a>> {
+        Box::new_in(self.with_statement_with_scope_id(span, object, body, scope_id), self.allocator)
     }
 
     /// Build a [`SwitchStatement`].

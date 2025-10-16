@@ -2256,7 +2256,9 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_statement(&it.body);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

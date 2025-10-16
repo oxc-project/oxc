@@ -1384,12 +1384,15 @@ pub struct ReturnStatement<'a> {
 
 /// With Statement
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct WithStatement<'a> {
     pub span: Span,
     pub object: Expression<'a>,
+    #[scope(enter_before)]
     pub body: Statement<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// Switch Statement

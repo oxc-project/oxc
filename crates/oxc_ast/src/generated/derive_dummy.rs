@@ -855,6 +855,7 @@ impl<'a> Dummy<'a> for WithStatement<'a> {
             span: Dummy::dummy(allocator),
             object: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
         }
     }
 }

@@ -2314,7 +2314,9 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_statement(&mut it.body);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
