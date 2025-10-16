@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, parent = null, getLoc;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, astId = 0, parent = null, getLoc;
 
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
@@ -38,13 +38,33 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInpu
 
 function deserializeProgram(pos) {
   let end = deserializeU32(pos + 4),
+    ref_uint32 = uint32,
+    ref_uint8 = uint8,
+    ref_sourceText = sourceText,
+    localAstId = ++astId,
     program = parent = {
       __proto__: NodeProto,
       type: 'Program',
       body: null,
       sourceType: deserializeModuleKind(pos + 125),
       hashbang: null,
-      comments: deserializeVecComment(pos + 24),
+      get comments() {
+        if (localAstId !== astId) {throw Error(
+            'The AST being accessed has already been cleaned up. Please ensure that the plugin works synchronously.',
+          );}
+        // restore buffers
+        uint32 = ref_uint32;
+        uint8 = ref_uint8;
+        sourceText = ref_sourceText;
+        // deserialize the comments
+        let c = deserializeVecComment(pos + 24);
+        // drop the references
+        ref_uint32 = void 0;
+        ref_uint8 = void 0;
+        ref_sourceText = void 0;
+        Object.defineProperty(this, 'comments', { value: c });
+        return c;
+      },
       start: 0,
       end,
       range: [0, end],

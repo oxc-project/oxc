@@ -124,12 +124,40 @@ impl Program<'_> {
     const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
         end = DESER[u32](POS_OFFSET.span.end);
 
+
+    /* IF LINTER */
+    // Buffers will be cleaned up after the main program is deserialized.
+    // We hold references here in case the comments need to be later accessed.
+    let ref_uint32 = uint32;
+    let ref_uint8 = uint8;
+    let ref_sourceText = sourceText;
+    const localAstId = ++astId;
+    /* END_IF */
+
     const program = parent = {
         type: 'Program',
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: null,
-        ...(COMMENTS && { comments: DESER[Vec<Comment>](POS_OFFSET.comments) }),
+        /* IF LINTER */
+        get comments() {
+            if (localAstId !== astId) {
+                throw new Error(`The AST being accessed has already been cleaned up. Please ensure that the plugin works synchronously.`);
+            }
+            // restore buffers
+            uint32 = ref_uint32;
+            uint8 = ref_uint8;
+            sourceText = ref_sourceText;
+            // deserialize the comments
+            const c = DESER[Vec<Comment>](POS_OFFSET.comments);
+            // drop the references
+            ref_uint32 = undefined;
+            ref_uint8 = undefined;
+            ref_sourceText = undefined;
+            Object.defineProperty(this, 'comments', { value: c });
+            return c;
+        },
+        /* END_IF */
         start,
         end,
         ...(RANGE && { range: [start, end] }),
