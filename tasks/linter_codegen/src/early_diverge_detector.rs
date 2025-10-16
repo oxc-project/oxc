@@ -34,6 +34,17 @@ impl EarlyDivergeDetector {
             }
             return Some(detector.node_types);
         }
+        // Stand-alone `match node.kind() { ... }` that diverges
+        else if let Stmt::Expr(Expr::Match(match_expr), _) = stmt
+            && is_node_kind_call(&match_expr.expr)
+        {
+            let mut detector = Self { node_types: NodeTypeSet::new() };
+            let result = detector.extract_variants_from_diverging_match_expr(match_expr);
+            if result == CollectionResult::Incomplete || detector.node_types.is_empty() {
+                return None;
+            }
+            return Some(detector.node_types);
+        }
 
         None
     }
@@ -71,6 +82,26 @@ impl EarlyDivergeDetector {
                     return CollectionResult::Complete;
                 }
                 CollectionResult::Incomplete
+            }
+            Pat::Or(or) => {
+                let mut overall_result = CollectionResult::Complete;
+                for case in &or.cases {
+                    let result = match case {
+                        Pat::TupleStruct(ts) => {
+                            if let Some(variant) = astkind_variant_from_path(&ts.path) {
+                                self.node_types.insert(variant);
+                                CollectionResult::Complete
+                            } else {
+                                CollectionResult::Incomplete
+                            }
+                        }
+                        _ => CollectionResult::Incomplete,
+                    };
+                    if result == CollectionResult::Incomplete {
+                        overall_result = CollectionResult::Incomplete;
+                    }
+                }
+                overall_result
             }
             _ => CollectionResult::Incomplete,
         }

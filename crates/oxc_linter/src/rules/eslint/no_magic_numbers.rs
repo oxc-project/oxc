@@ -289,8 +289,9 @@ impl Rule for NoMagicNumbers {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !matches!(node.kind(), AstKind::NumericLiteral(_) | AstKind::BigIntLiteral(_)) {
-            return;
+        match node.kind() {
+            AstKind::NumericLiteral(_) | AstKind::BigIntLiteral(_) => {}
+            _ => return,
         }
 
         let nodes = ctx.nodes();

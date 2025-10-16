@@ -145,8 +145,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !matches!(node.kind(), AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_)) {
-            return;
+        match node.kind() {
+            AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {}
+            _ => return,
         }
 
         if check_useless_spread_in_list(node, ctx) {

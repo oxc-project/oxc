@@ -725,9 +725,6 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
     if !matches!(node.kind(), AstKind::ObjectProperty(_)) {
         return false;
     }
-    if !matches!(node.kind(), AstKind::ObjectProperty(_)) {
-        return false;
-    }
     let parent = ctx.nodes().parent_node(node.id());
     if !matches!(parent.kind(), AstKind::ObjectExpression(_)) {
         return false;

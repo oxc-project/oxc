@@ -484,7 +484,8 @@ impl RuleRunner for crate::rules::eslint::no_loss_of_precision::NoLossOfPrecisio
 }
 
 impl RuleRunner for crate::rules::eslint::no_magic_numbers::NoMagicNumbers {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::BigIntLiteral, AstType::NumericLiteral]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2307,7 +2308,8 @@ impl RuleRunner for crate::rules::react::react_in_jsx_scope::ReactInJsxScope {
 }
 
 impl RuleRunner for crate::rules::react::require_render_return::RequireRenderReturn {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2939,7 +2941,8 @@ impl RuleRunner for crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces 
 }
 
 impl RuleRunner for crate::rules::unicorn::error_message::ErrorMessage {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3270,7 +3273,8 @@ impl RuleRunner
 }
 
 impl RuleRunner for crate::rules::unicorn::no_useless_spread::NoUselessSpread {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ArrayExpression, AstType::ObjectExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

@@ -70,9 +70,11 @@ declare_oxc_lint!(
 
 impl Rule for RequireRenderReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
-            return;
+        match node.kind() {
+            AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {}
+            _ => return,
         }
+
         let parent = ctx.nodes().parent_node(node.id());
         if !is_render_fn(parent) {
             return;
