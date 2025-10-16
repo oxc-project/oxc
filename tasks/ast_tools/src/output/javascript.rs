@@ -3,7 +3,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use lazy_regex::{Captures, Lazy, Regex, lazy_regex};
+use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
@@ -197,6 +197,9 @@ pub trait VariantGenerator<const FLAG_COUNT: usize>: Sync {
                 code.push('\n');
                 code.push_str(input_code);
 
+                // Replace flags comment blocks
+                code = replace_flag_comments(&code, flags, &Self::FLAG_NAMES);
+
                 // Parse, preprocess, minify, and print
                 let allocator = Allocator::new();
                 let mut program = parse_js(&code, &allocator);
@@ -213,6 +216,45 @@ pub fn parse_js<'a>(source_text: &'a str, allocator: &'a Allocator) -> Program<'
     let parser_ret = Parser::new(allocator, source_text, source_type).parse();
     assert!(parser_ret.errors.is_empty(), "Parse errors: {:#?}", parser_ret.errors);
     parser_ret.program
+}
+
+/// Replace `/* IF <FLAG> */ ... /* END_IF */` and `/* IF !<FLAG> */ ... /* END_IF */` comment blocks,
+/// depending on provided `flags`.
+fn replace_flag_comments<const FLAG_COUNT: usize>(
+    code: &str,
+    flags: [bool; FLAG_COUNT],
+    flag_names: &[&str; FLAG_COUNT],
+) -> String {
+    FLAG_COMMENT_REGEX.replace_all(code, FlagCommentReplacer { flags, flag_names }).into_owned()
+}
+
+static FLAG_COMMENT_REGEX: Lazy<Regex> =
+    lazy_regex!(r"/\*\s*IF\s+(!?)([a-zA-Z_]+)\s*\*/([\s\S]*?)/\*\s*END_IF\s*\*/");
+
+struct FlagCommentReplacer<'n, const FLAG_COUNT: usize> {
+    flags: [bool; FLAG_COUNT],
+    flag_names: &'n [&'n str; FLAG_COUNT],
+}
+
+impl<const FLAG_COUNT: usize> Replacer for FlagCommentReplacer<'_, FLAG_COUNT> {
+    fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
+        assert_eq!(caps.len(), 4);
+        let flag_name = &caps[2];
+        let flag_index = self.flag_names.iter().position(|&f| f == flag_name);
+
+        if let Some(flag_index) = flag_index {
+            let enable = caps[1].is_empty();
+            if self.flags[flag_index] == enable {
+                // Flag enabled. Remove comments and output text within the comment block.
+                dst.push_str(&caps[3]);
+            } else {
+                // Flag disabled. Remove everything between and including the comments.
+            }
+        } else {
+            // Unknown flag. Leave as is.
+            dst.push_str(&caps[0]);
+        }
+    }
 }
 
 /// Print AST with minified syntax.
