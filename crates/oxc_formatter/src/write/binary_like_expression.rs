@@ -165,15 +165,18 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     false
                 }
             }
-            AstNodes::ConditionalExpression(conditional) => !matches!(
-                parent.parent(),
-                AstNodes::ReturnStatement(_)
-                    | AstNodes::ThrowStatement(_)
-                    | AstNodes::CallExpression(_)
-                    | AstNodes::ImportExpression(_)
-                    | AstNodes::Argument(_)
-                    | AstNodes::MetaProperty(_)
-            ),
+            AstNodes::ConditionalExpression(conditional) => {
+                !matches!(
+                    parent.parent(),
+                    AstNodes::ReturnStatement(_)
+                        | AstNodes::ThrowStatement(_)
+                        | AstNodes::CallExpression(_)
+                        | AstNodes::ImportExpression(_)
+                        | AstNodes::MetaProperty(_)
+                    ) &&
+                    // TODO(prettier): Why not include `NewExpression` ???
+                    !matches!(parent.parent(), AstNodes::Argument(argument) if matches!(argument.parent, AstNodes::CallExpression(_)))
+            }
             _ => false,
         }
     }
