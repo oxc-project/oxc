@@ -530,7 +530,13 @@ impl RuleRunner for crate::rules::eslint::no_new::NoNew {
 }
 
 impl RuleRunner for crate::rules::eslint::no_new_func::NoNewFunc {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+        AstType::NewExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -1069,7 +1075,12 @@ impl RuleRunner for crate::rules::import::no_anonymous_default_export::NoAnonymo
 }
 
 impl RuleRunner for crate::rules::import::no_commonjs::NoCommonjs {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2274,7 +2285,12 @@ impl RuleRunner for crate::rules::react::no_set_state::NoSetState {
 }
 
 impl RuleRunner for crate::rules::react::no_string_refs::NoStringRefs {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::JSXAttribute,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3487,7 +3503,13 @@ impl RuleRunner for crate::rules::unicorn::prefer_node_protocol::PreferNodeProto
 }
 
 impl RuleRunner for crate::rules::unicorn::prefer_number_properties::PreferNumberProperties {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ComputedMemberExpression,
+        AstType::IdentifierReference,
+        AstType::PrivateFieldExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

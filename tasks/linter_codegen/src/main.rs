@@ -131,7 +131,7 @@ fn detect_top_level_node_types(
         return Some(node_types);
     }
 
-    let node_types = MatchDetector::from_run_func(run_func);
+    let node_types = MatchDetector::from_run_func(run_func, rule_runner_data);
     if let Some(node_types) = node_types
         && !node_types.is_empty()
     {
