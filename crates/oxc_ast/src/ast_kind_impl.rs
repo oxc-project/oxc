@@ -415,7 +415,6 @@ impl AstKind<'_> {
             Self::ObjectProperty(p) => {
                 format!("ObjectProperty({})", p.key.name().unwrap_or(COMPUTED)).into()
             }
-            Self::Argument(_) => "Argument".into(),
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),

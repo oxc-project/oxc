@@ -280,18 +280,11 @@ fn is_promise_resolve_with_value(expr: &Expression, ctx: &LintContext) -> Option
                 // IMO: This is a fault of the original rule design...
                 for resolve_ref in ctx.scoping().get_resolved_references(ident.symbol_id()) {
                     // Check if `resolve` is called with value
-                    match ctx.nodes().parent_kind(resolve_ref.node_id()) {
-                        // `resolve(foo)`
-                        AstKind::CallExpression(call_expr) => {
-                            if !call_expr.arguments.is_empty() {
-                                return Some(true);
-                            }
-                        }
-                        // `foo(resolve)`
-                        AstKind::Argument(_) => {
-                            return Some(true);
-                        }
-                        _ => {}
+                    if let AstKind::CallExpression(call_expr) =
+                        ctx.nodes().parent_kind(resolve_ref.node_id())
+                        && !call_expr.arguments.is_empty()
+                    {
+                        return Some(true);
                     }
                 }
                 None
