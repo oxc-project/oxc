@@ -165,14 +165,9 @@ impl Rule for ConstructorSuper {
         let Some(constructor_func_node) = constructor_func_node else { return };
         let constructor_block_id = ctx.nodes().cfg_id(constructor_func_node.id());
 
-        // Check AST for LogicalExpression with super() (CFG doesn't handle these properly)
-        let has_conditional_super =
-            Self::has_logical_expression_super(&body.statements, node.id(), ctx);
-
-        let (super_call_counts, super_call_spans, has_conditional_super_from_cfg) =
+        let (super_call_counts, super_call_spans) =
             Self::find_super_calls_in_cfg(cfg, constructor_block_id, node.id(), ctx);
 
-        let has_conditional_super = has_conditional_super || has_conditional_super_from_cfg;
         match super_class_type {
             SuperClassType::None | SuperClassType::Invalid => {
                 for &span in &super_call_spans {
@@ -193,12 +188,6 @@ impl Rule for ConstructorSuper {
                 }
             }
             SuperClassType::Valid => {
-                // Conditional super() (from LogicalExpression) can't be in all paths
-                if has_conditional_super {
-                    ctx.diagnostic(missing_super_some(constructor.span));
-                    return;
-                }
-
                 if super_call_counts.is_empty() {
                     ctx.diagnostic(missing_super_all(constructor.span));
                     return;
@@ -258,60 +247,6 @@ impl Rule for ConstructorSuper {
 }
 
 impl ConstructorSuper {
-    /// Check if constructor body contains a LogicalExpression with super()
-    /// CFG doesn't create proper instructions for logical expressions, so we check AST
-    /// Returns true only if super() appears in a truly conditional position (not both sides)
-    fn has_logical_expression_super(
-        statements: &[Statement],
-        _class_node_id: NodeId,
-        _ctx: &LintContext,
-    ) -> bool {
-        fn check_expression(expr: &Expression) -> bool {
-            match expr {
-                Expression::LogicalExpression(logical) => {
-                    let has_left_super = if let Expression::CallExpression(call) = &logical.left {
-                        matches!(&call.callee, Expression::Super(_))
-                    } else {
-                        check_expression(&logical.left)
-                    };
-
-                    let has_right_super = if let Expression::CallExpression(call) = &logical.right {
-                        matches!(&call.callee, Expression::Super(_))
-                    } else {
-                        check_expression(&logical.right)
-                    };
-
-                    // Only flag as conditional if super() is on exactly one side
-                    // If both sides have super(), the CFG will catch it as duplicate
-                    (has_left_super && !has_right_super) || (!has_left_super && has_right_super)
-                }
-                Expression::ConditionalExpression(cond) => {
-                    check_expression(&cond.test)
-                        || check_expression(&cond.consequent)
-                        || check_expression(&cond.alternate)
-                }
-                Expression::ParenthesizedExpression(paren) => check_expression(&paren.expression),
-                _ => false,
-            }
-        }
-
-        fn check_statement(stmt: &Statement) -> bool {
-            match stmt {
-                Statement::ExpressionStatement(expr_stmt) => {
-                    check_expression(&expr_stmt.expression)
-                }
-                Statement::BlockStatement(block) => block.body.iter().any(|s| check_statement(s)),
-                Statement::IfStatement(if_stmt) => {
-                    check_statement(&if_stmt.consequent)
-                        || if_stmt.alternate.as_ref().is_some_and(|alt| check_statement(alt))
-                }
-                _ => false,
-            }
-        }
-
-        statements.iter().any(|stmt| check_statement(stmt))
-    }
-
     /// Classify the superclass expression to determine if super() is needed/valid
     fn classify_super_class(super_class: Option<&Expression>) -> SuperClassType {
         match super_class {
@@ -328,16 +263,15 @@ impl ConstructorSuper {
     }
 
     /// Find all super() calls in CFG reachable from constructor
-    /// Returns (block counts, all spans, has conditional super)
+    /// Returns (block counts, all spans)
     fn find_super_calls_in_cfg(
         cfg: &ControlFlowGraph,
         constructor_block: BlockNodeId,
         class_node_id: NodeId,
         ctx: &LintContext,
-    ) -> (FxHashMap<BlockNodeId, usize>, Vec<Span>, bool) {
+    ) -> (FxHashMap<BlockNodeId, usize>, Vec<Span>) {
         let mut super_call_counts = FxHashMap::default();
         let mut super_call_spans = Vec::new();
-        let mut has_conditional_super = false;
 
         neighbors_filtered_by_edge_weight(
             &cfg.graph,
@@ -413,8 +347,11 @@ impl ConstructorSuper {
                                         record_super(span);
                                     }
                                 }
-                                // Logical expressions need AST detection for proper path analysis
-                                Expression::LogicalExpression(logical) => {
+                                // Special case: super() || super() where both execute
+                                // (super() returns undefined which is falsy, so right side always runs)
+                                Expression::LogicalExpression(logical)
+                                    if matches!(logical.operator, LogicalOperator::Or) =>
+                                {
                                     let check_super = |expr: &Expression| -> Option<Span> {
                                         if let Expression::CallExpression(call) = expr
                                             && matches!(&call.callee, Expression::Super(_))
@@ -428,20 +365,14 @@ impl ConstructorSuper {
                                     let left_span = check_super(&logical.left);
                                     let right_span = check_super(&logical.right);
 
-                                    // Only flag as conditional if super() is on exactly one side
-                                    // If both sides have super(), it's a duplicate (both execute for ||)
+                                    // If both sides have super() in ||, both will execute (duplicate)
                                     if left_span.is_some() && right_span.is_some() {
-                                        // Both sides have super() - record both as duplicates
                                         if let Some(span) = left_span {
                                             record_super(span);
                                         }
                                         if let Some(span) = right_span {
                                             record_super(span);
                                         }
-                                    } else if let Some(span) = left_span.or(right_span) {
-                                        // Only one side has super() - truly conditional
-                                        has_conditional_super = true;
-                                        record_super(span);
                                     }
                                 }
                                 _ => {}
@@ -455,7 +386,7 @@ impl ConstructorSuper {
             },
         );
 
-        (super_call_counts, super_call_spans, has_conditional_super)
+        (super_call_counts, super_call_spans)
     }
 
     /// Analyze CFG paths to determine super() call patterns
