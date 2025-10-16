@@ -12,15 +12,13 @@ expect(genCode(createVNodeCall(null, `"div"`, mockProps)))
     `)
 
 ==================== Output ====================
-expect(
-  genCode(createVNodeCall(null, `"div"`, mockProps)),
-).toMatchInlineSnapshot(`
+expect(genCode(createVNodeCall(null, `"div"`, mockProps)))
+  .toMatchInlineSnapshot(`
   `);
 
 expect(genCode(createVNodeCall(null, `"div"`, mockProps)))
   .toMatchInlineSnapshot(`
-  `)
-  .toMatchInlineSnapshot(`
+  `).toMatchInlineSnapshot(`
     `);
 
 ===================== End =====================

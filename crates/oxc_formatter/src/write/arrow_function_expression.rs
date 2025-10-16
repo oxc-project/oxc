@@ -170,21 +170,9 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                             true
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-                        Expression::TemplateLiteral(template) => {
-                            is_multiline_template_starting_on_same_line(
-                                template.span.start,
-                                template,
-                                f.source_text(),
-                            )
+                        _ => {
+                            is_multiline_template_starting_on_same_line(expression, f.source_text())
                         }
-                        Expression::TaggedTemplateExpression(template) => {
-                            is_multiline_template_starting_on_same_line(
-                                template.span.start,
-                                &template.quasi,
-                                f.source_text(),
-                            )
-                        }
-                        _ => false,
                     }
                 });
 
@@ -392,10 +380,15 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 ///
 /// Returns `false` because the template isn't on the same line as the '+' token.
 pub fn is_multiline_template_starting_on_same_line(
-    start: u32,
-    template: &TemplateLiteral,
+    expression: &Expression,
     source_text: SourceText,
 ) -> bool {
+    let (start, template) = match expression {
+        Expression::TemplateLiteral(template) => (template.span.start, template.as_ref()),
+        Expression::TaggedTemplateExpression(tagged) => (tagged.span.start, &tagged.quasi),
+        _ => return false,
+    };
+
     template.quasis.iter().any(|quasi| source_text.contains_newline(quasi.span))
         && !source_text.has_newline_before(start)
 }

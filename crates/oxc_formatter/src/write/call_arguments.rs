@@ -959,19 +959,11 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceTe
         return false;
     }
 
-    match arguments.first().unwrap() {
-        Argument::TemplateLiteral(template) => {
-            is_multiline_template_starting_on_same_line(template.span.start, template, source_text)
-        }
-        Argument::TaggedTemplateExpression(template) => {
-            is_multiline_template_starting_on_same_line(
-                template.span.start,
-                &template.quasi,
-                source_text,
-            )
-        }
-        _ => false,
-    }
+    arguments
+        .first()
+        .unwrap()
+        .as_expression()
+        .is_some_and(|expr| is_multiline_template_starting_on_same_line(expr, source_text))
 }
 
 /// This function is used to check if the code is a hook-like code:

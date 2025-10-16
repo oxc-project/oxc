@@ -78,6 +78,7 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
+    arrow_function_expression::is_multiline_template_starting_on_same_line,
     class::format_grouped_parameters_with_return_type,
     function::should_group_function_parameters,
     object_like::ObjectLike,
@@ -215,13 +216,20 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
         let arguments = self.arguments();
         let optional = self.optional();
 
-        if callee.as_member_expression().is_some_and(|e| {
-            matches!(
-                e,
-                MemberExpression::StaticMemberExpression(_)
-                    | MemberExpression::ComputedMemberExpression(_)
-            )
-        }) && !callee.needs_parentheses(f)
+        let is_template_literal_single_arg = arguments.len() == 1
+            && arguments.first().unwrap().as_expression().is_some_and(|expr| {
+                is_multiline_template_starting_on_same_line(expr, f.source_text())
+            });
+
+        if !is_template_literal_single_arg
+            && callee.as_member_expression().is_some_and(|e| {
+                matches!(
+                    e,
+                    MemberExpression::StaticMemberExpression(_)
+                        | MemberExpression::ComputedMemberExpression(_)
+                )
+            })
+            && !callee.needs_parentheses(f)
         {
             MemberChain::from_call_expression(self, f).fmt(f)
         } else {
