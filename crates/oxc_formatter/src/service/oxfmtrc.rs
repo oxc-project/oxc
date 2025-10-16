@@ -9,39 +9,43 @@ use crate::{
     Semicolons, SortImports, SortOrder, TrailingCommas,
 };
 
+/// Configuration options for the formatter.
+/// Most options are the same as Prettier's options.
+/// See also <https://prettier.io/docs/options>
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub indent_style: Option<String>,
+    pub use_tabs: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub indent_width: Option<u8>,
+    pub tab_width: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub line_ending: Option<String>,
+    pub end_of_line: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub line_width: Option<u16>,
+    pub print_width: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub quote_style: Option<String>,
+    pub single_quote: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub jsx_quote_style: Option<String>,
+    pub jsx_single_quote: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub quote_properties: Option<String>,
+    pub quote_props: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub trailing_commas: Option<String>,
+    pub trailing_comma: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub semicolons: Option<String>,
+    pub semi: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub arrow_parentheses: Option<String>,
+    pub arrow_parens: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_spacing: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub attribute_position: Option<String>,
+    pub object_wrap: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expand: Option<String>,
+    pub single_attribute_per_line: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_operator_position: Option<String>,
+    // TODO: experimental_ternaries
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
 }
@@ -106,83 +110,111 @@ impl Oxfmtrc {
     pub fn into_format_options(self) -> Result<FormatOptions, String> {
         let mut options = FormatOptions::default();
 
-        if let Some(style) = self.indent_style {
-            options.indent_style =
-                style.parse::<IndentStyle>().map_err(|e| format!("Invalid indent_style: {e}"))?;
+        // [Prettier] useTabs: boolean
+        if let Some(use_tabs) = self.use_tabs {
+            options.indent_style = if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
         }
 
-        if let Some(width) = self.indent_width {
+        // [Prettier] tabWidth: number
+        if let Some(width) = self.tab_width {
             options.indent_width =
-                IndentWidth::try_from(width).map_err(|e| format!("Invalid indent_width: {e}"))?;
+                IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
         }
 
-        if let Some(ending) = self.line_ending {
+        // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
+        // NOTE: "auto" is not supported
+        if let Some(ending) = self.end_of_line {
             options.line_ending =
-                ending.parse::<LineEnding>().map_err(|e| format!("Invalid line_ending: {e}"))?;
+                ending.parse::<LineEnding>().map_err(|e| format!("Invalid endOfLine: {e}"))?;
         }
 
-        if let Some(width) = self.line_width {
+        // [Prettier] printWidth: number
+        if let Some(width) = self.print_width {
             options.line_width =
-                LineWidth::try_from(width).map_err(|e| format!("Invalid line_width: {e}"))?;
+                LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
         }
 
-        if let Some(style) = self.quote_style {
+        // [Prettier] singleQuote: boolean
+        if let Some(single_quote) = self.single_quote {
             options.quote_style =
-                style.parse::<QuoteStyle>().map_err(|e| format!("Invalid quote_style: {e}"))?;
+                if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
         }
 
-        if let Some(style) = self.jsx_quote_style {
+        // [Prettier] jsxSingleQuote: boolean
+        if let Some(jsx_single_quote) = self.jsx_single_quote {
             options.jsx_quote_style =
-                style.parse::<QuoteStyle>().map_err(|e| format!("Invalid jsx_quote_style: {e}"))?;
+                if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
         }
 
-        if let Some(props) = self.quote_properties {
-            options.quote_properties = props
-                .parse::<QuoteProperties>()
-                .map_err(|e| format!("Invalid quote_properties: {e}"))?;
+        // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
+        // NOTE: "consistent" is not supported
+        if let Some(props) = self.quote_props {
+            options.quote_properties =
+                props.parse::<QuoteProperties>().map_err(|e| format!("Invalid quoteProps: {e}"))?;
         }
 
-        if let Some(commas) = self.trailing_commas {
+        // [Prettier] trailingComma: "all" | "es5" | "none"
+        if let Some(commas) = self.trailing_comma {
             options.trailing_commas = commas
                 .parse::<TrailingCommas>()
-                .map_err(|e| format!("Invalid trailing_commas: {e}"))?;
+                .map_err(|e| format!("Invalid trailingComma: {e}"))?;
         }
 
-        if let Some(semis) = self.semicolons {
-            options.semicolons =
-                semis.parse::<Semicolons>().map_err(|e| format!("Invalid semicolons: {e}"))?;
+        // [Prettier] semi: boolean -> Semicolons
+        if let Some(semi) = self.semi {
+            options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
         }
 
-        if let Some(parens) = self.arrow_parentheses {
-            options.arrow_parentheses = parens
+        // [Prettier] arrowParens: "avoid" | "always"
+        if let Some(parens) = self.arrow_parens {
+            let normalized = match parens.as_str() {
+                "avoid" => "as-needed",
+                _ => &parens,
+            };
+            options.arrow_parentheses = normalized
                 .parse::<ArrowParentheses>()
-                .map_err(|e| format!("Invalid arrow_parentheses: {e}"))?;
+                .map_err(|e| format!("Invalid arrowParens: {e}"))?;
         }
 
+        // [Prettier] bracketSpacing: boolean
         if let Some(spacing) = self.bracket_spacing {
             options.bracket_spacing = BracketSpacing::from(spacing);
         }
 
+        // [Prettier] bracketSameLine: boolean
         if let Some(same_line) = self.bracket_same_line {
             options.bracket_same_line = BracketSameLine::from(same_line);
         }
 
-        if let Some(position) = self.attribute_position {
-            options.attribute_position = position
-                .parse::<AttributePosition>()
-                .map_err(|e| format!("Invalid attribute_position: {e}"))?;
+        // [Prettier] singleAttributePerLine: boolean
+        if let Some(single_attribute_per_line) = self.single_attribute_per_line {
+            options.attribute_position = if single_attribute_per_line {
+                AttributePosition::Multiline
+            } else {
+                AttributePosition::Auto
+            };
         }
 
-        if let Some(expand) = self.expand {
+        // [Prettier] objectWrap: "preserve" | "collapse"
+        // NOTE: In addition to Prettier, we also support "always"
+        if let Some(object_wrap) = self.object_wrap {
+            let normalized = match object_wrap.as_str() {
+                "preserve" => "auto",
+                "collapse" => "never",
+                _ => &object_wrap,
+            };
             options.expand =
-                expand.parse::<Expand>().map_err(|e| format!("Invalid expand: {e}"))?;
+                normalized.parse::<Expand>().map_err(|e| format!("Invalid objectWrap: {e}"))?;
         }
 
+        // [Prettier] experimentalOperatorPosition: "start" | "end"
         if let Some(position) = self.experimental_operator_position {
             options.experimental_operator_position = position
                 .parse::<OperatorPosition>()
                 .map_err(|e| format!("Invalid experimental_operator_position: {e}"))?;
         }
+
+        // Below are our own extensions
 
         if let Some(sort_imports_config) = self.experimental_sort_imports {
             let order = sort_imports_config
@@ -210,11 +242,11 @@ mod tests {
     #[test]
     fn test_config_parsing() {
         let json = r#"{
-            "indentStyle": "tab",
-            "indentWidth": 4,
-            "lineWidth": 100,
-            "quoteStyle": "single",
-            "semicolons": "as-needed",
+            "useTabs": true,
+            "tabWidth": 4,
+            "printWidth": 100,
+            "singleQuote": true,
+            "semi": false,
             "experimentalSortImports": {
                 "partitionByNewline": true,
                 "order": "desc",
@@ -228,6 +260,8 @@ mod tests {
         assert!(options.indent_style.is_tab());
         assert_eq!(options.indent_width.value(), 4);
         assert_eq!(options.line_width.value(), 100);
+        assert!(!options.quote_style.is_double());
+        assert!(options.semicolons.is_as_needed());
 
         let sort_imports = options.experimental_sort_imports.unwrap();
         assert!(sort_imports.partition_by_newline);
@@ -263,5 +297,36 @@ mod tests {
         assert_eq!(options.indent_width.value(), 2);
         assert_eq!(options.line_width.value(), 80);
         assert_eq!(options.experimental_sort_imports, None);
+    }
+
+    #[test]
+    fn test_arrow_parens_normalization() {
+        // Test "avoid" -> "as-needed" normalization
+        let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
+        let options = config.into_format_options().unwrap();
+        assert!(options.arrow_parentheses.is_as_needed());
+
+        // Test "always" remains unchanged
+        let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
+        let options = config.into_format_options().unwrap();
+        assert!(options.arrow_parentheses.is_always());
+    }
+
+    #[test]
+    fn test_object_wrap_normalization() {
+        // Test "preserve" -> "auto" normalization
+        let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
+        let options = config.into_format_options().unwrap();
+        assert_eq!(options.expand, Expand::Auto);
+
+        // Test "collapse" -> "never" normalization
+        let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
+        let options = config.into_format_options().unwrap();
+        assert_eq!(options.expand, Expand::Never);
+
+        // Test "always" remains unchanged
+        let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "always"}"#).unwrap();
+        let options = config.into_format_options().unwrap();
+        assert_eq!(options.expand, Expand::Always);
     }
 }

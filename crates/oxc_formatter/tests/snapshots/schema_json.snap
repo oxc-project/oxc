@@ -5,15 +5,10 @@ expression: json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Oxfmtrc",
+  "description": "Configuration options for the formatter.\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>",
   "type": "object",
   "properties": {
-    "arrowParentheses": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "attributePosition": {
+    "arrowParens": {
       "type": [
         "string",
         "null"
@@ -31,7 +26,7 @@ expression: json
         "null"
       ]
     },
-    "expand": {
+    "endOfLine": {
       "type": [
         "string",
         "null"
@@ -53,33 +48,19 @@ expression: json
         }
       ]
     },
-    "indentStyle": {
+    "jsxSingleQuote": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "objectWrap": {
       "type": [
         "string",
         "null"
       ]
     },
-    "indentWidth": {
-      "type": [
-        "integer",
-        "null"
-      ],
-      "format": "uint8",
-      "minimum": 0.0
-    },
-    "jsxQuoteStyle": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "lineEnding": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "lineWidth": {
+    "printWidth": {
       "type": [
         "integer",
         "null"
@@ -87,27 +68,47 @@ expression: json
       "format": "uint16",
       "minimum": 0.0
     },
-    "quoteProperties": {
+    "quoteProps": {
       "type": [
         "string",
         "null"
       ]
     },
-    "quoteStyle": {
+    "semi": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "singleAttributePerLine": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "singleQuote": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "tabWidth": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint8",
+      "minimum": 0.0
+    },
+    "trailingComma": {
       "type": [
         "string",
         "null"
       ]
     },
-    "semicolons": {
+    "useTabs": {
       "type": [
-        "string",
-        "null"
-      ]
-    },
-    "trailingCommas": {
-      "type": [
-        "string",
+        "boolean",
         "null"
       ]
     }
