@@ -211,12 +211,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the duplicate 'super()' call
 
-  ⚠ eslint(constructor-super): Lacked a call of 'super()' in some code paths.
-   ╭─[constructor_super.tsx:1:21]
+  ⚠ eslint(constructor-super): Unexpected duplicate 'super()'.
+   ╭─[constructor_super.tsx:1:48]
  1 │ class A extends B { constructor() { super() || super(); } }
-   ·                     ─────────────────────────────────────
+   ·                                                ───────
    ╰────
-  help: Ensure 'super()' is called in all code paths
+  help: Remove the duplicate 'super()' call
 
   ⚠ eslint(constructor-super): Unexpected duplicate 'super()'.
    ╭─[constructor_super.tsx:1:53]

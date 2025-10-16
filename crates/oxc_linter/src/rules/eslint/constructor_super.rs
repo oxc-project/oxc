@@ -249,6 +249,7 @@ impl Rule for ConstructorSuper {
 impl ConstructorSuper {
     /// Check if constructor body contains a LogicalExpression with super()
     /// CFG doesn't create proper instructions for logical expressions, so we check AST
+    /// Returns true only if super() appears in a truly conditional position (not both sides)
     fn has_logical_expression_super(
         statements: &[Statement],
         _class_node_id: NodeId,
@@ -269,7 +270,9 @@ impl ConstructorSuper {
                         check_expression(&logical.right)
                     };
 
-                    has_left_super || has_right_super
+                    // Only flag as conditional if super() is on exactly one side
+                    // If both sides have super(), the CFG will catch it as duplicate
+                    (has_left_super && !has_right_super) || (!has_left_super && has_right_super)
                 }
                 Expression::ConditionalExpression(cond) => {
                     check_expression(&cond.test)
@@ -389,9 +392,21 @@ impl ConstructorSuper {
                                         }
                                     };
 
-                                    if let Some(span) = check_super(&logical.left)
-                                        .or_else(|| check_super(&logical.right))
-                                    {
+                                    let left_span = check_super(&logical.left);
+                                    let right_span = check_super(&logical.right);
+
+                                    // Only flag as conditional if super() is on exactly one side
+                                    // If both sides have super(), it's a duplicate (both execute for ||)
+                                    if left_span.is_some() && right_span.is_some() {
+                                        // Both sides have super() - record both as duplicates
+                                        if let Some(span) = left_span {
+                                            record_super(span);
+                                        }
+                                        if let Some(span) = right_span {
+                                            record_super(span);
+                                        }
+                                    } else if let Some(span) = left_span.or(right_span) {
+                                        // Only one side has super() - truly conditional
                                         has_conditional_super = true;
                                         record_super(span);
                                     }
