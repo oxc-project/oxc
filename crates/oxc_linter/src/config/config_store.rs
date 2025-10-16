@@ -183,7 +183,8 @@ impl Config {
             .cloned()
             .collect::<Vec<_>>();
 
-        let mut external_rules = FxHashMap::default();
+        let mut external_rules =
+            self.base.external_rules.iter().copied().collect::<FxHashMap<_, _>>();
 
         // Track which plugins have already had their category rules applied.
         // Start with the root plugins since they already have categories applied in base_rules.
@@ -683,6 +684,49 @@ mod test {
         let app = store.resolve("App.tsx".as_ref()).config;
         assert!(app.globals.is_enabled("React"));
         assert!(app.globals.is_enabled("Secret"));
+    }
+
+    #[test]
+    fn test_external_rules_preserved_with_overrides() {
+        // reproduction for https://github.com/oxc-project/oxc/issues/14504
+        // the bug occurred due to a simple omission and the fix was simple.
+        // this test is just to communicate what was going wrong and to avoid a regression.
+        // i noticed js plugins aren't considered stable yet, so feel free to edit or remove this test
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        external_plugin_store.register_plugin(
+            "./plugin.js".into(),
+            "custom".into(),
+            0,
+            vec!["no-debugger".into()],
+        );
+
+        let rule_id = external_plugin_store.lookup_rule_id("custom", "no-debugger").unwrap();
+
+        let overrides = ResolvedOxlintOverrides::new(vec![ResolvedOxlintOverride {
+            files: GlobSet::new(vec!["*.ts"]),
+            env: None,
+            plugins: None,
+            globals: None,
+            rules: ResolvedOxlintOverrideRules { builtin_rules: vec![], external_rules: vec![] },
+        }]);
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![(rule_id, AllowWarnDeny::Deny)],
+                OxlintCategories::default(),
+                LintConfig::default(),
+                overrides,
+            ),
+            FxHashMap::default(),
+            external_plugin_store,
+        );
+
+        // Bug: external rules were lost when overrides matched
+        let resolved = store.resolve("foo.ts".as_ref());
+        assert_eq!(resolved.external_rules.len(), 1);
+        assert_eq!(resolved.external_rules[0].0, rule_id);
     }
 
     #[test]
