@@ -28,6 +28,9 @@ pub struct FormatCommand {
     pub basic_options: BasicOptions,
 
     #[bpaf(external)]
+    pub ignore_options: IgnoreOptions,
+
+    #[bpaf(external)]
     pub misc_options: MiscOptions,
 
     /// Single file, single path or list of paths.
@@ -58,6 +61,14 @@ pub struct BasicOptions {
     /// Path to the configuration file
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
+}
+
+/// Ignore Options
+#[derive(Debug, Clone, Bpaf)]
+pub struct IgnoreOptions {
+    /// Format code in node_modules directory (disabled by default)
+    #[bpaf(switch)]
+    pub with_node_modules: bool,
 }
 
 /// Miscellaneous

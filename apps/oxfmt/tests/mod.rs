@@ -87,6 +87,15 @@ fn vcs_dirs_ignored() {
 }
 
 #[test]
+fn node_modules_ignored() {
+    // Test that `node_modules` directories are ignored by default
+    // but can be included with `--with-node-modules` flag
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/node_modules_dirs"))
+        .test_and_snapshot_multiple(&[&["--check"], &["--check", "--with-node-modules"]]);
+}
+
+#[test]
 fn exclude_nested_paths() {
     // Test that nested path exclusion works correctly
     // See: https://github.com/oxc-project/oxc/issues/14684
