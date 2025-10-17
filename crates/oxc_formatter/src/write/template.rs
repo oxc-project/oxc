@@ -295,18 +295,22 @@ impl<'a> Format<'a> for FormatTemplateExpression<'a, '_> {
                 let indent = match self.expression {
                     TemplateExpression::Expression(e) => {
                         has_comment_in_expression
-                            || matches!(
-                                e.as_ref(),
+                            || match e.as_ref() {
                                 Expression::StaticMemberExpression(_)
-                                    | Expression::ComputedMemberExpression(_)
-                                    | Expression::ConditionalExpression(_)
-                                    | Expression::SequenceExpression(_)
-                                    | Expression::TSAsExpression(_)
-                                    | Expression::TSSatisfiesExpression(_)
-                                    | Expression::BinaryExpression(_)
-                                    | Expression::LogicalExpression(_)
-                                    | Expression::Identifier(_)
-                            )
+                                | Expression::ComputedMemberExpression(_)
+                                | Expression::PrivateFieldExpression(_)
+                                | Expression::ConditionalExpression(_)
+                                | Expression::SequenceExpression(_)
+                                | Expression::TSAsExpression(_)
+                                | Expression::TSSatisfiesExpression(_)
+                                | Expression::BinaryExpression(_)
+                                | Expression::LogicalExpression(_)
+                                | Expression::Identifier(_) => true,
+                                Expression::ChainExpression(chain) => {
+                                    chain.expression.is_member_expression()
+                                }
+                                _ => false,
+                            }
                     }
                     TemplateExpression::TSType(t) => {
                         self.options.after_new_line || is_complex_type(t.as_ref())
