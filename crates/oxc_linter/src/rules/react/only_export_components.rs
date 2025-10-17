@@ -614,8 +614,7 @@ impl OnlyExportComponents {
             && let Some(init_expr) = init
         {
             let expr_without_ts = Self::skip_ts_expression(init_expr);
-            let expr_type = Self::get_expression_type(expr_without_ts);
-            if CONSTANT_EXPORT_EXPRESSIONS.contains(expr_type) {
+            if is_constant_export_expression(expr_without_ts) {
                 return ExportType::Allowed;
             }
         }
@@ -643,8 +642,7 @@ impl OnlyExportComponents {
             }
 
             let expr_without_ts = Self::skip_ts_expression(init_expr);
-            let expr_type = Self::get_expression_type(expr_without_ts);
-            if NOT_REACT_COMPONENT_EXPRESSION.contains(expr_type) {
+            if is_not_react_component_expression(expr_without_ts) {
                 return ExportType::NonComponent(span);
             }
         }
@@ -653,26 +651,6 @@ impl OnlyExportComponents {
             ExportType::ReactComponent
         } else {
             ExportType::NonComponent(span)
-        }
-    }
-
-    fn get_expression_type(expr: &Expression<'_>) -> &'static str {
-        match expr {
-            Expression::BooleanLiteral(_)
-            | Expression::NumericLiteral(_)
-            | Expression::StringLiteral(_) => "Literal",
-            Expression::UnaryExpression(_) => "UnaryExpression",
-            Expression::TemplateLiteral(_) => "TemplateLiteral",
-            Expression::BinaryExpression(_) => "BinaryExpression",
-            Expression::ArrayExpression(_) => "ArrayExpression",
-            Expression::AwaitExpression(_) => "AwaitExpression",
-            Expression::ChainExpression(_) => "ChainExpression",
-            Expression::ConditionalExpression(_) => "ConditionalExpression",
-            Expression::LogicalExpression(_) => "LogicalExpression",
-            Expression::ObjectExpression(_) => "ObjectExpression",
-            Expression::ThisExpression(_) => "ThisExpression",
-            Expression::UpdateExpression(_) => "UpdateExpression",
-            _ => "",
         }
     }
 
@@ -716,23 +694,37 @@ impl OnlyExportComponents {
     }
 }
 
-const CONSTANT_EXPORT_EXPRESSIONS: phf::Set<&'static str> =
-    phf::phf_set!["Literal", "UnaryExpression", "TemplateLiteral", "BinaryExpression"];
+fn is_constant_export_expression(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::UnaryExpression(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::BinaryExpression(_)
+    )
+}
 
-const NOT_REACT_COMPONENT_EXPRESSION: phf::Set<&'static str> = phf::phf_set![
-    "ArrayExpression",
-    "AwaitExpression",
-    "BinaryExpression",
-    "ChainExpression",
-    "ConditionalExpression",
-    "Literal",
-    "LogicalExpression",
-    "ObjectExpression",
-    "TemplateLiteral",
-    "ThisExpression",
-    "UnaryExpression",
-    "UpdateExpression"
-];
+fn is_not_react_component_expression(expr: &Expression) -> bool {
+    matches!(
+        expr,
+        Expression::ArrayExpression(_)
+            | Expression::AwaitExpression(_)
+            | Expression::BinaryExpression(_)
+            | Expression::ChainExpression(_)
+            | Expression::ConditionalExpression(_)
+            | Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::LogicalExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::ThisExpression(_)
+            | Expression::UnaryExpression(_)
+            | Expression::UpdateExpression(_)
+    )
+}
 
 #[derive(Debug, Default, Clone)]
 struct ExportAnalysis {
