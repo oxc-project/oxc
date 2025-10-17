@@ -54,11 +54,6 @@ declare_oxc_lint!(
 
 impl Rule for NoWebpackLoaderSyntax {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // not in top level
-        if node.scope_id() != ctx.scoping().root_scope_id() {
-            return;
-        }
-
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 if let Expression::Identifier(identifier) = &call_expr.callee {
@@ -74,6 +69,11 @@ impl Rule for NoWebpackLoaderSyntax {
                         return;
                     };
 
+                    // not in top level
+                    if node.scope_id() != ctx.scoping().root_scope_id() {
+                        return;
+                    }
+
                     if ident.value.contains('!') {
                         ctx.diagnostic(no_named_as_default_diagnostic(
                             ident.value.as_str(),
@@ -83,6 +83,11 @@ impl Rule for NoWebpackLoaderSyntax {
                 }
             }
             AstKind::ImportDeclaration(import_decl) => {
+                // not in top level
+                if node.scope_id() != ctx.scoping().root_scope_id() {
+                    return;
+                }
+
                 if import_decl.source.value.contains('!') {
                     ctx.diagnostic(no_named_as_default_diagnostic(
                         &import_decl.source.value,
