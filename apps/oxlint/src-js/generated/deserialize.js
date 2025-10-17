@@ -37,11 +37,13 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInpu
 }
 
 function deserializeProgram(pos) {
-  let end = deserializeU32(pos + 4),
-    refUint32 = uint32,
+  // Buffers will be cleaned up after the main program is deserialized.
+  // We hold references here in case the comments need to be later accessed.
+  let refUint32 = uint32,
     refUint8 = uint8,
     refSourceText = sourceText,
     localAstId = ++astId,
+    end = deserializeU32(pos + 4),
     program = parent = {
       __proto__: NodeProto,
       type: 'Program',

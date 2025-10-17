@@ -121,10 +121,6 @@ impl Program<'_> {
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
-    const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end);
-
-
     /* IF COMMENTS */
     // Buffers will be cleaned up after the main program is deserialized.
     // We hold references here in case the comments need to be later accessed.
@@ -133,6 +129,9 @@ impl Program<'_> {
     let refSourceText = sourceText;
     const localAstId = ++astId;
     /* END_IF */
+
+    const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
+        end = DESER[u32](POS_OFFSET.span.end);
 
     const program = parent = {
         type: 'Program',
