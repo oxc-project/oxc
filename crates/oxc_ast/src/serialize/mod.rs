@@ -149,7 +149,7 @@ impl Program<'_> {
             // Deserialize the comments
             const comments = DESER[Vec<Comment>](POS_OFFSET.comments);
             // Drop the references
-            refUint32 = refUint8 = refSourceText = undefined;
+            refUint32 = refUint8 = refSourceText = uint32 = uint8 = sourceText = undefined;
             Object.defineProperty(this, 'comments', { value: comments, enumerable: true });
             return comments;
         },
