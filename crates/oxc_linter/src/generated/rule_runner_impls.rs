@@ -736,7 +736,12 @@ impl RuleRunner for crate::rules::eslint::no_unreachable::NoUnreachable {
 }
 
 impl RuleRunner for crate::rules::eslint::no_unsafe_finally::NoUnsafeFinally {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BreakStatement,
+        AstType::ContinueStatement,
+        AstType::ReturnStatement,
+        AstType::ThrowStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

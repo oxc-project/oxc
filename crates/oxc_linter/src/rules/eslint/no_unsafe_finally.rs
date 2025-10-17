@@ -51,9 +51,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnsafeFinally {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-
-        let sentinel_node_type = match kind {
+        let sentinel_node_type = match node.kind() {
             AstKind::BreakStatement(stmt) if stmt.label.is_none() => SentinelNodeType::Break,
             AstKind::ContinueStatement(_) => SentinelNodeType::Continue,
             AstKind::ReturnStatement(_)
@@ -62,7 +60,7 @@ impl Rule for NoUnsafeFinally {
             _ => return,
         };
 
-        let label_name = match kind {
+        let label_name = match node.kind() {
             AstKind::BreakStatement(BreakStatement { label, .. })
             | AstKind::ContinueStatement(ContinueStatement { label, .. }) => {
                 label.as_ref().map(|label| &label.name)
