@@ -335,12 +335,7 @@ impl LanguageServer for Backend {
             }
 
             if let Some(diagnostics) = diagnostics {
-                for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.push((
-                        uri.clone(),
-                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    ));
-                }
+                new_diagnostics.extend(diagnostics);
             }
 
             if let Some(watchers) = watchers
@@ -412,10 +407,7 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            for (uri, reports) in &diagnostics.pin() {
-                all_diagnostics
-                    .push((uri.clone(), reports.iter().map(|d| d.diagnostic.clone()).collect()));
-            }
+            all_diagnostics.extend(diagnostics);
         }
 
         if !all_diagnostics.is_empty() {

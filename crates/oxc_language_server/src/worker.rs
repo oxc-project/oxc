@@ -11,7 +11,7 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    ConcurrentHashMap, FORMAT_CONFIG_FILE,
+    FORMAT_CONFIG_FILE,
     code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
     formatter::{options::FormatOptions, server_formatter::ServerFormatter},
     linter::{
@@ -215,12 +215,9 @@ impl WorkspaceWorker {
 
     /// Revalidate diagnostics for the given URIs
     /// This will re-lint all opened files and return the new diagnostics
-    async fn revalidate_diagnostics(
-        &self,
-        uris: Vec<Uri>,
-    ) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
+    async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
         let Some(server_linter) = &*self.server_linter.read().await else {
-            return ConcurrentHashMap::default();
+            return Vec::new();
         };
 
         server_linter.revalidate_diagnostics(uris).await
@@ -319,7 +316,7 @@ impl WorkspaceWorker {
     pub async fn did_change_watched_files(
         &self,
         _file_event: &FileEvent,
-    ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+    ) -> Option<Vec<(String, Vec<Diagnostic>)>> {
         // TODO: the tools should implement a helper function to detect if the changed file is relevant
         let files = {
             let server_linter_guard = self.server_linter.read().await;
@@ -348,7 +345,7 @@ impl WorkspaceWorker {
         changed_options: &Options,
     ) -> (
         // Diagnostic reports that need to be revalidated
-        Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+        Option<Vec<(String, Vec<Diagnostic>)>>,
         // File system watcher for lint/fmt config changes
         // - `None` if no watcher changes are needed
         // - empty vector if all watchers should be removed

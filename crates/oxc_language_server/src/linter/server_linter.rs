@@ -7,7 +7,7 @@ use log::{debug, warn};
 use oxc_linter::{AllowWarnDeny, LintIgnoreMatcher};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tokio::sync::Mutex;
-use tower_lsp_server::lsp_types::Uri;
+use tower_lsp_server::lsp_types::{Diagnostic, Uri};
 
 use oxc_linter::{
     Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions, Oxlintrc,
@@ -283,17 +283,19 @@ impl ServerLinter {
             .collect()
     }
 
-    pub async fn revalidate_diagnostics(
-        &self,
-        uris: Vec<Uri>,
-    ) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
-        let map = ConcurrentHashMap::default();
+    pub async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
+        let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
-            if let Some(diagnostics) = self.run_single(&uri, None, ServerLinterRun::Always).await {
-                map.pin().insert(uri.to_string(), diagnostics);
+            if let Some(file_diagnostic) =
+                self.run_single(&uri, None, ServerLinterRun::Always).await
+            {
+                diagnostics.push((
+                    uri.to_string(),
+                    file_diagnostic.into_iter().map(|d| d.diagnostic).collect(),
+                ));
             }
         }
-        map
+        diagnostics
     }
 
     fn is_ignored(&self, uri: &Uri) -> bool {
