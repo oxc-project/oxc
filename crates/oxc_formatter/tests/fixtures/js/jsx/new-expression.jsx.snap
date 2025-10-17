@@ -1,0 +1,14 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+return new ImageResponse(
+  (
+    <div>
+    </div>
+  ),
+)
+==================== Output ====================
+return new ImageResponse(<div></div>);
+
+===================== End =====================
