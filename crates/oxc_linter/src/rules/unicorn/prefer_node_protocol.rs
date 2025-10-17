@@ -64,7 +64,7 @@ impl Rule for PreferNodeProtocol {
             AstKind::ExportNamedDeclaration(export) => {
                 export.source.as_ref().map(|item| (item.value, item.span))
             }
-            _ => None,
+            _ => return,
         };
         let Some((string_lit_value, span)) = string_lit_value_with_span else {
             return;

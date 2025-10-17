@@ -3541,7 +3541,13 @@ impl RuleRunner for crate::rules::unicorn::prefer_negative_index::PreferNegative
 }
 
 impl RuleRunner for crate::rules::unicorn::prefer_node_protocol::PreferNodeProtocol {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ExportNamedDeclaration,
+        AstType::ImportDeclaration,
+        AstType::ImportExpression,
+        AstType::TSImportEqualsDeclaration,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
