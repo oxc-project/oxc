@@ -17,31 +17,31 @@ use crate::{
 
 fn use_to_be(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBe()` when comparing primitive values")
-        .with_help("Replace `toEqual()` with `toBe()` for primitive comparison")
+        .with_help("Replace `toEqual()` with `toBe()`")
         .with_label(span)
 }
 
 fn use_to_be_undefined(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeUndefined()` when checking for undefined values")
-        .with_help("Replace with `toBeUndefined()` for more explicit undefined checking")
+        .with_help("Replace with `toBeUndefined()`")
         .with_label(span)
 }
 
 fn use_to_be_defined(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeDefined()` when checking for defined values")
-        .with_help("Replace with `toBeDefined()` for more explicit defined checking")
+        .with_help("Replace with `toBeDefined()`")
         .with_label(span)
 }
 
 fn use_to_be_null(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeNull()` when checking for null values")
-        .with_help("Replace with `toBeNull()` for more explicit null checking")
+        .with_help("Replace with `toBeNull()`")
         .with_label(span)
 }
 
 fn use_to_be_na_n(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeNaN()` when checking for NaN values")
-        .with_help("Replace with `toBeNaN()` for more explicit NaN checking")
+        .with_help("Replace with `toBeNaN()`")
         .with_label(span)
 }
 
