@@ -3,37 +3,28 @@ source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:2:22]
- 1 │     
- 2 │ ╭─▶                     var Hello = createReactClass({
- 3 │ │                         render: function() {
- 4 │ │                           return React.createElement("div", {}, "text content");
- 5 │ │                         }
- 6 │ ╰─▶                     });
- 7 │                       
+ 1 │ 
+ 2 │                     var Hello = createReactClass({
+   ·                         ─────
+ 3 │                       render: function() {
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:2:22]
- 1 │     
- 2 │ ╭─▶                     var Hello = React.createClass({
- 3 │ │                         render: function() {
- 4 │ │                           return React.createElement("div", {}, "text content");
- 5 │ │                         }
- 6 │ ╰─▶                     });
- 7 │                       
+ 1 │ 
+ 2 │                     var Hello = React.createClass({
+   ·                         ─────
+ 3 │                       render: function() {
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:2:16]
- 1 │     
- 2 │ ╭─▶                     var Hello = createReactClass({
- 3 │ │                         render: function() {
- 4 │ │                           return <div>Hello {this.props.name}</div>;
- 5 │ │                         }
- 6 │ ╰─▶                     });
- 7 │                       
+ 1 │ 
+ 2 │                     var Hello = createReactClass({
+   ·                         ─────
+ 3 │                       render: function() {
    ╰────
   help: Add a displayName property to the component
 
@@ -50,11 +41,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
-   ╭─[display_name.tsx:2:21]
- 1 │ 
- 2 │                     function HelloComponent() {
-   ·                              ──────────────
- 3 │                       return createReactClass({
+   ╭─[display_name.tsx:2:12]
+ 1 │     
+ 2 │ ╭─▶                     function HelloComponent() {
+ 3 │ │                         return createReactClass({
+ 4 │ │                           render: function() {
+ 5 │ │                             return <div>Hello {this.props.name}</div>;
+ 6 │ │                           }
+ 7 │ │                         });
+ 8 │ ╰─▶                     }
+ 9 │                         module.exports = HelloComponent();
    ╰────
   help: Add a displayName property to the component
 
@@ -91,61 +87,38 @@ source: crates/oxc_linter/src/tester.rs
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
-    ╭─[display_name.tsx:2:16]
-  1 │     
-  2 │ ╭─▶                     var Hello = createReactClass({
-  3 │ │                         _renderHello: function() {
-  4 │ │                           return <span>Hello {this.props.name}</span>;
-  5 │ │                         },
-  6 │ │                         render: function() {
-  7 │ │                           return <div>{this._renderHello()}</div>;
-  8 │ │                         }
-  9 │ ╰─▶                     });
- 10 │                       
-    ╰────
+   ╭─[display_name.tsx:2:16]
+ 1 │ 
+ 2 │                     var Hello = createReactClass({
+   ·                         ─────
+ 3 │                       _renderHello: function() {
+   ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
-    ╭─[display_name.tsx:2:16]
-  1 │     
-  2 │ ╭─▶                     var Hello = Foo.createClass({
-  3 │ │                         _renderHello: function() {
-  4 │ │                           return <span>Hello {this.props.name}</span>;
-  5 │ │                         },
-  6 │ │                         render: function() {
-  7 │ │                           return <div>{this._renderHello()}</div>;
-  8 │ │                         }
-  9 │ ╰─▶                     });
- 10 │                       
-    ╰────
+   ╭─[display_name.tsx:2:16]
+ 1 │ 
+ 2 │                     var Hello = Foo.createClass({
+   ·                         ─────
+ 3 │                       _renderHello: function() {
+   ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
-    ╭─[display_name.tsx:3:16]
-  2 │                         /** @jsx Foo */
-  3 │ ╭─▶                     var Hello = Foo.createClass({
-  4 │ │                         _renderHello: function() {
-  5 │ │                           return <span>Hello {this.props.name}</span>;
-  6 │ │                         },
-  7 │ │                         render: function() {
-  8 │ │                           return <div>{this._renderHello()}</div>;
-  9 │ │                         }
- 10 │ ╰─▶                     });
- 11 │                       
-    ╰────
+   ╭─[display_name.tsx:3:16]
+ 2 │                     /** @jsx Foo */
+ 3 │                     var Hello = Foo.createClass({
+   ·                         ─────
+ 4 │                       _renderHello: function() {
+   ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:2:18]
- 1 │     
- 2 │ ╭─▶                     const Mixin = {
- 3 │ │                         Button() {
- 4 │ │                           return (
- 5 │ │                             <button />
- 6 │ │                           );
- 7 │ │                         }
- 8 │ ╰─▶                     };
- 9 │                       
+ 1 │ 
+ 2 │                     const Mixin = {
+   ·                           ─────
+ 3 │                       Button() {
    ╰────
   help: Add a displayName property to the component
 
@@ -173,77 +146,64 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:18]
- 3 │     
- 4 │ ╭─▶                     const ComponentWithMemo = React.memo(({ world }) => {
- 5 │ │                         return <div>Hello {world}</div>
- 6 │ ╰─▶                     })
- 7 │                       
+ 3 │ 
+ 4 │                     const ComponentWithMemo = React.memo(({ world }) => {
+   ·                           ─────────────────
+ 5 │                       return <div>Hello {world}</div>
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:18]
- 3 │     
- 4 │ ╭─▶                     const ComponentWithMemo = React.memo(function() {
- 5 │ │                         return <div>Hello {world}</div>
- 6 │ ╰─▶                     })
- 7 │                       
+ 3 │ 
+ 4 │                     const ComponentWithMemo = React.memo(function() {
+   ·                           ─────────────────
+ 5 │                       return <div>Hello {world}</div>
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:18]
- 3 │     
- 4 │ ╭─▶                     const ForwardRefComponentLike = React.forwardRef(({ world }, ref) => {
- 5 │ │                         return <div ref={ref}>Hello {world}</div>
- 6 │ ╰─▶                     })
- 7 │                       
+ 3 │ 
+ 4 │                     const ForwardRefComponentLike = React.forwardRef(({ world }, ref) => {
+   ·                           ───────────────────────
+ 5 │                       return <div ref={ref}>Hello {world}</div>
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:18]
- 3 │     
- 4 │ ╭─▶                     const ForwardRefComponentLike = React.forwardRef(function({ world }, ref) {
- 5 │ │                         return <div ref={ref}>Hello {world}</div>
- 6 │ ╰─▶                     })
- 7 │                       
+ 3 │ 
+ 4 │                     const ForwardRefComponentLike = React.forwardRef(function({ world }, ref) {
+   ·                           ───────────────────────
+ 5 │                       return <div ref={ref}>Hello {world}</div>
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:18]
- 3 │     
- 4 │ ╭─▶                     const MemoizedForwardRefComponentLike = React.memo(
- 5 │ │                         React.forwardRef(({ world }, ref) => {
- 6 │ │                           return <div ref={ref}>Hello {world}</div>
- 7 │ │                         })
- 8 │ ╰─▶                     )
- 9 │                       
+ 3 │ 
+ 4 │                     const MemoizedForwardRefComponentLike = React.memo(
+   ·                           ───────────────────────────────
+ 5 │                       React.forwardRef(({ world }, ref) => {
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:18]
- 3 │     
- 4 │ ╭─▶                     const MemoizedForwardRefComponentLike = React.memo(
- 5 │ │                         React.forwardRef(function({ world }, ref) {
- 6 │ │                           return <div ref={ref}>Hello {world}</div>
- 7 │ │                         })
- 8 │ ╰─▶                     )
- 9 │                       
+ 3 │ 
+ 4 │                     const MemoizedForwardRefComponentLike = React.memo(
+   ·                           ───────────────────────────────
+ 5 │                       React.forwardRef(function({ world }, ref) {
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:18]
- 3 │     
- 4 │ ╭─▶                     const MemoizedForwardRefComponentLike = React.memo(
- 5 │ │                         React.forwardRef(function ComponentLike({ world }, ref) {
- 6 │ │                           return <div ref={ref}>Hello {world}</div>
- 7 │ │                         })
- 8 │ ╰─▶                     )
- 9 │                       
+ 3 │ 
+ 4 │                     const MemoizedForwardRefComponentLike = React.memo(
+   ·                           ───────────────────────────────
+ 5 │                       React.forwardRef(function ComponentLike({ world }, ref) {
    ╰────
   help: Add a displayName property to the component
 
@@ -344,33 +304,28 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:2:18]
- 1 │     
- 2 │ ╭─▶                     const renderer = a => listItem => (
- 3 │ │                         <div>{a} {listItem}</div>
- 4 │ ╰─▶                     );
- 5 │                       
+ 1 │ 
+ 2 │                     const renderer = a => listItem => (
+   ·                           ────────
+ 3 │                       <div>{a} {listItem}</div>
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
    ╭─[display_name.tsx:4:31]
- 3 │     
- 4 │ ╭─▶                     export const Component = observer(() => {
- 5 │ │                         const data = processData({ value: 'data' });
- 6 │ │                         return <div>{data}</div>;
- 7 │ ╰─▶                     });
- 8 │     
+ 3 │ 
+ 4 │                     export const Component = observer(() => {
+   ·                                  ─────────
+ 5 │                       const data = processData({ value: 'data' });
    ╰────
   help: Add a displayName property to the component
 
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name
     ╭─[display_name.tsx:9:31]
-  8 │     
-  9 │ ╭─▶                     export const Component2 = observer(() => {
- 10 │ │                         const data = processData();
- 11 │ │                         return <div>{data}</div>;
- 12 │ ╰─▶                     });
- 13 │                       
+  8 │ 
+  9 │                     export const Component2 = observer(() => {
+    ·                                  ──────────
+ 10 │                       const data = processData();
     ╰────
   help: Add a displayName property to the component
 
@@ -378,7 +333,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[display_name.tsx:4:18]
  3 │ 
  4 │                     const Hello = React.createContext();
-   ·                           ─────────────────────────────
+   ·                           ─────
  5 │                   
    ╰────
   help: Add a displayName property to the context
@@ -387,7 +342,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[display_name.tsx:4:18]
  3 │ 
  4 │                     const Hello = React.createContext();
-   ·                           ─────────────────────────────
+   ·                           ─────
  5 │                   
    ╰────
   help: Add a displayName property to the context
@@ -396,7 +351,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[display_name.tsx:4:18]
  3 │ 
  4 │                     const Hello = createContext();
-   ·                           ───────────────────────
+   ·                           ─────
  5 │                   
    ╰────
   help: Add a displayName property to the context

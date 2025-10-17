@@ -8,8 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
 use oxc_semantic::{AstNode, Reference, SymbolId};
-use oxc_span::CompactStr;
-use oxc_span::Span;
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -387,7 +386,7 @@ fn is_react_component_node<'a>(
             {
                 if check_context_objects {
                     return Some(ReactComponentInfo {
-                        span: decl.span,
+                        span: decl.id.span(),
                         _component_type: ComponentType::Function,
                         is_context: true,
                         name,
@@ -427,7 +426,7 @@ fn is_react_component_node<'a>(
 
                     // Return component info with name only if inner function has a name
                     return Some(ReactComponentInfo {
-                        span: decl.span,
+                        span: decl.id.span(),
                         _component_type: ComponentType::Function,
                         is_context: false,
                         name: if inner_has_name { name } else { None },
@@ -454,7 +453,7 @@ fn is_react_component_node<'a>(
 
                     if !has_display_name {
                         return Some(ReactComponentInfo {
-                            span: decl.span,
+                            span: decl.id.span(),
                             _component_type: ComponentType::CreateReactClass,
                             is_context: false,
                             name,
@@ -470,7 +469,7 @@ fn is_react_component_node<'a>(
                     check_function_expression_component(expr, ctx)
             {
                 return Some(ReactComponentInfo {
-                    span: decl.span,
+                    span: decl.id.span(),
                     _component_type: component_type,
                     is_context: false,
                     name: if is_hof { None } else { name }, // HOFs don't use variable name as displayName
@@ -483,7 +482,7 @@ fn is_react_component_node<'a>(
                 && has_component_methods_in_object(obj_expr, ignore_transpiler_name)
             {
                 return Some(ReactComponentInfo {
-                    span: decl.span,
+                    span: decl.id.span(),
                     _component_type: ComponentType::ObjectProperty,
                     is_context: false,
                     name: Some(name.clone()),
@@ -601,7 +600,7 @@ fn is_react_component_node<'a>(
 
                                     if !has_display_name {
                                         return Some(ReactComponentInfo {
-                                            span: name.span,
+                                            span: func.span,
                                             _component_type: ComponentType::CreateReactClass,
                                             is_context: false,
                                             name: Some(CompactStr::from(name.name.as_str())),
