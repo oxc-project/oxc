@@ -35,8 +35,12 @@ jobs:
         run: |
           # Add upstream remote if it doesn't exist
           git remote add upstream https://github.com/oxc-project/oxc.git || true
-          # Fetch all branches and tags from upstream
-          git fetch upstream --tags
+          # Fetch specific commits and tags (avoid long branch names on Windows)
+          git fetch upstream --no-tags 1b3f43746891a3fabdd0d2528595a1bdb4c0f26f
+          git fetch upstream --no-tags 454ee94ff30d8423520bba9488bed0e3f8d1c77b
+          # Also fetch tags for reference
+          git fetch upstream 'refs/tags/crates_v0.92.0:refs/tags/crates_v0.92.0'
+          git fetch upstream 'refs/tags/crates_v0.95.0:refs/tags/crates_v0.95.0'
           # Verify the commits exist
           echo "Checking for commits..."
           git rev-parse 1b3f43746891a3fabdd0d2528595a1bdb4c0f26f
