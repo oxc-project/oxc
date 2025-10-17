@@ -175,12 +175,38 @@ export const SOURCE_CODE = Object.freeze({
     const { comments } = ast;
     if (comments.length === 0) return [];
     const targetStart = nodeOrToken.range[0];
-    let i = comments.length - 1;
-    // linear backwards search for the index of the last comment before the provided node or token, TODO(perf): binary
-    while (i >= 0 && comments[i].range[1] > targetStart) {
-      i--;
+
+    const commentsBefore: Comment[] = [];
+
+    // Reverse iteration isn't ideal, but this entire implementation may need to be rewritten
+    // with token-based APIs to match eslint.
+    for (let i = comments.length - 1; i >= 0; i--) {
+      const comment = comments[i];
+      const commentEnd = comment.range[1];
+
+      if (commentEnd > targetStart) {
+        continue;
+      }
+
+      const whitespaceOnlyGap = /^^\s*$/.test(sourceText.slice(commentEnd, targetStart));
+      if (whitespaceOnlyGap) {
+        commentsBefore.unshift(comment);
+        let currentComment = comment;
+        for (let j = i - 1; j >= 0; j--) {
+          const prevComment = comments[j];
+          const between = sourceText.slice(prevComment.range[1], currentComment.range[0]);
+          if (/^\s*$/.test(between)) {
+            commentsBefore.unshift(prevComment);
+            currentComment = prevComment;
+          } else {
+            break;
+          }
+        }
+        break;
+      }
     }
-    return comments.slice(0, i + 1);
+
+    return commentsBefore;
   },
 
   /**
@@ -192,13 +218,27 @@ export const SOURCE_CODE = Object.freeze({
     if (ast === null) initAst();
     const { comments } = ast;
     if (comments.length === 0) return [];
-    const targetEnd = nodeOrToken.range[1];
-    let i = 0;
-    // linear forwards search for the index of the first comment after the provided node or token, TODO(perf): binary
-    while (i < comments.length && comments[i].range[0] < targetEnd) {
-      i++;
+    let targetEnd = nodeOrToken.range[1];
+
+    const commentsAfter: Comment[] = [];
+
+    for (let i = 0; i < comments.length; i++) {
+      const comment = comments[i];
+      const commentStart = comment.range[0];
+
+      if (commentStart < targetEnd) {
+        continue;
+      }
+      const whitespaceOnlyGap = /^\s*$/.test(sourceText.slice(targetEnd, commentStart));
+      if (whitespaceOnlyGap) {
+        commentsAfter.push(comment);
+        targetEnd = comment.range[1];
+      } else {
+        break;
+      }
     }
-    return comments.slice(i);
+
+    return commentsAfter;
   },
 
   /**
@@ -212,7 +252,8 @@ export const SOURCE_CODE = Object.freeze({
     if (comments.length === 0) return [];
     const [rangeStart, rangeEnd] = node.range;
     let indexStart = null, indexEnd = null;
-    // linear search for the first comment inside the node's range, TODO(perf): binary
+    // Linear search for first comment within `node`'s range
+    // TODO: Use binary search.
     for (let i = 0; i < comments.length; i++) {
       const c = comments[i];
       if (c.range[0] >= rangeStart && c.range[1] <= rangeEnd) {
@@ -221,7 +262,8 @@ export const SOURCE_CODE = Object.freeze({
       }
     }
     if (indexStart === null) return [];
-    // linear search for the last comment inside the node's range, TODO(perf): binary
+    // Linear search for last comment within `node`'s range
+    // TODO: Use binary search.
     for (let i = indexStart; i < comments.length; i++) {
       const c = comments[i];
       if (c.range[1] > rangeEnd) {

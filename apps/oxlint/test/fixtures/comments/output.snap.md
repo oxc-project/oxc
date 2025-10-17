@@ -3,71 +3,138 @@
 
 # stdout
 ```
-  x test-comments(test-comments): getCommentsAfter(x) returned 5 comments:
-  |   [0] Block: " Block comment 1 " at [31, 52]
-  |   [1] Block: "*\n * JSDoc comment\n " at [54, 78]
-  |   [2] Line: " Line comment 2" at [105, 122]
-  |   [3] Line: " Line comment 3" at [135, 152]
-  |   [4] Block: " Block comment 2 " at [156, 177]
-   ,-[files/test.js:2:1]
- 1 | // Line comment 1
- 2 | const x = 1; /* Block comment 1 */
-   : ^^^^^^^^^^^^
- 3 | 
+  x test-comments(test-comments): getCommentsBefore(topLevelVariable1) returned 0 comments:
+  | 
+   ,-[files/test.js:1:1]
+ 1 | const topLevelVariable1 = 1;
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | // Line comment 1
    `----
 
-  x test-comments(test-comments): getCommentsBefore(x) returned 1 comments:
-  |   [0] Line: " Line comment 1" at [0, 17]
-   ,-[files/test.js:2:1]
- 1 | // Line comment 1
- 2 | const x = 1; /* Block comment 1 */
-   : ^^^^^^^^^^^^
- 3 | 
-   `----
-
-  x test-comments(test-comments): commentsExistBetween(x, foo): true
-   ,-[files/test.js:2:1]
- 1 | // Line comment 1
- 2 | const x = 1; /* Block comment 1 */
-   : ^^^^^^^^^^^^
- 3 | 
-   `----
-
-  x test-comments(test-comments): getAllComments() returned 6 comments:
-  |   [0] Line: " Line comment 1" at [0, 17]
-  |   [1] Block: " Block comment 1 " at [31, 52]
-  |   [2] Block: "*\n * JSDoc comment\n " at [54, 78]
-  |   [3] Line: " Line comment 2" at [105, 122]
-  |   [4] Line: " Line comment 3" at [135, 152]
-  |   [5] Block: " Block comment 2 " at [156, 177]
-    ,-[files/test.js:2:1]
-  1 |     // Line comment 1
-  2 | ,-> const x = 1; /* Block comment 1 */
-  3 | |   
-  4 | |   /**
-  5 | |    * JSDoc comment
-  6 | |    */
-  7 | |   export function foo() {
-  8 | |     // Line comment 2
-  9 | |     return x; // Line comment 3
- 10 | |   }
- 11 | |   
- 12 | `-> /* Block comment 2 */
+  x test-comments(test-comments): getAllComments() returned 9 comments:
+  |   [0] Line: " Line comment 1" at [29, 46]
+  |   [1] Block: " Block comment 1 " at [76, 97]
+  |   [2] Block: "*\n * JSDoc comment\n " at [99, 123]
+  |   [3] Line: " Line comment 2" at [163, 180]
+  |   [4] Block: " Block comment 2 " at [183, 204]
+  |   [5] Block: "*\n   * JSDoc comment 2\n   " at [256, 286]
+  |   [6] Line: " Line comment 3" at [321, 338]
+  |   [7] Line: " Line comment 4" at [405, 422]
+  |   [8] Block: " Block comment 3 " at [426, 447]
+    ,-[files/test.js:1:1]
+  1 | ,-> const topLevelVariable1 = 1;
+  2 | |   // Line comment 1
+  3 | |   const topLevelVariable2 = 1; /* Block comment 1 */
+  4 | |   
+  5 | |   /**
+  6 | |    * JSDoc comment
+  7 | |    */
+  8 | |   export function topLevelFunction() {
+  9 | |     // Line comment 2
+ 10 | |     /* Block comment 2 */
+ 11 | |     let functionScopedVariable = topLevelVariable;
+ 12 | |     /**
+ 13 | |      * JSDoc comment 2
+ 14 | |      */
+ 15 | |     function nestedFunction() {
+ 16 | |       // Line comment 3
+ 17 | |       return functionScopedVariable;
+ 18 | |     }
+ 19 | |     return nestedFunction(); // Line comment 4
+ 20 | |   }
+ 21 | |   
+ 22 | |   /* Block comment 3 */
+ 23 | `-> const topLevelVariable3 = 2;
     `----
 
-  x test-comments(test-comments): getCommentsInside(foo) returned 2 comments:
-  |   [0] Line: " Line comment 2" at [105, 122]
-  |   [1] Line: " Line comment 3" at [135, 152]
-    ,-[files/test.js:7:1]
-  6 |      */
-  7 | ,-> export function foo() {
-  8 | |     // Line comment 2
-  9 | |     return x; // Line comment 3
- 10 | `-> }
- 11 |     
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'topLevelVariable1' is declared but never used. Unused variables should start with a '_'.
+   ,-[files/test.js:1:7]
+ 1 | const topLevelVariable1 = 1;
+   :       ^^^^^^^^|^^^^^^^^
+   :               `-- 'topLevelVariable1' is declared here
+ 2 | // Line comment 1
+   `----
+  help: Consider removing this declaration.
+
+  x test-comments(test-comments): commentsExistBetween(topLevelVariable, topLevelFunction): true
+   ,-[files/test.js:3:1]
+ 2 | // Line comment 1
+ 3 | const topLevelVariable2 = 1; /* Block comment 1 */
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | 
+   `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'topLevelVariable2' is declared but never used. Unused variables should start with a '_'.
+   ,-[files/test.js:3:7]
+ 2 | // Line comment 1
+ 3 | const topLevelVariable2 = 1; /* Block comment 1 */
+   :       ^^^^^^^^|^^^^^^^^
+   :               `-- 'topLevelVariable2' is declared here
+ 4 | 
+   `----
+  help: Consider removing this declaration.
+
+  x test-comments(test-comments): getCommentsInside(topLevelFunction) returned 5 comments:
+  |   [0] Line: " Line comment 2" at [163, 180]
+  |   [1] Block: " Block comment 2 " at [183, 204]
+  |   [2] Block: "*\n   * JSDoc comment 2\n   " at [256, 286]
+  |   [3] Line: " Line comment 3" at [321, 338]
+  |   [4] Line: " Line comment 4" at [405, 422]
+    ,-[files/test.js:8:8]
+  7 |      */
+  8 | ,-> export function topLevelFunction() {
+  9 | |     // Line comment 2
+ 10 | |     /* Block comment 2 */
+ 11 | |     let functionScopedVariable = topLevelVariable;
+ 12 | |     /**
+ 13 | |      * JSDoc comment 2
+ 14 | |      */
+ 15 | |     function nestedFunction() {
+ 16 | |       // Line comment 3
+ 17 | |       return functionScopedVariable;
+ 18 | |     }
+ 19 | |     return nestedFunction(); // Line comment 4
+ 20 | `-> }
+ 21 |     
     `----
 
-Found 0 warnings and 5 errors.
+  x test-comments(test-comments): getCommentsAfter(functionScopedVariable) returned 1 comments:
+  |   [0] Block: "*\n   * JSDoc comment 2\n   " at [256, 286]
+    ,-[files/test.js:11:3]
+ 10 |   /* Block comment 2 */
+ 11 |   let functionScopedVariable = topLevelVariable;
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 12 |   /**
+    `----
+
+  x test-comments(test-comments): getCommentsBefore(functionScopedVariable) returned 2 comments:
+  |   [0] Line: " Line comment 2" at [163, 180]
+  |   [1] Block: " Block comment 2 " at [183, 204]
+    ,-[files/test.js:11:3]
+ 10 |   /* Block comment 2 */
+ 11 |   let functionScopedVariable = topLevelVariable;
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 12 |   /**
+    `----
+
+  x test-comments(test-comments): getCommentsAfter(topLevelVariable3) returned 0 comments:
+  | 
+    ,-[files/test.js:23:1]
+ 22 | /* Block comment 3 */
+ 23 | const topLevelVariable3 = 2;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'topLevelVariable3' is declared but never used. Unused variables should start with a '_'.
+    ,-[files/test.js:23:7]
+ 22 | /* Block comment 3 */
+ 23 | const topLevelVariable3 = 2;
+    :       ^^^^^^^^|^^^^^^^^
+    :               `-- 'topLevelVariable3' is declared here
+    `----
+  help: Consider removing this declaration.
+
+Found 3 warnings and 7 errors.
 Finished in Xms on 1 file using X threads.
 ```
 
