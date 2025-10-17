@@ -179,14 +179,18 @@ jobs:
           git config user.email "bisect@oxc.rs"
           git config user.name "Bisect Bot"
           
+          # Set commits - use inputs if available, otherwise use defaults
+          GOOD_COMMIT="${{ github.event.inputs.good_commit || '1b3f43746' }}"
+          BAD_COMMIT="${{ github.event.inputs.bad_commit || '454ee94ff' }}"
+          
           # Start bisect
           echo "Starting git bisect..."
-          echo "Good commit: ${{ github.event.inputs.good_commit }}"
-          echo "Bad commit: ${{ github.event.inputs.bad_commit }}"
+          echo "Good commit: $GOOD_COMMIT"
+          echo "Bad commit: $BAD_COMMIT"
           
           git bisect start
-          git bisect bad ${{ github.event.inputs.bad_commit }}
-          git bisect good ${{ github.event.inputs.good_commit }}
+          git bisect bad "$BAD_COMMIT"
+          git bisect good "$GOOD_COMMIT"
           
           # Run bisect automatically
           echo "Running automated bisect..."
