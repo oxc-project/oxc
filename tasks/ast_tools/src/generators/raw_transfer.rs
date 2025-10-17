@@ -222,7 +222,7 @@ fn generate_deserializers(
     }
 
     impl VariantGenerator<7> for VariantGen {
-        const FLAG_NAMES: [&str;7] =
+        const FLAG_NAMES: [&str; 7] =
             ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "COMMENTS", "LINTER"];
 
         fn variants(&mut self) -> Vec<[bool; 7]> {
@@ -241,7 +241,8 @@ fn generate_deserializers(
 
                         variants.push([
                             is_ts, range, /* loc */ false, parent,
-                            /* preserve_parens */ true, /* comments */ false, /* linter */ false,
+                            /* preserve_parens */ true, /* comments */ false,
+                            /* linter */ false,
                         ]);
                     }
                 }
@@ -251,7 +252,8 @@ fn generate_deserializers(
             self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
-                /* parent */ true, /* preserve_parens */ false, /* comments */ true, /* linter */ true,
+                /* parent */ true, /* preserve_parens */ false, /* comments */ true,
+                /* linter */ true,
             ]);
 
             variants
