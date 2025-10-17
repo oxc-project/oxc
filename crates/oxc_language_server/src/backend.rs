@@ -403,8 +403,9 @@ impl LanguageServer for Backend {
         let workers = self.workspace_workers.read().await;
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
-        let all_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
-            ConcurrentHashMap::default();
+
+        let mut all_diagnostics = Vec::new();
+
         for file_event in &params.changes {
             // We do not expect multiple changes from the same workspace folder.
             // If we should consider it, we need to map the events to the workers first,
@@ -418,24 +419,15 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            for (key, value) in &diagnostics.pin() {
+            for (uri, reports) in &diagnostics.pin() {
                 all_diagnostics
-                    .pin()
-                    .insert(key.clone(), value.iter().map(|d| d.diagnostic.clone()).collect());
+                    .push((uri.clone(), reports.iter().map(|d| d.diagnostic.clone()).collect()));
             }
         }
 
-        if all_diagnostics.is_empty() {
-            return;
+        if !all_diagnostics.is_empty() {
+            self.publish_all_diagnostics(&all_diagnostics).await;
         }
-
-        let x = &all_diagnostics
-            .pin()
-            .into_iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<Vec<_>>();
-
-        self.publish_all_diagnostics(x).await;
     }
 
     /// The server will start new [WorkspaceWorker]s for added workspace folders
