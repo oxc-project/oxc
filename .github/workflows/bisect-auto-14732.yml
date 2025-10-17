@@ -1,0 +1,248 @@
+name: Auto Bisect Issue 14732
+
+on:
+  workflow_dispatch:
+    inputs:
+      good_commit:
+        description: 'Known good commit (default: v0.92.0)'
+        required: false
+        default: '1b3f43746'
+      bad_commit:
+        description: 'Known bad commit (default: v0.95.0)'
+        required: false
+        default: '454ee94ff'
+
+permissions:
+  contents: read
+
+jobs:
+  auto-bisect:
+    name: Auto Bisect on Windows
+    runs-on: windows-latest
+    timeout-minutes: 180  # 3 hours max
+    
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      
+      - uses: samypr100/setup-dev-drive@cf663fdf88945e3faaa980ec525b5bc2350fbf9d # v3.4.3
+        with:
+          workspace-copy: true
+          drive-size: 8GB
+          drive-format: NTFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+
+      - name: Install Rust
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          rustup set profile minimal
+          rustup show
+          git restore .
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: false
+
+      - name: Create bisect test script
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          cat > bisect-run.sh << 'SCRIPT_EOF'
+          #!/bin/bash
+          set -e
+          
+          echo "============================================"
+          echo "Testing commit: $(git log -1 --oneline)"
+          echo "============================================"
+          
+          # Create test files if they don't exist (for older commits)
+          mkdir -p napi/parser
+          
+          if [ ! -f napi/parser/test-worker-main.mjs ]; then
+            echo "Creating test-worker-main.mjs..."
+            cat > napi/parser/test-worker-main.mjs << 'EOF'
+          import { dirname, join } from 'node:path';
+          import process from 'node:process';
+          import { fileURLToPath } from 'node:url';
+          import { Worker } from 'node:worker_threads';
+          
+          const __filename = fileURLToPath(import.meta.url);
+          const __dirname = dirname(__filename);
+          
+          const WORKER_COUNT = 16;
+          let done = 0;
+          
+          console.log(\`Starting \${ WORKER_COUNT } workers...\n\`);
+          
+          for (let i = 1; i <= WORKER_COUNT; i++) {
+             const worker = new Worker(join(__dirname, 'test-worker.mjs'), {
+                workerData: { workerId: i },
+             });
+          
+             const id = String(i).padStart(2);
+          
+             worker.on('error', (error) => {
+                console.error(\`[Main] Worker \${ id } error:\`, error);
+             });
+          
+             worker.on('exit', (code) => {
+                done++;
+                if (code !== 0) {
+                   console.error(\`[Main] Worker \${ id } stopped with exit code \${ code }\`);
+                }
+                console.log(\`Workers done: \${ done }/\${ WORKER_COUNT }\`);
+                if (done === WORKER_COUNT) {
+                   console.log(\`All workers done!\`);
+                }
+             });
+          }
+          
+          process.on('exit', (code) => {
+             console.log(\`About to exit with code: \${ code }\`);
+          });
+          
+          console.log(\`\n\${ WORKER_COUNT } workers created and running!\n\`);
+          EOF
+          fi
+          
+          if [ ! -f napi/parser/test-worker.mjs ]; then
+            echo "Creating test-worker.mjs..."
+            cat > napi/parser/test-worker.mjs << 'EOF'
+          import { workerData } from 'node:worker_threads';
+          
+          const workerId = String(workerData.workerId);
+          
+          console.log(\`Worker \${ workerId.padStart(2) } starting ...\`);
+          
+          try {
+             const module = await import('./src-js/index.js');
+          } catch (error) {
+             console.error(error);
+          }
+          
+          setTimeout(() => {
+             console.log(\`Hello from worker \${ workerId }\`);
+          }, Math.random() * 1000);
+          EOF
+          fi
+          
+          # Build oxc-parser
+          echo "Building oxc-parser..."
+          cd napi/parser
+          
+          # Install deps if needed
+          if [ ! -d node_modules ]; then
+            pnpm install --ignore-scripts
+          fi
+          
+          # Build with allocator feature
+          if ! pnpm build --features allocator --release 2>&1 | tail -5; then
+            echo "Build failed - skipping this commit"
+            exit 125  # Tell git bisect to skip this commit
+          fi
+          
+          echo "Build completed. Running test..."
+          
+          # Run test with timeout - if it crashes or times out, it's bad
+          if timeout 60 node test-worker-main.mjs 2>&1 | tee test-output.log; then
+            # Check if all workers completed
+            if grep -q "All workers done!" test-output.log; then
+              echo "✅ Test PASSED - All workers completed"
+              exit 0  # Good commit
+            else
+              echo "❌ Test FAILED - Not all workers completed"
+              exit 1  # Bad commit
+            fi
+          else
+            EXIT_CODE=$?
+            echo "❌ Test FAILED - Exit code: $EXIT_CODE (crash or timeout)"
+            exit 1  # Bad commit
+          fi
+          SCRIPT_EOF
+          
+          chmod +x bisect-run.sh
+
+      - name: Run git bisect
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          # Configure git
+          git config user.email "bisect@oxc.rs"
+          git config user.name "Bisect Bot"
+          
+          # Start bisect
+          echo "Starting git bisect..."
+          echo "Good commit: ${{ github.event.inputs.good_commit }}"
+          echo "Bad commit: ${{ github.event.inputs.bad_commit }}"
+          
+          git bisect start
+          git bisect bad ${{ github.event.inputs.bad_commit }}
+          git bisect good ${{ github.event.inputs.good_commit }}
+          
+          # Run bisect automatically
+          echo "Running automated bisect..."
+          git bisect run ./bisect-run.sh
+          
+          # Get the result
+          echo ""
+          echo "=========================================="
+          echo "BISECT RESULT:"
+          echo "=========================================="
+          git bisect log | tail -20
+          
+          # Save the first bad commit
+          FIRST_BAD=$(git bisect view --pretty=format:'%H' | head -1)
+          echo ""
+          echo "=========================================="
+          echo "First bad commit: $FIRST_BAD"
+          git log -1 $FIRST_BAD
+          echo "=========================================="
+          
+          # Save to output
+          echo "first_bad_commit=$FIRST_BAD" >> $GITHUB_OUTPUT
+          
+          # Save detailed log
+          git bisect log > bisect-full.log
+          
+      - name: Create summary
+        if: always()
+        shell: bash
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: |
+          echo "# Bisect Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f bisect-full.log ]; then
+            echo "## Bisect Log" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -30 bisect-full.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            
+            # Try to extract the first bad commit
+            FIRST_BAD=$(git bisect view --pretty=format:'%H' 2>/dev/null | head -1 || echo "unknown")
+            if [ "$FIRST_BAD" != "unknown" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "## 🔴 First Bad Commit" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "\`$FIRST_BAD\`" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              git log -1 $FIRST_BAD >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "Bisect did not complete successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+      - name: Upload bisect log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bisect-log
+          path: ${{ env.DEV_DRIVE_WORKSPACE }}/bisect-full.log
+          if-no-files-found: ignore

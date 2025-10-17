@@ -1,8 +1,34 @@
 # Start Here - Bisect Issue #14732
 
-## Quick Start: Test on Windows via GitHub Actions
+## 🚀 RECOMMENDED: Automated Bisect (One Click!)
 
-### ⚠️ IMPORTANT: The workflows must be run from these test branches
+### ⭐ Use the Automated Bisect Workflow
+
+**This workflow automatically finds the breaking commit using `git bisect run`**
+
+1. Go to: https://github.com/oxc-project/oxc/actions/workflows/bisect-auto-14732.yml
+
+2. Click "Run workflow" dropdown:
+   - **Use workflow from:** `cam-debug-14732` (or `main` if merged)
+   - **good_commit:** `1b3f43746` (v0.92.0 - leave default)
+   - **bad_commit:** `454ee94ff` (v0.95.0 - leave default)
+   - Click green "Run workflow" button
+
+3. Wait ~30-90 minutes - it will test ~10-15 commits automatically
+
+4. Check the "Summary" tab to see the **First Bad Commit** 🎯
+
+**That's it!** The workflow will automatically:
+- Test each commit in the range
+- Build oxc-parser with the allocator feature
+- Run the worker thread test
+- Identify the exact breaking commit
+
+---
+
+## Alternative: Manual Testing (Step by Step)
+
+If you want to test specific commits manually or the automated bisect fails:
 
 The GitHub Actions workflows are ready to use. Follow these steps:
 
