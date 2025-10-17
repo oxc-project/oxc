@@ -200,10 +200,14 @@ impl Rule for DisplayName {
             }
         }
 
-        // Phase 2: Handle anonymous components (no symbol) - only specific cases
-        for node in ctx.nodes() {
-            match node.kind() {
-                AstKind::ExportDefaultDeclaration(export) => {
+        // Phase 2: Handle anonymous components (no symbol) - ES module exports and CommonJS
+
+        // Check for ES module export default using module_record
+        if ctx.module_record().export_default.is_some() {
+            // Efficiently find export default by checking only top-level statements
+            let program = ctx.nodes().program();
+            for stmt in &program.body {
+                if let oxc_ast::ast::Statement::ExportDefaultDeclaration(export) = stmt {
                     if let Some(component_info) = is_anonymous_export_component(
                         export,
                         ctx,
@@ -212,20 +216,37 @@ impl Rule for DisplayName {
                     ) {
                         components_to_report.push((component_info.span, component_info.is_context));
                     }
+                    break; // Only one export default per module
                 }
-                AstKind::AssignmentExpression(assign) => {
-                    // Handle: module.exports = () => <div />
-                    if let Some(component_info) = is_module_exports_component(
-                        assign,
-                        ctx,
-                        &mut version_cache,
-                        ignore_transpiler_name,
-                        check_context_objects,
-                    ) {
-                        components_to_report.push((component_info.span, component_info.is_context));
+            }
+        }
+
+        // Check for CommonJS module.exports by looking at references to 'module' global
+        if let Some(module_reference_ids) = ctx.scoping().root_unresolved_references().get("module")
+        {
+            for &reference_id in module_reference_ids {
+                let reference = ctx.scoping().get_reference(reference_id);
+                let node = ctx.nodes().get_node(reference.node_id());
+
+                // Walk up to find if this is part of module.exports assignment
+                for ancestor_id in ctx.nodes().ancestor_ids(node.id()) {
+                    let ancestor = ctx.nodes().get_node(ancestor_id);
+
+                    if let AstKind::AssignmentExpression(assign) = ancestor.kind() {
+                        // Handle: module.exports = () => <div />
+                        if let Some(component_info) = is_module_exports_component(
+                            assign,
+                            ctx,
+                            &mut version_cache,
+                            ignore_transpiler_name,
+                            check_context_objects,
+                        ) {
+                            components_to_report
+                                .push((component_info.span, component_info.is_context));
+                        }
+                        break; // Found the assignment, no need to check further ancestors
                     }
                 }
-                _ => {}
             }
         }
 
