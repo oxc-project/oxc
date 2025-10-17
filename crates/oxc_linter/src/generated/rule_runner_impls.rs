@@ -465,7 +465,11 @@ impl RuleRunner for crate::rules::eslint::no_label_var::NoLabelVar {
 }
 
 impl RuleRunner for crate::rules::eslint::no_labels::NoLabels {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::BreakStatement,
+        AstType::ContinueStatement,
+        AstType::LabeledStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
