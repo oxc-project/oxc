@@ -108,6 +108,7 @@ fn test() {
         ("await using x = foo();", None),
         ("using x = foo(); bar(x);", None),
         ("await using x = foo(); bar(x);", None),
+        ("type t = (a, ...b) => void", None),
     ];
 
     let fail = vec![
