@@ -17,31 +17,31 @@ use crate::{
 
 fn use_to_be(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBe` when expecting primitive literals.")
-        .with_help(format!("Replace `{x0}` with `toBe`"))
+        .with_help(format!("Replace `{x0}` with `toBe`."))
         .with_label(span)
 }
 
 fn use_to_be_undefined(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeUndefined` instead.")
-        .with_help(format!("Replace `{x0}` with `toBeUndefined()`"))
+        .with_help(format!("Replace `{x0}` with `toBeUndefined()`."))
         .with_label(span)
 }
 
 fn use_to_be_defined(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeDefined` instead.")
-        .with_help(format!("Replace `{x0}` with `toBeDefined()`"))
+        .with_help(format!("Replace `{x0}` with `toBeDefined()`."))
         .with_label(span)
 }
 
 fn use_to_be_null(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeNull` instead.")
-        .with_help(format!("Replace `{x0}` with `toBeNull()`"))
+        .with_help(format!("Replace `{x0}` with `toBeNull()`."))
         .with_label(span)
 }
 
 fn use_to_be_na_n(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `toBeNaN` instead.")
-        .with_help(format!("Replace `{x0}` with `toBeNaN()`"))
+        .with_help(format!("Replace `{x0}` with `toBeNaN()`."))
         .with_label(span)
 }
 
