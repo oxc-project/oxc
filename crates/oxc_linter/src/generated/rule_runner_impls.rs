@@ -1077,7 +1077,8 @@ impl RuleRunner for crate::rules::import::no_absolute_path::NoAbsolutePath {
 }
 
 impl RuleRunner for crate::rules::import::no_amd::NoAmd {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
