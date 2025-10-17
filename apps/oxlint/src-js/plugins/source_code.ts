@@ -174,7 +174,7 @@ export const SOURCE_CODE = Object.freeze({
     if (ast === null) initAst();
     const { comments } = ast;
     if (comments.length === 0) return [];
-    const targetStart = nodeOrToken.range[0];
+    const targetStart = nodeOrToken.start;
 
     const commentsBefore: Comment[] = [];
 
@@ -182,7 +182,7 @@ export const SOURCE_CODE = Object.freeze({
     // with token-based APIs to match eslint.
     for (let i = comments.length - 1; i >= 0; i--) {
       const comment = comments[i];
-      const commentEnd = comment.range[1];
+      const commentEnd = comment.end;
 
       if (commentEnd > targetStart) {
         continue;
@@ -194,7 +194,7 @@ export const SOURCE_CODE = Object.freeze({
         let currentComment = comment;
         for (let j = i - 1; j >= 0; j--) {
           const prevComment = comments[j];
-          const between = sourceText.slice(prevComment.range[1], currentComment.range[0]);
+          const between = sourceText.slice(prevComment.end, currentComment.start);
           if (/^\s*$/.test(between)) {
             commentsBefore.unshift(prevComment);
             currentComment = prevComment;
@@ -218,13 +218,13 @@ export const SOURCE_CODE = Object.freeze({
     if (ast === null) initAst();
     const { comments } = ast;
     if (comments.length === 0) return [];
-    let targetEnd = nodeOrToken.range[1];
+    let targetEnd = nodeOrToken.end;
 
     const commentsAfter: Comment[] = [];
 
     for (let i = 0; i < comments.length; i++) {
       const comment = comments[i];
-      const commentStart = comment.range[0];
+      const commentStart = comment.start;
 
       if (commentStart < targetEnd) {
         continue;
@@ -232,7 +232,7 @@ export const SOURCE_CODE = Object.freeze({
       const whitespaceOnlyGap = /^\s*$/.test(sourceText.slice(targetEnd, commentStart));
       if (whitespaceOnlyGap) {
         commentsAfter.push(comment);
-        targetEnd = comment.range[1];
+        targetEnd = comment.end;
       } else {
         break;
       }
@@ -255,8 +255,8 @@ export const SOURCE_CODE = Object.freeze({
     // Linear search for first comment within `node`'s range
     // TODO: Use binary search.
     for (let i = 0; i < comments.length; i++) {
-      const c = comments[i];
-      if (c.range[0] >= rangeStart && c.range[1] <= rangeEnd) {
+      const comment = comments[i];
+      if (comment.start >= rangeStart && comment.end <= rangeEnd) {
         indexStart = i;
         break;
       }
@@ -265,8 +265,8 @@ export const SOURCE_CODE = Object.freeze({
     // Linear search for last comment within `node`'s range
     // TODO: Use binary search.
     for (let i = indexStart; i < comments.length; i++) {
-      const c = comments[i];
-      if (c.range[1] > rangeEnd) {
+      const comment = comments[i];
+      if (comment.end > rangeEnd) {
         indexEnd = i;
         break;
       }
@@ -549,12 +549,15 @@ export const SOURCE_CODE = Object.freeze({
    * @returns `true` if one or more comments exist.
    */
   commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
-    // find the first comment after nodeOrToken1 end, check if it ends before nodeOrToken2 starts
-    const nodeOrToken1End = nodeOrToken1.range[1];
-    for (let i = 0; i < ast.comments.length; i++) {
-      const c = ast.comments[i];
-      if (c.range[0] >= nodeOrToken1End) {
-        return c.range[1] <= nodeOrToken2.range[0];
+    // Find the first comment after `nodeOrToken1` ends.
+    // Check if it ends before `nodeOrToken2` starts.
+    const { comments } = ast;
+    const betweenRangeStart = nodeOrToken1.end;
+    const betweenRangeEnd = nodeOrToken2.start;
+    for (let i = 0; i < comments.length; i++) {
+      const comment = comments[i];
+      if (comment.start >= betweenRangeStart) {
+        return comment.end <= betweenRangeEnd;
       }
     }
     return false;
