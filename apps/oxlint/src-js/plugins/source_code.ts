@@ -253,29 +253,32 @@ export const SOURCE_CODE = Object.freeze({
   getCommentsInside(node: Node): Comment[] {
     if (ast === null) initAst();
     const { comments } = ast;
-    if (comments.length === 0) return [];
+
+    const commentsLength = comments.length;
     const [rangeStart, rangeEnd] = node.range;
-    let indexStart = null, indexEnd = null;
-    // Linear search for first comment within `node`'s range
+    let indexStart: number = commentsLength;
+    let indexEnd: number | undefined = undefined;
+
+    // Linear search for first comment within `node`'s range.
     // TODO: Use binary search.
-    for (let i = 0; i < comments.length; i++) {
+    for (let i = 0; i < commentsLength; i++) {
       const comment = comments[i];
-      if (comment.start >= rangeStart && comment.end <= rangeEnd) {
+      if (comment.start >= rangeStart) {
         indexStart = i;
         break;
       }
     }
-    if (indexStart === null) return [];
-    // Linear search for last comment within `node`'s range
-    // TODO: Use binary search.
-    for (let i = indexStart; i < comments.length; i++) {
+
+    // Continued linear search for last comment within `node`'s range.
+    for (let i = indexStart; i < commentsLength; i++) {
       const comment = comments[i];
-      if (comment.end > rangeEnd) {
+      if (comment.start > rangeEnd) {
         indexEnd = i;
         break;
       }
     }
-    return comments.slice(indexStart, indexEnd ?? comments.length);
+
+    return comments.slice(indexStart, indexEnd);
   },
 
   /**
