@@ -125,7 +125,7 @@ impl Program<'_> {
         end = DESER[u32](POS_OFFSET.span.end);
 
 
-    /* IF LINTER */
+    /* IF COMMENTS */
     // Buffers will be cleaned up after the main program is deserialized.
     // We hold references here in case the comments need to be later accessed.
     let refUint32 = uint32;
@@ -139,7 +139,7 @@ impl Program<'_> {
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: null,
-        /* IF LINTER */
+        /* IF COMMENTS */
         get comments() {
             if (localAstId !== astId) throw new Error('Comments are only accessible while linting the file');
             // Restore buffers
