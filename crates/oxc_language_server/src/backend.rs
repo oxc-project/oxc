@@ -327,7 +327,7 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let (diagnostics, watcher, formatter_activated) =
+            let (diagnostics, watchers, formatter_activated) =
                 worker.did_change_configuration(&option.options).await;
 
             if formatter_activated && self.capabilities.get().is_some_and(|c| c.dynamic_formatting)
@@ -344,7 +344,7 @@ impl LanguageServer for Backend {
                 }
             }
 
-            if let Some(watcher) = watcher
+            if let Some(watchers) = watchers
                 && self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers)
             {
                 // remove the old watcher
@@ -357,7 +357,7 @@ impl LanguageServer for Backend {
                     id: format!("watcher-{}", worker.get_root_uri().as_str()),
                     method: "workspace/didChangeWatchedFiles".to_string(),
                     register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                        watchers: vec![watcher]
+                        watchers
                     })),
                 });
             }

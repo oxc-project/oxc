@@ -11,9 +11,9 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    ConcurrentHashMap,
+    ConcurrentHashMap, FORMAT_CONFIG_FILE,
     code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
-    formatter::server_formatter::ServerFormatter,
+    formatter::{options::FormatOptions, server_formatter::ServerFormatter},
     linter::{
         error_with_position::DiagnosticReport,
         options::LintOptions,
@@ -104,6 +104,21 @@ impl WorkspaceWorker {
             kind: Some(WatchKind::all()), // created, deleted, changed
         });
 
+        if options.format.experimental {
+            watchers.push(FileSystemWatcher {
+                glob_pattern: GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(self.root_uri.clone()),
+                    pattern: options
+                        .format
+                        .config_path
+                        .as_ref()
+                        .map_or(FORMAT_CONFIG_FILE, |v| v)
+                        .to_owned(),
+                }),
+                kind: Some(WatchKind::all()), // created, deleted, changed
+            });
+        }
+
         let Some(root_path) = &self.root_uri.to_file_path() else {
             return watchers;
         };
@@ -160,6 +175,15 @@ impl WorkspaceWorker {
         let server_linter = ServerLinter::new(&self.root_uri, lint_options);
 
         *self.server_linter.write().await = Some(server_linter);
+    }
+
+    /// Restart the server formatter with the current options
+    /// This will recreate the formatter and re-read the config files.
+    /// Call this when the options have changed and the formatter needs to be updated.
+    async fn refresh_server_formatter(&self, format_options: &FormatOptions) {
+        let server_formatter = ServerFormatter::new(&self.root_uri, format_options);
+
+        *self.server_formatter.write().await = Some(server_formatter);
     }
 
     /// Lint a file with the current linter
@@ -296,20 +320,25 @@ impl WorkspaceWorker {
         &self,
         _file_event: &FileEvent,
     ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+        // TODO: the tools should implement a helper function to detect if the changed file is relevant
         let files = {
             let server_linter_guard = self.server_linter.read().await;
             let server_linter = server_linter_guard.as_ref()?;
             server_linter.get_cached_files_of_diagnostics()
         };
-        let lint_options = self
-            .options
-            .lock()
-            .await
-            .as_ref()
-            .map(|option| option.lint.clone())
-            .unwrap_or_default();
+        let options = self.options.lock().await;
+        let format_options = options.as_ref().map(|o| o.format.clone()).unwrap_or_default();
+        let lint_options = options.as_ref().map(|o| o.lint.clone()).unwrap_or_default();
 
-        self.refresh_server_linter(&lint_options).await;
+        if format_options.experimental {
+            tokio::join!(
+                self.refresh_server_formatter(&format_options),
+                self.refresh_server_linter(&lint_options)
+            );
+        } else {
+            self.refresh_server_linter(&lint_options).await;
+        }
+
         Some(self.revalidate_diagnostics(files).await)
     }
 
@@ -320,8 +349,10 @@ impl WorkspaceWorker {
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
-        // File system watcher for lint config changes
-        Option<FileSystemWatcher>,
+        // File system watcher for lint/fmt config changes
+        // - `None` if no watcher changes are needed
+        // - empty vector if all watchers should be removed
+        Option<Vec<FileSystemWatcher>>,
         // Is true, when the formatter was added to the workspace worker
         bool,
     ) {
@@ -346,17 +377,53 @@ impl WorkspaceWorker {
         }
 
         let mut formatting = false;
-        if current_option.format != changed_options.format {
+        let mut removed_formatter = false;
+
+        // create all watchers again, because maybe one tool configuration is changed
+        // and we unregister the workspace watcher and register a new one.
+        // Without adding the old watchers back, the client would not watch them anymore.
+        //
+        // TODO: create own watcher for each tool with its own id,
+        // so we can unregister only the watcher that changed.
+        let mut watchers = Vec::new();
+
+        if current_option.format == changed_options.format {
             if changed_options.format.experimental {
-                debug!("experimental formatter enabled/restarted");
-                // restart the formatter
-                *self.server_formatter.write().await =
-                    Some(ServerFormatter::new(&self.root_uri, &changed_options.format));
-                formatting = true;
-            } else {
-                debug!("experimental formatter disabled");
-                *self.server_formatter.write().await = None;
+                watchers.push(FileSystemWatcher {
+                    glob_pattern: GlobPattern::Relative(RelativePattern {
+                        base_uri: OneOf::Right(self.root_uri.clone()),
+                        pattern: changed_options
+                            .format
+                            .config_path
+                            .as_ref()
+                            .map_or(FORMAT_CONFIG_FILE, |v| v)
+                            .to_owned(),
+                    }),
+                    kind: Some(WatchKind::all()), // created, deleted, changed
+                });
             }
+        } else if changed_options.format.experimental {
+            debug!("experimental formatter enabled/restarted");
+            self.refresh_server_formatter(&changed_options.format).await;
+
+            formatting = true;
+
+            watchers.push(FileSystemWatcher {
+                glob_pattern: GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(self.root_uri.clone()),
+                    pattern: changed_options
+                        .format
+                        .config_path
+                        .as_ref()
+                        .map_or(FORMAT_CONFIG_FILE, |v| v)
+                        .to_owned(),
+                }),
+                kind: Some(WatchKind::all()), // created, deleted, changed
+            });
+        } else {
+            debug!("experimental formatter disabled");
+            *self.server_formatter.write().await = None;
+            removed_formatter = true;
         }
 
         if ServerLinter::needs_restart(&current_option.lint, &changed_options.lint) {
@@ -371,29 +438,39 @@ impl WorkspaceWorker {
             };
             self.refresh_server_linter(&changed_options.lint).await;
 
-            if current_option.lint.config_path != changed_options.lint.config_path {
-                return (
-                    Some(self.revalidate_diagnostics(files).await),
-                    Some(FileSystemWatcher {
-                        glob_pattern: GlobPattern::Relative(RelativePattern {
-                            base_uri: OneOf::Right(self.root_uri.clone()),
-                            pattern: changed_options
-                                .lint
-                                .config_path
-                                .as_ref()
-                                .unwrap_or(&"**/.oxlintrc.json".to_string())
-                                .to_owned(),
-                        }),
-                        kind: Some(WatchKind::all()), // created, deleted, changed
-                    }),
-                    formatting,
-                );
-            }
+            watchers.push(FileSystemWatcher {
+                glob_pattern: GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(self.root_uri.clone()),
+                    pattern: changed_options
+                        .lint
+                        .config_path
+                        .as_ref()
+                        .unwrap_or(&"**/.oxlintrc.json".to_string())
+                        .to_owned(),
+                }),
+                kind: Some(WatchKind::all()), // created, deleted, changed
+            });
 
-            return (Some(self.revalidate_diagnostics(files).await), None, formatting);
+            return (Some(self.revalidate_diagnostics(files).await), Some(watchers), formatting);
+        } else if !watchers.is_empty() || removed_formatter {
+            // when we added/removed the formatter watcher, we also need to add the linter watcher again
+            watchers.push(FileSystemWatcher {
+                glob_pattern: GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(self.root_uri.clone()),
+                    pattern: changed_options
+                        .lint
+                        .config_path
+                        .as_ref()
+                        .unwrap_or(&"**/.oxlintrc.json".to_string())
+                        .to_owned(),
+                }),
+                kind: Some(WatchKind::all()), // created, deleted, changed
+            });
         }
 
-        (None, None, formatting)
+        let watchers = if watchers.is_empty() { None } else { Some(watchers) };
+
+        (None, watchers, formatting)
     }
 }
 
@@ -471,7 +548,7 @@ mod test_watchers {
                 .block_on(async { self.worker.init_watchers().await })
         }
 
-        fn did_change_configuration(&self, options: &Options) -> Option<FileSystemWatcher> {
+        fn did_change_configuration(&self, options: &Options) -> Option<Vec<FileSystemWatcher>> {
             let (_, watchers, _) = tokio::runtime::Runtime::new()
                 .unwrap()
                 .block_on(async { self.worker.did_change_configuration(options).await });
@@ -483,7 +560,8 @@ mod test_watchers {
         use tower_lsp_server::lsp_types::{GlobPattern, OneOf, RelativePattern};
 
         use crate::{
-            linter::options::LintOptions, options::Options, worker::test_watchers::Tester,
+            formatter::options::FormatOptions, linter::options::LintOptions, options::Options,
+            worker::test_watchers::Tester,
         };
 
         #[test]
@@ -582,12 +660,106 @@ mod test_watchers {
                 })
             );
         }
+
+        #[test]
+        fn test_formatter_experimental_enabled() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                    ..Default::default()
+                },
+            );
+            let watchers = tester.init_watchers();
+
+            assert_eq!(watchers.len(), 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: ".oxfmtrc.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_formatter_custom_config_path() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    format: FormatOptions {
+                        experimental: true,
+                        config_path: Some("configs/formatter.json".to_string()),
+                    },
+                    ..Default::default()
+                },
+            );
+            let watchers = tester.init_watchers();
+
+            assert_eq!(watchers.len(), 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "configs/formatter.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_linter_and_formatter_custom_config_path() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    lint: LintOptions {
+                        config_path: Some("configs/lint.json".to_string()),
+                        ..Default::default()
+                    },
+                    format: FormatOptions {
+                        experimental: true,
+                        config_path: Some("configs/formatter.json".to_string()),
+                    },
+                },
+            );
+            let watchers = tester.init_watchers();
+
+            assert_eq!(watchers.len(), 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "configs/lint.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "configs/formatter.json".to_string(),
+                })
+            );
+        }
     }
 
     mod did_change_configuration {
         use tower_lsp_server::lsp_types::{GlobPattern, OneOf, RelativePattern};
 
         use crate::{
+            formatter::options::FormatOptions,
             linter::options::{LintOptions, Run},
             options::Options,
             worker::test_watchers::Tester,
@@ -613,8 +785,9 @@ mod test_watchers {
                 })
                 .unwrap();
 
+            assert_eq!(watchers.len(), 1);
             assert_eq!(
-                watchers.glob_pattern,
+                watchers[0].glob_pattern,
                 GlobPattern::Relative(RelativePattern {
                     base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
                     pattern: "configs/lint.json".to_string(),
@@ -631,6 +804,164 @@ mod test_watchers {
                 ..Default::default()
             });
             assert!(watchers.is_none());
+        }
+
+        #[test]
+        fn test_no_changes_with_formatter() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                    ..Default::default()
+                },
+            );
+            let watchers = tester
+                .did_change_configuration(&Options {
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                    ..Default::default()
+                })
+                .unwrap();
+
+            // TODO: should be none
+            assert!(watchers.len() == 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: ".oxfmtrc.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_lint_config_path_change_with_formatter() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                    ..Default::default()
+                },
+            );
+            let watchers = tester
+                .did_change_configuration(&Options {
+                    lint: LintOptions {
+                        config_path: Some("configs/lint.json".to_string()),
+                        ..Default::default()
+                    },
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                })
+                .unwrap();
+
+            assert_eq!(watchers.len(), 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: ".oxfmtrc.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "configs/lint.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_formatter_experimental_enabled() {
+            let tester = Tester::new("fixtures/watcher/default", &Options::default());
+            let watchers = tester
+                .did_change_configuration(&Options {
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                    ..Default::default()
+                })
+                .unwrap();
+
+            assert_eq!(watchers.len(), 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: ".oxfmtrc.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_formatter_custom_config_path() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                    ..Default::default()
+                },
+            );
+            let watchers = tester
+                .did_change_configuration(&Options {
+                    format: FormatOptions {
+                        experimental: true,
+                        config_path: Some("configs/formatter.json".to_string()),
+                    },
+                    ..Default::default()
+                })
+                .unwrap();
+
+            assert_eq!(watchers.len(), 2);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "configs/formatter.json".to_string(),
+                })
+            );
+            assert_eq!(
+                watchers[1].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
+        }
+
+        #[test]
+        fn test_formatter_disabling() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                    ..Default::default()
+                },
+            );
+            let watchers = tester
+                .did_change_configuration(&Options {
+                    format: FormatOptions { experimental: false, ..Default::default() },
+                    ..Default::default()
+                })
+                .unwrap();
+            assert!(watchers.len() == 1);
+            assert_eq!(
+                watchers[0].glob_pattern,
+                GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
+                    pattern: "**/.oxlintrc.json".to_string(),
+                })
+            );
         }
     }
 }
