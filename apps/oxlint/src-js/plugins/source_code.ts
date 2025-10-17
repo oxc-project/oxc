@@ -20,6 +20,7 @@ import type { Scope, ScopeManager, Variable } from './scope.ts';
 import type { BufferWithArrays, Comment, Node, NodeOrToken, Ranged, Token } from './types.ts';
 
 const { max } = Math;
+const whitespacePattern = /^\s*$/;
 
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
@@ -188,14 +189,14 @@ export const SOURCE_CODE = Object.freeze({
         continue;
       }
 
-      const whitespaceOnlyGap = /^^\s*$/.test(sourceText.slice(commentEnd, targetStart));
+      const whitespaceOnlyGap = whitespacePattern.test(sourceText.slice(commentEnd, targetStart));
       if (whitespaceOnlyGap) {
         commentsBefore.unshift(comment);
         let currentComment = comment;
         for (let j = i - 1; j >= 0; j--) {
           const prevComment = comments[j];
           const between = sourceText.slice(prevComment.end, currentComment.start);
-          if (/^\s*$/.test(between)) {
+          if (whitespacePattern.test(between)) {
             commentsBefore.unshift(prevComment);
             currentComment = prevComment;
           } else {
@@ -229,7 +230,7 @@ export const SOURCE_CODE = Object.freeze({
       if (commentStart < targetEnd) {
         continue;
       }
-      const whitespaceOnlyGap = /^\s*$/.test(sourceText.slice(targetEnd, commentStart));
+      const whitespaceOnlyGap = whitespacePattern.test(sourceText.slice(targetEnd, commentStart));
       if (whitespaceOnlyGap) {
         commentsAfter.push(comment);
         targetEnd = comment.end;
