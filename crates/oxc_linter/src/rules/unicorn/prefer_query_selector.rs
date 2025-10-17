@@ -2,7 +2,6 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::phf_map;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_node_value_not_dom_node};
 
@@ -19,11 +18,13 @@ fn prefer_query_selector_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct PreferQuerySelector;
 
-const DISALLOWED_IDENTIFIER_NAMES: phf::Map<&'static str, &'static str> = phf_map!(
-    "getElementById" => "querySelector",
-    "getElementsByClassName" => "querySelectorAll",
-    "getElementsByTagName" => "querySelectorAll"
-);
+fn get_preferred_identifier_name(ident_name: &str) -> Option<&'static str> {
+    match ident_name {
+        "getElementById" => Some("querySelector"),
+        "getElementsByClassName" | "getElementsByTagName" => Some("querySelectorAll"),
+        _ => None,
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -89,20 +90,13 @@ impl Rule for PreferQuerySelector {
             return;
         };
 
-        for (cur_property_name, preferred_selector) in &DISALLOWED_IDENTIFIER_NAMES {
-            if cur_property_name != &property_name {
-                continue;
-            }
-
-            let diagnostic = prefer_query_selector_diagnostic(
-                preferred_selector,
-                cur_property_name,
-                property_span,
-            );
+        if let Some(preferred_selector) = get_preferred_identifier_name(property_name) {
+            let diagnostic =
+                prefer_query_selector_diagnostic(preferred_selector, property_name, property_span);
 
             if argument_expr.is_null() {
                 return ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                    fixer.replace(property_span, *preferred_selector)
+                    fixer.replace(property_span, preferred_selector)
                 });
             }
 
@@ -121,12 +115,12 @@ impl Rule for PreferQuerySelector {
             if let Some(literal_value) = literal_value {
                 return ctx.diagnostic_with_fix(diagnostic, |fixer| {
                     if literal_value.is_empty() {
-                        return fixer.replace(property_span, *preferred_selector);
+                        return fixer.replace(property_span, preferred_selector);
                     }
 
                     let source_text = fixer.source_range(argument_expr.span());
                     let quotes_symbol = source_text.chars().next().unwrap();
-                    let argument = match *cur_property_name {
+                    let argument = match property_name {
                         "getElementById" => format!("#{literal_value}"),
                         "getElementsByClassName" => {
                             format!(

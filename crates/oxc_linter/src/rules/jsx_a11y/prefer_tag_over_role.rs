@@ -1,5 +1,3 @@
-use phf::phf_map;
-
 use oxc_ast::{
     AstKind,
     ast::{JSXAttributeItem, JSXAttributeValue},
@@ -50,52 +48,44 @@ declare_oxc_lint!(
 );
 
 impl PreferTagOverRole {
-    fn check_roles<'a>(
-        role_prop: &JSXAttributeItem<'a>,
-        role_to_tag: &phf::Map<&str, &str>,
-        jsx_name: &str,
-        ctx: &LintContext<'a>,
-    ) {
+    fn check_roles<'a>(role_prop: &JSXAttributeItem<'a>, jsx_name: &str, ctx: &LintContext<'a>) {
         if let JSXAttributeItem::Attribute(attr) = role_prop
             && let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value
         {
             let roles = role_values.value.split_whitespace();
             for role in roles {
-                Self::check_role(role, role_to_tag, jsx_name, attr.span, ctx);
+                Self::check_role(role, jsx_name, attr.span, ctx);
             }
         }
     }
 
-    fn check_role(
-        role: &str,
-        role_to_tag: &phf::Map<&str, &str>,
-        jsx_name: &str,
-        span: Span,
-        ctx: &LintContext,
-    ) {
-        if let Some(tag) = role_to_tag.get(role)
-            && jsx_name != *tag
+    fn check_role(role: &str, jsx_name: &str, span: Span, ctx: &LintContext) {
+        if let Some(tag) = get_tags_from_role(role)
+            && jsx_name != tag
         {
             ctx.diagnostic(prefer_tag_over_role_diagnostic(span, tag, role));
         }
     }
 }
 
-const ROLE_TO_TAG_MAP: phf::Map<&'static str, &'static str> = phf_map! {
-    "checkbox" => "input",
-    "button" => "button",
-    "heading" => "h1,h2,h3,h4,h5,h6",
-    "link" => "a,area",
-    "rowgroup" => "tbody,tfoot,thead",
-    "banner" => "header",
-};
+fn get_tags_from_role(role: &str) -> Option<&'static str> {
+    match role {
+        "checkbox" => Some("input"),
+        "button" => Some("button"),
+        "heading" => Some("h1,h2,h3,h4,h5,h6"),
+        "link" => Some("a,area"),
+        "rowgroup" => Some("tbody,tfoot,thead"),
+        "banner" => Some("header"),
+        _ => None,
+    }
+}
 
 impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let name = get_element_type(ctx, jsx_el);
             if let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") {
-                Self::check_roles(role_prop, &ROLE_TO_TAG_MAP, &name, ctx);
+                Self::check_roles(role_prop, &name, ctx);
             }
         }
     }

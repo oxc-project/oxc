@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_map;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -21,17 +20,23 @@ fn prefer_modern_dom_apis_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct PreferModernDomApis;
 
-const DISALLOWED_METHODS: phf::Map<&'static str, &'static str> = phf_map!(
-    "replaceChild" => "replaceWith",
-    "insertBefore" => "before",
-);
+fn get_replacement_for_disallowed_method(method: &str) -> Option<&'static str> {
+    match method {
+        "replaceChild" => Some("replaceWith"),
+        "insertBefore" => Some("before"),
+        _ => None,
+    }
+}
 
-const POSITION_REPLACERS: phf::Map<&'static str, &'static str> = phf_map!(
-    "beforebegin" => "before",
-    "afterbegin" => "prepend",
-    "beforeend" => "append",
-    "afterend" => "after",
-);
+fn get_replacement_for_position(position: &str) -> Option<&'static str> {
+    match position {
+        "beforebegin" => Some("before"),
+        "afterbegin" => Some("prepend"),
+        "beforeend" => Some("append"),
+        "afterend" => Some("after"),
+        _ => None,
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -89,7 +94,7 @@ impl Rule for PreferModernDomApis {
             .all(|argument| matches!(argument.as_expression(), Some(expr) if !expr.is_undefined()))
             && matches!(member_expr.object, Expression::Identifier(_))
             && !call_expr.optional
-            && let Some(preferred_method) = DISALLOWED_METHODS.get(method)
+            && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
         {
             ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
                 preferred_method,
@@ -107,16 +112,13 @@ impl Rule for PreferModernDomApis {
             Some(2),
             Some(2),
         ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
+            && let Some(replacer) = get_replacement_for_position(lit.value.as_str())
         {
-            for (position, replacer) in &POSITION_REPLACERS {
-                if lit.value == position {
-                    ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
-                        replacer,
-                        method,
-                        member_expr.property.span,
-                    ));
-                }
-            }
+            ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
+                replacer,
+                method,
+                member_expr.property.span,
+            ));
         }
     }
 }
