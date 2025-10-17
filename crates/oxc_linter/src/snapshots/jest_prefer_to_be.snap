@@ -125,14 +125,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect("a string").not["toBe"](null);
    ·                        ──────
    ╰────
-  help: Replace `"toBe"](null)` with `toBeNull()`
+  help: Replace `["toBe"](null)` with `toBeNull()`
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:27]
  1 │ expect("a string")["not"]["toBe"](null);
    ·                           ──────
    ╰────
-  help: Replace `"toBe"](null)` with `toBeNull()`
+  help: Replace `["toBe"](null)` with `toBeNull()`
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:24]

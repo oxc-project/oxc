@@ -281,19 +281,25 @@ impl PreferToBe {
                 fixer.replace(replacement_span, new_matcher)
             });
         } else if kind == &PreferToBeKind::Null {
-            let replacement_span = Span::new(span.start, end);
+            // For computed member expressions, we need to start one character before the span
+            // to include the opening bracket: ["toBe"] -> ["toBeNull"]
+            let replacement_start = if is_cmp_mem_expr { span.start - 1 } else { span.start };
+            let replacement_span = Span::new(replacement_start, end);
             let source_text = ctx.source_range(replacement_span);
 
             ctx.diagnostic_with_fix(use_to_be_null(source_text, span), |fixer| {
-                let new_matcher = if is_cmp_mem_expr { "\"toBeNull\"]()" } else { "toBeNull()" };
+                let new_matcher = if is_cmp_mem_expr { "[\"toBeNull\"]()" } else { "toBeNull()" };
                 fixer.replace(replacement_span, new_matcher)
             });
         } else if kind == &PreferToBeKind::NaN {
-            let replacement_span = Span::new(span.start, end);
+            // For computed member expressions, we need to start one character before the span
+            // to include the opening bracket: ["toBe"] -> ["toBeNaN"]
+            let replacement_start = if is_cmp_mem_expr { span.start - 1 } else { span.start };
+            let replacement_span = Span::new(replacement_start, end);
             let source_text = ctx.source_range(replacement_span);
 
             ctx.diagnostic_with_fix(use_to_be_na_n(source_text, span), |fixer| {
-                let new_matcher = if is_cmp_mem_expr { "\"toBeNaN\"]()" } else { "toBeNaN()" };
+                let new_matcher = if is_cmp_mem_expr { "[\"toBeNaN\"]()" } else { "toBeNaN()" };
                 fixer.replace(replacement_span, new_matcher)
             });
         } else {
