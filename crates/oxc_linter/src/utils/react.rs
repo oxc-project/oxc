@@ -370,7 +370,6 @@ pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
 #[derive(Debug)]
 pub enum InnermostFunction<'a> {
     Function(&'a Function<'a>),
-    #[expect(dead_code, reason = "False positive: field is read in pattern matching")]
     ArrowFunction(&'a ArrowFunctionExpression<'a>),
 }
 
