@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect(value)["toEqual"](`my string`);
    ·               ─────────
    ╰────
-  help: Replace `"toEqual"` with `toBe`.
+  help: Replace `"toEqual"` with `"toBe"`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBe` when expecting primitive literals.
    ╭─[prefer_to_be.tsx:1:15]
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect(loadMessage()).resolves["toStrictEqual"]("hello world");
    ·                                ───────────────
    ╰────
-  help: Replace `"toStrictEqual"` with `toBe`.
+  help: Replace `"toStrictEqual"` with `"toBe"`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBe` when expecting primitive literals.
    ╭─[prefer_to_be.tsx:1:35]
@@ -125,14 +125,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect("a string").not["toBe"](null);
    ·                        ──────
    ╰────
-  help: Replace `["toBe"](null)` with `toBeNull()`.
+  help: Replace `["toBe"](null)` with `["toBeNull"]()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:27]
  1 │ expect("a string")["not"]["toBe"](null);
    ·                           ──────
    ╰────
-  help: Replace `["toBe"](null)` with `toBeNull()`.
+  help: Replace `["toBe"](null)` with `["toBeNull"]()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:24]
@@ -188,7 +188,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect("a string").rejects.not["toBe"](undefined);
    ·                                ──────
    ╰────
-  help: Replace `.not["toBe"](undefined)` with `toBeDefined()`.
+  help: Replace `.not["toBe"](undefined)` with `["toBeDefined"]()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeDefined` instead.
    ╭─[prefer_to_be.tsx:1:24]
