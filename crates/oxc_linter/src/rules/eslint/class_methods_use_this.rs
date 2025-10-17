@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Deref};
 
 use itertools::Itertools;
 use oxc_ast::{
@@ -41,6 +41,14 @@ impl Default for ClassMethodsUseThisConfig {
 
 #[derive(Debug, Clone, Default)]
 pub struct ClassMethodsUseThis(Box<ClassMethodsUseThisConfig>);
+
+impl Deref for ClassMethodsUseThis {
+    type Target = ClassMethodsUseThisConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 #[derive(Debug, Clone)]
 struct MethodException {
@@ -136,12 +144,11 @@ impl Rule for ClassMethodsUseThis {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let config = &self.0;
         let function_pair = match node.kind() {
             AstKind::AccessorProperty(accessor) => {
                 if accessor.r#static
-                    || !config.enforce_for_class_fields
-                    || (config.ignore_override_methods && accessor.r#override)
+                    || !self.enforce_for_class_fields
+                    || (self.ignore_override_methods && accessor.r#override)
                     || self.check_ignore_classes_with_implements(
                         node,
                         ctx,
@@ -164,7 +171,7 @@ impl Rule for ClassMethodsUseThis {
             AstKind::MethodDefinition(method_definition) => {
                 if method_definition.r#static
                     || method_definition.kind.is_constructor()
-                    || (config.ignore_override_methods && method_definition.r#override)
+                    || (self.ignore_override_methods && method_definition.r#override)
                     || self.check_ignore_classes_with_implements(
                         node,
                         ctx,
@@ -179,8 +186,8 @@ impl Rule for ClassMethodsUseThis {
             }
             AstKind::PropertyDefinition(property_definition) => {
                 if property_definition.r#static
-                    || !config.enforce_for_class_fields
-                    || (config.ignore_override_methods && property_definition.r#override)
+                    || !self.enforce_for_class_fields
+                    || (self.ignore_override_methods && property_definition.r#override)
                     || self.check_ignore_classes_with_implements(
                         node,
                         ctx,
@@ -200,11 +207,11 @@ impl Rule for ClassMethodsUseThis {
                     _ => None,
                 })
             }
-            _ => None,
+            _ => return,
         };
         let Some((function_body, name)) = function_pair else { return };
         if let Some(name_str) = name.name()
-            && config.except_methods.iter().any(|method| {
+            && self.except_methods.iter().any(|method| {
                 method.name == name_str && method.private == name.is_private_identifier()
             })
         {

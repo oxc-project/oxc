@@ -27,7 +27,11 @@ impl RuleRunner for crate::rules::eslint::block_scoped_var::BlockScopedVar {
 }
 
 impl RuleRunner for crate::rules::eslint::class_methods_use_this::ClassMethodsUseThis {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AccessorProperty,
+        AstType::MethodDefinition,
+        AstType::PropertyDefinition,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
