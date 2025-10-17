@@ -16,23 +16,33 @@ use crate::{
 };
 
 fn use_to_be(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBe` when expecting primitive literals.").with_label(span)
+    OxcDiagnostic::warn("Use `toBe()` when comparing primitive values")
+        .with_help("Replace `toEqual()` with `toBe()` for primitive comparison")
+        .with_label(span)
 }
 
 fn use_to_be_undefined(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeUndefined` instead.").with_label(span)
+    OxcDiagnostic::warn("Use `toBeUndefined()` when checking for undefined values")
+        .with_help("Replace with `toBeUndefined()` for more explicit undefined checking")
+        .with_label(span)
 }
 
 fn use_to_be_defined(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeDefined` instead.").with_label(span)
+    OxcDiagnostic::warn("Use `toBeDefined()` when checking for defined values")
+        .with_help("Replace with `toBeDefined()` for more explicit defined checking")
+        .with_label(span)
 }
 
 fn use_to_be_null(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeNull` instead.").with_label(span)
+    OxcDiagnostic::warn("Use `toBeNull()` when checking for null values")
+        .with_help("Replace with `toBeNull()` for more explicit null checking")
+        .with_label(span)
 }
 
 fn use_to_be_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeNaN` instead.").with_label(span)
+    OxcDiagnostic::warn("Use `toBeNaN()` when checking for NaN values")
+        .with_help("Replace with `toBeNaN()` for more explicit NaN checking")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -176,7 +186,10 @@ impl PreferToBe {
             return;
         }
 
-        if Self::should_use_tobe(first_matcher_arg) && !matcher.is_name_equal("toBe") {
+        if Self::should_use_tobe(first_matcher_arg)
+            && !matcher.is_name_equal("toBe")
+            && !Self::should_skip_float(first_matcher_arg, ctx)
+        {
             Self::check_and_fix(
                 &PreferToBeKind::ToBe,
                 call_expr,
@@ -209,6 +222,15 @@ impl PreferToBe {
                 | Expression::TemplateLiteral(_)
                 | Expression::StringLiteral(_)
         )
+    }
+
+    fn should_skip_float(expr: &Expression, ctx: &LintContext) -> bool {
+        // Check if this is a float literal by examining the source text
+        if let Expression::NumericLiteral(num) = expr {
+            let source = ctx.source_range(num.span);
+            return source.contains('.');
+        }
+        false
     }
 
     fn check_and_fix(
@@ -291,6 +313,7 @@ fn tests() {
         ("expect(token).toStrictEqual(/[abc]+/g);", None),
         ("expect(token).toStrictEqual(new RegExp('[abc]+', 'g'));", None),
         ("expect(value).toEqual(dedent`my string`);", None),
+        ("expect(0.1 + 0.2).toEqual(0.3);", None),
         // null
         ("expect(null).toBeNull();", None),
         ("expect(null).not.toBeNull();", None),
