@@ -7,11 +7,11 @@ use quote::{format_ident, quote};
 use crate::{
     Codegen, Generator,
     generators::{define_generator, formatter::ast_nodes::get_node_type},
-    output::{Output, output_path},
+    output::Output,
     schema::{Def, EnumDef, Schema, StructDef, TypeDef, TypeId},
 };
 
-const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
+use super::ast_nodes::formatter_output_path;
 
 /// Based on the prettier printing comments algorithm, these nodes don't need to print comments.
 const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
@@ -90,15 +90,17 @@ impl Generator for FormatterFormatGenerator {
                     trivia::FormatTrailingComments,
                 },
                 parentheses::NeedsParentheses,
-                generated::ast_nodes::{AstNode, AstNodes, transmute_self},
+                ast_nodes::{AstNode, AstNodes},
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
                 write::{FormatWrite #(#options)*},
             };
 
+            use super::ast_nodes::transmute_self;
+
             #impls
         };
 
-        Output::Rust { path: output_path(FORMATTER_CRATE_PATH, "format.rs"), tokens: output }
+        Output::Rust { path: formatter_output_path("format"), tokens: output }
     }
 }
 

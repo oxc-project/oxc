@@ -9,10 +9,7 @@
     clippy::struct_field_names
 )] // FIXME: all these needs to be fixed.
 
-mod generated {
-    pub mod ast_nodes;
-    mod format;
-}
+mod ast_nodes;
 mod formatter;
 mod ir_transform;
 mod options;
@@ -40,8 +37,8 @@ pub use crate::service::{
     source_type::{enable_jsx_source_type, get_supported_source_type},
 };
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     formatter::{FormatContext, Formatted, format_element::document::Document},
-    generated::ast_nodes::{AstNode, AstNodes},
     ir_transform::SortImportsTransform,
 };
 

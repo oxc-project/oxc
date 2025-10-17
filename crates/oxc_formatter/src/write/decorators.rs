@@ -3,13 +3,14 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Format, FormatResult, format_args,
+    Format, FormatResult,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 

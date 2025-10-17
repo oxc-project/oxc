@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{formatter::FormatElement, generated::ast_nodes::AstNode, options::FormatOptions};
+use crate::{ast_nodes::AstNode, formatter::FormatElement, options::FormatOptions};
 
 use super::{Comments, SourceText};
 

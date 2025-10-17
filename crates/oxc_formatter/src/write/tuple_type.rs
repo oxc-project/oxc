@@ -3,8 +3,8 @@ use oxc_ast::ast::*;
 
 use crate::{
     Expand, Format, FormatResult, FormatTrailingCommas,
+    ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
-    generated::ast_nodes::AstNode,
     write,
 };
 

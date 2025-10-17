@@ -3,9 +3,9 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{FormatResult, Formatter, prelude::*},
-    generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
     utils::typescript::is_object_like_type,
     write,

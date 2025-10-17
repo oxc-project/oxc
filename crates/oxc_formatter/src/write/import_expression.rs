@@ -1,9 +1,10 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    Format, FormatResult, TrailingSeparator, best_fitting, format_args,
+    Format, FormatResult, TrailingSeparator,
+    ast_nodes::AstNode,
+    best_fitting, format_args,
     formatter::{Formatter, prelude::*},
-    generated::ast_nodes::AstNode,
     write,
 };
 

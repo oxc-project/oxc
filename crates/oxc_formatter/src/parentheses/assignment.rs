@@ -6,6 +6,6 @@ use oxc_syntax::{
 };
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    generated::ast_nodes::{AstNode, AstNodes},
 };

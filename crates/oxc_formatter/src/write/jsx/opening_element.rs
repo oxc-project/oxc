@@ -7,8 +7,8 @@ use oxc_span::GetSpan;
 
 use crate::{
     AttributePosition, FormatResult,
+    ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
-    generated::ast_nodes::AstNode,
     write,
 };
 

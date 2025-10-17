@@ -6,12 +6,12 @@ use crate::utils::assignment_like::AssignmentLike;
 use crate::write::semicolon::MaybeOptionalSemicolon;
 use crate::write::{OptionalSemicolon, semicolon};
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         Buffer, Format, FormatError, FormatResult, Formatter, prelude::*,
         separated::FormatSeparatedIter,
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     options::TrailingSeparator,
     write,
 };

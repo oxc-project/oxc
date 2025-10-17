@@ -1,22 +1,25 @@
 //! Generator for `oxc_formatter`.
 //! Generates the `AstNodes` and `AstNode` types.
 
-use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use crate::{
     Codegen, Generator,
     generators::define_generator,
-    output::{Output, output_path},
+    output::Output,
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId},
 };
+
+const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
+
+pub fn formatter_output_path(file_name: &str) -> String {
+    format!("{FORMATTER_CRATE_PATH}/src/ast_nodes/generated/{file_name}.rs")
+}
 
 pub fn get_node_type(ty: &TokenStream) -> TokenStream {
     quote! { AstNode<'a, #ty> }
 }
-
-const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
 /// Based on the printing comments algorithm, the last child of these AST nodes don't need to print comments.
 /// Without following nodes could lead to only print comments that before the end of the node, which is what we want.
@@ -105,12 +108,7 @@ impl Generator for FormatterAstNodesGenerator {
             }
         };
 
-        let ast_node_ast_nodes_impls = ast_node_and_ast_nodes_impls();
-        let ast_node_iterator_impls = ast_node_iterator_impls(schema);
-
         let output = quote! {
-            #![expect(clippy::elidable_lifetime_names)]
-
             use std::{mem::transmute, ops::Deref, fmt};
             ///@@line_break
             use oxc_ast::ast::*;
@@ -126,6 +124,8 @@ impl Generator for FormatterAstNodesGenerator {
                 parentheses::NeedsParentheses,
                 write::FormatWrite,
             };
+
+            use crate::ast_nodes::AstNode;
 
             ///@@line_break
             #transmute_self
@@ -162,29 +162,10 @@ impl Generator for FormatterAstNodesGenerator {
                 }
             }
 
-            ///@@line_break
-            pub struct AstNode<'a, T> {
-                pub(super) inner: &'a T,
-                pub parent: &'a AstNodes<'a>,
-                pub(super) allocator: &'a Allocator,
-                pub(super) following_span: Option<Span>,
-            }
-
-
-            impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
-                fn span(&self) -> Span {
-                    self.inner.span()
-                }
-            }
-
-            #ast_node_ast_nodes_impls
-
             #impls
-
-            #ast_node_iterator_impls
         };
 
-        Output::Rust { path: output_path(FORMATTER_CRATE_PATH, "ast_nodes.rs"), tokens: output }
+        Output::Rust { path: formatter_output_path("ast_nodes"), tokens: output }
     }
 }
 
@@ -229,7 +210,6 @@ fn generate_struct_impls(
     let fields = &struct_def.fields;
     let methods = fields.iter().enumerate().filter_map(|(index, field)| {
         if field.name == "span" {
-            // Instead of generating a method for `span`, we implement the `GetSpan` trait for it.
             return None;
         }
 
@@ -397,14 +377,6 @@ fn generate_struct_impls(
                 .fmt(f)
             }
         }
-
-        ///@@line_break
-        impl<'a> GetSpan for AstNode<'a, #type_ty>  {
-            #[inline]
-            fn span(&self) -> oxc_span::Span {
-                self.inner.span()
-            }
-        }
     }
 }
 
@@ -547,7 +519,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
     let node_type = get_node_type(&type_ty);
 
-    let as_ast_nodes_fn = quote! {
+    quote! {
         ///@@line_break
         impl<'a> #node_type {
             #[inline]
@@ -560,21 +532,6 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                 self.allocator.alloc(node)
             }
         }
-    };
-
-    let impl_get_span = quote! {
-        ///@@line_break
-        impl<'a> GetSpan for #node_type {
-            #[inline]
-            fn span(&self) -> oxc_span::Span {
-                self.inner.span()
-            }
-        }
-    };
-
-    quote! {
-        #as_ast_nodes_fn
-        #impl_get_span
     }
 }
 
@@ -589,197 +546,4 @@ fn has_kind(type_def: &TypeDef, schema: &Schema) -> bool {
 
 fn is_copyable(devices: &[String]) -> bool {
     devices.contains(&"Copy".to_string())
-}
-
-fn ast_node_and_ast_nodes_impls() -> TokenStream {
-    quote! {
-        ///@@line_break
-        impl<'a, T: fmt::Debug> fmt::Debug for AstNode<'a, T> {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                f.debug_struct("AstNode")
-                    .field("inner", &self.inner)
-                    .field("parent", &self.parent.debug_name())
-                    .finish_non_exhaustive()
-            }
-        }
-
-        ///@@line_break
-        impl<'a, T> Deref for AstNode<'a, T> {
-            type Target = T;
-
-            fn deref(&self) -> &'a Self::Target {
-                self.inner
-            }
-        }
-
-        ///@@line_break
-        impl<'a, T> AsRef<T> for AstNode<'a, T> {
-            fn as_ref(&self) -> &'a T {
-                self.inner
-            }
-        }
-
-        ///@@line_break
-        impl<'a> AstNode<'a, Program<'a>> {
-            pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
-                AstNode { inner, parent, allocator, following_span: None }
-            }
-        }
-
-        ///@@line_break
-        impl<'a, T> AstNode<'a, Option<T>> {
-            pub fn as_ref(&self) -> Option<&'a AstNode<'a, T>> {
-                self.allocator
-                    .alloc(self.inner.as_ref().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                        following_span: self.following_span,
-                    }))
-                    .as_ref()
-            }
-        }
-    }
-}
-
-fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
-    let types_used_in_vec = schema
-        .types
-        .iter()
-        .filter_map(|type_def| {
-            if let TypeDef::Struct(struct_def) = type_def {
-                if !struct_def.visit.has_visitor() {
-                    return None;
-                }
-                Some(struct_def.fields.iter().filter_map(|field| {
-                    let mut field_type = field.type_def(schema);
-                    if field_type.is_option() {
-                        field_type = field_type.as_option().unwrap().inner_type(schema);
-                    }
-                    if let TypeDef::Vec(vec_def) = field_type {
-                        let inner_type_def = vec_def
-                            .maybe_inner_type(schema)
-                            .unwrap_or_else(|| vec_def.inner_type(schema));
-
-                        match inner_type_def {
-                            TypeDef::Struct(inner_struct_def)
-                                if !inner_struct_def.visit.has_visitor() =>
-                            {
-                                None
-                            }
-                            TypeDef::Enum(inner_enum_def)
-                                if !inner_enum_def.visit.has_visitor() =>
-                            {
-                                None
-                            }
-                            _ => Some(inner_type_def.id()),
-                        }
-                    } else {
-                        None
-                    }
-                }))
-            } else {
-                None
-            }
-        })
-        .flatten()
-        .sorted_unstable()
-        .dedup();
-
-    let impls = types_used_in_vec.map(|type_id| {
-        let type_def = &schema.types[type_id];
-
-        let next_to_following_node = if type_def.is_option() {
-            quote! { .map(|next| next.as_ref().map(GetSpan::span)).unwrap_or_default() }
-        } else {
-            quote! { .map(GetSpan::span) }
-        };
-
-        let type_ty = type_def.ty(schema);
-        quote! {
-            ///@@line_break
-            impl<'a> AstNode<'a, Vec<'a, #type_ty>> {
-                pub fn iter(&self) -> AstNodeIterator<'a, #type_ty> {
-                    AstNodeIterator {
-                        inner: self.inner.iter().peekable(),
-                        parent: self.parent,
-                        allocator: self.allocator
-                    }
-                }
-
-                ///@@line_break
-                pub fn first(&self) -> Option<&'a AstNode<'a, #type_ty>> {
-                    let mut inner_iter = self.inner.iter();
-                    self.allocator
-                        .alloc(inner_iter.next().map(|inner| AstNode {
-                            inner,
-                            parent: self.parent,
-                            allocator: self.allocator,
-                            following_span: inner_iter
-                                .next()
-                                #next_to_following_node,
-                        }))
-                        .as_ref()
-                }
-
-                ///@@line_break
-                pub fn last(&self) -> Option<&'a AstNode<'a, #type_ty>> {
-                    self.allocator
-                        .alloc(self.inner.last().map(|inner| AstNode {
-                            inner,
-                            parent: self.parent,
-                            allocator: self.allocator,
-                            following_span: None,
-                        }))
-                        .as_ref()
-                }
-            }
-
-            ///@@line_break
-            impl<'a> Iterator for AstNodeIterator<'a, #type_ty> {
-                type Item = &'a AstNode<'a, #type_ty>;
-                fn next(&mut self) -> Option<Self::Item> {
-                    let allocator = self.allocator;
-                    allocator
-                        .alloc(self.inner.next().map(|inner| {
-                            let following_span = self.inner.peek()
-                                .copied()
-                                #next_to_following_node;
-                            AstNode {
-                                parent: self.parent,
-                                inner,
-                                allocator,
-                                following_span,
-                            }
-                        }))
-                        .as_ref()
-                }
-            }
-
-            ///@@line_break
-            impl<'a> IntoIterator for &AstNode<'a, Vec<'a, #type_ty>>
-            {
-                type Item = &'a AstNode<'a, #type_ty>;
-                type IntoIter = AstNodeIterator<'a, #type_ty>;
-                fn into_iter(self) -> Self::IntoIter {
-                    AstNodeIterator::<#type_ty> {
-                        inner: self.inner.iter().peekable(),
-                        parent: self.parent,
-                        allocator: self.allocator,
-                    }
-                }
-            }
-        }
-    });
-
-    quote! {
-        ///@@line_break
-        pub struct AstNodeIterator<'a, T> {
-            inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
-            parent: &'a AstNodes<'a>,
-            allocator: &'a Allocator,
-        }
-
-        #(#impls)*
-    }
 }

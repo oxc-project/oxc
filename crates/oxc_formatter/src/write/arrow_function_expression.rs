@@ -4,6 +4,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
@@ -11,7 +12,6 @@ use crate::{
         prelude::*,
         trivia::{FormatLeadingComments, format_trailing_comments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
     utils::assignment_like::AssignmentLikeLayout,
     write,

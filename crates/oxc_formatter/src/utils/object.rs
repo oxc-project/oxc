@@ -4,8 +4,8 @@ use unicode_width::UnicodeWidthStr;
 
 use crate::{
     Buffer, Format, FormatResult,
+    ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    generated::ast_nodes::{AstNode, AstNodes},
     utils::string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
     write,
 };

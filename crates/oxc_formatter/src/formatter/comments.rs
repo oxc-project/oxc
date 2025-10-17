@@ -323,7 +323,7 @@ impl<'a> Comments<'a> {
                 }
 
                 if !source_text.all_bytes_match(start, comment.span.start, |b| {
-                    b.is_ascii_whitespace() || matches!(b, b')' | b',' | b';')
+                    b.is_ascii_whitespace() || matches!(b, b')' | b',')
                 }) {
                     return &comments[..idx];
                 }

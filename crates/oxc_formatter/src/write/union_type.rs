@@ -3,13 +3,13 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         FormatResult, Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
     utils::typescript::should_hug_type,
     write,

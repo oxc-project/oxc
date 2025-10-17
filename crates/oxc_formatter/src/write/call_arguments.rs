@@ -5,7 +5,9 @@ use oxc_ast::{ast::*, match_expression};
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator, format_args,
+    Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         BufferExtensions, Comments, FormatElement, FormatError, Formatter, SourceText, VecBuffer,
         format_element,
@@ -16,7 +18,6 @@ use crate::{
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, format_dangling_comments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         call_expression::is_test_call_expression, is_long_curried_call,
         member_chain::simple_argument::SimpleArgument,

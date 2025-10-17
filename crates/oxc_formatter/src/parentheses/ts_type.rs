@@ -4,8 +4,8 @@ use oxc_span::GetSpan;
 use super::NeedsParentheses;
 use crate::{
     Format,
+    ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    generated::ast_nodes::{AstNode, AstNodes},
     write::{BinaryLikeExpression, ExpressionLeftSide, should_flatten},
 };
 

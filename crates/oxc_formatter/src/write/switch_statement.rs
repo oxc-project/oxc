@@ -4,13 +4,14 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
-    Format, FormatResult, format_args,
+    Format, FormatResult,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         Formatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
     write::{semicolon::OptionalSemicolon, utils::statement_body::FormatStatementBody},
 };

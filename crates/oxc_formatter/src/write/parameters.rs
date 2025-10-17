@@ -2,12 +2,12 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
         Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter,
         trivia::FormatTrailingComments,
     },
-    generated::ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     options::{FormatTrailingCommas, TrailingSeparator},
     utils::call_expression::is_test_call_expression,
     write,

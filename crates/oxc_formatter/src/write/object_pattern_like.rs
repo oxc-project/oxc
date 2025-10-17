@@ -2,12 +2,12 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     formatter::{
         Buffer, Comments, Format, FormatResult, Formatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::{DanglingIndentMode, format_dangling_comments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 

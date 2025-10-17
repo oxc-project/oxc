@@ -2,6 +2,7 @@ use oxc_ast::ast::Statement;
 use oxc_span::GetSpan;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
@@ -10,7 +11,6 @@ use crate::{
         },
         trivia::FormatTrailingComments,
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
     write::FormatWrite,

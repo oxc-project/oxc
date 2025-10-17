@@ -3,8 +3,8 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodeIterator},
     formatter::{Buffer, Format, FormatResult, Formatter, separated::FormatSeparatedIter},
-    generated::ast_nodes::{AstNode, AstNodeIterator},
     options::{FormatTrailingCommas, TrailingSeparator},
     write,
 };

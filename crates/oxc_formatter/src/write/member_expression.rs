@@ -4,7 +4,9 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    JsLabels, format_args,
+    JsLabels,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
         buffer::RemoveSoftLinesBuffer,
@@ -14,7 +16,6 @@ use crate::{
             FormatTrailingComments, format_dangling_comments,
         },
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
     utils::member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,
     write,

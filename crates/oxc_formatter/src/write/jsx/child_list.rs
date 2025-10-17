@@ -3,12 +3,13 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    FormatResult, format_args,
+    FormatResult,
+    ast_nodes::AstNode,
+    format_args,
     formatter::{
         Comments, FormatContext, FormatElement, Formatter, VecBuffer,
         prelude::{tag::GroupMode, *},
     },
-    generated::ast_nodes::AstNode,
     utils::{
         jsx::{
             JsxChild, JsxChildrenIterator, JsxRawSpace, JsxSpace, is_meaningful_jsx_text,

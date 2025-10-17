@@ -8,7 +8,9 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
-    IndentWidth, format, format_args,
+    IndentWidth,
+    ast_nodes::{AstNode, AstNodeIterator},
+    format, format_args,
     formatter::{
         Format, FormatElement, FormatResult, Formatter, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
@@ -16,7 +18,6 @@ use crate::{
         printer::Printer,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodeIterator},
     utils::{
         call_expression::is_test_each_pattern,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,

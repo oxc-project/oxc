@@ -5,9 +5,10 @@ pub mod simple_argument;
 use std::iter;
 
 use crate::{
-    JsLabels, best_fitting,
+    JsLabels,
+    ast_nodes::{AstNode, AstNodes},
+    best_fitting,
     formatter::{Buffer, Format, FormatResult, Formatter, SourceText, prelude::*},
-    generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         call_expression::is_test_call_expression,
         is_long_curried_call,

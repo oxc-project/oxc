@@ -5,9 +5,10 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
+use super::ast_nodes::transmute_self;
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     formatter::{Buffer, Format, FormatResult, Formatter, trivia::FormatTrailingComments},
-    generated::ast_nodes::{AstNode, AstNodes, transmute_self},
     parentheses::NeedsParentheses,
     utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
     write::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},

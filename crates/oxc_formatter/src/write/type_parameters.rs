@@ -4,6 +4,7 @@ use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         Buffer, Format, FormatError, FormatResult, Formatter, GroupId,
@@ -11,7 +12,6 @@ use crate::{
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, TrailingSeparator},
     utils::{
         call_expression::is_test_call_expression,

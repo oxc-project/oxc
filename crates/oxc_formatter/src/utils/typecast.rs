@@ -5,9 +5,10 @@ use oxc_ast::{
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatResult, format_args,
+    Buffer, Format, FormatResult,
+    ast_nodes::AstNode,
+    format_args,
     formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
-    generated::ast_nodes::AstNode,
     write,
     write::{
         FormatFunctionOptions, FormatJsArrowFunctionExpression,

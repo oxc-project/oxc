@@ -3,9 +3,10 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
-    Format, FormatResult, format_args,
+    Format, FormatResult,
+    ast_nodes::AstNode,
+    format_args,
     formatter::{Formatter, comments::Comments, prelude::*},
-    generated::ast_nodes::AstNode,
     write,
     write::{ExpressionLeftSide, semicolon::OptionalSemicolon},
 };

@@ -4,11 +4,11 @@ use oxc_span::GetSpan;
 
 use crate::{
     Expand, FormatTrailingCommas,
+    ast_nodes::AstNode,
     formatter::{
         Buffer, Comments, Format, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
-    generated::ast_nodes::AstNode,
     write,
 };
 

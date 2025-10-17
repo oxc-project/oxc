@@ -1,13 +1,13 @@
 use std::ops::Deref;
 
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         Format, FormatResult, Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 use oxc_ast::{AstKind, ast::*};

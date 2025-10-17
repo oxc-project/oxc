@@ -6,9 +6,10 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::{ZWNBSP, is_line_terminator};
 
 use crate::{
-    Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator, format_args,
+    Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{prelude::*, trivia::FormatTrailingComments},
-    generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         call_expression::is_test_call_expression,
         is_long_curried_call,

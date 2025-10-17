@@ -4,8 +4,8 @@ use oxc_span::{GetSpan, Span};
 
 use super::chain_member::ChainMember;
 use crate::{
+    ast_nodes::AstNode,
     formatter::{Format, FormatResult, Formatter, SourceText, prelude::*},
-    generated::ast_nodes::AstNode,
     parentheses::NeedsParentheses,
     write,
 };

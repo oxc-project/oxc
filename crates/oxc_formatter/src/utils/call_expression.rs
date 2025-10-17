@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::generated::ast_nodes::{AstNode, AstNodes};
+use crate::ast_nodes::{AstNode, AstNodes};
 
 /// This is a specialized function that checks if the current [call expression]
 /// resembles a call expression usually used by a testing frameworks.

@@ -5,13 +5,14 @@ use oxc_span::GetSpan;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
-    FormatOptions, format_args,
+    FormatOptions,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     options::Expand,
     parentheses::NeedsParentheses,
     utils::{

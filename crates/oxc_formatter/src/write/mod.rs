@@ -48,7 +48,9 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
-    Expand, best_fitting, format_args,
+    Expand,
+    ast_nodes::{AstNode, AstNodes},
+    best_fitting, format_args,
     formatter::{
         Buffer, Format, FormatResult, Formatter,
         prelude::*,
@@ -59,7 +61,6 @@ use crate::{
             FormatTrailingComments,
         },
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, Semicolons, TrailingSeparator},
     parentheses::NeedsParentheses,
     utils::{

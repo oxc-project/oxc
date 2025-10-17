@@ -10,8 +10,8 @@ use oxc_syntax::{
 
 use crate::{
     Format,
+    ast_nodes::{AstNode, AstNodes},
     formatter::{FormatResult, Formatter, trivia::FormatTrailingComments},
-    generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
 };

@@ -11,13 +11,14 @@ use opening_element::{FormatOpeningElement, OpeningElementLayout};
 use oxc_span::GetSpan;
 
 use crate::{
-    AttributePosition, Format, FormatResult, format_args,
+    AttributePosition, Format, FormatResult,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         Comments, Formatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 

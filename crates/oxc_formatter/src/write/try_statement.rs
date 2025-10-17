@@ -5,6 +5,7 @@ use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
     Format, FormatResult, FormatTrailingCommas, QuoteProperties, TrailingSeparator,
+    ast_nodes::{AstNode, AstNodes},
     formatter::{
         Formatter,
         prelude::*,
@@ -14,7 +15,6 @@ use crate::{
             FormatTrailingComments,
         },
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
     write::semicolon::OptionalSemicolon,
 };

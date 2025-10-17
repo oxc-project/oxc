@@ -8,9 +8,10 @@ use oxc_span::{GetSpan, Span};
 use crate::QuoteStyle;
 use crate::formatter::Comments;
 use crate::{
-    FormatResult, format_args,
+    FormatResult,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{Formatter, prelude::*},
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 

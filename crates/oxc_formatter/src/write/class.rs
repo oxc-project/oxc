@@ -5,14 +5,15 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
-    Semicolons, TrailingSeparator, format_args,
+    Semicolons, TrailingSeparator,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         Buffer, FormatResult, Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
     utils::{
         assignment_like::AssignmentLike,

@@ -4,9 +4,10 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Format, FormatResult, FormatWrite, format_args,
+    Format, FormatResult, FormatWrite,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
-    generated::ast_nodes::{AstNode, AstNodes},
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };

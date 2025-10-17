@@ -1,8 +1,8 @@
 use oxc_ast::ast::*;
 
 use crate::{
+    ast_nodes::AstNode,
     formatter::{Buffer, Formatter, prelude::*},
-    generated::ast_nodes::AstNode,
     options::Expand,
     write,
 };

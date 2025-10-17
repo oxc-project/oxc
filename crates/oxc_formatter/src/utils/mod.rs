@@ -14,9 +14,10 @@ use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::CallExpression};
 
 use crate::{
-    Format, FormatResult, FormatTrailingCommas, format_args,
+    Format, FormatResult, FormatTrailingCommas,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{Formatter, prelude::soft_line_break_or_space},
-    generated::ast_nodes::{AstNode, AstNodes},
 };
 
 /// Tests if expression is a long curried call

@@ -5,8 +5,8 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     Format, FormatResult,
+    ast_nodes::{AstNode, AstNodes},
     formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
-    generated::ast_nodes::{AstNode, AstNodes},
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
     write::utils::array::write_array_node,

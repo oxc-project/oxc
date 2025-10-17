@@ -2,8 +2,8 @@ use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 
 use crate::{
     FormatResult,
+    ast_nodes::AstNode,
     formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
-    generated::ast_nodes::AstNode,
     write,
     write::semicolon::OptionalSemicolon,
 };

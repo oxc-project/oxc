@@ -4,13 +4,13 @@ use oxc_span::GetSpan;
 
 use super::FormatWrite;
 use crate::{
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
         Buffer, FormatResult, Formatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 

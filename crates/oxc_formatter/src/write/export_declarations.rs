@@ -4,13 +4,13 @@ use oxc_span::GetSpan;
 
 use crate::{
     FormatResult, FormatTrailingCommas,
+    ast_nodes::{AstNode, AstNodes},
     formatter::{
         Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
     write::{
         import_declaration::format_import_and_export_source_with_clause,

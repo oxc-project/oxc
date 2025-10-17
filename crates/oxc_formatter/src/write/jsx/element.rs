@@ -5,9 +5,10 @@ use oxc_ast::ast::{
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    FormatResult, best_fitting, format_args,
+    FormatResult,
+    ast_nodes::{AstNode, AstNodes},
+    best_fitting, format_args,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
-    generated::ast_nodes::{AstNode, AstNodes},
     parentheses::NeedsParentheses,
     utils::{
         jsx::{WrapState, get_wrap_state, is_meaningful_jsx_text},

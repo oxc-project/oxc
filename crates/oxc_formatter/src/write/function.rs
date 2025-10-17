@@ -8,6 +8,7 @@ use super::{
     block_statement::is_empty_block,
 };
 use crate::{
+    ast_nodes::AstNode,
     format_args,
     formatter::{
         Buffer, FormatError, FormatResult, Formatter,
@@ -15,7 +16,6 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatLeadingComments},
     },
-    generated::ast_nodes::AstNode,
     write,
     write::{
         arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
