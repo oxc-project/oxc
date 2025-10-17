@@ -17,8 +17,9 @@ use crate::{
     formatter::{
         Comments, Formatter,
         prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments},
+        trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
 
@@ -202,16 +203,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 }
             }
         } else {
+            // JSXAttributeValue
             let should_inline = !has_comment(f) && should_inline_jsx_expression(self, f.comments());
 
+            let format_expression = format_once(|f| {
+                write!(f, FormatNodeWithoutTrailingComments(&self.expression()));
+                let comments = f.context().comments().comments_before(self.span.end);
+                write!(f, FormatTrailingComments::Comments(comments))
+            });
+
             if should_inline {
-                write!(f, ["{", self.expression(), line_suffix_boundary(), "}"])
+                write!(f, ["{", format_expression, line_suffix_boundary(), "}"])
             } else {
                 write!(
                     f,
                     [group(&format_args!(
                         "{",
-                        soft_block_indent(&self.expression()),
+                        soft_block_indent(&format_expression),
                         line_suffix_boundary(),
                         "}"
                     ))]
