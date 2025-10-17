@@ -52,7 +52,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
         let length = self.len();
 
         let is_parent_for_loop = matches!(
-            self.parent.parent(),
+            self.grand_parent(),
             AstNodes::ForStatement(_) | AstNodes::ForInStatement(_) | AstNodes::ForOfStatement(_)
         );
 

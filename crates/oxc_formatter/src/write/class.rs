@@ -425,7 +425,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
                         }
                     });
 
-                    if matches!(extends.parent.parent(), AstNodes::AssignmentExpression(_)) {
+                    if matches!(extends.grand_parent(), AstNodes::AssignmentExpression(_)) {
                         if has_trailing_comments {
                             write!(f, [text("("), &content, text(")")])
                         } else {

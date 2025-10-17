@@ -115,7 +115,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         });
 
         if has_empty_line
-            || (!matches!(self.parent.parent(), AstNodes::Decorator(_))
+            || (!matches!(self.grand_parent(), AstNodes::Decorator(_))
                 && is_function_composition_args(self))
         {
             return format_all_args_broken_out(self, true, f);

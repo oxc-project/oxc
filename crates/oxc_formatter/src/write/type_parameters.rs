@@ -69,7 +69,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
         let trailing_separator = if self.len() == 1
         // This only concern sources that allow JSX or a restricted standard variant.
         && f.context().source_type().is_jsx()
-        && matches!(self.parent.parent(), AstNodes::ArrowFunctionExpression(_))
+        && matches!(self.grand_parent(), AstNodes::ArrowFunctionExpression(_))
         // Ignore Type parameter with an `extends` clause or a default type.
         && !self.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some())
         {
@@ -113,7 +113,7 @@ impl<'a> Format<'a> for FormatTSTypeParameters<'a, '_> {
             write!(
                 f,
                 [group(&format_args!("<", format_once(|f| {
-                    if matches!( self.decl.parent.parent().parent(), AstNodes::CallExpression(call) if is_test_call_expression(call))
+                    if matches!(self.decl.ancestors().nth(2), Some(AstNodes::CallExpression(call)) if is_test_call_expression(call))
                     {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit).finish()
                     } else {
@@ -204,7 +204,7 @@ fn is_arrow_function_variable_type_argument<'a>(
 
     // `node.parent` is `TSTypeReference`
     matches!(
-        &node.parent.parent(),
+        &node.grand_parent(),
         AstNodes::TSTypeAnnotation(type_annotation)
             if matches!(
                 &type_annotation.parent,

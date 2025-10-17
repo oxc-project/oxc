@@ -49,10 +49,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
         let layout = if !self.has_parameter() && this_param.is_none() {
             ParameterLayout::NoParameters
         } else if can_hug || {
-            // `self.parent`: Function
-            // `self.parent.parent()`: Argument
-            // `self.parent.parent().parent()` CallExpression
-            if let AstNodes::CallExpression(call) = self.parent.parent().parent() {
+            // `self`: Function
+            // `self.ancestors().nth(1)`: Argument
+            // `self.ancestors().nth(2)`: CallExpression
+            if let Some(AstNodes::CallExpression(call)) = self.ancestors().nth(2) {
                 is_test_call_expression(call)
             } else {
                 false

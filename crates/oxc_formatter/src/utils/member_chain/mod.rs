@@ -96,7 +96,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                 is_factory(&identifier.name) ||
                 // If an identifier has a name that is shorter than the tab with, then we join it with the "head"
                 (matches!(parent, AstNodes::ExpressionStatement(stmt) if {
-                     if let AstNodes::ArrowFunctionExpression(arrow) = stmt.parent.parent() {
+                     if let AstNodes::ArrowFunctionExpression(arrow) = stmt.grand_parent() {
                         !arrow.expression
                      } else {
                         true

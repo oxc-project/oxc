@@ -63,6 +63,48 @@ impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
     }
 }
 
+impl<T> AstNode<'_, T> {
+    /// Returns an iterator over all ancestor nodes in the AST, starting from self.
+    ///
+    /// The iteration includes the current node and proceeds upward through the tree,
+    /// terminating after yielding the root `Program` node.
+    ///
+    /// This is a convenience method that delegates to `self.parent.ancestors()`.
+    ///
+    /// # Example
+    /// ```text
+    /// Program
+    ///   └─ BlockStatement
+    ///       └─ ExpressionStatement  <- self
+    /// ```
+    /// For `self` as ExpressionStatement, this yields: [ExpressionStatement, BlockStatement, Program]
+    ///
+    /// # Usage
+    /// ```ignore
+    /// // Find the first ancestor that matches a condition
+    /// let parent = self.ancestors()
+    ///     .find(|p| matches!(p, AstNodes::ForStatement(_)))
+    ///     .unwrap();
+    ///
+    /// // Get the nth ancestor
+    /// let great_grandparent = self.ancestors().nth(3);
+    ///
+    /// // Check if any ancestor is a specific type
+    /// let in_arrow_fn = self.ancestors()
+    ///     .any(|p| matches!(p, AstNodes::ArrowFunctionExpression(_)));
+    /// ```
+    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'_>> {
+        self.parent.ancestors()
+    }
+
+    /// Returns the grandparent node (parent's parent).
+    ///
+    /// This is a convenience method equivalent to `self.parent.parent()`.
+    pub fn grand_parent(&self) -> &AstNodes<'_> {
+        self.parent.parent()
+    }
+}
+
 impl<'a> AstNode<'a, Program<'a>> {
     pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
         AstNode { inner, parent, allocator, following_span: None }

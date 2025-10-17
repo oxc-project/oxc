@@ -46,12 +46,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         let leading_comments = f.context().comments().comments_before(self.span().start);
         let has_leading_comments = !leading_comments.is_empty();
         let mut union_type_at_top = self;
-        while let AstNodes::TSUnionType(parent) = union_type_at_top.parent {
-            if parent.types().len() == 1 {
-                union_type_at_top = parent;
-            } else {
-                break;
-            }
+        while let AstNodes::TSUnionType(parent) = union_type_at_top.parent
+            && parent.types().len() == 1
+        {
+            union_type_at_top = parent;
         }
 
         let should_indent = {

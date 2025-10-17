@@ -84,20 +84,20 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                 matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                let mut parent = self.parent;
-                loop {
+                // Walk up ancestors to find the relevant context for `let` keyword
+                for parent in self.ancestors() {
                     match parent {
-                        AstNodes::Program(_) | AstNodes::ExpressionStatement(_) => return false,
+                        AstNodes::ExpressionStatement(_) => return false,
                         AstNodes::ForOfStatement(stmt) => {
                             return stmt.left.span().contains_inclusive(self.span);
                         }
                         AstNodes::TSSatisfiesExpression(expr) => {
                             return expr.expression.span() == self.span();
                         }
-                        _ => parent = parent.parent(),
+                        _ => {}
                     }
                 }
-                unreachable!()
+                false
             }
             name => {
                 // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/needs-parens.js#L123-L133>
@@ -131,7 +131,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, IdentifierReference<'a>> {
                 matches!(
                     parent, AstNodes::ExpressionStatement(stmt) if
                     !matches!(
-                        stmt.parent.parent(), AstNodes::ArrowFunctionExpression(arrow)
+                        stmt.grand_parent(), AstNodes::ArrowFunctionExpression(arrow)
                         if arrow.expression()
                     )
                 )
@@ -392,8 +392,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, BinaryExpression<'a>> {
 
 /// Add parentheses if the `in` is inside of a `for` initializer (see tests).
 fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
-    let mut parent = expr.parent;
-    loop {
+    let mut ancestors = expr.ancestors();
+
+    while let Some(parent) = ancestors.next() {
         match parent {
             AstNodes::ExpressionStatement(stmt) => {
                 let grand_parent = parent.parent();
@@ -404,7 +405,13 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
                         grand_grand_parent,
                         AstNodes::ArrowFunctionExpression(arrow) if arrow.expression()
                     ) {
-                        parent = grand_grand_parent;
+                        // Skip ahead to grand_grand_parent by consuming ancestors
+                        // until we reach it
+                        for ancestor in ancestors.by_ref() {
+                            if core::ptr::eq(ancestor, grand_grand_parent) {
+                                break;
+                            }
+                        }
                         continue;
                     }
                 }
@@ -423,11 +430,11 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
             AstNodes::Program(_) => {
                 return false;
             }
-            _ => {
-                parent = parent.parent();
-            }
+            _ => {}
         }
     }
+
+    false
 }
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
@@ -546,25 +553,20 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AssignmentExpression<'a>> {
             // - `a = 1, b = 2` in for loops don't need parens
             // - `(a = 1, b = 2)` elsewhere usually need parens
             AstNodes::SequenceExpression(sequence) => {
-                let mut current_parent = self.parent;
-                loop {
-                    match current_parent {
-                        AstNodes::SequenceExpression(_) | AstNodes::ParenthesizedExpression(_) => {
-                            current_parent = current_parent.parent();
-                        }
-                        AstNodes::ForStatement(for_stmt) => {
-                            let is_initializer = for_stmt
-                                .init
-                                .as_ref()
-                                .is_some_and(|init| init.span().contains_inclusive(self.span()));
-                            let is_update = for_stmt.update.as_ref().is_some_and(|update| {
-                                update.span().contains_inclusive(self.span())
-                            });
-                            return !(is_initializer || is_update);
-                        }
-                        _ => break,
+                // Skip through SequenceExpression and ParenthesizedExpression ancestors
+                if let Some(ancestor) = self.ancestors().find(|p| {
+                    !matches!(p, AstNodes::SequenceExpression(_) | AstNodes::ParenthesizedExpression(_))
+                }) && let AstNodes::ForStatement(for_stmt) = ancestor {
+                        let is_initializer = for_stmt
+                            .init
+                            .as_ref()
+                            .is_some_and(|init| init.span().contains_inclusive(self.span()));
+                        let is_update = for_stmt.update.as_ref().is_some_and(|update| {
+                            update.span().contains_inclusive(self.span())
+                        });
+                        return !(is_initializer || is_update);
                     }
-                }
+
                 true
             }
             // `interface { [a = 1]; }` and `class { [a = 1]; }` not need parens
@@ -620,8 +622,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, SequenceExpression<'a>> {
     }
 }
 
-impl<'a> NeedsParentheses<'a> for AstNode<'a, AwaitExpression<'a>> {
-    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+impl NeedsParentheses<'_> for AstNode<'_, AwaitExpression<'_>> {
+    fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
         if f.comments().is_type_cast_node(self) {
             return false;
         }
@@ -977,14 +979,15 @@ pub enum FirstInStatementMode {
 /// the left most node or reached a statement.
 fn is_first_in_statement(
     mut current_span: Span,
-    mut parent: &AstNodes<'_>,
+    parent: &AstNodes<'_>,
     mode: FirstInStatementMode,
 ) -> bool {
-    let mut is_not_first_iteration = false;
-    loop {
-        match parent {
+    for (index, ancestor) in parent.ancestors().enumerate() {
+        let is_not_first_iteration = index > 0;
+
+        match ancestor {
             AstNodes::ExpressionStatement(stmt) => {
-                if matches!(stmt.parent.parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
+                if matches!(stmt.grand_parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
                 {
                     if mode == FirstInStatementMode::ExpressionStatementOrArrow {
                         if is_not_first_iteration
@@ -1051,9 +1054,7 @@ fn is_first_in_statement(
             }
             _ => break,
         }
-        current_span = parent.span();
-        parent = parent.parent();
-        is_not_first_iteration = true;
+        current_span = ancestor.span();
     }
 
     false

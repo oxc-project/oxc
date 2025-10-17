@@ -429,22 +429,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
         };
 
         if is_callee_or_object {
-            let mut parent = self.parent.parent();
-            loop {
-                match parent {
-                    AstNodes::AwaitExpression(_)
-                    | AstNodes::BlockStatement(_)
+            let mut await_expression = None;
+            for ancestor in self.ancestors().skip(1) {
+                match ancestor {
+                    AstNodes::BlockStatement(_)
                     | AstNodes::FunctionBody(_)
                     | AstNodes::SwitchCase(_)
                     | AstNodes::Program(_)
                     | AstNodes::TSModuleBlock(_) => break,
-                    _ => parent = parent.parent(),
+                    AstNodes::AwaitExpression(expr) => await_expression = Some(expr),
+                    _ => {}
                 }
             }
 
             let indented = format_with(|f| write!(f, [soft_block_indent(&format_inner)]));
 
-            return if let AstNodes::AwaitExpression(expr) = parent {
+            return if let Some(expr) = await_expression.take() {
                 if !expr.needs_parentheses(f)
                     && ExpressionLeftSide::leftmost(expr.argument()).span() != self.span()
                 {

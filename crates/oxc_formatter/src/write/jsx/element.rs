@@ -181,10 +181,10 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
 ///  </div>;
 /// ```
 pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
-    if matches!(parent, AstNodes::ExpressionStatement(_)) {
+    if let AstNodes::ExpressionStatement(stmt) = parent {
         // If the parent is a JSXExpressionContainer, we need to check its parent
         // to determine if it should expand.
-        parent = parent.parent().parent();
+        parent = stmt.grand_parent();
     }
     let maybe_jsx_expression_child = match parent {
         AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent {
@@ -192,7 +192,7 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
             AstNodes::Argument(argument)
                 if matches!(argument.parent, AstNodes::CallExpression(_)) =>
             {
-                argument.parent.parent()
+                argument.grand_parent()
             }
             // Callee
             AstNodes::CallExpression(call) => call.parent,
