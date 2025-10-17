@@ -127,7 +127,7 @@ impl Program<'_> {
     let refUint32 = uint32;
     let refUint8 = uint8;
     let refSourceText = sourceText;
-    const localAstId = ++astId;
+    const localAstId = astId;
     /* END_IF */
 
     const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),

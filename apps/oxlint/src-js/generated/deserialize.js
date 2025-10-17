@@ -19,6 +19,13 @@ export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc
   return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
 }
 
+export function reset() {
+  // Increment `astId` counter.
+  // This prevents `program.comments` being accessed after the AST is done with.
+  // (see `deserializeProgram`)
+  astId++;
+}
+
 function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
@@ -42,7 +49,7 @@ function deserializeProgram(pos) {
   let refUint32 = uint32,
     refUint8 = uint8,
     refSourceText = sourceText,
-    localAstId = ++astId,
+    localAstId = astId,
     end = deserializeU32(pos + 4),
     program = parent = {
       __proto__: NodeProto,

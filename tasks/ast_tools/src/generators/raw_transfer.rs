@@ -163,6 +163,13 @@ fn generate_deserializers(
         export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc) {{
             return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
         }}
+
+        export function reset() {{
+            // Increment `astId` counter.
+            // This prevents `program.comments` being accessed after the AST is done with.
+            // (see `deserializeProgram`)
+            astId++;
+        }}
         /* END_IF */
 
         function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {{
