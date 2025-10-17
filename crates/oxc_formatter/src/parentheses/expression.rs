@@ -197,7 +197,7 @@ impl NeedsParentheses<'_> for AstNode<'_, NumericLiteral<'_>> {
         }
 
         if let AstNodes::StaticMemberExpression(member) = self.parent {
-            return member.object.without_parentheses().span() == self.span();
+            return member.object.span() == self.span();
         }
         false
     }
@@ -491,7 +491,7 @@ impl NeedsParentheses<'_> for AstNode<'_, ConditionalExpression<'_>> {
             return true;
         }
         if let AstNodes::ConditionalExpression(e) = parent {
-            e.test.without_parentheses().span() == self.span()
+            e.test.span() == self.span()
         } else {
             update_or_lower_expression_needs_parens(self.span(), parent)
         }
@@ -705,7 +705,7 @@ impl NeedsParentheses<'_> for AstNode<'_, ArrowFunctionExpression<'_>> {
             return true;
         }
         if let AstNodes::ConditionalExpression(e) = parent {
-            e.test.without_parentheses().span() == self.span()
+            e.test.span() == self.span()
         } else {
             update_or_lower_expression_needs_parens(self.span(), parent)
         }
@@ -1075,7 +1075,7 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_>) -> bool {
         return true;
     }
     if let AstNodes::ConditionalExpression(e) = node {
-        e.test.without_parentheses().span() == span
+        e.test.span() == span
     } else {
         update_or_lower_expression_needs_parens(span, node)
     }
@@ -1102,7 +1102,7 @@ fn ts_as_or_satisfies_needs_parens(
 
 fn is_class_extends(span: Span, parent: &AstNodes<'_>) -> bool {
     if let AstNodes::Class(c) = parent {
-        return c.super_class.as_ref().is_some_and(|c| c.without_parentheses().span() == span);
+        return c.super_class.as_ref().is_some_and(|c| c.span() == span);
     }
     false
 }

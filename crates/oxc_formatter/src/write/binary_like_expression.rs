@@ -227,12 +227,8 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
         let is_inside_parenthesis = match parent {
             AstNodes::StaticMemberExpression(_) | AstNodes::UnaryExpression(_) => true,
-            AstNodes::CallExpression(call) => {
-                call.callee().without_parentheses().span() == self.span()
-            }
-            AstNodes::NewExpression(new) => {
-                new.callee().without_parentheses().span() == self.span()
-            }
+            AstNodes::CallExpression(call) => call.callee().span() == self.span(),
+            AstNodes::NewExpression(new) => new.callee().span() == self.span(),
             _ => false,
         };
 
