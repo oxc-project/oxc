@@ -185,13 +185,9 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
-        let AstKind::FormalParameters(parameters) = parent_kind else {
+        let AstKind::FormalParameters(_) = parent_kind else {
             return;
         };
-
-        if parameters.kind.is_signature() {
-            return;
-        }
 
         let includes = SymbolFlags::FunctionScopedVariable;
         let excludes =
@@ -208,10 +204,6 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
-
-        if parameters.kind.is_signature() {
-            return;
-        }
 
         let includes = SymbolFlags::FunctionScopedVariable;
 

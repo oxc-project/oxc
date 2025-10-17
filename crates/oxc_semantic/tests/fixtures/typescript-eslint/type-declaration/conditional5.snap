@@ -16,13 +16,29 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "flags": "ScopeFlags(StrictMode)",
                     "id": 4,
                     "node": "TSFunctionType",
-                    "symbols": []
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(FunctionScopedVariable)",
+                        "id": 3,
+                        "name": "arg2",
+                        "node": "FormalParameter(arg2)",
+                        "references": []
+                      }
+                    ]
                   }
                 ],
                 "flags": "ScopeFlags(StrictMode)",
                 "id": 3,
                 "node": "TSFunctionType",
-                "symbols": []
+                "symbols": [
+                  {
+                    "flags": "SymbolFlags(FunctionScopedVariable)",
+                    "id": 2,
+                    "name": "arg",
+                    "node": "FormalParameter(arg)",
+                    "references": []
+                  }
+                ]
               }
             ],
             "flags": "ScopeFlags(StrictMode | TsConditional)",
@@ -31,7 +47,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "symbols": [
               {
                 "flags": "SymbolFlags(TypeParameter)",
-                "id": 2,
+                "id": 4,
                 "name": "I",
                 "node": "TSTypeParameter(I)",
                 "references": [

@@ -357,6 +357,15 @@ impl NoUnusedVars {
             return true;
         }
 
+        let node_id = symbol.declaration().id();
+        if flags.intersects(SymbolFlags::FunctionScopedVariable)
+            && let AstKind::FormalParameters(formal_parameters) =
+                symbol.nodes().parent_node(node_id).kind()
+            && formal_parameters.kind.is_signature()
+        {
+            return true;
+        }
+
         // In some cases (e.g. "jsx": "react" in tsconfig.json), React imports
         // get used in generated code. We don't have a way to detect
         // "jsxPragmas" or whether TSX files are using "jsx": "react-jsx", so we

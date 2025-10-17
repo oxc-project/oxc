@@ -12,7 +12,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ScopeFlags(StrictMode)",
             "id": 2,
             "node": "TSFunctionType",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "a",
+                "node": "BindingRestElement",
+                "references": []
+              }
+            ]
           }
         ],
         "flags": "ScopeFlags(StrictMode)",

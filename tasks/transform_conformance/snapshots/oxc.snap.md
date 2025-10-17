@@ -1226,10 +1226,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol span mismatch for "C":
-after transform: SymbolId(2): Span { start: 107, end: 108 }
+after transform: SymbolId(3): Span { start: 107, end: 108 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
+after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(1): Span { start: 107, end: 108 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -1246,10 +1246,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol span mismatch for "C":
-after transform: SymbolId(2): Span { start: 107, end: 108 }
+after transform: SymbolId(3): Span { start: 107, end: 108 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
-after transform: SymbolId(3): Span { start: 0, end: 0 }
+after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(1): Span { start: 107, end: 108 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -1266,10 +1266,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol span mismatch for "C":
-after transform: SymbolId(1): Span { start: 134, end: 135 }
+after transform: SymbolId(3): Span { start: 134, end: 135 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
-after transform: SymbolId(2): Span { start: 0, end: 0 }
+after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(1): Span { start: 134, end: 135 }
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"

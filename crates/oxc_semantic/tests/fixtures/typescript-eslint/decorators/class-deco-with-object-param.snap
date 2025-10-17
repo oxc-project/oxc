@@ -12,7 +12,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
             "flags": "ScopeFlags(StrictMode)",
             "id": 2,
             "node": "TSFunctionType",
-            "symbols": []
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "param",
+                "node": "BindingRestElement",
+                "references": []
+              }
+            ]
           }
         ],
         "flags": "ScopeFlags(StrictMode | Function)",
@@ -56,7 +64,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/clas
       },
       {
         "flags": "SymbolFlags(Class)",
-        "id": 2,
+        "id": 3,
         "name": "Foo",
         "node": "Class(Foo)",
         "references": []

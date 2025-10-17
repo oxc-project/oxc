@@ -33,6 +33,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     "node_id": 21
                   }
                 ]
+              },
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 3,
+                "name": "arg",
+                "node": "FormalParameter(arg)",
+                "references": []
               }
             ]
           }
