@@ -1551,7 +1551,8 @@ impl RuleRunner for crate::rules::jsdoc::require_returns_type::RequireReturnsTyp
 }
 
 impl RuleRunner for crate::rules::jsdoc::require_yields::RequireYields {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Function, AstType::YieldExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -37,6 +39,14 @@ fn missing_yields_with_generator(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct RequireYields(Box<RequireYieldsConfig>);
 
+impl Deref for RequireYields {
+    type Target = RequireYieldsConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -71,7 +81,7 @@ declare_oxc_lint!(
 );
 
 #[derive(Debug, Clone, Deserialize)]
-struct RequireYieldsConfig {
+pub struct RequireYieldsConfig {
     #[serde(default = "default_exempted_by", rename = "exemptedBy")]
     exempted_by: Vec<String>,
     #[serde(default, rename = "forceRequireYields")]
@@ -103,8 +113,6 @@ impl Rule for RequireYields {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let config = &self.0;
-
         // This rule checks generator function should have JSDoc `@yields` tag.
         // By default, this rule only checks:
         // ```
@@ -134,7 +142,7 @@ impl Rule for RequireYields {
                 if jsdocs
                     .iter()
                     .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
-                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
+                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &self.exempted_by))
                     .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
                     .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
                     .count()
@@ -148,7 +156,7 @@ impl Rule for RequireYields {
 
                 // Without this option, need to check `yield` value.
                 // Check will be performed in `YieldExpression` branch.
-                if config.force_require_yields
+                if self.force_require_yields
                     && is_missing_special_tag(&jsdoc_tags, resolved_yields_tag_name)
                 {
                     ctx.diagnostic(missing_yields(func.span));
@@ -163,7 +171,7 @@ impl Rule for RequireYields {
                     return;
                 }
 
-                if config.with_generator_tag {
+                if self.with_generator_tag {
                     let resolved_generator_tag_name = settings.resolve_tag_name("generator");
 
                     if let Some(span) = is_missing_yields_tag_with_generator_tag(
@@ -186,7 +194,7 @@ impl Rule for RequireYields {
             AstKind::YieldExpression(yield_expr) => {
                 // With this option, no needs to check `yield` value.
                 // We can perform all checks in `Function` branch instead.
-                if config.force_require_yields {
+                if self.force_require_yields {
                     return;
                 }
 
@@ -226,7 +234,7 @@ impl Rule for RequireYields {
                 if jsdocs
                     .iter()
                     .filter(|jsdoc| !should_ignore_as_custom_skip(jsdoc))
-                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &config.exempted_by))
+                    .filter(|jsdoc| !should_ignore_as_avoid(jsdoc, settings, &self.exempted_by))
                     .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
                     .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
                     .count()
