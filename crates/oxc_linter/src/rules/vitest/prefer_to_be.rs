@@ -142,33 +142,33 @@ impl Rule for PreferToBe {
             Expression::StringLiteral(_) | Expression::BooleanLiteral(_) => {
                 // Only suggest toBe if currently using toEqual or toStrictEqual
                 let matcher_name = matcher.name();
-                if let Some(name) = matcher_name.as_deref() {
-                    if matches!(name, "toEqual" | "toStrictEqual") {
-                        // Only replace the matcher name, not the entire expression
-                        let matcher_replacement = if is_computed { r#"["toBe"]"# } else { "toBe" };
-                        ctx.diagnostic_with_fix(use_to_be(matcher.span), |fixer| {
-                            fixer.replace(matcher.span, matcher_replacement)
-                        });
-                    }
+                if let Some(name) = matcher_name.as_deref()
+                    && matches!(name, "toEqual" | "toStrictEqual")
+                {
+                    // Only replace the matcher name, not the entire expression
+                    let matcher_replacement = if is_computed { r#"["toBe"]"# } else { "toBe" };
+                    ctx.diagnostic_with_fix(use_to_be(matcher.span), |fixer| {
+                        fixer.replace(matcher.span, matcher_replacement)
+                    });
                 }
             }
 
             // Handle numeric literals separately to check for floats
             Expression::NumericLiteral(num) => {
                 let matcher_name = matcher.name();
-                if let Some(name) = matcher_name.as_deref() {
-                    if matches!(name, "toEqual" | "toStrictEqual") {
-                        // Check if this is a float by examining the source text
-                        let num_span = num.span;
-                        let has_decimal = ctx.source_range(num_span).contains('.');
-                        if !has_decimal {
-                            // Only suggest toBe for integer literals
-                            let matcher_replacement =
-                                if is_computed { r#"["toBe"]"# } else { "toBe" };
-                            ctx.diagnostic_with_fix(use_to_be(matcher.span), |fixer| {
-                                fixer.replace(matcher.span, matcher_replacement)
-                            });
-                        }
+                if let Some(name) = matcher_name.as_deref()
+                    && matches!(name, "toEqual" | "toStrictEqual")
+                {
+                    // Check if this is a float by examining the source text
+                    let num_span = num.span;
+                    let has_decimal = ctx.source_range(num_span).contains('.');
+                    if !has_decimal {
+                        // Only suggest toBe for integer literals
+                        let matcher_replacement =
+                            if is_computed { r#"["toBe"]"# } else { "toBe" };
+                        ctx.diagnostic_with_fix(use_to_be(matcher.span), |fixer| {
+                            fixer.replace(matcher.span, matcher_replacement)
+                        });
                     }
                 }
             }
