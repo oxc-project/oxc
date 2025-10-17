@@ -11,6 +11,12 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   }) => {
 
 }
+
+export function useCopyToClipboard({ timeout = 2000, onCopy }: {
+  timeout?: number;
+  onCopy?: () => void;
+} = {}) {}
+
 ==================== Output ====================
 (
   options,
@@ -24,5 +30,13 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
     messenger: Messenger;
   },
 ) => {};
+
+export function useCopyToClipboard({
+  timeout = 2000,
+  onCopy,
+}: {
+  timeout?: number;
+  onCopy?: () => void;
+} = {}) {}
 
 ===================== End =====================

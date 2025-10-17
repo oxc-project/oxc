@@ -53,9 +53,13 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
-            Self::ObjectPattern(node) => {
-                matches!(node.parent, AstNodes::FormalParameter(_))
-            }
+            Self::ObjectPattern(node) => match node.parent {
+                AstNodes::FormalParameter(_) => true,
+                AstNodes::AssignmentPattern(_) => {
+                    matches!(node.parent.parent(), AstNodes::FormalParameter(_))
+                }
+                _ => false,
+            },
             Self::ObjectAssignmentTarget(node) => false,
         }
     }

@@ -7,3 +7,8 @@
   }) => {
 
 }
+
+export function useCopyToClipboard({ timeout = 2000, onCopy }: {
+  timeout?: number;
+  onCopy?: () => void;
+} = {}) {}
