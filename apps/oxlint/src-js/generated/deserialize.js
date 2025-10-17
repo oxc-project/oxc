@@ -64,10 +64,7 @@ function deserializeProgram(pos) {
           uint8 =
           sourceText =
             void 0;
-        Object.defineProperty(this, 'comments', {
-          value: comments,
-          enumerable: true,
-        });
+        Object.defineProperty(this, 'comments', { value: comments });
         return comments;
       },
       start: 0,
