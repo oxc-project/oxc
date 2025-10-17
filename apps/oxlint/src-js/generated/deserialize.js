@@ -57,8 +57,17 @@ function deserializeProgram(pos) {
         // Deserialize the comments
         let comments = deserializeVecComment(pos + 24);
         // Drop the references
-        refUint32 = refUint8 = refSourceText = void 0;
-        Object.defineProperty(this, 'comments', { value: comments });
+        refUint32 =
+          refUint8 =
+          refSourceText =
+          uint32 =
+          uint8 =
+          sourceText =
+            void 0;
+        Object.defineProperty(this, 'comments', {
+          value: comments,
+          enumerable: true,
+        });
         return comments;
       },
       start: 0,
