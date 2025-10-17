@@ -19,13 +19,6 @@ export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc
   return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
 }
 
-export function reset() {
-  // Increment `astId` counter.
-  // This prevents `program.comments` being accessed after the AST is done with.
-  // (see `deserializeProgram`)
-  astId++;
-}
-
 function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
@@ -34,22 +27,21 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInpu
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
   getLoc = getLocInput;
-  let data = deserialize(uint32[536870902]);
+  return deserialize(uint32[536870902]);
+}
+
+export function resetBuffer() {
+  // Clear buffer and source text string to allow them to be garbage collected
   uint8 =
     uint32 =
     float64 =
     sourceText =
       void 0;
-  return data;
+  astId++;
 }
 
 function deserializeProgram(pos) {
-  // Buffers will be cleaned up after the main program is deserialized.
-  // We hold references here in case the comments need to be later accessed.
-  let refUint32 = uint32,
-    refUint8 = uint8,
-    refSourceText = sourceText,
-    localAstId = astId,
+  let localAstId = astId,
     end = deserializeU32(pos + 4),
     program = parent = {
       __proto__: NodeProto,
@@ -58,21 +50,11 @@ function deserializeProgram(pos) {
       sourceType: deserializeModuleKind(pos + 125),
       hashbang: null,
       get comments() {
+        // Check AST in buffer is still the same AST (buffers are reused)
         if (localAstId !== astId) throw Error('Comments are only accessible while linting the file');
-        // Restore buffers
-        uint32 = refUint32;
-        uint8 = refUint8;
-        sourceText = refSourceText;
-        // Deserialize the comments
+        // Deserialize the comments.
+        // Replace this getter with the comments array, so we don't deserialize twice.
         let comments = deserializeVecComment(pos + 24);
-        // Drop the references
-        refUint32 =
-          refUint8 =
-          refSourceText =
-          uint32 =
-          uint8 =
-          sourceText =
-            void 0;
         Object.defineProperty(this, 'comments', { value: comments });
         return comments;
       },

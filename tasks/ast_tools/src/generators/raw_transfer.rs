@@ -155,20 +155,15 @@ fn generate_deserializers(
 
         /* IF !LINTER */
         export function deserialize(buffer, sourceText, sourceByteLen) {{
-            return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
+            const data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
+            resetBuffer();
+            return data;
         }}
         /* END_IF */
 
         /* IF LINTER */
         export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc) {{
             return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
-        }}
-
-        export function reset() {{
-            // Increment `astId` counter.
-            // This prevents `program.comments` being accessed after the AST is done with.
-            // (see `deserializeProgram`)
-            astId++;
         }}
         /* END_IF */
 
@@ -183,11 +178,17 @@ fn generate_deserializers(
 
             if (LOC) getLoc = getLocInput;
 
-            const data = deserialize(uint32[{data_pointer_pos_32}]);
+            return deserialize(uint32[{data_pointer_pos_32}]);
+        }}
 
+        export function resetBuffer() {{
+            // Clear buffer and source text string to allow them to be garbage collected
             uint8 = uint32 = float64 = sourceText = undefined;
 
-            return data;
+            // Increment `astId` counter.
+            // This prevents `program.comments` being accessed after the AST is done with.
+            // (see `deserializeProgram`)
+            if (COMMENTS) astId++;
         }}
     ");
 

@@ -8,7 +8,9 @@ const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   { fromCodePoint } = String;
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
-  return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
+  let data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
+  resetBuffer();
+  return data;
 }
 
 function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {
@@ -18,13 +20,16 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInpu
   sourceText = sourceTextInput;
   sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
-  let data = deserialize(uint32[536870902]);
+  return deserialize(uint32[536870902]);
+}
+
+export function resetBuffer() {
+  // Clear buffer and source text string to allow them to be garbage collected
   uint8 =
     uint32 =
     float64 =
     sourceText =
       void 0;
-  return data;
 }
 
 function deserializeProgram(pos) {

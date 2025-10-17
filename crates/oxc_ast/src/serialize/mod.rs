@@ -121,14 +121,7 @@ impl Program<'_> {
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
-    /* IF COMMENTS */
-    // Buffers will be cleaned up after the main program is deserialized.
-    // We hold references here in case the comments need to be later accessed.
-    let refUint32 = uint32;
-    let refUint8 = uint8;
-    let refSourceText = sourceText;
     const localAstId = astId;
-    /* END_IF */
 
     const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
         end = DESER[u32](POS_OFFSET.span.end);
@@ -140,15 +133,11 @@ impl Program<'_> {
         hashbang: null,
         /* IF COMMENTS */
         get comments() {
+            // Check AST in buffer is still the same AST (buffers are reused)
             if (localAstId !== astId) throw new Error('Comments are only accessible while linting the file');
-            // Restore buffers
-            uint32 = refUint32;
-            uint8 = refUint8;
-            sourceText = refSourceText;
-            // Deserialize the comments
+            // Deserialize the comments.
+            // Replace this getter with the comments array, so we don't deserialize twice.
             const comments = DESER[Vec<Comment>](POS_OFFSET.comments);
-            // Drop the references
-            refUint32 = refUint8 = refSourceText = uint32 = uint8 = sourceText = undefined;
             Object.defineProperty(this, 'comments', { value: comments });
             return comments;
         },
