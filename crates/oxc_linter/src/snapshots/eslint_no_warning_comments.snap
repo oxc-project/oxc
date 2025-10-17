@@ -143,8 +143,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-warning-comments): Unexpected 'todo' comment: * *any block comment *with (TODO,...
    ╭─[no_warning_comments.tsx:1:1]
- 1 │ ╭─▶ /** 
- 2 │ │                *any block comment 
+ 1 │ ╭─▶ /**
+ 2 │ │                *any block comment
  3 │ ╰─▶             *with (TODO, FIXME's or XXX!) **/
    ╰────
   help: Remove or rephrase this comment
@@ -172,8 +172,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-warning-comments): Unexpected 'todo' comment: TODO: something really longer than 40...
    ╭─[no_warning_comments.tsx:1:1]
- 1 │ ╭─▶ /* TODO: something 
- 2 │ │                really longer than 40 characters 
+ 1 │ ╭─▶ /* TODO: something
+ 2 │ │                really longer than 40 characters
  3 │ ╰─▶              and also a new line */
    ╰────
   help: Remove or rephrase this comment
@@ -272,16 +272,16 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-warning-comments): Unexpected 'todo' comment: /// TODO decorated single-line comment...
    ╭─[no_warning_comments.tsx:1:1]
- 1 │ ///// TODO decorated single-line comment with decoration array 
-   · ───────────────────────────────────────────────────────────────
+ 1 │ ///// TODO decorated single-line comment with decoration array
+   · ──────────────────────────────────────────────────────────────
  2 │              /////
    ╰────
   help: Remove or rephrase this comment
 
   ⚠ eslint(no-warning-comments): Unexpected 'todo' comment: /*/*/ TODO decorated single-line comment...
    ╭─[no_warning_comments.tsx:1:1]
- 1 │ ///*/*/ TODO decorated single-line comment with multiple decoration characters (start) 
-   · ───────────────────────────────────────────────────────────────────────────────────────
+ 1 │ ///*/*/ TODO decorated single-line comment with multiple decoration characters (start)
+   · ──────────────────────────────────────────────────────────────────────────────────────
  2 │              /////
    ╰────
   help: Remove or rephrase this comment
