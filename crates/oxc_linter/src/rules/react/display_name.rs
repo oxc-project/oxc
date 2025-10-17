@@ -574,40 +574,39 @@ fn is_react_component_node<'a>(
                             }
 
                             // Check if it returns createReactClass
-                            if let Expression::CallExpression(call) = expr {
-                                if let Some(callee_name) = call.callee_name()
-                                    && (callee_name == "createClass"
-                                        || callee_name == "createReactClass")
-                                {
-                                    // Check if it has displayName in the object
-                                    let has_display_name = call.arguments.iter().any(|arg| {
-                                        if let Some(Expression::ObjectExpression(obj_expr)) =
-                                            arg.as_expression()
-                                        {
-                                            obj_expr.properties.iter().any(|prop| {
-                                                if let Some((prop_name, _)) = prop.prop_name() {
-                                                    prop_name == "displayName"
-                                                        || (!ignore_transpiler_name
-                                                            && prop_name == "name")
-                                                } else {
-                                                    false
-                                                }
-                                            })
-                                        } else {
-                                            false
-                                        }
-                                    });
-
-                                    if !has_display_name {
-                                        return Some(ReactComponentInfo {
-                                            span: func.span,
-                                            _component_type: ComponentType::CreateReactClass,
-                                            is_context: false,
-                                            name: Some(CompactStr::from(name.name.as_str())),
-                                        });
+                            if let Expression::CallExpression(call) = expr
+                                && let Some(callee_name) = call.callee_name()
+                                && (callee_name == "createClass"
+                                    || callee_name == "createReactClass")
+                            {
+                                // Check if it has displayName in the object
+                                let has_display_name = call.arguments.iter().any(|arg| {
+                                    if let Some(Expression::ObjectExpression(obj_expr)) =
+                                        arg.as_expression()
+                                    {
+                                        obj_expr.properties.iter().any(|prop| {
+                                            if let Some((prop_name, _)) = prop.prop_name() {
+                                                prop_name == "displayName"
+                                                    || (!ignore_transpiler_name
+                                                        && prop_name == "name")
+                                            } else {
+                                                false
+                                            }
+                                        })
+                                    } else {
+                                        false
                                     }
-                                    return None;
+                                });
+
+                                if !has_display_name {
+                                    return Some(ReactComponentInfo {
+                                        span: func.span,
+                                        _component_type: ComponentType::CreateReactClass,
+                                        is_context: false,
+                                        name: Some(CompactStr::from(name.name.as_str())),
+                                    });
                                 }
+                                return None;
                             }
                         }
                     }
