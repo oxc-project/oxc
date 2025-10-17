@@ -377,6 +377,33 @@ const X = 1;
 import type { T1, T2 } from "t";
 "#,
     );
+    // Still works with multiple import groups
+    assert_format(
+        r#"
+import b from "b";
+import a from "a";
+const X = 1;
+import d from "d";
+import c from "c";
+export const Y = 2;
+import f from "f";
+import e from "e";
+"#,
+        &FormatOptions {
+            experimental_sort_imports: Some(SortImports::default()),
+            ..Default::default()
+        },
+        r#"
+import a from "a";
+import b from "b";
+const X = 1;
+import c from "c";
+import d from "d";
+export const Y = 2;
+import e from "e";
+import f from "f";
+"#,
+    );
 }
 
 // ---
