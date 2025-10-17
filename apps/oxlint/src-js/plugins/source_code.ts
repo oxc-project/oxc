@@ -221,7 +221,7 @@ export const SOURCE_CODE = Object.freeze({
   getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
     if (ast === null) initAst();
     const { comments } = ast;
-    if (comments.length === 0) return [];
+
     let targetEnd = nodeOrToken.end;
 
     const commentsAfter: Comment[] = [];
@@ -233,7 +233,8 @@ export const SOURCE_CODE = Object.freeze({
       if (commentStart < targetEnd) {
         continue;
       }
-      const whitespaceOnlyGap = whitespacePattern.test(sourceText.slice(targetEnd, commentStart));
+      const gap = sourceText.slice(targetEnd, commentStart);
+      const whitespaceOnlyGap = whitespacePattern.test(gap);
       if (whitespaceOnlyGap) {
         commentsAfter.push(comment);
         targetEnd = comment.end;
