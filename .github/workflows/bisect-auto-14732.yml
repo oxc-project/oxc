@@ -6,11 +6,11 @@ on:
       good_commit:
         description: 'Known good commit (default: v0.92.0)'
         required: false
-        default: '1b3f43746'
+        default: '1b3f43746891a3fabdd0d2528595a1bdb4c0f26f'
       bad_commit:
         description: 'Known bad commit (default: v0.95.0)'
         required: false
-        default: '454ee94ff'
+        default: '454ee94ff30d8423520bba9488bed0e3f8d1c77b'
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -180,8 +180,8 @@ jobs:
           git config user.name "Bisect Bot"
           
           # Set commits - use inputs if available, otherwise use defaults
-          GOOD_COMMIT="${{ github.event.inputs.good_commit || '1b3f43746' }}"
-          BAD_COMMIT="${{ github.event.inputs.bad_commit || '454ee94ff' }}"
+          GOOD_COMMIT="${{ github.event.inputs.good_commit || '1b3f43746891a3fabdd0d2528595a1bdb4c0f26f' }}"
+          BAD_COMMIT="${{ github.event.inputs.bad_commit || '454ee94ff30d8423520bba9488bed0e3f8d1c77b' }}"
           
           # Start bisect
           echo "Starting git bisect..."
