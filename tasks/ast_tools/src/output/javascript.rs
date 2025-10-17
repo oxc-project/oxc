@@ -32,27 +32,38 @@ pub fn print_javascript(code: &str, generator_path: &str) -> String {
 
 /// Format JS/TS code with `dprint`.
 fn format(source_text: &str) -> String {
-    let mut dprint = Command::new("dprint")
+    // `dprint` needs to be run twice to get stable output in some cases
+    dprint(source_text.as_bytes())
+        .and_then(|formatted_bytes| dprint(&formatted_bytes))
+        .and_then(|formatted_bytes| {
+            String::from_utf8(formatted_bytes)
+                .map_err(|_| "`dprint` returned invalid UTF8 string".to_string())
+        })
+        .unwrap_or_else(|error| {
+            // Formatting failed. Return unformatted code, to aid debugging.
+            logln!("FAILED TO FORMAT JS/TS code:\n{error}");
+            source_text.to_string()
+        })
+}
+
+fn dprint(source_text_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    let mut dprint_command = Command::new("dprint")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .args(["fmt", "--stdin", "placeholder_filename.ts"])
         .spawn()
-        .expect("Failed to run dprint (is it installed?)");
+        .expect("Failed to run `dprint` (is it installed?)");
 
-    let stdin = dprint.stdin.as_mut().unwrap();
-    stdin.write_all(source_text.as_bytes()).unwrap();
+    let stdin = dprint_command.stdin.as_mut().unwrap();
+    stdin.write_all(source_text_bytes).unwrap();
     stdin.flush().unwrap();
 
-    let output = dprint.wait_with_output().unwrap();
+    let output = dprint_command.wait_with_output().unwrap();
     if output.status.success() {
-        String::from_utf8(output.stdout).unwrap()
+        Ok(output.stdout)
     } else {
-        // Formatting failed. Return unformatted code, to aid debugging.
-        let error =
-            String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string());
-        logln!("FAILED TO FORMAT JS/TS code:\n{error}");
-        source_text.to_string()
+        Err(String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string()))
     }
 }
 
