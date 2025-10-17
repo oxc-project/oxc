@@ -281,26 +281,76 @@ impl PreferToBe {
                 fixer.replace(replacement_span, new_matcher)
             });
         } else if kind == &PreferToBeKind::Null {
-            // For computed member expressions, we need to start one character before the span
-            // to include the opening bracket: ["toBe"] -> ["toBeNull"]
-            let replacement_start = if is_cmp_mem_expr { span.start - 1 } else { span.start };
-            let replacement_span = Span::new(replacement_start, end);
-            let source_text = ctx.source_range(replacement_span);
-            let new_matcher = if is_cmp_mem_expr { "[\"toBeNull\"]()" } else { "toBeNull()" };
+            // For null with "not", we keep the "not" modifier but change the matcher
+            let (source_start, suggestion) = if let Some(not_modifier) = maybe_not_modifier {
+                // Check if the "not" is a computed member expression
+                let not_is_computed =
+                    matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
 
-            ctx.diagnostic_with_fix(use_to_be_null(source_text, new_matcher, span), |fixer| {
-                fixer.replace(replacement_span, new_matcher)
+                if not_is_computed {
+                    // ["not"]["toBe"](null) -> ["not"]["toBeNull"]()
+                    let start = not_modifier.span.start - 1; // Include opening bracket of ["not"]
+                    let suggestion = if is_cmp_mem_expr {
+                        "[\"not\"][\"toBeNull\"]()"
+                    } else {
+                        "[\"not\"].toBeNull()"
+                    };
+                    (start, suggestion)
+                } else if is_cmp_mem_expr {
+                    // .not["toBe"](null) -> .not["toBeNull"]()
+                    (not_modifier.span.start, "not[\"toBeNull\"]()")
+                } else {
+                    // .not.toBe(null) -> .not.toBeNull()
+                    (not_modifier.span.start, "not.toBeNull()")
+                }
+            } else {
+                // No "not" modifier
+                let start = if is_cmp_mem_expr { span.start - 1 } else { span.start };
+                let suggestion = if is_cmp_mem_expr { "[\"toBeNull\"]()" } else { "toBeNull()" };
+                (start, suggestion)
+            };
+
+            let replacement_span = Span::new(source_start, end);
+            let source_text = ctx.source_range(replacement_span);
+
+            ctx.diagnostic_with_fix(use_to_be_null(source_text, suggestion, span), |fixer| {
+                fixer.replace(replacement_span, suggestion)
             });
         } else if kind == &PreferToBeKind::NaN {
-            // For computed member expressions, we need to start one character before the span
-            // to include the opening bracket: ["toBe"] -> ["toBeNaN"]
-            let replacement_start = if is_cmp_mem_expr { span.start - 1 } else { span.start };
-            let replacement_span = Span::new(replacement_start, end);
-            let source_text = ctx.source_range(replacement_span);
-            let new_matcher = if is_cmp_mem_expr { "[\"toBeNaN\"]()" } else { "toBeNaN()" };
+            // For NaN with "not", we keep the "not" modifier but change the matcher
+            let (source_start, suggestion) = if let Some(not_modifier) = maybe_not_modifier {
+                // Check if the "not" is a computed member expression
+                let not_is_computed =
+                    matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
 
-            ctx.diagnostic_with_fix(use_to_be_na_n(source_text, new_matcher, span), |fixer| {
-                fixer.replace(replacement_span, new_matcher)
+                if not_is_computed {
+                    // ["not"]["toBe"](NaN) -> ["not"]["toBeNaN"]()
+                    let start = not_modifier.span.start - 1; // Include opening bracket of ["not"]
+                    let suggestion = if is_cmp_mem_expr {
+                        "[\"not\"][\"toBeNaN\"]()"
+                    } else {
+                        "[\"not\"].toBeNaN()"
+                    };
+                    (start, suggestion)
+                } else if is_cmp_mem_expr {
+                    // .not["toBe"](NaN) -> .not["toBeNaN"]()
+                    (not_modifier.span.start, "not[\"toBeNaN\"]()")
+                } else {
+                    // .not.toBe(NaN) -> .not.toBeNaN()
+                    (not_modifier.span.start, "not.toBeNaN()")
+                }
+            } else {
+                // No "not" modifier
+                let start = if is_cmp_mem_expr { span.start - 1 } else { span.start };
+                let suggestion = if is_cmp_mem_expr { "[\"toBeNaN\"]()" } else { "toBeNaN()" };
+                (start, suggestion)
+            };
+
+            let replacement_span = Span::new(source_start, end);
+            let source_text = ctx.source_range(replacement_span);
+
+            ctx.diagnostic_with_fix(use_to_be_na_n(source_text, suggestion, span), |fixer| {
+                fixer.replace(replacement_span, suggestion)
             });
         } else {
             let source_text = ctx.source_range(span);

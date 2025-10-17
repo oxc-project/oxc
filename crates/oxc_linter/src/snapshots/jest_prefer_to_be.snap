@@ -118,35 +118,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect("a string").not.toBe(null);
    ·                        ────
    ╰────
-  help: Replace `toBe(null)` with `toBeNull()`.
+  help: Replace `not.toBe(null)` with `not.toBeNull()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:24]
  1 │ expect("a string").not["toBe"](null);
    ·                        ──────
    ╰────
-  help: Replace `["toBe"](null)` with `["toBeNull"]()`.
+  help: Replace `not["toBe"](null)` with `not["toBeNull"]()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:27]
  1 │ expect("a string")["not"]["toBe"](null);
    ·                           ──────
    ╰────
-  help: Replace `["toBe"](null)` with `["toBeNull"]()`.
+  help: Replace `["not"]["toBe"](null)` with `["not"]["toBeNull"]()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:24]
  1 │ expect("a string").not.toEqual(null);
    ·                        ───────
    ╰────
-  help: Replace `toEqual(null)` with `toBeNull()`.
+  help: Replace `not.toEqual(null)` with `not.toBeNull()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNull` instead.
    ╭─[prefer_to_be.tsx:1:24]
  1 │ expect("a string").not.toStrictEqual(null);
    ·                        ─────────────
    ╰────
-  help: Replace `toStrictEqual(null)` with `toBeNull()`.
+  help: Replace `not.toStrictEqual(null)` with `not.toBeNull()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeUndefined` instead.
    ╭─[prefer_to_be.tsx:1:19]
@@ -230,35 +230,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect("a string").not.toBe(NaN);
    ·                        ────
    ╰────
-  help: Replace `toBe(NaN)` with `toBeNaN()`.
+  help: Replace `not.toBe(NaN)` with `not.toBeNaN()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.
    ╭─[prefer_to_be.tsx:1:32]
  1 │ expect("a string").rejects.not.toBe(NaN);
    ·                                ────
    ╰────
-  help: Replace `toBe(NaN)` with `toBeNaN()`.
+  help: Replace `not.toBe(NaN)` with `not.toBeNaN()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.
    ╭─[prefer_to_be.tsx:1:35]
  1 │ expect("a string")["rejects"].not.toBe(NaN);
    ·                                   ────
    ╰────
-  help: Replace `toBe(NaN)` with `toBeNaN()`.
+  help: Replace `not.toBe(NaN)` with `not.toBeNaN()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.
    ╭─[prefer_to_be.tsx:1:24]
  1 │ expect("a string").not.toEqual(NaN);
    ·                        ───────
    ╰────
-  help: Replace `toEqual(NaN)` with `toBeNaN()`.
+  help: Replace `not.toEqual(NaN)` with `not.toBeNaN()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeNaN` instead.
    ╭─[prefer_to_be.tsx:1:24]
  1 │ expect("a string").not.toStrictEqual(NaN);
    ·                        ─────────────
    ╰────
-  help: Replace `toStrictEqual(NaN)` with `toBeNaN()`.
+  help: Replace `not.toStrictEqual(NaN)` with `not.toBeNaN()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeUndefined` instead.
    ╭─[prefer_to_be.tsx:1:23]
@@ -328,7 +328,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect("a string").not.toEqual(null as number);
    ·                        ───────
    ╰────
-  help: Replace `toEqual(null as number)` with `toBeNull()`.
+  help: Replace `not.toEqual(null as number)` with `not.toBeNull()`.
 
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBeUndefined` instead.
    ╭─[prefer_to_be.tsx:1:19]
