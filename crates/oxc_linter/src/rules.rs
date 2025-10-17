@@ -44,6 +44,7 @@ pub(crate) mod eslint {
     pub mod arrow_body_style;
     pub mod block_scoped_var;
     pub mod class_methods_use_this;
+    pub mod constructor_super;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
@@ -664,6 +665,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::arrow_body_style,
     eslint::block_scoped_var,
     eslint::class_methods_use_this,
+    eslint::constructor_super,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
