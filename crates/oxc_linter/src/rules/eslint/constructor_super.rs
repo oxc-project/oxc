@@ -1,10 +1,6 @@
-use oxc_ast::{
-    AstKind,
-    ast::{
-        AssignmentOperator, ClassElement, Expression, LogicalOperator, MethodDefinitionKind,
-        Statement,
-    },
-};
+use rustc_hash::{FxHashMap, FxHashSet};
+
+use oxc_ast::{AstKind, ast::*};
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType,
     graph::{
@@ -16,7 +12,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -158,6 +153,7 @@ impl Rule for ConstructorSuper {
         let cfg = ctx.cfg();
 
         // Find constructor's CFG entry block
+        // TODO: this is expensive, we should have a direct mapping from function AST to node id (and then to CFG block)
         let constructor_func_node = ctx.nodes().iter().find(
             |n| matches!(n.kind(), AstKind::Function(func) if func.span == constructor.value.span),
         );
