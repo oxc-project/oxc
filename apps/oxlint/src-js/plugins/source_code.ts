@@ -174,40 +174,43 @@ export const SOURCE_CODE = Object.freeze({
   getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
     if (ast === null) initAst();
     const { comments } = ast;
-    if (comments.length === 0) return [];
-    const targetStart = nodeOrToken.start;
 
-    const commentsBefore: Comment[] = [];
+    const commentsLength = comments.length;
+    let targetStart = nodeOrToken.start;
+
+    let sliceStart = commentsLength;
+    let sliceEnd = 0;
 
     // Reverse iteration isn't ideal, but this entire implementation may need to be rewritten
     // with token-based APIs to match eslint.
-    for (let i = comments.length - 1; i >= 0; i--) {
+    for (let i = commentsLength - 1; i >= 0; i--) {
       const comment = comments[i];
       const commentEnd = comment.end;
 
-      if (commentEnd > targetStart) {
-        continue;
-      }
-
-      const whitespaceOnlyGap = whitespacePattern.test(sourceText.slice(commentEnd, targetStart));
-      if (whitespaceOnlyGap) {
-        commentsBefore.unshift(comment);
-        let currentComment = comment;
-        for (let j = i - 1; j >= 0; j--) {
-          const prevComment = comments[j];
-          const between = sourceText.slice(prevComment.end, currentComment.start);
-          if (whitespacePattern.test(between)) {
-            commentsBefore.unshift(prevComment);
-            currentComment = prevComment;
-          } else {
-            break;
-          }
+      if (commentEnd < targetStart) {
+        const gap = sourceText.slice(commentEnd, targetStart);
+        const whitespaceOnlyGap = whitespacePattern.test(gap);
+        if (whitespaceOnlyGap) {
+          sliceStart = sliceEnd = i + 1;
+          targetStart = comment.start;
         }
         break;
       }
     }
 
-    return commentsBefore;
+    for (let i = sliceEnd - 1; i >= 0; i--) {
+      const comment = comments[i];
+      const gap = sourceText.slice(comment.end, targetStart);
+      const whitespaceOnlyGap = whitespacePattern.test(gap);
+      if (whitespaceOnlyGap) {
+        sliceStart = i;
+        targetStart = comment.start;
+      } else {
+        break;
+      }
+    }
+
+    return comments.slice(sliceStart, sliceEnd);
   },
 
   /**
