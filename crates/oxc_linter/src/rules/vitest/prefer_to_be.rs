@@ -164,8 +164,7 @@ impl Rule for PreferToBe {
                     let has_decimal = ctx.source_range(num_span).contains('.');
                     if !has_decimal {
                         // Only suggest toBe for integer literals
-                        let matcher_replacement =
-                            if is_computed { r#"["toBe"]"# } else { "toBe" };
+                        let matcher_replacement = if is_computed { r#"["toBe"]"# } else { "toBe" };
                         ctx.diagnostic_with_fix(use_to_be(matcher.span), |fixer| {
                             fixer.replace(matcher.span, matcher_replacement)
                         });
