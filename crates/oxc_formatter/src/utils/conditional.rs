@@ -464,10 +464,10 @@ impl<'a> FormatConditionalLike<'a, '_> {
 
         let format_alternative = format_with(|f| match self.conditional {
             ConditionalLike::ConditionalExpression(conditional) => {
-                write!(f, [conditional.alternate()])
+                write!(f, [FormatNodeWithoutTrailingComments(conditional.alternate())])
             }
             ConditionalLike::TSConditionalType(conditional) => {
-                write!(f, [conditional.false_type()])
+                write!(f, [FormatNodeWithoutTrailingComments(conditional.false_type())])
             }
         });
         let format_alternative = format_with(|f| {
