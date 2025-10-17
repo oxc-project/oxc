@@ -171,6 +171,7 @@ pub(crate) mod eslint {
     pub mod no_useless_rename;
     pub mod no_var;
     pub mod no_void;
+    pub mod no_warning_comments;
     pub mod no_with;
     pub mod operator_assignment;
     pub mod prefer_destructuring;
@@ -792,6 +793,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_useless_rename,
     eslint::no_var,
     eslint::no_void,
+    eslint::no_warning_comments,
     eslint::no_with,
     eslint::operator_assignment,
     eslint::prefer_template,
