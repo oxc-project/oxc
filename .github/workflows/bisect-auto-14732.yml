@@ -30,6 +30,19 @@ jobs:
         with:
           fetch-depth: 0  # Full history for bisect
       
+      - name: Fetch upstream commits
+        shell: bash
+        run: |
+          # Add upstream remote if it doesn't exist
+          git remote add upstream https://github.com/oxc-project/oxc.git || true
+          # Fetch all branches and tags from upstream
+          git fetch upstream --tags
+          # Verify the commits exist
+          echo "Checking for commits..."
+          git rev-parse 1b3f43746891a3fabdd0d2528595a1bdb4c0f26f
+          git rev-parse 454ee94ff30d8423520bba9488bed0e3f8d1c77b
+          echo "Both commits found!"
+      
       - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
       
       - uses: samypr100/setup-dev-drive@cf663fdf88945e3faaa980ec525b5bc2350fbf9d # v3.4.3
