@@ -15,33 +15,33 @@ use crate::{
     },
 };
 
-fn use_to_be(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBe()` when comparing primitive values")
-        .with_help("Replace `toEqual()` with `toBe()`")
+fn use_to_be(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBe` when expecting primitive literals.")
+        .with_help(format!("Replace `{x0}` with `toBe`"))
         .with_label(span)
 }
 
-fn use_to_be_undefined(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeUndefined()` when checking for undefined values")
-        .with_help("Replace with `toBeUndefined()`")
+fn use_to_be_undefined(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeUndefined` instead.")
+        .with_help(format!("Replace `{x0}` with `toBeUndefined()`"))
         .with_label(span)
 }
 
-fn use_to_be_defined(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeDefined()` when checking for defined values")
-        .with_help("Replace with `toBeDefined()`")
+fn use_to_be_defined(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeDefined` instead.")
+        .with_help(format!("Replace `{x0}` with `toBeDefined()`"))
         .with_label(span)
 }
 
-fn use_to_be_null(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeNull()` when checking for null values")
-        .with_help("Replace with `toBeNull()`")
+fn use_to_be_null(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeNull` instead.")
+        .with_help(format!("Replace `{x0}` with `toBeNull()`"))
         .with_label(span)
 }
 
-fn use_to_be_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeNaN()` when checking for NaN values")
-        .with_help("Replace with `toBeNaN()`")
+fn use_to_be_na_n(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeNaN` instead.")
+        .with_help(format!("Replace `{x0}` with `toBeNaN()`"))
         .with_label(span)
 }
 
@@ -255,38 +255,51 @@ impl PreferToBe {
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 
         if kind == &PreferToBeKind::Undefined {
-            ctx.diagnostic_with_fix(use_to_be_undefined(span), |fixer| {
+            let replacement_span = if let Some(not_modifier) = maybe_not_modifier {
+                Span::new(not_modifier.span.start, end)
+            } else {
+                Span::new(span.start, end)
+            };
+            let source_text = ctx.source_range(replacement_span);
+
+            ctx.diagnostic_with_fix(use_to_be_undefined(source_text, span), |fixer| {
                 let new_matcher =
                     if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
-                let span = if let Some(not_modifier) = maybe_not_modifier {
-                    Span::new(not_modifier.span.start, end)
-                } else {
-                    Span::new(span.start, end)
-                };
-                fixer.replace(span, new_matcher)
+                fixer.replace(replacement_span, new_matcher)
             });
         } else if kind == &PreferToBeKind::Defined {
-            ctx.diagnostic_with_fix(use_to_be_defined(span), |fixer| {
-                let (new_matcher, start) = if is_cmp_mem_expr {
-                    ("[\"toBeDefined\"]()", modifiers.first().unwrap().span.end)
-                } else {
-                    ("toBeDefined()", maybe_not_modifier.unwrap().span.start)
-                };
+            let start = if is_cmp_mem_expr {
+                modifiers.first().unwrap().span.end
+            } else {
+                maybe_not_modifier.unwrap().span.start
+            };
+            let replacement_span = Span::new(start, end);
+            let source_text = ctx.source_range(replacement_span);
 
-                fixer.replace(Span::new(start, end), new_matcher)
+            ctx.diagnostic_with_fix(use_to_be_defined(source_text, span), |fixer| {
+                let new_matcher = if is_cmp_mem_expr { "[\"toBeDefined\"]()" } else { "toBeDefined()" };
+                fixer.replace(replacement_span, new_matcher)
             });
         } else if kind == &PreferToBeKind::Null {
-            ctx.diagnostic_with_fix(use_to_be_null(span), |fixer| {
+            let replacement_span = Span::new(span.start, end);
+            let source_text = ctx.source_range(replacement_span);
+
+            ctx.diagnostic_with_fix(use_to_be_null(source_text, span), |fixer| {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNull\"]()" } else { "toBeNull()" };
-                fixer.replace(Span::new(span.start, end), new_matcher)
+                fixer.replace(replacement_span, new_matcher)
             });
         } else if kind == &PreferToBeKind::NaN {
-            ctx.diagnostic_with_fix(use_to_be_na_n(span), |fixer| {
+            let replacement_span = Span::new(span.start, end);
+            let source_text = ctx.source_range(replacement_span);
+
+            ctx.diagnostic_with_fix(use_to_be_na_n(source_text, span), |fixer| {
                 let new_matcher = if is_cmp_mem_expr { "\"toBeNaN\"]()" } else { "toBeNaN()" };
-                fixer.replace(Span::new(span.start, end), new_matcher)
+                fixer.replace(replacement_span, new_matcher)
             });
         } else {
-            ctx.diagnostic_with_fix(use_to_be(span), |fixer| {
+            let source_text = ctx.source_range(span);
+
+            ctx.diagnostic_with_fix(use_to_be(source_text, span), |fixer| {
                 let new_matcher = if is_cmp_mem_expr { "\"toBe\"" } else { "toBe" };
                 fixer.replace(span, new_matcher)
             });
