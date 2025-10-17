@@ -177,24 +177,40 @@ impl Rule for ArrayType {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let default_config = &self.default;
-        let readonly_config: &ArrayOption =
-            &self.readonly.clone().unwrap_or_else(|| default_config.clone());
-
         match node.kind() {
             AstKind::TSArrayType(ts_array_type) => {
-                check(&ts_array_type.element_type, default_config, readonly_config, ctx);
+                check(
+                    &ts_array_type.element_type,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                );
             }
             AstKind::TSTypeAnnotation(ts_type_annotation) => {
-                check(&ts_type_annotation.type_annotation, default_config, readonly_config, ctx);
+                check(
+                    &ts_type_annotation.type_annotation,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                );
             }
             // for example: type barUnion = (string | number | boolean)[];
             AstKind::TSTypeAliasDeclaration(ts_alias_annotation) => {
-                check(&ts_alias_annotation.type_annotation, default_config, readonly_config, ctx);
+                check(
+                    &ts_alias_annotation.type_annotation,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                );
             }
             // for example: let ya = [[1, '2']] as [number, string][];
             AstKind::TSAsExpression(ts_as_expression) => {
-                check(&ts_as_expression.type_annotation, default_config, readonly_config, ctx);
+                check(
+                    &ts_as_expression.type_annotation,
+                    self.default_config(),
+                    self.readonly_config(),
+                    ctx,
+                );
             }
             AstKind::TSTypeReference(ts_type_reference)
                 if outermost_paren_parent(node, ctx).is_some_and(|x| match x.kind() {
@@ -209,30 +225,34 @@ impl Rule for ArrayType {
                 }) =>
             {
                 check_and_report_error_reference(
-                    default_config,
-                    readonly_config,
+                    self.default_config(),
+                    self.readonly_config(),
                     ts_type_reference,
                     ctx,
                 );
             }
             AstKind::TSTypeParameterInstantiation(ts_type_param_instantiation) => {
                 for param in &ts_type_param_instantiation.params {
-                    check(param, default_config, readonly_config, ctx);
+                    check(param, self.default_config(), self.readonly_config(), ctx);
                 }
             }
             AstKind::TSConditionalType(ts_conditional_type) => {
+                let default_config = self.default_config();
+                let readonly_config = self.readonly_config();
                 check(&ts_conditional_type.check_type, default_config, readonly_config, ctx);
                 check(&ts_conditional_type.extends_type, default_config, readonly_config, ctx);
                 check(&ts_conditional_type.true_type, default_config, readonly_config, ctx);
                 check(&ts_conditional_type.false_type, default_config, readonly_config, ctx);
             }
             AstKind::TSIndexedAccessType(ts_indexed_access_type) => {
+                let default_config = self.default_config();
+                let readonly_config = self.readonly_config();
                 check(&ts_indexed_access_type.object_type, default_config, readonly_config, ctx);
                 check(&ts_indexed_access_type.index_type, default_config, readonly_config, ctx);
             }
             AstKind::TSMappedType(ts_mapped_type) => {
                 if let Some(type_annotation) = &ts_mapped_type.type_annotation {
-                    check(type_annotation, default_config, readonly_config, ctx);
+                    check(type_annotation, self.default_config(), self.readonly_config(), ctx);
                 }
             }
             _ => {}
@@ -241,6 +261,16 @@ impl Rule for ArrayType {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
+    }
+}
+
+impl ArrayType {
+    fn default_config(&self) -> &ArrayOption {
+        &self.default
+    }
+
+    fn readonly_config(&self) -> &ArrayOption {
+        if let Some(readonly) = &self.readonly { readonly } else { &self.default }
     }
 }
 

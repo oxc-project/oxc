@@ -2416,7 +2416,17 @@ impl RuleRunner
 }
 
 impl RuleRunner for crate::rules::typescript::array_type::ArrayType {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::TSArrayType,
+        AstType::TSAsExpression,
+        AstType::TSConditionalType,
+        AstType::TSIndexedAccessType,
+        AstType::TSMappedType,
+        AstType::TSTypeAliasDeclaration,
+        AstType::TSTypeAnnotation,
+        AstType::TSTypeParameterInstantiation,
+        AstType::TSTypeReference,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
