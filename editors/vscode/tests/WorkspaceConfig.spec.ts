@@ -3,7 +3,7 @@ import { ConfigurationTarget, workspace } from 'vscode';
 import { WorkspaceConfig } from '../client/WorkspaceConfig.js';
 import { WORKSPACE_FOLDER } from './test-helpers.js';
 
-const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives', 'typeAware', 'fmt.experimental'];
+const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives', 'typeAware', 'fmt.experimental', 'fmt.configPath'];
 
 suite('WorkspaceConfig', () => {
   setup(async () => {
@@ -36,6 +36,7 @@ suite('WorkspaceConfig', () => {
     strictEqual(config.typeAware, false);
     deepStrictEqual(config.flags, {});
     strictEqual(config.formattingExperimental, false);
+    strictEqual(config.formattingConfigPath, null);
   });
 
   test('configPath defaults to null when using nested configs and configPath is empty', async () => {
@@ -71,6 +72,7 @@ suite('WorkspaceConfig', () => {
       config.updateTypeAware(true),
       config.updateFlags({ test: 'value' }),
       config.updateFormattingExperimental(true),
+      config.updateFormattingConfigPath('./oxfmt.json'),
     ]);
 
     const wsConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
@@ -82,5 +84,6 @@ suite('WorkspaceConfig', () => {
     strictEqual(wsConfig.get('typeAware'), true);
     deepStrictEqual(wsConfig.get('flags'), { test: 'value' });
     strictEqual(wsConfig.get('fmt.experimental'), true);
+    strictEqual(wsConfig.get('fmt.configPath'), './oxfmt.json');
   });
 });

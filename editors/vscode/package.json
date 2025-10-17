@@ -158,6 +158,15 @@
           "scope": "resource",
           "default": false,
           "description": "Enable experimental formatting support. This feature is experimental and might not work as expected."
+        },
+        "oxc.fmt.configPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "scope": "resource",
+          "default": null,
+          "description": "Path to an oxfmt configuration file"
         }
       }
     },

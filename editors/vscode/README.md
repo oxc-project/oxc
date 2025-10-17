@@ -66,6 +66,7 @@ Following configuration are supported via `settings.json` and can be changed for
 | `oxc.typeAware`               | `false`       | `false` \| `true`           | Enable type aware linting.                                                                                                                       |
 | `oxc.flags`                   | -             | `Record<string, string>`    | Custom flags passed to the language server.                                                                                                      |
 | `oxc.fmt.experimental`        | `false`       | `false` \| `true`           | Enable experimental formatting support. This feature is experimental and might not work as expected.                                             |
+| `oxc.fmt.configPath`          | `null`        | `<string>` \| `null`        | Path to an oxfmt configuration file. When `null`, the server will use `.oxfmtrc.json` at the workspace root.                                     |
 
 #### Flags
 

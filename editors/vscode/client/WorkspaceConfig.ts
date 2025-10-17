@@ -69,6 +69,12 @@ export interface WorkspaceConfigInterface {
    * @default false
    */
   ['fmt.experimental']: boolean;
+
+  /**
+   * Path to an oxfmt configuration file
+   * `oxc.fmt.configPath`
+   */
+  ['fmt.configPath']?: string | null;
 }
 
 export class WorkspaceConfig {
@@ -79,6 +85,7 @@ export class WorkspaceConfig {
   private _typeAware: boolean = false;
   private _flags: Record<string, string> = {};
   private _formattingExperimental: boolean = false;
+  private _formattingConfigPath: string | null = null;
 
   constructor(private readonly workspace: WorkspaceFolder) {
     this.refresh();
@@ -101,6 +108,7 @@ export class WorkspaceConfig {
     this._typeAware = this.configuration.get<boolean>('typeAware') ?? false;
     this._flags = flags;
     this._formattingExperimental = this.configuration.get<boolean>('fmt.experimental') ?? false;
+    this._formattingConfigPath = this.configuration.get<string | null>('fmt.configPath') ?? null;
   }
 
   public effectsConfigChange(event: ConfigurationChangeEvent): boolean {
@@ -123,6 +131,9 @@ export class WorkspaceConfig {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.experimental`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.configPath`, this.workspace)) {
       return true;
     }
     return false;
@@ -195,6 +206,15 @@ export class WorkspaceConfig {
     return this.configuration.update('fmt.experimental', value, ConfigurationTarget.WorkspaceFolder);
   }
 
+  get formattingConfigPath(): string | null {
+    return this._formattingConfigPath;
+  }
+
+  updateFormattingConfigPath(value: string | null): PromiseLike<void> {
+    this._formattingConfigPath = value;
+    return this.configuration.update('fmt.configPath', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
   public toLanguageServerConfig(): WorkspaceConfigInterface {
     return {
       run: this.runTrigger,
@@ -204,6 +224,7 @@ export class WorkspaceConfig {
       typeAware: this.typeAware,
       flags: this.flags,
       ['fmt.experimental']: this.formattingExperimental,
+      ['fmt.configPath']: this.formattingConfigPath ?? null,
     };
   }
 }
