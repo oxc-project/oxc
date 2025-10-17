@@ -221,11 +221,11 @@ fn generate_deserializers(
         variant_paths: Vec<String>,
     }
 
-    impl VariantGenerator<6> for VariantGen {
-        const FLAG_NAMES: [&str; 6] =
-            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "LINTER"];
+    impl VariantGenerator<7> for VariantGen {
+        const FLAG_NAMES: [&str;7] =
+            ["IS_TS", "RANGE", "LOC", "PARENT", "PRESERVE_PARENS", "COMMENTS", "LINTER"];
 
-        fn variants(&mut self) -> Vec<[bool; 6]> {
+        fn variants(&mut self) -> Vec<[bool; 7]> {
             let mut variants = Vec::with_capacity(9);
 
             // Parser deserializers
@@ -241,7 +241,7 @@ fn generate_deserializers(
 
                         variants.push([
                             is_ts, range, /* loc */ false, parent,
-                            /* preserve_parens */ true, /* linter */ false,
+                            /* preserve_parens */ true, /* comments */ false, /* linter */ false,
                         ]);
                     }
                 }
@@ -251,7 +251,7 @@ fn generate_deserializers(
             self.variant_paths.push(format!("{OXLINT_APP_PATH}/src-js/generated/deserialize.js"));
             variants.push([
                 /* is_ts */ true, /* range */ true, /* loc */ true,
-                /* parent */ true, /* preserve_parens */ false, /* linter */ true,
+                /* parent */ true, /* preserve_parens */ false, /* comments */ true, /* linter */ true,
             ]);
 
             variants
@@ -260,7 +260,7 @@ fn generate_deserializers(
         fn pre_process_variant<'a>(
             &self,
             program: &mut Program<'a>,
-            flags: [bool; 6],
+            flags: [bool; 7],
             allocator: &'a Allocator,
         ) {
             if flags[2] {
