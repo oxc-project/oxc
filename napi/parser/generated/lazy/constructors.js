@@ -10823,7 +10823,7 @@ export class TSConstructorType {
 
   get abstract() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 32, internal.ast);
+    return constructBool(internal.pos + 36, internal.ast);
   }
 
   get typeParameters() {

@@ -2,7 +2,7 @@ commit: 41d96516
 
 semantic_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2006/2423 (82.79%)
+Positive Passed: 2002/2423 (82.62%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -2658,6 +2658,16 @@ Bindings mismatch:
 after transform: ScopeId(0): ["a", "b"]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/abstract-constructor-signatures/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/abstract-constructor-signatures-babel-7/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/conditional/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -2685,6 +2695,16 @@ Identifier `method` has already been declared
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-babel-7/input.ts
 Identifier `method` has already been declared
 Identifier `method` has already been declared
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/constructor-signatures/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/constructor-signatures-babel-7/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function/input.ts
 Scope children mismatch:

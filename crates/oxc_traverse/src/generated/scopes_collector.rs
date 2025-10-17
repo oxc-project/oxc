@@ -1914,11 +1914,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_constructor_type(&mut self, it: &TSConstructorType<'a>) {
-        if let Some(type_parameters) = &it.type_parameters {
-            self.visit_ts_type_parameter_declaration(type_parameters);
-        }
-        self.visit_formal_parameters(&it.params);
-        self.visit_ts_type_annotation(&it.return_type);
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]

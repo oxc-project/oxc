@@ -1468,14 +1468,15 @@ const _: () = {
     assert!(offset_of!(TSFunctionType, return_type) == 32);
     assert!(offset_of!(TSFunctionType, scope_id) == 40);
 
-    // Padding: 7 bytes
+    // Padding: 3 bytes
     assert!(size_of::<TSConstructorType>() == 40);
     assert!(align_of::<TSConstructorType>() == 8);
     assert!(offset_of!(TSConstructorType, span) == 0);
-    assert!(offset_of!(TSConstructorType, r#abstract) == 32);
+    assert!(offset_of!(TSConstructorType, r#abstract) == 36);
     assert!(offset_of!(TSConstructorType, type_parameters) == 8);
     assert!(offset_of!(TSConstructorType, params) == 16);
     assert!(offset_of!(TSConstructorType, return_type) == 24);
+    assert!(offset_of!(TSConstructorType, scope_id) == 32);
 
     // Padding: 2 bytes
     assert!(size_of::<TSMappedType>() == 56);
@@ -3075,13 +3076,14 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSFunctionType, scope_id) == 24);
 
     // Padding: 3 bytes
-    assert!(size_of::<TSConstructorType>() == 24);
+    assert!(size_of::<TSConstructorType>() == 28);
     assert!(align_of::<TSConstructorType>() == 4);
     assert!(offset_of!(TSConstructorType, span) == 0);
-    assert!(offset_of!(TSConstructorType, r#abstract) == 20);
+    assert!(offset_of!(TSConstructorType, r#abstract) == 24);
     assert!(offset_of!(TSConstructorType, type_parameters) == 8);
     assert!(offset_of!(TSConstructorType, params) == 12);
     assert!(offset_of!(TSConstructorType, return_type) == 16);
+    assert!(offset_of!(TSConstructorType, scope_id) == 20);
 
     // Padding: 2 bytes
     assert!(size_of::<TSMappedType>() == 36);

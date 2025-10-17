@@ -1446,6 +1446,7 @@ pub struct TSFunctionType<'a> {
 }
 
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConstructorType<'a> {
@@ -1454,6 +1455,7 @@ pub struct TSConstructorType<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// TypeScript Mapped Type

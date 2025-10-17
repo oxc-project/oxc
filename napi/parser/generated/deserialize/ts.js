@@ -4174,7 +4174,7 @@ function deserializeTSConstructorType(pos) {
     end = deserializeU32(pos + 4),
     node = {
       type: 'TSConstructorType',
-      abstract: deserializeBool(pos + 32),
+      abstract: deserializeBool(pos + 36),
       typeParameters: null,
       params: null,
       returnType: null,

@@ -13,26 +13,34 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "symbols": []
       },
       {
-        "children": [],
-        "flags": "ScopeFlags(StrictMode)",
-        "id": 2,
-        "node": "TSTypeAliasDeclaration",
-        "symbols": [
+        "children": [
           {
-            "flags": "SymbolFlags(TypeParameter)",
-            "id": 2,
-            "name": "U",
-            "node": "TSTypeParameter(U)",
-            "references": [
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSConstructorType",
+            "symbols": [
               {
-                "flags": "ReferenceFlags(Type)",
-                "id": 0,
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 2,
                 "name": "U",
-                "node_id": 16
+                "node": "TSTypeParameter(U)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 0,
+                    "name": "U",
+                    "node_id": 16
+                  }
+                ]
               }
             ]
           }
-        ]
+        ],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
       }
     ],
     "flags": "ScopeFlags(StrictMode | Top)",

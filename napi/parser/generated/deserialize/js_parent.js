@@ -4570,7 +4570,7 @@ function deserializeTSConstructorType(pos) {
     previousParent = parent,
     node = parent = {
       type: 'TSConstructorType',
-      abstract: deserializeBool(pos + 32),
+      abstract: deserializeBool(pos + 36),
       typeParameters: null,
       params: null,
       returnType: null,

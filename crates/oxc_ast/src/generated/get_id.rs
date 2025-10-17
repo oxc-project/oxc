@@ -442,6 +442,25 @@ impl TSFunctionType<'_> {
     }
 }
 
+impl TSConstructorType<'_> {
+    /// Get [`ScopeId`] of [`TSConstructorType`].
+    ///
+    /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
+    ///
+    /// # Panics
+    /// Panics if `scope_id` is [`None`].
+    #[inline]
+    pub fn scope_id(&self) -> ScopeId {
+        self.scope_id.get().unwrap()
+    }
+
+    /// Set [`ScopeId`] of [`TSConstructorType`].
+    #[inline]
+    pub fn set_scope_id(&self, scope_id: ScopeId) {
+        self.scope_id.set(Some(scope_id));
+    }
+}
+
 impl TSMappedType<'_> {
     /// Get [`ScopeId`] of [`TSMappedType`].
     ///

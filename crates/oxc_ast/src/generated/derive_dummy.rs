@@ -2684,6 +2684,7 @@ impl<'a> Dummy<'a> for TSConstructorType<'a> {
             type_parameters: Dummy::dummy(allocator),
             params: Dummy::dummy(allocator),
             return_type: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
         }
     }
 }

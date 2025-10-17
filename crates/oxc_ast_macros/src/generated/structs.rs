@@ -133,7 +133,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("DoWhileStatement", StructDetails { field_order: None }),
         ("ReturnStatement", StructDetails { field_order: None }),
         ("TSImportType", StructDetails { field_order: None }),
-        ("TSConstructorType", StructDetails { field_order: Some(&[0, 4, 1, 2, 3]) }),
+        ("TSConstructorType", StructDetails { field_order: Some(&[0, 5, 1, 2, 3, 4]) }),
         ("TSImportEqualsDeclaration", StructDetails { field_order: None }),
         ("RegExpLiteral", StructDetails { field_order: None }),
         ("LogicalExpression", StructDetails { field_order: Some(&[0, 1, 3, 2]) }),
