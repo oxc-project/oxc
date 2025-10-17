@@ -7,9 +7,11 @@ use crate::{
     Format, FormatResult,
     ast_nodes::{AstNode, AstNodes},
     formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    utils::{
+        array::write_array_node,
+        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    },
     write,
-    write::utils::array::write_array_node,
 };
 
 use super::FormatWrite;

@@ -1,3 +1,4 @@
+pub mod array;
 pub mod assignment_like;
 pub mod call_expression;
 pub mod conditional;
@@ -6,6 +7,7 @@ pub mod format_node_without_trailing_comments;
 pub mod jsx;
 pub mod member_chain;
 pub mod object;
+pub mod statement_body;
 pub mod string_utils;
 pub mod suppressed;
 pub mod typecast;

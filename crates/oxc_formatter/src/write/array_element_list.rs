@@ -9,10 +9,9 @@ use crate::{
         Buffer, Comments, Format, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
+    utils::array::write_array_node,
     write,
 };
-
-use super::utils::array::write_array_node;
 
 pub struct ArrayElementList<'a, 'b> {
     elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,

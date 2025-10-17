@@ -31,7 +31,6 @@ mod try_statement;
 mod tuple_type;
 mod type_parameters;
 mod union_type;
-mod utils;
 mod variable_declaration;
 
 pub use arrow_function_expression::{
@@ -64,6 +63,7 @@ use crate::{
     options::{FormatTrailingCommas, QuoteProperties, Semicolons, TrailingSeparator},
     parentheses::NeedsParentheses,
     utils::{
+        array::write_array_node,
         assignment_like::AssignmentLike,
         call_expression::{contains_a_test_pattern, is_test_call_expression, is_test_each_pattern},
         conditional::ConditionalLike,
@@ -71,6 +71,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::MemberChain,
         object::format_property_key,
+        statement_body::FormatStatementBody,
         string_utils::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::FormatSuppressedNode,
     },
@@ -89,10 +90,6 @@ use self::{
     return_or_throw_statement::FormatAdjacentArgument,
     semicolon::OptionalSemicolon,
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
-    utils::{
-        array::{TrailingSeparatorMode, write_array_node},
-        statement_body::FormatStatementBody,
-    },
 };
 
 pub trait FormatWrite<'ast, T = ()> {

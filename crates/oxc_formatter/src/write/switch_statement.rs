@@ -12,8 +12,9 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
+    utils::statement_body::FormatStatementBody,
     write,
-    write::{semicolon::OptionalSemicolon, utils::statement_body::FormatStatementBody},
+    write::semicolon::OptionalSemicolon,
 };
 
 use super::FormatWrite;
