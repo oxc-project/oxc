@@ -101,7 +101,7 @@ impl Rule for NoExtraNonNullAssertion {
                     None
                 }
             }
-            _ => None,
+            _ => return,
         };
 
         if let Some(expr) = expr {
