@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, parent = null, getLoc;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen, astId = 0, parent = null, getLoc;
 
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
@@ -38,13 +38,35 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInpu
 
 function deserializeProgram(pos) {
   let end = deserializeU32(pos + 4),
+    refUint32 = uint32,
+    refUint8 = uint8,
+    refSourceText = sourceText,
+    localAstId = ++astId,
     program = parent = {
       __proto__: NodeProto,
       type: 'Program',
       body: null,
       sourceType: deserializeModuleKind(pos + 125),
       hashbang: null,
-      comments: deserializeVecComment(pos + 24),
+      get comments() {
+        if (localAstId !== astId) throw Error('Comments are only accessible while linting the file');
+        // Restore buffers
+        uint32 = refUint32;
+        uint8 = refUint8;
+        sourceText = refSourceText;
+        // Deserialize the comments
+        let comments = deserializeVecComment(pos + 24);
+        // Drop the references
+        refUint32 =
+          refUint8 =
+          refSourceText =
+          uint32 =
+          uint8 =
+          sourceText =
+            void 0;
+        Object.defineProperty(this, 'comments', { value: comments });
+        return comments;
+      },
       start: 0,
       end,
       range: [0, end],

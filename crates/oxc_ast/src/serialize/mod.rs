@@ -124,12 +124,36 @@ impl Program<'_> {
     const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
         end = DESER[u32](POS_OFFSET.span.end);
 
+
+    /* IF COMMENTS */
+    // Buffers will be cleaned up after the main program is deserialized.
+    // We hold references here in case the comments need to be later accessed.
+    let refUint32 = uint32;
+    let refUint8 = uint8;
+    let refSourceText = sourceText;
+    const localAstId = ++astId;
+    /* END_IF */
+
     const program = parent = {
         type: 'Program',
         body: null,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: null,
-        ...(COMMENTS && { comments: DESER[Vec<Comment>](POS_OFFSET.comments) }),
+        /* IF COMMENTS */
+        get comments() {
+            if (localAstId !== astId) throw new Error('Comments are only accessible while linting the file');
+            // Restore buffers
+            uint32 = refUint32;
+            uint8 = refUint8;
+            sourceText = refSourceText;
+            // Deserialize the comments
+            const comments = DESER[Vec<Comment>](POS_OFFSET.comments);
+            // Drop the references
+            refUint32 = refUint8 = refSourceText = uint32 = uint8 = sourceText = undefined;
+            Object.defineProperty(this, 'comments', { value: comments });
+            return comments;
+        },
+        /* END_IF */
         start,
         end,
         ...(RANGE && { range: [start, end] }),

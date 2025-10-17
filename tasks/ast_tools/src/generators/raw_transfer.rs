@@ -136,6 +136,7 @@ fn generate_deserializers(
     let mut code = format!("
         let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
 
+        let astId = 0;
         let parent = null;
         let getLoc;
 
