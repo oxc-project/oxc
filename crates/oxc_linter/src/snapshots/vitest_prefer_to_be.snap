@@ -1,0 +1,79 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBe()` when comparing primitive values
+   ╭─[prefer_to_be.tsx:1:15]
+ 1 │ expect(value).toEqual("my string");
+   ·               ───────
+   ╰────
+  help: Replace `toEqual()` with `toBe()` for primitive comparison
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNull()` when checking for null values
+   ╭─[prefer_to_be.tsx:1:24]
+ 1 │ expect("a string").not.toEqual(null);
+   ·                        ─────────────
+   ╰────
+  help: Replace with `toBeNull()` for more explicit null checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNull()` when checking for null values
+   ╭─[prefer_to_be.tsx:1:24]
+ 1 │ expect("a string").not.toStrictEqual(null);
+   ·                        ───────────────────
+   ╰────
+  help: Replace with `toBeNull()` for more explicit null checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNaN()` when checking for NaN values
+   ╭─[prefer_to_be.tsx:1:13]
+ 1 │ expect(NaN).toBe(NaN);
+   ·             ─────────
+   ╰────
+  help: Replace with `toBeNaN()` for more explicit NaN checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNaN()` when checking for NaN values
+   ╭─[prefer_to_be.tsx:1:24]
+ 1 │ expect("a string").not.toBe(NaN);
+   ·                        ─────────
+   ╰────
+  help: Replace with `toBeNaN()` for more explicit NaN checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNaN()` when checking for NaN values
+   ╭─[prefer_to_be.tsx:1:24]
+ 1 │ expect("a string").not.toStrictEqual(NaN);
+   ·                        ──────────────────
+   ╰────
+  help: Replace with `toBeNaN()` for more explicit NaN checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNull()` when checking for null values
+   ╭─[prefer_to_be.tsx:1:14]
+ 1 │ expect(null).toBe(null);
+   ·              ──────────
+   ╰────
+  help: Replace with `toBeNull()` for more explicit null checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNull()` when checking for null values
+   ╭─[prefer_to_be.tsx:1:14]
+ 1 │ expect(null).toEqual(null);
+   ·              ─────────────
+   ╰────
+  help: Replace with `toBeNull()` for more explicit null checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeNull()` when checking for null values
+   ╭─[prefer_to_be.tsx:1:24]
+ 1 │ expect("a string").not.toEqual(null as number);
+   ·                        ───────────────────────
+   ╰────
+  help: Replace with `toBeNull()` for more explicit null checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeUndefined()` when checking for undefined values
+   ╭─[prefer_to_be.tsx:1:19]
+ 1 │ expect(undefined).toBe(undefined as unknown as string as any);
+   ·                   ───────────────────────────────────────────
+   ╰────
+  help: Replace with `toBeUndefined()` for more explicit undefined checking
+
+  ⚠ eslint-plugin-vitest(prefer-to-be): Use `toBeUndefined()` when checking for undefined values
+   ╭─[prefer_to_be.tsx:1:20]
+ 1 │ expect("a string").toEqual(undefined as number);
+   ·                    ────────────────────────────
+   ╰────
+  help: Replace with `toBeUndefined()` for more explicit undefined checking

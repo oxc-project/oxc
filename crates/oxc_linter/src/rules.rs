@@ -630,9 +630,9 @@ pub(crate) mod promise {
 }
 
 pub(crate) mod vitest {
-        pub mod prefer_to_be;
-pub mod no_conditional_tests;
+    pub mod no_conditional_tests;
     pub mod no_import_node_test;
+    pub mod prefer_to_be;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
