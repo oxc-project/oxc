@@ -260,8 +260,7 @@ impl LanguageServer for Backend {
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeConfiguration>
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
         let workers = self.workspace_workers.read().await;
-        let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
-            ConcurrentHashMap::default();
+        let mut new_diagnostics = Vec::new();
         let mut removing_registrations = vec![];
         let mut adding_registrations = vec![];
 
@@ -337,10 +336,10 @@ impl LanguageServer for Backend {
 
             if let Some(diagnostics) = diagnostics {
                 for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.pin().insert(
+                    new_diagnostics.push((
                         uri.clone(),
                         reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    );
+                    ));
                 }
             }
 
@@ -364,13 +363,7 @@ impl LanguageServer for Backend {
         }
 
         if !new_diagnostics.is_empty() {
-            let x = &new_diagnostics
-                .pin()
-                .into_iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect::<Vec<_>>();
-
-            self.publish_all_diagnostics(x).await;
+            self.publish_all_diagnostics(&new_diagnostics).await;
         }
 
         // override the existing formatting registration
