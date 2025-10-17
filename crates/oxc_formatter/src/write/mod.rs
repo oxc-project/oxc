@@ -35,7 +35,7 @@ mod utils;
 mod variable_declaration;
 
 pub use arrow_function_expression::{
-    ExpressionLeftSide, FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
+    FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 pub use function::FormatFunctionOptions;
@@ -67,6 +67,7 @@ use crate::{
         assignment_like::AssignmentLike,
         call_expression::{contains_a_test_pattern, is_test_call_expression, is_test_each_pattern},
         conditional::ConditionalLike,
+        expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::MemberChain,
         object::format_property_key,
@@ -528,55 +529,46 @@ fn expression_statement_needs_semicolon<'a>(
     let expr = stmt.expression();
 
     // Get the leftmost expression to check what the line starts with
-    let mut current = ExpressionLeftSide::Expression(expr);
-    loop {
-        let needs_semi = match current {
-            ExpressionLeftSide::Expression(expr) => {
-                expr.needs_parentheses(f)
-                    || match expr.as_ref() {
-                        Expression::ArrayExpression(_)
-                        | Expression::RegExpLiteral(_)
-                        | Expression::TSTypeAssertion(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::JSXElement(_) => true,
+    ExpressionLeftSide::from(expr).iter().any(|current| match current {
+        ExpressionLeftSide::Expression(expr) => {
+            expr.needs_parentheses(f)
+                || match expr.as_ref() {
+                    Expression::ArrayExpression(_)
+                    | Expression::RegExpLiteral(_)
+                    | Expression::TSTypeAssertion(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::JSXElement(_) => true,
 
-                        Expression::TemplateLiteral(template) => true,
-                        Expression::UnaryExpression(unary) => {
-                            matches!(
-                                unary.operator,
-                                UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
-                            )
-                        }
-                        _ => false,
+                    Expression::TemplateLiteral(template) => true,
+                    Expression::UnaryExpression(unary) => {
+                        matches!(
+                            unary.operator,
+                            UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
+                        )
                     }
-            }
-            ExpressionLeftSide::AssignmentTarget(assignment) => {
-                matches!(
-                    assignment.as_ref(),
-                    AssignmentTarget::ArrayAssignmentTarget(_)
-                        | AssignmentTarget::TSTypeAssertion(_)
-                        | AssignmentTarget::TSAsExpression(_)
-                        | AssignmentTarget::TSSatisfiesExpression(_)
-                        | AssignmentTarget::TSNonNullExpression(_)
-                )
-            }
-            ExpressionLeftSide::SimpleAssignmentTarget(assignment) => {
-                matches!(
-                    assignment.as_ref(),
-                    SimpleAssignmentTarget::TSTypeAssertion(_)
-                        | SimpleAssignmentTarget::TSAsExpression(_)
-                        | SimpleAssignmentTarget::TSNonNullExpression(_)
-                )
-            }
-            _ => false,
-        };
-
-        if needs_semi {
-            return true;
+                    _ => false,
+                }
         }
-
-        if let Some(next) = current.left_expression() { current = next } else { return false }
-    }
+        ExpressionLeftSide::AssignmentTarget(assignment) => {
+            matches!(
+                assignment.as_ref(),
+                AssignmentTarget::ArrayAssignmentTarget(_)
+                    | AssignmentTarget::TSTypeAssertion(_)
+                    | AssignmentTarget::TSAsExpression(_)
+                    | AssignmentTarget::TSSatisfiesExpression(_)
+                    | AssignmentTarget::TSNonNullExpression(_)
+            )
+        }
+        ExpressionLeftSide::SimpleAssignmentTarget(assignment) => {
+            matches!(
+                assignment.as_ref(),
+                SimpleAssignmentTarget::TSTypeAssertion(_)
+                    | SimpleAssignmentTarget::TSAsExpression(_)
+                    | SimpleAssignmentTarget::TSNonNullExpression(_)
+            )
+        }
+        _ => false,
+    })
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {

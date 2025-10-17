@@ -1,6 +1,7 @@
 pub mod assignment_like;
 pub mod call_expression;
 pub mod conditional;
+pub mod expression;
 pub mod format_node_without_trailing_comments;
 pub mod jsx;
 pub mod member_chain;

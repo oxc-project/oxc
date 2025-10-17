@@ -6,7 +6,7 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    write::{BinaryLikeExpression, ExpressionLeftSide, should_flatten},
+    write::{BinaryLikeExpression, should_flatten},
 };
 
 impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
