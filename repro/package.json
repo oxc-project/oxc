@@ -1,0 +1,7 @@
+{
+  "name": "oxc-parser-repro",
+  "type": "module",
+  "dependencies": {
+    "oxc-parser": "file:../napi/parser"
+  }
+}

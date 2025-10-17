@@ -1,0 +1,208 @@
+name: Test Specific Commits for Issue 14732
+
+on:
+  workflow_dispatch:
+    inputs:
+      commits:
+        description: 'Comma-separated list of commits to test (default: key suspects)'
+        required: false
+        default: '1b3f43746891a3fabdd0d2528595a1bdb4c0f26f,e75d42d509c9c9914958eeacf603ec5c3bd9a545,7e4d04fadf1bfb5e1ca7c2fc9c43d13173cfc4a0,454ee94ff30d8423520bba9488bed0e3f8d1c77b'
+      worker_count:
+        description: 'Number of workers to spawn (default: 16)'
+        required: false
+        default: '16'
+      timeout_seconds:
+        description: 'Timeout per test in seconds (default: 120)'
+        required: false
+        default: '120'
+
+permissions:
+  contents: read
+
+jobs:
+  test-commits:
+    name: Test commit ${{ matrix.commit }}
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # Split commits into array for matrix
+        commit: 
+          - '1b3f43746891a3fabdd0d2528595a1bdb4c0f26f'  # v0.92.0 (good)
+          - 'e75d42d509c9c9914958eeacf603ec5c3bd9a545'  # before parent prop
+          - '7e4d04fadf1bfb5e1ca7c2fc9c43d13173cfc4a0'  # parent prop added (SUSPECT)
+          - '454ee94ff30d8423520bba9488bed0e3f8d1c77b'  # v0.95.0 (bad)
+    
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+        with:
+          fetch-depth: 0
+      
+      - name: Fetch upstream commits
+        shell: bash
+        run: |
+          git remote add upstream https://github.com/oxc-project/oxc.git || true
+          git fetch upstream --no-tags ${{ matrix.commit }}
+          git rev-parse ${{ matrix.commit }}
+      
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      
+      - uses: samypr100/setup-dev-drive@cf663fdf88945e3faaa980ec525b5bc2350fbf9d # v3.4.3
+        with:
+          workspace-copy: true
+          drive-size: 8GB
+          drive-format: NTFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+
+      - name: Install Rust
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          rustup set profile minimal
+          rustup show
+          git restore .
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: false
+
+      - name: Save test files
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          mkdir -p /tmp/bisect-tests
+          cp napi/parser/test-worker-main.mjs /tmp/bisect-tests/
+          cp napi/parser/test-worker.mjs /tmp/bisect-tests/
+
+      - name: Checkout test commit
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          git config user.email "test@oxc.rs"
+          git config user.name "Test Bot"
+          git checkout ${{ matrix.commit }}
+          
+      - name: Get commit info
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          echo "## Testing Commit" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          git log -1 --pretty=fuller ${{ matrix.commit }} >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Restore test files
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          mkdir -p napi/parser
+          cp /tmp/bisect-tests/test-worker-main.mjs napi/parser/
+          cp /tmp/bisect-tests/test-worker.mjs napi/parser/
+
+      - name: Build oxc-parser
+        id: build
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser
+        shell: bash
+        run: |
+          set +e  # Don't exit on error
+          
+          # Install deps
+          pnpm install --ignore-scripts
+          
+          # Build with allocator feature
+          echo "Building with allocator feature..."
+          pnpm build --features allocator --release 2>&1 | tee build.log
+          BUILD_EXIT=$?
+          
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "build_success=false" >> $GITHUB_OUTPUT
+            echo "## ⚠️ Build Failed" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -20 build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 0  # Don't fail the job
+          fi
+          
+          echo "build_success=true" >> $GITHUB_OUTPUT
+          echo "## ✅ Build Succeeded" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run worker test
+        if: steps.build.outputs.build_success == 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser
+        shell: bash
+        timeout-minutes: 3
+        run: |
+          set +e  # Don't exit on error
+          
+          echo "Running test with ${{ github.event.inputs.worker_count || '16' }} workers..."
+          
+          # Modify worker count in test file
+          WORKER_COUNT=${{ github.event.inputs.worker_count || '16' }}
+          sed -i "s/const WORKER_COUNT = [0-9]\\+/const WORKER_COUNT = $WORKER_COUNT/" test-worker-main.mjs
+          
+          # Run test with timeout
+          timeout ${{ github.event.inputs.timeout_seconds || '120' }}s node test-worker-main.mjs 2>&1 | tee test.log
+          TEST_EXIT=$?
+          
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $TEST_EXIT -eq 124 ]; then
+            echo "### ⏱️ Test Timed Out" >> $GITHUB_STEP_SUMMARY
+            echo "test_result=timeout" >> $GITHUB_OUTPUT
+          elif [ $TEST_EXIT -ne 0 ]; then
+            echo "### ❌ Test Failed (Exit code: $TEST_EXIT)" >> $GITHUB_STEP_SUMMARY
+            echo "test_result=failed" >> $GITHUB_OUTPUT
+            
+            # Check for heap corruption
+            if grep -i "heap.*corruption\|0xC0000374" test.log; then
+              echo "**HEAP CORRUPTION DETECTED** 🔴" >> $GITHUB_STEP_SUMMARY
+              echo "test_result=heap_corruption" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Check if all workers completed
+            if grep -q "All workers done!" test.log; then
+              echo "### ✅ Test Passed - All workers completed successfully" >> $GITHUB_STEP_SUMMARY
+              echo "test_result=passed" >> $GITHUB_OUTPUT
+            else
+              echo "### ⚠️ Test Incomplete - Not all workers finished" >> $GITHUB_STEP_SUMMARY
+              echo "test_result=incomplete" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Output:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat test.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.commit }}
+          path: |
+            ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser/build.log
+            ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser/test.log
+          if-no-files-found: ignore
+
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: test-commits
+    if: always()
+    steps:
+      - name: Create summary
+        run: |
+          echo "# Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check individual job logs for detailed results." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Commits Tested" >> $GITHUB_STEP_SUMMARY
+          echo "- \`1b3f437\` - v0.92.0 (known good)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`e75d42d\` - Before parent prop addition" >> $GITHUB_STEP_SUMMARY
+          echo "- \`7e4d04f\` - **Parent prop addition (PRIME SUSPECT)**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`454ee94\` - v0.95.0 (known bad)" >> $GITHUB_STEP_SUMMARY
