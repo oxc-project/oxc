@@ -128,9 +128,9 @@ impl Program<'_> {
     /* IF LINTER */
     // Buffers will be cleaned up after the main program is deserialized.
     // We hold references here in case the comments need to be later accessed.
-    let ref_uint32 = uint32;
-    let ref_uint8 = uint8;
-    let ref_sourceText = sourceText;
+    let refUint32 = uint32;
+    let refUint8 = uint8;
+    let refSourceText = sourceText;
     const localAstId = ++astId;
     /* END_IF */
 
@@ -142,18 +142,16 @@ impl Program<'_> {
         /* IF LINTER */
         get comments() {
             if (localAstId !== astId) throw new Error(`The AST being accessed has already been cleaned up. Please ensure that the plugin works synchronously.`);
-            // restore buffers
-            uint32 = ref_uint32;
-            uint8 = ref_uint8;
-            sourceText = ref_sourceText;
-            // deserialize the comments
-            const c = DESER[Vec<Comment>](POS_OFFSET.comments);
-            // drop the references
-            ref_uint32 = undefined;
-            ref_uint8 = undefined;
-            ref_sourceText = undefined;
-            Object.defineProperty(this, 'comments', { value: c });
-            return c;
+            // Restore buffers
+            uint32 = refUint32;
+            uint8 = refUint8;
+            sourceText = refSourceText;
+            // Deserialize the comments
+            const comments = DESER[Vec<Comment>](POS_OFFSET.comments);
+            // Drop the references
+            refUint32 = refUint8 = refSourceText = undefined;
+            Object.defineProperty(this, 'comments', { value: comments });
+            return comments;
         },
         /* END_IF */
         start,
