@@ -71,6 +71,15 @@ jobs:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: false
 
+      - name: Save test files to temp
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          # Save the test files from current branch to a temp location
+          mkdir -p /tmp/bisect-tests
+          cp napi/parser/test-worker-main.mjs /tmp/bisect-tests/
+          cp napi/parser/test-worker.mjs /tmp/bisect-tests/
+      
       - name: Create bisect test script
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
@@ -83,75 +92,17 @@ jobs:
           echo "Testing commit: $(git log -1 --oneline)"
           echo "============================================"
           
-          # Create test files if they don't exist (for older commits)
+          # Copy test files from temp (they may not exist in older commits)
           mkdir -p napi/parser
           
           if [ ! -f napi/parser/test-worker-main.mjs ]; then
-            echo "Creating test-worker-main.mjs..."
-            cat > napi/parser/test-worker-main.mjs << 'EOF'
-          import { dirname, join } from 'node:path';
-          import process from 'node:process';
-          import { fileURLToPath } from 'node:url';
-          import { Worker } from 'node:worker_threads';
-          
-          const __filename = fileURLToPath(import.meta.url);
-          const __dirname = dirname(__filename);
-          
-          const WORKER_COUNT = 16;
-          let done = 0;
-          
-          console.log(\`Starting \${ WORKER_COUNT } workers...\n\`);
-          
-          for (let i = 1; i <= WORKER_COUNT; i++) {
-             const worker = new Worker(join(__dirname, 'test-worker.mjs'), {
-                workerData: { workerId: i },
-             });
-          
-             const id = String(i).padStart(2);
-          
-             worker.on('error', (error) => {
-                console.error(\`[Main] Worker \${ id } error:\`, error);
-             });
-          
-             worker.on('exit', (code) => {
-                done++;
-                if (code !== 0) {
-                   console.error(\`[Main] Worker \${ id } stopped with exit code \${ code }\`);
-                }
-                console.log(\`Workers done: \${ done }/\${ WORKER_COUNT }\`);
-                if (done === WORKER_COUNT) {
-                   console.log(\`All workers done!\`);
-                }
-             });
-          }
-          
-          process.on('exit', (code) => {
-             console.log(\`About to exit with code: \${ code }\`);
-          });
-          
-          console.log(\`\n\${ WORKER_COUNT } workers created and running!\n\`);
-          EOF
+            echo "Copying test-worker-main.mjs..."
+            cp /tmp/bisect-tests/test-worker-main.mjs napi/parser/
           fi
           
           if [ ! -f napi/parser/test-worker.mjs ]; then
-            echo "Creating test-worker.mjs..."
-            cat > napi/parser/test-worker.mjs << 'EOF'
-          import { workerData } from 'node:worker_threads';
-          
-          const workerId = String(workerData.workerId);
-          
-          console.log(\`Worker \${ workerId.padStart(2) } starting ...\`);
-          
-          try {
-             const module = await import('./src-js/index.js');
-          } catch (error) {
-             console.error(error);
-          }
-          
-          setTimeout(() => {
-             console.log(\`Hello from worker \${ workerId }\`);
-          }, Math.random() * 1000);
-          EOF
+            echo "Copying test-worker.mjs..."
+            cp /tmp/bisect-tests/test-worker.mjs napi/parser/
           fi
           
           # Build oxc-parser
