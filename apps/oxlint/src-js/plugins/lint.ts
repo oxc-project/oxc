@@ -1,6 +1,6 @@
 import { diagnostics, setupContextForFile } from './context.js';
 import { registeredRules } from './load.js';
-import { ast, initAst, resetSource, setupSourceForFile } from './source_code.js';
+import { ast, initAst, resetSourceAndAst, setupSourceForFile } from './source_code.js';
 import { assertIs, getErrorMessage } from './utils.js';
 import { addVisitorToCompiled, compiledVisitor, finalizeCompiledVisitor, initCompiledVisitor } from './visitor.js';
 
@@ -160,6 +160,6 @@ function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | n
     afterHooks.length = 0;
   }
 
-  // Reset source, to free memory
-  resetSource();
+  // Reset source and AST, to free memory
+  resetSourceAndAst();
 }

@@ -65,7 +65,7 @@ export function initAst(): void {
 }
 
 /**
- * Reset source after file has been linted, to free memory.
+ * Reset source and AST after file has been linted, to free memory.
  *
  * Setting `buffer` to `null` also prevents AST being deserialized after linting,
  * at which point the buffer may be being reused for another file.
@@ -74,7 +74,7 @@ export function initAst(): void {
  * With `buffer` set to `null`, accessing `SOURCE_CODE.ast` will still throw, but the error message will be clearer,
  * and no danger of an infinite loop due to a circular AST (unlikely but possible).
  */
-export function resetSource(): void {
+export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
