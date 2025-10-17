@@ -11,6 +11,10 @@ on:
         description: 'Known bad commit (default: v0.95.0)'
         required: false
         default: '454ee94ff'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - '**'
 
 permissions:
   contents: read
