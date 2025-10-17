@@ -277,7 +277,8 @@ impl PreferToBe {
             let source_text = ctx.source_range(replacement_span);
 
             ctx.diagnostic_with_fix(use_to_be_defined(source_text, span), |fixer| {
-                let new_matcher = if is_cmp_mem_expr { "[\"toBeDefined\"]()" } else { "toBeDefined()" };
+                let new_matcher =
+                    if is_cmp_mem_expr { "[\"toBeDefined\"]()" } else { "toBeDefined()" };
                 fixer.replace(replacement_span, new_matcher)
             });
         } else if kind == &PreferToBeKind::Null {
