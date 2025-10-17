@@ -217,7 +217,7 @@ describe('oxlint CLI', () => {
     }
   });
 
-  it('SourceCode.getAllComments() should return all comments', async () => {
-    await testFixture('getAllComments');
+  it('should support comments-related APIs in `context.sourceCode`', async () => {
+    await testFixture('comments');
   });
 });

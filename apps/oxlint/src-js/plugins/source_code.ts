@@ -170,9 +170,17 @@ export const SOURCE_CODE = Object.freeze({
    * @param nodeOrToken - The AST node or token to check for adjacent comment tokens.
    * @returns Array of `Comment`s in occurrence order.
    */
-  // oxlint-disable-next-line no-unused-vars
   getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
-    throw new Error('`sourceCode.getCommentsBefore` not implemented yet'); // TODO
+    if (ast === null) initAst();
+    const { comments } = ast;
+    if (comments.length === 0) return [];
+    const targetStart = nodeOrToken.range[0];
+    let i = comments.length - 1;
+    // linear backwards search for the index of the last comment before the provided node or token, TODO(perf): binary
+    while (i >= 0 && comments[i].range[1] > targetStart) {
+      i--;
+    }
+    return comments.slice(0, i + 1);
   },
 
   /**
@@ -180,9 +188,17 @@ export const SOURCE_CODE = Object.freeze({
    * @param nodeOrToken - The AST node or token to check for adjacent comment tokens.
    * @returns Array of `Comment`s in occurrence order.
    */
-  // oxlint-disable-next-line no-unused-vars
   getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
-    throw new Error('`sourceCode.getCommentsAfter` not implemented yet'); // TODO
+    if (ast === null) initAst();
+    const { comments } = ast;
+    if (comments.length === 0) return [];
+    const targetEnd = nodeOrToken.range[1];
+    let i = 0;
+    // linear forwards search for the index of the first comment after the provided node or token, TODO(perf): binary
+    while (i < comments.length && comments[i].range[0] < targetEnd) {
+      i++;
+    }
+    return comments.slice(i);
   },
 
   /**
@@ -190,9 +206,30 @@ export const SOURCE_CODE = Object.freeze({
    * @param node - The AST node to get the comments for.
    * @returns Array of `Comment`s in occurrence order.
    */
-  // oxlint-disable-next-line no-unused-vars
   getCommentsInside(node: Node): Comment[] {
-    throw new Error('`sourceCode.getCommentsInside` not implemented yet'); // TODO
+    if (ast === null) initAst();
+    const { comments } = ast;
+    if (comments.length === 0) return [];
+    const [rangeStart, rangeEnd] = node.range;
+    let indexStart = null, indexEnd = null;
+    // linear search for the first comment inside the node's range, TODO(perf): binary
+    for (let i = 0; i < comments.length; i++) {
+      const c = comments[i];
+      if (c.range[0] >= rangeStart && c.range[1] <= rangeEnd) {
+        indexStart = i;
+        break;
+      }
+    }
+    if (indexStart === null) return [];
+    // linear search for the last comment inside the node's range, TODO(perf): binary
+    for (let i = indexStart; i < comments.length; i++) {
+      const c = comments[i];
+      if (c.range[1] > rangeEnd) {
+        indexEnd = i;
+        break;
+      }
+    }
+    return comments.slice(indexStart, indexEnd ?? comments.length);
   },
 
   /**
@@ -469,9 +506,16 @@ export const SOURCE_CODE = Object.freeze({
    * @param nodeOrToken2 - The node to check.
    * @returns `true` if one or more comments exist.
    */
-  // oxlint-disable-next-line no-unused-vars
   commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
-    throw new Error('`sourceCode.commentsExistBetween` not implemented yet'); // TODO
+    // find the first comment after nodeOrToken1 end, check if it ends before nodeOrToken2 starts
+    const nodeOrToken1End = nodeOrToken1.range[1];
+    for (let i = 0; i < ast.comments.length; i++) {
+      const c = ast.comments[i];
+      if (c.range[0] >= nodeOrToken1End) {
+        return c.range[1] <= nodeOrToken2.range[0];
+      }
+    }
+    return false;
   },
 
   getAncestors,
