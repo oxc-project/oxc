@@ -563,14 +563,53 @@ fn is_react_component_node<'a>(
                     for stmt in &body.statements {
                         if let Statement::ReturnStatement(ret_stmt) = stmt
                             && let Some(expr) = &ret_stmt.argument
-                            && find_innermost_function_with_jsx(expr, ctx).is_some()
                         {
-                            return Some(ReactComponentInfo {
-                                span: func.span,
-                                _component_type: ComponentType::Function,
-                                is_context: false,
-                                name: None, // HOFs don't use the outer function name as displayName
-                            });
+                            // Check if it returns a function with JSX
+                            if find_innermost_function_with_jsx(expr, ctx).is_some() {
+                                return Some(ReactComponentInfo {
+                                    span: func.span,
+                                    _component_type: ComponentType::Function,
+                                    is_context: false,
+                                    name: None, // HOFs don't use the outer function name as displayName
+                                });
+                            }
+
+                            // Check if it returns createReactClass
+                            if let Expression::CallExpression(call) = expr {
+                                if let Some(callee_name) = call.callee_name()
+                                    && (callee_name == "createClass"
+                                        || callee_name == "createReactClass")
+                                {
+                                    // Check if it has displayName in the object
+                                    let has_display_name = call.arguments.iter().any(|arg| {
+                                        if let Some(Expression::ObjectExpression(obj_expr)) =
+                                            arg.as_expression()
+                                        {
+                                            obj_expr.properties.iter().any(|prop| {
+                                                if let Some((prop_name, _)) = prop.prop_name() {
+                                                    prop_name == "displayName"
+                                                        || (!ignore_transpiler_name
+                                                            && prop_name == "name")
+                                                } else {
+                                                    false
+                                                }
+                                            })
+                                        } else {
+                                            false
+                                        }
+                                    });
+
+                                    if !has_display_name {
+                                        return Some(ReactComponentInfo {
+                                            span: name.span,
+                                            _component_type: ComponentType::CreateReactClass,
+                                            is_context: false,
+                                            name: Some(CompactStr::from(name.name.as_str())),
+                                        });
+                                    }
+                                    return None;
+                                }
+                            }
                         }
                     }
                 }
@@ -1954,13 +1993,20 @@ fn test() {
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
-        // NOTE: The following pattern is not currently detected:
-        // function HelloComponent() {
-        //   return createReactClass({ render: function() { return <div /> } });
-        // }
-        // module.exports = HelloComponent();
-        // This would require tracking function return values through semantic analysis,
-        // which adds significant complexity. This is a rare pattern in practice.
+        (
+            "
+			        function HelloComponent() {
+			          return createReactClass({
+			            render: function() {
+			              return <div>Hello {this.props.name}</div>;
+			            }
+			          });
+			        }
+			        module.exports = HelloComponent();
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
         (
             "
 			        module.exports = () => {
