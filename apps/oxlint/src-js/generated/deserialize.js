@@ -49,11 +49,7 @@ function deserializeProgram(pos) {
       sourceType: deserializeModuleKind(pos + 125),
       hashbang: null,
       get comments() {
-        if (localAstId !== astId) {
-          throw Error(
-            'The AST being accessed has already been cleaned up. Please ensure that the plugin works synchronously.',
-          );
-        }
+        if (localAstId !== astId) throw Error('Comments are only accessible while linting the file');
         // Restore buffers
         uint32 = refUint32;
         uint8 = refUint8;

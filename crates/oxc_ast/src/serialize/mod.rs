@@ -141,7 +141,7 @@ impl Program<'_> {
         hashbang: null,
         /* IF LINTER */
         get comments() {
-            if (localAstId !== astId) throw new Error(`The AST being accessed has already been cleaned up. Please ensure that the plugin works synchronously.`);
+            if (localAstId !== astId) throw new Error('Comments are only accessible while linting the file');
             // Restore buffers
             uint32 = refUint32;
             uint8 = refUint8;
