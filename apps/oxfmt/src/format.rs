@@ -61,26 +61,15 @@ impl FormatRunner {
             }
         };
 
-        // Instead of `oxlint`'s `--ignore-pattern=PAT`, `oxfmt` supports `!` prefix in paths like Prettier
-        let (exclude_patterns, target_paths): (Vec<_>, Vec<_>) =
-            paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
-
-        // Default to cwd if no `target_paths` are provided
-        // NOTE: Do not specify `.` as cwd here, it behaves differently
-        let target_paths = if target_paths.is_empty() { vec![cwd.clone()] } else { target_paths };
-
-        // Resolve relative paths against the current working directory
-        let target_paths: Vec<PathBuf> = target_paths
-            .into_iter()
-            .map(|path| if path.is_relative() { cwd.join(path) } else { path })
-            .collect();
+        // Normalize user input paths
+        let (target_paths, exclude_patterns) = normalize_paths(&cwd, &paths);
 
         // Build exclude patterns if any exist
         let override_builder = (!exclude_patterns.is_empty())
             .then(|| {
                 let mut builder = OverrideBuilder::new(&cwd);
-                for pattern in exclude_patterns {
-                    builder.add(&pattern.to_string_lossy()).ok()?;
+                for pattern_str in exclude_patterns {
+                    builder.add(&pattern_str).ok()?;
                 }
                 builder.build().ok()
             })
@@ -211,6 +200,49 @@ fn load_config(cwd: &Path, config: Option<&PathBuf>) -> Result<FormatOptions, St
 
     // No config file found, use defaults
     Ok(FormatOptions::default())
+}
+
+/// Normalize user input paths into `target_paths` and `exclude_patterns`.
+/// - `target_paths`: Absolute paths to format
+/// - `exclude_patterns`: Pattern strings to exclude (with `!` prefix)
+fn normalize_paths(cwd: &Path, input_paths: &[PathBuf]) -> (Vec<PathBuf>, Vec<String>) {
+    let mut target_paths = vec![];
+    let mut exclude_patterns = vec![];
+
+    for path in input_paths {
+        let path_str = path.to_string_lossy();
+
+        // Instead of `oxlint`'s `--ignore-pattern=PAT`,
+        // `oxfmt` supports `!` prefix in paths like Prettier.
+        if path_str.starts_with('!') {
+            exclude_patterns.push(path_str.to_string());
+            continue;
+        }
+
+        // Otherwise, treat as target path
+
+        if path.is_absolute() {
+            target_paths.push(path.clone());
+            continue;
+        }
+
+        // NOTE: `.` and cwd behaves differently, need to normalize
+        let path = if path_str == "." {
+            cwd.to_path_buf()
+        } else if let Some(stripped) = path_str.strip_prefix("./") {
+            cwd.join(stripped)
+        } else {
+            cwd.join(path)
+        };
+        target_paths.push(path);
+    }
+
+    // Default to cwd if no `target_paths` are provided
+    if target_paths.is_empty() {
+        target_paths.push(cwd.into());
+    }
+
+    (target_paths, exclude_patterns)
 }
 
 fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
