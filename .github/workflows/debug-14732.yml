@@ -1,0 +1,112 @@
+name: Debug Issue 14732 - Windows Worker Thread Crash
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit SHA to test (leave empty for current HEAD)'
+        required: false
+        default: ''
+      runs:
+        description: 'Number of test runs'
+        required: false
+        default: '3'
+
+permissions:
+  contents: read
+
+jobs:
+  test-worker-threads-windows:
+    name: Test Worker Threads on Windows
+    runs-on: windows-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+        with:
+          ref: ${{ github.event.inputs.commit || github.sha }}
+      
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      
+      - uses: samypr100/setup-dev-drive@cf663fdf88945e3faaa980ec525b5bc2350fbf9d # v3.4.3
+        with:
+          workspace-copy: true
+          drive-size: 8GB
+          drive-format: NTFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+
+      - name: Install Rust
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          rustup set profile minimal
+          rustup show
+          git restore .
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: false
+
+      - name: Build oxc-parser
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser
+        shell: bash
+        run: |
+          pnpm install
+          pnpm build --features allocator --release
+          echo "✓ Build completed"
+
+      - name: Show commit info
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          echo "=== Testing Commit ==="
+          git log -1 --oneline
+          echo "====================="
+
+      - name: Run worker thread test
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          echo "Running worker thread test ${{ github.event.inputs.runs || 3 }} times..."
+          RUNS=${{ github.event.inputs.runs || 3 }}
+          FAILED=0
+          
+          for i in $(seq 1 $RUNS); do
+            echo ""
+            echo "=== Run $i/$RUNS ==="
+            if timeout 60 node test-worker-main.mjs; then
+              echo "✓ Test run $i PASSED"
+            else
+              EXIT_CODE=$?
+              echo "✗ Test run $i FAILED with exit code: $EXIT_CODE"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+          
+          echo ""
+          echo "=== Results ==="
+          echo "Total runs: $RUNS"
+          echo "Passed: $((RUNS - FAILED))"
+          echo "Failed: $FAILED"
+          
+          if [ $FAILED -gt 0 ]; then
+            echo "❌ Test FAILED - Worker thread crash detected"
+            exit 1
+          else
+            echo "✅ Test PASSED - No crashes detected"
+            exit 0
+          fi
+
+      - name: Test result summary
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ RESULT: No crashes detected on Windows"
+            echo "This commit appears to be GOOD"
+          else
+            echo "❌ RESULT: Crashes detected on Windows"
+            echo "This commit appears to be BAD"
+          fi

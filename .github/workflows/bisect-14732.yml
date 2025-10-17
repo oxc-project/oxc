@@ -1,0 +1,155 @@
+name: Bisect Issue 14732
+
+on:
+  workflow_dispatch:
+    inputs:
+      commits:
+        description: 'Comma-separated commit SHAs to test (or "range" for automatic range)'
+        required: true
+        default: 'range'
+
+permissions:
+  contents: read
+
+jobs:
+  generate-matrix:
+    name: Generate commit matrix
+    runs-on: ubuntu-latest
+    outputs:
+      commits: ${{ steps.commits.outputs.commits }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      
+      - name: Generate commit list
+        id: commits
+        shell: bash
+        run: |
+          if [ "${{ github.event.inputs.commits }}" == "range" ]; then
+            # Generate a bisect range between v0.92.0 and v0.95.0
+            # Get commits in the range (limited to reasonable number)
+            GOOD="1b3f43746"  # v0.92.0
+            BAD="454ee94ff"   # v0.95.0
+            
+            # Get commits between good and bad, pick a few key points
+            COMMITS=$(git log --oneline --no-merges $GOOD..$BAD --format="%H" | \
+              awk 'NR==1 || NR%10==0 || END {print}' | \
+              head -20 | \
+              jq -R . | jq -s .)
+          else
+            # Use provided commits
+            COMMITS=$(echo "${{ github.event.inputs.commits }}" | \
+              tr ',' '\n' | \
+              jq -R . | jq -s .)
+          fi
+          
+          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+          echo "Testing commits:"
+          echo "$COMMITS" | jq -r '.[]'
+
+  test-commits:
+    name: Test ${{ matrix.commit }}
+    needs: generate-matrix
+    runs-on: windows-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        commit: ${{ fromJson(needs.generate-matrix.outputs.commits) }}
+    
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+        with:
+          ref: ${{ matrix.commit }}
+      
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      
+      - uses: samypr100/setup-dev-drive@cf663fdf88945e3faaa980ec525b5bc2350fbf9d # v3.4.3
+        with:
+          workspace-copy: true
+          drive-size: 8GB
+          drive-format: NTFS
+          env-mapping: |
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+
+      - name: Install Rust
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: |
+          rustup set profile minimal
+          rustup show
+          git restore .
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1 # v2.8.1
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: false
+          key: bisect-${{ matrix.commit }}
+
+      - name: Build oxc-parser
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser
+        shell: bash
+        run: |
+          pnpm install
+          pnpm build --features allocator --release
+          echo "✓ Build completed for commit ${{ matrix.commit }}"
+
+      - name: Run worker thread test
+        id: test
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser
+        shell: bash
+        timeout-minutes: 3
+        run: |
+          echo "Testing commit: ${{ matrix.commit }}"
+          echo "==================================="
+          git log -1 --oneline
+          echo "==================================="
+          
+          # Run test 3 times to catch intermittent issues
+          FAILED=0
+          for i in 1 2 3; do
+            echo ""
+            echo "Run $i/3:"
+            if timeout 60 node test-worker-main.mjs 2>&1 | tee run-$i.log; then
+              echo "✓ Run $i passed"
+            else
+              echo "✗ Run $i failed"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+          
+          if [ $FAILED -gt 0 ]; then
+            echo "result=BAD" >> $GITHUB_OUTPUT
+            echo "❌ FAILED: $FAILED/3 runs crashed"
+            exit 1
+          else
+            echo "result=GOOD" >> $GITHUB_OUTPUT
+            echo "✅ PASSED: All runs completed"
+            exit 0
+          fi
+
+      - name: Mark result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.test.outcome }}" == "success" ]; then
+            echo "✅ ${{ matrix.commit }} - GOOD"
+          else
+            echo "❌ ${{ matrix.commit }} - BAD"
+          fi
+
+  summarize:
+    name: Summarize Results
+    needs: test-commits
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "# Bisect Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check individual job results above to identify:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ GOOD commits (no crashes)" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ BAD commits (crashes detected)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The breaking commit is the first BAD commit after a GOOD commit." >> $GITHUB_STEP_SUMMARY
