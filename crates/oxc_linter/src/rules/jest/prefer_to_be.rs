@@ -264,9 +264,10 @@ impl PreferToBe {
             let new_matcher =
                 if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
 
-            ctx.diagnostic_with_fix(use_to_be_undefined(source_text, new_matcher, span), |fixer| {
-                fixer.replace(replacement_span, new_matcher)
-            });
+            ctx.diagnostic_with_fix(
+                use_to_be_undefined(source_text, new_matcher, replacement_span),
+                |fixer| fixer.replace(replacement_span, new_matcher),
+            );
         } else if kind == &PreferToBeKind::Defined {
             let start = if is_cmp_mem_expr {
                 modifiers.first().unwrap().span.end
@@ -277,9 +278,10 @@ impl PreferToBe {
             let source_text = ctx.source_range(replacement_span);
             let new_matcher = if is_cmp_mem_expr { "[\"toBeDefined\"]()" } else { "toBeDefined()" };
 
-            ctx.diagnostic_with_fix(use_to_be_defined(source_text, new_matcher, span), |fixer| {
-                fixer.replace(replacement_span, new_matcher)
-            });
+            ctx.diagnostic_with_fix(
+                use_to_be_defined(source_text, new_matcher, replacement_span),
+                |fixer| fixer.replace(replacement_span, new_matcher),
+            );
         } else if kind == &PreferToBeKind::Null {
             // For null with "not", we keep the "not" modifier but change the matcher
             let (source_start, suggestion) = if let Some(not_modifier) = maybe_not_modifier {
@@ -313,9 +315,10 @@ impl PreferToBe {
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
 
-            ctx.diagnostic_with_fix(use_to_be_null(source_text, suggestion, span), |fixer| {
-                fixer.replace(replacement_span, suggestion)
-            });
+            ctx.diagnostic_with_fix(
+                use_to_be_null(source_text, suggestion, replacement_span),
+                |fixer| fixer.replace(replacement_span, suggestion),
+            );
         } else if kind == &PreferToBeKind::NaN {
             // For NaN with "not", we keep the "not" modifier but change the matcher
             let (source_start, suggestion) = if let Some(not_modifier) = maybe_not_modifier {
@@ -349,9 +352,10 @@ impl PreferToBe {
             let replacement_span = Span::new(source_start, end);
             let source_text = ctx.source_range(replacement_span);
 
-            ctx.diagnostic_with_fix(use_to_be_na_n(source_text, suggestion, span), |fixer| {
-                fixer.replace(replacement_span, suggestion)
-            });
+            ctx.diagnostic_with_fix(
+                use_to_be_na_n(source_text, suggestion, replacement_span),
+                |fixer| fixer.replace(replacement_span, suggestion),
+            );
         } else {
             let source_text = ctx.source_range(span);
             let new_matcher = if is_cmp_mem_expr { "\"toBe\"" } else { "toBe" };
