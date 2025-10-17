@@ -99,36 +99,36 @@ declare_oxc_lint!(
 
 impl Rule for NoConditionalInTest {
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        if matches!(
-            node.kind(),
+        match node.kind() {
             AstKind::IfStatement(_)
-                | AstKind::SwitchStatement(_)
-                | AstKind::ConditionalExpression(_)
-                | AstKind::LogicalExpression(_)
-        ) {
-            let is_if_statement_in_test = ctx.nodes().ancestors(node.id()).any(|node| {
-                let AstKind::CallExpression(call_expr) = node.kind() else { return false };
-                let vitest_node = PossibleJestNode { node, original: None };
+            | AstKind::SwitchStatement(_)
+            | AstKind::ConditionalExpression(_)
+            | AstKind::LogicalExpression(_) => {}
+            _ => return,
+        }
 
-                is_type_of_jest_fn_call(
-                    call_expr,
-                    &vitest_node,
-                    ctx,
-                    &[JestFnKind::General(crate::utils::JestGeneralFnKind::Test)],
-                )
-            });
+        let is_if_statement_in_test = ctx.nodes().ancestors(node.id()).any(|node| {
+            let AstKind::CallExpression(call_expr) = node.kind() else { return false };
+            let vitest_node = PossibleJestNode { node, original: None };
 
-            if is_if_statement_in_test {
-                let span = match node.kind() {
-                    AstKind::IfStatement(stmt) => stmt.span,
-                    AstKind::SwitchStatement(stmt) => stmt.span,
-                    AstKind::ConditionalExpression(expr) => expr.span,
-                    AstKind::LogicalExpression(expr) => expr.span,
-                    _ => unreachable!(),
-                };
+            is_type_of_jest_fn_call(
+                call_expr,
+                &vitest_node,
+                ctx,
+                &[JestFnKind::General(crate::utils::JestGeneralFnKind::Test)],
+            )
+        });
 
-                ctx.diagnostic(no_conditional_in_test(span));
-            }
+        if is_if_statement_in_test {
+            let span = match node.kind() {
+                AstKind::IfStatement(stmt) => stmt.span,
+                AstKind::SwitchStatement(stmt) => stmt.span,
+                AstKind::ConditionalExpression(expr) => expr.span,
+                AstKind::LogicalExpression(expr) => expr.span,
+                _ => unreachable!(),
+            };
+
+            ctx.diagnostic(no_conditional_in_test(span));
         }
     }
 }

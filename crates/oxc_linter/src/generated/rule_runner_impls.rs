@@ -1226,7 +1226,12 @@ impl RuleRunner for crate::rules::jest::no_conditional_expect::NoConditionalExpe
 }
 
 impl RuleRunner for crate::rules::jest::no_conditional_in_test::NoConditionalInTest {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ConditionalExpression,
+        AstType::IfStatement,
+        AstType::LogicalExpression,
+        AstType::SwitchStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
