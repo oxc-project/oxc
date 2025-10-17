@@ -2949,7 +2949,8 @@ impl RuleRunner for crate::rules::typescript::use_unknown_in_catch_callback_vari
 }
 
 impl RuleRunner for crate::rules::unicorn::catch_error_name::CatchErrorName {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::CatchParameter]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

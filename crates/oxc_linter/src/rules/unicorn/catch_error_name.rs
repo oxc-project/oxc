@@ -152,24 +152,26 @@ impl Rule for CatchErrorName {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CatchParameter(catch_param) = node.kind() {
-            self.check_binding_identifier(ctx, &catch_param.pattern.kind);
-        }
-
-        if let AstKind::CallExpression(call_expr) = node.kind()
-            && let Some(member_expr) = call_expr.callee.as_member_expression()
-        {
-            if member_expr.static_property_name() == Some("catch")
-                && let Some(arg) = call_expr.arguments.first()
-            {
-                self.check_function_arguments(arg, ctx);
+        match node.kind() {
+            AstKind::CatchParameter(catch_param) => {
+                self.check_binding_identifier(ctx, &catch_param.pattern.kind);
             }
+            AstKind::CallExpression(call_expr) => {
+                if let Some(member_expr) = call_expr.callee.as_member_expression() {
+                    if member_expr.static_property_name() == Some("catch")
+                        && let Some(arg) = call_expr.arguments.first()
+                    {
+                        self.check_function_arguments(arg, ctx);
+                    }
 
-            if member_expr.static_property_name() == Some("then")
-                && let Some(arg) = call_expr.arguments.get(1)
-            {
-                self.check_function_arguments(arg, ctx);
+                    if member_expr.static_property_name() == Some("then")
+                        && let Some(arg) = call_expr.arguments.get(1)
+                    {
+                        self.check_function_arguments(arg, ctx);
+                    }
+                }
             }
+            _ => {}
         }
     }
 }
