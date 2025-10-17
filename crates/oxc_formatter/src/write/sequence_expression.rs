@@ -32,8 +32,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
             });
 
             if matches!(self.parent, AstNodes::ForStatement(_))
-                || (matches!(self.parent, AstNodes::ExpressionStatement(statement) if
-                    !matches!(statement.grand_parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)))
+                || (matches!(self.parent, AstNodes::ExpressionStatement(statement)
+                    if !statement.is_arrow_function_body()))
             {
                 write!(f, [indent(&rest)])
             } else {

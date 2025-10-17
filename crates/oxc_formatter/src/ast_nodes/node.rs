@@ -2,7 +2,7 @@ use core::fmt;
 use std::ops::Deref;
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Program;
+use oxc_ast::ast::{ExpressionStatement, Program};
 use oxc_span::{GetSpan, Span};
 
 use super::AstNodes;
@@ -108,5 +108,19 @@ impl<T> AstNode<'_, T> {
 impl<'a> AstNode<'a, Program<'a>> {
     pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
         AstNode { inner, parent, allocator, following_span: None }
+    }
+}
+
+impl<'a> AstNode<'a, ExpressionStatement<'a>> {
+    /// Check if this ExpressionStatement is the body of an arrow function expression
+    ///
+    /// Example:
+    /// `() => expression;`
+    ///        ^^^^^^^^^^ This ExpressionStatement is the body of an arrow function
+    ///
+    /// `() => { return expression; }`
+    ///         ^^^^^^^^^^^^^^^^^^^^ This ExpressionStatement is NOT the body of an arrow function
+    pub fn is_arrow_function_body(&self) -> bool {
+        matches!(self.parent.parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
     }
 }

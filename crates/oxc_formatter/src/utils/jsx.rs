@@ -90,13 +90,7 @@ pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
         AstNodes::ExpressionStatement(stmt) => {
             // `() => <div></div>`
             //        ^^^^^^^^^^^
-            if let AstNodes::FunctionBody(body) = stmt.parent
-                && matches!(body.parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
-            {
-                WrapState::WrapOnBreak
-            } else {
-                WrapState::NoWrap
-            }
+            if stmt.is_arrow_function_body() { WrapState::WrapOnBreak } else { WrapState::NoWrap }
         }
         AstNodes::ComputedMemberExpression(member) => {
             if member.optional {

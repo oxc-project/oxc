@@ -131,10 +131,7 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
 
                 matches!(
                     parent, AstNodes::ExpressionStatement(stmt) if
-                    !matches!(
-                        stmt.grand_parent(), AstNodes::ArrowFunctionExpression(arrow)
-                        if arrow.expression()
-                    )
+                        !stmt.is_arrow_function_body()
                 )
             }
         }
@@ -211,15 +208,7 @@ impl NeedsParentheses<'_> for AstNode<'_, StringLiteral<'_>> {
 
         if let AstNodes::ExpressionStatement(stmt) = self.parent {
             // `() => "foo"`
-            if let AstNodes::FunctionBody(arrow) = stmt.parent {
-                if let AstNodes::ArrowFunctionExpression(arrow) = arrow.parent {
-                    !arrow.expression()
-                } else {
-                    true
-                }
-            } else {
-                true
-            }
+            !stmt.is_arrow_function_body()
         } else {
             false
         }
@@ -400,21 +389,11 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
             AstNodes::ExpressionStatement(stmt) => {
                 let grand_parent = parent.parent();
 
-                if matches!(grand_parent, AstNodes::FunctionBody(_)) {
-                    let grand_grand_parent = grand_parent.parent();
-                    if matches!(
-                        grand_grand_parent,
-                        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression()
-                    ) {
-                        // Skip ahead to grand_grand_parent by consuming ancestors
-                        // until we reach it
-                        for ancestor in ancestors.by_ref() {
-                            if core::ptr::eq(ancestor, grand_grand_parent) {
-                                break;
-                            }
-                        }
-                        continue;
-                    }
+                if stmt.is_arrow_function_body() {
+                    // Skip `FunctionBody` and `ArrowFunctionExpression`
+                    let skipped = ancestors.by_ref().nth(1);
+                    debug_assert!(matches!(skipped, Some(AstNodes::ArrowFunctionExpression(_))));
+                    continue;
                 }
 
                 return false;
@@ -534,15 +513,11 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
             // - `{ x } = obj` -> `({ x } = obj)` = needed to prevent parsing as block statement
             // - `() => { x } = obj` -> `() => ({ x } = obj)` = needed in arrow function body
             // - `() => a = b` -> `() => (a = b)` = also parens needed
-            AstNodes::ExpressionStatement(parent) => {
-                let parent_parent = parent.parent;
-                if let AstNodes::FunctionBody(body) = parent_parent {
-                    let parent_parent_parent = body.parent;
-                    if matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression())
-                    {
-                        return true;
-                    }
+            AstNodes::ExpressionStatement(stmt) => {
+                if stmt.is_arrow_function_body() {
+                    return true;
                 }
+
                 matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
                     && is_first_in_statement(
                         self.span,
@@ -588,12 +563,6 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
                     stmt.update.as_ref().is_some_and(|update| update.span() == self.span());
                 !(is_initializer || is_update)
             }
-            // Arrow functions, only need parens if assignment is the direct body:
-            // - `() => a = b` -> `() => (a = b)` = needed
-            // - `() => someFunc(a = b)` = no extra parens needed
-            AstNodes::ArrowFunctionExpression(arrow) => {
-                arrow.expression() && arrow.body.span() == self.span()
-            }
             // Default: need parentheses in most other contexts
             // - `new (a = b)`
             // - `(a = b).prop`
@@ -617,8 +586,6 @@ impl NeedsParentheses<'_> for AstNode<'_, SequenceExpression<'_>> {
             | AstNodes::ForStatement(_)
             | AstNodes::ExpressionStatement(_)
             | AstNodes::SequenceExpression(_)
-            // Handled as part of the arrow function formatting
-            | AstNodes::ArrowFunctionExpression(_)
         )
     }
 }
@@ -988,8 +955,7 @@ fn is_first_in_statement(
 
         match ancestor {
             AstNodes::ExpressionStatement(stmt) => {
-                if matches!(stmt.grand_parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
-                {
+                if stmt.is_arrow_function_body() {
                     if mode == FirstInStatementMode::ExpressionStatementOrArrow {
                         if is_not_first_iteration
                             && matches!(

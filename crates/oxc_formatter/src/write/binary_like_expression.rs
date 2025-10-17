@@ -158,13 +158,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             AstNodes::JSXExpressionContainer(container) => {
                 matches!(container.parent, AstNodes::JSXAttribute(_))
             }
-            AstNodes::ExpressionStatement(statement) => {
-                if let AstNodes::FunctionBody(arrow) = statement.parent {
-                    arrow.span == self.span()
-                } else {
-                    false
-                }
-            }
+            AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
             AstNodes::ConditionalExpression(conditional) => {
                 !matches!(
                     parent.parent(),
