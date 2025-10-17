@@ -193,6 +193,7 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 }
 
 fn format_all_elements_broken_out<'a, 'b>(
+    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
     elements: impl Iterator<Item = (FormatResult<Option<FormatElement<'a>>>, usize)>,
     expand: bool,
     mut buffer: impl Buffer<'a>,
@@ -215,7 +216,11 @@ fn format_all_elements_broken_out<'a, 'b>(
                     }
                 }
 
-                write!(f, FormatTrailingCommas::All)
+                write!(
+                    f,
+                    [(!matches!(node.parent, AstNodes::ImportExpression(_)))
+                        .then_some(FormatTrailingCommas::All)]
+                )
             })),
             ")",
         ))
@@ -245,7 +250,11 @@ fn format_all_args_broken_out<'a, 'b>(
                     write!(f, [argument, (index != last_index).then_some(",")])?;
                 }
 
-                write!(f, FormatTrailingCommas::All)
+                write!(
+                    f,
+                    [(!matches!(node.parent, AstNodes::ImportExpression(_)))
+                        .then_some(FormatTrailingCommas::All)]
+                )
             })),
             ")",
         ))
@@ -641,7 +650,7 @@ fn write_grouped_arguments<'a>(
     // If any of the not grouped elements break, then fall back to the variant where
     // all arguments are printed in expanded mode.
     if non_grouped_breaks {
-        return format_all_elements_broken_out(elements.into_iter(), true, f);
+        return format_all_elements_broken_out(node, elements.into_iter(), true, f);
     }
 
     // We now cache the delimiter tokens. This is needed because `[crate::best_fitting]` will try to
@@ -654,7 +663,7 @@ fn write_grouped_arguments<'a>(
         let mut buffer = VecBuffer::new(f.state_mut());
         buffer.write_element(FormatElement::Tag(Tag::StartEntry))?;
 
-        format_all_elements_broken_out(elements.iter().cloned(), true, &mut buffer);
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
 
         buffer.write_element(FormatElement::Tag(Tag::EndEntry))?;
 

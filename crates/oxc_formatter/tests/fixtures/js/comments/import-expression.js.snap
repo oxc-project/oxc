@@ -1,0 +1,34 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+import(
+  // comment1
+  `../alias/${base}.js`
+  // comment2
+);
+
+import(
+  // comment1
+  `../alias/${base}.js`,
+  // comment2
+  { with: { type: "json" }}
+  // comment2
+);
+
+==================== Output ====================
+import(
+  // comment1
+  `../alias/${base}.js`
+  // comment2
+);
+
+import(
+  // comment1
+  `../alias/${base}.js`,
+  // comment2
+  { with: { type: "json" } }
+  // comment2
+);
+
+===================== End =====================
