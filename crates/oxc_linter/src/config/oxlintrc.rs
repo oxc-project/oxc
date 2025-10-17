@@ -89,6 +89,8 @@ pub struct Oxlintrc {
     /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of
     /// rules.
     pub rules: OxlintRules,
+    // TODO: roll into settings
+    pub raw_settings: Option<String>,
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub env: OxlintEnv,
@@ -190,6 +192,7 @@ impl Oxlintrc {
             .map(|rule| (**rule).clone())
             .collect::<Vec<_>>();
 
+        // TODO: this ignores the settings from the config being extended
         let settings = self.settings.clone();
         let env = self.env.clone();
         let globals = self.globals.clone();
@@ -217,6 +220,8 @@ impl Oxlintrc {
             external_plugins,
             categories,
             rules: OxlintRules::new(rules),
+            // TODO: implement some sort of inheritance, this currently drops all settings from the other config
+            raw_settings: self.raw_settings.clone(),
             settings,
             env,
             globals,

@@ -305,6 +305,12 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
+        if let (Some(ext), Some(settings_json_string)) =
+            (&external_linter, config_store.raw_settings())
+        {
+            (ext.set_settings)(settings_json_string.to_string())
+        }
+
         let files_to_lint = paths
             .into_iter()
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))

@@ -25,6 +25,10 @@ pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
+    // TODO: combine with settings
+    // raw_settings can have any key name, is parsed and used on the JS side for external plugins
+    // settings has specific known keys for internal rust plugins
+    pub(crate) raw_settings: Option<String>,
     pub(crate) settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub(crate) env: OxlintEnv,
@@ -38,6 +42,7 @@ impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
         Self {
             plugins: config.plugins.unwrap_or_default(),
+            raw_settings: config.raw_settings,
             settings: config.settings,
             env: config.env,
             globals: config.globals,

@@ -201,6 +201,7 @@ impl ConfigStoreBuilder {
 
         let config = LintConfig {
             plugins,
+            raw_settings: oxlintrc.raw_settings,
             settings: oxlintrc.settings,
             env: oxlintrc.env,
             globals: oxlintrc.globals,
