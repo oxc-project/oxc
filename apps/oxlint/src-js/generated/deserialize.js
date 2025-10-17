@@ -38,9 +38,9 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInpu
 
 function deserializeProgram(pos) {
   let end = deserializeU32(pos + 4),
-    ref_uint32 = uint32,
-    ref_uint8 = uint8,
-    ref_sourceText = sourceText,
+    refUint32 = uint32,
+    refUint8 = uint8,
+    refSourceText = sourceText,
     localAstId = ++astId,
     program = parent = {
       __proto__: NodeProto,
@@ -52,18 +52,16 @@ function deserializeProgram(pos) {
         if (localAstId !== astId) {throw Error(
             'The AST being accessed has already been cleaned up. Please ensure that the plugin works synchronously.',
           );}
-        // restore buffers
-        uint32 = ref_uint32;
-        uint8 = ref_uint8;
-        sourceText = ref_sourceText;
-        // deserialize the comments
-        let c = deserializeVecComment(pos + 24);
-        // drop the references
-        ref_uint32 = void 0;
-        ref_uint8 = void 0;
-        ref_sourceText = void 0;
-        Object.defineProperty(this, 'comments', { value: c });
-        return c;
+        // Restore buffers
+        uint32 = refUint32;
+        uint8 = refUint8;
+        sourceText = refSourceText;
+        // Deserialize the comments
+        let comments = deserializeVecComment(pos + 24);
+        // Drop the references
+        refUint32 = refUint8 = refSourceText = void 0;
+        Object.defineProperty(this, 'comments', { value: comments });
+        return comments;
       },
       start: 0,
       end,
