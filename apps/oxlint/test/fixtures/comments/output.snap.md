@@ -9,7 +9,7 @@
   | getCommentsAfter: 1 comment
   |   [0] Line: " Line comment 1" at [29, 46]
   | commentsExistBetween(id, init): false
-   ,-[files/test.js:1:1]
+   ,-[files/comments.js:1:1]
  1 | const topLevelVariable1 = 1;
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  2 | // Line comment 1
@@ -28,7 +28,7 @@
   |   [9] Block: " Block comment 4 " at [474, 495]
   |   [10] Line: " Line comment 5" at [559, 576]
   |   [11] Line: " Line comment 6" at [577, 594]
-    ,-[files/test.js:1:1]
+    ,-[files/comments.js:1:1]
   1 | ,-> const topLevelVariable1 = 1;
   2 | |   // Line comment 1
   3 | |   const topLevelVariable2 = 2; /* Block comment 1 */
@@ -68,7 +68,7 @@
   |   [0] Block: " Block comment 1 " at [76, 97]
   |   [1] Block: "*\n * JSDoc comment\n " at [99, 123]
   | commentsExistBetween(id, init): false
-   ,-[files/test.js:3:1]
+   ,-[files/comments.js:3:1]
  2 | // Line comment 1
  3 | const topLevelVariable2 = 2; /* Block comment 1 */
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -76,7 +76,7 @@
    `----
 
   x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): true
-   ,-[files/test.js:3:1]
+   ,-[files/comments.js:3:1]
  2 | // Line comment 1
  3 | const topLevelVariable2 = 2; /* Block comment 1 */
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -93,7 +93,7 @@
   |   [4] Line: " Line comment 4" at [405, 422]
   | getCommentsAfter: 1 comment
   |   [0] Block: " Block comment 3 " at [426, 447]
-    ,-[files/test.js:8:8]
+    ,-[files/comments.js:8:8]
   7 |      */
   8 | ,-> export function topLevelFunction() {
   9 | |     // Line comment 2
@@ -119,7 +119,7 @@
   | getCommentsAfter: 1 comment
   |   [0] Block: "*\n   * JSDoc comment 2\n   " at [256, 286]
   | commentsExistBetween(id, init): false
-    ,-[files/test.js:11:3]
+    ,-[files/comments.js:11:3]
  10 |   /* Block comment 2 */
  11 |   let functionScopedVariable = topLevelVariable;
     :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -132,7 +132,7 @@
   | getCommentsInside: 1 comment
   |   [0] Line: " Line comment 3" at [321, 338]
   | getCommentsAfter: 0 comments
-    ,-[files/test.js:15:3]
+    ,-[files/comments.js:15:3]
  14 |        */
  15 | ,->   function nestedFunction() {
  16 | |       // Line comment 3
@@ -148,7 +148,7 @@
   |   [0] Block: " Block comment 4 " at [474, 495]
   | getCommentsAfter: 0 comments
   | commentsExistBetween(id, init): true
-    ,-[files/test.js:23:1]
+    ,-[files/comments.js:23:1]
  22 | /* Block comment 3 */
  23 | const topLevelVariable3 = /* Block comment 4 */ 3;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -160,7 +160,7 @@
   | getCommentsInside: 0 comments
   | getCommentsAfter: 0 comments
   | commentsExistBetween(id, init): false
-    ,-[files/test.js:25:1]
+    ,-[files/comments.js:25:1]
  24 | 
  25 | const topLevelVariable4 = 4;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -174,7 +174,7 @@
   |   [0] Line: " Line comment 5" at [559, 576]
   |   [1] Line: " Line comment 6" at [577, 594]
   | commentsExistBetween(id, init): false
-    ,-[files/test.js:26:1]
+    ,-[files/comments.js:26:1]
  25 | const topLevelVariable4 = 4;
  26 | const topLevelVariable5 = 5;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
