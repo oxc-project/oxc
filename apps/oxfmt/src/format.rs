@@ -47,6 +47,9 @@ impl FormatRunner {
         let FormatCommand { paths, output_options, basic_options, misc_options } = self.options;
 
         // Find and load config
+        // NOTE: Currently, we only load single config file.
+        // - from `--config` if specified
+        // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
         let format_options = match load_config(&cwd, basic_options.config.as_ref()) {
             Ok(options) => options,
             Err(err) => {
@@ -58,12 +61,13 @@ impl FormatRunner {
             }
         };
 
-        // Default to current working directory if no paths are provided
-        let paths = if paths.is_empty() { vec![cwd.clone()] } else { paths };
-
-        // Instead of `--ignore-pattern=PAT`, we support `!` prefix in paths
+        // Instead of `oxlint`'s `--ignore-pattern=PAT`, `oxfmt` supports `!` prefix in paths like Prettier
         let (exclude_patterns, target_paths): (Vec<_>, Vec<_>) =
             paths.into_iter().partition(|p| p.to_string_lossy().starts_with('!'));
+
+        // Default to cwd if no `target_paths` are provided
+        // NOTE: Do not specify `.` as cwd here, it behaves differently
+        let target_paths = if target_paths.is_empty() { vec![cwd.clone()] } else { target_paths };
 
         // Resolve relative paths against the current working directory
         let target_paths: Vec<PathBuf> = target_paths
