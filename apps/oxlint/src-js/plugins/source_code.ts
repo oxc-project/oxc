@@ -173,9 +173,10 @@ export const SOURCE_CODE = Object.freeze({
    */
   getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
     if (ast === null) initAst();
-    const { comments } = ast;
 
-    const commentsLength = comments.length;
+    const { comments } = ast,
+      commentsLength = comments.length;
+
     let targetStart = nodeOrToken.range[0]; // start
 
     let sliceStart = commentsLength;
@@ -220,16 +221,16 @@ export const SOURCE_CODE = Object.freeze({
    */
   getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
     if (ast === null) initAst();
-    const { comments } = ast;
+
+    const { comments } = ast,
+      commentsLength = comments.length;
 
     let targetEnd = nodeOrToken.range[1]; // end
 
     const commentsAfter: Comment[] = [];
-
-    const commentsLength = comments.length;
     for (let i = 0; i < commentsLength; i++) {
-      const comment = comments[i];
-      const commentStart = comment.start;
+      const comment = comments[i],
+        commentStart = comment.start;
 
       if (commentStart < targetEnd) {
         continue;
@@ -254,9 +255,10 @@ export const SOURCE_CODE = Object.freeze({
    */
   getCommentsInside(node: Node): Comment[] {
     if (ast === null) initAst();
-    const { comments } = ast;
 
-    const commentsLength = comments.length;
+    const { comments } = ast,
+      commentsLength = comments.length;
+
     let indexStart: number = commentsLength;
     let indexEnd: number | undefined = undefined;
 
