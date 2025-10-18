@@ -74,6 +74,7 @@ suite('E2E Diagnostics', () => {
   testSingleFolderMode('detects diagnostics on run', async () =>
   {
     await loadFixture('lint_on_run');
+    await sleep(250);
     const diagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
     strictEqual(diagnostics.length, 0);
 
@@ -91,6 +92,7 @@ suite('E2E Diagnostics', () => {
 
   test('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');
+    await sleep(250);
     const diagnostics = await getDiagnostics('debugger.js');
 
     strictEqual(diagnostics.length, 1);
