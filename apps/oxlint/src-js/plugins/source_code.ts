@@ -259,8 +259,8 @@ export const SOURCE_CODE = Object.freeze({
     const { comments } = ast,
       commentsLength = comments.length;
 
-    let indexStart: number = commentsLength;
-    let indexEnd: number | undefined = undefined;
+    let sliceStart = commentsLength;
+    let sliceEnd: number | undefined = undefined;
 
     const { range } = node,
       rangeStart = range[0],
@@ -271,21 +271,22 @@ export const SOURCE_CODE = Object.freeze({
     for (let i = 0; i < commentsLength; i++) {
       const comment = comments[i];
       if (comment.start >= rangeStart) {
-        indexStart = i;
+        sliceStart = i;
         break;
       }
     }
 
-    // Continued linear search for last comment within `node`'s range.
-    for (let i = indexStart; i < commentsLength; i++) {
+    // Continued linear search for first comment outside `node`'s range.
+    // Its index is used as `sliceEnd`, which is exclusive of the slice.
+    for (let i = sliceStart; i < commentsLength; i++) {
       const comment = comments[i];
       if (comment.start > rangeEnd) {
-        indexEnd = i;
+        sliceEnd = i;
         break;
       }
     }
 
-    return comments.slice(indexStart, indexEnd);
+    return comments.slice(sliceStart, sliceEnd);
   },
 
   /**
