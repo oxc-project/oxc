@@ -352,6 +352,10 @@ impl ConfigStore {
     ) -> (/* plugin name */ &str, /* rule name */ &str) {
         self.external_plugin_store.resolve_plugin_rule_names(external_rule_id)
     }
+
+    pub fn raw_settings(&self) -> Option<&std::string::String> {
+        self.base.base.config.raw_settings.as_ref()
+    }
 }
 
 #[cfg(test)]
@@ -771,6 +775,7 @@ mod test {
         let base_config = LintConfig {
             plugins: LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::UNICORN,
             env: OxlintEnv::default(),
+            raw_settings: None,
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
@@ -858,6 +863,7 @@ mod test {
         let base_config = LintConfig {
             plugins: (LintPlugins::TYPESCRIPT),
             env: OxlintEnv::default(),
+            raw_settings: None,
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
@@ -962,6 +968,7 @@ mod test {
         let base_config = LintConfig {
             plugins: (LintPlugins::REACT),
             env: OxlintEnv::default(),
+            raw_settings: None,
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,

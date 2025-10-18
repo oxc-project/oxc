@@ -72,6 +72,15 @@ export let setupContextForFile: (
  */
 let getInternal: (context: Context, actionDescription: string) => InternalContext;
 
+let settings_record: Record<string, unknown> = {};
+
+export function setSettings(settings: string) {
+  // Freezes to prevent mutation from a plugin.
+  // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
+  // We don't try-catch here, because it's probably validated in the rust side Oxlintrc.
+  settings_record = Object.freeze(JSON.parse(settings));
+}
+
 // Internal data within `Context` that don't want to expose to plugins.
 // Stored as `#internal` property of `Context`.
 export interface InternalContext {
@@ -135,6 +144,10 @@ export class Context {
   // Getter for options for file being linted.
   get options() {
     return getInternal(this, 'access `context.options`').options;
+  }
+
+  get settings() {
+    return settings_record;
   }
 
   // Getter for `SourceCode` for file being linted.
