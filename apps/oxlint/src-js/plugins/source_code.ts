@@ -161,7 +161,7 @@ export const SOURCE_CODE = Object.freeze({
    */
   getAllComments(): Comment[] {
     if (ast === null) initAst();
-    // TODO: Deserializing strings is expensive, make this access lazy
+    // `comments` property is a getter. Comments are deserialized lazily.
     return ast.comments;
   },
 
