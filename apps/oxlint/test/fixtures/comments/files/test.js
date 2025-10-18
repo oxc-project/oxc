@@ -20,4 +20,4 @@ export function topLevelFunction() {
 }
 
 /* Block comment 3 */
-const topLevelVariable3 = 2;
+const topLevelVariable3 = /* Block comment 4 */ 2;

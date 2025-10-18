@@ -14,7 +14,7 @@
  2 | // Line comment 1
    `----
 
-  x test-comments(test-comments): getAllComments: 9 comments
+  x test-comments(test-comments): getAllComments: 10 comments
   |   [0] Line: " Line comment 1" at [29, 46]
   |   [1] Block: " Block comment 1 " at [76, 97]
   |   [2] Block: "*\n * JSDoc comment\n " at [99, 123]
@@ -24,6 +24,7 @@
   |   [6] Line: " Line comment 3" at [321, 338]
   |   [7] Line: " Line comment 4" at [405, 422]
   |   [8] Block: " Block comment 3 " at [426, 447]
+  |   [9] Block: " Block comment 4 " at [474, 495]
     ,-[files/test.js:1:1]
   1 | ,-> const topLevelVariable1 = 1;
   2 | |   // Line comment 1
@@ -47,7 +48,7 @@
  20 | |   }
  21 | |   
  22 | |   /* Block comment 3 */
- 23 | `-> const topLevelVariable3 = 2;
+ 23 | `-> const topLevelVariable3 = /* Block comment 4 */ 2;
     `----
 
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
@@ -132,12 +133,13 @@
   x test-comments(test-comments): VariableDeclaration(topLevelVariable3):
   | getCommentsBefore: 1 comment
   |   [0] Block: " Block comment 3 " at [426, 447]
-  | getCommentsInside: 0 comments
+  | getCommentsInside: 1 comment
+  |   [0] Block: " Block comment 4 " at [474, 495]
   | getCommentsAfter: 0 comments
     ,-[files/test.js:23:1]
  22 | /* Block comment 3 */
- 23 | const topLevelVariable3 = 2;
-    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 23 | const topLevelVariable3 = /* Block comment 4 */ 2;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
 Found 0 warnings and 8 errors.
