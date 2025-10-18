@@ -57,7 +57,10 @@
  26 | |   const topLevelVariable5 = 5;
  27 | |   
  28 | |   // Line comment 5
- 29 | `-> // Line comment 6
+ 29 | |   // Line comment 6
+ 30 | |   
+ 31 | |   const topLevelVariable6 = 6;
+ 32 | `-> const topLevelVariable7 = 7;
     `----
 
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
@@ -200,6 +203,31 @@
  27 | 
     `----
 
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable6):
+  | getCommentsBefore: 2 comments
+  |   [0] Line: " Line comment 5" at [559, 576]
+  |   [1] Line: " Line comment 6" at [577, 594]
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): false
+    ,-[files/comments.js:31:1]
+ 30 | 
+ 31 | const topLevelVariable6 = 6;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 32 | const topLevelVariable7 = 7;
+    `----
+
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable7):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): false
+    ,-[files/comments.js:32:1]
+ 31 | const topLevelVariable6 = 6;
+ 32 | const topLevelVariable7 = 7;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
   x test-comments(test-comments): VariableDeclaration(topLevelVariable1):
   | getCommentsBefore: 0 comments
   | getCommentsInside: 0 comments
@@ -226,7 +254,9 @@
  11 | |   
  12 | |   const topLevelVariable3 = 3;
  13 | |   const topLevelVariable4 = 4;
- 14 | `-> const topLevelVariable5 = 5;
+ 14 | |   const topLevelVariable5 = 5;
+ 15 | |   const topLevelVariable6 = 6;
+ 16 | `-> const topLevelVariable7 = 7;
     `----
 
   x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): false
@@ -335,9 +365,33 @@
  13 | const topLevelVariable4 = 4;
  14 | const topLevelVariable5 = 5;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 15 | const topLevelVariable6 = 6;
     `----
 
-Found 0 warnings and 22 errors.
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable6):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): false
+    ,-[files/no_comments.js:15:1]
+ 14 | const topLevelVariable5 = 5;
+ 15 | const topLevelVariable6 = 6;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 16 | const topLevelVariable7 = 7;
+    `----
+
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable7):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): false
+    ,-[files/no_comments.js:16:1]
+ 15 | const topLevelVariable6 = 6;
+ 16 | const topLevelVariable7 = 7;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+Found 0 warnings and 26 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

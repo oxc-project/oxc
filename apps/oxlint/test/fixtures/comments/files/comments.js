@@ -27,3 +27,6 @@ const topLevelVariable5 = 5;
 
 // Line comment 5
 // Line comment 6
+
+const topLevelVariable6 = 6;
+const topLevelVariable7 = 7;

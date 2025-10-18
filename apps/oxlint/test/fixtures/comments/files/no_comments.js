@@ -12,3 +12,5 @@ export function topLevelFunction() {
 const topLevelVariable3 = 3;
 const topLevelVariable4 = 4;
 const topLevelVariable5 = 5;
+const topLevelVariable6 = 6;
+const topLevelVariable7 = 7;
