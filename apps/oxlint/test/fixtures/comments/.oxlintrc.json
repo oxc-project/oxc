@@ -1,5 +1,6 @@
 {
   "jsPlugins": ["./plugin.ts"],
+  "categories": { "correctness": "off" },
   "rules": {
     "test-comments/test-comments": "error"
   }

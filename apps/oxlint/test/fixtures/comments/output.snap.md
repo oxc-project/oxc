@@ -47,15 +47,6 @@
  23 | `-> const topLevelVariable3 = 2;
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'topLevelVariable1' is declared but never used. Unused variables should start with a '_'.
-   ,-[files/test.js:1:7]
- 1 | const topLevelVariable1 = 1;
-   :       ^^^^^^^^|^^^^^^^^
-   :               `-- 'topLevelVariable1' is declared here
- 2 | // Line comment 1
-   `----
-  help: Consider removing this declaration.
-
   x test-comments(test-comments): commentsExistBetween(topLevelVariable, topLevelFunction): true
    ,-[files/test.js:3:1]
  2 | // Line comment 1
@@ -63,16 +54,6 @@
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  4 | 
    `----
-
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'topLevelVariable2' is declared but never used. Unused variables should start with a '_'.
-   ,-[files/test.js:3:7]
- 2 | // Line comment 1
- 3 | const topLevelVariable2 = 1; /* Block comment 1 */
-   :       ^^^^^^^^|^^^^^^^^
-   :               `-- 'topLevelVariable2' is declared here
- 4 | 
-   `----
-  help: Consider removing this declaration.
 
   x test-comments(test-comments): getCommentsInside(topLevelFunction) returned 5 comments:
   |   [0] Line: " Line comment 2" at [163, 180]
@@ -125,16 +106,7 @@
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'topLevelVariable3' is declared but never used. Unused variables should start with a '_'.
-    ,-[files/test.js:23:7]
- 22 | /* Block comment 3 */
- 23 | const topLevelVariable3 = 2;
-    :       ^^^^^^^^|^^^^^^^^
-    :               `-- 'topLevelVariable3' is declared here
-    `----
-  help: Consider removing this declaration.
-
-Found 3 warnings and 7 errors.
+Found 0 warnings and 7 errors.
 Finished in Xms on 1 file using X threads.
 ```
 
