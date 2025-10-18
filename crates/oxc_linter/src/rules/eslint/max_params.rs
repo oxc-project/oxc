@@ -81,7 +81,7 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    /// ### max
+    /// #### max
     ///
     /// `{ "max": number }`
     ///
@@ -90,7 +90,7 @@ declare_oxc_lint!(
     /// For example `{ "max": 4 }` would mean that having a function take four
     /// parameters is allowed which overrides the default of three.
     ///
-    /// ### countVoidThis
+    /// #### countVoidThis
     ///
     /// `{ "countVoidThis": boolean }`
     ///
