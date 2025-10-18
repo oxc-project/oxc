@@ -15,7 +15,7 @@
  2 | // Line comment 1
    `----
 
-  x test-comments(test-comments): getAllComments: 10 comments
+  x test-comments(test-comments): getAllComments: 12 comments
   |   [0] Line: " Line comment 1" at [29, 46]
   |   [1] Block: " Block comment 1 " at [76, 97]
   |   [2] Block: "*\n * JSDoc comment\n " at [99, 123]
@@ -26,6 +26,8 @@
   |   [7] Line: " Line comment 4" at [405, 422]
   |   [8] Block: " Block comment 3 " at [426, 447]
   |   [9] Block: " Block comment 4 " at [474, 495]
+  |   [10] Line: " Line comment 5" at [559, 576]
+  |   [11] Line: " Line comment 6" at [577, 594]
     ,-[files/test.js:1:1]
   1 | ,-> const topLevelVariable1 = 1;
   2 | |   // Line comment 1
@@ -49,7 +51,13 @@
  20 | |   }
  21 | |   
  22 | |   /* Block comment 3 */
- 23 | `-> const topLevelVariable3 = /* Block comment 4 */ 3;
+ 23 | |   const topLevelVariable3 = /* Block comment 4 */ 3;
+ 24 | |   
+ 25 | |   const topLevelVariable4 = 4;
+ 26 | |   const topLevelVariable5 = 5;
+ 27 | |   
+ 28 | |   // Line comment 5
+ 29 | `-> // Line comment 6
     `----
 
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
@@ -144,9 +152,36 @@
  22 | /* Block comment 3 */
  23 | const topLevelVariable3 = /* Block comment 4 */ 3;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 24 | 
     `----
 
-Found 0 warnings and 8 errors.
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable4):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): false
+    ,-[files/test.js:25:1]
+ 24 | 
+ 25 | const topLevelVariable4 = 4;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 26 | const topLevelVariable5 = 5;
+    `----
+
+  x test-comments(test-comments): VariableDeclaration(topLevelVariable5):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 2 comments
+  |   [0] Line: " Line comment 5" at [559, 576]
+  |   [1] Line: " Line comment 6" at [577, 594]
+  | commentsExistBetween(id, init): false
+    ,-[files/test.js:26:1]
+ 25 | const topLevelVariable4 = 4;
+ 26 | const topLevelVariable5 = 5;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 27 | 
+    `----
+
+Found 0 warnings and 10 errors.
 Finished in Xms on 1 file using X threads.
 ```
 
