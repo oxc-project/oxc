@@ -256,9 +256,12 @@ export const SOURCE_CODE = Object.freeze({
     const { comments } = ast;
 
     const commentsLength = comments.length;
-    const [rangeStart, rangeEnd] = node.range;
     let indexStart: number = commentsLength;
     let indexEnd: number | undefined = undefined;
+
+    const { range } = node,
+      rangeStart = range[0],
+      rangeEnd = range[1];
 
     // Linear search for first comment within `node`'s range.
     // TODO: Use binary search.
