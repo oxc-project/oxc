@@ -4,7 +4,6 @@ use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::{Map, phf_map};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -87,14 +86,16 @@ declare_oxc_lint!(
     fix
 );
 
-const DEPRECATED_FUNCTIONS_MAP: Map<&'static str, (usize, &'static str)> = phf_map! {
-    "jest.resetModuleRegistry" => (15, "jest.resetModules"),
-    "jest.addMatchers" => (17, "expect.extend"),
-    "require.requireMock" => (21, "jest.requireMock"),
-    "require.requireActual" => (21, "jest.requireMock"),
-    "jest.runTimersToTime" => (22, "jest.advanceTimersByTime"),
-    "jest.genMockFromModule" => (26, "jest.createMockFromModule"),
-};
+fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)> {
+    match deprecated_fn {
+        "jest.resetModuleRegistry" => Some((15, "jest.resetModules")),
+        "jest.addMatchers" => Some((17, "expect.extend")),
+        "require.requireMock" | "require.requireActual" => Some((21, "jest.requireMock")),
+        "jest.runTimersToTime" => Some((22, "jest.advanceTimersByTime")),
+        "jest.genMockFromModule" => Some((26, "jest.createMockFromModule")),
+        _ => None,
+    }
+}
 
 impl Rule for NoDeprecatedFunctions {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -133,12 +134,12 @@ impl Rule for NoDeprecatedFunctions {
         // Todo: read from configuration
         let jest_version_num: usize = self.jest.version.parse().unwrap_or(29);
 
-        if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name)
-            && jest_version_num >= *base_version
+        if let Some((base_version, replacement)) = deprecated_functions_map(&node_name)
+            && jest_version_num >= base_version
         {
             ctx.diagnostic_with_fix(
                 deprecated_function(&node_name, replacement, mem_expr.span()),
-                |fixer| fixer.replace(mem_expr.span(), *replacement),
+                |fixer| fixer.replace(mem_expr.span(), replacement),
             );
         }
     }

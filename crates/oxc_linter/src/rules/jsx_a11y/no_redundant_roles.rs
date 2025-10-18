@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_map;
 
 use crate::{
     AstNode,
@@ -52,11 +51,14 @@ declare_oxc_lint!(
     fix
 );
 
-static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, &'static str> = phf_map! {
-    "nav" => "navigation",
-    "button" => "button",
-    "body" => "document",
-};
+fn get_default_role_exception(tag: &str) -> Option<&'static str> {
+    match tag {
+        "nav" => Some("navigation"),
+        "button" => Some("button"),
+        "body" => Some("document"),
+        _ => None,
+    }
+}
 
 impl Rule for NoRedundantRoles {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -71,7 +73,7 @@ impl Rule for NoRedundantRoles {
         {
             let roles = role_values.value.split_whitespace().collect::<Vec<_>>();
             for role in &roles {
-                let exceptions = DEFAULT_ROLE_EXCEPTIONS.get(&component);
+                let exceptions = get_default_role_exception(&component);
                 if exceptions.is_some_and(|set| set.contains(role)) {
                     ctx.diagnostic_with_fix(
                         no_redundant_roles_diagnostic(attr.span, &component, role),

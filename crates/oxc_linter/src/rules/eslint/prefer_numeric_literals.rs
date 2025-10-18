@@ -8,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{Map, phf_map, phf_ordered_set};
 
 use crate::{AstNode, ast_util::get_symbol_id_of_variable, context::LintContext, rule::Rule};
 
@@ -20,11 +19,14 @@ fn prefer_numeric_literals_diagnostic(span: Span, prefix_name: &str) -> OxcDiagn
 #[derive(Debug, Default, Clone)]
 pub struct PreferNumericLiterals;
 
-const RADIX_MAP: Map<&'static str, phf::OrderedSet<&'static str>> = phf_map! {
-    "2" => phf_ordered_set!{"binary", "0b"},
-    "8" => phf_ordered_set!{"octal", "0o"},
-    "16" => phf_ordered_set!{"hexadecimal", "0x"},
-};
+fn radix_map(base: &str) -> Option<(&'static str, &'static str)> {
+    match base {
+        "2" => Some(("binary", "0b")),
+        "8" => Some(("octal", "0o")),
+        "16" => Some(("hexadecimal", "0x")),
+        _ => None,
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -133,10 +135,7 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     };
 
     let raw = numeric_lit.raw.as_ref().unwrap().as_str();
-    if let Some(name_prefix_set) = RADIX_MAP.get(raw) {
-        let name = name_prefix_set.index(0).unwrap();
-        let prefix = name_prefix_set.index(1).unwrap();
-
+    if let Some((name, prefix)) = radix_map(raw) {
         match is_fixable(call_expr, raw) {
             Ok(argument) => {
                 ctx.diagnostic_with_fix(

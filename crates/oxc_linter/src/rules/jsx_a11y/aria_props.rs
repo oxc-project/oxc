@@ -60,7 +60,7 @@ impl Rule for AriaProps {
             let name = get_jsx_attribute_name(&attr.name);
             let name = name.cow_to_ascii_lowercase();
             if name.starts_with("aria-") && !is_valid_aria_property(&name) {
-                let suggestion = COMMON_TYPOS.get(&name).copied();
+                let suggestion = get_common_aria_prop_typo(&name);
                 let diagnostic = aria_props_diagnostic(attr.span, &name, suggestion);
 
                 if let Some(suggestion) = suggestion {
@@ -75,13 +75,16 @@ impl Rule for AriaProps {
     }
 }
 
-const COMMON_TYPOS: phf::Map<&'static str, &'static str> = phf::phf_map! {
-    "aria-labeledby" => "aria-labelledby",
-    "aria-role" => "role",
-    "aria-sorted" => "aria-sort",
-    "aria-lable" => "aria-label",
-    "aria-value" => "aria-valuenow",
-};
+fn get_common_aria_prop_typo(prop_name: &str) -> Option<&'static str> {
+    match prop_name {
+        "aria-labeledby" => Some("aria-labelledby"),
+        "aria-role" => Some("role"),
+        "aria-sorted" => Some("aria-sort"),
+        "aria-lable" => Some("aria-label"),
+        "aria-value" => Some("aria-valuenow"),
+        _ => None,
+    }
+}
 
 #[test]
 fn test() {
