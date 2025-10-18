@@ -520,12 +520,11 @@ export type SourceCode = typeof SOURCE_CODE;
 function getAncestors(node: Node): Node[] {
   const ancestors = [];
 
-  for (
-    let ancestor = (node as unknown as { parent: Node }).parent;
-    ancestor;
-    ancestor = (ancestor as unknown as { parent: Node }).parent
-  ) {
-    ancestors.push(ancestor);
+  while (true) {
+    // @ts-expect-error `parent` property should be present on `Node` type
+    node = node.parent;
+    if (node === null) break;
+    ancestors.push(node);
   }
 
   return ancestors.reverse();
