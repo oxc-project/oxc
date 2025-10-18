@@ -1,17 +1,16 @@
-use std::vec;
-
 use log::debug;
+use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
     lsp_types::{
-        CodeActionOrCommand, Diagnostic, FileEvent, FileSystemWatcher, GlobPattern, OneOf, Range,
-        RelativePattern, TextEdit, Uri, WatchKind,
+        CodeActionOrCommand, Diagnostic, DidChangeWatchedFilesRegistrationOptions, FileEvent,
+        FileSystemWatcher, GlobPattern, OneOf, Range, Registration, RelativePattern, TextEdit,
+        Unregistration, Uri, WatchKind,
     },
 };
 
 use crate::{
-    FORMAT_CONFIG_FILE,
     code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
     formatter::{options::FormatOptions, server_formatter::ServerFormatter},
     linter::{
@@ -20,7 +19,6 @@ use crate::{
         server_linter::{ServerLinter, ServerLinterRun},
     },
     options::Options,
-    utils::normalize_path,
 };
 
 /// A worker that manages the individual tools for a specific workspace
@@ -81,73 +79,68 @@ impl WorkspaceWorker {
     /// Initialize file system watchers for the workspace.
     /// These watchers are used to watch for changes in the lint configuration files.
     /// The returned watchers will be registered to the client.
-    pub async fn init_watchers(&self) -> Vec<FileSystemWatcher> {
-        let mut watchers = Vec::new();
+    pub async fn init_watchers(&self) -> Vec<Registration> {
+        let mut registrations = Vec::new();
+
+        let Some(root_path) = &self.root_uri.to_file_path() else {
+            return registrations;
+        };
 
         // clone the options to avoid locking the mutex
         let options = self.options.lock().await;
-        let default_options = Options::default();
-        let options = options.as_ref().unwrap_or(&default_options);
-        let use_nested_configs = options.lint.use_nested_configs();
+        let lint_options = options.as_ref().map(|o| o.lint.clone()).unwrap_or_default();
+        let format_options = options.as_ref().map(|o| o.format.clone()).unwrap_or_default();
+        let lint_patterns = self
+            .server_linter
+            .read()
+            .await
+            .as_ref()
+            .map(|linter| linter.get_watch_patterns(&lint_options, root_path));
+        let format_patterns = self
+            .server_formatter
+            .read()
+            .await
+            .as_ref()
+            .map(|formatter| formatter.get_watcher_patterns(&format_options));
 
-        // append the base watcher
-        watchers.push(FileSystemWatcher {
-            glob_pattern: GlobPattern::Relative(RelativePattern {
-                base_uri: OneOf::Right(self.root_uri.clone()),
-                pattern: options
-                    .lint
-                    .config_path
-                    .as_ref()
-                    .unwrap_or(&"**/.oxlintrc.json".to_owned())
-                    .to_owned(),
-            }),
-            kind: Some(WatchKind::all()), // created, deleted, changed
-        });
-
-        if options.format.experimental {
-            watchers.push(FileSystemWatcher {
-                glob_pattern: GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(self.root_uri.clone()),
-                    pattern: options
-                        .format
-                        .config_path
-                        .as_ref()
-                        .map_or(FORMAT_CONFIG_FILE, |v| v)
-                        .to_owned(),
-                }),
-                kind: Some(WatchKind::all()), // created, deleted, changed
+        if let Some(lint_patterns) = lint_patterns {
+            registrations.push(Registration {
+                id: format!("watcher-linter-{}", self.root_uri.as_str()),
+                method: "workspace/didChangeWatchedFiles".to_string(),
+                register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                    watchers: lint_patterns
+                        .into_iter()
+                        .map(|pattern| FileSystemWatcher {
+                            glob_pattern: GlobPattern::Relative(RelativePattern {
+                                base_uri: OneOf::Right(self.root_uri.clone()),
+                                pattern,
+                            }),
+                            kind: Some(WatchKind::all()), // created, deleted, changed
+                        })
+                        .collect::<Vec<_>>(),
+                })),
             });
         }
 
-        let Some(root_path) = &self.root_uri.to_file_path() else {
-            return watchers;
-        };
-
-        // Add watchers for all extended config paths of the current linter
-        let Some(extended_paths) =
-            self.server_linter.read().await.as_ref().map(|linter| linter.extended_paths.clone())
-        else {
-            return watchers;
-        };
-
-        for path in &extended_paths {
-            // ignore .oxlintrc.json files when using nested configs
-            if path.ends_with(".oxlintrc.json") && use_nested_configs {
-                continue;
-            }
-
-            let pattern = path.strip_prefix(root_path).unwrap_or(path);
-
-            watchers.push(FileSystemWatcher {
-                glob_pattern: GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(self.root_uri.clone()),
-                    pattern: normalize_path(pattern).to_string_lossy().to_string(),
-                }),
-                kind: Some(WatchKind::all()), // created, deleted, changed
+        if format_options.experimental
+            && let Some(format_patterns) = format_patterns
+        {
+            registrations.push(Registration {
+                id: format!("watcher-formatter-{}", self.root_uri.as_str()),
+                method: "workspace/didChangeWatchedFiles".to_string(),
+                register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                    watchers: vec![FileSystemWatcher {
+                        glob_pattern: GlobPattern::Relative(RelativePattern {
+                            base_uri: OneOf::Right(self.root_uri.clone()),
+                            pattern: format_patterns
+                        }),
+                        kind: Some(WatchKind::all()), // created, deleted, changed
+                    }]
+                })),
             });
         }
 
-        watchers
+        registrations
     }
 
     /// Check if the worker needs to be initialized with options
@@ -346,10 +339,10 @@ impl WorkspaceWorker {
     ) -> (
         // Diagnostic reports that need to be revalidated
         Option<Vec<(String, Vec<Diagnostic>)>>,
-        // File system watcher for lint/fmt config changes
-        // - `None` if no watcher changes are needed
-        // - empty vector if all watchers should be removed
-        Option<Vec<FileSystemWatcher>>,
+        // New watchers that need to be registered
+        Vec<Registration>,
+        // Watchers that need to be unregistered
+        Vec<Unregistration>,
         // Is true, when the formatter was added to the workspace worker
         bool,
     ) {
@@ -374,100 +367,114 @@ impl WorkspaceWorker {
         }
 
         let mut formatting = false;
-        let mut removed_formatter = false;
 
-        // create all watchers again, because maybe one tool configuration is changed
-        // and we unregister the workspace watcher and register a new one.
-        // Without adding the old watchers back, the client would not watch them anymore.
-        //
-        // TODO: create own watcher for each tool with its own id,
-        // so we can unregister only the watcher that changed.
-        let mut watchers = Vec::new();
+        let mut registrations = vec![];
+        let mut unregistrations = vec![];
+        let mut diagnostics = None;
 
-        if current_option.format == changed_options.format {
+        if current_option.format != changed_options.format {
             if changed_options.format.experimental {
-                watchers.push(FileSystemWatcher {
-                    glob_pattern: GlobPattern::Relative(RelativePattern {
-                        base_uri: OneOf::Right(self.root_uri.clone()),
-                        pattern: changed_options
-                            .format
-                            .config_path
-                            .as_ref()
-                            .map_or(FORMAT_CONFIG_FILE, |v| v)
-                            .to_owned(),
-                    }),
-                    kind: Some(WatchKind::all()), // created, deleted, changed
+                self.refresh_server_formatter(&changed_options.format).await;
+                formatting = true;
+
+                // Extract pattern data without holding the lock
+                let pattern = {
+                    let formatter_guard = self.server_formatter.read().await;
+                    formatter_guard.as_ref().and_then(|formatter| {
+                        formatter.get_changed_watch_patterns(
+                            &current_option.format,
+                            &changed_options.format,
+                        )
+                    })
+                };
+
+                if let Some(pattern) = pattern {
+                    if current_option.format.experimental {
+                        // unregister the old watcher
+                        unregistrations.push(Unregistration {
+                            id: format!("watcher-formatter-{}", self.root_uri.as_str()),
+                            method: "workspace/didChangeWatchedFiles".to_string(),
+                        });
+                    }
+
+                    registrations.push(Registration {
+                        id: format!("watcher-formatter-{}", self.root_uri.as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                            watchers: vec![FileSystemWatcher {
+                                glob_pattern: GlobPattern::Relative(RelativePattern {
+                                    base_uri: OneOf::Right(self.root_uri.clone()),
+                                    pattern
+                                }),
+                                kind: Some(WatchKind::all()), // created, deleted, changed
+                            }]
+                        })),
+                    });
+                }
+            } else {
+                *self.server_formatter.write().await = None;
+
+                unregistrations.push(Unregistration {
+                    id: format!("watcher-formatter-{}", self.root_uri.as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
                 });
             }
-        } else if changed_options.format.experimental {
-            debug!("experimental formatter enabled/restarted");
-            self.refresh_server_formatter(&changed_options.format).await;
-
-            formatting = true;
-
-            watchers.push(FileSystemWatcher {
-                glob_pattern: GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(self.root_uri.clone()),
-                    pattern: changed_options
-                        .format
-                        .config_path
-                        .as_ref()
-                        .map_or(FORMAT_CONFIG_FILE, |v| v)
-                        .to_owned(),
-                }),
-                kind: Some(WatchKind::all()), // created, deleted, changed
-            });
-        } else {
-            debug!("experimental formatter disabled");
-            *self.server_formatter.write().await = None;
-            removed_formatter = true;
         }
 
         if ServerLinter::needs_restart(&current_option.lint, &changed_options.lint) {
-            let files = {
-                let server_linter_guard = self.server_linter.read().await;
-                let server_linter = server_linter_guard.as_ref();
-                if let Some(server_linter) = server_linter {
-                    server_linter.get_cached_files_of_diagnostics()
-                } else {
-                    vec![]
-                }
+            // get the cached files before refreshing the linter
+            let linter_files = {
+                let linter_guard = self.server_linter.read().await;
+                linter_guard
+                    .as_ref()
+                    .map(|linter: &ServerLinter| linter.get_cached_files_of_diagnostics())
             };
+
             self.refresh_server_linter(&changed_options.lint).await;
 
-            watchers.push(FileSystemWatcher {
-                glob_pattern: GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(self.root_uri.clone()),
-                    pattern: changed_options
-                        .lint
-                        .config_path
-                        .as_ref()
-                        .unwrap_or(&"**/.oxlintrc.json".to_string())
-                        .to_owned(),
-                }),
-                kind: Some(WatchKind::all()), // created, deleted, changed
-            });
+            // Get the Watch patterns (including the files from oxlint `extends`)
+            let patterns = {
+                let linter_guard = self.server_linter.read().await;
+                linter_guard.as_ref().and_then(|linter: &ServerLinter| {
+                    linter.get_changed_watch_patterns(
+                        &current_option.lint,
+                        &changed_options.lint,
+                        self.root_uri.to_file_path().as_ref().unwrap(),
+                    )
+                })
+            };
 
-            return (Some(self.revalidate_diagnostics(files).await), Some(watchers), formatting);
-        } else if !watchers.is_empty() || removed_formatter {
-            // when we added/removed the formatter watcher, we also need to add the linter watcher again
-            watchers.push(FileSystemWatcher {
-                glob_pattern: GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(self.root_uri.clone()),
-                    pattern: changed_options
-                        .lint
-                        .config_path
-                        .as_ref()
-                        .unwrap_or(&"**/.oxlintrc.json".to_string())
-                        .to_owned(),
-                }),
-                kind: Some(WatchKind::all()), // created, deleted, changed
-            });
+            // revalidate diagnostics for previously cached files
+            if let Some(linter_files) = linter_files {
+                diagnostics = Some(self.revalidate_diagnostics(linter_files).await);
+            }
+
+            if let Some(patterns) = patterns {
+                unregistrations.push(Unregistration {
+                    id: format!("watcher-linter-{}", self.root_uri.as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                });
+
+                registrations.push(Registration {
+                    id: format!("watcher-linter-{}", self.root_uri.as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: patterns
+                            .into_iter()
+                            .map(|pattern| FileSystemWatcher {
+                                glob_pattern: GlobPattern::Relative(RelativePattern {
+                                    base_uri: OneOf::Right(self.root_uri.clone()),
+                                    pattern,
+                                }),
+                                kind: Some(WatchKind::all()), // created, deleted, changed
+                            })
+                            .collect::<Vec<_>>(),
+                    })),
+                });
+            }
         }
 
-        let watchers = if watchers.is_empty() { None } else { Some(watchers) };
-
-        (None, watchers, formatting)
+        (diagnostics, registrations, unregistrations, formatting)
     }
 }
 
@@ -507,9 +514,13 @@ mod tests {
 
 #[cfg(test)]
 mod test_watchers {
+    use serde_json::json;
     use tower_lsp_server::{
         UriExt,
-        lsp_types::{FileSystemWatcher, Uri},
+        lsp_types::{
+            DidChangeWatchedFilesRegistrationOptions, FileSystemWatcher, GlobPattern, OneOf,
+            Registration, RelativePattern, Unregistration, Uri, WatchKind,
+        },
     };
 
     use crate::{options::Options, worker::WorkspaceWorker};
@@ -539,23 +550,54 @@ mod test_watchers {
             worker
         }
 
-        fn init_watchers(&self) -> Vec<FileSystemWatcher> {
+        fn init_watchers(&self) -> Vec<Registration> {
             tokio::runtime::Runtime::new()
                 .unwrap()
                 .block_on(async { self.worker.init_watchers().await })
         }
 
-        fn did_change_configuration(&self, options: &Options) -> Option<Vec<FileSystemWatcher>> {
-            let (_, watchers, _) = tokio::runtime::Runtime::new()
+        fn did_change_configuration(
+            &self,
+            options: &Options,
+        ) -> (Vec<Registration>, Vec<Unregistration>) {
+            let (_, registration, unregistration, _) = tokio::runtime::Runtime::new()
                 .unwrap()
                 .block_on(async { self.worker.did_change_configuration(options).await });
-            watchers
+
+            (registration, unregistration)
+        }
+
+        pub fn assert_eq_registration(
+            &self,
+            registration: &Registration,
+            tool: &str,
+            patterns: &[&str],
+        ) {
+            assert_eq!(
+                *registration,
+                Registration {
+                    id: format!("watcher-{}-{}", tool, self.worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: patterns
+                            .iter()
+                            .map(|pattern| {
+                                FileSystemWatcher {
+                                    glob_pattern: GlobPattern::Relative(RelativePattern {
+                                        base_uri: OneOf::Right(self.worker.get_root_uri().clone()),
+                                        pattern: (*pattern).to_string(),
+                                    }),
+                                    kind: Some(WatchKind::all()), // created, deleted, changed
+                                }
+                            })
+                            .collect(),
+                    })),
+                }
+            );
         }
     }
 
     mod init_watchers {
-        use tower_lsp_server::lsp_types::{GlobPattern, OneOf, RelativePattern};
-
         use crate::{
             formatter::options::FormatOptions, linter::options::LintOptions, options::Options,
             worker::test_watchers::Tester,
@@ -564,16 +606,10 @@ mod test_watchers {
         #[test]
         fn test_default_options() {
             let tester = Tester::new("fixtures/watcher/default", &Options::default());
-            let watchers = tester.init_watchers();
+            let registrations = tester.init_watchers();
 
-            assert_eq!(watchers.len(), 1);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
-            );
+            assert_eq!(registrations.len(), 1);
+            tester.assert_eq_registration(&registrations[0], "linter", &["**/.oxlintrc.json"]);
         }
 
         #[test]
@@ -588,42 +624,23 @@ mod test_watchers {
                     ..Default::default()
                 },
             );
-            let watchers = tester.init_watchers();
+            let registrations = tester.init_watchers();
 
-            assert_eq!(watchers.len(), 1);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "configs/lint.json".to_string(),
-                })
-            );
+            assert_eq!(registrations.len(), 1);
+            tester.assert_eq_registration(&registrations[0], "linter", &["configs/lint.json"]);
         }
 
         #[test]
         fn test_linter_extends_configs() {
             let tester = Tester::new("fixtures/watcher/linter_extends", &Options::default());
-            let watchers = tester.init_watchers();
+            let registrations = tester.init_watchers();
 
             // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
-            assert_eq!(watchers.len(), 2);
-
-            // nested configs pattern
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
-            );
-
-            // extends of root config
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "lint.json".to_string(),
-                })
+            assert_eq!(registrations.len(), 1);
+            tester.assert_eq_registration(
+                &registrations[0],
+                "linter",
+                &["**/.oxlintrc.json", "lint.json"],
             );
         }
 
@@ -639,22 +656,13 @@ mod test_watchers {
                     ..Default::default()
                 },
             );
-            let watchers = tester.init_watchers();
+            let registrations = tester.init_watchers();
 
-            assert_eq!(watchers.len(), 2);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: ".oxlintrc.json".to_string(),
-                })
-            );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "lint.json".to_string(),
-                })
+            assert_eq!(registrations.len(), 1);
+            tester.assert_eq_registration(
+                &registrations[0],
+                "linter",
+                &[".oxlintrc.json", "lint.json"],
             );
         }
 
@@ -670,20 +678,8 @@ mod test_watchers {
             let watchers = tester.init_watchers();
 
             assert_eq!(watchers.len(), 2);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
-            );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: ".oxfmtrc.json".to_string(),
-                })
-            );
+            tester.assert_eq_registration(&watchers[0], "linter", &["**/.oxlintrc.json"]);
+            tester.assert_eq_registration(&watchers[1], "formatter", &[".oxfmtrc.json"]);
         }
 
         #[test]
@@ -701,20 +697,8 @@ mod test_watchers {
             let watchers = tester.init_watchers();
 
             assert_eq!(watchers.len(), 2);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
-            );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "configs/formatter.json".to_string(),
-                })
-            );
+            tester.assert_eq_registration(&watchers[0], "linter", &["**/.oxlintrc.json"]);
+            tester.assert_eq_registration(&watchers[1], "formatter", &["configs/formatter.json"]);
         }
 
         #[test]
@@ -735,25 +719,13 @@ mod test_watchers {
             let watchers = tester.init_watchers();
 
             assert_eq!(watchers.len(), 2);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "configs/lint.json".to_string(),
-                })
-            );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "configs/formatter.json".to_string(),
-                })
-            );
+            tester.assert_eq_registration(&watchers[0], "linter", &["configs/lint.json"]);
+            tester.assert_eq_registration(&watchers[1], "formatter", &["configs/formatter.json"]);
         }
     }
 
     mod did_change_configuration {
-        use tower_lsp_server::lsp_types::{GlobPattern, OneOf, RelativePattern};
+        use tower_lsp_server::lsp_types::Unregistration;
 
         use crate::{
             formatter::options::FormatOptions,
@@ -765,42 +737,46 @@ mod test_watchers {
         #[test]
         fn test_no_change() {
             let tester = Tester::new("fixtures/watcher/default", &Options::default());
-            let watchers = tester.did_change_configuration(&Options::default());
-            assert!(watchers.is_none());
+            let (registration, unregistrations) =
+                tester.did_change_configuration(&Options::default());
+            assert!(registration.is_empty());
+            assert!(unregistrations.is_empty());
         }
 
         #[test]
         fn test_lint_config_path_change() {
             let tester = Tester::new("fixtures/watcher/default", &Options::default());
-            let watchers = tester
-                .did_change_configuration(&Options {
-                    lint: LintOptions {
-                        config_path: Some("configs/lint.json".to_string()),
-                        ..Default::default()
-                    },
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
+                lint: LintOptions {
+                    config_path: Some("configs/lint.json".to_string()),
                     ..Default::default()
-                })
-                .unwrap();
+                },
+                ..Default::default()
+            });
 
-            assert_eq!(watchers.len(), 1);
+            assert_eq!(unregistrations.len(), 1);
+            assert_eq!(registration.len(), 1);
+
             assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "configs/lint.json".to_string(),
-                })
+                unregistrations[0],
+                Unregistration {
+                    id: format!("watcher-linter-{}", tester.worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                }
             );
+            tester.assert_eq_registration(&registration[0], "linter", &["configs/lint.json"]);
         }
 
         #[test]
         fn test_lint_other_option_change() {
             let tester = Tester::new("fixtures/watcher/default", &Options::default());
-            let watchers = tester.did_change_configuration(&Options {
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
                 // run is the only option that does not require a restart
                 lint: LintOptions { run: Run::OnSave, ..Default::default() },
                 ..Default::default()
             });
-            assert!(watchers.is_none());
+            assert!(unregistrations.is_empty());
+            assert!(registration.is_empty());
         }
 
         #[test]
@@ -812,29 +788,13 @@ mod test_watchers {
                     ..Default::default()
                 },
             );
-            let watchers = tester
-                .did_change_configuration(&Options {
-                    format: FormatOptions { experimental: true, ..Default::default() },
-                    ..Default::default()
-                })
-                .unwrap();
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
+                format: FormatOptions { experimental: true, ..Default::default() },
+                ..Default::default()
+            });
 
-            // TODO: should be none
-            assert!(watchers.len() == 2);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: ".oxfmtrc.json".to_string(),
-                })
-            );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
-            );
+            assert!(registration.is_empty());
+            assert!(unregistrations.is_empty());
         }
 
         #[test]
@@ -846,58 +806,36 @@ mod test_watchers {
                     ..Default::default()
                 },
             );
-            let watchers = tester
-                .did_change_configuration(&Options {
-                    lint: LintOptions {
-                        config_path: Some("configs/lint.json".to_string()),
-                        ..Default::default()
-                    },
-                    format: FormatOptions { experimental: true, ..Default::default() },
-                })
-                .unwrap();
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
+                lint: LintOptions {
+                    config_path: Some("configs/lint.json".to_string()),
+                    ..Default::default()
+                },
+                format: FormatOptions { experimental: true, ..Default::default() },
+            });
 
-            assert_eq!(watchers.len(), 2);
+            assert_eq!(unregistrations.len(), 1);
             assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: ".oxfmtrc.json".to_string(),
-                })
+                unregistrations[0],
+                Unregistration {
+                    id: format!("watcher-linter-{}", tester.worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                }
             );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "configs/lint.json".to_string(),
-                })
-            );
+            tester.assert_eq_registration(&registration[0], "linter", &["configs/lint.json"]);
         }
 
         #[test]
         fn test_formatter_experimental_enabled() {
             let tester = Tester::new("fixtures/watcher/default", &Options::default());
-            let watchers = tester
-                .did_change_configuration(&Options {
-                    format: FormatOptions { experimental: true, ..Default::default() },
-                    ..Default::default()
-                })
-                .unwrap();
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
+                format: FormatOptions { experimental: true, ..Default::default() },
+                ..Default::default()
+            });
 
-            assert_eq!(watchers.len(), 2);
-            assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: ".oxfmtrc.json".to_string(),
-                })
-            );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
-            );
+            assert_eq!(unregistrations.len(), 0);
+            assert_eq!(registration.len(), 1);
+            tester.assert_eq_registration(&registration[0], "formatter", &[".oxfmtrc.json"]);
         }
 
         #[test]
@@ -909,30 +847,28 @@ mod test_watchers {
                     ..Default::default()
                 },
             );
-            let watchers = tester
-                .did_change_configuration(&Options {
-                    format: FormatOptions {
-                        experimental: true,
-                        config_path: Some("configs/formatter.json".to_string()),
-                    },
-                    ..Default::default()
-                })
-                .unwrap();
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
+                format: FormatOptions {
+                    experimental: true,
+                    config_path: Some("configs/formatter.json".to_string()),
+                },
+                ..Default::default()
+            });
 
-            assert_eq!(watchers.len(), 2);
+            assert_eq!(unregistrations.len(), 1);
+            assert_eq!(registration.len(), 1);
             assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "configs/formatter.json".to_string(),
-                })
+                unregistrations[0],
+                Unregistration {
+                    id: format!("watcher-formatter-{}", tester.worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                }
             );
-            assert_eq!(
-                watchers[1].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
+
+            tester.assert_eq_registration(
+                &registration[0],
+                "formatter",
+                &["configs/formatter.json"],
             );
         }
 
@@ -945,19 +881,19 @@ mod test_watchers {
                     ..Default::default()
                 },
             );
-            let watchers = tester
-                .did_change_configuration(&Options {
-                    format: FormatOptions { experimental: false, ..Default::default() },
-                    ..Default::default()
-                })
-                .unwrap();
-            assert!(watchers.len() == 1);
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
+                format: FormatOptions { experimental: false, ..Default::default() },
+                ..Default::default()
+            });
+
+            assert_eq!(unregistrations.len(), 1);
+            assert_eq!(registration.len(), 0);
             assert_eq!(
-                watchers[0].glob_pattern,
-                GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(tester.worker.get_root_uri().clone()),
-                    pattern: "**/.oxlintrc.json".to_string(),
-                })
+                unregistrations[0],
+                Unregistration {
+                    id: format!("watcher-formatter-{}", tester.worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                }
             );
         }
     }

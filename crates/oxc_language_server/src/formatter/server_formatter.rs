@@ -9,7 +9,7 @@ use oxc_formatter::{
 use oxc_parser::{ParseOptions, Parser};
 use tower_lsp_server::{
     UriExt,
-    lsp_types::{Position, Range, TextEdit, Uri},
+    lsp_types::{Pattern, Position, Range, TextEdit, Uri},
 };
 
 use crate::formatter::options::FormatOptions as LSPFormatOptions;
@@ -102,6 +102,23 @@ impl ServerFormatter {
                 FormatOptions::default()
             }
         }
+    }
+
+    #[expect(clippy::unused_self)]
+    pub fn get_watcher_patterns(&self, options: &LSPFormatOptions) -> Pattern {
+        options.config_path.as_ref().map_or(FORMAT_CONFIG_FILE, |v| v).to_owned()
+    }
+
+    pub fn get_changed_watch_patterns(
+        &self,
+        old_options: &LSPFormatOptions,
+        new_options: &LSPFormatOptions,
+    ) -> Option<Pattern> {
+        if old_options != new_options && new_options.experimental {
+            return Some(self.get_watcher_patterns(new_options));
+        }
+
+        None
     }
 }
 

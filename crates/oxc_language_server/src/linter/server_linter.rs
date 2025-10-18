@@ -7,7 +7,7 @@ use log::{debug, warn};
 use oxc_linter::{AllowWarnDeny, LintIgnoreMatcher};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tokio::sync::Mutex;
-use tower_lsp_server::lsp_types::{Diagnostic, Uri};
+use tower_lsp_server::lsp_types::{Diagnostic, Pattern, Uri};
 
 use oxc_linter::{
     Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions, Oxlintrc,
@@ -40,7 +40,7 @@ pub struct ServerLinter {
     gitignore_glob: Vec<Gitignore>,
     lint_on_run: Run,
     diagnostics: ServerLinterDiagnostics,
-    pub extended_paths: FxHashSet<PathBuf>,
+    extended_paths: FxHashSet<PathBuf>,
 }
 
 #[derive(Debug, Default)]
@@ -377,6 +377,39 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+    }
+
+    pub fn get_watch_patterns(&self, options: &LSPLintOptions, root_path: &Path) -> Vec<Pattern> {
+        let mut watchers = vec![
+            options.config_path.as_ref().unwrap_or(&"**/.oxlintrc.json".to_string()).to_owned(),
+        ];
+
+        for path in &self.extended_paths {
+            // ignore .oxlintrc.json files when using nested configs
+            if path.ends_with(".oxlintrc.json") && options.use_nested_configs() {
+                continue;
+            }
+
+            let pattern = path.strip_prefix(root_path).unwrap_or(path);
+
+            watchers.push(normalize_path(pattern).to_string_lossy().to_string());
+        }
+        watchers
+    }
+
+    pub fn get_changed_watch_patterns(
+        &self,
+        old_options: &LSPLintOptions,
+        new_options: &LSPLintOptions,
+        root_path: &Path,
+    ) -> Option<Vec<Pattern>> {
+        if old_options.config_path == new_options.config_path
+            && old_options.use_nested_configs() == new_options.use_nested_configs()
+        {
+            return None;
+        }
+
+        Some(self.get_watch_patterns(new_options, root_path))
     }
 }
 
