@@ -20,7 +20,8 @@ import type { Scope, ScopeManager, Variable } from './scope.ts';
 import type { BufferWithArrays, Comment, Node, NodeOrToken, Ranged, Token } from './types.ts';
 
 const { max } = Math;
-const whitespacePattern = /^\s*$/;
+
+const WHITESPACE_ONLY_REGEXP = /^\s*$/;
 
 // Text decoder, for decoding source text from buffer
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
@@ -190,7 +191,7 @@ export const SOURCE_CODE = Object.freeze({
 
       if (commentEnd < targetStart) {
         const gap = sourceText.slice(commentEnd, targetStart);
-        const whitespaceOnlyGap = whitespacePattern.test(gap);
+        const whitespaceOnlyGap = WHITESPACE_ONLY_REGEXP.test(gap);
         if (whitespaceOnlyGap) {
           sliceStart = sliceEnd = i + 1;
           targetStart = comment.start;
@@ -202,7 +203,7 @@ export const SOURCE_CODE = Object.freeze({
     for (let i = sliceEnd - 1; i >= 0; i--) {
       const comment = comments[i];
       const gap = sourceText.slice(comment.end, targetStart);
-      const whitespaceOnlyGap = whitespacePattern.test(gap);
+      const whitespaceOnlyGap = WHITESPACE_ONLY_REGEXP.test(gap);
       if (whitespaceOnlyGap) {
         sliceStart = i;
         targetStart = comment.start;
@@ -236,7 +237,7 @@ export const SOURCE_CODE = Object.freeze({
         continue;
       }
       const gap = sourceText.slice(targetEnd, commentStart);
-      const whitespaceOnlyGap = whitespacePattern.test(gap);
+      const whitespaceOnlyGap = WHITESPACE_ONLY_REGEXP.test(gap);
       if (whitespaceOnlyGap) {
         commentsAfter.push(comment);
         targetEnd = comment.end;
