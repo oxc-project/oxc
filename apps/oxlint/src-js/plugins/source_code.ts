@@ -296,11 +296,10 @@ export const SOURCE_CODE = Object.freeze({
     // Check if it ends before `nodeOrToken2` starts.
     const { comments } = ast;
     const betweenRangeStart = nodeOrToken1.range[1]; // end
-    const betweenRangeEnd = nodeOrToken2.range[0]; // start
     for (let i = 0; i < comments.length; i++) {
       const comment = comments[i];
       if (comment.start >= betweenRangeStart) {
-        return comment.end <= betweenRangeEnd;
+        return comment.end <= nodeOrToken2.range[0]; // start
       }
     }
     return false;
