@@ -310,7 +310,9 @@ impl<'a> Printer<'a> {
             let indent = std::mem::take(&mut self.state.pending_indent);
             let total_indent_char_count = indent.level() as usize * repeat_count as usize;
 
-            self.state.buffer.reserve(total_indent_char_count + indent.align() as usize);
+            self.state
+                .buffer
+                .reserve(total_indent_char_count + indent.align() as usize + text.len());
 
             for _ in 0..total_indent_char_count {
                 self.print_char(indent_char);
