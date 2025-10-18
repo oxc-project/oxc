@@ -191,8 +191,8 @@ export const SOURCE_CODE = Object.freeze({
 
       if (commentEnd < targetStart) {
         const gap = sourceText.slice(commentEnd, targetStart);
-        const whitespaceOnlyGap = WHITESPACE_ONLY_REGEXP.test(gap);
-        if (whitespaceOnlyGap) {
+        if (WHITESPACE_ONLY_REGEXP.test(gap)) {
+          // Nothing except whitespace between end of comment and start of `nodeOrToken`
           sliceStart = sliceEnd = i + 1;
           targetStart = comment.start;
         }
@@ -203,8 +203,8 @@ export const SOURCE_CODE = Object.freeze({
     for (let i = sliceEnd - 1; i >= 0; i--) {
       const comment = comments[i];
       const gap = sourceText.slice(comment.end, targetStart);
-      const whitespaceOnlyGap = WHITESPACE_ONLY_REGEXP.test(gap);
-      if (whitespaceOnlyGap) {
+      if (WHITESPACE_ONLY_REGEXP.test(gap)) {
+        // Nothing except whitespace between end of comment and start of `nodeOrToken`
         sliceStart = i;
         targetStart = comment.start;
       } else {
@@ -237,8 +237,8 @@ export const SOURCE_CODE = Object.freeze({
         continue;
       }
       const gap = sourceText.slice(targetEnd, commentStart);
-      const whitespaceOnlyGap = WHITESPACE_ONLY_REGEXP.test(gap);
-      if (whitespaceOnlyGap) {
+      if (WHITESPACE_ONLY_REGEXP.test(gap)) {
+        // Nothing except whitespace between end of `nodeOrToken` and start of comment
         commentsAfter.push(comment);
         targetEnd = comment.end;
       } else {
