@@ -78,7 +78,7 @@ impl TsGoLintState {
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
-        let json_input = self.json_input(paths, &mut resolved_configs);
+        let json_input = self.json_input(paths, None, &mut resolved_configs);
         if json_input.configs.is_empty() {
             return Ok(());
         }
@@ -294,8 +294,14 @@ impl TsGoLintState {
         source_text: String,
     ) -> Result<Vec<Message>, String> {
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+        let mut source_overrides = FxHashMap::default();
+        source_overrides.insert(path.to_string_lossy().to_string(), source_text.clone());
 
-        let json_input = self.json_input(std::slice::from_ref(path), &mut resolved_configs);
+        let json_input = self.json_input(
+            std::slice::from_ref(path),
+            Some(source_overrides),
+            &mut resolved_configs,
+        );
         let executable_path = self.executable_path.clone();
 
         let handler = std::thread::spawn(move || {
@@ -426,6 +432,7 @@ impl TsGoLintState {
     fn json_input(
         &self,
         paths: &[Arc<OsStr>],
+        source_overrides: Option<FxHashMap<String, String>>,
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
     ) -> Payload {
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
@@ -464,6 +471,7 @@ impl TsGoLintState {
                     rules: rules.into_iter().collect(),
                 })
                 .collect(),
+            source_overrides,
         }
     }
 }
@@ -487,6 +495,7 @@ impl TsGoLintState {
 pub struct Payload {
     pub version: i32,
     pub configs: Vec<Config>,
+    pub source_overrides: Option<FxHashMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
