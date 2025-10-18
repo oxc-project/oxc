@@ -21,6 +21,10 @@ fn es_target() {
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
         ("es2021", "class Foo { #a; }"),
+        ("es2021", "await fetch('/')"), // test top-level await target error
+        ("es2022", "await fetch('/')"), // no error for es2022
+        ("es2021", "async function f() { await fetch('/'); }"), // no error inside async function
+        ("es2021", "{ await fetch('/'); }"), // test top-level await in block, should also error
     ];
 
     // Test no transformation for esnext.
