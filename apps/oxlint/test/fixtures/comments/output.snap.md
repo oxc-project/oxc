@@ -8,6 +8,7 @@
   | getCommentsInside: 0 comments
   | getCommentsAfter: 1 comment
   |   [0] Line: " Line comment 1" at [29, 46]
+  | commentsExistBetween(id, init): false
    ,-[files/test.js:1:1]
  1 | const topLevelVariable1 = 1;
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -58,6 +59,7 @@
   | getCommentsAfter: 2 comments
   |   [0] Block: " Block comment 1 " at [76, 97]
   |   [1] Block: "*\n * JSDoc comment\n " at [99, 123]
+  | commentsExistBetween(id, init): false
    ,-[files/test.js:3:1]
  2 | // Line comment 1
  3 | const topLevelVariable2 = 1; /* Block comment 1 */
@@ -65,7 +67,7 @@
  4 | 
    `----
 
-  x test-comments(test-comments): commentsExistBetween(topLevelVariable, topLevelFunction): true
+  x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): true
    ,-[files/test.js:3:1]
  2 | // Line comment 1
  3 | const topLevelVariable2 = 1; /* Block comment 1 */
@@ -108,6 +110,7 @@
   | getCommentsInside: 0 comments
   | getCommentsAfter: 1 comment
   |   [0] Block: "*\n   * JSDoc comment 2\n   " at [256, 286]
+  | commentsExistBetween(id, init): false
     ,-[files/test.js:11:3]
  10 |   /* Block comment 2 */
  11 |   let functionScopedVariable = topLevelVariable;
@@ -136,6 +139,7 @@
   | getCommentsInside: 1 comment
   |   [0] Block: " Block comment 4 " at [474, 495]
   | getCommentsAfter: 0 comments
+  | commentsExistBetween(id, init): true
     ,-[files/test.js:23:1]
  22 | /* Block comment 3 */
  23 | const topLevelVariable3 = /* Block comment 4 */ 2;
