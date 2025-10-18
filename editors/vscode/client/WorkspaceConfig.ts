@@ -3,7 +3,7 @@ import { ConfigService } from './ConfigService';
 
 export const oxlintConfigFileName = '.oxlintrc.json';
 
-export type Trigger = 'onSave' | 'onType';
+export type Trigger = 'onSave' | 'onType' | 'off';
 
 type UnusedDisableDirectives = 'allow' | 'warn' | 'deny';
 
