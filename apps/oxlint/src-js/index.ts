@@ -99,6 +99,7 @@ export function defineRule(rule: Rule): Rule {
     // and methods on another object which is its prototype.
     defineProperty(context, 'id', { value: eslintContext.id });
     defineProperty(context, 'options', { value: eslintContext.options });
+    // oxlint-disable-next-line typescript/unbound-method
     defineProperty(context, 'report', { value: eslintContext.report });
     setPrototypeOf(context, getPrototypeOf(eslintContext));
 

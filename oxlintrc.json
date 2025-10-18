@@ -26,6 +26,19 @@
       }
     },
     {
+      "files": ["apps/oxlint/test/e2e.test.ts", "apps/oxlint/test/eslint-compat.test.ts"],
+      "rules": {
+        // We run through `testFixture`, which calls `expect` internally.
+        "vitest/expect-expect": "off"
+      }
+    },
+    {
+      "files": ["apps/oxlint/test/compile-visitor.test.ts"],
+      "rules": {
+        "vitest/no-conditional-expect": "off"
+      }
+    },
+    {
       "files": [
         "tasks/e2e/test/*.test.ts"
       ],
@@ -42,7 +55,6 @@
     "npm/runtime/**",
     "tasks/coverage/**",
     "crates/oxc_semantic/tests/**",
-    "napi/minify/**", // TODO
-    "apps/oxlint" // TODO
+    "napi/minify/**" // TODO
   ]
 }
