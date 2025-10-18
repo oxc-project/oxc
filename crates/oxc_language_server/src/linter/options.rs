@@ -20,6 +20,7 @@ pub enum Run {
     OnSave,
     #[default]
     OnType,
+    Off,
 }
 
 #[derive(Debug, Default, Serialize, Clone)]

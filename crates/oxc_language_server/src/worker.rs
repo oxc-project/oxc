@@ -15,7 +15,7 @@ use crate::{
     formatter::{options::FormatOptions, server_formatter::ServerFormatter},
     linter::{
         error_with_position::DiagnosticReport,
-        options::LintOptions,
+        options::{LintOptions, Run},
         server_linter::{ServerLinter, ServerLinterRun},
     },
     options::Options,
@@ -68,7 +68,12 @@ impl WorkspaceWorker {
     pub async fn start_worker(&self, options: &Options) {
         *self.options.lock().await = Some(options.clone());
 
-        *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, &options.lint));
+        if options.lint.run != Run::Off {
+            debug!("linter enabled");
+            *self.server_linter.write().await =
+                Some(ServerLinter::new(&self.root_uri, &options.lint));
+        }
+
         if options.format.experimental {
             debug!("experimental formatter enabled");
             *self.server_formatter.write().await =
@@ -320,13 +325,15 @@ impl WorkspaceWorker {
         let format_options = options.as_ref().map(|o| o.format.clone()).unwrap_or_default();
         let lint_options = options.as_ref().map(|o| o.lint.clone()).unwrap_or_default();
 
-        if format_options.experimental {
+        if format_options.experimental && lint_options.run != Run::Off {
             tokio::join!(
                 self.refresh_server_formatter(&format_options),
                 self.refresh_server_linter(&lint_options)
             );
-        } else {
+        } else if lint_options.run != Run::Off {
             self.refresh_server_linter(&lint_options).await;
+        } else if format_options.experimental {
+            self.refresh_server_formatter(&format_options).await;
         }
 
         Some(self.revalidate_diagnostics(files).await)
@@ -421,7 +428,12 @@ impl WorkspaceWorker {
             }
         }
 
-        if ServerLinter::needs_restart(&current_option.lint, &changed_options.lint) {
+        let is_linter_enabled =
+            current_option.lint.run == Run::Off && changed_options.lint.run != Run::Off;
+
+        if is_linter_enabled
+            || ServerLinter::needs_restart(&current_option.lint, &changed_options.lint)
+        {
             // get the cached files before refreshing the linter
             let linter_files = {
                 let linter_guard = self.server_linter.read().await;
@@ -450,10 +462,13 @@ impl WorkspaceWorker {
             }
 
             if let Some(patterns) = patterns {
-                unregistrations.push(Unregistration {
-                    id: format!("watcher-linter-{}", self.root_uri.as_str()),
-                    method: "workspace/didChangeWatchedFiles".to_string(),
-                });
+                // when linter was disabled before, no need to unregister
+                if !is_linter_enabled {
+                    unregistrations.push(Unregistration {
+                        id: format!("watcher-linter-{}", self.root_uri.as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                    });
+                }
 
                 registrations.push(Registration {
                     id: format!("watcher-linter-{}", self.root_uri.as_str()),
@@ -472,6 +487,17 @@ impl WorkspaceWorker {
                     })),
                 });
             }
+        } else if current_option.lint.run != Run::Off && changed_options.lint.run == Run::Off {
+            // the current files needs to be cleared
+            diagnostics = Some(self.get_clear_diagnostics().await);
+
+            // linter is turned off
+            *self.server_linter.write().await = None;
+
+            unregistrations.push(Unregistration {
+                id: format!("watcher-linter-{}", self.root_uri.as_str()),
+                method: "workspace/didChangeWatchedFiles".to_string(),
+            });
         }
 
         (diagnostics, registrations, unregistrations, formatting)
@@ -599,7 +625,9 @@ mod test_watchers {
 
     mod init_watchers {
         use crate::{
-            formatter::options::FormatOptions, linter::options::LintOptions, options::Options,
+            formatter::options::FormatOptions,
+            linter::options::{LintOptions, Run},
+            options::Options,
             worker::test_watchers::Tester,
         };
 
@@ -610,6 +638,20 @@ mod test_watchers {
 
             assert_eq!(registrations.len(), 1);
             tester.assert_eq_registration(&registrations[0], "linter", &["**/.oxlintrc.json"]);
+        }
+
+        #[test]
+        fn test_disabling_linter() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    lint: LintOptions { run: Run::Off, ..Default::default() },
+                    ..Default::default()
+                },
+            );
+            let registrations = tester.init_watchers();
+
+            assert_eq!(registrations.len(), 0);
         }
 
         #[test]
@@ -680,6 +722,21 @@ mod test_watchers {
             assert_eq!(watchers.len(), 2);
             tester.assert_eq_registration(&watchers[0], "linter", &["**/.oxlintrc.json"]);
             tester.assert_eq_registration(&watchers[1], "formatter", &[".oxfmtrc.json"]);
+        }
+
+        #[test]
+        fn test_formatter_with_disabled_linter() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    lint: LintOptions { run: Run::Off, ..Default::default() },
+                    format: FormatOptions { experimental: true, ..Default::default() },
+                },
+            );
+            let watchers = tester.init_watchers();
+
+            assert_eq!(watchers.len(), 1);
+            tester.assert_eq_registration(&watchers[0], "formatter", &[".oxfmtrc.json"]);
         }
 
         #[test]
@@ -895,6 +952,42 @@ mod test_watchers {
                     method: "workspace/didChangeWatchedFiles".to_string(),
                 }
             );
+        }
+
+        #[test]
+        fn test_linter_disabling() {
+            let tester = Tester::new("fixtures/watcher/default", &Options::default());
+            let (registration, unregistrations) = tester.did_change_configuration(&Options {
+                lint: LintOptions { run: Run::Off, ..Default::default() },
+                ..Default::default()
+            });
+
+            assert_eq!(unregistrations.len(), 1);
+            assert_eq!(registration.len(), 0);
+            assert_eq!(
+                unregistrations[0],
+                Unregistration {
+                    id: format!("watcher-linter-{}", tester.worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                }
+            );
+        }
+
+        #[test]
+        fn test_linter_enabling() {
+            let tester = Tester::new(
+                "fixtures/watcher/default",
+                &Options {
+                    lint: LintOptions { run: Run::Off, ..Default::default() },
+                    ..Default::default()
+                },
+            );
+            let (registration, unregistrations) =
+                tester.did_change_configuration(&Options::default());
+
+            assert_eq!(unregistrations.len(), 0);
+            assert_eq!(registration.len(), 1);
+            tester.assert_eq_registration(&registration[0], "linter", &["**/.oxlintrc.json"]);
         }
     }
 }
