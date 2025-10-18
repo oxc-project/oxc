@@ -286,6 +286,27 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   /**
+   * Check whether any comments exist or not between the given 2 nodes.
+   * @param nodeOrToken1 - The node to check.
+   * @param nodeOrToken2 - The node to check.
+   * @returns `true` if one or more comments exist.
+   */
+  commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
+    // Find the first comment after `nodeOrToken1` ends.
+    // Check if it ends before `nodeOrToken2` starts.
+    const { comments } = ast;
+    const betweenRangeStart = nodeOrToken1.range[1]; // end
+    const betweenRangeEnd = nodeOrToken2.range[0]; // start
+    for (let i = 0; i < comments.length; i++) {
+      const comment = comments[i];
+      if (comment.start >= betweenRangeStart) {
+        return comment.end <= betweenRangeEnd;
+      }
+    }
+    return false;
+  },
+
+  /**
    * Determine if two nodes or tokens have at least one whitespace character between them.
    * Order does not matter. Returns `false` if the given nodes or tokens overlap.
    * @param nodeOrToken1 - The first node or token to check between.
@@ -552,27 +573,6 @@ export const SOURCE_CODE = Object.freeze({
 
   getLocFromIndex: getLineColumnFromOffset,
   getIndexFromLoc: getOffsetFromLineColumn,
-
-  /**
-   * Check whether any comments exist or not between the given 2 nodes.
-   * @param nodeOrToken1 - The node to check.
-   * @param nodeOrToken2 - The node to check.
-   * @returns `true` if one or more comments exist.
-   */
-  commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
-    // Find the first comment after `nodeOrToken1` ends.
-    // Check if it ends before `nodeOrToken2` starts.
-    const { comments } = ast;
-    const betweenRangeStart = nodeOrToken1.range[1]; // end
-    const betweenRangeEnd = nodeOrToken2.range[0]; // start
-    for (let i = 0; i < comments.length; i++) {
-      const comment = comments[i];
-      if (comment.start >= betweenRangeStart) {
-        return comment.end <= betweenRangeEnd;
-      }
-    }
-    return false;
-  },
 
   getAncestors,
 
