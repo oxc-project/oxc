@@ -1,27 +1,32 @@
 import assert from 'node:assert';
 
-import type { Plugin, Rule } from '../../../dist/index.js';
+import type { Comment, Plugin, Rule } from '../../../dist/index.js';
+
+function formatComments(comments: Comment[]): string {
+  let text = `${comments.length} comment${comments.length === 1 ? '' : 's'}`;
+  if (comments.length > 0) {
+    text += '\n';
+    text += comments
+      .map((c, i) => `  [${i}] ${c.type}: ${JSON.stringify(c.value)} at [${c.range[0]}, ${c.range[1]}]`)
+      .join('\n');
+  }
+  return text;
+}
 
 const testCommentsRule: Rule = {
   create(context) {
     const { sourceCode } = context;
     const { ast } = sourceCode;
-    const { body } = ast;
 
-    const comments = sourceCode.getAllComments();
     context.report({
-      message: `getAllComments() returned ${comments.length} comments:\n` +
-        comments.map((c, i) => `  [${i}] ${c.type}: ${JSON.stringify(c.value)} at [${c.range[0]}, ${c.range[1]}]`).join(
-          '\n',
-        ),
-      node: context.sourceCode.ast,
+      message: `getAllComments: ${formatComments(sourceCode.getAllComments())}`,
+      node: ast,
     });
 
-    const [topLevelVariable1, topLevelVariable2, topLevelFunctionExport, topLevelVariable3] = body;
+    const [, topLevelVariable2, topLevelFunctionExport] = ast.body;
     assert(topLevelFunctionExport.type === 'ExportNamedDeclaration');
     const topLevelFunction = topLevelFunctionExport.declaration;
     assert(topLevelFunction.type === 'FunctionDeclaration');
-    const [functionScopedVariable] = topLevelFunction.body.body;
 
     const commentsBetween = sourceCode.commentsExistBetween(topLevelVariable2, topLevelFunction);
     context.report({
@@ -29,54 +34,31 @@ const testCommentsRule: Rule = {
       node: topLevelVariable2,
     });
 
-    const commentsBeforeFunctionScopedVariable = sourceCode.getCommentsBefore(functionScopedVariable);
-    context.report({
-      message:
-        `getCommentsBefore(functionScopedVariable) returned ${commentsBeforeFunctionScopedVariable.length} comments:\n` +
-        commentsBeforeFunctionScopedVariable.map((c, i) =>
-          `  [${i}] ${c.type}: ${JSON.stringify(c.value)} at [${c.range[0]}, ${c.range[1]}]`
-        ).join(
-          '\n',
-        ),
-      node: functionScopedVariable,
-    });
+    return {
+      VariableDeclaration(node) {
+        const { declarations } = node;
+        assert(declarations.length >= 1);
+        const firstDeclarationId = declarations[0].id;
+        assert(firstDeclarationId.type === 'Identifier');
 
-    const commentsBeforeTopLevelVariable1 = sourceCode.getCommentsBefore(topLevelVariable1);
-    context.report({
-      message: `getCommentsBefore(topLevelVariable1) returned ${commentsBeforeTopLevelVariable1.length} comments:\n`,
-      node: topLevelVariable1,
-    });
-
-    const commentsAfterFunctionScopedVariable = sourceCode.getCommentsAfter(functionScopedVariable);
-    context.report({
-      message:
-        `getCommentsAfter(functionScopedVariable) returned ${commentsAfterFunctionScopedVariable.length} comments:\n` +
-        commentsAfterFunctionScopedVariable.map((c, i) =>
-          `  [${i}] ${c.type}: ${JSON.stringify(c.value)} at [${c.range[0]}, ${c.range[1]}]`
-        ).join(
-          '\n',
-        ),
-      node: functionScopedVariable,
-    });
-
-    const commentsAfterTopLevelVariable3 = sourceCode.getCommentsAfter(topLevelVariable3);
-    context.report({
-      message: `getCommentsAfter(topLevelVariable3) returned ${commentsAfterTopLevelVariable3.length} comments:\n`,
-      node: topLevelVariable3,
-    });
-
-    const commentsInsideTopLevelFunction = sourceCode.getCommentsInside(topLevelFunction);
-    context.report({
-      message: `getCommentsInside(topLevelFunction) returned ${commentsInsideTopLevelFunction.length} comments:\n` +
-        commentsInsideTopLevelFunction.map((c, i) =>
-          `  [${i}] ${c.type}: ${JSON.stringify(c.value)} at [${c.range[0]}, ${c.range[1]}]`
-        ).join(
-          '\n',
-        ),
-      node: topLevelFunction,
-    });
-
-    return {};
+        context.report({
+          message: `VariableDeclaration(${firstDeclarationId.name}):\n` +
+            `getCommentsBefore: ${formatComments(sourceCode.getCommentsBefore(node))}\n` +
+            `getCommentsInside: ${formatComments(sourceCode.getCommentsInside(node))}\n` +
+            `getCommentsAfter: ${formatComments(sourceCode.getCommentsAfter(node))}`,
+          node,
+        });
+      },
+      FunctionDeclaration(node) {
+        context.report({
+          message: `FunctionDeclaration(${node.id.name}):\n` +
+            `getCommentsBefore: ${formatComments(sourceCode.getCommentsBefore(node))}\n` +
+            `getCommentsInside: ${formatComments(sourceCode.getCommentsInside(node))}\n` +
+            `getCommentsAfter: ${formatComments(sourceCode.getCommentsAfter(node))}`,
+          node,
+        });
+      },
+    };
   },
 };
 
