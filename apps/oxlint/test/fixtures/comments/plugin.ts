@@ -34,6 +34,13 @@ const testCommentsRule: Rule = {
       node: topLevelVariable2,
     });
 
+    // Test `commentsExistBetween` returns `false` when start node is after end node
+    context.report({
+      message: 'commentsExistBetween(topLevelFunction, topLevelVariable2): ' +
+        sourceCode.commentsExistBetween(topLevelFunction, topLevelVariable2),
+      node: topLevelFunction,
+    });
+
     return {
       VariableDeclaration(node) {
         const { declarations } = node;

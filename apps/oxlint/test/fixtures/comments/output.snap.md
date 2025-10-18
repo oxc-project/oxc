@@ -83,6 +83,25 @@
  4 | 
    `----
 
+  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
+    ,-[files/comments.js:8:8]
+  7 |      */
+  8 | ,-> export function topLevelFunction() {
+  9 | |     // Line comment 2
+ 10 | |     /* Block comment 2 */
+ 11 | |     let functionScopedVariable = topLevelVariable;
+ 12 | |     /**
+ 13 | |      * JSDoc comment 2
+ 14 | |      */
+ 15 | |     function nestedFunction() {
+ 16 | |       // Line comment 3
+ 17 | |       return functionScopedVariable;
+ 18 | |     }
+ 19 | |     return nestedFunction(); // Line comment 4
+ 20 | `-> }
+ 21 |     
+    `----
+
   x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
   | getCommentsBefore: 0 comments
   | getCommentsInside: 5 comments
@@ -230,6 +249,19 @@
  3 | 
    `----
 
+  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
+    ,-[files/no_comments.js:4:8]
+  3 |     
+  4 | ,-> export function topLevelFunction() {
+  5 | |     let functionScopedVariable = topLevelVariable;
+  6 | |     function nestedFunction() {
+  7 | |       return functionScopedVariable;
+  8 | |     }
+  9 | |     return nestedFunction();
+ 10 | `-> }
+ 11 |     
+    `----
+
   x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
   | getCommentsBefore: 0 comments
   | getCommentsInside: 0 comments
@@ -305,7 +337,7 @@
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 
-Found 0 warnings and 20 errors.
+Found 0 warnings and 22 errors.
 Finished in Xms on 2 files using X threads.
 ```
 
