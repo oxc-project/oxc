@@ -295,6 +295,8 @@ export const SOURCE_CODE = Object.freeze({
    * @returns `true` if one or more comments exist.
    */
   commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
+    if (ast === null) initAst();
+
     // Find the first comment after `nodeOrToken1` ends.
     // Check if it ends before `nodeOrToken2` starts.
     const { comments } = ast,
