@@ -113,16 +113,25 @@ enum EnumType {
     Object,
 }
 
+/// Metadata for decorated methods
+pub(super) struct MethodMetadata<'a> {
+    /// The `design:type` metadata expression
+    pub r#type: Expression<'a>,
+    /// The `design:paramtypes` metadata expression
+    pub param_types: Expression<'a>,
+    /// The `design:returntype` metadata expression (optional, omitted for getters/setters)
+    pub return_type: Option<Expression<'a>>,
+}
+
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
-    /// Stack of method metadata arrays, each array contains 3 expressions:
-    /// `[design:type, design:paramtypes, design:returntype]`
+    /// Stack of method metadata.
     ///
     /// Only the method that needs to be pushed onto a stack is the method metadata,
     /// which should be inserted after all real decorators. However, method parameters
     /// will be processed before the metadata generation, so we need to temporarily store
     /// them in a stack and pop them when in exit_method_definition.
-    method_metadata_stack: SparseStack<[Expression<'a>; 3]>,
+    method_metadata_stack: SparseStack<MethodMetadata<'a>>,
     /// Stack of constructor metadata expressions, each expression
     /// is the `design:paramtypes`.
     ///
@@ -182,7 +191,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
                 && constructor.value.params.items.iter().all(|param| param.decorators.is_empty()))
         {
             let serialized_type =
-                self.serialize_parameter_types_of_node(&constructor.value.params, ctx);
+                self.serialize_parameters_types_of_node(&constructor.value.params, ctx);
 
             Some(self.create_metadata("design:paramtypes", serialized_type, ctx))
         } else {
@@ -208,18 +217,32 @@ impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
                 || method.value.params.items.iter().any(|param| !param.decorators.is_empty()));
 
         let metadata = is_decorated.then(|| {
-            [
-                self.create_metadata("design:type", Self::global_function(ctx), ctx),
-                {
-                    let serialized_type =
-                        self.serialize_parameter_types_of_node(&method.value.params, ctx);
-                    self.create_metadata("design:paramtypes", serialized_type, ctx)
-                },
-                {
-                    let serialized_type = self.serialize_return_type_of_node(&method.value, ctx);
-                    self.create_metadata("design:returntype", serialized_type, ctx)
-                },
-            ]
+            // TypeScript only emits `design:returntype` for regular methods,
+            // not for getters or setters.
+
+            let (design_type, return_type) = if method.kind.is_get() {
+                // For getters, the design type is the type of the property
+                (self.serialize_return_type_of_node(&method.value, ctx), None)
+            } else if method.kind.is_set()
+                && let Some(param) = method.value.params.items.first()
+            {
+                // For setters, the design type is the type of the first parameter
+                (self.serialize_parameter_types_of_node(param, ctx), None)
+            } else {
+                // For methods, the design type is always `Function`
+                (
+                    Self::global_function(ctx),
+                    Some(self.serialize_return_type_of_node(&method.value, ctx)),
+                )
+            };
+
+            let param_types = self.serialize_parameters_types_of_node(&method.value.params, ctx);
+
+            MethodMetadata {
+                r#type: self.create_metadata("design:type", design_type, ctx),
+                param_types: self.create_metadata("design:paramtypes", param_types, ctx),
+                return_type: return_type.map(|t| self.create_metadata("design:returntype", t, ctx)),
+            }
         });
 
         self.method_metadata_stack.push(metadata);
@@ -302,7 +325,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         enum_type
     }
 
-    pub fn pop_method_metadata(&mut self) -> Option<[Expression<'a>; 3]> {
+    pub fn pop_method_metadata(&mut self) -> Option<MethodMetadata<'a>> {
         self.method_metadata_stack.pop()
     }
 
@@ -407,7 +430,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     }
 
     /// Serializes the type of a node for use with decorator type metadata.
-    fn serialize_parameter_types_of_node(
+    fn serialize_parameters_types_of_node(
         &mut self,
         params: &FormalParameters<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -415,13 +438,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         let mut elements =
             ctx.ast.vec_with_capacity(params.items.len() + usize::from(params.rest.is_some()));
         elements.extend(params.items.iter().map(|param| {
-            let type_annotation = match &param.pattern.kind {
-                BindingPatternKind::AssignmentPattern(pattern) => {
-                    pattern.left.type_annotation.as_ref()
-                }
-                _ => param.pattern.type_annotation.as_ref(),
-            };
-            ArrayExpressionElement::from(self.serialize_type_annotation(type_annotation, ctx))
+            ArrayExpressionElement::from(self.serialize_parameter_types_of_node(param, ctx))
         }));
 
         if let Some(rest) = &params.rest {
@@ -430,6 +447,18 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
             ));
         }
         ctx.ast.expression_array(SPAN, elements)
+    }
+
+    fn serialize_parameter_types_of_node(
+        &mut self,
+        param: &FormalParameter<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let type_annotation = match &param.pattern.kind {
+            BindingPatternKind::AssignmentPattern(pattern) => pattern.left.type_annotation.as_ref(),
+            _ => param.pattern.type_annotation.as_ref(),
+        };
+        self.serialize_type_annotation(type_annotation, ctx)
     }
 
     /// Serializes the return type of a node for use with decorator type metadata.
