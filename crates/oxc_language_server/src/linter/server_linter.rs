@@ -332,8 +332,8 @@ impl ServerLinter {
             // run only oxlint on type
             // tsgolint does not support memory source_text
             (ServerLinterRun::OnType, Run::OnType) => (true, false),
-            // it does not match, run nothing
-            (ServerLinterRun::OnType, Run::OnSave) => (false, false),
+            // it is disabled, or it does not match, run nothing
+            (_, Run::Off) | (ServerLinterRun::OnType, Run::OnSave) => (false, false),
             // In onType mode, only TypeScript type checking runs on save
             // If type_aware is disabled (tsgo_linter is None), skip everything to preserve diagnostics
             (ServerLinterRun::OnSave, Run::OnType) => {
@@ -403,6 +403,11 @@ impl ServerLinter {
         new_options: &LSPLintOptions,
         root_path: &Path,
     ) -> Option<Vec<Pattern>> {
+        // from off to on, need to watch all patterns
+        if old_options.run == Run::Off && new_options.run != Run::Off {
+            return Some(self.get_watch_patterns(new_options, root_path));
+        }
+
         if old_options.config_path == new_options.config_path
             && old_options.use_nested_configs() == new_options.use_nested_configs()
         {
