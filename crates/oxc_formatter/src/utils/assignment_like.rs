@@ -604,13 +604,12 @@ impl<'a> AssignmentLike<'a, '_> {
                     return false;
                 };
 
-                let properties = &object.properties;
-                if properties.len() <= 2 {
+                if object.len() <= 2 {
                     return false;
                 }
 
-                properties.iter().any(|property| {
-                    !property.shorthand || !property.value.kind.is_binding_identifier()
+                object.properties.iter().any(|property| {
+                    !property.shorthand || property.value.kind.is_assignment_pattern()
                 })
             }
             AssignmentLike::AssignmentExpression(assignment) => {
@@ -618,8 +617,11 @@ impl<'a> AssignmentLike<'a, '_> {
                     return false;
                 };
 
-                let properties = &object.properties;
-                properties.iter().any(|property| match property {
+                if object.len() <= 2 {
+                    return false;
+                }
+
+                object.properties.iter().any(|property| match property {
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
                         property_identifier,
                     ) => property_identifier.init.is_some(),
