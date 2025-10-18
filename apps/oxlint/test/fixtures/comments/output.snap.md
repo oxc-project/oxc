@@ -29,7 +29,7 @@
     ,-[files/test.js:1:1]
   1 | ,-> const topLevelVariable1 = 1;
   2 | |   // Line comment 1
-  3 | |   const topLevelVariable2 = 1; /* Block comment 1 */
+  3 | |   const topLevelVariable2 = 2; /* Block comment 1 */
   4 | |   
   5 | |   /**
   6 | |    * JSDoc comment
@@ -49,7 +49,7 @@
  20 | |   }
  21 | |   
  22 | |   /* Block comment 3 */
- 23 | `-> const topLevelVariable3 = /* Block comment 4 */ 2;
+ 23 | `-> const topLevelVariable3 = /* Block comment 4 */ 3;
     `----
 
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
@@ -62,7 +62,7 @@
   | commentsExistBetween(id, init): false
    ,-[files/test.js:3:1]
  2 | // Line comment 1
- 3 | const topLevelVariable2 = 1; /* Block comment 1 */
+ 3 | const topLevelVariable2 = 2; /* Block comment 1 */
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  4 | 
    `----
@@ -70,7 +70,7 @@
   x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): true
    ,-[files/test.js:3:1]
  2 | // Line comment 1
- 3 | const topLevelVariable2 = 1; /* Block comment 1 */
+ 3 | const topLevelVariable2 = 2; /* Block comment 1 */
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  4 | 
    `----
@@ -142,7 +142,7 @@
   | commentsExistBetween(id, init): true
     ,-[files/test.js:23:1]
  22 | /* Block comment 3 */
- 23 | const topLevelVariable3 = /* Block comment 4 */ 2;
+ 23 | const topLevelVariable3 = /* Block comment 4 */ 3;
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
 

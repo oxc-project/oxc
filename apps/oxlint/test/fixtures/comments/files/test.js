@@ -1,6 +1,6 @@
 const topLevelVariable1 = 1;
 // Line comment 1
-const topLevelVariable2 = 1; /* Block comment 1 */
+const topLevelVariable2 = 2; /* Block comment 1 */
 
 /**
  * JSDoc comment
@@ -20,4 +20,4 @@ export function topLevelFunction() {
 }
 
 /* Block comment 3 */
-const topLevelVariable3 = /* Block comment 4 */ 2;
+const topLevelVariable3 = /* Block comment 4 */ 3;
