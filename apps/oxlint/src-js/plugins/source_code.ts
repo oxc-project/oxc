@@ -176,7 +176,7 @@ export const SOURCE_CODE = Object.freeze({
     const { comments } = ast;
 
     const commentsLength = comments.length;
-    let targetStart = nodeOrToken.start;
+    let targetStart = nodeOrToken.range[0]; // start
 
     let sliceStart = commentsLength;
     let sliceEnd = 0;
@@ -222,7 +222,7 @@ export const SOURCE_CODE = Object.freeze({
     if (ast === null) initAst();
     const { comments } = ast;
 
-    let targetEnd = nodeOrToken.end;
+    let targetEnd = nodeOrToken.range[1]; // end
 
     const commentsAfter: Comment[] = [];
 
@@ -560,8 +560,8 @@ export const SOURCE_CODE = Object.freeze({
     // Find the first comment after `nodeOrToken1` ends.
     // Check if it ends before `nodeOrToken2` starts.
     const { comments } = ast;
-    const betweenRangeStart = nodeOrToken1.end;
-    const betweenRangeEnd = nodeOrToken2.start;
+    const betweenRangeStart = nodeOrToken1.range[1]; // end
+    const betweenRangeEnd = nodeOrToken2.range[0]; // start
     for (let i = 0; i < comments.length; i++) {
       const comment = comments[i];
       if (comment.start >= betweenRangeStart) {
