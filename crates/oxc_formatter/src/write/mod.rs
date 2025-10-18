@@ -553,7 +553,6 @@ fn expression_statement_needs_semicolon<'a>(
                     | AssignmentTarget::TSTypeAssertion(_)
                     | AssignmentTarget::TSAsExpression(_)
                     | AssignmentTarget::TSSatisfiesExpression(_)
-                    | AssignmentTarget::TSNonNullExpression(_)
             )
         }
         ExpressionLeftSide::SimpleAssignmentTarget(assignment) => {
@@ -561,7 +560,7 @@ fn expression_statement_needs_semicolon<'a>(
                 assignment.as_ref(),
                 SimpleAssignmentTarget::TSTypeAssertion(_)
                     | SimpleAssignmentTarget::TSAsExpression(_)
-                    | SimpleAssignmentTarget::TSNonNullExpression(_)
+                    | SimpleAssignmentTarget::TSSatisfiesExpression(_)
             )
         }
         _ => false,
