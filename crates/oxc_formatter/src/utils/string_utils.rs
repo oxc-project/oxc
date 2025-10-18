@@ -78,9 +78,13 @@ pub struct CleanedStringLiteralText<'a> {
     width: usize,
 }
 
-impl CleanedStringLiteralText<'_> {
+impl<'a> CleanedStringLiteralText<'a> {
     pub fn width(&self) -> usize {
         self.width
+    }
+
+    pub fn into_format(self) -> SyntaxTokenCowSlice<'a> {
+        syntax_token_cow_slice(self.text, self.span)
     }
 }
 
@@ -92,7 +96,7 @@ impl<'a> Format<'a> for CleanedStringLiteralText<'a> {
 
 impl<'a> Format<'a> for FormatLiteralStringToken<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.clean_text(f.context().source_type(), f.options()).fmt(f)
+        self.clean_text(f.context().source_type(), f.options()).into_format().fmt(f)
     }
 }
 
