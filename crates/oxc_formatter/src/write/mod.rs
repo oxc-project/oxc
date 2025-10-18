@@ -948,7 +948,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
         let comments = f.context().comments().own_line_comments_before(self.right.span().start);
         write!(
             f,
-            [FormatLeadingComments::Comments(comments), left, space(), "=", space(), self.right()]
+            [
+                FormatLeadingComments::Comments(comments),
+                group(&left),
+                space(),
+                "=",
+                space(),
+                self.right()
+            ]
         )
     }
 }
