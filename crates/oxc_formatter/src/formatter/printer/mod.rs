@@ -1169,24 +1169,68 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             self.state.line_width += 1;
         }
 
-        for c in text.chars() {
-            let char_width = match c {
-                '\t' => self.options().indent_width.value() as usize,
-                '\n' => {
-                    return if self.must_be_flat
-                        || self.state.line_width > usize::from(self.options().print_width)
-                    {
+        // Unified byte iteration - handles both ASCII and Unicode efficiently
+        let mut width = 0;
+        let tab_width = self.options().indent_width.value() as usize;
+        let print_width = usize::from(self.options().print_width);
+
+        let mut byte_index = 0;
+        let mut bytes = text.bytes();
+
+        while let Some(byte) = bytes.next() {
+            match byte {
+                b'\n' => {
+                    self.state.line_width += width;
+                    return if self.must_be_flat || self.state.line_width > print_width {
                         Fits::No
                     } else {
                         Fits::Yes
                     };
                 }
-                c => c.width().unwrap_or(0),
-            };
-            self.state.line_width += char_width;
+                b'\t' => width += tab_width,
+                // ASCII printable characters (0x20-0x7E) have width 1
+                0x20..=0x7E => width += 1,
+                // UTF-8 multi-byte sequence start (0xC0-0xFF)
+                0xC0..=0xFF => {
+                    // Decode the full UTF-8 character
+                    let remaining = &text[byte_index..];
+                    if let Some(c) = remaining.chars().next() {
+                        width += c.width().unwrap_or(0);
+                        // Skip the remaining bytes of this multi-byte character
+                        let char_len = c.len_utf8();
+                        for _ in 1..char_len {
+                            bytes.next();
+                            byte_index += 1;
+                        }
+                    }
+                }
+                // Control characters (0x00-0x1F, 0x7F) and continuation bytes (0x80-0xBF)
+                _ => {
+                    // Most control chars have width 0, but decode to be safe
+                    let remaining = &text[byte_index..];
+                    if let Some(c) = remaining.chars().next() {
+                        width += c.width().unwrap_or(0);
+                        let char_len = c.len_utf8();
+                        for _ in 1..char_len {
+                            bytes.next();
+                            byte_index += 1;
+                        }
+                    }
+                }
+            }
+
+            byte_index += 1;
+
+            // Early exit if already over width
+            if self.state.line_width + width > print_width {
+                self.state.line_width += width;
+                return Fits::No;
+            }
         }
 
-        if self.state.line_width > usize::from(self.options().print_width) {
+        self.state.line_width += width;
+
+        if self.state.line_width > print_width {
             return Fits::No;
         }
 
