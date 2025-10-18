@@ -224,7 +224,7 @@ impl<'a> LiteralStringNormaliser<'a> {
         let can_remove_quotes =
             !self.is_preserve_quote_properties() && is_identifier_name(quoteless);
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalise_string_literal(string_information)
         }
@@ -281,7 +281,7 @@ impl<'a> LiteralStringNormaliser<'a> {
             && (self.can_remove_number_quotes_by_file_type(source_type)
                 || is_identifier_name(quoteless));
         if can_remove_quotes {
-            Cow::Owned(quoteless.to_string())
+            Cow::Borrowed(quoteless)
         } else {
             self.normalise_string_literal(string_information)
         }
@@ -320,7 +320,11 @@ impl<'a> LiteralStringNormaliser<'a> {
         if original.starts_with(preferred_quote) {
             Cow::Borrowed(original)
         } else {
-            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}",))
+            let mut s = String::with_capacity(content_to_use.len() + 2);
+            s.push(preferred_quote);
+            s.push_str(content_to_use);
+            s.push(preferred_quote);
+            Cow::Owned(s)
         }
     }
 }
