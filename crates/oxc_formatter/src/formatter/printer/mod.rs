@@ -6,6 +6,7 @@ mod stack;
 
 use std::num::NonZeroU8;
 
+use oxc_data_structures::code_buffer::CodeBuffer;
 pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
@@ -40,7 +41,15 @@ pub struct Printer<'a> {
 
 impl<'a> Printer<'a> {
     pub fn new(options: PrinterOptions) -> Self {
-        Self { options, state: PrinterState::default() }
+        let (indent_char, indent_width) = match options.indent_style() {
+            IndentStyle::Tab => (oxc_data_structures::code_buffer::IndentChar::Tab, 1),
+            IndentStyle::Space => (
+                oxc_data_structures::code_buffer::IndentChar::Space,
+                options.indent_width().value() as usize,
+            ),
+        };
+        let buffer = CodeBuffer::with_indent(indent_char, indent_width);
+        Self { options, state: PrinterState { buffer, ..Default::default() } }
     }
 
     /// Prints the passed in element as well as all its content
@@ -67,7 +76,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        Ok(Printed::new(self.state.buffer, None, self.state.verbatim_markers))
+        Ok(Printed::new(self.state.buffer.into_string(), None, self.state.verbatim_markers))
     }
 
     /// Prints a single element and push the following elements to queue
@@ -302,24 +311,17 @@ impl<'a> Printer<'a> {
 
     fn print_text(&mut self, text: &str) {
         if !self.state.pending_indent.is_empty() {
-            let (indent_char, repeat_count) = match self.options.indent_style() {
-                IndentStyle::Tab => ('\t', 1),
-                IndentStyle::Space => (' ', self.options.indent_width().value()),
-            };
-
             let indent = std::mem::take(&mut self.state.pending_indent);
-            let total_indent_char_count = indent.level() as usize * repeat_count as usize;
 
-            self.state
-                .buffer
-                .reserve(total_indent_char_count + indent.align() as usize + text.len());
+            // Use CodeBuffer's optimized print_indent for the main indentation
+            self.state.buffer.print_indent(indent.level() as usize);
+            self.state.line_width +=
+                indent.level() as usize * self.options.indent_width().value() as usize;
 
-            for _ in 0..total_indent_char_count {
-                self.print_char(indent_char);
-            }
-
+            // Print alignment spaces (if any)
             for _ in 0..indent.align() {
-                self.print_char(' ');
+                self.state.buffer.print_ascii_byte(b' ');
+                self.state.line_width += 1;
             }
         }
 
@@ -636,16 +638,42 @@ impl<'a> Printer<'a> {
     }
 
     fn print_str(&mut self, content: &str) {
-        for char in content.chars() {
-            self.print_char(char);
+        let bytes = content.as_bytes();
+        let mut i = 0;
 
-            self.state.has_empty_line = false;
+        while i < bytes.len() {
+            let byte = bytes[i];
+
+            if byte < 128 {
+                // ASCII - fast inline handling
+                if byte == b'\n' {
+                    self.state.buffer.print_str(self.options.line_ending.as_str());
+                    self.state.line_width = 0;
+                    self.state.measured_group_fits = false;
+                } else if byte == b'\t' {
+                    self.state.buffer.print_ascii_byte(b'\t');
+                    self.state.line_width += self.options.indent_width().value() as usize;
+                } else {
+                    self.state.buffer.print_ascii_byte(byte);
+                    self.state.line_width += 1;
+                }
+                i += 1;
+            } else {
+                // Multi-byte UTF-8 - decode only this character
+                let remaining = &content[i..];
+                let ch = remaining.chars().next().unwrap();
+                self.state.buffer.print_char(ch);
+                self.state.line_width += ch.width().unwrap_or(0);
+                i += ch.len_utf8();
+            }
         }
+
+        self.state.has_empty_line = false;
     }
 
     fn print_char(&mut self, char: char) {
         if char == '\n' {
-            self.state.buffer.push_str(self.options.line_ending.as_str());
+            self.state.buffer.print_str(self.options.line_ending.as_str());
 
             self.state.line_width = 0;
 
@@ -653,7 +681,7 @@ impl<'a> Printer<'a> {
             // The next group must re-measure if it still fits.
             self.state.measured_group_fits = false;
         } else {
-            self.state.buffer.push(char);
+            self.state.buffer.print_char(char);
 
             let char_width = if char == '\t' {
                 self.options.indent_width().value() as usize
@@ -688,7 +716,7 @@ enum FillPairLayout {
 /// position the printer currently is.
 #[derive(Default, Debug)]
 struct PrinterState<'a> {
-    buffer: String,
+    buffer: CodeBuffer,
     pending_indent: Indention,
     pending_space: bool,
     measured_group_fits: bool,
@@ -1169,10 +1197,15 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             self.state.line_width += 1;
         }
 
-        for c in text.chars() {
-            let char_width = match c {
-                '\t' => self.options().indent_width.value() as usize,
-                '\n' => {
+        let bytes = text.as_bytes();
+        let mut i = 0;
+
+        while i < bytes.len() {
+            let byte = bytes[i];
+
+            if byte < 128 {
+                // ASCII - fast inline handling
+                let char_width = if byte == b'\n' {
                     return if self.must_be_flat
                         || self.state.line_width > usize::from(self.options().print_width)
                     {
@@ -1180,10 +1213,20 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     } else {
                         Fits::Yes
                     };
-                }
-                c => c.width().unwrap_or(0),
-            };
-            self.state.line_width += char_width;
+                } else if byte == b'\t' {
+                    self.options().indent_width.value() as usize
+                } else {
+                    1
+                };
+                self.state.line_width += char_width;
+                i += 1;
+            } else {
+                // Multi-byte UTF-8 - decode only this character
+                let remaining = &text[i..];
+                let ch = remaining.chars().next().unwrap();
+                self.state.line_width += ch.width().unwrap_or(0);
+                i += ch.len_utf8();
+            }
         }
 
         if self.state.line_width > usize::from(self.options().print_width) {
