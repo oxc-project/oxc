@@ -1,6 +1,6 @@
 import assert from 'node:assert';
-import { definePlugin } from '../../../dist/index.js';
-import type { Rule } from '../../../dist/index.js';
+
+import type { Plugin, Rule } from '../../../dist/index.js';
 
 const testCommentsRule: Rule = {
   create(context) {
@@ -80,11 +80,13 @@ const testCommentsRule: Rule = {
   },
 };
 
-export default definePlugin({
+const plugin: Plugin = {
   meta: {
     name: 'test-comments',
   },
   rules: {
     'test-comments': testCommentsRule,
   },
-});
+};
+
+export default plugin;
