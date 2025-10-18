@@ -114,6 +114,9 @@ expression: json
           "implementsReplacesDocs": false,
           "exemptDestructuredRootsFromChecks": false,
           "tagNamePreference": {}
+        },
+        "vitest": {
+          "typecheck": false
         }
       },
       "allOf": [
@@ -539,6 +542,16 @@ expression: json
               "$ref": "#/definitions/ReactPluginSettings"
             }
           ]
+        },
+        "vitest": {
+          "default": {
+            "typecheck": false
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/VitestPluginSettings"
+            }
+          ]
         }
       }
     },
@@ -599,6 +612,17 @@ expression: json
           "type": "boolean"
         }
       ]
+    },
+    "VitestPluginSettings": {
+      "description": "Configure Vitest plugin rules.\n\nSee [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s\nconfiguration for a full reference.",
+      "type": "object",
+      "properties": {
+        "typecheck": {
+          "description": "Whether to enable typecheck mode for Vitest rules.\nWhen enabled, some rules will skip certain checks for describe blocks\nto accommodate TypeScript type checking scenarios.",
+          "default": false,
+          "type": "boolean"
+        }
+      }
     }
   }
 }
