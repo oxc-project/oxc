@@ -70,7 +70,7 @@ export async function activateExtension(full: boolean = true): Promise<void> {
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'debugger.js');
     await window.showTextDocument(fileUri);
     // wait for initialized requests
-    await sleep(500);
+    await sleep(250);
     await commands.executeCommand('workbench.action.closeActiveEditor');
   }
 }
@@ -109,7 +109,7 @@ export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesW
 export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<Diagnostic[]> {
   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
   await window.showTextDocument(fileUri);
-  await sleep(500);
+  await sleep(250);
   const diagnostics = languages.getDiagnostics(fileUri);
   return diagnostics;
 }
