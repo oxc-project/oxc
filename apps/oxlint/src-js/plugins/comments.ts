@@ -7,7 +7,7 @@ const WHITESPACE_ONLY_REGEXP = /^\s*$/;
 
 /**
  * Retrieve an array containing all comments in the source code.
- * @returns Array of `Comment`s in occurrence order.
+ * @returns Array of `Comment`s in order they appear in source.
  */
 export function getAllComments(): Comment[] {
   if (ast === null) initAst();
@@ -16,7 +16,19 @@ export function getAllComments(): Comment[] {
 }
 
 /**
- * Get all comment tokens directly before the given node or token.
+ * Get all comments directly before the given node or token.
+ *
+ * "Directly before" means only comments before this node, and after the preceding token.
+ *
+ * ```js
+ * // Define `x`
+ * const x = 1;
+ * // Define `y`
+ * const y = 2;
+ * ```
+ *
+ * `sourceCode.getCommentsBefore(varDeclY)` will only return "Define `y`" comment, not also "Define `x`".
+ *
  * @param nodeOrToken - The AST node or token to check for adjacent comment tokens.
  * @returns Array of `Comment`s in occurrence order.
  */
@@ -65,6 +77,19 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
 
 /**
  * Get all comment tokens directly after the given node or token.
+ *
+ * "Directly after" means only comments between end of this node, and the next token following it.
+ *
+ * ```js
+ * const x = 1;
+ * // Define `y`
+ * const y = 2;
+ * // Define `z`
+ * const z = 3;
+ * ```
+ *
+ * `sourceCode.getCommentsAfter(varDeclX)` will only return "Define `y`" comment, not also "Define `z`".
+ *
  * @param nodeOrToken - The AST node or token to check for adjacent comment tokens.
  * @returns Array of `Comment`s in occurrence order.
  */
@@ -140,9 +165,9 @@ export function getCommentsInside(node: Node): Comment[] {
 
 /**
  * Check whether any comments exist or not between the given 2 nodes.
- * @param nodeOrToken1 - The node to check.
- * @param nodeOrToken2 - The node to check.
- * @returns `true` if one or more comments exist.
+ * @param nodeOrToken1 - Start node/token.
+ * @param nodeOrToken2 - End node/token.
+ * @returns `true` if one or more comments exist between the two.
  */
 export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
   if (ast === null) initAst();
