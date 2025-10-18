@@ -5,8 +5,41 @@ use oxc_ast::Comment;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
+use rustc_hash::FxHashSet;
 
 use crate::fixer::Fix;
+
+/// Check if a rule name corresponds to a known oxlint rule.
+///
+/// Unknown rules (e.g., from custom plugins) should not be reported as
+/// unused directives since we cannot determine if they were actually needed.
+/// This matches ESLint's behavior of only reporting unused directives for
+/// rules from loaded plugins.
+///
+/// Uses a lazy-initialized cache of known rule names for O(1) lookup performance.
+fn is_known_rule(rule_name: &str) -> bool {
+    use std::sync::OnceLock;
+    static KNOWN_RULES: OnceLock<FxHashSet<String>> = OnceLock::new();
+
+    let known_rules = KNOWN_RULES.get_or_init(|| {
+        use crate::rules::RULES;
+
+        RULES
+            .iter()
+            .flat_map(|rule| {
+                let plugin_name = rule.plugin_name();
+                let name = rule.name();
+                [
+                    name.to_string(),                 // "no-debugger"
+                    format!("{plugin_name}/{name}"),  // "eslint/no-debugger"
+                    format!("@{plugin_name}/{name}"), // "@typescript-eslint/no-explicit-any"
+                ]
+            })
+            .collect()
+    });
+
+    known_rules.contains(rule_name)
+}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum DisabledRule {
@@ -211,10 +244,16 @@ impl DisableDirectives {
                         }
                         match &interval.val {
                             DisabledRule::Single { rule_name, name_span, .. } => {
-                                Some(RuleCommentRule {
-                                    rule_name: rule_name.clone(),
-                                    name_span: *name_span,
-                                })
+                                // Only report known rules as unused
+                                // Unknown rules (e.g., from custom plugins) are silently ignored
+                                if is_known_rule(rule_name) {
+                                    Some(RuleCommentRule {
+                                        rule_name: rule_name.clone(),
+                                        name_span: *name_span,
+                                    })
+                                } else {
+                                    None
+                                }
                             }
                             DisabledRule::All { .. } => Some(RuleCommentRule {
                                 rule_name: "all".to_string(),
@@ -1322,6 +1361,159 @@ function test() {
         assert!(
             !directives.contains("no-console", second_console_log_span),
             "eslint-disable-next-line should NOT suppress diagnostics on lines after the next line"
+        );
+    }
+
+    // Tests for issue #11983: Unknown ESLint rules should not be reported as unused
+
+    #[test]
+    fn unknown_plugin_rules_not_reported_as_unused() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable custom-plugin/custom-rule */
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should NOT report custom-plugin/custom-rule as unused
+                assert_eq!(
+                    unused.len(),
+                    0,
+                    "Unknown plugin rules should not be reported as unused"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn known_rules_reported_as_unused() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable no-debugger */
+                    console.log();
+                    "
+                )
+            },
+            |comments, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should report no-debugger as unused (it's a known rule with no violation)
+                assert_eq!(unused.len(), 1, "Known unused rules should be reported");
+                assert_eq!(unused[0].span, comments.first().unwrap().content_span());
+                // When all rules in a directive are unused, it's reported as RuleCommentType::All
+                assert_eq!(unused[0].r#type, RuleCommentType::All);
+            },
+        );
+    }
+
+    #[test]
+    fn mixed_known_and_unknown_rules() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable no-debugger, custom-plugin/my-rule, no-console */
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                assert_eq!(unused.len(), 1, "Should report comment with unused known rules");
+                match &unused[0].r#type {
+                    RuleCommentType::Single(rules) => {
+                        // Should only report known rules (no-debugger, no-console)
+                        assert_eq!(rules.len(), 2, "Should only report the 2 known rules");
+                        assert!(
+                            rules.iter().any(|r| r.rule_name == "no-debugger"),
+                            "Should include no-debugger"
+                        );
+                        assert!(
+                            rules.iter().any(|r| r.rule_name == "no-console"),
+                            "Should include no-console"
+                        );
+                        // Should NOT include custom-plugin/my-rule
+                        assert!(
+                            !rules.iter().any(|r| r.rule_name == "custom-plugin/my-rule"),
+                            "Should not include unknown custom-plugin/my-rule"
+                        );
+                    }
+                    RuleCommentType::All => panic!("Expected Single rule comment type"),
+                }
+            },
+        );
+    }
+
+    #[test]
+    fn typescript_eslint_plugin_unknown_rules() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable @custom-org/eslint-plugin/some-rule */
+                    const x = 1;
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Custom org plugins should not be reported as unused
+                assert_eq!(
+                    unused.len(),
+                    0,
+                    "Unknown @-prefixed plugin rules should not be reported"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn unknown_rules_in_next_line_directive() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line custom-plugin/rule-name
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                assert_eq!(
+                    unused.len(),
+                    0,
+                    "Unknown rules in next-line directives should not be reported"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn all_unknown_rules_results_in_no_unused_report() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    /* {prefix}-disable custom-plugin/rule1, another-plugin/rule2 */
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // If all rules are unknown, should not report anything
+                assert_eq!(
+                    unused.len(),
+                    0,
+                    "When all rules are unknown, should not report any unused directives"
+                );
+            },
         );
     }
 }
