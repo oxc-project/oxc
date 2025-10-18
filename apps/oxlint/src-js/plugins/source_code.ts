@@ -226,7 +226,8 @@ export const SOURCE_CODE = Object.freeze({
 
     const commentsAfter: Comment[] = [];
 
-    for (let i = 0; i < comments.length; i++) {
+    const commentsLength = comments.length;
+    for (let i = 0; i < commentsLength; i++) {
       const comment = comments[i];
       const commentStart = comment.start;
 
@@ -294,9 +295,10 @@ export const SOURCE_CODE = Object.freeze({
   commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
     // Find the first comment after `nodeOrToken1` ends.
     // Check if it ends before `nodeOrToken2` starts.
-    const { comments } = ast;
+    const { comments } = ast,
+      commentsLength = comments.length;
     const betweenRangeStart = nodeOrToken1.range[1]; // end
-    for (let i = 0; i < comments.length; i++) {
+    for (let i = 0; i < commentsLength; i++) {
       const comment = comments[i];
       if (comment.start >= betweenRangeStart) {
         return comment.end <= nodeOrToken2.range[0]; // start
