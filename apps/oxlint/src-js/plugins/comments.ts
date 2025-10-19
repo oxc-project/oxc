@@ -180,15 +180,19 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
   if (ast === null) initAst();
 
   // Find the first comment after `nodeOrToken1` ends.
-  // Check if it ends before `nodeOrToken2` starts.
   const { comments } = ast,
     commentsLength = comments.length;
-  const betweenRangeStart = nodeOrToken1.range[1]; // end
-  for (let i = 0; i < commentsLength; i++) {
-    const comment = comments[i];
-    if (comment.start >= betweenRangeStart) {
-      return comment.end <= nodeOrToken2.range[0]; // start
+  const betweenRangeStart = nodeOrToken1.range[1];
+  let lo = 0, hi = commentsLength, firstCommentBetween = -1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start < betweenRangeStart) {
+      lo = mid + 1;
+    } else {
+      firstCommentBetween = hi = mid;
     }
   }
-  return false;
+  // Check if it ends before `nodeOrToken2` starts.
+  return 0 <= firstCommentBetween && firstCommentBetween < commentsLength &&
+    comments[firstCommentBetween].end <= nodeOrToken2.range[0];
 }
