@@ -8,6 +8,10 @@ export type JsLintFileCb =
 export type JsLoadPluginCb =
   ((arg0: string, arg1?: string | undefined | null) => Promise<string>)
 
+/** JS callback to set settings. */
+export type JsSetSettingsCb =
+  ((arg: any) => void)
+
 /**
  * NAPI entry point.
  *
@@ -15,7 +19,8 @@ export type JsLoadPluginCb =
  * 1. `args`: Command line arguments (process.argv.slice(2))
  * 2. `load_plugin`: Load a JS plugin from a file path.
  * 3. `lint_file`: Lint a file.
+ * 4. `set_settings`: Populate `context.settings` field.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb, setSettings: JsSetSettingsCb): Promise<boolean>

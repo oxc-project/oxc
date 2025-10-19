@@ -9,24 +9,26 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, LintFileResult,
-    PluginLoadResult,
+    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+    ExternalLinterSetSettingsCb, LintFileResult, PluginLoadResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb},
+    run::{JsLintFileCb, JsLoadPluginCb, JsSetSettingsCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
+    set_settings: JsSetSettingsCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_set_settings = wrap_set_settings(set_settings);
 
-    ExternalLinter::new(rust_load_plugin, rust_lint_file)
+    ExternalLinter::new(rust_load_plugin, rust_lint_file, rust_set_settings)
 }
 
 /// Wrap `loadPlugin` JS callback as a normal Rust function.
@@ -112,6 +114,15 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             Ok(Err(err)) => panic!("Callback reported error: {err}"),
             Err(err) => panic!("Callback did not respond: {err}"),
         }
+    })
+}
+
+fn wrap_set_settings(cb: JsSetSettingsCb) -> ExternalLinterSetSettingsCb {
+    let cb = Arc::new(cb);
+    Arc::new(move |settings_json| {
+        // let cb = Arc::clone(&cb);
+        let status = cb.call(settings_json.clone(), ThreadsafeFunctionCallMode::Blocking);
+        assert!(status == Status::Ok, "Failed to set settings: {status:?}");
     })
 }
 
