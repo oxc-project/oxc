@@ -38,7 +38,8 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         f: &Formatter<'_, 'a>,
     ) -> Self {
         let parent = &call_expression.parent;
-        let mut chain_members = chain_members_iter(call_expression, f).collect::<SmallVec<[_; 8]>>();
+        let mut chain_members =
+            chain_members_iter(call_expression, f).collect::<SmallVec<[_; 8]>>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
