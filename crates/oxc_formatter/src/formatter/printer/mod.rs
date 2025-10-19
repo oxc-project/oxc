@@ -43,6 +43,11 @@ impl<'a> Printer<'a> {
         Self { options, state: PrinterState::default() }
     }
 
+    /// Creates a new printer with pre-allocated buffers based on source text length
+    pub fn new_with_capacity(options: PrinterOptions, source_len: usize) -> Self {
+        Self { options, state: PrinterState::with_source_len(source_len) }
+    }
+
     /// Prints the passed in element as well as all its content
     pub fn print(self, document: &'a Document) -> PrintResult<Printed> {
         self.print_with_indent(document, 0)
@@ -703,6 +708,27 @@ struct PrinterState<'a> {
     fits_indent_stack: Vec<Indention>,
     fits_stack_tem_indent: Vec<Indention>,
     fits_queue: Vec<&'a [FormatElement<'a>]>,
+}
+
+impl<'a> PrinterState<'a> {
+    /// Creates a new PrinterState with pre-allocated buffers based on source text length
+    fn with_source_len(source_len: usize) -> Self {
+        // Output is typically 0.9x - 1.1x of input size
+        // Add 10% headroom to avoid most reallocations
+        let buffer_capacity = source_len + (source_len / 10);
+
+        // Estimate: ~1 stack frame per 100 chars of source
+        let estimated_depth = (source_len / 100).max(16);
+
+        Self {
+            buffer: String::with_capacity(buffer_capacity),
+            fits_stack: Vec::with_capacity(estimated_depth),
+            fits_indent_stack: Vec::with_capacity(estimated_depth / 2),
+            fits_stack_tem_indent: Vec::with_capacity(estimated_depth / 2),
+            fits_queue: Vec::with_capacity(estimated_depth),
+            ..Default::default()
+        }
+    }
 }
 
 /// Tracks the mode in which groups with ids are printed. Stores the groups at `group.id()` index.

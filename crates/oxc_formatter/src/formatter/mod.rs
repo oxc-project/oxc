@@ -114,8 +114,9 @@ impl<'a> Formatted<'a> {
 impl Formatted<'_> {
     pub fn print(&self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
+        let source_len = self.context.source_text().len();
 
-        let printed = Printer::new(print_options).print(&self.document)?;
+        let printed = Printer::new_with_capacity(print_options, source_len).print(&self.document)?;
 
         // let printed = match self.context.source_map() {
         // Some(source_map) => source_map.map_printed(printed),
