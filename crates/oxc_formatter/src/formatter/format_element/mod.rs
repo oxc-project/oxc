@@ -20,21 +20,54 @@ pub fn contains_newline(text: &str) -> bool {
     memchr(b'\n', text.as_bytes()).is_some()
 }
 
+// UTF-8 byte sequences for Unicode line separators
+// LS (\u{2028}) = [0xE2, 0x80, 0xA8]
+// PS (\u{2029}) = [0xE2, 0x80, 0xA9]
+
+/// First byte of both LS and PS UTF-8 encoding
+const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
+
+/// Last 2 bytes of LS (\u{2028}) UTF-8 encoding
+const LS_LAST_2_BYTES: [u8; 2] = [0x80, 0xA8];
+
+/// Last 2 bytes of PS (\u{2029}) UTF-8 encoding
+const PS_LAST_2_BYTES: [u8; 2] = [0x80, 0xA9];
+
 /// Fast line terminator detection optimized for common cases.
 ///
 /// Checks for all JavaScript line terminators:
 /// - Common (99.9% of cases): LF (\n), CR (\r) - uses SIMD
-/// - Rare: Unicode LS (\u{2028}), PS (\u{2029}) - fallback
+/// - Rare: Unicode LS (\u{2028}), PS (\u{2029}) - byte-level checks
+///
+/// Uses a single `memchr3` call to search for all potential line terminators,
+/// then validates LS/PS by checking the following bytes.
 #[inline]
 pub fn contains_line_terminator(text: &str) -> bool {
-    // Fast path: check for common line terminators (LF, CR) using SIMD
-    if memchr::memchr2(b'\n', b'\r', text.as_bytes()).is_some() {
-        return true;
+    let bytes = text.as_bytes();
+
+    // Use memchr3 to search for LF, CR, or potential LS/PS (0xE2)
+    let mut search_start = 0;
+    while let Some(pos) = memchr::memchr3(b'\n', b'\r', LS_OR_PS_FIRST_BYTE, &bytes[search_start..])
+    {
+        let absolute_pos = search_start + pos;
+        match bytes[absolute_pos] {
+            b'\n' | b'\r' => return true,
+            LS_OR_PS_FIRST_BYTE => {
+                // Check if this is actually LS or PS
+                if absolute_pos + 2 < bytes.len() {
+                    let next2 = [bytes[absolute_pos + 1], bytes[absolute_pos + 2]];
+                    if matches!(next2, LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
+                        return true;
+                    }
+                }
+                // False positive - 0xE2 but not LS/PS, continue searching
+                search_start = absolute_pos + 1;
+            }
+            _ => unreachable!(),
+        }
     }
 
-    // Slow path: check for rare Unicode line separators (LS, PS)
-    // These are multi-byte UTF-8 sequences
-    text.contains('\u{2028}') || text.contains('\u{2029}')
+    false
 }
 
 /// Language agnostic IR for formatting source code.
