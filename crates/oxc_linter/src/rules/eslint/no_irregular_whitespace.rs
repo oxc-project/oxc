@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// function example() {
     ///   var foo = 'bar'; // regular spaces only
     /// }
+    /// ```
     NoIrregularWhitespace,
     eslint,
     correctness
