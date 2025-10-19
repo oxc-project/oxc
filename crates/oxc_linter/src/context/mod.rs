@@ -485,23 +485,21 @@ impl<'a> LintContext<'a> {
 /// ```
 #[inline]
 fn plugin_name_to_prefix(plugin_name: &'static str) -> &'static str {
-    PLUGIN_PREFIXES.get(plugin_name).copied().unwrap_or(plugin_name)
+    match plugin_name {
+        "import" => "eslint-plugin-import",
+        "jest" => "eslint-plugin-jest",
+        "jsdoc" => "eslint-plugin-jsdoc",
+        "jsx_a11y" => "eslint-plugin-jsx-a11y",
+        "nextjs" => "eslint-plugin-next",
+        "promise" => "eslint-plugin-promise",
+        "react_perf" => "eslint-plugin-react-perf",
+        "react" => "eslint-plugin-react",
+        "typescript" => "typescript-eslint",
+        "unicorn" => "eslint-plugin-unicorn",
+        "vitest" => "eslint-plugin-vitest",
+        "node" => "eslint-plugin-node",
+        "vue" => "eslint-plugin-vue",
+        "regexp" => "eslint-plugin-regexp",
+        _ => plugin_name,
+    }
 }
-
-/// Map of plugin names to their prefixed versions.
-const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
-    "import" => "eslint-plugin-import",
-    "jest" => "eslint-plugin-jest",
-    "jsdoc" => "eslint-plugin-jsdoc",
-    "jsx_a11y" => "eslint-plugin-jsx-a11y",
-    "nextjs" => "eslint-plugin-next",
-    "promise" => "eslint-plugin-promise",
-    "react_perf" => "eslint-plugin-react-perf",
-    "react" => "eslint-plugin-react",
-    "typescript" => "typescript-eslint",
-    "unicorn" => "eslint-plugin-unicorn",
-    "vitest" => "eslint-plugin-vitest",
-    "node" => "eslint-plugin-node",
-    "vue" => "eslint-plugin-vue",
-    "regexp" => "eslint-plugin-regexp",
-};
