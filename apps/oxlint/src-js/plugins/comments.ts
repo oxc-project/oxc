@@ -43,28 +43,23 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
   let sliceStart = commentsLength;
   let sliceEnd = 0;
 
-  // Reverse iteration isn't ideal, but this entire implementation may need to be rewritten
-  // with token-based APIs to match eslint.
-  for (let i = commentsLength - 1; i >= 0; i--) {
-    const comment = comments[i];
-    const commentEnd = comment.end;
-
-    if (commentEnd < targetStart) {
-      const gap = sourceText.slice(commentEnd, targetStart);
-      if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-        // Nothing except whitespace between end of comment and start of `nodeOrToken`
-        sliceStart = sliceEnd = i + 1;
-        targetStart = comment.start;
-      }
-      break;
+  // Binary search for the comment immediately before `nodeOrToken`.
+  let lo = 0, hi = commentsLength - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].end < targetStart) {
+      sliceEnd = lo = mid + 1;
+    } else {
+      hi = mid - 1;
     }
   }
 
   for (let i = sliceEnd - 1; i >= 0; i--) {
     const comment = comments[i];
     const gap = sourceText.slice(comment.end, targetStart);
+    // Ensure that there is nothing except whitespace between the end of the
+    // current comment and the start of the next as we iterate backwards.
     if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-      // Nothing except whitespace between end of comment and start of `nodeOrToken`
       sliceStart = i;
       targetStart = comment.start;
     } else {
