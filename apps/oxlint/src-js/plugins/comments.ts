@@ -144,23 +144,26 @@ export function getCommentsInside(node: Node): Comment[] {
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Linear search for first comment within `node`'s range.
-  // TODO: Use binary search.
-  for (let i = 0; i < commentsLength; i++) {
-    const comment = comments[i];
-    if (comment.start >= rangeStart) {
-      sliceStart = i;
-      break;
+  // Binary search for first comment within `node`'s range.
+  let lo = 0, hi = commentsLength;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start < rangeStart) {
+      lo = mid + 1;
+    } else {
+      sliceStart = hi = mid;
     }
   }
 
-  // Continued linear search for first comment outside `node`'s range.
+  // Binary search for first comment outside `node`'s range.
   // Its index is used as `sliceEnd`, which is exclusive of the slice.
-  for (let i = sliceStart; i < commentsLength; i++) {
-    const comment = comments[i];
-    if (comment.start > rangeEnd) {
-      sliceEnd = i;
-      break;
+  lo = sliceStart, hi = commentsLength;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start <= rangeEnd) {
+      lo = mid + 1;
+    } else {
+      sliceEnd = hi = mid;
     }
   }
 
