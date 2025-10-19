@@ -44,13 +44,12 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
   let sliceEnd = 0;
 
   // Binary search for the comment immediately before `nodeOrToken`.
-  let lo = 0, hi = commentsLength - 1;
-  while (lo <= hi) {
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
     const mid = (lo + hi) >> 1;
-    if (comments[mid].end < targetStart) {
+    if (comments[mid].end <= targetStart) {
       sliceEnd = lo = mid + 1;
     } else {
-      hi = mid - 1;
+      hi = mid;
     }
   }
 
@@ -100,8 +99,7 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
   let sliceEnd = 0;
 
   // Binary search for the comment immediately after `nodeOrToken`.
-  let lo = 0, hi = commentsLength;
-  while (lo < hi) {
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].start < targetEnd) {
       lo = mid + 1;
@@ -145,8 +143,7 @@ export function getCommentsInside(node: Node): Comment[] {
     rangeEnd = range[1];
 
   // Binary search for first comment within `node`'s range.
-  let lo = 0, hi = commentsLength;
-  while (lo < hi) {
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].start < rangeStart) {
       lo = mid + 1;
@@ -157,10 +154,9 @@ export function getCommentsInside(node: Node): Comment[] {
 
   // Binary search for first comment outside `node`'s range.
   // Its index is used as `sliceEnd`, which is exclusive of the slice.
-  lo = sliceStart, hi = commentsLength;
-  while (lo < hi) {
+  for (let lo = sliceStart, hi = commentsLength; lo < hi;) {
     const mid = (lo + hi) >> 1;
-    if (comments[mid].start <= rangeEnd) {
+    if (comments[mid].start < rangeEnd) {
       lo = mid + 1;
     } else {
       sliceEnd = hi = mid;
@@ -181,10 +177,11 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
 
   // Find the first comment after `nodeOrToken1` ends.
   const { comments } = ast,
-    commentsLength = comments.length;
-  const betweenRangeStart = nodeOrToken1.range[1];
-  let lo = 0, hi = commentsLength, firstCommentBetween = -1;
-  while (lo < hi) {
+    commentsLength = comments.length,
+    betweenRangeStart = nodeOrToken1.range[1];
+  let firstCommentBetween = -1;
+
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].start < betweenRangeStart) {
       lo = mid + 1;
