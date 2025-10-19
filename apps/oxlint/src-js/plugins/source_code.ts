@@ -6,13 +6,7 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.j
 import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
 
 import visitorKeys from '../generated/keys.js';
-import {
-  commentsExistBetween,
-  getAllComments,
-  getCommentsAfter,
-  getCommentsBefore,
-  getCommentsInside,
-} from './comments.js';
+import * as commentMethods from './comments.js';
 import {
   getLineColumnFromOffset,
   getNodeLoc,
@@ -164,12 +158,6 @@ export const SOURCE_CODE = Object.freeze({
     return sourceText.slice(start, end);
   },
 
-  getAllComments,
-  getCommentsBefore,
-  getCommentsAfter,
-  getCommentsInside,
-  commentsExistBetween,
-
   /**
    * Determine if two nodes or tokens have at least one whitespace character between them.
    * Order does not matter. Returns `false` if the given nodes or tokens overlap.
@@ -182,6 +170,13 @@ export const SOURCE_CODE = Object.freeze({
   isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
     throw new Error('`sourceCode.isSpaceBetween` not implemented yet'); // TODO
   },
+
+  // Comment methods
+  getAllComments: commentMethods.getAllComments,
+  getCommentsBefore: commentMethods.getCommentsBefore,
+  getCommentsAfter: commentMethods.getCommentsAfter,
+  getCommentsInside: commentMethods.getCommentsInside,
+  commentsExistBetween: commentMethods.commentsExistBetween,
 
   // Scope methods
   isGlobalReference: scopeMethods.isGlobalReference,

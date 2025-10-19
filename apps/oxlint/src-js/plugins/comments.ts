@@ -1,3 +1,7 @@
+/*
+ * `SourceCode` methods related to comments.
+ */
+
 import { ast, initAst, sourceText } from './source_code.js';
 
 import type { Comment, Node, NodeOrToken } from './types.ts';
