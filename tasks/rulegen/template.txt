@@ -52,6 +52,26 @@ declare_oxc_lint!(
     /// ```{{language}}
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
+{{#if rule_config}}
+    ///
+    /// ### Options
+    ///
+    /// #### optionName
+    ///
+    /// `{ type: FIXME, default: FIXME }`
+    ///
+    /// FIXME: Explanation of what this option does.
+    ///
+    /// Example:
+    /// ```json
+    /// {
+    ///   "{{mod_name}}/{{kebab_rule_name}}": [
+    ///     "error",
+    ///     { "optionName": "FIXME: example option value" }
+    ///   ]
+    /// }
+    /// ```
+{{/if}}
     {{pascal_rule_name}},
     {{mod_name}},
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
