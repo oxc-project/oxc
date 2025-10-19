@@ -130,7 +130,7 @@ export function getTokenBefore(
 /* oxlint-enable no-unused-vars */
 
 /**
- * Get the tokens that precedes a given node or token.
+ * Get the tokens that precede a given node or token.
  * @param nodeOrToken - The AST node or token.
  * @param countOptions? - Options object. Same options as `getFirstTokens()`.
  * @returns Array of `Token`s.
@@ -202,7 +202,7 @@ export function getTokensBetween(
  * Get the first token between two non-overlapping nodes.
  * @param nodeOrToken1 - Node before the desired token range.
  * @param nodeOrToken2 - Node after the desired token range.
- * @param countOptions? - Options object. Same options as `getFirstToken()`.
+ * @param skipOptions? - Options object. Same options as `getFirstToken()`.
  * @returns `Token`, or `null` if all were skipped.
  */
 /* oxlint-disable no-unused-vars */
@@ -269,7 +269,7 @@ export function getLastTokensBetween(
 /**
  * Get the token starting at the specified index.
  * @param index - Index of the start of the token's range.
- * @param options - Options object.
+ * @param rangeOptions - Options object.
  * @returns The token starting at index, or `null` if no such token.
  */
 // oxlint-disable-next-line no-unused-vars
