@@ -112,7 +112,7 @@ declare_oxc_lint!(
     ///
     /// `{ type: string[], default: [] }`
     ///
-    /// You may pass a list of `allow`ed function kinds, which will allow functions of
+    /// You may pass a list of allowed function kinds, which will allow functions of
     /// these kinds to be empty.
     ///
     /// Example:
