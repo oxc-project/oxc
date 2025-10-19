@@ -34,10 +34,13 @@ pub struct NoUselessEscapeConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary escape characters
+    /// Disallow unnecessary escape characters.
     ///
     /// ### Why is this bad?
     ///
+    /// Escaping characters unnecessarily has no effect on the regex behavior,
+    /// and can make regexes harder to read and understand by adding
+    /// unnecessary complexity.
     ///
     /// ### Examples
     ///
@@ -77,6 +80,23 @@ declare_oxc_lint!(
     /// /[[]/;
     /// /[\]]/;
     /// /[a-z-]/;
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### allowRegexCharacters
+    ///
+    /// `{ type: string[], default: [] }`
+    ///
+    /// An array of characters that are allowed to be escaped unnecessarily in regexes.
+    ///
+    /// Example:
+    /// ```json
+    /// {
+    ///   "no-useless-escape": ["error", {
+    ///     "allowRegexCharacters": ["!", "@", "#"]
+    ///   }]
+    /// }
     /// ```
     NoUselessEscape,
     eslint,
