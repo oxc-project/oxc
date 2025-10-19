@@ -21,10 +21,11 @@ import {
   lines,
   resetLines,
 } from './location.js';
+import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
 import type { Program } from '../generated/types.d.ts';
-import type { Scope, ScopeManager, Variable } from './scope.ts';
+import type { ScopeManager } from './scope.ts';
 import type { BufferWithArrays, Node, NodeOrToken, Ranged } from './types.ts';
 
 const { max } = Math;
@@ -182,15 +183,11 @@ export const SOURCE_CODE = Object.freeze({
     throw new Error('`sourceCode.isSpaceBetween` not implemented yet'); // TODO
   },
 
-  /**
-   * Determine whether the given identifier node is a reference to a global variable.
-   * @param node - `Identifier` node to check.
-   * @returns `true` if the identifier is a reference to a global variable.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  isGlobalReference(node: Node): boolean {
-    throw new Error('`sourceCode.isGlobalReference` not implemented yet'); // TODO
-  },
+  // Scope methods
+  isGlobalReference: scopeMethods.isGlobalReference,
+  getDeclaredVariables: scopeMethods.getDeclaredVariables,
+  getScope: scopeMethods.getScope,
+  markVariableAsUsed: scopeMethods.markVariableAsUsed,
 
   // Token methods
   getTokens: tokenMethods.getTokens,
@@ -223,38 +220,6 @@ export const SOURCE_CODE = Object.freeze({
   getIndexFromLoc: getOffsetFromLineColumn,
 
   getAncestors,
-
-  /**
-   * Get the variables that `node` defines.
-   * This is a convenience method that passes through to the same method on the `scopeManager`.
-   * @param node - The node for which the variables are obtained.
-   * @returns An array of variable nodes representing the variables that `node` defines.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  getDeclaredVariables(node: Node): Variable[] {
-    throw new Error('`sourceCode.getDeclaredVariables` not implemented yet'); // TODO
-  },
-
-  /**
-   * Get the scope for the given node
-   * @param node - The node to get the scope of.
-   * @returns The scope information for this node.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  getScope(node: Node): Scope {
-    throw new Error('`sourceCode.getScope` not implemented yet'); // TODO
-  },
-
-  /**
-   * Mark a variable as used in the current scope
-   * @param name - The name of the variable to mark as used.
-   * @param refNode? - The closest node to the variable reference.
-   * @returns `true` if the variable was found and marked as used, `false` if not.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  markVariableAsUsed(name: string, refNode: Node): boolean {
-    throw new Error('`sourceCode.markVariableAsUsed` not implemented yet'); // TODO
-  },
 });
 
 export type SourceCode = typeof SOURCE_CODE;
