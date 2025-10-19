@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     AllowWarnDeny,
+    config::OxlintSettings,
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -311,6 +312,10 @@ impl ConfigStore {
 
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.base.rules
+    }
+
+    pub fn settings(&self) -> &OxlintSettings {
+        &self.base.base.config.settings
     }
 
     pub fn plugins(&self) -> LintPlugins {

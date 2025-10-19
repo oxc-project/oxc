@@ -38,9 +38,12 @@ use self::{
 ///   }
 /// }
 /// ```
-#[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Default, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct OxlintSettings {
+    #[serde(skip)]
+    pub value: Option<serde_json::Value>,
+
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]
     pub jsx_a11y: JSXA11yPluginSettings,
@@ -56,6 +59,66 @@ pub struct OxlintSettings {
 
     #[serde(default)]
     pub vitest: VitestPluginSettings,
+}
+
+impl<'de> Deserialize<'de> for OxlintSettings {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // Create a temporary struct without the value field for deserialization
+        #[derive(serde::Deserialize)]
+        struct WellKnownOxlintSettings {
+            #[serde(default)]
+            #[serde(rename = "jsx-a11y")]
+            jsx_a11y: JSXA11yPluginSettings,
+
+            #[serde(default)]
+            next: NextPluginSettings,
+
+            #[serde(default)]
+            react: ReactPluginSettings,
+
+            #[serde(default)]
+            jsdoc: JSDocPluginSettings,
+        }
+
+        // Capture the raw JSON value first
+        let raw_value = serde_json::Value::deserialize(deserializer)?;
+
+        let well_known_settings: WellKnownOxlintSettings =
+            serde_json::from_value(raw_value.clone()).map_err(serde::de::Error::custom)?;
+
+        Ok(OxlintSettings {
+            value: Some(raw_value),
+            jsx_a11y: well_known_settings.jsx_a11y,
+            next: well_known_settings.next,
+            react: well_known_settings.react,
+            jsdoc: well_known_settings.jsdoc,
+        })
+    }
+}
+
+impl OxlintSettings {
+    /// Create a new OxlintSettings instance with both parsed settings and raw JSON.
+    /// This allows external plugins to access unknown configuration fields.
+    pub fn from_json_with_raw(json_value: &serde_json::Value) -> Result<Self, serde_json::Error> {
+        let mut settings = Self::deserialize(json_value)?;
+        settings.value = Some(json_value.clone());
+        Ok(settings)
+    }
+
+    /// Get the raw JSON value if available.
+    /// This contains the full settings object including unknown fields.
+    pub fn value(&self) -> Option<&serde_json::Value> {
+        self.value.as_ref()
+    }
+
+    /// Get the raw JSON as a string if available.
+    /// This contains the full settings object including unknown fields.
+    pub fn raw_json(&self) -> Option<String> {
+        self.value.as_ref().map(ToString::to_string)
+    }
 }
 
 #[cfg(test)]
@@ -166,5 +229,127 @@ mod test {
         .unwrap();
 
         assert!(settings.jsx_a11y.attributes.is_empty());
+    }
+
+    #[test]
+    fn test_parse_settings_with_extra_fields_and_raw_json() {
+        // Helper struct to demonstrate external plugin configuration parsing
+        #[derive(serde::Deserialize, Debug, PartialEq)]
+        struct CustomPluginConfig {
+            enabled: bool,
+            severity: String,
+            config: CustomPluginInnerConfig,
+        }
+
+        #[derive(serde::Deserialize, Debug, PartialEq)]
+        struct CustomPluginInnerConfig {
+            #[serde(rename = "maxDepth")]
+            max_depth: i32,
+            #[serde(rename = "ignorePatterns")]
+            ignore_patterns: Vec<String>,
+        }
+        // Test JSON with both known plugin settings and unknown extra fields
+        let json_value = serde_json::json!({
+            "jsx-a11y": {
+                "polymorphicPropName": "role",
+                "components": {
+                    "Link": "a",
+                    "Button": "button"
+                }
+            },
+            "react": {
+                "linkComponents": [
+                    { "name": "Link", "linkAttribute": "to" }
+                ]
+            },
+            // Extra fields for external plugins
+            "eslint-plugin-custom": {
+                "enabled": true,
+                "severity": "error",
+                "config": {
+                    "maxDepth": 3,
+                    "ignorePatterns": ["*.test.js"]
+                }
+            },
+            "typescript-plugin": {
+                "strict": true,
+                "parserOptions": {
+                    "project": "./tsconfig.json"
+                }
+            },
+            // Another unknown field at the root level
+            "globalSetting": "value"
+        });
+
+        // Test the enhanced parsing that captures raw JSON
+        let settings = OxlintSettings::from_json_with_raw(&json_value).unwrap();
+
+        // Verify that known plugin settings are properly parsed
+        assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".into()));
+        assert_eq!(settings.jsx_a11y.components.get("Link"), Some(&"a".into()));
+        assert_eq!(settings.jsx_a11y.components.get("Button"), Some(&"button".into()));
+
+        let link_attrs = settings.react.get_link_component_attrs("Link").unwrap();
+        assert!(link_attrs.contains(&"to".into()));
+
+        // Verify that raw JSON is captured
+        assert!(settings.value().is_some());
+        let raw_json = settings.value().unwrap();
+
+        // Verify known fields are present in raw JSON
+        assert_eq!(raw_json["jsx-a11y"]["polymorphicPropName"], "role");
+        assert_eq!(raw_json["react"]["linkComponents"][0]["name"], "Link");
+
+        // Verify unknown fields are preserved in raw JSON
+        assert_eq!(raw_json["eslint-plugin-custom"]["enabled"], true);
+        assert_eq!(raw_json["eslint-plugin-custom"]["severity"], "error");
+        assert_eq!(raw_json["eslint-plugin-custom"]["config"]["maxDepth"], 3);
+        assert_eq!(raw_json["eslint-plugin-custom"]["config"]["ignorePatterns"][0], "*.test.js");
+
+        assert_eq!(raw_json["typescript-plugin"]["strict"], true);
+        assert_eq!(raw_json["typescript-plugin"]["parserOptions"]["project"], "./tsconfig.json");
+
+        assert_eq!(raw_json["globalSetting"], "value");
+
+        // Demonstrate how an external plugin would access its configuration
+        if let Some(custom_config) = raw_json.get("eslint-plugin-custom") {
+            let custom_plugin_config: CustomPluginConfig =
+                serde_json::from_value(custom_config.clone()).unwrap();
+
+            // Simulate external plugin processing
+            assert!(custom_plugin_config.enabled);
+            assert_eq!(custom_plugin_config.severity, "error");
+            assert_eq!(custom_plugin_config.config.max_depth, 3);
+            assert_eq!(custom_plugin_config.config.ignore_patterns, vec!["*.test.js".to_string()]);
+        }
+    }
+
+    #[test]
+    fn test_raw_json_access_methods() {
+        let json_value = serde_json::json!({
+            "jsx-a11y": { "components": { "Link": "a" } },
+            "custom-plugin": { "setting": "value" }
+        });
+
+        let settings = OxlintSettings::from_json_with_raw(&json_value).unwrap();
+
+        // Test value() method
+        assert!(settings.value().is_some());
+        let raw_json = settings.value().unwrap();
+
+        assert_eq!(raw_json["custom-plugin"]["setting"], "value");
+
+        // Test with empty settings
+        let empty_settings = OxlintSettings::default();
+        assert!(empty_settings.value().is_none());
+
+        // Test raw_json() method that returns String
+        assert!(settings.raw_json().is_some());
+        let raw_json_str = settings.raw_json().unwrap();
+        let parsed_from_string: serde_json::Value = serde_json::from_str(&raw_json_str).unwrap();
+        assert_eq!(parsed_from_string["custom-plugin"]["setting"], "value");
+
+        // Test empty settings raw_json()
+        assert!(empty_settings.raw_json().is_none());
     }
 }
