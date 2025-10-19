@@ -4,6 +4,8 @@ pub mod simple_argument;
 
 use std::iter;
 
+use smallvec::SmallVec;
+
 use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
@@ -36,7 +38,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         f: &Formatter<'_, 'a>,
     ) -> Self {
         let parent = &call_expression.parent;
-        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression, f).collect::<SmallVec<[_; 8]>>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
@@ -46,7 +48,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         // `[ StaticMemberExpression -> AnyNode + CallExpression ]`
         let tail_groups =
             compute_remaining_groups(chain_members.drain(remaining_members_start_index..));
-        let head_group = MemberChainGroup::from(chain_members);
+        let head_group = MemberChainGroup::from(chain_members.into_vec());
 
         let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
 
