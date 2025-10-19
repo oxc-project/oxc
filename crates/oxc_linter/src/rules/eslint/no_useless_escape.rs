@@ -38,9 +38,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Escaping characters unnecessarily has no effect on the regex behavior,
-    /// and can make regexes harder to read and understand by adding
-    /// unnecessary complexity.
+    /// Escaping characters unnecessarily has no effect on the behavior of strings or regexes,
+    /// and can make code harder to read and understand by adding unnecessary complexity.
+    /// This applies to string literals, template literals, and regular expressions.
     ///
     /// ### Examples
     ///
