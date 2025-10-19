@@ -20,6 +20,23 @@ pub fn contains_newline(text: &str) -> bool {
     memchr(b'\n', text.as_bytes()).is_some()
 }
 
+/// Fast line terminator detection optimized for common cases.
+///
+/// Checks for all JavaScript line terminators:
+/// - Common (99.9% of cases): LF (\n), CR (\r) - uses SIMD
+/// - Rare: Unicode LS (\u{2028}), PS (\u{2029}) - fallback
+#[inline]
+pub fn contains_line_terminator(text: &str) -> bool {
+    // Fast path: check for common line terminators (LF, CR) using SIMD
+    if memchr::memchr2(b'\n', b'\r', text.as_bytes()).is_some() {
+        return true;
+    }
+
+    // Slow path: check for rare Unicode line separators (LS, PS)
+    // These are multi-byte UTF-8 sequences
+    text.contains('\u{2028}') || text.contains('\u{2029}')
+}
+
 /// Language agnostic IR for formatting source code.
 ///
 /// Use the helper functions like [crate::builders::space], [crate::builders::soft_line_break] etc. defined in this file to create elements.
