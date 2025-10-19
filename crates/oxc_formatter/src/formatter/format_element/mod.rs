@@ -16,7 +16,7 @@ use super::{
 
 /// Fast newline detection using SIMD-accelerated byte search
 #[inline]
-pub(crate) fn contains_newline(text: &str) -> bool {
+pub fn contains_newline(text: &str) -> bool {
     memchr(b'\n', text.as_bytes()).is_some()
 }
 

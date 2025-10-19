@@ -66,6 +66,7 @@ use oxc_syntax::comment_node;
 use crate::write;
 
 use super::{Argument, Arguments, GroupId, SourceText, SyntaxToken, prelude::*};
+use super::format_element::contains_newline;
 
 /// Returns true if:
 /// - `next_comment` is Some, and
@@ -524,7 +525,7 @@ impl<'a> Format<'a> for Comment {
 /// "#)));
 /// ```
 pub fn is_alignable_comment(source_text: &str) -> bool {
-    if !source_text.contains('\n') {
+    if !contains_newline(source_text) {
         return false;
     }
     source_text.lines().enumerate().all(|(index, line)| {

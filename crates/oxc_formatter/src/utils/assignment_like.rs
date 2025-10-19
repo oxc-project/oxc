@@ -10,6 +10,7 @@ use crate::{
     format_args,
     formatter::{
         Buffer, BufferExtensions, Format, FormatResult, Formatter, VecBuffer,
+        format_element::contains_newline,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
@@ -969,7 +970,7 @@ fn is_short_argument(argument: &Argument, threshold: u16, f: &Formatter) -> bool
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
             literal.quasis.len() == 1 && {
                 let raw = literal.quasis[0].value.raw;
-                raw.len() <= threshold as usize && !raw.contains('\n')
+                raw.len() <= threshold as usize && !contains_newline(&raw)
             }
         }
         Argument::ThisExpression(_)
