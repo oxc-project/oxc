@@ -65,8 +65,8 @@ use oxc_syntax::comment_node;
 
 use crate::write;
 
-use super::{Argument, Arguments, GroupId, SourceText, SyntaxToken, prelude::*};
 use super::format_element::contains_newline;
+use super::{Argument, Arguments, GroupId, SourceText, SyntaxToken, prelude::*};
 
 /// Returns true if:
 /// - `next_comment` is Some, and
