@@ -1,3 +1,8 @@
+/*
+ * `SourceCode` methods related to `LineColumn`.
+ * Functions for converting between `LineColumn` and offsets, and splitting source text into lines.
+ */
+
 import { initSourceText, sourceText } from './source_code.js';
 
 import type { LineColumn, Location, Node } from './types.ts';

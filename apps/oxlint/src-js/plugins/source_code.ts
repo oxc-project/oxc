@@ -159,6 +159,25 @@ export const SOURCE_CODE = Object.freeze({
   },
 
   /**
+   * Get all the ancestors of a given node.
+   * @param node - AST node
+   * @returns All the ancestor nodes in the AST, not including the provided node,
+   *   starting from the root node at index 0 and going inwards to the parent node.
+   */
+  getAncestors(node: Node): Node[] {
+    const ancestors = [];
+
+    while (true) {
+      // @ts-expect-error `parent` property should be present on `Node` type
+      node = node.parent;
+      if (node === null) break;
+      ancestors.push(node);
+    }
+
+    return ancestors.reverse();
+  },
+
+  /**
    * Determine if two nodes or tokens have at least one whitespace character between them.
    * Order does not matter. Returns `false` if the given nodes or tokens overlap.
    * @param nodeOrToken1 - The first node or token to check between.
@@ -170,6 +189,20 @@ export const SOURCE_CODE = Object.freeze({
   isSpaceBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: NodeOrToken): boolean {
     throw new Error('`sourceCode.isSpaceBetween` not implemented yet'); // TODO
   },
+
+  /**
+   * Get the deepest node containing a range index.
+   * @param index Range index of the desired node.
+   * @returns The node if found, or `null` if not found.
+   */
+  // oxlint-disable-next-line no-unused-vars
+  getNodeByRangeIndex(index: number): Node | null {
+    throw new Error('`sourceCode.getNodeByRangeIndex` not implemented yet'); // TODO
+  },
+
+  // Location methods
+  getLocFromIndex: getLineColumnFromOffset,
+  getIndexFromLoc: getOffsetFromLineColumn,
 
   // Comment methods
   getAllComments: commentMethods.getAllComments,
@@ -200,40 +233,6 @@ export const SOURCE_CODE = Object.freeze({
   getLastTokenBetween: tokenMethods.getLastTokenBetween,
   getLastTokensBetween: tokenMethods.getLastTokensBetween,
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
-
-  /**
-   * Get the deepest node containing a range index.
-   * @param index Range index of the desired node.
-   * @returns The node if found, or `null` if not found.
-   */
-  // oxlint-disable-next-line no-unused-vars
-  getNodeByRangeIndex(index: number): Node | null {
-    throw new Error('`sourceCode.getNodeByRangeIndex` not implemented yet'); // TODO
-  },
-
-  getLocFromIndex: getLineColumnFromOffset,
-  getIndexFromLoc: getOffsetFromLineColumn,
-
-  getAncestors,
 });
 
 export type SourceCode = typeof SOURCE_CODE;
-
-/**
- * Get all the ancestors of a given node.
- * @param node - AST node
- * @returns All the ancestor nodes in the AST, not including the provided node,
- *   starting from the root node at index 0 and going inwards to the parent node.
- */
-function getAncestors(node: Node): Node[] {
-  const ancestors = [];
-
-  while (true) {
-    // @ts-expect-error `parent` property should be present on `Node` type
-    node = node.parent;
-    if (node === null) break;
-    ancestors.push(node);
-  }
-
-  return ancestors.reverse();
-}
