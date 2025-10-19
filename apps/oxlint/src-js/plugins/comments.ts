@@ -96,25 +96,34 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
 
   let targetEnd = nodeOrToken.range[1]; // end
 
-  const commentsAfter: Comment[] = [];
-  for (let i = 0; i < commentsLength; i++) {
-    const comment = comments[i],
-      commentStart = comment.start;
+  let sliceStart = commentsLength;
+  let sliceEnd = 0;
 
-    if (commentStart < targetEnd) {
-      continue;
+  // Binary search for the comment immediately after `nodeOrToken`.
+  let lo = 0, hi = commentsLength;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start < targetEnd) {
+      lo = mid + 1;
+    } else {
+      sliceStart = hi = mid;
     }
-    const gap = sourceText.slice(targetEnd, commentStart);
+  }
+
+  for (let i = sliceStart; i < commentsLength; i++) {
+    // Ensure that there is nothing except whitespace between the
+    // end of the previous comment and the start of the current.
+    const comment = comments[i];
+    const gap = sourceText.slice(targetEnd, comment.start);
     if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-      // Nothing except whitespace between end of `nodeOrToken` and start of comment
-      commentsAfter.push(comment);
+      sliceEnd = i + 1;
       targetEnd = comment.end;
     } else {
       break;
     }
   }
 
-  return commentsAfter;
+  return comments.slice(sliceStart, sliceEnd);
 }
 
 /**
