@@ -433,6 +433,7 @@ impl Linter {
             // Convert spans to UTF-16
             let span_converter = Utf8ToUtf16::new(program.source_text);
             span_converter.convert_program(program);
+            span_converter.convert_comments(&mut program.comments);
 
             // Get offset of `Program` within buffer (bottom 32 bits of pointer)
             let program_offset = ptr::from_ref(program) as u32;

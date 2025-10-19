@@ -220,4 +220,8 @@ describe('oxlint CLI', () => {
   it('should support comments-related APIs in `context.sourceCode`', async () => {
     await testFixture('comments');
   });
+
+  it('should support UTF16 characters in source code and comments with correct spans', async () => {
+    await testFixture('unicode-comments');
+  });
 });
