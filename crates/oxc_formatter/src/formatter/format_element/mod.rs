@@ -7,10 +7,18 @@ pub mod tag;
 use std::hash::{Hash, Hasher};
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
+use memchr::memchr;
+
 use super::{
     TagKind, TextSize, TokenText,
     format_element::tag::{LabelId, Tag},
 };
+
+/// Fast newline detection using SIMD-accelerated byte search
+#[inline]
+pub(crate) fn contains_newline(text: &str) -> bool {
+    memchr(b'\n', text.as_bytes()).is_some()
+}
 
 /// Language agnostic IR for formatting source code.
 ///
@@ -242,9 +250,9 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => matches!(line_mode, LineMode::Hard | LineMode::Empty),
             FormatElement::StaticText { text } | FormatElement::DynamicText { text } => {
-                text.contains('\n')
+                contains_newline(text)
             }
-            FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
+            FormatElement::LocatedTokenText { slice, .. } => contains_newline(slice),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
             // the most flat version contains some content that forces a break.

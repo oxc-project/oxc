@@ -28,6 +28,7 @@ oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
 json-strip-comments = { workspace = true }
+memchr = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
