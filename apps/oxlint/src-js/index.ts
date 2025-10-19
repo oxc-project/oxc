@@ -15,7 +15,8 @@ export type {
   ScopeType,
   Variable,
 } from './plugins/scope.ts';
-export type { CountOptions, FilterFn, RangeOptions, SkipOptions, SourceCode } from './plugins/source_code.ts';
+export type { SourceCode } from './plugins/source_code.ts';
+export type { CountOptions, FilterFn, RangeOptions, SkipOptions } from './plugins/tokens.ts';
 export type {
   AfterHook,
   BeforeHook,
