@@ -1,0 +1,6 @@
+/node_modules/
+/dist/
+*.node
+/src-js/bindings.js
+/src-js/bindings.d.ts
+/src-js/oxfmt
