@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
@@ -22,6 +21,7 @@ use crate::linter::{
     tsgo_linter::TsgoLinter,
 };
 use crate::utils::normalize_path;
+use crate::worker::WorkerDiagnostics;
 use crate::{ConcurrentHashMap, LINT_CONFIG_FILE};
 
 use super::config_walker::ConfigWalker;
@@ -39,50 +39,7 @@ pub struct ServerLinter {
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     lint_on_run: Run,
-    diagnostics: ServerLinterDiagnostics,
     extended_paths: FxHashSet<PathBuf>,
-}
-
-#[derive(Debug, Default)]
-struct ServerLinterDiagnostics {
-    isolated_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
-    tsgo_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
-}
-
-impl ServerLinterDiagnostics {
-    pub fn get_diagnostics(&self, path: &str) -> Option<Vec<DiagnosticReport>> {
-        let mut reports = Vec::new();
-        let mut found = false;
-        if let Some(entry) = self.isolated_linter.pin().get(path) {
-            found = true;
-            if let Some(diagnostics) = entry {
-                reports.extend(diagnostics.clone());
-            }
-        }
-        if let Some(entry) = self.tsgo_linter.pin().get(path) {
-            found = true;
-            if let Some(diagnostics) = entry {
-                reports.extend(diagnostics.clone());
-            }
-        }
-        if found { Some(reports) } else { None }
-    }
-
-    pub fn remove_diagnostics(&self, path: &str) {
-        self.isolated_linter.pin().remove(path);
-        self.tsgo_linter.pin().remove(path);
-    }
-
-    pub fn get_cached_files_of_diagnostics(&self) -> Vec<String> {
-        let isolated_files = self.isolated_linter.pin().keys().cloned().collect::<Vec<_>>();
-        let tsgo_files = self.tsgo_linter.pin().keys().cloned().collect::<Vec<_>>();
-
-        let mut files = Vec::with_capacity(isolated_files.len() + tsgo_files.len());
-        files.extend(isolated_files);
-        files.extend(tsgo_files);
-        files.dedup();
-        files
-    }
 }
 
 impl ServerLinter {
@@ -174,7 +131,6 @@ impl ServerLinter {
             gitignore_glob: Self::create_ignore_glob(&root_path),
             extended_paths,
             lint_on_run: options.run,
-            diagnostics: ServerLinterDiagnostics::default(),
             tsgo_linter: if options.type_aware {
                 Arc::new(Some(TsgoLinter::new(&root_path, config_store)))
             } else {
@@ -267,27 +223,15 @@ impl ServerLinter {
         gitignore_globs
     }
 
-    pub fn remove_diagnostics(&self, uri: &Uri) {
-        self.diagnostics.remove_diagnostics(&uri.to_string());
-    }
-
-    pub fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
-        self.diagnostics.get_diagnostics(&uri.to_string())
-    }
-
-    pub fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
-        self.diagnostics
-            .get_cached_files_of_diagnostics()
-            .into_iter()
-            .filter_map(|s| Uri::from_str(&s).ok())
-            .collect()
-    }
-
-    pub async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
+    pub async fn revalidate_diagnostics(
+        &self,
+        uris: Vec<Uri>,
+        diagnostics_map: &WorkerDiagnostics,
+    ) -> Vec<(String, Vec<Diagnostic>)> {
         let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
             if let Some(file_diagnostic) =
-                self.run_single(&uri, None, ServerLinterRun::Always).await
+                self.run_single(&uri, None, ServerLinterRun::Always, diagnostics_map).await
             {
                 diagnostics.push((
                     uri.to_string(),
@@ -325,6 +269,7 @@ impl ServerLinter {
         uri: &Uri,
         content: Option<String>,
         run_type: ServerLinterRun,
+        diagnostics_map: &WorkerDiagnostics,
     ) -> Option<Vec<DiagnosticReport>> {
         let (oxlint, tsgolint) = match (run_type, self.lint_on_run) {
             // run everything on save, or when it is forced
@@ -356,17 +301,17 @@ impl ServerLinter {
                 let mut isolated_linter = self.isolated_linter.lock().await;
                 isolated_linter.run_single(uri, content.clone())
             };
-            self.diagnostics.isolated_linter.pin().insert(uri.to_string(), diagnostics);
+            diagnostics_map.isolated_linter.pin().insert(uri.to_string(), diagnostics);
         }
 
         if tsgolint && let Some(tsgo_linter) = self.tsgo_linter.as_ref() {
-            self.diagnostics
+            diagnostics_map
                 .tsgo_linter
                 .pin()
                 .insert(uri.to_string(), tsgo_linter.lint_file(uri, content.clone()));
         }
 
-        self.diagnostics.get_diagnostics(&uri.to_string())
+        diagnostics_map.get_diagnostics(&uri.to_string())
     }
 
     pub fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
@@ -423,11 +368,9 @@ mod test {
     use std::path::{Path, PathBuf};
 
     use crate::{
-        ConcurrentHashMap,
         linter::{
-            error_with_position::DiagnosticReport,
             options::{LintOptions, Run, UnusedDisableDirectives},
-            server_linter::{ServerLinter, ServerLinterDiagnostics},
+            server_linter::ServerLinter,
         },
         tester::{Tester, get_file_path},
     };
@@ -465,45 +408,6 @@ mod test {
         assert!(configs_dirs[2].ends_with("deep2"));
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
-    }
-
-    #[test]
-    fn test_get_diagnostics_found_and_none_entries() {
-        let key = "file:///test.js".to_string();
-
-        // Case 1: Both entries present, Some diagnostics
-        let diag = DiagnosticReport::default();
-        let diag_map = ConcurrentHashMap::default();
-        diag_map.pin().insert(key.clone(), Some(vec![diag.clone()]));
-        let tsgo_map = ConcurrentHashMap::default();
-        tsgo_map.pin().insert(key.clone(), Some(vec![diag]));
-
-        let server_diag = super::ServerLinterDiagnostics {
-            isolated_linter: std::sync::Arc::new(diag_map),
-            tsgo_linter: std::sync::Arc::new(tsgo_map),
-        };
-        let result = server_diag.get_diagnostics(&key);
-        assert!(result.is_some());
-        assert_eq!(result.unwrap().len(), 2);
-
-        // Case 2: Entry present, but value is None
-        let diag_map_none = ConcurrentHashMap::default();
-        diag_map_none.pin().insert(key.clone(), None);
-        let tsgo_map_none = ConcurrentHashMap::default();
-        tsgo_map_none.pin().insert(key.clone(), None);
-
-        let server_diag_none = ServerLinterDiagnostics {
-            isolated_linter: std::sync::Arc::new(diag_map_none),
-            tsgo_linter: std::sync::Arc::new(tsgo_map_none),
-        };
-        let result_none = server_diag_none.get_diagnostics(&key);
-        assert!(result_none.is_some());
-        assert_eq!(result_none.unwrap().len(), 0);
-
-        // Case 3: No entry at all
-        let server_diag_empty = ServerLinterDiagnostics::default();
-        let result_empty = server_diag_empty.get_diagnostics(&key);
-        assert!(result_empty.is_none());
     }
 
     #[test]

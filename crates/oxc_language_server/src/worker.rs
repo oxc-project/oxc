@@ -1,3 +1,5 @@
+use std::{str::FromStr, sync::Arc};
+
 use log::debug;
 use serde_json::json;
 use tokio::sync::{Mutex, RwLock};
@@ -11,6 +13,7 @@ use tower_lsp_server::{
 };
 
 use crate::{
+    ConcurrentHashMap,
     code_actions::{apply_all_fix_code_action, apply_fix_code_actions, fix_all_text_edit},
     formatter::{options::FormatOptions, server_formatter::ServerFormatter},
     linter::{
@@ -20,6 +23,48 @@ use crate::{
     },
     options::Options,
 };
+
+#[derive(Debug, Default)]
+pub struct WorkerDiagnostics {
+    pub isolated_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+    pub tsgo_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
+}
+
+impl WorkerDiagnostics {
+    pub fn get_diagnostics(&self, path: &str) -> Option<Vec<DiagnosticReport>> {
+        let mut reports = Vec::new();
+        let mut found = false;
+        if let Some(entry) = self.isolated_linter.pin().get(path) {
+            found = true;
+            if let Some(diagnostics) = entry {
+                reports.extend(diagnostics.clone());
+            }
+        }
+        if let Some(entry) = self.tsgo_linter.pin().get(path) {
+            found = true;
+            if let Some(diagnostics) = entry {
+                reports.extend(diagnostics.clone());
+            }
+        }
+        if found { Some(reports) } else { None }
+    }
+
+    pub fn remove_diagnostics(&self, path: &str) {
+        self.isolated_linter.pin().remove(path);
+        self.tsgo_linter.pin().remove(path);
+    }
+
+    pub fn get_cached_files_of_diagnostics(&self) -> Vec<String> {
+        let isolated_files = self.isolated_linter.pin().keys().cloned().collect::<Vec<_>>();
+        let tsgo_files = self.tsgo_linter.pin().keys().cloned().collect::<Vec<_>>();
+
+        let mut files = Vec::with_capacity(isolated_files.len() + tsgo_files.len());
+        files.extend(isolated_files);
+        files.extend(tsgo_files);
+        files.dedup();
+        files
+    }
+}
 
 /// A worker that manages the individual tools for a specific workspace
 /// and reports back the results to the [`Backend`](crate::backend::Backend).
@@ -31,6 +76,7 @@ pub struct WorkspaceWorker {
     server_linter: RwLock<Option<ServerLinter>>,
     server_formatter: RwLock<Option<ServerFormatter>>,
     options: Mutex<Option<Options>>,
+    diagnostics: WorkerDiagnostics,
 }
 
 impl WorkspaceWorker {
@@ -43,6 +89,7 @@ impl WorkspaceWorker {
             server_linter: RwLock::new(None),
             server_formatter: RwLock::new(None),
             options: Mutex::new(None),
+            diagnostics: WorkerDiagnostics::default(),
         }
     }
 
@@ -158,12 +205,20 @@ impl WorkspaceWorker {
     }
 
     /// Remove all diagnostics for the given URI
-    pub async fn remove_diagnostics(&self, uri: &Uri) {
-        let server_linter_guard = self.server_linter.read().await;
-        let Some(server_linter) = server_linter_guard.as_ref() else {
-            return;
-        };
-        server_linter.remove_diagnostics(uri);
+    pub fn remove_diagnostics(&self, uri: &Uri) {
+        self.diagnostics.remove_diagnostics(&uri.to_string());
+    }
+
+    pub fn get_cached_diagnostics(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
+        self.diagnostics.get_diagnostics(&uri.to_string())
+    }
+
+    pub fn get_cached_files_of_diagnostics(&self) -> Vec<Uri> {
+        self.diagnostics
+            .get_cached_files_of_diagnostics()
+            .into_iter()
+            .filter_map(|s| Uri::from_str(&s).ok())
+            .collect()
     }
 
     /// Refresh the server linter with the current options
@@ -197,7 +252,7 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_linter.run_single(uri, content, run_type).await
+        server_linter.run_single(uri, content, run_type, &self.diagnostics).await
     }
 
     /// Format a file with the current formatter
@@ -218,7 +273,7 @@ impl WorkspaceWorker {
             return Vec::new();
         };
 
-        server_linter.revalidate_diagnostics(uris).await
+        server_linter.revalidate_diagnostics(uris, &self.diagnostics).await
     }
 
     /// Get all clear diagnostics for the current workspace
@@ -228,19 +283,11 @@ impl WorkspaceWorker {
     /// - The server is shut down
     ///
     /// This will return a list of URIs that had diagnostics before, each with an empty diagnostics list
-    pub async fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
-        self.server_linter
-            .read()
-            .await
-            .as_ref()
-            .map(|server_linter| {
-                server_linter
-                    .get_cached_files_of_diagnostics()
-                    .iter()
-                    .map(|uri| (uri.to_string(), vec![]))
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default()
+    pub fn get_clear_diagnostics(&self) -> Vec<(String, Vec<Diagnostic>)> {
+        self.get_cached_files_of_diagnostics()
+            .iter()
+            .map(|uri| (uri.to_string(), vec![]))
+            .collect::<Vec<_>>()
     }
 
     /// Get code actions or commands for the given range
@@ -252,14 +299,15 @@ impl WorkspaceWorker {
         range: &Range,
         is_source_fix_all_oxc: bool,
     ) -> Vec<CodeActionOrCommand> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return vec![];
-        };
-
-        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
+        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            let Some(server_linter) = &*self.server_linter.read().await else {
+                return vec![];
+            };
+            let diagnostics = server_linter
+                .run_single(uri, None, ServerLinterRun::Always, &self.diagnostics)
+                .await;
             diagnostics.unwrap_or_default()
         };
 
@@ -291,13 +339,15 @@ impl WorkspaceWorker {
 
     /// This function is used for executing the `oxc.fixAll` command
     pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
-        let Some(server_linter) = &*self.server_linter.read().await else {
-            return vec![];
-        };
-        let value = if let Some(cached_diagnostics) = server_linter.get_cached_diagnostics(uri) {
+        let value = if let Some(cached_diagnostics) = self.get_cached_diagnostics(uri) {
             cached_diagnostics
         } else {
-            let diagnostics = server_linter.run_single(uri, None, ServerLinterRun::Always).await;
+            let Some(server_linter) = &*self.server_linter.read().await else {
+                return vec![];
+            };
+            let diagnostics = server_linter
+                .run_single(uri, None, ServerLinterRun::Always, &self.diagnostics)
+                .await;
             diagnostics.unwrap_or_default()
         };
 
@@ -316,11 +366,8 @@ impl WorkspaceWorker {
         _file_event: &FileEvent,
     ) -> Option<Vec<(String, Vec<Diagnostic>)>> {
         // TODO: the tools should implement a helper function to detect if the changed file is relevant
-        let files = {
-            let server_linter_guard = self.server_linter.read().await;
-            let server_linter = server_linter_guard.as_ref()?;
-            server_linter.get_cached_files_of_diagnostics()
-        };
+        let files = self.get_cached_files_of_diagnostics();
+
         let options = self.options.lock().await;
         let format_options = options.as_ref().map(|o| o.format.clone()).unwrap_or_default();
         let lint_options = options.as_ref().map(|o| o.lint.clone()).unwrap_or_default();
@@ -435,12 +482,7 @@ impl WorkspaceWorker {
             || ServerLinter::needs_restart(&current_option.lint, &changed_options.lint)
         {
             // get the cached files before refreshing the linter
-            let linter_files = {
-                let linter_guard = self.server_linter.read().await;
-                linter_guard
-                    .as_ref()
-                    .map(|linter: &ServerLinter| linter.get_cached_files_of_diagnostics())
-            };
+            let linter_files = self.get_cached_files_of_diagnostics();
 
             self.refresh_server_linter(&changed_options.lint).await;
 
@@ -457,9 +499,7 @@ impl WorkspaceWorker {
             };
 
             // revalidate diagnostics for previously cached files
-            if let Some(linter_files) = linter_files {
-                diagnostics = Some(self.revalidate_diagnostics(linter_files).await);
-            }
+            diagnostics = Some(self.revalidate_diagnostics(linter_files).await);
 
             if let Some(patterns) = patterns {
                 // when linter was disabled before, no need to unregister
@@ -489,7 +529,7 @@ impl WorkspaceWorker {
             }
         } else if current_option.lint.run != Run::Off && changed_options.lint.run == Run::Off {
             // the current files needs to be cleared
-            diagnostics = Some(self.get_clear_diagnostics().await);
+            diagnostics = Some(self.get_clear_diagnostics());
 
             // linter is turned off
             *self.server_linter.write().await = None;
@@ -535,6 +575,45 @@ mod tests {
             !worker
                 .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
         );
+    }
+
+    #[test]
+    fn test_get_diagnostics_found_and_none_entries() {
+        let key = "file:///test.js".to_string();
+
+        // Case 1: Both entries present, Some diagnostics
+        let diag = DiagnosticReport::default();
+        let diag_map = ConcurrentHashMap::default();
+        diag_map.pin().insert(key.clone(), Some(vec![diag.clone()]));
+        let tsgo_map = ConcurrentHashMap::default();
+        tsgo_map.pin().insert(key.clone(), Some(vec![diag]));
+
+        let worker_diag = WorkerDiagnostics {
+            isolated_linter: std::sync::Arc::new(diag_map),
+            tsgo_linter: std::sync::Arc::new(tsgo_map),
+        };
+        let result = worker_diag.get_diagnostics(&key);
+        assert!(result.is_some());
+        assert_eq!(result.unwrap().len(), 2);
+
+        // Case 2: Entry present, but value is None
+        let diag_map_none = ConcurrentHashMap::default();
+        diag_map_none.pin().insert(key.clone(), None);
+        let tsgo_map_none = ConcurrentHashMap::default();
+        tsgo_map_none.pin().insert(key.clone(), None);
+
+        let worker_diag_none = WorkerDiagnostics {
+            isolated_linter: std::sync::Arc::new(diag_map_none),
+            tsgo_linter: std::sync::Arc::new(tsgo_map_none),
+        };
+        let result_none = worker_diag_none.get_diagnostics(&key);
+        assert!(result_none.is_some());
+        assert_eq!(result_none.unwrap().len(), 0);
+
+        // Case 3: No entry at all
+        let worker_diag_empty = WorkerDiagnostics::default();
+        let result_empty = worker_diag_empty.get_diagnostics(&key);
+        assert!(result_empty.is_none());
     }
 }
 

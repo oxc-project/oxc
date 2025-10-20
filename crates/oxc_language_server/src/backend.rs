@@ -413,7 +413,7 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
+            cleared_diagnostics.extend(worker.get_clear_diagnostics());
             removed_registrations.push(Unregistration {
                 id: format!("watcher-{}", worker.get_root_uri().as_str()),
                 method: "workspace/didChangeWatchedFiles".to_string(),
@@ -570,7 +570,7 @@ impl LanguageServer for Backend {
         if self.capabilities.get().is_some_and(|option| option.dynamic_formatting) {
             self.file_system.write().await.remove(uri);
         }
-        worker.remove_diagnostics(&params.text_document.uri).await;
+        worker.remove_diagnostics(&params.text_document.uri);
     }
 
     /// It will return code actions or commands for the given range.
@@ -703,7 +703,7 @@ impl Backend {
         let mut cleared_diagnostics = vec![];
         let workers = &*self.workspace_workers.read().await;
         for worker in workers {
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
+            cleared_diagnostics.extend(worker.get_clear_diagnostics());
         }
         self.publish_all_diagnostics(&cleared_diagnostics).await;
     }
