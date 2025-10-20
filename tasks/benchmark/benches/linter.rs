@@ -50,6 +50,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 runner.run(|| {
                     linter.run(
                         path,
+                        path,
                         vec![ContextSubHost::new(semantic, Arc::clone(&module_record), 0)],
                         &allocator,
                     )

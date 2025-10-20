@@ -21,6 +21,12 @@
    : ^
    `----
 
+  x context-plugin(log-context): cwd:
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x context-plugin(log-context): id: context-plugin/log-context
    ,-[files/2.js:1:1]
  1 | let y;
@@ -39,7 +45,13 @@
    : ^
    `----
 
-Found 0 warnings and 6 errors.
+  x context-plugin(log-context): cwd:
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
+Found 0 warnings and 8 errors.
 Finished in Xms on 2 files using X threads.
 ```
 

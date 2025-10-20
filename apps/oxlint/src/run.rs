@@ -33,6 +33,7 @@ pub type JsLintFileCb = ThreadsafeFunction<
     // Arguments
     FnArgs<(
         String,             // Absolute path of file to lint
+        String,             // Current working directory
         u32,                // Buffer ID
         Option<Uint8Array>, // Buffer (optional)
         Vec<u32>,           // Array of rule IDs
@@ -40,7 +41,7 @@ pub type JsLintFileCb = ThreadsafeFunction<
     // Return value
     String, // `Vec<LintFileResult>`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>)>,
+    FnArgs<(String, String, u32, Option<Uint8Array>, Vec<u32>)>,
     // Error status
     Status,
     // CalleeHandled

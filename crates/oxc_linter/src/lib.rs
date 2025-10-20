@@ -144,10 +144,11 @@ impl Linter {
     pub fn run<'a>(
         &self,
         path: &Path,
+        cwd: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives(path, context_sub_hosts, allocator).0
+        self.run_with_disable_directives(path, cwd, context_sub_hosts, allocator).0
     }
 
     /// Same as `run` but also returns the disable directives for the file
@@ -157,6 +158,7 @@ impl Linter {
     pub fn run_with_disable_directives<'a>(
         &self,
         path: &Path,
+        cwd: &Path,
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
@@ -350,7 +352,7 @@ impl Linter {
             // can mutably access `ctx_host` via `Rc::get_mut` without panicking due to multiple references.
             drop(rules);
 
-            self.run_external_rules(&external_rules, path, &mut ctx_host, allocator);
+            self.run_external_rules(&external_rules, path, cwd, &mut ctx_host, allocator);
 
             // Report unused directives is now handled differently with type-aware linting
 
@@ -386,6 +388,7 @@ impl Linter {
         &self,
         external_rules: &[(ExternalRuleId, AllowWarnDeny)],
         path: &Path,
+        cwd: &Path,
         ctx_host: &mut Rc<ContextHost<'a>>,
         allocator: &'a Allocator,
     ) {
@@ -451,6 +454,7 @@ impl Linter {
         // Pass AST and rule IDs to JS
         let result = (external_linter.lint_file)(
             path.to_str().unwrap().to_string(),
+            cwd.to_str().unwrap().to_string(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
             allocator,
         );
