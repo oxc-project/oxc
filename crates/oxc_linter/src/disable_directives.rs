@@ -1398,11 +1398,9 @@ mod tests {
         let source_text = "// eslint-disable-next-line max-params";
         let comment_span = Span::sized(3, source_text.len() as u32 - 3);
 
-        let fix = RuleCommentRule {
-            rule_name: "max-params".to_string(),
-            name_span: Span::sized(28, 10),
-        }
-        .create_fix(source_text, comment_span);
+        let fix =
+            RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
+                .create_fix(source_text, comment_span);
 
         // Should delete just the rule name (no panic!)
         assert_eq!(fix.span, Span::sized(28, 10));
