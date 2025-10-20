@@ -6,11 +6,11 @@ arguments: -c .oxlintrc.json --report-unused-disable-directives
 working directory: fixtures/report_unused_directives
 ----------
 
-  ! Unused eslint-disable directive (no problems were reported).
-   ,-[test-multiple-scripts.vue:6:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+   ,-[test-multiple-scripts.vue:6:29]
  5 | <script>
  6 | // eslint-disable-next-line no-debugger
-   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :                             ^^^^^^^^^^^
  7 | console.log('regular script');
    `----
 
@@ -23,11 +23,11 @@ working directory: fixtures/report_unused_directives
    `----
   help: Delete this console statement.
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test-multiple-scripts.vue:9:3]
+  ! Unused eslint-disable directive (no problems were reported from no-console).
+    ,-[test-multiple-scripts.vue:9:29]
   8 | 
   9 | // eslint-disable-next-line no-console
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^
  10 | debugger;
     `----
 
@@ -40,19 +40,27 @@ working directory: fixtures/report_unused_directives
     `----
   help: Remove the debugger statement
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test-multiple-scripts.vue:17:3]
+  ! Unused eslint-disable directive (no problems were reported from no-unused-vars).
+    ,-[test-multiple-scripts.vue:17:29]
  16 | 
  17 | // eslint-disable-next-line no-unused-vars
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^^^^
  18 | const unusedVariable2 = 100;
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test-multiple-scripts.vue:30:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+    ,-[test-multiple-scripts.vue:30:29]
  29 | 
  30 | // oxlint-disable-next-line no-debugger, no-for-loop
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 31 | console.log("complete line");
+    `----
+
+  ! Unused eslint-disable directive (no problems were reported from no-for-loop).
+    ,-[test-multiple-scripts.vue:30:42]
+ 29 | 
+ 30 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  31 | console.log("complete line");
     `----
 
@@ -65,19 +73,19 @@ working directory: fixtures/report_unused_directives
     `----
   help: Delete this console statement.
 
-  ! Unused eslint-disable directive (no problems were reported).
-   ,-[test.astro:5:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+   ,-[test.astro:5:29]
  4 | 
  5 | // eslint-disable-next-line no-debugger
-   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :                             ^^^^^^^^^^^
  6 | console.log('This is a test');
    `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.astro:10:3]
+  ! Unused eslint-disable directive (no problems were reported from no-console).
+    ,-[test.astro:10:29]
   9 | 
  10 | // eslint-disable-next-line no-console
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^
  11 | debugger;
     `----
 
@@ -90,11 +98,11 @@ working directory: fixtures/report_unused_directives
     `----
   help: Remove the debugger statement
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.astro:17:3]
+  ! Unused eslint-disable directive (no problems were reported from no-unused-vars).
+    ,-[test.astro:17:29]
  16 | <script>
  17 | // eslint-disable-next-line no-unused-vars
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^^^^
  18 | const unusedVariable2 = 100;
     `----
 
@@ -106,11 +114,19 @@ working directory: fixtures/report_unused_directives
  29 | console.log('no');
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.astro:31:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+    ,-[test.astro:31:29]
  30 | 
  31 | // oxlint-disable-next-line no-debugger, no-for-loop
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 32 | console.log("complete line");
+    `----
+
+  ! Unused eslint-disable directive (no problems were reported from no-for-loop).
+    ,-[test.astro:31:42]
+ 30 | 
+ 31 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  32 | console.log("complete line");
     `----
 
@@ -131,19 +147,19 @@ working directory: fixtures/report_unused_directives
  37 | </script>
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-   ,-[test.js:4:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+   ,-[test.js:4:29]
  3 | 
  4 | // eslint-disable-next-line no-debugger
-   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :                             ^^^^^^^^^^^
  5 | console.log('This is a test');
    `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.js:9:3]
+  ! Unused eslint-disable directive (no problems were reported from no-console).
+    ,-[test.js:9:29]
   8 | 
   9 | // eslint-disable-next-line no-console
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^
  10 | debugger;
     `----
 
@@ -164,11 +180,19 @@ working directory: fixtures/report_unused_directives
  24 | console.log('no');
     `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[test.js:26:3]
+  ! Unused oxlint-disable directive (no problems were reported from no-debugger).
+    ,-[test.js:26:29]
  25 | 
  26 | // oxlint-disable-next-line no-debugger, no-for-loop
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 27 | console.log("complete line");
+    `----
+
+  ! Unused oxlint-disable directive (no problems were reported from no-for-loop).
+    ,-[test.js:26:42]
+ 25 | 
+ 26 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  27 | console.log("complete line");
     `----
 
@@ -188,19 +212,19 @@ working directory: fixtures/report_unused_directives
     :   ^^^^^^^^^^^^^^
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-   ,-[test.svelte:5:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+   ,-[test.svelte:5:29]
  4 | 
  5 | // eslint-disable-next-line no-debugger
-   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :                             ^^^^^^^^^^^
  6 | console.log('This is a test');
    `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.svelte:10:3]
+  ! Unused eslint-disable directive (no problems were reported from no-console).
+    ,-[test.svelte:10:29]
   9 | 
  10 | // eslint-disable-next-line no-console
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^
  11 | debugger;
     `----
 
@@ -213,11 +237,11 @@ working directory: fixtures/report_unused_directives
     `----
   help: Remove the debugger statement
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.svelte:13:3]
+  ! Unused eslint-disable directive (no problems were reported from no-unused-vars).
+    ,-[test.svelte:13:29]
  12 | 
  13 | // eslint-disable-next-line no-unused-vars
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^^^^
  14 | const unusedVariable2 = 100;
     `----
 
@@ -229,11 +253,19 @@ working directory: fixtures/report_unused_directives
  25 | console.log('no');
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.svelte:27:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+    ,-[test.svelte:27:29]
  26 | 
  27 | // oxlint-disable-next-line no-debugger, no-for-loop
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 28 | console.log("complete line");
+    `----
+
+  ! Unused eslint-disable directive (no problems were reported from no-for-loop).
+    ,-[test.svelte:27:42]
+ 26 | 
+ 27 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  28 | console.log("complete line");
     `----
 
@@ -254,19 +286,19 @@ working directory: fixtures/report_unused_directives
  33 | </script>
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.vue:9:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+    ,-[test.vue:9:29]
   8 | 
   9 | // eslint-disable-next-line no-debugger
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
  10 | console.log('This is a test');
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.vue:14:3]
+  ! Unused eslint-disable directive (no problems were reported from no-console).
+    ,-[test.vue:14:29]
  13 | 
  14 | // eslint-disable-next-line no-console
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^
  15 | debugger;
     `----
 
@@ -279,11 +311,11 @@ working directory: fixtures/report_unused_directives
     `----
   help: Remove the debugger statement
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.vue:17:3]
+  ! Unused eslint-disable directive (no problems were reported from no-unused-vars).
+    ,-[test.vue:17:29]
  16 | 
  17 | // eslint-disable-next-line no-unused-vars
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^^^^
  18 | const unusedVariable2 = 100;
     `----
 
@@ -295,11 +327,19 @@ working directory: fixtures/report_unused_directives
  29 | console.log('no');
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test.vue:31:3]
+  ! Unused eslint-disable directive (no problems were reported from no-debugger).
+    ,-[test.vue:31:29]
  30 | 
  31 | // oxlint-disable-next-line no-debugger, no-for-loop
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^
+ 32 | console.log("complete line");
+    `----
+
+  ! Unused eslint-disable directive (no problems were reported from no-for-loop).
+    ,-[test.vue:31:42]
+ 30 | 
+ 31 | // oxlint-disable-next-line no-debugger, no-for-loop
+    :                                          ^^^^^^^^^^^
  32 | console.log("complete line");
     `----
 
@@ -320,7 +360,7 @@ working directory: fixtures/report_unused_directives
  37 | </script>
     `----
 
-Found 38 warnings and 0 errors.
+Found 43 warnings and 0 errors.
 Finished in <variable>ms on 5 files with 90 rules using 1 threads.
 ----------
 CLI result: LintSucceeded

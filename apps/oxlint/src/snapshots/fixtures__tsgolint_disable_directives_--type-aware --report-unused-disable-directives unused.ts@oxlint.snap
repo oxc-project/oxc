@@ -15,19 +15,19 @@ working directory: fixtures/tsgolint_disable_directives
    `----
   help: Consider using this expression or removing it
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[unused.ts:9:3]
+  ! Unused oxlint-disable directive (no problems were reported from typescript/no-floating-promises).
+    ,-[unused.ts:9:29]
   8 | // This disable directive is UNUSED (no error to suppress)
   9 | // oxlint-disable-next-line typescript/no-floating-promises
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  10 | console.log("hello")
     `----
 
-  ! Unused oxlint-disable directive (no problems were reported).
-    ,-[unused.ts:13:3]
+  ! Unused oxlint-disable directive (no problems were reported from typescript/no-unsafe-assignment).
+    ,-[unused.ts:13:29]
  12 | // This disable directive is UNUSED (wrong rule name)
  13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    :                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  14 | myPromise
     `----
 
