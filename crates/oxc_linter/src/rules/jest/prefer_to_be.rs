@@ -15,24 +15,34 @@ use crate::{
     },
 };
 
-fn use_to_be(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBe` when expecting primitive literals.").with_label(span)
+fn use_to_be(source_text: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBe` when expecting primitive literals.")
+        .with_help(format!("Replace `{source_text}` with `{suggestion}`."))
+        .with_label(span)
 }
 
-fn use_to_be_undefined(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeUndefined` instead.").with_label(span)
+fn use_to_be_undefined(source_text: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeUndefined` instead.")
+        .with_help(format!("Replace `{source_text}` with `{suggestion}`."))
+        .with_label(span)
 }
 
-fn use_to_be_defined(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeDefined` instead.").with_label(span)
+fn use_to_be_defined(source_text: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeDefined` instead.")
+        .with_help(format!("Replace `{source_text}` with `{suggestion}`."))
+        .with_label(span)
 }
 
-fn use_to_be_null(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeNull` instead.").with_label(span)
+fn use_to_be_null(source_text: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeNull` instead.")
+        .with_help(format!("Replace `{source_text}` with `{suggestion}`."))
+        .with_label(span)
 }
 
-fn use_to_be_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeNaN` instead.").with_label(span)
+fn use_to_be_na_n(source_text: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `toBeNaN` instead.")
+        .with_help(format!("Replace `{source_text}` with `{suggestion}`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -176,7 +186,10 @@ impl PreferToBe {
             return;
         }
 
-        if Self::should_use_tobe(first_matcher_arg) && !matcher.is_name_equal("toBe") {
+        if Self::should_use_tobe(first_matcher_arg)
+            && !matcher.is_name_equal("toBe")
+            && !Self::should_skip_float(first_matcher_arg, ctx)
+        {
             Self::check_and_fix(
                 &PreferToBeKind::ToBe,
                 call_expr,
@@ -211,6 +224,55 @@ impl PreferToBe {
         )
     }
 
+    fn should_skip_float(expr: &Expression, ctx: &LintContext) -> bool {
+        // Check if this is a float literal by examining the source text
+        if let Expression::NumericLiteral(num) = expr {
+            let source = ctx.source_range(num.span);
+            return source.contains('.');
+        }
+        false
+    }
+
+    /// Helper function to build suggestion for matchers that keep the "not" modifier (null, NaN).
+    /// Returns (source_start, suggestion_string).
+    fn build_suggestion_with_not_modifier(
+        matcher_name: &str,
+        not_modifier: Option<&&KnownMemberExpressionProperty>,
+        is_cmp_mem_expr: bool,
+        span_start: u32,
+    ) -> (u32, String) {
+        if let Some(&not_modifier) = not_modifier {
+            let not_is_computed =
+                matches!(not_modifier.parent, Some(Expression::ComputedMemberExpression(_)));
+
+            if not_is_computed {
+                // ["not"]["toBe"](value) -> ["not"]["toBeMatcher"]()
+                let start = not_modifier.span.start - 1; // Include opening bracket of ["not"]
+                let suggestion = if is_cmp_mem_expr {
+                    format!("[\"not\"][\"{matcher_name}\"]()")
+                } else {
+                    format!("[\"not\"].{matcher_name}()")
+                };
+                (start, suggestion)
+            } else if is_cmp_mem_expr {
+                // .not["toBe"](value) -> .not["toBeMatcher"]()
+                (not_modifier.span.start, format!("not[\"{matcher_name}\"]()"))
+            } else {
+                // .not.toBe(value) -> .not.toBeMatcher()
+                (not_modifier.span.start, format!("not.{matcher_name}()"))
+            }
+        } else {
+            // No "not" modifier
+            let start = if is_cmp_mem_expr { span_start - 1 } else { span_start };
+            let suggestion = if is_cmp_mem_expr {
+                format!("[\"{matcher_name}\"]()")
+            } else {
+                format!("{matcher_name}()")
+            };
+            (start, suggestion)
+        }
+    }
+
     fn check_and_fix(
         kind: &PreferToBeKind,
         call_expr: &CallExpression,
@@ -233,39 +295,68 @@ impl PreferToBe {
         let maybe_not_modifier = modifiers.iter().find(|modifier| modifier.is_name_equal("not"));
 
         if kind == &PreferToBeKind::Undefined {
-            ctx.diagnostic_with_fix(use_to_be_undefined(span), |fixer| {
-                let new_matcher =
-                    if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
-                let span = if let Some(not_modifier) = maybe_not_modifier {
-                    Span::new(not_modifier.span.start, end)
-                } else {
-                    Span::new(span.start, end)
-                };
-                fixer.replace(span, new_matcher)
-            });
-        } else if kind == &PreferToBeKind::Defined {
-            ctx.diagnostic_with_fix(use_to_be_defined(span), |fixer| {
-                let (new_matcher, start) = if is_cmp_mem_expr {
-                    ("[\"toBeDefined\"]()", modifiers.first().unwrap().span.end)
-                } else {
-                    ("toBeDefined()", maybe_not_modifier.unwrap().span.start)
-                };
+            let replacement_span = if let Some(not_modifier) = maybe_not_modifier {
+                Span::new(not_modifier.span.start, end)
+            } else {
+                Span::new(span.start, end)
+            };
+            let source_text = ctx.source_range(replacement_span);
+            let new_matcher =
+                if is_cmp_mem_expr { "[\"toBeUndefined\"]()" } else { "toBeUndefined()" };
 
-                fixer.replace(Span::new(start, end), new_matcher)
-            });
+            ctx.diagnostic_with_fix(
+                use_to_be_undefined(source_text, new_matcher, replacement_span),
+                |fixer| fixer.replace(replacement_span, new_matcher),
+            );
+        } else if kind == &PreferToBeKind::Defined {
+            let start = if is_cmp_mem_expr {
+                modifiers.first().unwrap().span.end
+            } else {
+                maybe_not_modifier.unwrap().span.start
+            };
+            let replacement_span = Span::new(start, end);
+            let source_text = ctx.source_range(replacement_span);
+            let new_matcher = if is_cmp_mem_expr { "[\"toBeDefined\"]()" } else { "toBeDefined()" };
+
+            ctx.diagnostic_with_fix(
+                use_to_be_defined(source_text, new_matcher, replacement_span),
+                |fixer| fixer.replace(replacement_span, new_matcher),
+            );
         } else if kind == &PreferToBeKind::Null {
-            ctx.diagnostic_with_fix(use_to_be_null(span), |fixer| {
-                let new_matcher = if is_cmp_mem_expr { "\"toBeNull\"]()" } else { "toBeNull()" };
-                fixer.replace(Span::new(span.start, end), new_matcher)
-            });
+            let (source_start, suggestion) = Self::build_suggestion_with_not_modifier(
+                "toBeNull",
+                maybe_not_modifier,
+                is_cmp_mem_expr,
+                span.start,
+            );
+
+            let replacement_span = Span::new(source_start, end);
+            let source_text = ctx.source_range(replacement_span);
+
+            ctx.diagnostic_with_fix(
+                use_to_be_null(source_text, &suggestion, replacement_span),
+                |fixer| fixer.replace(replacement_span, suggestion),
+            );
         } else if kind == &PreferToBeKind::NaN {
-            ctx.diagnostic_with_fix(use_to_be_na_n(span), |fixer| {
-                let new_matcher = if is_cmp_mem_expr { "\"toBeNaN\"]()" } else { "toBeNaN()" };
-                fixer.replace(Span::new(span.start, end), new_matcher)
-            });
+            let (source_start, suggestion) = Self::build_suggestion_with_not_modifier(
+                "toBeNaN",
+                maybe_not_modifier,
+                is_cmp_mem_expr,
+                span.start,
+            );
+
+            let replacement_span = Span::new(source_start, end);
+            let source_text = ctx.source_range(replacement_span);
+
+            ctx.diagnostic_with_fix(
+                use_to_be_na_n(source_text, &suggestion, replacement_span),
+                |fixer| fixer.replace(replacement_span, suggestion),
+            );
         } else {
-            ctx.diagnostic_with_fix(use_to_be(span), |fixer| {
-                let new_matcher = if is_cmp_mem_expr { "\"toBe\"" } else { "toBe" };
+            let source_text = ctx.source_range(span);
+            let new_matcher = if is_cmp_mem_expr { "\"toBe\"" } else { "toBe" };
+
+            ctx.diagnostic_with_fix(use_to_be(source_text, new_matcher, span), |fixer| {
                 fixer.replace(span, new_matcher)
             });
         }
@@ -291,6 +382,7 @@ fn tests() {
         ("expect(token).toStrictEqual(/[abc]+/g);", None),
         ("expect(token).toStrictEqual(new RegExp('[abc]+', 'g'));", None),
         ("expect(value).toEqual(dedent`my string`);", None),
+        ("expect(0.1 + 0.2).toEqual(0.3);", None),
         // null
         ("expect(null).toBeNull();", None),
         ("expect(null).not.toBeNull();", None),

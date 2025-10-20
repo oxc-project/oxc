@@ -30,7 +30,7 @@ pub use self::{
 };
 
 /// List of Jest rules that have Vitest equivalents.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -59,6 +59,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
     "prefer-lowercase-title",
     "prefer-mock-promise-shorthand",
     "prefer-strict-equal",
+    "prefer-to-be",
     "prefer-to-have-length",
     "prefer-todo",
     "require-to-throw-message",
