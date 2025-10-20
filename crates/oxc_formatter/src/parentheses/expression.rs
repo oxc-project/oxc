@@ -14,9 +14,8 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
-    generated::ast_nodes::{AstNode, AstNodes},
-    utils::is_expression_used_as_call_argument,
-    write::{BinaryLikeExpression, ExpressionLeftSide, should_flatten},
+    utils::{expression::ExpressionLeftSide, is_expression_used_as_call_argument},
+    write::{BinaryLikeExpression, should_flatten},
 };
 
 use super::NeedsParentheses;
@@ -369,7 +368,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TaggedTemplateExpression<'_>> {
     }
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, MemberExpression<'_>> {
+impl<'a> NeedsParentheses<'a> for AstNode<'a, MemberExpression<'a>> {
     #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         // Member expressions with call expression or another member expression with call as object
@@ -573,7 +572,7 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
     false
 }
 
-impl NeedsParentheses<'_> for AstNode<'_, PrivateInExpression<'_>> {
+impl<'a> NeedsParentheses<'a> for AstNode<'a, PrivateInExpression<'a>> {
     #[inline]
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         is_class_extends(self.parent, self.span)
