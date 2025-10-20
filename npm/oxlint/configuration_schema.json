@@ -473,7 +473,6 @@
           ]
         },
         "settings": {
-          "description": "Settings to override for this configuration.",
           "default": null,
           "anyOf": [
             {
