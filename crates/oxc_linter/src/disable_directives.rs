@@ -1569,6 +1569,79 @@ function test() {
             |prefix| {
                 format!(
                     r"
+                    // {prefix}-disable-next-line typescript/max-params
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should report typescript/max-params as unused since it's a known rule
+                // (remapped from eslint/max-params) and there's no violation
+                assert_eq!(
+                    unused.len(),
+                    1,
+                    "Remapped TypeScript rules should be recognized as known rules"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn remapped_typescript_rules_not_in_compatibility_list_treated_as_unknown() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line typescript/no-var
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should NOT report typescript/no-var as unused because
+                // even though eslint/no-var exists, no-var is NOT in the
+                // TYPESCRIPT_COMPATIBLE_ESLINT_RULES list, so we treat it as unknown
+                assert_eq!(
+                    unused.len(),
+                    0,
+                    "TypeScript-prefixed rules not in compatibility list should be treated as unknown"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn remapped_vitest_rules_not_in_compatibility_list_treated_as_unknown() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line vitest/no-disabled-tests
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // vitest/no-disabled-tests should be recognized as known (it IS in the list)
+                // This test verifies our remapping works for an actual implemented rule
+                assert_eq!(
+                    unused.len(),
+                    1,
+                    "Vitest rules in compatibility list should be recognized when implemented"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn typescript_rules_not_in_compatibility_list_treated_as_unknown() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
                     // {prefix}-disable-next-line typescript/no-invalid-this
                     console.log();
                     "
@@ -1576,12 +1649,13 @@ function test() {
             },
             |_, directives| {
                 let unused = directives.collect_unused_disable_comments();
-                // Should report typescript/no-invalid-this as unused since it's a known rule
-                // (remapped from eslint/no-invalid-this) and there's no violation
+                // typescript/no-invalid-this: even though it's in TYPESCRIPT_COMPATIBLE_ESLINT_RULES,
+                // the base eslint/no-invalid-this rule is NOT implemented in oxlint,
+                // so the remapped version is treated as unknown (not reported as unused)
                 assert_eq!(
                     unused.len(),
-                    1,
-                    "Remapped TypeScript rules should be recognized as known rules"
+                    0,
+                    "Remapped rules with unimplemented base rules should be treated as unknown"
                 );
             },
         );
