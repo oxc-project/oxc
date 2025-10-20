@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// for (let i = 0; i < l; i += 1) {
     ///    doSomething(i);
     /// }
+    /// ```
     ///
     /// ### Options
     ///
