@@ -216,10 +216,15 @@ impl IdLength {
             return;
         }
 
-        let segmenter = GraphemeClusterSegmenter::new();
-        let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
-        let is_too_long = self.is_too_long(graphemes_length);
-        let is_too_short = self.is_too_short(graphemes_length);
+        // If identifier is all ASCII, then we can use .len() instead of counting graphemes
+        let (is_too_long, is_too_short) = if ident_name.is_ascii() {
+            let ident_length = ident_name.len();
+            (self.is_too_long(ident_length), self.is_too_short(ident_length))
+        } else {
+            let segmenter = GraphemeClusterSegmenter::new();
+            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
+        };
 
         if !is_too_long && !is_too_short {
             return;
