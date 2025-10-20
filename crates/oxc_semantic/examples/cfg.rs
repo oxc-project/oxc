@@ -9,7 +9,7 @@
 //!
 //! Create a `test.js` file and run:
 //! ```bash
-//! cargo run -p oxc_semantic --example cfg [filename]
+//! cargo run -p oxc_semantic --example cfg --features=cfg [filename]
 //! ```
 //!
 //! This generates:
@@ -36,8 +36,8 @@ use oxc_span::SourceType;
 
 // Instruction:
 // 1. create a `test.js`,
-// 2. run `cargo run -p oxc_semantic --example cfg`
-//    or `just watch "run -p oxc_semantic --example cfg"`
+// 2. run `cargo run -p oxc_semantic --example cfg --features=cfg`
+//    or `just watch "run -p oxc_semantic --example cfg --features=cfg"`
 // 3. observe visualizations of:
 //    - AST (test.ast.txt)
 //    - CFG blocks (test.cfg.txt)
@@ -46,9 +46,9 @@ use oxc_span::SourceType;
 /// Generate control flow graph visualizations from JavaScript/TypeScript code
 fn main() -> std::io::Result<()> {
     let test_file_name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
-    let ast_file_name = env::args().nth(1).unwrap_or_else(|| "test.ast.txt".to_string());
-    let cfg_file_name = env::args().nth(1).unwrap_or_else(|| "test.cfg.txt".to_string());
-    let dot_file_name = env::args().nth(1).unwrap_or_else(|| "test.dot".to_string());
+    let ast_file_name = format!("{test_file_name}.ast.txt");
+    let cfg_file_name = format!("{test_file_name}.cfg.txt");
+    let dot_file_name = format!("{test_file_name}.dot");
 
     let test_file_path = Path::new(&test_file_name);
     let ast_file_path = Path::new(&ast_file_name);
