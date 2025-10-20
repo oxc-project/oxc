@@ -167,6 +167,7 @@ fn is_invalid_fetch_options<'a>(
                     let reference_id = value_ident.reference_id();
 
                     let Some(symbol_id) = symbols.get_reference(reference_id).symbol_id() else {
+                        method_name = UNKNOWN_METHOD_NAME;
                         continue;
                     };
 
@@ -294,6 +295,7 @@ fn test() {
          method: Method.Post,
          body: "",
         });"#,
+        ("const response = await fetch('', { method, headers, body, });"),
     ];
 
     let fail = vec![
