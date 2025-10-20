@@ -16,26 +16,46 @@ use crate::fixer::Fix;
 /// This matches ESLint's behavior of only reporting unused directives for
 /// rules from loaded plugins.
 ///
+/// Supports remapped rule names:
+/// - `vitest/*` rules map to `jest/*` equivalents
+/// - `typescript/*` rules map to `eslint/*` equivalents
+///
 /// Uses a lazy-initialized cache of known rule names for O(1) lookup performance.
 fn is_known_rule(rule_name: &str) -> bool {
     use std::sync::OnceLock;
+
     static KNOWN_RULES: OnceLock<FxHashSet<String>> = OnceLock::new();
 
     let known_rules = KNOWN_RULES.get_or_init(|| {
         use crate::rules::RULES;
+        use crate::utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest};
 
-        RULES
-            .iter()
-            .flat_map(|rule| {
-                let plugin_name = rule.plugin_name();
-                let name = rule.name();
-                [
-                    name.to_string(),                 // "no-debugger"
-                    format!("{plugin_name}/{name}"),  // "eslint/no-debugger"
-                    format!("@{plugin_name}/{name}"), // "@typescript-eslint/no-explicit-any"
-                ]
-            })
-            .collect()
+        let mut rules = FxHashSet::default();
+
+        // Add all registered rules with their variants
+        for rule in RULES.iter() {
+            let plugin_name = rule.plugin_name();
+            let name = rule.name();
+
+            rules.insert(name.to_string()); // "no-debugger"
+            rules.insert(format!("{plugin_name}/{name}")); // "eslint/no-debugger"
+            rules.insert(format!("@{plugin_name}/{name}")); // "@typescript-eslint/no-explicit-any"
+
+            // Add remapped rule names to cache
+            // For jest rules that have vitest equivalents, add vitest/* variants
+            if plugin_name == "jest" && is_jest_rule_adapted_to_vitest(name) {
+                rules.insert(format!("vitest/{name}"));
+                rules.insert(format!("@vitest/{name}"));
+            }
+
+            // For eslint rules that have typescript equivalents, add typescript/* variants
+            if plugin_name == "eslint" && is_eslint_rule_adapted_to_typescript(name) {
+                rules.insert(format!("typescript/{name}"));
+                rules.insert(format!("@typescript/{name}"));
+            }
+        }
+
+        rules
     });
 
     known_rules.contains(rule_name)
@@ -1512,6 +1532,56 @@ function test() {
                     unused.len(),
                     0,
                     "When all rules are unknown, should not report any unused directives"
+                );
+            },
+        );
+    }
+
+    // Tests for remapped rule names (issue #11983)
+
+    #[test]
+    fn remapped_vitest_rules_recognized_as_known() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line vitest/expect-expect
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should report vitest/expect-expect as unused since it's a known rule
+                // (remapped from jest/expect-expect) and there's no violation
+                assert_eq!(
+                    unused.len(),
+                    1,
+                    "Remapped Vitest rules should be recognized as known rules"
+                );
+            },
+        );
+    }
+
+    #[test]
+    fn remapped_typescript_rules_recognized_as_known() {
+        test_directives(
+            |prefix| {
+                format!(
+                    r"
+                    // {prefix}-disable-next-line typescript/max-params
+                    console.log();
+                    "
+                )
+            },
+            |_, directives| {
+                let unused = directives.collect_unused_disable_comments();
+                // Should report typescript/max-params as unused since it's a known rule
+                // (remapped from eslint/max-params) and there's no violation
+                assert_eq!(
+                    unused.len(),
+                    1,
+                    "Remapped TypeScript rules should be recognized as known rules"
                 );
             },
         );
