@@ -15,7 +15,7 @@ working directory: fixtures/tsgolint_disable_directives
    `----
   help: Consider using this expression or removing it
 
-  ! Unused eslint-disable directive (no problems were reported).
+  ! Unused oxlint-disable directive (no problems were reported).
     ,-[unused.ts:9:3]
   8 | // This disable directive is UNUSED (no error to suppress)
   9 | // oxlint-disable-next-line typescript/no-floating-promises
@@ -23,7 +23,7 @@ working directory: fixtures/tsgolint_disable_directives
  10 | console.log("hello")
     `----
 
-  ! Unused eslint-disable directive (no problems were reported).
+  ! Unused oxlint-disable directive (no problems were reported).
     ,-[unused.ts:13:3]
  12 | // This disable directive is UNUSED (wrong rule name)
  13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
