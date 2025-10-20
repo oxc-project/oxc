@@ -186,24 +186,11 @@ declare_oxc_lint!(
     /// // Not respected, use ES6 modules instead.
     /// var global_var = 42;
     /// ```
-    /// ### Options
-    /// 
-    /// #### ignoreRestSiblings
-    /// 
-    /// `{ type: boolean, default: false }`
-    /// 
-    /// The `ignoreRestSiblings` option is set to `false` by default, meaning unused siblings of the object rest property are flagged.
-    /// With the option set to `false`, the code below would be flagged.
-    /// 
-    /// ```js
-    /// const { password, ...profile } = user; // `password` is unused.
-    /// return Response.json(profile);
-    /// ```
-    /// With the option set to `true`, the code would be allowed.
     NoUnusedVars,
     eslint,
     correctness,
-    dangerous_suggestion
+    dangerous_suggestion,
+    config = NoUnusedVarsOptions
 );
 
 impl Deref for NoUnusedVars {
