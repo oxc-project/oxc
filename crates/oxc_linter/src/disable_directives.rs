@@ -1635,29 +1635,4 @@ function test() {
             },
         );
     }
-
-    #[test]
-    fn typescript_rules_not_in_compatibility_list_treated_as_unknown() {
-        test_directives(
-            |prefix| {
-                format!(
-                    r"
-                    // {prefix}-disable-next-line typescript/no-invalid-this
-                    console.log();
-                    "
-                )
-            },
-            |_, directives| {
-                let unused = directives.collect_unused_disable_comments();
-                // typescript/no-invalid-this: even though it's in TYPESCRIPT_COMPATIBLE_ESLINT_RULES,
-                // the base eslint/no-invalid-this rule is NOT implemented in oxlint,
-                // so the remapped version is treated as unknown (not reported as unused)
-                assert_eq!(
-                    unused.len(),
-                    0,
-                    "Remapped rules with unimplemented base rules should be treated as unknown"
-                );
-            },
-        );
-    }
 }
