@@ -8,7 +8,10 @@ use rustc_hash::FxHashSet;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
+use crate::{
+    LintPlugins, OxlintEnv, OxlintGlobals,
+    config::{OxlintRules, OxlintSettings},
+};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -112,6 +115,9 @@ pub struct OxlintOverride {
 
     #[serde(default)]
     pub rules: OxlintRules,
+
+    #[serde(default)]
+    pub settings: Option<OxlintSettings>,
 }
 
 /// A set of glob patterns.
