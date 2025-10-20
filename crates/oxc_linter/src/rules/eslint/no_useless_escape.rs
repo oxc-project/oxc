@@ -8,6 +8,7 @@ use oxc_regular_expression::{
 };
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -26,18 +27,23 @@ impl std::ops::Deref for NoUselessEscape {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUselessEscapeConfig {
+    /// An array of characters that are allowed to be escaped unnecessarily in regexes.
     allow_regex_characters: Vec<char>,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary escape characters
+    /// Disallow unnecessary escape characters.
     ///
     /// ### Why is this bad?
     ///
+    /// Escaping characters unnecessarily has no effect on the behavior of strings or regexes,
+    /// and can make code harder to read and understand by adding unnecessary complexity.
+    /// This applies to string literals, template literals, and regular expressions.
     ///
     /// ### Examples
     ///
@@ -81,7 +87,8 @@ declare_oxc_lint!(
     NoUselessEscape,
     eslint,
     correctness,
-    fix
+    fix,
+    config = NoUselessEscapeConfig,
 );
 
 impl Rule for NoUselessEscape {
