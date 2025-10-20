@@ -313,10 +313,11 @@ impl DisableDirectives {
                     return None;
                 }
 
-                // Use RuleCommentType::All only for directives that disable all rules
-                // (e.g., `eslint-disable` with no specific rules)
-                // For directives with specific rules, always use Single to show which rules are problematic
-                if is_disable_all_directive {
+                // Use RuleCommentType::All when:
+                // 1. The directive disables all rules (e.g., `eslint-disable` with no specific rules)
+                // 2. There's only one unused rule (that represents "all" unused rules in this directive)
+                // Otherwise use Single to show which specific rules are problematic
+                if is_disable_all_directive || rules.len() == 1 {
                     return Some(DisableRuleComment {
                         span: *comment_span,
                         r#type: RuleCommentType::All,
@@ -1502,12 +1503,8 @@ function test() {
                 // Should report no-debugger as unused (it's a known rule with no violation)
                 assert_eq!(unused.len(), 1, "Known unused rules should be reported");
                 assert_eq!(unused[0].span, comments.first().unwrap().content_span());
-                // Directives with specific rules should be reported as Single (to show which rules)
-                assert!(
-                    matches!(unused[0].r#type, RuleCommentType::Single(_)),
-                    "Expected RuleCommentType::Single but got {:?}",
-                    unused[0].r#type
-                );
+                // Single unused rule should be reported as All (represents "all" unused rules)
+                assert_eq!(unused[0].r#type, RuleCommentType::All);
             },
         );
     }
@@ -1832,12 +1829,8 @@ function test() {
             1,
             "oxlint-disable with existing unused rules should report them as unused"
         );
-        // Verify it's reported as RuleCommentType::Single to show which specific rules
-        assert!(
-            matches!(unused[0].r#type, RuleCommentType::Single(_)),
-            "Expected RuleCommentType::Single but got {:?}",
-            unused[0].r#type
-        );
+        // Single unused rule should be reported as All
+        assert_eq!(unused[0].r#type, RuleCommentType::All);
     }
 
     #[test]
@@ -1864,12 +1857,8 @@ function test() {
             "oxlint-disable with unknown rule should be reported, eslint-disable should not"
         );
         assert_eq!(unused[0].directive_prefix, "oxlint");
-        // Directives with specific rules should be reported as Single to show which rules
-        assert!(
-            matches!(unused[0].r#type, RuleCommentType::Single(_)),
-            "Expected RuleCommentType::Single but got {:?}",
-            unused[0].r#type
-        );
+        // Single unused rule should be reported as All
+        assert_eq!(unused[0].r#type, RuleCommentType::All);
     }
 
     #[test]
@@ -1895,13 +1884,9 @@ function test() {
             "Mixed oxlint/eslint directives with existing unused rules should report each as unused"
         );
 
-        // Both should be reported as RuleCommentType::Single to show which specific rules
+        // Both should be reported as All since each has only one unused rule
         for unused_comment in &unused {
-            assert!(
-                matches!(unused_comment.r#type, RuleCommentType::Single(_)),
-                "Expected RuleCommentType::Single but got {:?}",
-                unused_comment.r#type
-            );
+            assert_eq!(unused_comment.r#type, RuleCommentType::All);
         }
     }
 }
