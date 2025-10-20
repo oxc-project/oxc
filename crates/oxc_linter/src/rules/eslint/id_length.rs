@@ -210,7 +210,7 @@ impl IdLength {
         node: &AstNode,
         ctx: &LintContext,
     ) {
-        let ident_name = ident.name.to_string();
+        let ident_name = ident.name;
 
         if self.is_exception(&ident_name) {
             return;
@@ -269,17 +269,20 @@ impl IdLength {
     }
 
     fn handle_identifier_name(&self, ident: &IdentifierName, node: &AstNode, ctx: &LintContext) {
-        let ident_name = ident.name.to_string();
+        let ident_name = ident.name;
 
         if self.is_exception(&ident_name) {
             return;
         }
 
-        let segmenter = GraphemeClusterSegmenter::new();
-        let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
-
-        let is_too_long = self.is_too_long(graphemes_length);
-        let is_too_short = self.is_too_short(graphemes_length);
+        let (is_too_long, is_too_short) = if ident_name.is_ascii() {
+            let ident_length = ident_name.len();
+            (self.is_too_long(ident_length), self.is_too_short(ident_length))
+        } else {
+            let segmenter = GraphemeClusterSegmenter::new();
+            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
+        };
 
         if !is_too_long && !is_too_short {
             return;
@@ -376,16 +379,20 @@ impl IdLength {
         node: &AstNode,
         ctx: &LintContext,
     ) {
-        let ident_name = ident.name.to_string();
+        let ident_name = ident.name;
 
         if self.is_exception(&ident_name) {
             return;
         }
 
-        let segmenter = GraphemeClusterSegmenter::new();
-        let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
-        let is_too_long = self.is_too_long(graphemes_length);
-        let is_too_short = self.is_too_short(graphemes_length);
+        let (is_too_long, is_too_short) = if ident_name.is_ascii() {
+            let ident_length = ident_name.len();
+            (self.is_too_long(ident_length), self.is_too_short(ident_length))
+        } else {
+            let segmenter = GraphemeClusterSegmenter::new();
+            let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
+            (self.is_too_long(graphemes_length), self.is_too_short(graphemes_length))
+        };
 
         if is_too_long {
             ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
@@ -408,8 +415,8 @@ impl IdLength {
         )
     }
 
-    fn is_exception(&self, identifier: &String) -> bool {
-        if self.exceptions.contains(identifier) {
+    fn is_exception(&self, identifier: &str) -> bool {
+        if self.exceptions.iter().any(|exc| exc == identifier) {
             return true;
         }
         if self.exception_patterns.iter().any(|regex| regex.is_match(identifier)) {
