@@ -149,9 +149,9 @@ impl RuleCommentRule {
             ));
         }
 
-        unreachable!(
-            "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
-        );
+        // If there's no comma before or after, this is the last (or only) rule in the list.
+        // Just remove the rule name itself.
+        Fix::delete(self.name_span)
     }
 }
 
@@ -271,6 +271,11 @@ impl DisableDirectives {
                     | DisabledRule::Single { directive_prefix, .. } => *directive_prefix,
                 };
 
+                // Check if this directive disables all rules (e.g., `eslint-disable` with no specific rules)
+                let is_disable_all_directive = group_vec
+                    .iter()
+                    .any(|interval| matches!(interval.val, DisabledRule::All { .. }));
+
                 let rules: Vec<RuleCommentRule> = group_vec
                     .iter()
                     .filter_map(|interval| {
@@ -308,7 +313,10 @@ impl DisableDirectives {
                     return None;
                 }
 
-                if rules.len() == group_vec.len() {
+                // Use RuleCommentType::All only for directives that disable all rules
+                // (e.g., `eslint-disable` with no specific rules)
+                // For directives with specific rules, always use Single to show which rules are problematic
+                if is_disable_all_directive {
                     return Some(DisableRuleComment {
                         span: *comment_span,
                         r#type: RuleCommentType::All,
@@ -1294,7 +1302,12 @@ mod tests {
 
                 let comment = unused.first().unwrap();
                 assert_eq!(comment.span, comments.first().unwrap().content_span());
-                assert_eq!(comment.r#type, RuleCommentType::All);
+                // Directives with specific rules should be reported as Single to show which rules
+                assert!(
+                    matches!(comment.r#type, RuleCommentType::Single(_)),
+                    "Expected RuleCommentType::Single but got {:?}",
+                    comment.r#type
+                );
             },
         );
     }
@@ -1377,18 +1390,22 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
-    )]
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn test_rule_comment_rule_create_fix_panic() {
-        // This test is expected to panic because it is a standalone rule.
-        // Standalone rules should be `RuleCommentType::All`.
+    fn test_rule_comment_rule_create_fix_standalone() {
+        // Test that create_fix works for a standalone rule (last rule without a comma).
+        // This should now work without panicking since we changed the logic to always use
+        // RuleCommentType::Single for directives with specific rules.
         let source_text = "// eslint-disable-next-line max-params";
         let comment_span = Span::sized(3, source_text.len() as u32 - 3);
 
-        RuleCommentRule { rule_name: "max-params".to_string(), name_span: Span::sized(28, 10) }
-            .create_fix(source_text, comment_span);
+        let fix = RuleCommentRule {
+            rule_name: "max-params".to_string(),
+            name_span: Span::sized(28, 10),
+        }
+        .create_fix(source_text, comment_span);
+
+        // Should delete just the rule name (no panic!)
+        assert_eq!(fix.span, Span::sized(28, 10));
     }
 
     #[test]
@@ -1487,8 +1504,12 @@ function test() {
                 // Should report no-debugger as unused (it's a known rule with no violation)
                 assert_eq!(unused.len(), 1, "Known unused rules should be reported");
                 assert_eq!(unused[0].span, comments.first().unwrap().content_span());
-                // When all rules in a directive are unused, it's reported as RuleCommentType::All
-                assert_eq!(unused[0].r#type, RuleCommentType::All);
+                // Directives with specific rules should be reported as Single (to show which rules)
+                assert!(
+                    matches!(unused[0].r#type, RuleCommentType::Single(_)),
+                    "Expected RuleCommentType::Single but got {:?}",
+                    unused[0].r#type
+                );
             },
         );
     }
@@ -1539,12 +1560,27 @@ function test() {
                     }
                 } else {
                     // oxlint-disable: All 3 rules are unused (2 known + 1 unknown)
-                    // When all rules are unused, it's reported as All
+                    // Should be reported as Single to show which specific rules are problematic
                     assert!(
-                        matches!(unused[0].r#type, RuleCommentType::All),
-                        "Expected RuleCommentType::All for oxlint-disable when all rules are unused but got {:?}",
+                        matches!(unused[0].r#type, RuleCommentType::Single(_)),
+                        "Expected RuleCommentType::Single for oxlint-disable but got {:?}",
                         unused[0].r#type
                     );
+                    if let RuleCommentType::Single(rules) = &unused[0].r#type {
+                        assert_eq!(rules.len(), 3, "Should report all 3 rules for oxlint-disable");
+                        assert!(
+                            rules.iter().any(|r| r.rule_name == "no-debugger"),
+                            "Should include no-debugger"
+                        );
+                        assert!(
+                            rules.iter().any(|r| r.rule_name == "no-console"),
+                            "Should include no-console"
+                        );
+                        assert!(
+                            rules.iter().any(|r| r.rule_name == "custom-plugin/my-rule"),
+                            "Should include unknown custom-plugin/my-rule for oxlint-disable"
+                        );
+                    }
                 }
             },
         );
@@ -1798,10 +1834,10 @@ function test() {
             1,
             "oxlint-disable with existing unused rules should report them as unused"
         );
-        // Verify it's reported as RuleCommentType::All since all rules in the directive are unused
+        // Verify it's reported as RuleCommentType::Single to show which specific rules
         assert!(
-            matches!(unused[0].r#type, RuleCommentType::All),
-            "Expected RuleCommentType::All but got {:?}",
+            matches!(unused[0].r#type, RuleCommentType::Single(_)),
+            "Expected RuleCommentType::Single but got {:?}",
             unused[0].r#type
         );
     }
@@ -1830,10 +1866,10 @@ function test() {
             "oxlint-disable with unknown rule should be reported, eslint-disable should not"
         );
         assert_eq!(unused[0].directive_prefix, "oxlint");
-        // When all rules in a directive are unused, it's reported as RuleCommentType::All
+        // Directives with specific rules should be reported as Single to show which rules
         assert!(
-            matches!(unused[0].r#type, RuleCommentType::All),
-            "Expected RuleCommentType::All when all rules are unused but got {:?}",
+            matches!(unused[0].r#type, RuleCommentType::Single(_)),
+            "Expected RuleCommentType::Single but got {:?}",
             unused[0].r#type
         );
     }
@@ -1861,11 +1897,11 @@ function test() {
             "Mixed oxlint/eslint directives with existing unused rules should report each as unused"
         );
 
-        // Both should be reported as RuleCommentType::All since all rules in each directive are unused
+        // Both should be reported as RuleCommentType::Single to show which specific rules
         for unused_comment in &unused {
             assert!(
-                matches!(unused_comment.r#type, RuleCommentType::All),
-                "Expected RuleCommentType::All but got {:?}",
+                matches!(unused_comment.r#type, RuleCommentType::Single(_)),
+                "Expected RuleCommentType::Single but got {:?}",
                 unused_comment.r#type
             );
         }
