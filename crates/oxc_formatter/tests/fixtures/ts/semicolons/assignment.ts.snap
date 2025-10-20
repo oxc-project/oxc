@@ -1,0 +1,26 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+(<T>pendingSetRef.flags) |= SchedulerJobFlags.DISPOSED;
+(pendingSetRef.flags as T) |= SchedulerJobFlags.DISPOSED;
+(pendingSetRef.flags satisfies T) |= SchedulerJobFlags.DISPOSED;
+(pendingSetRef.flags!) |= SchedulerJobFlags.DISPOSED;
+==================== Output ====================
+--------------
+{ semi: true }
+--------------
+(<T>pendingSetRef.flags) |= SchedulerJobFlags.DISPOSED;
+(pendingSetRef.flags as T) |= SchedulerJobFlags.DISPOSED;
+(pendingSetRef.flags satisfies T) |= SchedulerJobFlags.DISPOSED;
+pendingSetRef.flags! |= SchedulerJobFlags.DISPOSED;
+
+---------------
+{ semi: false }
+---------------
+;(<T>pendingSetRef.flags) |= SchedulerJobFlags.DISPOSED
+;(pendingSetRef.flags as T) |= SchedulerJobFlags.DISPOSED
+;(pendingSetRef.flags satisfies T) |= SchedulerJobFlags.DISPOSED
+pendingSetRef.flags! |= SchedulerJobFlags.DISPOSED
+
+===================== End =====================
