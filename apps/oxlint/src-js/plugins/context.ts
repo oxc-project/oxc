@@ -73,7 +73,6 @@ let settings_record: Record<string, unknown> = {};
 export function setSettings(settings: unknown) {
   // Freezes to prevent mutation from a plugin.
   // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
-  // We don't try-catch here, because it's probably validated in the rust side Oxlintrc.
   settings_record = Object.freeze(settings);
 }
 
