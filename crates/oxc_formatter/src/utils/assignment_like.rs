@@ -392,7 +392,7 @@ impl<'a> AssignmentLike<'a, '_> {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
-        if self.should_break_left_hand_side() {
+        if self.should_break_left_hand_side(left_may_break) {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
@@ -518,7 +518,7 @@ impl<'a> AssignmentLike<'a, '_> {
 
     /// Particular function that checks if the left hand side of a [AssignmentLike] should
     /// be broken on multiple lines
-    fn should_break_left_hand_side(&self) -> bool {
+    fn should_break_left_hand_side(&self, left_may_break: bool) -> bool {
         if self.is_complex_destructuring() {
             return true;
         }
@@ -534,9 +534,11 @@ impl<'a> AssignmentLike<'a, '_> {
         let type_annotation = declarator.id.type_annotation.as_ref();
 
         type_annotation.is_some_and(|ann| is_complex_type_annotation(ann))
-            || (self.get_right_expression().is_some_and(|expr| {
-                matches!(expr.as_ref(), Expression::ArrowFunctionExpression(_))
-            }) && type_annotation.is_some_and(|ann| is_annotation_breakable(ann)))
+            || (left_may_break
+                && declarator
+                    .init
+                    .as_ref()
+                    .is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))))
     }
 
     /// Checks if the current assignment is eligible for [AssignmentLikeLayout::BreakAfterOperator]
@@ -1007,15 +1009,6 @@ fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> b
     // https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L454
 
     false
-}
-
-/// Checks if the annotation is breakable
-fn is_annotation_breakable(annotation: &TSTypeAnnotation) -> bool {
-    matches!(
-        &annotation.type_annotation,
-        TSType::TSTypeReference(reference_type)
-            if reference_type.type_arguments.as_ref().is_some_and(|type_args| !type_args.params.is_empty())
-    )
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>

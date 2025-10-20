@@ -1,0 +1,26 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  const onPanning: ComponenASDtProps<
+    typeof TransformWrapper
+  >["onPanning"] = () => {
+  }
+}
+const onPanning: ComponenASDtProps<
+  typeof TransformWrapper
+>["onPanning"] = () => {
+}
+
+==================== Output ====================
+{
+  const onPanning: ComponenASDtProps<
+    typeof TransformWrapper
+  >["onPanning"] = () => {};
+}
+const onPanning: ComponenASDtProps<
+  typeof TransformWrapper
+>["onPanning"] = () => {};
+
+===================== End =====================
