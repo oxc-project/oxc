@@ -424,9 +424,12 @@ impl<'a> Symbol<'_, 'a> {
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
                 AstKind::UpdateExpression(UpdateExpression { argument, .. }) => {
-                    // `a.b++` or `a[b] + 1` are not reassignment of `a`
-                    if !argument.is_member_expression() {
-                        is_used_by_others = false;
+                    // `for (let x = 0; x++; ) {}` is valid usage, as the loop body running is a side-effect
+                    if !self.is_in_for_loop_test_or_update(node.id(), ref_span) {
+                        // `a.b++` or `a[b] + 1` are not reassignment of `a`
+                        if !argument.is_member_expression() {
+                            is_used_by_others = false;
+                        }
                     }
                 }
                 // RHS usage when LHS != reference's symbol is definitely used by
@@ -541,6 +544,27 @@ impl<'a> Symbol<'_, 'a> {
         }
 
         !is_used_by_others
+    }
+
+    /// Check if a [`AstNode`] is within the test or update section of a for loop.
+    fn is_in_for_loop_test_or_update(&self, node_id: NodeId, node_span: Span) -> bool {
+        for parent in self.iter_relevant_parents_of(node_id).map(AstNode::kind) {
+            match parent {
+                AstKind::ForStatement(for_stmt) => {
+                    return for_stmt
+                        .test
+                        .as_ref()
+                        .is_some_and(|test| test.span().contains_inclusive(node_span))
+                        || for_stmt
+                            .update
+                            .as_ref()
+                            .is_some_and(|update| update.span().contains_inclusive(node_span));
+                }
+                x if x.is_statement() => return false,
+                _ => {}
+            }
+        }
+        false
     }
 
     /// Check if a [`AstNode`] is within a return statement or implicit return.
