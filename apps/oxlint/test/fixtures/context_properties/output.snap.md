@@ -3,6 +3,12 @@
 
 # stdout
 ```
+  x context-plugin(log-context): cwd:
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x context-plugin(log-context): id: context-plugin/log-context
    ,-[files/1.js:1:1]
  1 | let x;
@@ -22,8 +28,8 @@
    `----
 
   x context-plugin(log-context): cwd:
-   ,-[files/1.js:1:1]
- 1 | let x;
+   ,-[files/2.js:1:1]
+ 1 | let y;
    : ^
    `----
 
@@ -40,12 +46,6 @@
    `----
 
   x context-plugin(log-context): physicalFilename: files/2.js
-   ,-[files/2.js:1:1]
- 1 | let y;
-   : ^
-   `----
-
-  x context-plugin(log-context): cwd:
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
