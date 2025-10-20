@@ -53,7 +53,6 @@ expression: json
     },
     "jsPlugins": {
       "description": "JS plugins.\n\nNote: JS plugins are experimental and not subject to semver.\nThey are not supported in language server at present.",
-      "default": null,
       "type": [
         "array",
         "null"
