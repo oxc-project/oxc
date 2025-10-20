@@ -38,11 +38,10 @@ use self::{
 ///   }
 /// }
 /// ```
-#[derive(Debug, Clone, Serialize, Default, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Serialize, Default, JsonSchema, PartialEq)]
 pub struct OxlintSettings {
     #[serde(skip)]
-    pub value: Option<serde_json::Value>,
+    pub json: Option<OxlintSettingsJson>,
 
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]
@@ -60,6 +59,8 @@ pub struct OxlintSettings {
     #[serde(default)]
     pub vitest: VitestPluginSettings,
 }
+
+pub type OxlintSettingsJson = serde_json::Map<String, serde_json::Value>;
 
 impl<'de> Deserialize<'de> for OxlintSettings {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -89,8 +90,11 @@ impl<'de> Deserialize<'de> for OxlintSettings {
         let well_known_settings: WellKnownOxlintSettings =
             serde_json::from_value(raw_value.clone()).map_err(serde::de::Error::custom)?;
 
+        let arbitrary_settings =
+            if let serde_json::Value::Object(json) = raw_value { Some(json) } else { None };
+
         Ok(OxlintSettings {
-            value: Some(raw_value),
+            json: arbitrary_settings,
             jsx_a11y: well_known_settings.jsx_a11y,
             next: well_known_settings.next,
             react: well_known_settings.react,
@@ -103,21 +107,27 @@ impl OxlintSettings {
     /// Create a new OxlintSettings instance with both parsed settings and raw JSON.
     /// This allows external plugins to access unknown configuration fields.
     pub fn from_json_with_raw(json_value: &serde_json::Value) -> Result<Self, serde_json::Error> {
-        let mut settings = Self::deserialize(json_value)?;
-        settings.value = Some(json_value.clone());
+        let settings = Self::deserialize(json_value)?;
         Ok(settings)
     }
 
-    /// Get the raw JSON value if available.
-    /// This contains the full settings object including unknown fields.
-    pub fn value(&self) -> Option<&serde_json::Value> {
-        self.value.as_ref()
-    }
+    pub fn override_settings(&self, settings_to_override: &mut OxlintSettings) {
+        // TODO: we need to distinguish between overrides of well known settings being default vs actually being empty.
+        // Switch to Option?
+        settings_to_override.react = self.react.clone();
+        settings_to_override.jsx_a11y = self.jsx_a11y.clone();
+        settings_to_override.next = self.next.clone();
+        settings_to_override.jsdoc = self.jsdoc.clone();
 
-    /// Get the raw JSON as a string if available.
-    /// This contains the full settings object including unknown fields.
-    pub fn raw_json(&self) -> Option<String> {
-        self.value.as_ref().map(ToString::to_string)
+        if let Some(base_json) = &self.json {
+            if let Some(override_json) = &mut settings_to_override.json {
+                for (key, value) in base_json {
+                    override_json[key] = value.clone();
+                }
+            } else {
+                settings_to_override.json = Some(base_json.clone());
+            }
+        }
     }
 }
 
@@ -293,8 +303,8 @@ mod test {
         assert!(link_attrs.contains(&"to".into()));
 
         // Verify that raw JSON is captured
-        assert!(settings.value().is_some());
-        let raw_json = settings.value().unwrap();
+        assert!(settings.json.is_some());
+        let raw_json = settings.json.unwrap();
 
         // Verify known fields are present in raw JSON
         assert_eq!(raw_json["jsx-a11y"]["polymorphicPropName"], "role");
@@ -322,34 +332,5 @@ mod test {
             assert_eq!(custom_plugin_config.config.max_depth, 3);
             assert_eq!(custom_plugin_config.config.ignore_patterns, vec!["*.test.js".to_string()]);
         }
-    }
-
-    #[test]
-    fn test_raw_json_access_methods() {
-        let json_value = serde_json::json!({
-            "jsx-a11y": { "components": { "Link": "a" } },
-            "custom-plugin": { "setting": "value" }
-        });
-
-        let settings = OxlintSettings::from_json_with_raw(&json_value).unwrap();
-
-        // Test value() method
-        assert!(settings.value().is_some());
-        let raw_json = settings.value().unwrap();
-
-        assert_eq!(raw_json["custom-plugin"]["setting"], "value");
-
-        // Test with empty settings
-        let empty_settings = OxlintSettings::default();
-        assert!(empty_settings.value().is_none());
-
-        // Test raw_json() method that returns String
-        assert!(settings.raw_json().is_some());
-        let raw_json_str = settings.raw_json().unwrap();
-        let parsed_from_string: serde_json::Value = serde_json::from_str(&raw_json_str).unwrap();
-        assert_eq!(parsed_from_string["custom-plugin"]["setting"], "value");
-
-        // Test empty settings raw_json()
-        assert!(empty_settings.raw_json().is_none());
     }
 }
