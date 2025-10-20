@@ -1482,11 +1482,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         if let Some(expr) = &case.test {
             #[cfg(feature = "cfg")]
+            let condition_block_ix = control_flow!(self, |cfg| cfg.current_node_ix);
+            #[cfg(feature = "cfg")]
             self.record_ast_nodes();
             self.visit_expression(expr);
             #[cfg(feature = "cfg")]
             let test_node_id = self.retrieve_recorded_ast_node();
-            control_flow!(self, |cfg| cfg.append_condition_to(cfg.current_node_ix, test_node_id));
+            control_flow!(self, |cfg| cfg.append_condition_to(condition_block_ix, test_node_id));
         }
 
         /* cfg */
