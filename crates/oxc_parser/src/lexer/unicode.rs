@@ -5,12 +5,37 @@ use cow_utils::CowUtils;
 use oxc_allocator::StringBuilder;
 use oxc_syntax::identifier::{
     CR, FF, LF, LS, PS, TAB, VT, is_identifier_part, is_identifier_start,
-    is_identifier_start_unicode, is_irregular_line_terminator, is_irregular_whitespace,
+    is_identifier_start_unicode,
 };
 
 use crate::diagnostics;
 
 use super::{Kind, Lexer, Span};
+
+// UTF-8 byte sequences for irregular line terminators
+const LS_BYTES: [u8; 3] = [0xE2, 0x80, 0xA8]; // U+2028 LINE SEPARATOR
+const PS_BYTES: [u8; 3] = [0xE2, 0x80, 0xA9]; // U+2029 PARAGRAPH SEPARATOR
+
+// UTF-8 byte sequences for common irregular whitespace
+const OGHAM_SPACE_BYTES: [u8; 3] = [0xE1, 0x9A, 0x80]; // U+1680 OGHAM SPACE MARK
+const ZWNBSP_BYTES: [u8; 3] = [0xEF, 0xBB, 0xBF]; // U+FEFF ZERO WIDTH NO-BREAK SPACE
+
+// UTF-8 byte sequences for En Quad through Zero Width Space (U+2000 to U+200A)
+const EN_QUAD_BYTES: [u8; 3] = [0xE2, 0x80, 0x80]; // U+2000
+const EM_QUAD_BYTES: [u8; 3] = [0xE2, 0x80, 0x81]; // U+2001
+const EN_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x82]; // U+2002
+const EM_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x83]; // U+2003
+const THREE_PER_EM_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x84]; // U+2004
+const FOUR_PER_EM_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x85]; // U+2005
+const SIX_PER_EM_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x86]; // U+2006
+const FIGURE_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x87]; // U+2007
+const PUNCTUATION_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x88]; // U+2008
+const THIN_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x89]; // U+2009
+const HAIR_SPACE_BYTES: [u8; 3] = [0xE2, 0x80, 0x8A]; // U+200A
+
+const NNBSP_BYTES: [u8; 3] = [0xE2, 0x80, 0xAF]; // U+202F NARROW NO-BREAK SPACE
+const MMSP_BYTES: [u8; 3] = [0xE2, 0x81, 0x9F]; // U+205F MEDIUM MATHEMATICAL SPACE
+const IDEOGRAPHIC_SPACE_BYTES: [u8; 3] = [0xE3, 0x80, 0x80]; // U+3000 IDEOGRAPHIC SPACE
 
 /// A Unicode escape sequence.
 ///
@@ -28,34 +53,142 @@ enum UnicodeEscape {
 }
 
 impl<'a> Lexer<'a> {
-    pub(super) fn unicode_char_handler(&mut self) -> Kind {
-        let c = self.peek_char().unwrap();
-        match c {
-            c if is_identifier_start_unicode(c) => {
-                let start_pos = self.source.position();
-                self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
-                Kind::Ident
-            }
-            c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),
-            c if is_irregular_line_terminator(c) => self.handle_irregular_line_terminator(c),
-            _ => self.handle_invalid_unicode_char(c),
+    /// Check if the next bytes match a specific byte sequence.
+    /// Returns `true` if the bytes match, `false` otherwise.
+    #[inline]
+    fn check_byte_sequence(&self, sequence: &[u8]) -> bool {
+        let Some(first_byte) = self.peek_byte() else {
+            return false;
+        };
+
+        if first_byte != sequence[0] {
+            return false;
         }
+
+        if sequence.len() == 1 {
+            return true;
+        }
+
+        // For multi-byte sequences, we need to peek additional bytes
+        if sequence.len() == 2 {
+            if let Some([b1, b2]) = self.peek_2_bytes() {
+                return b1 == sequence[0] && b2 == sequence[1];
+            }
+            return false;
+        }
+
+        // For 3-byte sequences, check first 2 bytes, then check 3rd
+        if sequence.len() == 3
+            && let Some([b1, b2]) = self.peek_2_bytes()
+        {
+            if b1 != sequence[0] || b2 != sequence[1] {
+                return false;
+            }
+            // Need to check 3rd byte
+            // Create a position 2 bytes ahead and read from it
+            let pos = self.source.position();
+            // SAFETY: We just checked that there are at least 2 bytes available
+            let third_pos = unsafe { pos.add(2) };
+            if !third_pos.is_end_of(&self.source) {
+                // SAFETY: We checked that third_pos is not at end of source
+                let third_byte = unsafe { third_pos.read() };
+                return third_byte == sequence[2];
+            }
+        }
+
+        false
     }
 
-    #[cold]
-    fn handle_irregular_whitespace(&mut self, _c: char) -> Kind {
-        self.consume_char();
-        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
-        Kind::Skip
+    /// Check if next bytes represent an irregular line terminator (LS or PS).
+    /// Uses byte-based fast path before falling back to char decoding.
+    #[inline]
+    fn is_next_irregular_line_terminator(&self) -> bool {
+        self.check_byte_sequence(&LS_BYTES) || self.check_byte_sequence(&PS_BYTES)
     }
 
-    #[cold]
-    fn handle_irregular_line_terminator(&mut self, _c: char) -> Kind {
-        self.consume_char();
-        self.token.set_is_on_new_line(true);
-        self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
-        Kind::Skip
+    /// Check if next bytes represent irregular whitespace.
+    /// Uses byte-based fast path for common cases before falling back to char decoding.
+    #[inline]
+    fn is_next_irregular_whitespace(&self) -> bool {
+        let Some(first_byte) = self.peek_byte() else {
+            return false;
+        };
+
+        // Fast path for 2-byte sequences starting with 0xC2
+        if first_byte == 0xC2 {
+            if let Some([_, second]) = self.peek_2_bytes() {
+                // Check for NBSP (0xA0), or other 2-byte irregular whitespace
+                if second == 0xA0 {
+                    return true; // NBSP
+                }
+            }
+            return false;
+        }
+
+        // Fast path for 3-byte sequences starting with 0xE2
+        if first_byte == 0xE2 {
+            return self.check_byte_sequence(&EN_QUAD_BYTES)
+                || self.check_byte_sequence(&EM_QUAD_BYTES)
+                || self.check_byte_sequence(&EN_SPACE_BYTES)
+                || self.check_byte_sequence(&EM_SPACE_BYTES)
+                || self.check_byte_sequence(&THREE_PER_EM_SPACE_BYTES)
+                || self.check_byte_sequence(&FOUR_PER_EM_SPACE_BYTES)
+                || self.check_byte_sequence(&SIX_PER_EM_SPACE_BYTES)
+                || self.check_byte_sequence(&FIGURE_SPACE_BYTES)
+                || self.check_byte_sequence(&PUNCTUATION_SPACE_BYTES)
+                || self.check_byte_sequence(&THIN_SPACE_BYTES)
+                || self.check_byte_sequence(&HAIR_SPACE_BYTES)
+                || self.check_byte_sequence(&NNBSP_BYTES)
+                || self.check_byte_sequence(&MMSP_BYTES);
+        }
+
+        // Fast path for other 3-byte sequences
+        if first_byte == 0xE1 && self.check_byte_sequence(&OGHAM_SPACE_BYTES) {
+            return true;
+        }
+
+        if first_byte == 0xE3 && self.check_byte_sequence(&IDEOGRAPHIC_SPACE_BYTES) {
+            return true;
+        }
+
+        if first_byte == 0xEF && self.check_byte_sequence(&ZWNBSP_BYTES) {
+            return true;
+        }
+
+        false
+    }
+
+    pub(super) fn unicode_char_handler(&mut self) -> Kind {
+        // Try byte-based fast paths first before decoding the full character
+
+        // Fast path 1: Check for irregular line terminators (LS, PS)
+        if self.is_next_irregular_line_terminator() {
+            self.consume_char();
+            self.token.set_is_on_new_line(true);
+            self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+            return Kind::Skip;
+        }
+
+        // Fast path 2: Check for irregular whitespace
+        if self.is_next_irregular_whitespace() {
+            self.consume_char();
+            self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
+            return Kind::Skip;
+        }
+
+        // Slow path: Decode the character and check if it's an identifier start or error
+        let c = self.peek_char().unwrap();
+
+        if is_identifier_start_unicode(c) {
+            let start_pos = self.source.position();
+            self.consume_char();
+            self.identifier_tail_after_unicode(start_pos);
+            Kind::Ident
+        } else {
+            // Not an irregular whitespace/line terminator or identifier start
+            // Must be an invalid character
+            self.handle_invalid_unicode_char(c)
+        }
     }
 
     #[cold]
