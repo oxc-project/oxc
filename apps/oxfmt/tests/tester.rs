@@ -46,7 +46,7 @@ impl Tester {
     ///
     /// # Panics
     /// Panics if the current working directory cannot be determined or if command parsing fails.
-    pub fn test_and_snapshot_multiple(&self, multiple_args: &[&[&str]]) {
+    pub fn test_and_snapshot_multiple(&self, snapshot_name: &str, multiple_args: &[&[&str]]) {
         let mut output: Vec<u8> = Vec::new();
         let current_cwd = std::env::current_dir().unwrap();
         let relative_dir = self.cwd.strip_prefix(&current_cwd).unwrap_or(&self.cwd);
@@ -90,16 +90,8 @@ impl Tester {
         let test_cwd_string = self.cwd.to_str().unwrap().cow_replace('\\', "/").to_string();
         let output_string = output_string.cow_replace(&test_cwd_string, "<cwd>");
 
-        let full_args_list =
-            multiple_args.iter().map(|args| args.join(" ")).collect::<Vec<String>>().join(" ");
-
-        let snapshot_file_name = format!("{}_{}", relative_dir.to_str().unwrap(), full_args_list);
-
-        // windows can not handle filenames with *
-        // allow replace instead of cow_replace. It only test
-        let snapshot_file_name = snapshot_file_name.cow_replace('*', "_").to_string();
         settings.bind(|| {
-            insta::assert_snapshot!(snapshot_file_name, output_string);
+            insta::assert_snapshot!(snapshot_name, output_string);
         });
     }
 
