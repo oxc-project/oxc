@@ -30,7 +30,7 @@ pub use self::{
 };
 
 /// List of Jest rules that have Vitest equivalents.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 35] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
