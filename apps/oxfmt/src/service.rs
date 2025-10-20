@@ -44,7 +44,7 @@ impl FormatService {
     fn process_entry(&self, entry: &WalkEntry, tx_error: &DiagnosticSender) {
         let start_time = Instant::now();
 
-        let path = Path::new(&entry.path);
+        let path = &entry.path;
         let source_type = enable_jsx_source_type(entry.source_type);
 
         // TODO: Use `read_to_arena_str()` like `oxlint`?
@@ -69,7 +69,7 @@ impl FormatService {
                 &source_text,
                 ret.errors,
             );
-            tx_error.send((path.to_path_buf(), diagnostics)).unwrap();
+            tx_error.send((path.clone(), diagnostics)).unwrap();
             return;
         }
 
@@ -106,7 +106,7 @@ impl FormatService {
             ))),
             _ => None,
         } {
-            tx_error.send((path.to_path_buf(), vec![diagnostic.into()])).unwrap();
+            tx_error.send((path.clone(), vec![diagnostic.into()])).unwrap();
         }
     }
 }

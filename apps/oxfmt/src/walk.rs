@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
+use std::{ffi::OsStr, path::PathBuf, sync::mpsc};
 
 use ignore::overrides::Override;
 
@@ -58,7 +58,7 @@ impl Walk {
 }
 
 pub struct WalkEntry {
-    pub path: Arc<OsStr>,
+    pub path: PathBuf,
     pub source_type: SourceType,
 }
 
@@ -112,8 +112,7 @@ impl ignore::ParallelVisitor for WalkVisitor {
                 }
 
                 if let Some(source_type) = get_supported_source_type(entry.path()) {
-                    let walk_entry =
-                        WalkEntry { path: entry.path().as_os_str().into(), source_type };
+                    let walk_entry = WalkEntry { path: entry.path().to_path_buf(), source_type };
                     // Send each entry immediately through the channel
                     // If send fails, the receiver has been dropped, so stop walking
                     if self.sender.send(walk_entry).is_err() {
