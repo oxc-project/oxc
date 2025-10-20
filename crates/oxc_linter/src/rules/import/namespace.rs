@@ -8,6 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -46,8 +47,10 @@ fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/namespace.md>
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct Namespace {
+    /// Whether to allow computed references to an imported namespace.
     allow_computed: bool,
 }
 
@@ -103,7 +106,8 @@ declare_oxc_lint!(
     /// ```
     Namespace,
     import,
-    correctness
+    correctness,
+    config = Namespace,
 );
 
 impl Rule for Namespace {
