@@ -65,8 +65,6 @@ impl Walk {
     /// Will not canonicalize paths.
     /// # Panics
     pub fn new(paths: &[PathBuf], override_builder: Option<Override>) -> Self {
-        assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
-
         let mut inner = ignore::WalkBuilder::new(
             paths
                 .iter()

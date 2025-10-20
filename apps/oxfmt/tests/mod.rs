@@ -20,10 +20,11 @@ fn multiple_files() {
         .test_and_snapshot_multiple(&[
             // Explicit file list
             &["--check", "simple.js", "arrow.js"],
-            // Directory
-            &["--check", "."],
             // Default to current directory
             &["--check"],
+            // Explicit cwd
+            &["--check", "."],
+            &["--check", "./"],
         ]);
 }
 
@@ -106,18 +107,22 @@ fn exclude_nested_paths() {
 #[test]
 fn exclude_nested_paths_with_dot() {
     // All these cases should not report parse error from `foo/bar/error.js`
-    // TODO: Make the commented cases work as well.
     Tester::new()
         .with_cwd(PathBuf::from("tests/fixtures/exclude_nested"))
         .test_and_snapshot_multiple(&[
-            // &["--check", ".", "!foo/bar/error.js"],
-            // &["--check", ".", "!foo/bar"],
+            &["--check", ".", "!foo/bar/error.js"],
+            &["--check", ".", "!foo/bar"],
             &["--check", ".", "!foo"],
             &["--check", ".", "!**/error.js"],
+        ]);
+    // Split to avoid too long file name error...
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/exclude_nested"))
+        .test_and_snapshot_multiple(&[
             &["--check", "./foo", "!**/bar/error.js"],
             &["--check", "./foo", "!**/error.js"],
             &["--check", "./foo", "!**/bar/*"],
-            // &["--check", "./foo", "!foo/bar/error.js"],
-            // &["--check", "./foo", "!foo/bar"],
+            &["--check", "./foo", "!foo/bar/error.js"],
+            &["--check", "./foo", "!foo/bar"],
         ]);
 }
