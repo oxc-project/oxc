@@ -9,13 +9,13 @@ suite('VSCodeConfig', () => {
   setup(async () => {
     const keys = ['enable', 'requireConfig', 'trace.server', 'path.server'];
 
-    await Promise.all(keys.map(key => conf.update(key, undefined)));
+    await Promise.all(keys.map((key) => conf.update(key, undefined)));
   });
 
   teardown(async () => {
     const keys = ['enable', 'requireConfig', 'trace.server', 'path.server'];
 
-    await Promise.all(keys.map(key => conf.update(key, undefined)));
+    await Promise.all(keys.map((key) => conf.update(key, undefined)));
   });
 
   testSingleFolderMode('default values on initialization', () => {

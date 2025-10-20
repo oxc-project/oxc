@@ -4,7 +4,8 @@
 })();
 
 // oxlint-disable-next-line no-debugger, no-for-loop, no-console
-console.log("asd"); debugger;
+console.log('asd');
+debugger;
 
 // oxlint-disable-next-line no-debugger, no-for-loop
-console.log("complete line");
+console.log('complete line');

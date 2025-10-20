@@ -1,6 +1,6 @@
 class Apple {
-    #t
-    checker() {
-        return #t in {}
-    }
+  #t;
+  checker() {
+    return #t in {};
+  }
 }

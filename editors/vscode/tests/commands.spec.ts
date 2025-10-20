@@ -1,17 +1,6 @@
 import { deepStrictEqual, notEqual, strictEqual } from 'assert';
-import {
-  commands,
-  Uri,
-  window,
-  workspace,
-  WorkspaceEdit
-} from 'vscode';
-import {
-  activateExtension,
-  sleep,
-  testSingleFolderMode,
-  WORKSPACE_DIR
-} from './test-helpers';
+import { commands, Uri, window, workspace, WorkspaceEdit } from 'vscode';
+import { activateExtension, sleep, testSingleFolderMode, WORKSPACE_DIR } from './test-helpers';
 
 const fileUri = Uri.joinPath(WORKSPACE_DIR, 'debugger.js');
 
@@ -29,15 +18,12 @@ teardown(async () => {
 
 suite('commands', () => {
   testSingleFolderMode('listed commands', async () => {
-    const oxcCommands = (await commands.getCommands(true)).filter(x => x.startsWith('oxc.'));
+    const oxcCommands = (await commands.getCommands(true)).filter((x) => x.startsWith('oxc.'));
 
-    deepStrictEqual([
-      'oxc.restartServer',
-      'oxc.showOutputChannel',
-      'oxc.toggleEnable',
-      'oxc.applyAllFixesFile',
-      'oxc.fixAll',
-    ], oxcCommands);
+    deepStrictEqual(
+      ['oxc.restartServer', 'oxc.showOutputChannel', 'oxc.toggleEnable', 'oxc.applyAllFixesFile', 'oxc.fixAll'],
+      oxcCommands,
+    );
   });
 
   testSingleFolderMode('oxc.showOutputChannel', async () => {

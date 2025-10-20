@@ -1,1 +1,1 @@
-export const DEEP = 'RISING'
+export const DEEP = 'RISING';

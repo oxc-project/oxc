@@ -1,1 +1,1 @@
-export { foo } from "../depth-zero";
+export { foo } from '../depth-zero';

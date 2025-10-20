@@ -1,1 +1,1 @@
-export { foo as default } from './common.js'
+export { foo as default } from './common.js';

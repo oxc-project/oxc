@@ -2,16 +2,16 @@
 
 // Foo.jsx
 class Foo {
-    // ES7 static members
-    static bar = true;
+  // ES7 static members
+  static bar = true;
 }
 
-export default Foo
+export default Foo;
 
 export class Bar {
-    static baz = false;
+  static baz = false;
 
-    render() {
-        let {a, ...rest } = {a: 1, b: 2, c: 3}
-    }
+  render() {
+    let { a, ...rest } = { a: 1, b: 2, c: 3 };
+  }
 }

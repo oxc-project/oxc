@@ -1,1 +1,1 @@
-﻿import {foo} from './prefix-child.js';
+﻿import { foo } from './prefix-child.js';

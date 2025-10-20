@@ -8,7 +8,4 @@ type T3 = { a: string } & { a: string };
 
 type T4 = [A, A];
 
-type T5 =
-  | 'foo'
-  | 'bar'
-  | 'foo';
+type T5 = 'foo' | 'bar' | 'foo';

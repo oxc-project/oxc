@@ -5,7 +5,7 @@ declare interface foo {
 declare namespace SomeNamespace {
   type foobar = foo & {
     b: string;
-  }
+  };
 }
 
-export = SomeNamespace
+export = SomeNamespace;

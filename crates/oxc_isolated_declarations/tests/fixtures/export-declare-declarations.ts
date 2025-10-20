@@ -1,15 +1,22 @@
 import { Reference, Unreferenced } from 'mod';
 
 declare class Class {}
-declare function Function(): Reference
+declare function Function(): Reference;
 declare const variable: number;
-declare enum Enum { A, B, C }
+declare enum Enum {
+  A,
+  B,
+  C,
+}
 
 // Should not be included in the output, because they are not exported
 declare class UnreferencedClass {}
-declare function UnreferencedFunction(): Unreferenced
+declare function UnreferencedFunction(): Unreferenced;
 declare const UnreferencedVariable: number;
-declare enum UnreferencedEnum { A, B, C }
+declare enum UnreferencedEnum {
+  A,
+  B,
+  C,
+}
 
-
-export { Class, Function, variable, Enum }
+export { Class, Function, variable, Enum };

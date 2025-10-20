@@ -3,7 +3,8 @@
 class Builder {
   private value: string = '';
 
-  setValue(value: string): Builder { // Should return 'this'
+  setValue(value: string): Builder {
+    // Should return 'this'
     this.value = value;
     return this;
   }

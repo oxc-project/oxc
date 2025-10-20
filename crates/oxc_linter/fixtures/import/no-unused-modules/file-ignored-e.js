@@ -1,3 +1,3 @@
-const e0 = 5
+const e0 = 5;
 
-export { e0 as e }
+export { e0 as e };

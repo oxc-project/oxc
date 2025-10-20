@@ -1,13 +1,12 @@
 export function foo(): void {}
-foo.apply = () => {}
+foo.apply = () => {};
 
-export const bar = (): void => {}
-bar.call = () => {}
-
+export const bar = (): void => {};
+bar.call = () => {};
 
 export namespace NS {
-  export const goo = (): void => {}
-  goo.length = 10
+  export const goo = (): void => {};
+  goo.length = 10;
 }
 
 export namespace foo {
@@ -20,8 +19,8 @@ foo.bar = 42;
 foo.baz = 100;
 
 // unexported
-const zoo = (): void => {}
-zoo.toString = () => {}
+const zoo = (): void => {};
+zoo.toString = () => {};
 
 function qux(): void {}
 

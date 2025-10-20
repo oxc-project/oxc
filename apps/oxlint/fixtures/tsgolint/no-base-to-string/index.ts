@@ -2,8 +2,8 @@
 
 // These will evaluate to '[object Object]'
 ({}).toString();
-({foo: 'bar'}).toString();
-({foo: 'bar'}).toLocaleString();
+({ foo: 'bar' }).toString();
+({ foo: 'bar' }).toLocaleString();
 
 // This will evaluate to 'Symbol()'
 Symbol('foo').toString();

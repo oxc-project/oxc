@@ -1,2 +1,2 @@
-debugger
-console.log("Don't lint me!!")
+debugger;
+console.log("Don't lint me!!");

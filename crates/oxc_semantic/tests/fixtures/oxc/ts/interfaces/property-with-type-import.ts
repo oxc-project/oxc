@@ -1,4 +1,4 @@
-import type X from "mod";
+import type X from 'mod';
 
 type B = number;
 

@@ -1,1 +1,1 @@
-export const bin = 'bin'
+export const bin = 'bin';

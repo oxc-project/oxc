@@ -1,4 +1,4 @@
-import { B } from "./b";
+import { B } from './b';
 
 export class A {
   value: B;

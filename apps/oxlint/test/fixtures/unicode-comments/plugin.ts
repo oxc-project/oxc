@@ -6,9 +6,11 @@ const unicodeCommentsRule: Rule = {
     const { ast } = sourceCode;
 
     context.report({
-      message: `getAllComments: ${
-        JSON.stringify(sourceCode.getAllComments().map(c => ({ type: c.type, value: c.value })), null, 4)
-      }`,
+      message: `getAllComments: ${JSON.stringify(
+        sourceCode.getAllComments().map((c) => ({ type: c.type, value: c.value })),
+        null,
+        4,
+      )}`,
       node: ast,
     });
 

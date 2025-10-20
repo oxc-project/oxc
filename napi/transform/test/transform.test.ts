@@ -189,9 +189,7 @@ console.log(bar)
       console.log(bar);
       "
     `);
-    expect(ret.declaration).toEqual(
-      'declare const _default: () => void;\nexport = _default;\n',
-    );
+    expect(ret.declaration).toEqual('declare const _default: () => void;\nexport = _default;\n');
   });
 });
 
@@ -312,9 +310,7 @@ describe('inject plugin', () => {
         'Object.assign': 'foo',
       },
     });
-    expect(ret.code).toEqual(
-      'import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n',
-    );
+    expect(ret.code).toEqual('import $inject_Object_assign from "foo";\nlet _ = $inject_Object_assign;\n');
   });
 });
 

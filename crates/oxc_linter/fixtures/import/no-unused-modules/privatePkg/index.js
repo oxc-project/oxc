@@ -1,1 +1,1 @@
-export const privatePkg = 'privatePkg'
+export const privatePkg = 'privatePkg';

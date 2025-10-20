@@ -1,1 +1,1 @@
-export * as d from './d'
+export * as d from './d';

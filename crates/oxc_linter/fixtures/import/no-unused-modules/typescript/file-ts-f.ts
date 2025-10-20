@@ -1,1 +1,1 @@
-import {g} from './file-ts-g';
+import { g } from './file-ts-g';

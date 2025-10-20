@@ -1,1 +1,1 @@
-export const browserObject = 'browserObject'
+export const browserObject = 'browserObject';

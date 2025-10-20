@@ -1,22 +1,22 @@
-export declare type MyType = string
+export declare type MyType = string;
 export declare enum MyEnum {
   Foo,
   Bar,
-  Baz
+  Baz,
 }
 export declare interface Foo {
-  native: string | number
-  typedef: MyType
-  enum: MyEnum
+  native: string | number;
+  typedef: MyType;
+  enum: MyEnum;
 }
 
 export declare abstract class Bar {
-  abstract foo(): Foo
+  abstract foo(): Foo;
 
   method();
 }
 
-export declare function getFoo() : MyType;
+export declare function getFoo(): MyType;
 
 export declare module MyModule {
   export function ModuleFunction();

@@ -1,2 +1,2 @@
-exports['x'] = 'y'
-exports['foo' + 'bar'] = 'baz'
+exports['x'] = 'y';
+exports['foo' + 'bar'] = 'baz';

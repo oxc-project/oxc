@@ -7,6 +7,6 @@
 /**
  * this class is great
  */
-export default class Thing { }
+export default class Thing {}
 
 // some other comment

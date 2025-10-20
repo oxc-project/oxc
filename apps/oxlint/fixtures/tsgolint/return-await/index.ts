@@ -28,5 +28,9 @@ async function handleRequest(): Promise<Response> {
 declare function getUser(): Promise<User>;
 declare function fetchData(): Promise<string>;
 declare function handleAsync(): Promise<Response>;
-declare interface User { id: number; }
-declare interface Response { data: any; }
+declare interface User {
+  id: number;
+}
+declare interface Response {
+  data: any;
+}

@@ -1,7 +1,10 @@
 import { createRequire } from 'node:module';
 
 // Lazy-loaded when first construct a `Visitor`
-let walkProgram = null, addVisitorToCompiled, createCompiledVisitor, finalizeCompiledVisitor;
+let walkProgram = null,
+  addVisitorToCompiled,
+  createCompiledVisitor,
+  finalizeCompiledVisitor;
 
 /**
  * Visitor class for traversing AST.

@@ -1,3 +1,3 @@
 export function d() {
-  return 4
+  return 4;
 }

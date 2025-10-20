@@ -2,8 +2,7 @@
 async function asyncFunctionGood(): Promise<number> {}
 const asyncFunctionGoo2 = async (): Promise<number> => {
   return Promise.resolve(0);
-}
-
+};
 
 class AsyncClassGood {
   async method(): number {
@@ -18,8 +17,8 @@ async function asyncFunction() {
 }
 
 const asyncFunction2 = async () => {
-  return "Hello, World!";
-}
+  return 'Hello, World!';
+};
 
 class AsyncClassBad {
   async method() {

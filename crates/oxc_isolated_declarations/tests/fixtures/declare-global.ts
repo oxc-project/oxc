@@ -1,11 +1,11 @@
 function MyFunction() {
-  return 'here is my function'
+  return 'here is my function';
 }
 
 declare global {
   interface Window {
-    MyFunction: typeof MyFunction
+    MyFunction: typeof MyFunction;
   }
 }
 
-export {}
+export {};

@@ -1,1 +1,1 @@
-foo[{}].call(bar)
+foo[{}].call(bar);

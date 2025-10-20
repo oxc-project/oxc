@@ -1,2 +1,2 @@
-import foo from "../depth-zero"
-export { foo }
+import foo from '../depth-zero';
+export { foo };

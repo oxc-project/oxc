@@ -1,2 +1,2 @@
-import { o2 } from './file-o'
-export default () => 1
+import { o2 } from './file-o';
+export default () => 1;

@@ -1,6 +1,6 @@
 var a = 1;
 try {
-  throw 2
+  throw 2;
 } catch (a) {
   var a = 3;
 }

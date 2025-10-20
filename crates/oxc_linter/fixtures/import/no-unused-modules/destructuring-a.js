@@ -1,1 +1,1 @@
-import {a, b} from "./destructuring-b";
+import { a, b } from './destructuring-b';

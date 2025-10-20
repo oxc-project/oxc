@@ -1,4 +1,3 @@
-
 import { deepStrictEqual, strictEqual } from 'assert';
 import {
   CodeAction,
@@ -10,15 +9,9 @@ import {
   Uri,
   window,
   workspace,
-  WorkspaceEdit
+  WorkspaceEdit,
 } from 'vscode';
-import {
-  activateExtension,
-  fixturesWorkspaceUri,
-  loadFixture,
-  sleep,
-  testSingleFolderMode
-} from './test-helpers';
+import { activateExtension, fixturesWorkspaceUri, loadFixture, sleep, testSingleFolderMode } from './test-helpers';
 import assert = require('assert');
 
 suiteSetup(async () => {
@@ -52,9 +45,7 @@ suite('code actions', () => {
     );
 
     assert(Array.isArray(codeActions));
-    const quickFixes = codeActions.filter(
-      (action) => action.kind?.value === 'quickfix',
-    );
+    const quickFixes = codeActions.filter((action) => action.kind?.value === 'quickfix');
     strictEqual(quickFixes.length, 3);
     deepStrictEqual(
       quickFixes.map(({ edit: _edit, kind: _kind, ...fix }) => ({
@@ -107,7 +98,7 @@ suite('code actions', () => {
   });
 
   // https://discord.com/channels/1079625926024900739/1080723403595591700/1422191300395929620
-   test('code action `source.fixAll.oxc` ignores "ignore this rule for this line/file"', async () => {
+  test('code action `source.fixAll.oxc` ignores "ignore this rule for this line/file"', async () => {
     let file = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'file2.js');
     let expectedFile = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'expected.txt');
 
@@ -149,14 +140,16 @@ suite('code actions', () => {
     );
 
     assert(Array.isArray(codeActionsNoFix));
-    const quickFixesNoFix = codeActionsNoFix.filter(
-      (action) => action.kind?.value === 'quickfix',
-    );
+    const quickFixesNoFix = codeActionsNoFix.filter((action) => action.kind?.value === 'quickfix');
     strictEqual(quickFixesNoFix.length, 2);
 
-    await workspace.getConfiguration('oxc', fixturesWorkspaceUri()).update('flags', {
-      'fix_kind': 'dangerous_fix',
-    }, ConfigurationTarget.WorkspaceFolder);
+    await workspace.getConfiguration('oxc', fixturesWorkspaceUri()).update(
+      'flags',
+      {
+        fix_kind: 'dangerous_fix',
+      },
+      ConfigurationTarget.WorkspaceFolder,
+    );
     await workspace.saveAll();
 
     const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
@@ -169,9 +162,7 @@ suite('code actions', () => {
     );
 
     assert(Array.isArray(codeActionsWithFix));
-    const quickFixesWithFix = codeActionsWithFix.filter(
-      (action) => action.kind?.value === 'quickfix',
-    );
+    const quickFixesWithFix = codeActionsWithFix.filter((action) => action.kind?.value === 'quickfix');
     strictEqual(quickFixesWithFix.length, 3);
   });
 

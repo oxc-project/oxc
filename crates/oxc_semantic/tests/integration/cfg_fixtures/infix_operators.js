@@ -1,2 +1,2 @@
-a instanceof b
-a && b
+a instanceof b;
+a && b;

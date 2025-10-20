@@ -1,2 +1,2 @@
 // bar.js
-export { default as foo } from './foo'
+export { default as foo } from './foo';

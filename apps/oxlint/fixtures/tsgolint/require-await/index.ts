@@ -7,5 +7,5 @@ async function fetchData() {
 
 // Async arrow function without await
 const processData = async () => {
-  return someData.map(x => x * 2);
+  return someData.map((x) => x * 2);
 };

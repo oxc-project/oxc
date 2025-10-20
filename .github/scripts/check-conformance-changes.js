@@ -25,10 +25,7 @@ function getCoverageDependencies() {
 /**
  * Directories that should always trigger conformance tests
  */
-const ALWAYS_RUN_PATHS = [
-  'tasks/coverage/',
-  'tasks/common/',
-];
+const ALWAYS_RUN_PATHS = ['tasks/coverage/', 'tasks/common/'];
 
 /**
  * Check if conformance tests should run based on changed files

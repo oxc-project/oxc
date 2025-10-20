@@ -71,7 +71,7 @@ function deserialize(buffer, sourceText, sourceByteLen, options) {
     parent = !!options.experimentalParent;
 
   // Lazy load deserializer, and deserialize buffer to JS objects
-  const deserializerIndex = (+isJs) | ((+range) << 1) | ((+parent) << 2);
+  const deserializerIndex = +isJs | (+range << 1) | (+parent << 2);
   let deserializeThis = deserializers[deserializerIndex];
   if (deserializeThis === null) {
     deserializeThis = deserializers[deserializerIndex] = require(

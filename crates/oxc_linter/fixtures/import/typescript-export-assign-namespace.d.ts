@@ -1,26 +1,26 @@
 export = AssignedNamespace;
 
 declare namespace AssignedNamespace {
-  type MyType = string
+  type MyType = string;
   enum MyEnum {
     Foo,
     Bar,
-    Baz
+    Baz,
   }
 
   interface Foo {
-    native: string | number
-    typedef: MyType
-    enum: MyEnum
+    native: string | number;
+    typedef: MyType;
+    enum: MyEnum;
   }
 
   abstract class Bar {
-    abstract foo(): Foo
+    abstract foo(): Foo;
 
     method();
   }
 
-  export function getFoo() : MyType;
+  export function getFoo(): MyType;
 
   export module MyModule {
     export function ModuleFunction();

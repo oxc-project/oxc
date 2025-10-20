@@ -1,1 +1,1 @@
-export interface c {};
+export interface c {}

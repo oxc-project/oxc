@@ -45,7 +45,10 @@ export { name1, /* …, */ nameN } from "module-name";
 export { import1 as name1, import2 as name2, /* …, */ nameN } from "module-name";
 export { default, /* …, */ } from "module-name";
 export { default as name1 } from "module-name";
-`.split('\n').map((s) => s.trim()).filter(Boolean);
+`
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   test.each(code)('%s', (s) => {
     const ret = parseSync('test.js', s);

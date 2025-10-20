@@ -1,5 +1,4 @@
 function myFunction() {
-    for (let i = 'init'; 'test'; 'update')
-        'body';
-    'after for loop'
+  for (let i = 'init'; 'test'; 'update') ('body');
+  ('after for loop');
 }

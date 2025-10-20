@@ -1,1 +1,1 @@
-const es6 = "ecmascript6";
+const es6 = 'ecmascript6';

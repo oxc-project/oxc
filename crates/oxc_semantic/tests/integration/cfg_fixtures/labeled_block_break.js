@@ -1,11 +1,10 @@
 try {
-    // Some code.
+  // Some code.
 } catch (e) {
-    LABEL:
-    {
-        if (condition) {
-            break LABEL;
-        }
-        // Remaining code.
+  LABEL: {
+    if (condition) {
+      break LABEL;
     }
+    // Remaining code.
+  }
 }

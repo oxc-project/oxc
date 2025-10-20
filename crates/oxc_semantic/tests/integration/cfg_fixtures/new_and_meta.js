@@ -1,1 +1,1 @@
-new URL("../public/favicon.ico", import.meta.url).toString()
+new URL('../public/favicon.ico', import.meta.url).toString();

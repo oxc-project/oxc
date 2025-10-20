@@ -1,1 +1,1 @@
-import { createElement } from "preact";
+import { createElement } from 'preact';

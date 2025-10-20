@@ -1,1 +1,1 @@
-import type {g} from './file-ts-g-used-as-type'
+import type { g } from './file-ts-g-used-as-type';

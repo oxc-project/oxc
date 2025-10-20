@@ -1,3 +1,3 @@
 exports.parserOptions = {
   sourceType: 'module',
-}
+};

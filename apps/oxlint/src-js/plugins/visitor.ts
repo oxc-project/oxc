@@ -320,7 +320,7 @@ function addNonLeafVisitFn(typeId: number, isExit: boolean, visitFn: VisitFn): v
   const existing = compiledVisitor[typeId] as CompilingNonLeafVisitorEntry;
 
   if (existing === null) {
-    const enterExit = compiledVisitor[typeId] = getEnterExitObject();
+    const enterExit = (compiledVisitor[typeId] = getEnterExitObject());
     if (isExit) {
       enterExit.exit = visitFn;
     } else {

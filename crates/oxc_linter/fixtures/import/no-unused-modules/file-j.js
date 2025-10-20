@@ -1,3 +1,3 @@
 export function j() {
-  return 4
+  return 4;
 }

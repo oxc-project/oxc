@@ -1,1 +1,1 @@
-export * as "default" from "./named-exports";
+export * as 'default' from './named-exports';

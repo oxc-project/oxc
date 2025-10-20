@@ -1,1 +1,3 @@
-function fn() { arguments['map'] }
+function fn() {
+  arguments['map'];
+}

@@ -1,2 +1,2 @@
-import * as deepDep from './deprecated'
-export { deepDep }
+import * as deepDep from './deprecated';
+export { deepDep };

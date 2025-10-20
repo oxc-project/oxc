@@ -1,1 +1,1 @@
-export { test } from './issue210.js'
+export { test } from './issue210.js';

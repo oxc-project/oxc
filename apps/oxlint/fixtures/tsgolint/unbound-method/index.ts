@@ -16,7 +16,7 @@ class Calculator {
 const calc = new Calculator();
 
 // Unbound method - loses 'this' context
-const addMethod = calc.add; 
+const addMethod = calc.add;
 addMethod(5); // Error: 'this' is undefined
 
 // Array method callback loses context

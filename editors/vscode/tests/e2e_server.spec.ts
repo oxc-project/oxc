@@ -8,7 +8,7 @@ import {
   Uri,
   window,
   workspace,
-  WorkspaceEdit
+  WorkspaceEdit,
 } from 'vscode';
 import {
   activateExtension,
@@ -21,7 +21,7 @@ import {
   testSingleFolderMode,
   waitForDiagnosticChange,
   WORKSPACE_DIR,
-  writeToFixtureFile
+  writeToFixtureFile,
 } from './test-helpers';
 import assert = require('assert');
 
@@ -40,7 +40,6 @@ teardown(async () => {
   await workspace.getConfiguration('editor').update('defaultFormatter', undefined);
   await workspace.saveAll();
 });
-
 
 suite('E2E Diagnostics', () => {
   test('simple debugger statement', async () => {
@@ -71,8 +70,7 @@ suite('E2E Diagnostics', () => {
     });
   }
 
-  testSingleFolderMode('detects diagnostics on run', async () =>
-  {
+  testSingleFolderMode('detects diagnostics on run', async () => {
     await loadFixture('lint_on_run');
     const diagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
     strictEqual(diagnostics.length, 0);
@@ -220,17 +218,13 @@ suite('E2E Diagnostics', () => {
 
     const oxlintExtendedConfigUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'folder/custom.json');
     const oxlintExtendedConfig = JSON.stringify({
-      "rules": {
-        "no-debugger": "error"
-      }
+      rules: {
+        'no-debugger': 'error',
+      },
     });
 
     const edit = new WorkspaceEdit();
-    edit.replace(
-      oxlintExtendedConfigUri,
-      new Range(new Position(0, 0), new Position(100, 100)),
-      oxlintExtendedConfig
-    );
+    edit.replace(oxlintExtendedConfigUri, new Range(new Position(0, 0), new Position(100, 100)), oxlintExtendedConfig);
 
     await window.showTextDocument(oxlintExtendedConfigUri);
     await workspace.applyEdit(edit);
@@ -249,7 +243,7 @@ suite('E2E Diagnostics', () => {
 
     strictEqual(firstDiagnostics.length, 0);
 
-    await workspace.getConfiguration('oxc').update('tsConfigPath', "fixtures/deep/tsconfig.json");
+    await workspace.getConfiguration('oxc').update('tsConfigPath', 'fixtures/deep/tsconfig.json');
     await workspace.saveAll();
     await waitForDiagnosticChange();
 
@@ -257,7 +251,7 @@ suite('E2E Diagnostics', () => {
     strictEqual(secondDiagnostics.length, 1);
     assert(typeof secondDiagnostics[0].code == 'object');
     strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
-    assert(secondDiagnostics[0].message.startsWith("Dependency cycle detected"));
+    assert(secondDiagnostics[0].message.startsWith('Dependency cycle detected'));
     strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 
@@ -287,7 +281,7 @@ suite('E2E Diagnostics', () => {
     await workspace.saveAll();
     const content = await workspace.fs.readFile(fileUri);
 
-    strictEqual(content.toString(), "class X {\n  foo() {\n    return 42;\n  }\n}\n");
+    strictEqual(content.toString(), 'class X {\n  foo() {\n    return 42;\n  }\n}\n');
   });
 
   test('formats code with `oxc.fmt.configPath`', async () => {
@@ -306,6 +300,6 @@ suite('E2E Diagnostics', () => {
     await workspace.saveAll();
     const content = await workspace.fs.readFile(fileUri);
 
-    strictEqual(content.toString(), "class X {\n  foo() {\n    return 42\n  }\n}\n");
+    strictEqual(content.toString(), 'class X {\n  foo() {\n    return 42\n  }\n}\n');
   });
 });

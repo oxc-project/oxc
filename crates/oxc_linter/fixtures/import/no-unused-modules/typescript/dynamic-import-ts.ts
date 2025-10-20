@@ -1,6 +1,5 @@
 class A {
-    method() {
-        const c = import('./exports-for-dynamic-ts')
-    }
+  method() {
+    const c = import('./exports-for-dynamic-ts');
+  }
 }
-

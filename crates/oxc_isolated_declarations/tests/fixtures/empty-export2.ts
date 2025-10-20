@@ -1,1 +1,1 @@
-import * as a from "mod";
+import * as a from 'mod';

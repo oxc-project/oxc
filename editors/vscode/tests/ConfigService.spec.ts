@@ -9,13 +9,13 @@ suite('ConfigService', () => {
   setup(async () => {
     const keys = ['path.server'];
 
-    await Promise.all(keys.map(key => conf.update(key, undefined)));
+    await Promise.all(keys.map((key) => conf.update(key, undefined)));
   });
 
   teardown(async () => {
     const keys = ['path.server'];
 
-    await Promise.all(keys.map(key => conf.update(key, undefined)));
+    await Promise.all(keys.map((key) => conf.update(key, undefined)));
   });
 
   testSingleFolderMode('resolves relative server path with workspace folder', async () => {

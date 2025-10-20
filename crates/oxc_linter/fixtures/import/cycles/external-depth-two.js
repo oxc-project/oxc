@@ -1,2 +1,2 @@
-import { foo } from "cycles/external/depth-one"
-export { foo }
+import { foo } from 'cycles/external/depth-one';
+export { foo };

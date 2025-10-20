@@ -1,1 +1,1 @@
-export * from '@oxc-playground/binding-wasm32-wasi'
+export * from '@oxc-playground/binding-wasm32-wasi';

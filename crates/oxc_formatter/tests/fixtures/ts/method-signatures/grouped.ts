@@ -1,24 +1,17 @@
-
 type A = {
-  new(...args): T<{
-    A
-  }
-  >
+  new (...args): T<{
+    A;
+  }>;
 };
-
 
 type A1 = {
   (...args): T<{
-    A
-  }
-  >
+    A;
+  }>;
 };
 
 type A2 = {
-  bar(
-    ...args
-  ): T<{
-    A
-  }>
-}
-
+  bar(...args): T<{
+    A;
+  }>;
+};

@@ -1,1 +1,1 @@
-export const binObject = 'binObject'
+export const binObject = 'binObject';

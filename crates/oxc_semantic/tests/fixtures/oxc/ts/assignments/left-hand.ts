@@ -1,4 +1,4 @@
-let Foo: any= 0;
+let Foo: any = 0;
 
 Foo! += 1;
 (<any>Foo) = 1;

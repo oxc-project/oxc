@@ -10,9 +10,7 @@ const PACKAGES_ROOT = resolve(OXFMT_ROOT, '..');
 const REPO_ROOT = resolve(PACKAGES_ROOT, '..');
 const MANIFEST_PATH = resolve(OXFMT_ROOT, 'package.json');
 
-const rootManifest = JSON.parse(
-  fs.readFileSync(MANIFEST_PATH).toString('utf-8'),
-);
+const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString('utf-8'));
 
 const LIBC_MAPPING = {
   gnu: 'glibc',
@@ -61,10 +59,7 @@ function generateNativePackage(target) {
   // Copy the binary
   const ext = platform === 'win32' ? '.exe' : '';
 
-  const oxfmtBinSource = resolve(
-    REPO_ROOT,
-    `${OXFMT_BIN_NAME}-${target}${ext}`,
-  );
+  const oxfmtBinSource = resolve(REPO_ROOT, `${OXFMT_BIN_NAME}-${target}${ext}`);
   const oxfmtBinTarget = resolve(packageRoot, `${OXFMT_BIN_NAME}${ext}`);
 
   console.log(`Copy formatter binary ${oxfmtBinSource}`);
@@ -75,14 +70,9 @@ function generateNativePackage(target) {
 function writeManifest() {
   const manifestPath = resolve(PACKAGES_ROOT, OXFMT_BIN_NAME, 'package.json');
 
-  const manifestData = JSON.parse(
-    fs.readFileSync(manifestPath).toString('utf-8'),
-  );
+  const manifestData = JSON.parse(fs.readFileSync(manifestPath).toString('utf-8'));
 
-  const nativePackages = TARGETS.map((target) => [
-    `@${OXFMT_BIN_NAME}/${target}`,
-    rootManifest.version,
-  ]);
+  const nativePackages = TARGETS.map((target) => [`@${OXFMT_BIN_NAME}/${target}`, rootManifest.version]);
 
   manifestData.version = rootManifest.version;
   manifestData.optionalDependencies = Object.fromEntries(nativePackages);

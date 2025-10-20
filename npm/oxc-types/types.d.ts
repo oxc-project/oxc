@@ -583,12 +583,10 @@ export interface DebuggerStatement extends Span {
   parent?: Node;
 }
 
-export type BindingPattern =
-  & ({
-    optional?: boolean;
-    typeAnnotation?: TSTypeAnnotation | null;
-  })
-  & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
+export type BindingPattern = {
+  optional?: boolean;
+  typeAnnotation?: TSTypeAnnotation | null;
+} & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
 
 export type BindingPatternKind = BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern;
 
@@ -673,11 +671,9 @@ export interface FormalParameterRest extends Span {
   value?: null;
 }
 
-export type FormalParameter =
-  & ({
-    decorators?: Array<Decorator>;
-  })
-  & BindingPattern;
+export type FormalParameter = {
+  decorators?: Array<Decorator>;
+} & BindingPattern;
 
 export interface TSParameterProperty extends Span {
   type: 'TSParameterProperty';

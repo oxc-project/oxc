@@ -29,31 +29,27 @@ const environments = [
 
 const envsVersions = parseEnvsVersions(envs);
 
-const compatSources = ['es5', 'es6', 'es2016plus', 'esnext'].map(source => {
+const compatSources = ['es5', 'es6', 'es2016plus', 'esnext'].map((source) => {
   const data = require(`./compat-table/data-${source}`);
   interpolateAllResults(data.tests, envs);
   return data;
 });
 
-const compatibilityTests = compatSources.flatMap(data =>
-  data.tests.flatMap(test => {
+const compatibilityTests = compatSources.flatMap((data) =>
+  data.tests.flatMap((test) => {
     if (!test.subtests) return test;
 
-    return test.subtests.map(subtest =>
+    return test.subtests.map((subtest) =>
       Object.assign({}, subtest, {
         name: test.name + ' / ' + subtest.name,
         group: test.name,
-      })
+      }),
     );
-  })
+  }),
 );
 
-const getLowestImplementedVersion = (
-  { features },
-  env,
-  exclude = () => false,
-) => {
-  const tests = compatibilityTests.filter(test => {
+const getLowestImplementedVersion = ({ features }, env, exclude = () => false) => {
+  const tests = compatibilityTests.filter((test) => {
     let ok = features.includes(test.name);
     ok ||= test.group && features.includes(test.group);
     ok ||= features.length === 1 && test.name.startsWith(features[0]);
@@ -76,7 +72,7 @@ const getLowestImplementedVersion = (
     return envsVersions[env][i + 1];
   });
 
-  if (envTests.length === 0 || envTests.some(t => !t)) return null;
+  if (envTests.length === 0 || envTests.some((t) => !t)) return null;
 
   const result = envTests.reduce((a, b) => {
     return compareVersions(a, b) > 0 ? a : b;
@@ -88,21 +84,22 @@ const getLowestImplementedVersion = (
   return result.version.join('.').replace(/\.0$/, '');
 };
 
-const expandFeatures = features =>
-  features.flatMap(feat => {
+const expandFeatures = (features) =>
+  features.flatMap((feat) => {
     if (feat.includes('/')) return [feat];
-    return compatibilityTests
-      .map(test => test.name)
-      .filter(name => name === feat || name.startsWith(feat + ' / '));
+    return compatibilityTests.map((test) => test.name).filter((name) => name === feat || name.startsWith(feat + ' / '));
   });
 
 const generateData = (environments, items) => {
   for (const item of items) {
     const targets = {};
-    environments.forEach(env => {
-      const version = getLowestImplementedVersion({
-        features: expandFeatures(item.features),
-      }, env);
+    environments.forEach((env) => {
+      const version = getLowestImplementedVersion(
+        {
+          features: expandFeatures(item.features),
+        },
+        env,
+      );
       if (version) targets[env] = version;
     });
     addElectronSupportFromChromium(targets);

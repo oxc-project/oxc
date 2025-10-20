@@ -4,5 +4,5 @@
  * @returns {string} nonsense
  */
 export function foo() {
-  return 'bar'
+  return 'bar';
 }

@@ -19,7 +19,8 @@ const createOnceRule: Rule = {
       Program(_program) {},
       after() {
         context.report({
-          message: 'after:\n' +
+          message:
+            'after:\n' +
             `text: ${JSON.stringify(context.sourceCode.text)}\n` +
             `getText(): ${JSON.stringify(context.sourceCode.getText())}\n` +
             // @ts-ignore

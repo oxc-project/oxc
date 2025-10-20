@@ -1,1 +1,1 @@
-let y = new RegExp("a", "g").exec(foo);
+let y = new RegExp('a', 'g').exec(foo);

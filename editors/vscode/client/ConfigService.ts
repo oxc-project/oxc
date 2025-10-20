@@ -13,9 +13,7 @@ export class ConfigService implements IDisposable {
 
   private workspaceConfigs: Map<string, WorkspaceConfig> = new Map();
 
-  public onConfigChange:
-    | ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>)
-    | undefined;
+  public onConfigChange: ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>) | undefined;
 
   constructor() {
     this.vsCodeConfig = new VSCodeConfig();
@@ -27,9 +25,7 @@ export class ConfigService implements IDisposable {
     }
     this.onConfigChange = undefined;
 
-    const disposeChangeListener = workspace.onDidChangeConfiguration(
-      this.onVscodeConfigChange.bind(this),
-    );
+    const disposeChangeListener = workspace.onDidChangeConfiguration(this.onVscodeConfigChange.bind(this));
     this._disposables.push(disposeChangeListener);
   }
 

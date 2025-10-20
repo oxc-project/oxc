@@ -1,2 +1,2 @@
 // @ts-ignore
-export type { foo } from "../depth-zero";
+export type { foo } from '../depth-zero';

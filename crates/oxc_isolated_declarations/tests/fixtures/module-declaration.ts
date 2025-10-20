@@ -1,5 +1,5 @@
-import "foo";
-declare module "foo" {
+import 'foo';
+declare module 'foo' {
   interface Foo {}
   const foo = 42;
 }
@@ -9,10 +9,10 @@ declare global {
   const bar = 42;
 }
 
-import { type X } from "./x";
+import { type X } from './x';
 type Y = 1;
 
-declare module "foo" {
+declare module 'foo' {
   interface Foo {
     x: X;
     y: Y;

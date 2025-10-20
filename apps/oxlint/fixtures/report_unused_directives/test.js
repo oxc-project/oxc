@@ -13,18 +13,19 @@ debugger;
 const unusedVariable2 = 100;
 
 function testFunction() {
-    // eslint-disable-next-line no-console
-    console.log('Inside test function');
+  // eslint-disable-next-line no-console
+  console.log('Inside test function');
 }
 
 // eslint-disable-next-line no-console, no-debugger
-console.log('yes'); debugger;
+console.log('yes');
+debugger;
 
 // eslint-disable-next-line no-console, no-debugger
 console.log('no');
 
 // oxlint-disable-next-line no-debugger, no-for-loop
-console.log("complete line");
+console.log('complete line');
 
 testFunction();
 

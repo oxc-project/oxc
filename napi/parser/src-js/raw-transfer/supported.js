@@ -31,7 +31,8 @@ function rawTransferRuntimeSupported() {
   let global;
   try {
     global = globalThis;
-  } catch (_err) { // oxlint-disable-line no-unused-vars
+  } catch (_err) {
+    // oxlint-disable-line no-unused-vars
     return false;
   }
 

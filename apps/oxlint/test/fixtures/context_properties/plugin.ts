@@ -14,9 +14,10 @@ const SPAN: Node = {
 
 const DIR_PATH_LEN = import.meta.dirname.length + 1;
 
-const relativePath = sep === '/'
-  ? (path: string) => path.slice(DIR_PATH_LEN)
-  : (path: string) => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
+const relativePath =
+  sep === '/'
+    ? (path: string) => path.slice(DIR_PATH_LEN)
+    : (path: string) => path.slice(DIR_PATH_LEN).replace(/\\/g, '/');
 
 const rule: Rule = {
   create(context) {

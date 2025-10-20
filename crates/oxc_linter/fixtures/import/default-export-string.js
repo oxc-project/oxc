@@ -1,3 +1,5 @@
-function foo() { return 'bar' }
+function foo() {
+  return 'bar';
+}
 
-export { foo as "default" }
+export { foo as 'default' };

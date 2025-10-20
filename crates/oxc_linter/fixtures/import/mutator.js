@@ -1,1 +1,1 @@
-export const mutant = 'logan'
+export const mutant = 'logan';

@@ -1,1 +1,3 @@
-try { console.log() } catch {}
+try {
+  console.log();
+} catch {}

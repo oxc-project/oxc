@@ -1,5 +1,5 @@
 // Correct
-function *generatorGood(): Generator<number> {}
+function* generatorGood(): Generator<number> {}
 
 class GeneratorClassGood {
   *method(): Generator<number> {
@@ -8,11 +8,9 @@ class GeneratorClassGood {
   }
 }
 
-
-
 // Need to explicit return type for async functions
 // Incorrect
-function *generatorBad() {
+function* generatorBad() {
   yield 50;
   return 42;
 }

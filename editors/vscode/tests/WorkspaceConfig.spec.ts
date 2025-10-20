@@ -3,28 +3,36 @@ import { ConfigurationTarget, workspace } from 'vscode';
 import { WorkspaceConfig } from '../client/WorkspaceConfig.js';
 import { WORKSPACE_FOLDER } from './test-helpers.js';
 
-const keys = ['lint.run', 'configPath', 'tsConfigPath', 'flags', 'unusedDisableDirectives', 'typeAware', 'fmt.experimental', 'fmt.configPath'];
+const keys = [
+  'lint.run',
+  'configPath',
+  'tsConfigPath',
+  'flags',
+  'unusedDisableDirectives',
+  'typeAware',
+  'fmt.experimental',
+  'fmt.configPath',
+];
 
 suite('WorkspaceConfig', () => {
   setup(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
 
-
-    await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
+    await Promise.all(keys.map((key) => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
     // Do not fail, we will make sure the global config is empty too.
-    await Promise.all(keys.map(key => globalConfig.update(key, undefined)));
+    await Promise.all(keys.map((key) => globalConfig.update(key, undefined)));
   });
 
   teardown(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
 
-    await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
+    await Promise.all(keys.map((key) => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
     // Do not fail, we will make sure the global config is empty too.
-    await Promise.all(keys.map(key => globalConfig.update(key, undefined)));
+    await Promise.all(keys.map((key) => globalConfig.update(key, undefined)));
   });
 
   test('default values on initialization', () => {

@@ -1,4 +1,3 @@
-
 export function Qux1() {
   return (
     <div>
@@ -12,5 +11,5 @@ export function Qux2() {
     <div>
       <p>Qux1</p>
     </div>
-  );;
+  );
 }

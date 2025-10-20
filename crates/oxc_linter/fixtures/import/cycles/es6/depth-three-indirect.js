@@ -1,5 +1,5 @@
-import './depth-two'
+import './depth-two';
 
 export function bar() {
-    return "side effects???"
+  return 'side effects???';
 }

@@ -1,7 +1,7 @@
 // Shadowed
 export type Foo = {};
 export type Bar = {
-	foo: Foo;
+  foo: Foo;
 };
 const Foo = new Map();
 
@@ -11,6 +11,6 @@ export type FuncType = Func;
 
 type Module = () => void;
 namespace Module {
-	export const x = 1;
+  export const x = 1;
 }
 export type ModuleType = Module;

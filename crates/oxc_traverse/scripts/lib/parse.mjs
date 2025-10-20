@@ -135,8 +135,12 @@ class Lines {
    * @returns {Lines}
    */
   static fromCode(code, filename) {
-    const lines = code.split(/\r?\n/)
-      .map(line => line.replace(/\s+/g, ' ').replace(/ ?\/\/.*$/, '').replace(/ $/, ''));
+    const lines = code.split(/\r?\n/).map((line) =>
+      line
+        .replace(/\s+/g, ' ')
+        .replace(/ ?\/\/.*$/, '')
+        .replace(/ $/, ''),
+    );
     return new Lines(lines, filename, 0);
   }
 
@@ -175,7 +179,8 @@ function parseFile(code, filename, types) {
     }
 
     // Consume attrs and comments, parse `#[scope]` attr
-    let match, scopeArgs = null;
+    let match,
+      scopeArgs = null;
     while (!lines.isEnd()) {
       if (/^#\[scope[(\]]/.test(lines.current())) {
         scopeArgs = parseScopeArgs(lines, scopeArgs);
@@ -211,7 +216,9 @@ function parseStruct(name, rawName, lines, scopeArgs) {
   const fields = [];
 
   while (!lines.isEnd()) {
-    let isScopeEntry = false, isScopeExit = false, line;
+    let isScopeEntry = false,
+      isScopeExit = false,
+      line;
     while (!lines.isEnd()) {
       line = lines.next();
       if (line === '') continue;

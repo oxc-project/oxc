@@ -8,6 +8,6 @@ import(
   // comment1
   `../alias/${base}.js`,
   // comment2
-  { with: { type: "json" }}
+  { with: { type: 'json' } }
   // comment2
 );

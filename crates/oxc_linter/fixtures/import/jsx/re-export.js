@@ -1,1 +1,1 @@
-export * from './named.jsx'
+export * from './named.jsx';

@@ -1,8 +1,7 @@
-
 debugger;
 
 async function returnsPromise() {
-  return "value";
+  return 'value';
 }
 
 returnsPromise().then(() => {});

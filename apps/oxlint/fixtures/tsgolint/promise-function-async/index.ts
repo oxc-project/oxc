@@ -2,12 +2,12 @@
 
 // Function returning Promise without async
 function fetchData(): Promise<string> {
-  return fetch('/api/data').then(res => res.text());
+  return fetch('/api/data').then((res) => res.text());
 }
 
 // Method returning Promise without async
 class DataService {
   getData(): Promise<any> {
-    return fetch('/api/data').then(res => res.json());
+    return fetch('/api/data').then((res) => res.json());
   }
 }

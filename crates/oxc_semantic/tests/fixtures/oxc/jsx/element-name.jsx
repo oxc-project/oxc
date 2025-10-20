@@ -1,2 +1,2 @@
 let Component = () => <div></div>;
-<Component></Component>
+<Component></Component>;

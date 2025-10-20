@@ -26,10 +26,10 @@ describe('parse', () => {
 
     const comment = ret.comments[0];
     expect(comment).toEqual({
-      'type': 'Block',
-      'start': 0,
-      'end': 13,
-      'value': ' comment ',
+      type: 'Block',
+      start: 0,
+      end: 13,
+      value: ' comment ',
     });
     expect(code.substring(comment.start, comment.end)).toBe('/*' + comment.value + '*/');
   });
@@ -340,7 +340,7 @@ describe('parse', () => {
                 raw: '\\uD800\\uDBFF',
                 cooked: '\ud800\udbff',
               },
-              'tail': false,
+              tail: false,
             },
             {
               type: 'TemplateElement',
@@ -350,7 +350,7 @@ describe('parse', () => {
                 raw: '\\uD800\\uDBFF',
                 cooked: '\ud800\udbff',
               },
-              'tail': true,
+              tail: true,
             },
           ],
         },
@@ -568,7 +568,7 @@ describe('parse', () => {
                 raw: '�\\u{FFFD}',
                 cooked: '��',
               },
-              'tail': false,
+              tail: false,
             },
             {
               type: 'TemplateElement',
@@ -578,7 +578,7 @@ describe('parse', () => {
                 raw: '�\\u{FFFD}',
                 cooked: '��',
               },
-              'tail': true,
+              tail: true,
             },
           ],
         },
@@ -614,7 +614,7 @@ describe('parse', () => {
                 raw: '�\\u{FFFD}\\uD800',
                 cooked: '��\ud800',
               },
-              'tail': false,
+              tail: false,
             },
             {
               type: 'TemplateElement',
@@ -624,7 +624,7 @@ describe('parse', () => {
                 raw: '\\uDBFF�\\u{FFFD}',
                 cooked: '\udbff��',
               },
-              'tail': true,
+              tail: true,
             },
           ],
         },
@@ -861,15 +861,15 @@ describe('error', () => {
     expect(ret.errors.length).toBe(1);
     delete ret.errors[0].codeframe;
     expect(ret.errors[0]).toStrictEqual({
-      'helpMessage': 'Try insert a semicolon here',
-      'labels': [
+      helpMessage: 'Try insert a semicolon here',
+      labels: [
         {
-          'end': 4,
-          'start': 4,
+          end: 4,
+          start: 4,
         },
       ],
-      'message': 'Expected a semicolon or an implicit semicolon after a statement, but found none',
-      'severity': 'Error',
+      message: 'Expected a semicolon or an implicit semicolon after a statement, but found none',
+      severity: 'Error',
     });
   });
 });

@@ -1,7 +1,14 @@
-import { strictEqual } from "assert";
-import { DiagnosticSeverity, Uri, workspace } from "vscode";
-import { activateExtension, getDiagnostics, loadFixture, sleep, testMultiFolderMode, WORKSPACE_DIR } from "./test-helpers";
-import assert = require("assert");
+import { strictEqual } from 'assert';
+import { DiagnosticSeverity, Uri, workspace } from 'vscode';
+import {
+  activateExtension,
+  getDiagnostics,
+  loadFixture,
+  sleep,
+  testMultiFolderMode,
+  WORKSPACE_DIR,
+} from './test-helpers';
+import assert = require('assert');
 
 suiteSetup(async () => {
   await activateExtension();
@@ -20,7 +27,7 @@ suite('Workspace Folders', () => {
 
     workspace.updateWorkspaceFolders(workspace.workspaceFolders?.length ?? 0, 0, {
       name: 'fixtures',
-      uri: FIXTURES_URI
+      uri: FIXTURES_URI,
     });
 
     await sleep(500);
@@ -32,5 +39,5 @@ suite('Workspace Folders', () => {
 
     // remove the workspace folder
     workspace.updateWorkspaceFolders(workspace.workspaceFolders?.length ?? 0, 1);
-  })
-})
+  });
+});

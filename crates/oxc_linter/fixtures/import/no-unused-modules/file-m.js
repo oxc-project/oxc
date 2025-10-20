@@ -1,6 +1,6 @@
-const m0 = 5
-const m = 10
+const m0 = 5;
+const m = 10;
 
-export { m0 as m1, m }
+export { m0 as m1, m };
 
-export default () => {}
+export default () => {};

@@ -1,1 +1,1 @@
-export const main = 'main'
+export const main = 'main';

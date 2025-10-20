@@ -3,7 +3,7 @@
 */
 class StripInternalClass {
   public test() {
-    console.log("test");
+    console.log('test');
   }
 }
 
@@ -11,7 +11,7 @@ class StripInternalClassFields {
   /**
    * @internal
    */
-  internalProperty: string = "internal";
+  internalProperty: string = 'internal';
 
   // @internal
   internalMethod(): void {}
@@ -21,7 +21,7 @@ class StripInternalClassFields {
 @internal
 */
 function stripInternalFunction() {
-  console.log("test");
+  console.log('test');
 }
 
 export { stripInternalFunction, StripInternalClass, StripInternalClassFields };
@@ -30,12 +30,12 @@ export { stripInternalFunction, StripInternalClass, StripInternalClassFields };
 @internal
 */
 export function stripInternalExportedFunction() {
-  console.log("test");
+  console.log('test');
 }
 
 /**
 @internal*/
-export const stripInternalExportedConst = "test";
+export const stripInternalExportedConst = 'test';
 
 /**
 @internal*/
@@ -76,7 +76,7 @@ export namespace StripInternalNamespaceInner {
    * @internal
    */
   export function internalFunction() {
-    console.log("test");
+    console.log('test');
   }
 }
 

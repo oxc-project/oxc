@@ -1,1 +1,3 @@
-export enum e { f };
+export enum e {
+  f,
+}

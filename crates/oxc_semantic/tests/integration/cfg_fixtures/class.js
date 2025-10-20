@@ -1,1 +1,5 @@
-class A { foo() { this.slice() } }
+class A {
+  foo() {
+    this.slice();
+  }
+}

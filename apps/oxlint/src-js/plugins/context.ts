@@ -49,11 +49,7 @@ export const diagnostics: DiagnosticReport[] = [];
  * @param ruleIndex - Index of this rule within `ruleIds` passed from Rust
  * @param filePath - Absolute path of file being linted
  */
-export let setupContextForFile: (
-  context: Context,
-  ruleIndex: number,
-  filePath: string,
-) => void;
+export let setupContextForFile: (context: Context, ruleIndex: number, filePath: string) => void;
 
 /**
  * Get internal data from `Context`.
@@ -192,8 +188,12 @@ export class Context {
       // Do type validation checks here, to ensure no error in serialization / deserialization.
       // Range validation happens on Rust side.
       if (
-        typeof start !== 'number' || typeof end !== 'number' ||
-        start < 0 || end < 0 || (start | 0) !== start || (end | 0) !== end
+        typeof start !== 'number' ||
+        typeof end !== 'number' ||
+        start < 0 ||
+        end < 0 ||
+        (start | 0) !== start ||
+        (end | 0) !== end
       ) {
         throw new TypeError('`node.range[0]` and `node.range[1]` must be non-negative integers');
       }
@@ -261,9 +261,9 @@ function resolveMessageFromMessageId(messageId: string, internal: InternalContex
 
   if (!hasOwn(messages, messageId)) {
     throw new Error(
-      `Unknown messageId '${messageId}'. Available \`messageIds\`: ${
-        ObjectKeys(messages).map((msg) => `'${msg}'`).join(', ')
-      }`,
+      `Unknown messageId '${messageId}'. Available \`messageIds\`: ${ObjectKeys(messages)
+        .map((msg) => `'${msg}'`)
+        .join(', ')}`,
     );
   }
 

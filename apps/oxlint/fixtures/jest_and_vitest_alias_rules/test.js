@@ -1,4 +1,4 @@
-describe("foo", () => {
-  it("works", () => {});
-  it("works", () => {});
+describe('foo', () => {
+  it('works', () => {});
+  it('works', () => {});
 });

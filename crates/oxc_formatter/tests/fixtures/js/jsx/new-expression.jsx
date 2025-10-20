@@ -1,6 +1,1 @@
-return new ImageResponse(
-  (
-    <div>
-    </div>
-  ),
-)
+return new ImageResponse(<div></div>);

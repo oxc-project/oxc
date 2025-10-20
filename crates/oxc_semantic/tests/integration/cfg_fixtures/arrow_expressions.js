@@ -1,2 +1,2 @@
-(a) => b
-const c = (x) => x + y
+(a) => b;
+const c = (x) => x + y;

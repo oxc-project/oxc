@@ -1,9 +1,5 @@
 {
   "lineWidth": 120,
-  "typescript": {
-    "quoteStyle": "preferSingle",
-    "binaryExpression.operatorPosition": "sameLine"
-  },
   "json": {
     "indentWidth": 2
   },
@@ -37,7 +33,6 @@
     ".github/generated/ast_changes_watch_list.yml"
   ],
   "plugins": [
-    "https://plugins.dprint.dev/typescript-0.95.11.wasm",
     "https://plugins.dprint.dev/json-0.21.0.wasm",
     "https://plugins.dprint.dev/markdown-0.20.0.wasm",
     "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.1.wasm",

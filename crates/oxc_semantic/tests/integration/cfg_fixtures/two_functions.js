@@ -1,7 +1,7 @@
 function apple() {
-    return 9;
+  return 9;
 }
 
 function orange() {
-    return 10;
+  return 10;
 }

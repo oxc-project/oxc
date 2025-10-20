@@ -1,3 +1,4 @@
 import { foo } from 'module';
 
-const a = foo, b = foo;
+const a = foo,
+  b = foo;

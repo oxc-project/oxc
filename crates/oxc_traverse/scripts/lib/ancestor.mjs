@@ -20,8 +20,7 @@ export default function generateAncestorsCode(types) {
     for (const field of type.fields) {
       const offsetVarName = `OFFSET_${typeScreamingName}_${field.name.toUpperCase()}`;
       field.offsetVarName = offsetVarName;
-      offsetCode += `pub(crate) const ${offsetVarName}: usize = ` +
-        `offset_of!(${type.name}, ${field.rawName});\n`;
+      offsetCode += `pub(crate) const ${offsetVarName}: usize = ` + `offset_of!(${type.name}, ${field.rawName});\n`;
     }
 
     const variantNames = [];
@@ -80,8 +79,7 @@ export default function generateAncestorsCode(types) {
       discriminant++;
 
       if (fieldType.kind === 'enum') {
-        (variantNamesForEnums[fieldTypeName] || (variantNamesForEnums[fieldTypeName] = []))
-          .push(variantName);
+        (variantNamesForEnums[fieldTypeName] || (variantNamesForEnums[fieldTypeName] = [])).push(variantName);
       }
 
       addressMatchArms += `Self::${variantName}(a) => a.address(),\n`;
@@ -96,7 +94,7 @@ export default function generateAncestorsCode(types) {
       isFunctions += `
         #[inline]
         pub fn is_${typeSnakeName}(self) -> bool {
-          matches!(self, ${variantNames.map(name => `Self::${name}(_)`).join(' | ')})
+          matches!(self, ${variantNames.map((name) => `Self::${name}(_)`).join(' | ')})
         }
       `;
     }
@@ -106,7 +104,7 @@ export default function generateAncestorsCode(types) {
     isFunctions += `
       #[inline]
       pub fn is_parent_of_${camelToSnake(typeName)}(self) -> bool {
-        matches!(self, ${variantNames.map(name => `Self::${name}(_)`).join(' | ')})
+        matches!(self, ${variantNames.map((name) => `Self::${name}(_)`).join(' | ')})
       }
     `;
   }

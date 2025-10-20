@@ -20,15 +20,9 @@ describe('moduleRunnerTransform', () => {
   });
 
   test('sourcemap', async () => {
-    const map = (
-      moduleRunnerTransform(
-        'index.js',
-        `export const a = 1`,
-        {
-          sourcemap: true,
-        },
-      )
-    )?.map;
+    const map = moduleRunnerTransform('index.js', `export const a = 1`, {
+      sourcemap: true,
+    })?.map;
 
     expect(map).toMatchInlineSnapshot(`
       {

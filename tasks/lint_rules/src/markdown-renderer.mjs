@@ -21,13 +21,9 @@ This is tracking issue for ${npm.map((n) => '`' + n + '`').join(', ')}.
  *   };
  * }} props
  */
-const renderCounters = ({
-  counters: { recommended, notRecommended, deprecated },
-}) => {
-  const recommendedTodos = recommended.total -
-    (recommended.isImplemented + recommended.isNotSupported);
-  const notRecommendedTodos = notRecommended.total -
-    (notRecommended.isImplemented + notRecommended.isNotSupported);
+const renderCounters = ({ counters: { recommended, notRecommended, deprecated } }) => {
+  const recommendedTodos = recommended.total - (recommended.isImplemented + recommended.isNotSupported);
+  const notRecommendedTodos = notRecommended.total - (notRecommended.isImplemented + notRecommended.isNotSupported);
 
   const countersList = [
     `- ${recommendedTodos}/${recommended.total} recommended rules are remaining as TODO`,
@@ -73,13 +69,9 @@ const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 
 | Status | Name | Docs |
 | :----: | :--- | :--- |
-${
-  views
-    .map(
-      (v) => `| ${v.isImplemented ? '✨' : ''}${v.isNotSupported ? '🚫' : ''} | ${v.name} | ${v.docsUrl} |`,
-    )
-    .join('\n')
-}
+${views
+  .map((v) => `| ${v.isImplemented ? '✨' : ''}${v.isNotSupported ? '🚫' : ''} | ${v.name} | ${v.docsUrl} |`)
+  .join('\n')}
 
 ✨ = Implemented, 🚫 = No need to implement
 
@@ -138,24 +130,24 @@ export const renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     renderCounters({ counters }),
     renderGettingStarted({ pluginName }),
     0 < views.recommended.length &&
-    renderRulesList({
-      title: 'Recommended rules',
-      counters: counters.recommended,
-      views: views.recommended,
-    }),
+      renderRulesList({
+        title: 'Recommended rules',
+        counters: counters.recommended,
+        views: views.recommended,
+      }),
     0 < views.notRecommended.length &&
-    renderRulesList({
-      title: 'Not recommended rules',
-      counters: counters.notRecommended,
-      views: views.notRecommended,
-    }),
+      renderRulesList({
+        title: 'Not recommended rules',
+        counters: counters.notRecommended,
+        views: views.notRecommended,
+      }),
     0 < views.deprecated.length &&
-    renderRulesList({
-      title: 'Deprecated rules',
-      counters: counters.deprecated,
-      views: views.deprecated,
-      defaultOpen: false,
-    }),
+      renderRulesList({
+        title: 'Deprecated rules',
+        counters: counters.deprecated,
+        views: views.deprecated,
+        defaultOpen: false,
+      }),
   ]
     .filter(Boolean)
     .join('\n');

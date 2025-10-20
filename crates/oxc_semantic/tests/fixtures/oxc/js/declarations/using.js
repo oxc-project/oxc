@@ -1,21 +1,23 @@
 {
-    using _ = {};
+  using _ = {};
 }
 {
-    using _ = {};
+  using _ = {};
 }
 
 {
-   await using foo = {};
+  await using foo = {};
 }
 {
-   await using foo = {};
+  await using foo = {};
 }
 
-for (using x of []) {};
+for (using x of []) {
+}
 
-x
+x;
 
-for (await using y of []) {};
+for (await using y of []) {
+}
 
-y
+y;

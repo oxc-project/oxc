@@ -10,7 +10,7 @@ const F = {
   arrow: (a: string): void => {},
   object: {
     a: `a`,
-    b: `b`
+    b: `b`,
   },
   array: [`a`, , { b: `\n` }],
-} as const
+} as const;

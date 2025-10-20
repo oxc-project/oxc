@@ -1,1 +1,1 @@
-Reflect.apply({}[Symbol()], baz, [])
+Reflect.apply({}[Symbol()], baz, []);

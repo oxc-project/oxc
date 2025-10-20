@@ -1,15 +1,15 @@
-import fs from "node:fs";
-import { createRequire } from "node:module";
-import { parse } from "node:path";
-import { WASI } from "node:wasi";
-import { parentPort, Worker } from "node:worker_threads";
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import { parse } from 'node:path';
+import { WASI } from 'node:wasi';
+import { parentPort, Worker } from 'node:worker_threads';
 
 const require = createRequire(import.meta.url);
 
-const { instantiateNapiModuleSync, MessageHandler, getDefaultContext } = require("@napi-rs/wasm-runtime");
+const { instantiateNapiModuleSync, MessageHandler, getDefaultContext } = require('@napi-rs/wasm-runtime');
 
 if (parentPort) {
-  parentPort.on("message", (data) => {
+  parentPort.on('message', (data) => {
     globalThis.onmessage({ data });
   });
 }
@@ -19,7 +19,7 @@ Object.assign(globalThis, {
   require,
   Worker,
   importScripts: function (f) {
-    ;(0, eval)(fs.readFileSync(f, "utf8") + "//# sourceURL=" + f);
+    (0, eval)(fs.readFileSync(f, 'utf8') + '//# sourceURL=' + f);
   },
   postMessage: function (msg) {
     if (parentPort) {
@@ -51,7 +51,7 @@ const handler = new MessageHandler({
           ...importObject.env,
           ...importObject.napi,
           ...importObject.emnapi,
-          memory: wasmMemory
+          memory: wasmMemory,
         };
       },
     });

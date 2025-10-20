@@ -1,1 +1,3 @@
-function fn(x) { return [1, 2, ...x] }
+function fn(x) {
+  return [1, 2, ...x];
+}

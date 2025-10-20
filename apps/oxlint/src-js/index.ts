@@ -87,7 +87,9 @@ export function defineRule(rule: Rule): Rule {
   if ('create' in rule) return rule;
 
   // Add `create` function to `rule`
-  let context: Context = null, visitor: Visitor, beforeHook: BeforeHook | null;
+  let context: Context = null,
+    visitor: Visitor,
+    beforeHook: BeforeHook | null;
 
   rule.create = (eslintContext) => {
     // Lazily call `createOnce` on first invocation of `create`
@@ -155,12 +157,13 @@ function createContextAndVisitor(rule: CreateOnceRule): {
     if (typeof afterHook !== 'function') throw new Error('`after` property of visitor must be a function if defined');
 
     const programExit = visitor['Program:exit'];
-    visitor['Program:exit'] = programExit == null
-      ? (_node) => afterHook()
-      : (node) => {
-        programExit(node);
-        afterHook();
-      };
+    visitor['Program:exit'] =
+      programExit == null
+        ? (_node) => afterHook()
+        : (node) => {
+            programExit(node);
+            afterHook();
+          };
   }
 
   return { context, visitor, beforeHook };

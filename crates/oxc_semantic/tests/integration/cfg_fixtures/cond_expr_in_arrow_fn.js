@@ -1,1 +1,1 @@
-const myFun = () => a() ? b() : c();
+const myFun = () => (a() ? b() : c());

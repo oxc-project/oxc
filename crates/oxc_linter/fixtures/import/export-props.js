@@ -1,2 +1,2 @@
-exports.x = 'y'
-exports.y = 'z'
+exports.x = 'y';
+exports.y = 'z';

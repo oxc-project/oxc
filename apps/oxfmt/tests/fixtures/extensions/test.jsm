@@ -1,1 +1,1 @@
-const jsModule = "javascript module";
+const jsModule = 'javascript module';

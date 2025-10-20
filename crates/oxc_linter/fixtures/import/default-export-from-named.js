@@ -1,1 +1,1 @@
-export { d as default } from './named-exports.js'
+export { d as default } from './named-exports.js';

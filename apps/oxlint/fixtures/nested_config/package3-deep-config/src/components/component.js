@@ -1,3 +1,3 @@
 export function Component() {
-  console.log("hello");
+  console.log('hello');
 }

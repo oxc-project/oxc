@@ -1,2 +1,2 @@
-import * as c from './c'
-export { c }
+import * as c from './c';
+export { c };

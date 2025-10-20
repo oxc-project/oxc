@@ -1,5 +1,5 @@
 function foo(a, b) {
-    return a;
+  return a;
 }
 
 debugger;

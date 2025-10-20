@@ -1,3 +1,3 @@
-import "./a";
+import './a';
 
-export const b = "b";
+export const b = 'b';

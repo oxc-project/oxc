@@ -1,5 +1,5 @@
-import { hello } from './magic/test'
+import { hello } from './magic/test';
 
 hello();
 
-export default function App() {};
+export default function App() {}

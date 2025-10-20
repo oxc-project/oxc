@@ -1,5 +1,15 @@
 import { Func } from 'mocha';
-import { commands, Diagnostic, extensions, languages, Uri, window, workspace, WorkspaceEdit, WorkspaceFolder } from 'vscode';
+import {
+  commands,
+  Diagnostic,
+  extensions,
+  languages,
+  Uri,
+  window,
+  workspace,
+  WorkspaceEdit,
+  WorkspaceFolder,
+} from 'vscode';
 import path = require('path');
 
 type OxlintConfigPlugins = string[];
@@ -35,7 +45,6 @@ export const WORKSPACE_SECOND_FOLDER: WorkspaceFolder | undefined = workspace.wo
 
 export const WORKSPACE_DIR = WORKSPACE_FOLDER.uri;
 export const WORKSPACE_SECOND_DIR = WORKSPACE_SECOND_FOLDER?.uri;
-
 
 const rootOxlintConfigUri = Uri.joinPath(WORKSPACE_DIR, '.oxlintrc.json');
 
@@ -106,7 +115,10 @@ export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesW
   return diagnostics;
 }
 
-export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<Diagnostic[]> {
+export async function getDiagnosticsWithoutClose(
+  file: string,
+  workspaceDir: Uri = fixturesWorkspaceUri(),
+): Promise<Diagnostic[]> {
   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
   await window.showTextDocument(fileUri);
   await sleep(500);
@@ -114,23 +126,26 @@ export async function getDiagnosticsWithoutClose(file: string, workspaceDir: Uri
   return diagnostics;
 }
 
-export async function writeToFixtureFile(file: string, content: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<void> {
-   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
+export async function writeToFixtureFile(
+  file: string,
+  content: string,
+  workspaceDir: Uri = fixturesWorkspaceUri(),
+): Promise<void> {
+  const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
   await window.showTextDocument(fileUri);
 
   for (const char of content) {
-      // oxlint-disable eslint/no-await-in-loop -- simulate key presses
-      await commands.executeCommand('type', { text: char });
-      await sleep(50);
-      // oxlint-enable
+    // oxlint-disable eslint/no-await-in-loop -- simulate key presses
+    await commands.executeCommand('type', { text: char });
+    await sleep(50);
+    // oxlint-enable
   }
 }
 
 export async function waitForDiagnosticChange(): Promise<void> {
-    return new Promise<void>((resolve) =>
-      languages.onDidChangeDiagnostics(() => {
-        resolve();
-      })
-    );
+  return new Promise<void>((resolve) =>
+    languages.onDidChangeDiagnostics(() => {
+      resolve();
+    }),
+  );
 }
-

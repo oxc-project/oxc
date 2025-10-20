@@ -5,14 +5,12 @@ function Foo() {
       <label>
         <span>name</span>
         <input
-          defaultValue={
-            actionState.payload?.get("name")?.toString() ?? "Pool party"
-          }
+          defaultValue={actionState.payload?.get('name')?.toString() ?? 'Pool party'}
           name="name"
           placeholder="name"
           type="text"
         />
       </label>
     </template>
-  )
+  );
 }

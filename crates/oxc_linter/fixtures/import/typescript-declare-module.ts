@@ -1,3 +1,3 @@
-declare module "typescript-declare-module-foo" {
+declare module 'typescript-declare-module-foo' {
   export const foo: string;
 }

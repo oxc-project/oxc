@@ -1,1 +1,5 @@
-class X { foo() { return 42; } }
+class X {
+  foo() {
+    return 42;
+  }
+}

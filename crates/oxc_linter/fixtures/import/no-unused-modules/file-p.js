@@ -1,1 +1,1 @@
-import { h3 as h0 } from './file-h'
+import { h3 as h0 } from './file-h';

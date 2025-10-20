@@ -1,6 +1,3 @@
 const builder = {
-  build(environment: BuildEnvironment): Promise<
-    RollupOutput | RollupOutput[]
-  > {
-  },
-}
+  build(environment: BuildEnvironment): Promise<RollupOutput | RollupOutput[]> {},
+};

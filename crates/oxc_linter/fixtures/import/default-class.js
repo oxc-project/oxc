@@ -1,3 +1,1 @@
-export default class EDClass {
-
-}
+export default class EDClass {}

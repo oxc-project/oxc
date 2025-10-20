@@ -1,7 +1,7 @@
-describe("", () => {
+describe('', () => {
   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
 
-  it("", () => {});
+  it('', () => {});
   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
   // ^ jest/expect-expect as `jest` plugin is enabled and `jest/expect-expect` is a correctness rule
 });

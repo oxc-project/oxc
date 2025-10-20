@@ -1,4 +1,1 @@
-(id) =>
-  id
-    .replace('@', resolve(__dirname, './mods/'))
-    .replace('#', resolve(__dirname, '../../'))
+(id) => id.replace('@', resolve(__dirname, './mods/')).replace('#', resolve(__dirname, '../../'));

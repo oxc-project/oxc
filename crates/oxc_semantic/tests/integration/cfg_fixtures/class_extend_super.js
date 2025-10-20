@@ -1,5 +1,5 @@
 class B extends A {
-    bark(...args) {
-        return super.noise(...args);
-    }
+  bark(...args) {
+    return super.noise(...args);
+  }
 }

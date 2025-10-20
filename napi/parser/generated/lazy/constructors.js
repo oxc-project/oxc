@@ -48,7 +48,7 @@ export class Program {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 96, internal.ast);
+    return (internal.$body = constructVecStatement(internal.pos + 96, internal.ast));
   }
 
   toJSON() {
@@ -191,7 +191,7 @@ export class IdentifierName {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -239,7 +239,7 @@ export class IdentifierReference {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -287,7 +287,7 @@ export class BindingIdentifier {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -335,7 +335,7 @@ export class LabelIdentifier {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -423,7 +423,7 @@ export class ArrayExpression {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return internal.$elements = constructVecArrayExpressionElement(internal.pos + 8, internal.ast);
+    return (internal.$elements = constructVecArrayExpressionElement(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -608,7 +608,7 @@ export class ObjectExpression {
     const internal = this.#internal,
       cached = internal.$properties;
     if (cached !== void 0) return cached;
-    return internal.$properties = constructVecObjectPropertyKind(internal.pos + 8, internal.ast);
+    return (internal.$properties = constructVecObjectPropertyKind(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -853,14 +853,14 @@ export class TemplateLiteral {
     const internal = this.#internal,
       cached = internal.$quasis;
     if (cached !== void 0) return cached;
-    return internal.$quasis = constructVecTemplateElement(internal.pos + 8, internal.ast);
+    return (internal.$quasis = constructVecTemplateElement(internal.pos + 8, internal.ast));
   }
 
   get expressions() {
     const internal = this.#internal,
       cached = internal.$expressions;
     if (cached !== void 0) return cached;
-    return internal.$expressions = constructVecExpression(internal.pos + 32, internal.ast);
+    return (internal.$expressions = constructVecExpression(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -1008,14 +1008,14 @@ export class TemplateElementValue {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructStr(internal.pos, internal.ast);
+    return (internal.$raw = constructStr(internal.pos, internal.ast));
   }
 
   get cooked() {
     const internal = this.#internal,
       cached = internal.$cooked;
     if (cached !== void 0) return cached;
-    return internal.$cooked = constructOptionStr(internal.pos + 16, internal.ast);
+    return (internal.$cooked = constructOptionStr(internal.pos + 16, internal.ast));
   }
 
   toJSON() {
@@ -1258,7 +1258,7 @@ export class CallExpression {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast);
+    return (internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast));
   }
 
   get optional() {
@@ -1324,7 +1324,7 @@ export class NewExpression {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast);
+    return (internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -2022,7 +2022,7 @@ export class ArrayAssignmentTarget {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return internal.$elements = constructVecOptionAssignmentTargetMaybeDefault(internal.pos + 8, internal.ast);
+    return (internal.$elements = constructVecOptionAssignmentTargetMaybeDefault(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -2070,7 +2070,7 @@ export class ObjectAssignmentTarget {
     const internal = this.#internal,
       cached = internal.$properties;
     if (cached !== void 0) return cached;
-    return internal.$properties = constructVecAssignmentTargetProperty(internal.pos + 8, internal.ast);
+    return (internal.$properties = constructVecAssignmentTargetProperty(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -2366,7 +2366,7 @@ export class SequenceExpression {
     const internal = this.#internal,
       cached = internal.$expressions;
     if (cached !== void 0) return cached;
-    return internal.$expressions = constructVecExpression(internal.pos + 8, internal.ast);
+    return (internal.$expressions = constructVecExpression(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -2685,7 +2685,7 @@ export class Directive {
     const internal = this.#internal,
       cached = internal.$directive;
     if (cached !== void 0) return cached;
-    return internal.$directive = constructStr(internal.pos + 56, internal.ast);
+    return (internal.$directive = constructStr(internal.pos + 56, internal.ast));
   }
 
   toJSON() {
@@ -2734,7 +2734,7 @@ export class Hashbang {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$value = constructStr(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -2782,7 +2782,7 @@ export class BlockStatement {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 8, internal.ast);
+    return (internal.$body = constructVecStatement(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -2858,7 +2858,7 @@ export class VariableDeclaration {
     const internal = this.#internal,
       cached = internal.$declarations;
     if (cached !== void 0) return cached;
-    return internal.$declarations = constructVecVariableDeclarator(internal.pos + 8, internal.ast);
+    return (internal.$declarations = constructVecVariableDeclarator(internal.pos + 8, internal.ast));
   }
 
   get declare() {
@@ -3741,7 +3741,7 @@ export class SwitchStatement {
     const internal = this.#internal,
       cached = internal.$cases;
     if (cached !== void 0) return cached;
-    return internal.$cases = constructVecSwitchCase(internal.pos + 24, internal.ast);
+    return (internal.$cases = constructVecSwitchCase(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -3795,7 +3795,7 @@ export class SwitchCase {
     const internal = this.#internal,
       cached = internal.$consequent;
     if (cached !== void 0) return cached;
-    return internal.$consequent = constructVecStatement(internal.pos + 24, internal.ast);
+    return (internal.$consequent = constructVecStatement(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -4235,7 +4235,7 @@ export class ObjectPattern {
     const internal = this.#internal,
       cached = internal.$properties;
     if (cached !== void 0) return cached;
-    return internal.$properties = constructVecBindingProperty(internal.pos + 8, internal.ast);
+    return (internal.$properties = constructVecBindingProperty(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -4347,7 +4347,7 @@ export class ArrayPattern {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return internal.$elements = constructVecOptionBindingPattern(internal.pos + 8, internal.ast);
+    return (internal.$elements = constructVecOptionBindingPattern(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -4553,7 +4553,7 @@ export class FormalParameters {
     const internal = this.#internal,
       cached = internal.$items;
     if (cached !== void 0) return cached;
-    return internal.$items = constructVecFormalParameter(internal.pos + 8, internal.ast);
+    return (internal.$items = constructVecFormalParameter(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -4591,7 +4591,7 @@ export class FormalParameter {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
+    return (internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast));
   }
 
   get pattern() {
@@ -4657,7 +4657,7 @@ export class FunctionBody {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 32, internal.ast);
+    return (internal.$body = constructVecStatement(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -4837,7 +4837,7 @@ export class Class {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
+    return (internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast));
   }
 
   get id() {
@@ -4864,7 +4864,7 @@ export class Class {
     const internal = this.#internal,
       cached = internal.$implements;
     if (cached !== void 0) return cached;
-    return internal.$implements = constructVecTSClassImplements(internal.pos + 96, internal.ast);
+    return (internal.$implements = constructVecTSClassImplements(internal.pos + 96, internal.ast));
   }
 
   get body() {
@@ -4946,7 +4946,7 @@ export class ClassBody {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecClassElement(internal.pos + 8, internal.ast);
+    return (internal.$body = constructVecClassElement(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -5015,7 +5015,7 @@ export class MethodDefinition {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
+    return (internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast));
   }
 
   get key() {
@@ -5126,7 +5126,7 @@ export class PropertyDefinition {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
+    return (internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast));
   }
 
   get key() {
@@ -5266,7 +5266,7 @@ export class PrivateIdentifier {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -5314,7 +5314,7 @@ export class StaticBlock {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 8, internal.ast);
+    return (internal.$body = constructVecStatement(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -5396,7 +5396,7 @@ export class AccessorProperty {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
+    return (internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast));
   }
 
   get key() {
@@ -5550,7 +5550,7 @@ export class ImportDeclaration {
     const internal = this.#internal,
       cached = internal.$specifiers;
     if (cached !== void 0) return cached;
-    return internal.$specifiers = constructOptionVecImportDeclarationSpecifier(internal.pos + 8, internal.ast);
+    return (internal.$specifiers = constructOptionVecImportDeclarationSpecifier(internal.pos + 8, internal.ast));
   }
 
   get source() {
@@ -5785,7 +5785,7 @@ export class WithClause {
     const internal = this.#internal,
       cached = internal.$attributes;
     if (cached !== void 0) return cached;
-    return internal.$attributes = constructVecImportAttribute(internal.pos + 8, internal.ast);
+    return (internal.$attributes = constructVecImportAttribute(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -5898,7 +5898,7 @@ export class ExportNamedDeclaration {
     const internal = this.#internal,
       cached = internal.$specifiers;
     if (cached !== void 0) return cached;
-    return internal.$specifiers = constructVecExportSpecifier(internal.pos + 24, internal.ast);
+    return (internal.$specifiers = constructVecExportSpecifier(internal.pos + 24, internal.ast));
   }
 
   get source() {
@@ -6250,7 +6250,7 @@ export class V8IntrinsicExpression {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast);
+    return (internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -6390,7 +6390,7 @@ export class NumericLiteral {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 16, internal.ast);
+    return (internal.$raw = constructOptionStr(internal.pos + 16, internal.ast));
   }
 
   toJSON() {
@@ -6439,14 +6439,14 @@ export class StringLiteral {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$value = constructStr(internal.pos + 8, internal.ast));
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 24, internal.ast);
+    return (internal.$raw = constructOptionStr(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -6495,14 +6495,14 @@ export class BigIntLiteral {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$value = constructStr(internal.pos + 8, internal.ast));
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 24, internal.ast);
+    return (internal.$raw = constructOptionStr(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -6556,7 +6556,7 @@ export class RegExpLiteral {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 40, internal.ast);
+    return (internal.$raw = constructOptionStr(internal.pos + 40, internal.ast));
   }
 
   toJSON() {
@@ -6633,7 +6633,7 @@ export class RegExpPattern {
     const internal = this.#internal,
       cached = internal.$pattern;
     if (cached !== void 0) return cached;
-    return internal.$pattern = constructStr(internal.pos, internal.ast);
+    return (internal.$pattern = constructStr(internal.pos, internal.ast));
   }
 
   toJSON() {
@@ -6708,7 +6708,7 @@ export class JSXElement {
     const internal = this.#internal,
       cached = internal.$children;
     if (cached !== void 0) return cached;
-    return internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast);
+    return (internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast));
   }
 
   get closingElement() {
@@ -6773,7 +6773,7 @@ export class JSXOpeningElement {
     const internal = this.#internal,
       cached = internal.$attributes;
     if (cached !== void 0) return cached;
-    return internal.$attributes = constructVecJSXAttributeItem(internal.pos + 32, internal.ast);
+    return (internal.$attributes = constructVecJSXAttributeItem(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -6874,7 +6874,7 @@ export class JSXFragment {
     const internal = this.#internal,
       cached = internal.$children;
     if (cached !== void 0) return cached;
-    return internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast);
+    return (internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast));
   }
 
   get closingFragment() {
@@ -7459,7 +7459,7 @@ export class JSXIdentifier {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -7570,14 +7570,14 @@ export class JSXText {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$value = constructStr(internal.pos + 8, internal.ast));
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 24, internal.ast);
+    return (internal.$raw = constructOptionStr(internal.pos + 24, internal.ast));
   }
 
   toJSON() {
@@ -7736,7 +7736,7 @@ export class TSEnumBody {
     const internal = this.#internal,
       cached = internal.$members;
     if (cached !== void 0) return cached;
-    return internal.$members = constructVecTSEnumMember(internal.pos + 8, internal.ast);
+    return (internal.$members = constructVecTSEnumMember(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -8107,7 +8107,7 @@ export class TSUnionType {
     const internal = this.#internal,
       cached = internal.$types;
     if (cached !== void 0) return cached;
-    return internal.$types = constructVecTSType(internal.pos + 8, internal.ast);
+    return (internal.$types = constructVecTSType(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -8155,7 +8155,7 @@ export class TSIntersectionType {
     const internal = this.#internal,
       cached = internal.$types;
     if (cached !== void 0) return cached;
-    return internal.$types = constructVecTSType(internal.pos + 8, internal.ast);
+    return (internal.$types = constructVecTSType(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -8412,7 +8412,7 @@ export class TSTupleType {
     const internal = this.#internal,
       cached = internal.$elementTypes;
     if (cached !== void 0) return cached;
-    return internal.$elementTypes = constructVecTSTupleElement(internal.pos + 8, internal.ast);
+    return (internal.$elementTypes = constructVecTSTupleElement(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -9372,7 +9372,7 @@ export class TSTypeParameterInstantiation {
     const internal = this.#internal,
       cached = internal.$params;
     if (cached !== void 0) return cached;
-    return internal.$params = constructVecTSType(internal.pos + 8, internal.ast);
+    return (internal.$params = constructVecTSType(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -9496,7 +9496,7 @@ export class TSTypeParameterDeclaration {
     const internal = this.#internal,
       cached = internal.$params;
     if (cached !== void 0) return cached;
-    return internal.$params = constructVecTSTypeParameter(internal.pos + 8, internal.ast);
+    return (internal.$params = constructVecTSTypeParameter(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -9683,7 +9683,7 @@ export class TSInterfaceDeclaration {
     const internal = this.#internal,
       cached = internal.$extends;
     if (cached !== void 0) return cached;
-    return internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 48, internal.ast);
+    return (internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 48, internal.ast));
   }
 
   get body() {
@@ -9745,7 +9745,7 @@ export class TSInterfaceBody {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecTSSignature(internal.pos + 8, internal.ast);
+    return (internal.$body = constructVecTSSignature(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -9880,7 +9880,7 @@ export class TSIndexSignature {
     const internal = this.#internal,
       cached = internal.$parameters;
     if (cached !== void 0) return cached;
-    return internal.$parameters = constructVecTSIndexSignatureName(internal.pos + 8, internal.ast);
+    return (internal.$parameters = constructVecTSIndexSignatureName(internal.pos + 8, internal.ast));
   }
 
   get typeAnnotation() {
@@ -10157,7 +10157,7 @@ export class TSIndexSignatureName {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$name = constructStr(internal.pos + 8, internal.ast));
   }
 
   get typeAnnotation() {
@@ -10431,7 +10431,7 @@ export class TSModuleBlock {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 32, internal.ast);
+    return (internal.$body = constructVecStatement(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -10479,7 +10479,7 @@ export class TSTypeLiteral {
     const internal = this.#internal,
       cached = internal.$members;
     if (cached !== void 0) return cached;
-    return internal.$members = constructVecTSSignature(internal.pos + 8, internal.ast);
+    return (internal.$members = constructVecTSSignature(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -10966,14 +10966,14 @@ export class TSTemplateLiteralType {
     const internal = this.#internal,
       cached = internal.$quasis;
     if (cached !== void 0) return cached;
-    return internal.$quasis = constructVecTemplateElement(internal.pos + 8, internal.ast);
+    return (internal.$quasis = constructVecTemplateElement(internal.pos + 8, internal.ast));
   }
 
   get types() {
     const internal = this.#internal,
       cached = internal.$types;
     if (cached !== void 0) return cached;
-    return internal.$types = constructVecTSType(internal.pos + 32, internal.ast);
+    return (internal.$types = constructVecTSType(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -11732,7 +11732,7 @@ export class NameSpan {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 8, internal.ast);
+    return (internal.$value = constructStr(internal.pos + 8, internal.ast));
   }
 
   get start() {
@@ -12210,7 +12210,7 @@ export class RawTransferData {
     const internal = this.#internal,
       cached = internal.$comments;
     if (cached !== void 0) return cached;
-    return internal.$comments = constructVecComment(internal.pos + 128, internal.ast);
+    return (internal.$comments = constructVecComment(internal.pos + 128, internal.ast));
   }
 
   get module() {
@@ -12222,7 +12222,7 @@ export class RawTransferData {
     const internal = this.#internal,
       cached = internal.$errors;
     if (cached !== void 0) return cached;
-    return internal.$errors = constructVecError(internal.pos + 256, internal.ast);
+    return (internal.$errors = constructVecError(internal.pos + 256, internal.ast));
   }
 
   toJSON() {
@@ -12264,28 +12264,28 @@ export class Error {
     const internal = this.#internal,
       cached = internal.$message;
     if (cached !== void 0) return cached;
-    return internal.$message = constructStr(internal.pos, internal.ast);
+    return (internal.$message = constructStr(internal.pos, internal.ast));
   }
 
   get labels() {
     const internal = this.#internal,
       cached = internal.$labels;
     if (cached !== void 0) return cached;
-    return internal.$labels = constructVecErrorLabel(internal.pos + 16, internal.ast);
+    return (internal.$labels = constructVecErrorLabel(internal.pos + 16, internal.ast));
   }
 
   get helpMessage() {
     const internal = this.#internal,
       cached = internal.$helpMessage;
     if (cached !== void 0) return cached;
-    return internal.$helpMessage = constructOptionStr(internal.pos + 40, internal.ast);
+    return (internal.$helpMessage = constructOptionStr(internal.pos + 40, internal.ast));
   }
 
   get codeframe() {
     const internal = this.#internal,
       cached = internal.$codeframe;
     if (cached !== void 0) return cached;
-    return internal.$codeframe = constructStr(internal.pos + 56, internal.ast);
+    return (internal.$codeframe = constructStr(internal.pos + 56, internal.ast));
   }
 
   toJSON() {
@@ -12336,7 +12336,7 @@ export class ErrorLabel {
     const internal = this.#internal,
       cached = internal.$message;
     if (cached !== void 0) return cached;
-    return internal.$message = constructOptionStr(internal.pos + 8, internal.ast);
+    return (internal.$message = constructOptionStr(internal.pos + 8, internal.ast));
   }
 
   get start() {
@@ -12394,28 +12394,28 @@ export class EcmaScriptModule {
     const internal = this.#internal,
       cached = internal.$staticImports;
     if (cached !== void 0) return cached;
-    return internal.$staticImports = constructVecStaticImport(internal.pos, internal.ast);
+    return (internal.$staticImports = constructVecStaticImport(internal.pos, internal.ast));
   }
 
   get staticExports() {
     const internal = this.#internal,
       cached = internal.$staticExports;
     if (cached !== void 0) return cached;
-    return internal.$staticExports = constructVecStaticExport(internal.pos + 24, internal.ast);
+    return (internal.$staticExports = constructVecStaticExport(internal.pos + 24, internal.ast));
   }
 
   get dynamicImports() {
     const internal = this.#internal,
       cached = internal.$dynamicImports;
     if (cached !== void 0) return cached;
-    return internal.$dynamicImports = constructVecDynamicImport(internal.pos + 48, internal.ast);
+    return (internal.$dynamicImports = constructVecDynamicImport(internal.pos + 48, internal.ast));
   }
 
   get importMetas() {
     const internal = this.#internal,
       cached = internal.$importMetas;
     if (cached !== void 0) return cached;
-    return internal.$importMetas = constructVecSpan(internal.pos + 72, internal.ast);
+    return (internal.$importMetas = constructVecSpan(internal.pos + 72, internal.ast));
   }
 
   toJSON() {
@@ -12468,7 +12468,7 @@ export class StaticImport {
     const internal = this.#internal,
       cached = internal.$entries;
     if (cached !== void 0) return cached;
-    return internal.$entries = constructVecImportEntry(internal.pos + 32, internal.ast);
+    return (internal.$entries = constructVecImportEntry(internal.pos + 32, internal.ast));
   }
 
   toJSON() {
@@ -12515,7 +12515,7 @@ export class StaticExport {
     const internal = this.#internal,
       cached = internal.$entries;
     if (cached !== void 0) return cached;
-    return internal.$entries = constructVecExportEntry(internal.pos + 8, internal.ast);
+    return (internal.$entries = constructVecExportEntry(internal.pos + 8, internal.ast));
   }
 
   toJSON() {
@@ -12575,13 +12575,7 @@ function constructStr(pos, ast) {
 function constructVecComment(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructComment,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructComment, ast);
 }
 
 function constructComment(pos, ast) {
@@ -12596,13 +12590,7 @@ function constructOptionHashbang(pos, ast) {
 function constructVecDirective(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    72,
-    constructDirective,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 72, constructDirective, ast);
 }
 
 function constructDirective(pos, ast) {
@@ -12612,13 +12600,7 @@ function constructDirective(pos, ast) {
 function constructVecStatement(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructStatement,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructStatement, ast);
 }
 
 function constructBoxBooleanLiteral(pos, ast) {
@@ -12784,13 +12766,7 @@ function constructBoxV8IntrinsicExpression(pos, ast) {
 function constructVecArrayExpressionElement(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructArrayExpressionElement,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructArrayExpressionElement, ast);
 }
 
 function constructBoxSpreadElement(pos, ast) {
@@ -12800,13 +12776,7 @@ function constructBoxSpreadElement(pos, ast) {
 function constructVecObjectPropertyKind(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructObjectPropertyKind,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructObjectPropertyKind, ast);
 }
 
 function constructBoxObjectProperty(pos, ast) {
@@ -12828,13 +12798,7 @@ function constructBoxPrivateIdentifier(pos, ast) {
 function constructVecTemplateElement(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    48,
-    constructTemplateElement,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 48, constructTemplateElement, ast);
 }
 
 function constructTemplateElement(pos, ast) {
@@ -12844,13 +12808,7 @@ function constructTemplateElement(pos, ast) {
 function constructVecExpression(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructExpression,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructExpression, ast);
 }
 
 function constructBoxTSTypeParameterInstantiation(pos, ast) {
@@ -12882,13 +12840,7 @@ function constructBoxPrivateFieldExpression(pos, ast) {
 function constructVecArgument(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructArgument,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructArgument, ast);
 }
 
 function constructBoxArrayAssignmentTarget(pos, ast) {
@@ -12907,13 +12859,7 @@ function constructOptionAssignmentTargetMaybeDefault(pos, ast) {
 function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructOptionAssignmentTargetMaybeDefault,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructOptionAssignmentTargetMaybeDefault, ast);
 }
 
 function constructBoxAssignmentTargetRest(pos, ast) {
@@ -12928,13 +12874,7 @@ function constructOptionBoxAssignmentTargetRest(pos, ast) {
 function constructVecAssignmentTargetProperty(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructAssignmentTargetProperty,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructAssignmentTargetProperty, ast);
 }
 
 function constructBoxAssignmentTargetWithDefault(pos, ast) {
@@ -13053,13 +12993,7 @@ function constructBoxTSImportEqualsDeclaration(pos, ast) {
 function constructVecVariableDeclarator(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    64,
-    constructVariableDeclarator,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 64, constructVariableDeclarator, ast);
 }
 
 function constructVariableDeclarator(pos, ast) {
@@ -13084,13 +13018,7 @@ function constructOptionLabelIdentifier(pos, ast) {
 function constructVecSwitchCase(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    48,
-    constructSwitchCase,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 48, constructSwitchCase, ast);
 }
 
 function constructSwitchCase(pos, ast) {
@@ -13144,13 +13072,7 @@ function constructBoxAssignmentPattern(pos, ast) {
 function constructVecBindingProperty(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    64,
-    constructBindingProperty,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 64, constructBindingProperty, ast);
 }
 
 function constructBindingProperty(pos, ast) {
@@ -13174,13 +13096,7 @@ function constructOptionBindingPattern(pos, ast) {
 function constructVecOptionBindingPattern(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    32,
-    constructOptionBindingPattern,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructOptionBindingPattern, ast);
 }
 
 function constructOptionBindingIdentifier(pos, ast) {
@@ -13222,13 +13138,7 @@ function constructOptionBoxFunctionBody(pos, ast) {
 function constructVecFormalParameter(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    72,
-    constructFormalParameter,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 72, constructFormalParameter, ast);
 }
 
 function constructFormalParameter(pos, ast) {
@@ -13238,13 +13148,7 @@ function constructFormalParameter(pos, ast) {
 function constructVecDecorator(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    24,
-    constructDecorator,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 24, constructDecorator, ast);
 }
 
 function constructDecorator(pos, ast) {
@@ -13259,13 +13163,7 @@ function constructOptionTSAccessibility(pos, ast) {
 function constructVecTSClassImplements(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    32,
-    constructTSClassImplements,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructTSClassImplements, ast);
 }
 
 function constructTSClassImplements(pos, ast) {
@@ -13279,13 +13177,7 @@ function constructBoxClassBody(pos, ast) {
 function constructVecClassElement(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructClassElement,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructClassElement, ast);
 }
 
 function constructBoxStaticBlock(pos, ast) {
@@ -13340,13 +13232,7 @@ function constructOptionImportPhase(pos, ast) {
 function constructVecImportDeclarationSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructImportDeclarationSpecifier,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructImportDeclarationSpecifier, ast);
 }
 
 function constructOptionVecImportDeclarationSpecifier(pos, ast) {
@@ -13378,13 +13264,7 @@ function constructBoxImportNamespaceSpecifier(pos, ast) {
 function constructVecImportAttribute(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    112,
-    constructImportAttribute,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 112, constructImportAttribute, ast);
 }
 
 function constructImportAttribute(pos, ast) {
@@ -13399,13 +13279,7 @@ function constructOptionDeclaration(pos, ast) {
 function constructVecExportSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    128,
-    constructExportSpecifier,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 128, constructExportSpecifier, ast);
 }
 
 function constructExportSpecifier(pos, ast) {
@@ -13433,13 +13307,7 @@ function constructBoxJSXOpeningElement(pos, ast) {
 function constructVecJSXChild(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructJSXChild,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructJSXChild, ast);
 }
 
 function constructBoxJSXClosingElement(pos, ast) {
@@ -13454,13 +13322,7 @@ function constructOptionBoxJSXClosingElement(pos, ast) {
 function constructVecJSXAttributeItem(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructJSXAttributeItem,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructJSXAttributeItem, ast);
 }
 
 function constructBoxJSXIdentifier(pos, ast) {
@@ -13503,13 +13365,7 @@ function constructBoxJSXSpreadChild(pos, ast) {
 function constructVecTSEnumMember(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    40,
-    constructTSEnumMember,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 40, constructTSEnumMember, ast);
 }
 
 function constructTSEnumMember(pos, ast) {
@@ -13667,25 +13523,13 @@ function constructBoxJSDocUnknownType(pos, ast) {
 function constructVecTSType(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructTSType,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructTSType, ast);
 }
 
 function constructVecTSTupleElement(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructTSTupleElement,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructTSTupleElement, ast);
 }
 
 function constructBoxTSOptionalType(pos, ast) {
@@ -13708,13 +13552,7 @@ function constructOptionTSType(pos, ast) {
 function constructVecTSTypeParameter(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    80,
-    constructTSTypeParameter,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 80, constructTSTypeParameter, ast);
 }
 
 function constructTSTypeParameter(pos, ast) {
@@ -13724,13 +13562,7 @@ function constructTSTypeParameter(pos, ast) {
 function constructVecTSInterfaceHeritage(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    32,
-    constructTSInterfaceHeritage,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructTSInterfaceHeritage, ast);
 }
 
 function constructTSInterfaceHeritage(pos, ast) {
@@ -13744,13 +13576,7 @@ function constructBoxTSInterfaceBody(pos, ast) {
 function constructVecTSSignature(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructTSSignature,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructTSSignature, ast);
 }
 
 function constructBoxTSPropertySignature(pos, ast) {
@@ -13772,13 +13598,7 @@ function constructBoxTSMethodSignature(pos, ast) {
 function constructVecTSIndexSignatureName(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    32,
-    constructTSIndexSignatureName,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructTSIndexSignatureName, ast);
 }
 
 function constructTSIndexSignatureName(pos, ast) {
@@ -13840,13 +13660,7 @@ function constructOptionU64(pos, ast) {
 function constructVecError(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    80,
-    constructError,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 80, constructError, ast);
 }
 
 function constructError(pos, ast) {
@@ -13856,13 +13670,7 @@ function constructError(pos, ast) {
 function constructVecErrorLabel(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    24,
-    constructErrorLabel,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 24, constructErrorLabel, ast);
 }
 
 function constructErrorLabel(pos, ast) {
@@ -13872,13 +13680,7 @@ function constructErrorLabel(pos, ast) {
 function constructVecStaticImport(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    56,
-    constructStaticImport,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 56, constructStaticImport, ast);
 }
 
 function constructStaticImport(pos, ast) {
@@ -13888,13 +13690,7 @@ function constructStaticImport(pos, ast) {
 function constructVecStaticExport(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    32,
-    constructStaticExport,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructStaticExport, ast);
 }
 
 function constructStaticExport(pos, ast) {
@@ -13904,13 +13700,7 @@ function constructStaticExport(pos, ast) {
 function constructVecDynamicImport(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    16,
-    constructDynamicImport,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructDynamicImport, ast);
 }
 
 function constructDynamicImport(pos, ast) {
@@ -13920,13 +13710,7 @@ function constructDynamicImport(pos, ast) {
 function constructVecSpan(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    8,
-    constructSpan,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 8, constructSpan, ast);
 }
 
 function constructSpan(pos, ast) {
@@ -13936,13 +13720,7 @@ function constructSpan(pos, ast) {
 function constructVecImportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    96,
-    constructImportEntry,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 96, constructImportEntry, ast);
 }
 
 function constructImportEntry(pos, ast) {
@@ -13952,13 +13730,7 @@ function constructImportEntry(pos, ast) {
 function constructVecExportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(
-    uint32[pos32],
-    uint32[pos32 + 2],
-    144,
-    constructExportEntry,
-    ast,
-  );
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 144, constructExportEntry, ast);
 }
 
 function constructExportEntry(pos, ast) {

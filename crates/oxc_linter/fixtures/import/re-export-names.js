@@ -1,3 +1,3 @@
-export { a as foo, b as bar } from './named-exports'
+export { a as foo, b as bar } from './named-exports';
 
-export const baz = 'will it blend?'
+export const baz = 'will it blend?';

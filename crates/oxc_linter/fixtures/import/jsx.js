@@ -1,1 +1,1 @@
-export const jsx = <div className="jsx" />
+export const jsx = <div className="jsx" />;

@@ -1,3 +1,3 @@
-export as namespace Foo
+export as namespace Foo;
 
-export function bar(): void
+export function bar(): void;

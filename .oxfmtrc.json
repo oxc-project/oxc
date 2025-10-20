@@ -1,0 +1,33 @@
+{
+  "$schema": "./npm/oxfmt/configuration_schema.json",
+  "printWidth": 120,
+  "singleQuote": true,
+  "ignorePatterns": [
+    "tasks/transform_conformance/tests/**",
+    "tasks/coverage/node-compat-table",
+    "tasks/coverage/misc",
+    "**/tests/**",
+    "**/fixtures/**",
+    "**/*.snap.*",
+    "**/CHANGELOG.md",
+    "pnpm-workspace.yaml",
+    "pnpm-lock.yaml",
+    "apps/oxlint/src-js/bindings.js",
+    "apps/oxlint/src-js/bindings.d.ts",
+    "!apps/oxlint/test/fixtures/**",
+    "apps/oxlint/test/fixtures/**/*.snap.md",
+    "napi/{transform,minify,playground}/index.js",
+    "napi/{parser,transform,minify,playground}/**/index.d.ts",
+    "napi/{parser,transform,minify,playground}/**/*.wasi-browser.js",
+    "napi/{parser,transform,minify,playground}/**/*.wasi.cjs",
+    "napi/{parser,transform,minify,playground}/**/wasi-worker-browser.mjs",
+    "napi/{parser,transform,minify,playground}/**/wasi-worker.mjs",
+    "napi/{parser,transform,minify,playground}/**/browser.js",
+    "napi/parser/src-js/bindings.js",
+    "npm/*/package.json",
+    "npm/oxlint/configuration_schema.json",
+    "npm/oxc-wasm/**",
+    "npm/runtime/src",
+    ".github/generated/ast_changes_watch_list.yml"
+  ]
+}

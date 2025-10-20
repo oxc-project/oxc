@@ -29,14 +29,16 @@ const testCommentsRule: Rule = {
     assert(topLevelFunction.type === 'FunctionDeclaration');
 
     context.report({
-      message: 'commentsExistBetween(topLevelVariable2, topLevelFunction): ' +
+      message:
+        'commentsExistBetween(topLevelVariable2, topLevelFunction): ' +
         sourceCode.commentsExistBetween(topLevelVariable2, topLevelFunction),
       node: topLevelVariable2,
     });
 
     // Test `commentsExistBetween` returns `false` when start node is after end node
     context.report({
-      message: 'commentsExistBetween(topLevelFunction, topLevelVariable2): ' +
+      message:
+        'commentsExistBetween(topLevelFunction, topLevelVariable2): ' +
         sourceCode.commentsExistBetween(topLevelFunction, topLevelVariable2),
       node: topLevelFunction,
     });
@@ -50,7 +52,8 @@ const testCommentsRule: Rule = {
         assert(init !== null);
 
         context.report({
-          message: `VariableDeclaration(${id.name}):\n` +
+          message:
+            `VariableDeclaration(${id.name}):\n` +
             `getCommentsBefore: ${formatComments(sourceCode.getCommentsBefore(node))}\n` +
             `getCommentsInside: ${formatComments(sourceCode.getCommentsInside(node))}\n` +
             `getCommentsAfter: ${formatComments(sourceCode.getCommentsAfter(node))}\n` +
@@ -60,7 +63,8 @@ const testCommentsRule: Rule = {
       },
       FunctionDeclaration(node) {
         context.report({
-          message: `FunctionDeclaration(${node.id.name}):\n` +
+          message:
+            `FunctionDeclaration(${node.id.name}):\n` +
             `getCommentsBefore: ${formatComments(sourceCode.getCommentsBefore(node))}\n` +
             `getCommentsInside: ${formatComments(sourceCode.getCommentsInside(node))}\n` +
             `getCommentsAfter: ${formatComments(sourceCode.getCommentsAfter(node))}`,

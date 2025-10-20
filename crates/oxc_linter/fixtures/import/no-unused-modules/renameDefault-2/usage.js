@@ -1,1 +1,1 @@
-import { ComponentA, ComponentB } from './components'
+import { ComponentA, ComponentB } from './components';

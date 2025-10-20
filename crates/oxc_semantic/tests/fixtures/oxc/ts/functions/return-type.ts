@@ -8,5 +8,4 @@ function Foo(): T {
 const Bar = (): T => {
   type T = string;
   return 0;
-}
-
+};

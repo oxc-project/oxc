@@ -66,6 +66,7 @@ fmt:
   -cargo shear --fix # remove all unused dependencies
   cargo fmt --all
   dprint fmt
+  node --run fmt
 
 [unix]
 doc:

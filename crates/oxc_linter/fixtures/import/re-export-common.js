@@ -1,1 +1,1 @@
-export { a as foo } from './common'
+export { a as foo } from './common';

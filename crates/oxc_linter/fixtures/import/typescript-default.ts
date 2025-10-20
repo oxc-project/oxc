@@ -1,1 +1,1 @@
-export default function foobar() {};
+export default function foobar() {}

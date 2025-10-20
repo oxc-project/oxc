@@ -7,7 +7,8 @@
     "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
-    "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
+    "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings",
+    "fmt": "oxfmt"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.2",
@@ -17,6 +18,7 @@
     "oxlint-tsgolint": "0.2.0",
     "publint": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "oxfmt": "0.6.0"
   }
 }

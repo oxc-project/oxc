@@ -1,2 +1,2 @@
-import foo from "./ignore";
+import foo from './ignore';
 export { foo };
