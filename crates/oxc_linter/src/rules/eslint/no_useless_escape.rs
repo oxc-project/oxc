@@ -8,6 +8,7 @@ use oxc_regular_expression::{
 };
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -26,8 +27,10 @@ impl std::ops::Deref for NoUselessEscape {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct NoUselessEscapeConfig {
+    /// An array of characters that are allowed to be escaped unnecessarily in regexes.
     allow_regex_characters: Vec<char>,
 }
 
@@ -81,27 +84,11 @@ declare_oxc_lint!(
     /// /[\]]/;
     /// /[a-z-]/;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowRegexCharacters
-    ///
-    /// `{ type: string[], default: [] }`
-    ///
-    /// An array of characters that are allowed to be escaped unnecessarily in regexes.
-    ///
-    /// Example:
-    /// ```json
-    /// {
-    ///   "no-useless-escape": ["error", {
-    ///     "allowRegexCharacters": ["!", "@", "#"]
-    ///   }]
-    /// }
-    /// ```
     NoUselessEscape,
     eslint,
     correctness,
-    fix
+    fix,
+    config = NoUselessEscapeConfig,
 );
 
 impl Rule for NoUselessEscape {
