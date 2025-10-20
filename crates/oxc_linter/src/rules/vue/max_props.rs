@@ -105,7 +105,7 @@ impl Rule for MaxProps {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_path().extension().is_some_and(|ext| ext == "vue")
+        ctx.file_extension().is_some_and(|ext| ext == "vue")
     }
 }
 

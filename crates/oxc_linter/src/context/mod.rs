@@ -1,6 +1,6 @@
 #![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
 
-use std::{ops::Deref, path::Path, rc::Rc};
+use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::GLOBALS;
 
@@ -139,6 +139,12 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn file_path(&self) -> &Path {
         &self.parent.file_path
+    }
+
+    /// Extension of the file currently being linted, without the leading dot.
+    #[inline]
+    pub fn file_extension(&self) -> Option<&OsStr> {
+        self.parent.file_extension()
     }
 
     /// Plugin settings

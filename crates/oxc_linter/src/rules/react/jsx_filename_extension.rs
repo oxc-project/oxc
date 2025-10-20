@@ -157,7 +157,7 @@ impl Rule for JsxFilenameExtension {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let file_extension = ctx.file_path().extension().and_then(OsStr::to_str).unwrap_or("");
+        let file_extension = ctx.file_extension().and_then(OsStr::to_str).unwrap_or("");
         let has_ext_allowed = self.extensions.contains(&CompactStr::new(file_extension));
 
         if !has_ext_allowed {

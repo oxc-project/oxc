@@ -93,7 +93,7 @@ impl Rule for RequireDefaultExport {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         // only on vue files
-        if ctx.file_path().extension().is_none_or(|ext| ext != "vue") {
+        if ctx.file_extension().is_none_or(|ext| ext != "vue") {
             return false;
         }
 

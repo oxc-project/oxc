@@ -1,4 +1,4 @@
-use std::{ops::Deref, path::Path};
+use std::ops::Deref;
 
 use lazy_regex::Regex;
 use oxc_ast::{
@@ -170,9 +170,7 @@ impl Rule for NoLargeSnapshots {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let is_snap = ctx.file_path().to_str().is_some_and(|p| {
-            Path::new(p).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("snap"))
-        });
+        let is_snap = ctx.file_extension().is_some_and(|ext| ext.eq_ignore_ascii_case("snap"));
 
         if is_snap {
             for node in ctx.nodes().iter() {

@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     cell::{Cell, RefCell},
+    ffi::OsStr,
     path::Path,
     rc::Rc,
     sync::Arc,
@@ -141,6 +142,8 @@ pub struct ContextHost<'a> {
     pub(super) fix: FixKind,
     /// Path to the file being linted.
     pub(super) file_path: Box<Path>,
+    /// Extension of the file being linted.
+    file_extension: Option<Box<OsStr>>,
     /// Global linter configuration, such as globals to include and the target
     /// environments, and other settings.
     pub(super) config: Arc<LintConfig>,
@@ -171,6 +174,7 @@ impl<'a> ContextHost<'a> {
         );
 
         let file_path = file_path.as_ref().to_path_buf().into_boxed_path();
+        let file_extension = file_path.extension().map(|ext| ext.to_owned().into_boxed_os_str());
 
         Self {
             sub_hosts,
@@ -178,6 +182,7 @@ impl<'a> ContextHost<'a> {
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
+            file_extension,
             config,
             frameworks: options.framework_hints,
         }
@@ -229,6 +234,12 @@ impl<'a> ContextHost<'a> {
     #[inline]
     pub fn file_path(&self) -> &Path {
         &self.file_path
+    }
+
+    /// Extension of the file currently being linted, without the leading dot.
+    #[inline]
+    pub fn file_extension(&self) -> Option<&OsStr> {
+        self.file_extension.as_deref()
     }
 
     /// The source type of the file being linted, e.g. JavaScript, TypeScript,

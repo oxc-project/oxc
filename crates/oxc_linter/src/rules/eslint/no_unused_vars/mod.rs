@@ -223,8 +223,7 @@ impl Rule for NoUnusedVars {
         //    we can't detect
         !ctx.source_type().is_typescript_definition()
             && !ctx
-                .file_path()
-                .extension()
+                .file_extension()
                 .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
     }
 }

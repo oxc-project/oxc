@@ -65,7 +65,7 @@ impl Rule for NoUnusedLabels {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_path().extension().is_some_and(|ext| ext != "svelte")
+        ctx.file_extension().is_some_and(|ext| ext != "svelte")
     }
 }
 

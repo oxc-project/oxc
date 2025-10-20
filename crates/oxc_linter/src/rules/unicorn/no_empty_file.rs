@@ -62,9 +62,8 @@ impl Rule for NoEmptyFile {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.file_path().extension().is_some_and(|ext| {
-            !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext.to_string_lossy().as_ref())
-        })
+        ctx.file_extension()
+            .is_some_and(|ext| !LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| *e == ext))
     }
 }
 

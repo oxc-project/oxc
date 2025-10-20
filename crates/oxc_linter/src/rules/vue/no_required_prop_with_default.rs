@@ -73,7 +73,7 @@ declare_oxc_lint!(
 
 impl Rule for NoRequiredPropWithDefault {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let is_vue = ctx.file_path().extension().is_some_and(|ext| ext == "vue");
+        let is_vue = ctx.file_extension().is_some_and(|ext| ext == "vue");
         if is_vue {
             self.run_on_vue(node, ctx);
         } else {

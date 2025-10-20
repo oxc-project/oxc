@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use oxc_ast::{AstKind, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -262,7 +260,7 @@ impl Rule for OnlyExportComponents {
         };
 
         let should_scan = {
-            let ext = Path::new(filename).extension().and_then(|e| e.to_str());
+            let ext = ctx.file_extension();
             matches!(ext, Some(e) if e.eq_ignore_ascii_case("tsx") || e.eq_ignore_ascii_case("jsx"))
                 || (self.check_js && matches!(ext, Some(e) if e.eq_ignore_ascii_case("js")))
         };
