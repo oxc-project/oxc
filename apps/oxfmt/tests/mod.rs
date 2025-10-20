@@ -135,3 +135,25 @@ fn exclude_nested_paths_with_dot() {
             &["--check", "./foo", "!foo/bar"],
         ]);
 }
+
+#[test]
+fn ignore_patterns() {
+    // Test ignore file handling with different configurations
+    // .prettierignore (cwd) contains: not-formatted/
+    // not-formatted/.prettierignore (subdirectory) should be ignored
+    // gitignore.txt contains: ignored/
+    // custom.ignore contains: ignored/ (only)
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/ignore_patterns"))
+        .test_and_snapshot_multiple(&[
+            // Default: auto-detects only cwd/.prettierignore (ignores not-formatted/ dir)
+            // Note: not-formatted/.prettierignore exists but should be ignored
+            &["--check"],
+            // Explicit: uses gitignore.txt (ignores ignored/ dir, checks not-formatted/)
+            &["--check", "--ignore-path", "gitignore.txt"],
+            // Multiple files: ignores both dirs
+            &["--check", "--ignore-path", "gitignore.txt", "--ignore-path", ".prettierignore"],
+            // Nonexistent file should error
+            &["--check", "--ignore-path", "nonexistent.ignore"],
+        ]);
+}

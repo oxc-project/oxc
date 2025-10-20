@@ -1,0 +1,52 @@
+---
+source: apps/oxfmt/tests/tester.rs
+---
+########## 
+arguments: --check
+working directory: tests/fixtures/ignore_patterns
+----------
+Checking formatting...
+ignored/should-be-ignored.js (<variable>ms)
+ignored/should-be-ignored.ts (<variable>ms)
+
+Format issues found in above 2 files. Run without `--check` to fix.
+Finished in <variable>ms on 4 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
+
+########## 
+arguments: --check --ignore-path gitignore.txt
+working directory: tests/fixtures/ignore_patterns
+----------
+Checking formatting...
+not-formatted/bad.js (<variable>ms)
+not-formatted/bad.ts (<variable>ms)
+
+Format issues found in above 2 files. Run without `--check` to fix.
+Finished in <variable>ms on 4 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
+
+########## 
+arguments: --check --ignore-path gitignore.txt --ignore-path .prettierignore
+working directory: tests/fixtures/ignore_patterns
+----------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 2 files using 1 threads.
+----------
+CLI result: FormatSucceeded
+----------
+
+########## 
+arguments: --check --ignore-path nonexistent.ignore
+working directory: tests/fixtures/ignore_patterns
+----------
+Failed to parse target paths or ignore settings.
+Failed to add ignore file: <cwd>/tests/fixtures/ignore_patterns/nonexistent.ignore
+----------
+CLI result: InvalidOptionConfig
+----------

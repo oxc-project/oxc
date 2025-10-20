@@ -16,6 +16,7 @@ impl Walk {
     pub fn build(
         cwd: &PathBuf,
         paths: &[PathBuf],
+        ignore_paths: &[PathBuf],
         with_node_modules: bool,
     ) -> Result<Self, String> {
         let (target_paths, exclude_patterns) = normalize_paths(cwd, paths);
@@ -44,12 +45,12 @@ impl Walk {
             inner.overrides(overrides);
         }
 
-        // TODO: Support ignoring files
-        // --ignore-path PATH1 --ignore-path PATH2
-        // or default cwd/{.gitignore,.prettierignore}
-        // if let Some(err) = inner.add_ignore(path) {
-        //     return Err(format!("Failed to add ignore file: {}", err));
-        // }
+        // Handle ignore files
+        for ignore_path in load_ignore_paths(cwd, ignore_paths) {
+            if inner.add_ignore(&ignore_path).is_some() {
+                return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
+            }
+        }
 
         // NOTE: If return `false` here, it will not be `visit()`ed at all
         inner.filter_entry(move |entry| {
@@ -92,7 +93,10 @@ impl Walk {
             .hidden(false)
             // Do not respect `.gitignore` automatically, we handle it manually
             .ignore(false)
+            .parents(false)
             .git_global(false)
+            .git_ignore(false)
+            .git_exclude(false)
             .build_parallel();
         Ok(Self { inner })
     }
@@ -153,6 +157,25 @@ fn normalize_paths(cwd: &Path, input_paths: &[PathBuf]) -> (Vec<PathBuf>, Vec<St
     }
 
     (target_paths, exclude_patterns)
+}
+
+fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Vec<PathBuf> {
+    // If specified, just resolves absolute paths
+    if !ignore_paths.is_empty() {
+        return ignore_paths
+            .iter()
+            .map(|path| if path.is_absolute() { path.clone() } else { cwd.join(path) })
+            .collect();
+    }
+
+    // Else, search for default ignore files in cwd
+    [".gitignore", ".prettierignore"]
+        .iter()
+        .filter_map(|file_name| {
+            let path = cwd.join(file_name);
+            if path.exists() { Some(path) } else { None }
+        })
+        .collect::<Vec<_>>()
 }
 
 // ---

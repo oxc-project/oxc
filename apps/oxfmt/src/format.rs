@@ -60,7 +60,12 @@ impl FormatRunner {
             }
         };
 
-        let walker = match Walk::build(&cwd, &paths, ignore_options.with_node_modules) {
+        let walker = match Walk::build(
+            &cwd,
+            &paths,
+            &ignore_options.ignore_path,
+            ignore_options.with_node_modules,
+        ) {
             Ok(walker) => walker,
             Err(err) => {
                 print_and_flush_stdout(

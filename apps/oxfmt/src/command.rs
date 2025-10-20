@@ -63,6 +63,10 @@ pub struct BasicOptions {
 /// Ignore Options
 #[derive(Debug, Clone, Bpaf)]
 pub struct IgnoreOptions {
+    /// Path to ignore file(s). Can be specified multiple times.
+    /// If not specified, .gitignore and .prettierignore in the current directory are used.
+    #[bpaf(argument("PATH"), many)]
+    pub ignore_path: Vec<PathBuf>,
     /// Format code in node_modules directory (skipped by default)
     #[bpaf(switch, hide_usage)]
     pub with_node_modules: bool,
