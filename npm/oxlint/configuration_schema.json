@@ -471,6 +471,18 @@
               "$ref": "#/definitions/OxlintRules"
             }
           ]
+        },
+        "settings": {
+          "description": "Settings to override for this configuration.",
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OxlintSettings"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },

@@ -305,7 +305,7 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
-        if let (Some(ext), Some(settings_json)) = (&external_linter, &config_store.settings().value)
+        if let (Some(ext), Some(settings_json)) = (&external_linter, &config_store.settings().json)
         {
             (ext.set_settings)(settings_json);
         }

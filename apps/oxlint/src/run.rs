@@ -51,11 +51,11 @@ pub type JsLintFileCb = ThreadsafeFunction<
 #[napi]
 pub type JsSetSettingsCb = ThreadsafeFunction<
     // Arguments
-    serde_json::Value,
+    serde_json::Map<String, serde_json::Value>,
     // Return value
     (),
     // Arguments (repeated)
-    serde_json::Value,
+    serde_json::Map<String, serde_json::Value>,
     // Error status
     Status,
     // CalleeHandled
