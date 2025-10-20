@@ -28,7 +28,7 @@ impl std::ops::Deref for NoUselessEscape {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUselessEscapeConfig {
     /// An array of characters that are allowed to be escaped unnecessarily in regexes.
     allow_regex_characters: Vec<char>,
