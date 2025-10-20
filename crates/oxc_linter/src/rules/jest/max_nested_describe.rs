@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -19,8 +20,10 @@ fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxNestedDescribe {
+    /// Maximum allowed depth of nested describe calls.
     pub max: usize,
 }
 
@@ -39,13 +42,12 @@ declare_oxc_lint!(
     ///
     /// Nesting `describe()` blocks too deeply can make the test suite hard to read and understand.
     ///
-    ///
     /// ### Example
     ///
     /// The following patterns are considered warnings (with the default option of
     /// `{ "max": 5 } `):
     ///
-    /// /// /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// describe('foo', () => {
     ///     describe('bar', () => {
@@ -118,6 +120,7 @@ declare_oxc_lint!(
     MaxNestedDescribe,
     jest,
     style,
+    config = MaxNestedDescribe
 );
 
 impl Rule for MaxNestedDescribe {
