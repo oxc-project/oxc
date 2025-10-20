@@ -88,9 +88,6 @@ pub fn get_wrap_state(parent: &AstNodes<'_>) -> WrapState {
                 WrapState::WrapOnBreak
             }
         }
-        AstNodes::Argument(argument) if matches!(argument.parent, AstNodes::CallExpression(_)) => {
-            WrapState::NoWrap
-        }
         AstNodes::ExpressionStatement(stmt) => {
             // `() => <div></div>`
             //        ^^^^^^^^^^^

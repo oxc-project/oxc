@@ -5,7 +5,6 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{FormatResult, Formatter, prelude::*},
-    generated::ast_nodes::{AstNode, AstNodes},
     write,
     write::FormatWrite,
 };
