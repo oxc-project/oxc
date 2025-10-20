@@ -32,6 +32,7 @@ suiteSetup(async () => {
 });
 
 teardown(async () => {
+  await workspace.getConfiguration('oxc').update('lint.run', undefined);
   await workspace.getConfiguration('oxc').update('flags', undefined);
   await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
   await workspace.getConfiguration('oxc').update('typeAware', undefined);
@@ -74,7 +75,6 @@ suite('E2E Diagnostics', () => {
   testSingleFolderMode('detects diagnostics on run', async () =>
   {
     await loadFixture('lint_on_run');
-    await sleep(250);
     const diagnostics = await getDiagnosticsWithoutClose(`onType.ts`);
     strictEqual(diagnostics.length, 0);
 
@@ -92,7 +92,6 @@ suite('E2E Diagnostics', () => {
 
   test('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');
-    await sleep(250);
     const diagnostics = await getDiagnostics('debugger.js');
 
     strictEqual(diagnostics.length, 1);
@@ -192,6 +191,39 @@ suite('E2E Diagnostics', () => {
     assert(typeof nestedDiagnostics[0].code == 'object');
     strictEqual(nestedDiagnostics[0].code.target.authority, 'oxc.rs');
     strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
+
+
+  test('setting `oxc.lint.run` to `off` clears diagnostics', async () => {
+    await workspace.getConfiguration('oxc').update('lint.run', undefined);
+    await loadFixture('disabling_lint');
+    await sleep(250);
+    const firstDiagnostics = await getDiagnosticsWithoutClose('debugger.js');
+
+    strictEqual(firstDiagnostics.length, 1);
+
+    await workspace.getConfiguration('oxc').update('lint.run', 'off');
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const secondDiagnostics = await getDiagnostics('debugger.js');
+    strictEqual(secondDiagnostics.length, 0);
+  });
+
+  test('setting `oxc.lint.run` from `off` to `onType`, shows the diagnostics', async () => {
+    await workspace.getConfiguration('oxc').update('lint.run', "off");
+    await loadFixture('disabling_lint');
+    await sleep(250);
+    const firstDiagnostics = await getDiagnosticsWithoutClose('debugger.js');
+
+    strictEqual(firstDiagnostics.length, 0);
+
+    await workspace.getConfiguration('oxc').update('lint.run', 'onType');
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+
+    const secondDiagnostics = await getDiagnostics('debugger.js');
+    strictEqual(secondDiagnostics.length, 1);
   });
 
   // somehow this test is flaky in CI
