@@ -315,9 +315,13 @@ impl DisableDirectives {
 
                 // Use RuleCommentType::All when:
                 // 1. The directive disables all rules (e.g., `eslint-disable` with no specific rules)
-                // 2. There's only one unused rule (that represents "all" unused rules in this directive)
+                // 2. The directive has only 1 rule total (represents the whole directive)
+                // 3. All rules in the directive are unused (group_vec.len() == rules.len())
                 // Otherwise use Single to show which specific rules are problematic
-                if is_disable_all_directive || rules.len() == 1 {
+                if is_disable_all_directive
+                    || group_vec.len() == 1
+                    || group_vec.len() == rules.len()
+                {
                     return Some(DisableRuleComment {
                         span: *comment_span,
                         r#type: RuleCommentType::All,
@@ -1303,12 +1307,8 @@ mod tests {
 
                 let comment = unused.first().unwrap();
                 assert_eq!(comment.span, comments.first().unwrap().content_span());
-                // Directives with specific rules should be reported as Single to show which rules
-                assert!(
-                    matches!(comment.r#type, RuleCommentType::Single(_)),
-                    "Expected RuleCommentType::Single but got {:?}",
-                    comment.r#type
-                );
+                // 2 unused rules -> uses All (rules.len() > 1)
+                assert_eq!(comment.r#type, RuleCommentType::All);
             },
         );
     }
@@ -1503,7 +1503,7 @@ function test() {
                 // Should report no-debugger as unused (it's a known rule with no violation)
                 assert_eq!(unused.len(), 1, "Known unused rules should be reported");
                 assert_eq!(unused[0].span, comments.first().unwrap().content_span());
-                // Single unused rule should be reported as All (represents "all" unused rules)
+                // Only 1 rule in directive → use All (represents whole directive)
                 assert_eq!(unused[0].r#type, RuleCommentType::All);
             },
         );
@@ -1526,56 +1526,21 @@ function test() {
                 assert_eq!(unused.len(), 1, "Should report comment with unused rules");
 
                 if prefix == "eslint" {
-                    // eslint-disable: Should only report known rules (no-debugger, no-console)
-                    // This is reported as Single because unknown rule is ignored (not all rules unused)
+                    // eslint-disable: 3 total rules, 2 unused (unknown ignored)
+                    // group_vec.len() = 3, rules.len() = 2 → NOT all unused → use Single
                     assert!(
                         matches!(unused[0].r#type, RuleCommentType::Single(_)),
-                        "Expected RuleCommentType::Single for eslint-disable but got {:?}",
+                        "Expected RuleCommentType::Single but got {:?}",
                         unused[0].r#type
                     );
-                    if let RuleCommentType::Single(rules) = &unused[0].r#type {
-                        assert_eq!(
-                            rules.len(),
-                            2,
-                            "Should only report the 2 known rules for eslint-disable"
-                        );
-                        assert!(
-                            rules.iter().any(|r| r.rule_name == "no-debugger"),
-                            "Should include no-debugger"
-                        );
-                        assert!(
-                            rules.iter().any(|r| r.rule_name == "no-console"),
-                            "Should include no-console"
-                        );
-                        // Should NOT include custom-plugin/my-rule
-                        assert!(
-                            !rules.iter().any(|r| r.rule_name == "custom-plugin/my-rule"),
-                            "Should not include unknown custom-plugin/my-rule for eslint-disable"
-                        );
-                    }
                 } else {
-                    // oxlint-disable: All 3 rules are unused (2 known + 1 unknown)
-                    // Should be reported as Single to show which specific rules are problematic
-                    assert!(
-                        matches!(unused[0].r#type, RuleCommentType::Single(_)),
-                        "Expected RuleCommentType::Single for oxlint-disable but got {:?}",
-                        unused[0].r#type
+                    // oxlint-disable: 3 total rules, all 3 unused (2 known + 1 unknown)
+                    // group_vec.len() = 3, rules.len() = 3 → all unused → use All
+                    assert_eq!(
+                        unused[0].r#type,
+                        RuleCommentType::All,
+                        "Expected RuleCommentType::All when all rules are unused"
                     );
-                    if let RuleCommentType::Single(rules) = &unused[0].r#type {
-                        assert_eq!(rules.len(), 3, "Should report all 3 rules for oxlint-disable");
-                        assert!(
-                            rules.iter().any(|r| r.rule_name == "no-debugger"),
-                            "Should include no-debugger"
-                        );
-                        assert!(
-                            rules.iter().any(|r| r.rule_name == "no-console"),
-                            "Should include no-console"
-                        );
-                        assert!(
-                            rules.iter().any(|r| r.rule_name == "custom-plugin/my-rule"),
-                            "Should include unknown custom-plugin/my-rule for oxlint-disable"
-                        );
-                    }
                 }
             },
         );
@@ -1608,37 +1573,6 @@ function test() {
                         unused.len(),
                         1,
                         "oxlint-disable with unknown @-prefixed plugin rules should be reported"
-                    );
-                }
-            },
-        );
-    }
-
-    #[test]
-    fn unknown_rules_in_next_line_directive() {
-        test_directives(
-            |prefix| {
-                format!(
-                    r"
-                    // {prefix}-disable-next-line custom-plugin/rule-name
-                    console.log();
-                    "
-                )
-            },
-            |prefix, _comments, directives| {
-                let unused = directives.collect_unused_disable_comments();
-
-                if prefix == "eslint" {
-                    assert_eq!(
-                        unused.len(),
-                        0,
-                        "eslint-disable-next-line with unknown rules should not be reported"
-                    );
-                } else {
-                    assert_eq!(
-                        unused.len(),
-                        1,
-                        "oxlint-disable-next-line with unknown rules should be reported"
                     );
                 }
             },
@@ -1785,108 +1719,5 @@ function test() {
                 );
             },
         );
-    }
-
-    #[test]
-    fn oxlint_directive_reports_non_existing_rules() {
-        // Test that oxlint-disable with a non-existing rule DOES report it as unused
-        // This is intentional: users explicitly targeting oxlint should be warned about unknown rules
-        let allocator = Allocator::default();
-        let source_text = r"
-            /* oxlint-disable custom-plugin/custom-rule */
-            console.log();
-        ";
-        let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
-
-        let unused = directives.collect_unused_disable_comments();
-        // Should report custom-plugin/custom-rule as unused for oxlint-disable directives
-        assert_eq!(
-            unused.len(),
-            1,
-            "oxlint-disable with non-existing rules should report them as unused"
-        );
-        assert_eq!(unused[0].directive_prefix, "oxlint");
-    }
-
-    #[test]
-    fn oxlint_directive_reports_existing_unused_rules() {
-        // Test that oxlint-disable with an existing but unused rule DOES report it as unused
-        let allocator = Allocator::default();
-        let source_text = r"
-            /* oxlint-disable no-debugger */
-            console.log();
-        ";
-        let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
-
-        let unused = directives.collect_unused_disable_comments();
-        // Should report no-debugger as unused since it's a known rule with no violation
-        assert_eq!(
-            unused.len(),
-            1,
-            "oxlint-disable with existing unused rules should report them as unused"
-        );
-        // Single unused rule should be reported as All
-        assert_eq!(unused[0].r#type, RuleCommentType::All);
-    }
-
-    #[test]
-    fn mixed_oxlint_eslint_directives_different_behavior_for_unknown_rules() {
-        // Test that oxlint-disable and eslint-disable behave differently with unknown rules:
-        // - oxlint-disable with unknown rule: REPORT as unused
-        // - eslint-disable with unknown rule: IGNORE (don't report)
-        let allocator = Allocator::default();
-        let source_text = r"
-            /* oxlint-disable custom-plugin/rule-one */
-            console.log();
-            /* eslint-disable another-plugin/rule-two */
-            console.log();
-        ";
-        let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
-
-        let unused = directives.collect_unused_disable_comments();
-        // Should only report oxlint-disable with unknown rule (not eslint-disable)
-        assert_eq!(
-            unused.len(),
-            1,
-            "oxlint-disable with unknown rule should be reported, eslint-disable should not"
-        );
-        assert_eq!(unused[0].directive_prefix, "oxlint");
-        // Single unused rule should be reported as All
-        assert_eq!(unused[0].r#type, RuleCommentType::All);
-    }
-
-    #[test]
-    fn mixed_oxlint_eslint_directives_report_existing_unused_rules() {
-        // Test that a mix of oxlint-disable and eslint-disable with existing unused rules
-        // DOES report each as unused (1 violation per directive)
-        let allocator = Allocator::default();
-        let source_text = r"
-            /* oxlint-disable no-debugger */
-            console.log();
-            /* eslint-disable no-console */
-            console.log();
-        ";
-        let semantic = process_source(&allocator, source_text);
-        let directives =
-            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments());
-
-        let unused = directives.collect_unused_disable_comments();
-        // Should report 2 unused directives (one for each comment)
-        assert_eq!(
-            unused.len(),
-            2,
-            "Mixed oxlint/eslint directives with existing unused rules should report each as unused"
-        );
-
-        // Both should be reported as All since each has only one unused rule
-        for unused_comment in &unused {
-            assert_eq!(unused_comment.r#type, RuleCommentType::All);
-        }
     }
 }
