@@ -215,7 +215,8 @@ fn is_value_context(kind: &AstNode, semantic: &Semantic<'_>) -> bool {
         | AstKind::UnaryExpression(_)
         | AstKind::IfStatement(_)
         | AstKind::SpreadElement(_)
-        | AstKind::LogicalExpression(_) => true,
+        | AstKind::LogicalExpression(_)
+        | AstKind::AssignmentPattern(_) => true,
         AstKind::ExpressionStatement(_) => {
             let parent_node = semantic.nodes().parent_node(kind.id());
             if let AstKind::FunctionBody(_) = parent_node.kind()
@@ -458,6 +459,9 @@ fn test() {
         r"class C { #method() { return 42; } static { const obj = new C(); obj.#method(); } }",
         r"class C { #field = 1; static { const getField = obj => { return obj.#field; }; } }",
         r"export class Database<const S extends idb.DBSchema> { readonly #db: Promise<idb.IDBPDatabase<S>>; constructor(name: string, version: number, hooks: idb.OpenDBCallbacks<S>) { this.#db = idb.openDB<S>(name, version, hooks); }  async read() { let db = await this.#db; } }",
+        r"export class A { #x; constructor(x: number) { this.#x = x; } get(y = this.#x) { return y; } }",
+        r"class B { #value = 42; method(param = this.#value) { return param * 2; } }",
+        r"class C { #arr = [1, 2, 3]; process(items = this.#arr) { return items.map(x => x * 2); } }",
     ];
 
     let fail = vec![
