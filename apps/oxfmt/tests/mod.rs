@@ -84,3 +84,40 @@ fn vcs_dirs_ignored() {
         .with_cwd(PathBuf::from("tests/fixtures/vcs_dirs"))
         .test_and_snapshot_multiple(&[&["--check"]]);
 }
+
+#[test]
+fn exclude_nested_paths() {
+    // Test that nested path exclusion works correctly
+    // See: https://github.com/oxc-project/oxc/issues/14684
+    // All these cases should not report parse error from `foo/bar/error.js`
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/exclude_nested"))
+        .test_and_snapshot_multiple(&[
+            &["--check", "!foo/bar/error.js"],
+            &["--check", "!foo/bar"],
+            &["--check", "!foo"],
+            &["--check", "!**/error.js"],
+            &["--check", "foo", "!foo/bar/error.js"],
+            &["--check", "foo", "!foo/bar"],
+            &["--check", "foo", "!**/bar/error.js"],
+            &["--check", "foo", "!**/bar/*"],
+        ]);
+}
+#[test]
+fn exclude_nested_paths_with_dot() {
+    // All these cases should not report parse error from `foo/bar/error.js`
+    // TODO: Make the commented cases work as well.
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/exclude_nested"))
+        .test_and_snapshot_multiple(&[
+            // &["--check", ".", "!foo/bar/error.js"],
+            // &["--check", ".", "!foo/bar"],
+            &["--check", ".", "!foo"],
+            &["--check", ".", "!**/error.js"],
+            &["--check", "./foo", "!**/bar/error.js"],
+            &["--check", "./foo", "!**/error.js"],
+            &["--check", "./foo", "!**/bar/*"],
+            // &["--check", "./foo", "!foo/bar/error.js"],
+            // &["--check", "./foo", "!foo/bar"],
+        ]);
+}
