@@ -41,11 +41,11 @@ tags: None
 
 code: ""
 code_description.href: "None"
-message: "Unused oxlint-disable directive (no problems were reported from no-for-loop)."
-range: Range { start: Position { line: 5, character: 41 }, end: Position { line: 5, character: 52 } }
+message: "Unused oxlint-disable directive (no problems were reported)."
+range: Range { start: Position { line: 5, character: 2 }, end: Position { line: 5, character: 64 } }
 related_information[0].message: ""
 related_information[0].location.uri: "file://<variable>/fixtures/linter/unused_disabled_directives/test.js"
-related_information[0].location.range: Range { start: Position { line: 5, character: 41 }, end: Position { line: 5, character: 52 } }
+related_information[0].location.range: Range { start: Position { line: 5, character: 2 }, end: Position { line: 5, character: 64 } }
 severity: Some(Error)
 source: Some("oxc")
 tags: None
