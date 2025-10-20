@@ -48,13 +48,11 @@ export const diagnostics: DiagnosticReport[] = [];
  * @param context - `Context` object
  * @param ruleIndex - Index of this rule within `ruleIds` passed from Rust
  * @param filePath - Absolute path of file being linted
- * @param cwd - Current working directory
  */
 export let setupContextForFile: (
   context: Context,
   ruleIndex: number,
   filePath: string,
-  cwd: string,
 ) => void;
 
 /**
@@ -83,8 +81,6 @@ export interface InternalContext {
   ruleIndex: number;
   // Absolute path of file being linted
   filePath: string;
-  // Current working directory
-  cwd: string;
   // Options
   options: unknown[];
   // `true` if rule can provide fixes (`meta.fixable` in `RuleMeta` is 'code' or 'whitespace')
@@ -113,7 +109,6 @@ export class Context {
     this.#internal = {
       id: fullRuleName,
       filePath: '',
-      cwd: '',
       ruleIndex: -1,
       options: [],
       isFixable,
@@ -139,7 +134,8 @@ export class Context {
 
   // Getter for current working directory.
   get cwd() {
-    return getInternal(this, 'access `context.cwd`').cwd;
+    getInternal(this, 'access `context.cwd`');
+    return process.cwd();
   }
 
   // Getter for options for file being linted.
@@ -219,12 +215,11 @@ export class Context {
   }
 
   static {
-    setupContextForFile = (context, ruleIndex, filePath, cwd) => {
+    setupContextForFile = (context, ruleIndex, filePath) => {
       // TODO: Support `options`
       const internal = context.#internal;
       internal.ruleIndex = ruleIndex;
       internal.filePath = filePath;
-      internal.cwd = cwd;
     };
 
     getInternal = (context, actionDescription) => {

@@ -67,7 +67,7 @@ pub enum LintFileReturnValue {
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
     let cb = Arc::new(cb);
-    Arc::new(move |file_path: String, cwd: String, rule_ids: Vec<u32>, allocator: &Allocator| {
+    Arc::new(move |file_path: String, rule_ids: Vec<u32>, allocator: &Allocator| {
         let cb = Arc::clone(&cb);
 
         let (tx, rx) = channel();
@@ -83,7 +83,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
         // Send data to JS
         let status = cb.call_with_return_value(
-            FnArgs::from((file_path, cwd, buffer_id, buffer, rule_ids)),
+            FnArgs::from((file_path, buffer_id, buffer, rule_ids)),
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
                 let _ = match &result {

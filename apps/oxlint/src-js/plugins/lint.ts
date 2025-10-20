@@ -31,21 +31,14 @@ const afterHooks: AfterHook[] = [];
  * Main logic is in separate function `lintFileImpl`, because V8 cannot optimize functions containing try/catch.
  *
  * @param filePath - Absolute path of file being linted
- * @param cwd - Current working directory
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
  * @returns JSON result
  */
-export function lintFile(
-  filePath: string,
-  cwd: string,
-  bufferId: number,
-  buffer: Uint8Array | null,
-  ruleIds: number[],
-): string {
+export function lintFile(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {
   try {
-    lintFileImpl(filePath, cwd, bufferId, buffer, ruleIds);
+    lintFileImpl(filePath, bufferId, buffer, ruleIds);
     return JSON.stringify({ Success: diagnostics });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -58,7 +51,6 @@ export function lintFile(
  * Run rules on a file.
  *
  * @param filePath - Absolute path of file being linted
- * @param cwd - Current working directory
  * @param bufferId - ID of buffer containing file data
  * @param buffer - Buffer containing file data, or `null` if buffer with this ID was previously sent to JS
  * @param ruleIds - IDs of rules to run on this file
@@ -66,7 +58,7 @@ export function lintFile(
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
-function lintFileImpl(filePath: string, cwd: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
+function lintFileImpl(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
   // if there's an error.
@@ -90,9 +82,6 @@ function lintFileImpl(filePath: string, cwd: string, bufferId: number, buffer: U
   if (typeof filePath !== 'string' || filePath.length === 0) {
     throw new Error('expected filePath to be a non-zero length string');
   }
-  if (typeof cwd !== 'string' || cwd.length === 0) {
-    throw new Error('expected cwd to be a non-zero length string');
-  }
   if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
     throw new Error('Expected `ruleIds` to be a non-zero len array');
   }
@@ -115,7 +104,7 @@ function lintFileImpl(filePath: string, cwd: string, bufferId: number, buffer: U
     const ruleId = ruleIds[i],
       ruleAndContext = registeredRules[ruleId];
     const { rule, context } = ruleAndContext;
-    setupContextForFile(context, i, filePath, cwd);
+    setupContextForFile(context, i, filePath);
 
     let { visitor } = ruleAndContext;
     if (visitor === null) {

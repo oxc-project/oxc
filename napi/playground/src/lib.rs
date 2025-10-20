@@ -407,7 +407,6 @@ impl Oxc {
             )
             .run(
                 path,
-                Path::new("."),
                 vec![ContextSubHost::new(semantic, Arc::clone(module_record), 0)],
                 allocator,
             );

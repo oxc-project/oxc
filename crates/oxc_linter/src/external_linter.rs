@@ -10,11 +10,8 @@ pub type ExternalLinterLoadPluginCb = Arc<
         + Sync,
 >;
 
-pub type ExternalLinterLintFileCb = Arc<
-    dyn Fn(String, String, Vec<u32>, &Allocator) -> Result<Vec<LintFileResult>, String>
-        + Sync
-        + Send,
->;
+pub type ExternalLinterLintFileCb =
+    Arc<dyn Fn(String, Vec<u32>, &Allocator) -> Result<Vec<LintFileResult>, String> + Sync + Send>;
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum PluginLoadResult {

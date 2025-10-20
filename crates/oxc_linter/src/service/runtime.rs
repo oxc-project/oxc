@@ -587,7 +587,6 @@ impl Runtime {
 
                     let (mut messages, disable_directives) = me.linter.run_with_disable_directives(
                         path,
-                        &me.cwd,
                         context_sub_hosts,
                         allocator_guard,
                     );
@@ -684,7 +683,7 @@ impl Runtime {
                         let path = Path::new(&module_to_lint.path);
                         let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, &me.cwd, context_sub_hosts, allocator_guard);
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard);
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map
@@ -752,7 +751,6 @@ impl Runtime {
                         messages.lock().unwrap().extend(
                             me.linter.run(
                                 Path::new(&module.path),
-                                &me.cwd,
                                 context_sub_hosts,
                                 allocator_guard
                             )
