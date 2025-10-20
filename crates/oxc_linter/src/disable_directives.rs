@@ -1569,15 +1569,15 @@ function test() {
             |prefix| {
                 format!(
                     r"
-                    // {prefix}-disable-next-line typescript/max-params
+                    // {prefix}-disable-next-line typescript/no-invalid-this
                     console.log();
                     "
                 )
             },
             |_, directives| {
                 let unused = directives.collect_unused_disable_comments();
-                // Should report typescript/max-params as unused since it's a known rule
-                // (remapped from eslint/max-params) and there's no violation
+                // Should report typescript/no-invalid-this as unused since it's a known rule
+                // (remapped from eslint/no-invalid-this) and there's no violation
                 assert_eq!(
                     unused.len(),
                     1,
