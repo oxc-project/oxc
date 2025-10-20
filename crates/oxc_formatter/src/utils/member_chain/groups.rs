@@ -159,7 +159,7 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
             let interned = f.intern(&FormatMemberChainGroup { group: self })?;
 
             if tail {
-                self.needs_empty_line.set(self.needs_empty_line_before(f));
+                self.set_needs_empty_line(self.needs_empty_line_before(f));
             }
 
             if let Some(interned) = interned {
@@ -199,28 +199,21 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         // Check whether has more than 1 continuous new lines before the operator (`.`)
         let start = expression.object().span().end;
         let mut end = expression.property().span().start;
-        let mut comments = f.comments().comments_in_range(start, end).iter();
-        let mut last_comment_span = comments.next_back();
 
-        while start < end {
-            // Skip comments that are after the operator (`.`)
-            if let Some(last_comment) = last_comment_span
-                && last_comment.span.end == end
-            {
-                end = last_comment.span.start - 1;
-                last_comment_span = comments.next_back();
-                continue;
-            } else if matches!(source.byte_at(end), Some(b'.')) {
-                // Found the operator, stop the loop
-                break;
-            }
-
-            end -= 1;
-        }
-
-        // Skip comments that are before the operator (`.`)
-        if let Some(comment) = comments.next() {
-            end = comment.span.start;
+        // We should found the real `end` position that is before comments and it is not after the operator `.`
+        if let Some(printed_comment) = f
+            .comments()
+            .printed_comments()
+            .iter()
+            .rev()
+            .take_while(|c| start <= c.span.start && c.span.end < end)
+            .last()
+        {
+            end = printed_comment.span.start;
+        } else if let Some(first_comment) =
+            f.comments().comments_before_character(start, b'.').first()
+        {
+            end = first_comment.span.start;
         }
 
         // Count the number of continuous new lines
