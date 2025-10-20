@@ -6,8 +6,6 @@ use std::{
     time::Instant,
 };
 
-use ignore::overrides::OverrideBuilder;
-
 use oxc_diagnostics::DiagnosticService;
 use oxc_formatter::{FormatOptions, Oxfmtrc};
 
@@ -62,22 +60,16 @@ impl FormatRunner {
             }
         };
 
-        // Normalize user input paths
-        let (target_paths, exclude_patterns) = normalize_paths(&cwd, &paths);
-
-        // Build exclude patterns if any exist
-        let override_builder = (!exclude_patterns.is_empty())
-            .then(|| {
-                let mut builder = OverrideBuilder::new(&cwd);
-                for pattern_str in exclude_patterns {
-                    builder.add(&pattern_str).ok()?;
-                }
-                builder.build().ok()
-            })
-            .flatten();
-
-        // TODO: Support ignoring files
-        let walker = Walk::new(&target_paths, override_builder, ignore_options.with_node_modules);
+        let walker = match Walk::build(&cwd, &paths, ignore_options.with_node_modules) {
+            Ok(walker) => walker,
+            Err(err) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
 
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();
@@ -169,81 +161,32 @@ impl FormatRunner {
     }
 }
 
-const DEFAULT_OXFMTRC: &str = ".oxfmtrc.json";
-
 /// # Errors
 ///
 /// Returns error if:
 /// - Config file is specified but not found or invalid
 /// - Config file parsing fails
-fn load_config(cwd: &Path, config: Option<&PathBuf>) -> Result<FormatOptions, String> {
-    // If `--config` is explicitly specified, use that path directly
-    if let Some(config_path) = config {
-        let full_path = if config_path.is_absolute() {
+fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<FormatOptions, String> {
+    let config_path = if let Some(config_path) = config_path {
+        // If `--config` is explicitly specified, use that path
+        Some(if config_path.is_absolute() {
             PathBuf::from(config_path)
         } else {
             cwd.join(config_path)
-        };
+        })
+    } else {
+        // If `--config` is not specified, search the nearest config file from cwd upwards
+        cwd.ancestors().find_map(|dir| {
+            let config_path = dir.join(".oxfmtrc.json");
+            if config_path.exists() { Some(config_path) } else { None }
+        })
+    };
 
-        // This will error if the file does not exist or is invalid
-        let oxfmtrc = Oxfmtrc::from_file(&full_path)?;
-        return oxfmtrc.into_format_options();
+    match config_path {
+        Some(ref path) => Oxfmtrc::from_file(path)?.into_format_options(),
+        // Default if not specified and not found
+        None => Ok(FormatOptions::default()),
     }
-
-    // If `--config` is not specified, search the nearest config file from cwd upwards
-    for dir in cwd.ancestors() {
-        let config_path = dir.join(DEFAULT_OXFMTRC);
-        if config_path.exists() {
-            let oxfmtrc = Oxfmtrc::from_file(&config_path)?;
-            return oxfmtrc.into_format_options();
-        }
-    }
-
-    // No config file found, use defaults
-    Ok(FormatOptions::default())
-}
-
-/// Normalize user input paths into `target_paths` and `exclude_patterns`.
-/// - `target_paths`: Absolute paths to format
-/// - `exclude_patterns`: Pattern strings to exclude (with `!` prefix)
-fn normalize_paths(cwd: &Path, input_paths: &[PathBuf]) -> (Vec<PathBuf>, Vec<String>) {
-    let mut target_paths = vec![];
-    let mut exclude_patterns = vec![];
-
-    for path in input_paths {
-        let path_str = path.to_string_lossy();
-
-        // Instead of `oxlint`'s `--ignore-pattern=PAT`,
-        // `oxfmt` supports `!` prefix in paths like Prettier.
-        if path_str.starts_with('!') {
-            exclude_patterns.push(path_str.to_string());
-            continue;
-        }
-
-        // Otherwise, treat as target path
-
-        if path.is_absolute() {
-            target_paths.push(path.clone());
-            continue;
-        }
-
-        // NOTE: `.` and cwd behaves differently, need to normalize
-        let path = if path_str == "." {
-            cwd.to_path_buf()
-        } else if let Some(stripped) = path_str.strip_prefix("./") {
-            cwd.join(stripped)
-        } else {
-            cwd.join(path)
-        };
-        target_paths.push(path);
-    }
-
-    // Default to cwd if no `target_paths` are provided
-    if target_paths.is_empty() {
-        target_paths.push(cwd.into());
-    }
-
-    (target_paths, exclude_patterns)
 }
 
 fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
