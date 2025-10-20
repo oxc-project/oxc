@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.6.0] - 2025-10-20
+
+### 🚀 Features
+
+- 6bf8bac formatter: Reimplement formatting for `ImportExpression` (#14712) (Dunqing)
+- 3f2e036 formatter: Introduce `AstNode<ExpressionStatement>::is_arrow_function_body` (#14709) (Dunqing)
+- df225e9 formatter: Add `AstNode::ancestor` and `AstNode::grand_parent` methods (#14700) (Dunqing)
+- fec2ed9 oxfmt: Use Prettier style config key and value (#14612) (leaysgur)
+- 1b58521 oxfmt,language_server: Enable JSX for all JS source type (#14605) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 21c4285 formatter: Correct printing remaining trailing comments for `TSMappedType` (#14761) (Dunqing)
+- 1d1573e formatter: Correct adding semicolons for TypeScript left-hand side nodes (#14760) (Dunqing)
+- 4cc3b10 formatter: Improve handling of new lines between comments in `MemberChain` (#14759) (Dunqing)
+- e6bce8e formatter: Break the left hand side of AssignmentLike node if it is an `ObjectPattern` with three properties (#14756) (Dunqing)
+- dc57a2b formatter: Incorrect handling of `VariableDeclarator` with an `ArrowFunctionExpression` initializer (#14731) (Dunqing)
+- 537185d formatter: Should always group the left side of `AssignmentPattern` (#14730) (Dunqing)
+- 4283fd8 formatter: Correct printing comments for `JSXAttributeValue` (#14719) (Dunqing)
+- 59c9e1b formatter: Avoid conditional being broken in arguments by trailing comments (#14718) (Dunqing)
+- 7d64b96 formatter: Should wrap parentheses with JSX arguments of `NewExpression` (#14717) (Dunqing)
+- 2068a63 formatter: Should indent TemplateExpression if it is a member expression that is part of `ChainExpression` (#14714) (Dunqing)
+- 5ea3bb6 formatter: Incorrect handling of `ObjectPattern` as an `AssignmentPattern` of a parameter (#14711) (Dunqing)
+- eb52529 formatter: Incorrect handling of `ObjectPattern` as a parameter (#14670) (Dunqing)
+- 8ac10da formatter: Correct checking assignment layout for the right side with ownline comment and it is a `PrivateFieldExpression` (#14664) (Dunqing)
+- 6cba9b1 formatter: Should not merge tail with head for MemberChain when its parent is ArrowFunctionExpression (#14663) (Dunqing)
+- f44d3c0 formatter: Should not indent BinaryLikeExpression when its parent is `NewExpression` (#14662) (Dunqing)
+- bf953b8 formatter: Should group nested test for TSConditionalType (#14661) (Dunqing)
+- 63dc57b formatter: Correct handling if a template literal should be printed as a signle line (#14660) (Dunqing)
+- 0150ad5 formatter: Should group type parameters and parameters for method-like and function-like nodes (#14659) (Dunqing)
+- 392bf74 formatter: Improve handling of dangling comments in if statements (#14658) (Dunqing)
+- fd52b10 formatter: Don't print CallExpression as MemberChain style when its only has one argument and it is a TemplateLiteral on its own line (#14657) (Dunqing)
+- 29c3c60 formatter: Don't group nested await expression when its is the leftmost expression (#14656) (Dunqing)
+- 72c7503 formatter: Correct checking function composition when the arguments have an call expression before function (#14655) (Dunqing)
+- 2b645e2 formatter: Don't wrap parenthesis for `type` when its grandparent isn't a `ExpressionStatement` (#14654) (Dunqing)
+- e0eb966 formatter: Skip the leading semicolon when calculating leading lines (#14653) (Dunqing)
+
+### 🚜 Refactor
+
+- 83e783a formatter: Organize utils structure (#14710) (Dunqing)
+- 58dd74a formatter: Remove all `without_parentheses` usages (#14707) (Dunqing)
+- 75dfcad formatter: Simplify `ExpressionLeftSide` (#14706) (Dunqing)
+- 273f0fe formatter: Remove unnecessary lifetimes for the implementations of `NeedsParentheses` (#14703) (Dunqing)
+- bae5f11 formatter: Improve `AstNode` and `AstNodes` (#14686) (Dunqing)
+
+### ⚡ Performance
+
+- c6395c7 formatter: Optimize string reservation in print_text (#14751) (Boshen)
+
+### 🧪 Testing
+
+- 42d8c62 formatter: Add tests for sort-imports (#14685) (leaysgur)
+
+
 ## [0.5.0] - 2025-10-14
 
 ### 🚀 Features
