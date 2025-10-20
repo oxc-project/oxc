@@ -44,7 +44,8 @@ impl FormatRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, output_options, basic_options, misc_options } = self.options;
+        let FormatCommand { paths, output_options, basic_options, ignore_options, misc_options } =
+            self.options;
 
         // Find and load config
         // NOTE: Currently, we only load single config file.
@@ -76,7 +77,7 @@ impl FormatRunner {
             .flatten();
 
         // TODO: Support ignoring files
-        let walker = Walk::new(&target_paths, override_builder);
+        let walker = Walk::new(&target_paths, override_builder, ignore_options.with_node_modules);
 
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();
