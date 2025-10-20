@@ -192,7 +192,7 @@ declare_oxc_lint!(
     /// 
     /// `{ type: boolean, default: false }`
     /// 
-    /// The `ignoreRestSiblings` option is set to `false` by default, meaning unused siblings of the rest parameter are flagged.
+    /// The `ignoreRestSiblings` option is set to `false` by default, meaning unused siblings of the object rest property are flagged.
     /// With the option set to `false`, the code below would be flagged.
     /// 
     /// ```js
