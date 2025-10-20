@@ -585,6 +585,9 @@ fn test() {
                 "reportUnusedFallthroughComment": false
             }])),
         ),
+        // Issue #6417: switch with logical operators should work correctly with break
+        ("switch(true) { case x === 1 || x === 2: a(); break; case x === 3: b(); }", None),
+        ("switch(true) { case x === 1 && y: a(); break; case x === 3: b(); }", None),
     ];
 
     let fail = vec![
@@ -648,6 +651,9 @@ fn test() {
                 "reportUnusedFallthroughComment": true
             }])),
         ),
+        // Issue #6417: switch with logical operators should detect fallthrough
+        ("switch(true) { case x === 1 || x === 2: a(); case x === 3: b(); }", None),
+        ("switch(true) { case x === 1 && y: a(); case x === 3: b(); }", None),
         // TODO: it should fail but doesn't, we ignore conditional discriminants for now.
         // ("switch (a === b ? c : d) { case 1: ; case 2: ; case 3: ; }", None)
     ];
