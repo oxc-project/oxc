@@ -85,6 +85,11 @@ describe('oxlint CLI', () => {
       overrideFiles: '.',
     });
   });
+  it('should do something', async () => {
+    await testFixture('custom_plugin_nested_config_duplicate', {
+      overrideFiles: '.',
+    });
+  });
 
   it('should load a custom plugin when configured in overrides', async () => {
     await testFixture('custom_plugin_via_overrides');
