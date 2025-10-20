@@ -47,28 +47,22 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
   let sliceStart = commentsLength;
   let sliceEnd = 0;
 
-  // Reverse iteration isn't ideal, but this entire implementation may need to be rewritten
-  // with token-based APIs to match eslint.
-  for (let i = commentsLength - 1; i >= 0; i--) {
-    const comment = comments[i];
-    const commentEnd = comment.end;
-
-    if (commentEnd < targetStart) {
-      const gap = sourceText.slice(commentEnd, targetStart);
-      if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-        // Nothing except whitespace between end of comment and start of `nodeOrToken`
-        sliceStart = sliceEnd = i + 1;
-        targetStart = comment.start;
-      }
-      break;
+  // Binary search for the comment immediately before `nodeOrToken`.
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].end <= targetStart) {
+      sliceEnd = lo = mid + 1;
+    } else {
+      hi = mid;
     }
   }
 
   for (let i = sliceEnd - 1; i >= 0; i--) {
     const comment = comments[i];
     const gap = sourceText.slice(comment.end, targetStart);
+    // Ensure that there is nothing except whitespace between the end of the
+    // current comment and the start of the next as we iterate backwards.
     if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-      // Nothing except whitespace between end of comment and start of `nodeOrToken`
       sliceStart = i;
       targetStart = comment.start;
     } else {
@@ -105,25 +99,33 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
 
   let targetEnd = nodeOrToken.range[1]; // end
 
-  const commentsAfter: Comment[] = [];
-  for (let i = 0; i < commentsLength; i++) {
-    const comment = comments[i],
-      commentStart = comment.start;
+  let sliceStart = commentsLength;
+  let sliceEnd = 0;
 
-    if (commentStart < targetEnd) {
-      continue;
+  // Binary search for the comment immediately after `nodeOrToken`.
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start < targetEnd) {
+      lo = mid + 1;
+    } else {
+      sliceStart = hi = mid;
     }
-    const gap = sourceText.slice(targetEnd, commentStart);
+  }
+
+  for (let i = sliceStart; i < commentsLength; i++) {
+    // Ensure that there is nothing except whitespace between the
+    // end of the previous comment and the start of the current.
+    const comment = comments[i];
+    const gap = sourceText.slice(targetEnd, comment.start);
     if (WHITESPACE_ONLY_REGEXP.test(gap)) {
-      // Nothing except whitespace between end of `nodeOrToken` and start of comment
-      commentsAfter.push(comment);
+      sliceEnd = i + 1;
       targetEnd = comment.end;
     } else {
       break;
     }
   }
 
-  return commentsAfter;
+  return comments.slice(sliceStart, sliceEnd);
 }
 
 /**
@@ -144,23 +146,24 @@ export function getCommentsInside(node: Node): Comment[] {
     rangeStart = range[0],
     rangeEnd = range[1];
 
-  // Linear search for first comment within `node`'s range.
-  // TODO: Use binary search.
-  for (let i = 0; i < commentsLength; i++) {
-    const comment = comments[i];
-    if (comment.start >= rangeStart) {
-      sliceStart = i;
-      break;
+  // Binary search for first comment within `node`'s range.
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start < rangeStart) {
+      lo = mid + 1;
+    } else {
+      sliceStart = hi = mid;
     }
   }
 
-  // Continued linear search for first comment outside `node`'s range.
+  // Binary search for first comment outside `node`'s range.
   // Its index is used as `sliceEnd`, which is exclusive of the slice.
-  for (let i = sliceStart; i < commentsLength; i++) {
-    const comment = comments[i];
-    if (comment.start > rangeEnd) {
-      sliceEnd = i;
-      break;
+  for (let lo = sliceStart, hi = commentsLength; lo < hi;) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start < rangeEnd) {
+      lo = mid + 1;
+    } else {
+      sliceEnd = hi = mid;
     }
   }
 
@@ -177,15 +180,20 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
   if (ast === null) initAst();
 
   // Find the first comment after `nodeOrToken1` ends.
-  // Check if it ends before `nodeOrToken2` starts.
   const { comments } = ast,
-    commentsLength = comments.length;
-  const betweenRangeStart = nodeOrToken1.range[1]; // end
-  for (let i = 0; i < commentsLength; i++) {
-    const comment = comments[i];
-    if (comment.start >= betweenRangeStart) {
-      return comment.end <= nodeOrToken2.range[0]; // start
+    commentsLength = comments.length,
+    betweenRangeStart = nodeOrToken1.range[1];
+  let firstCommentBetween = -1;
+
+  for (let lo = 0, hi = commentsLength; lo < hi;) {
+    const mid = (lo + hi) >> 1;
+    if (comments[mid].start < betweenRangeStart) {
+      lo = mid + 1;
+    } else {
+      firstCommentBetween = hi = mid;
     }
   }
-  return false;
+  // Check if it ends before `nodeOrToken2` starts.
+  return 0 <= firstCommentBetween && firstCommentBetween < commentsLength &&
+    comments[firstCommentBetween].end <= nodeOrToken2.range[0];
 }
