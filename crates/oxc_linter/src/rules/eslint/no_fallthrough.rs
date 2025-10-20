@@ -588,6 +588,15 @@ fn test() {
         // Issue #6417: switch with logical operators should work correctly with break
         ("switch(true) { case x === 1 || x === 2: a(); break; case x === 3: b(); }", None),
         ("switch(true) { case x === 1 && y: a(); break; case x === 3: b(); }", None),
+        (
+            r#"c.map(c => { switch (true) {
+        case c.f === 'qux' && xCount > 1: { return <td key="foo">Foo</td>; }
+        case c.f === 'barbaz' && isFoo: { return <td key="bar">Foobar</td>; }
+        case c.f === 'baz': { return arrayOfRecords.map(r => <td key={r.id}>{r.id}</td>); }
+        default: { return <td>Bar</td>; }
+      } });"#,
+            None,
+        ),
     ];
 
     let fail = vec![
