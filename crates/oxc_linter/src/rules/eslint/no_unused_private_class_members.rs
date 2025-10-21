@@ -111,6 +111,10 @@ impl Rule for NoUnusedPrivateClassMembers {
             }
         });
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().classes().len() > 0
+    }
 }
 
 fn is_read(current_node_id: NodeId, semantic: &Semantic) -> bool {
