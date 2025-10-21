@@ -172,6 +172,10 @@ impl ConfigStoreBuilder {
                 });
             };
 
+            if let Some(settings_json) = &oxlintrc.settings.json {
+                (external_linter.set_settings)(settings_json);
+            }
+
             let resolver = Resolver::new(ResolveOptions {
                 condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
                 ..Default::default()
