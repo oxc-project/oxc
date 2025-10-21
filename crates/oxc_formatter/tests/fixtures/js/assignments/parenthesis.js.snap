@@ -1,0 +1,10 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+object[key = "a" + "b"];
+
+==================== Output ====================
+object[(key = "a" + "b")];
+
+===================== End =====================

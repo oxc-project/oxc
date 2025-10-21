@@ -551,9 +551,9 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
             // - `a = (b = c)` = nested assignments don't need extra parens
             AstNodes::AssignmentExpression(_) => false,
             // Computed member expressions: need parens when assignment is the object
-            // - `obj[a = b]` = no parens needed for property
+            // - `obj[(a = b)]` parens needed for explicitness
             // - `(a = b)[obj]` = parens needed for object
-            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
+            AstNodes::ComputedMemberExpression(member) => true,
             // For statements, no parens needed in initializer or update sections:
             // - `for (a = 1; ...; a = 2) {}` = both assignments don't need parens
             AstNodes::ForStatement(stmt) => {
