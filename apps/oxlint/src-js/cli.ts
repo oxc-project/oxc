@@ -5,7 +5,7 @@ import { lint } from './bindings.js';
 // This avoids loading this code if user doesn't utilize JS plugins.
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
-let setSettings: (settingsJson: unknown) => void | null = null;
+let setSettings: typeof setSettingsWrapper | null = null;
 
 function loadPluginWrapper(path: string, packageName?: string): Promise<string> {
   if (loadPlugin === null) {
@@ -21,7 +21,7 @@ function lintFileWrapper(filePath: string, bufferId: number, buffer: Uint8Array 
   return lintFile(filePath, bufferId, buffer, ruleIds);
 }
 
-function setSettingsWrapper(settingsJson: {}) {
+function setSettingsWrapper(settingsJson: Record<string, unknown>) {
   return setSettings(settingsJson);
 }
 // Get command line arguments, skipping first 2 (node binary and script path)

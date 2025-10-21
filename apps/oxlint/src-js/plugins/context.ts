@@ -70,10 +70,10 @@ let getInternal: (context: Context, actionDescription: string) => InternalContex
 
 let settings_record: Record<string, unknown> = {};
 
-export function setSettings(settings: unknown) {
+export function setSettings(settings: Record<string, unknown>) {
   // Freezes to prevent mutation from a plugin.
   // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
-  settings_record = deepFreeze(settings) as Record<string, unknown>;
+  settings_record = deepFreeze(settings);
 }
 
 // Internal data within `Context` that don't want to expose to plugins.
