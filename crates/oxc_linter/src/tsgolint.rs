@@ -798,10 +798,11 @@ fn parse_single_message(
 /// Tries to find the `tsgolint` executable. In priority order, this will check:
 /// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
 /// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
+/// 3. The `tsgolint` binary in the system PATH.
 ///
 /// # Errors
 /// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
-/// Returns an error if the tsgolint executable could not be resolve inside `node_modules/.bin`.
+/// Returns an error if the tsgolint executable could not be found.
 pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
     // Check the environment variable first
     if let Ok(path_str) = std::env::var("OXLINT_TSGOLINT_PATH") {
@@ -845,6 +846,20 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
         // If we reach the root directory, stop searching
         if !current_dir.pop() {
             break;
+        }
+    }
+
+    // Finally, search in the system PATH
+    // This supports package managers that install binaries globally and make them
+    // available via PATH
+    if let Ok(path_env) = std::env::var("PATH") {
+        for dir in std::env::split_paths(&path_env) {
+            for file in files {
+                let candidate = dir.join(file);
+                if candidate.is_file() {
+                    return Ok(candidate);
+                }
+            }
         }
     }
 
