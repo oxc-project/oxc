@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.7.0] - 2025-10-21
+
+### 🚀 Features
+
+- aa024d9 formatter: Wrap parenthesis for `AssignmentExpression` that are inside `ComputedMemberExpression` (#14834) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 88fb768 formatter: Correct handling of ignore comment for `TSUnionType` and `TSMappedType` (#14824) (Dunqing)
+- f7727c7 formatter: Ignore comment doesn't work for the expression statement (#14817) (Dunqing)
+- 7a420a1 oxfmt: Handle `.d.ts` file correctly (#14835) (leaysgur)
+
+### 🚜 Refactor
+
+- 9d914a3 formatter: Improve comments handling (#14816) (Dunqing)
+- f52863d formatter: Improve handling of type cast node (#14815) (Dunqing)
+
+
 ## [0.6.0] - 2025-10-20
 
 ### 🚀 Features

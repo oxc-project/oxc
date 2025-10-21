@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.7.0] - 2025-10-21
+
+### 🚀 Features
+
+- 6dfcd80 oxfmt: Search both .json and .jsonc config file (#14848) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 7a420a1 oxfmt: Handle `.d.ts` file correctly (#14835) (leaysgur)
+
+### 🚜 Refactor
+
+- 6fa7420 oxfmt: Use custom ignore builder (#14850) (leaysgur)
+
+
 ## [0.6.0] - 2025-10-20
 
 ### 🚀 Features
