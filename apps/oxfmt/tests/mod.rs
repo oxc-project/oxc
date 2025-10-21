@@ -28,6 +28,7 @@ fn multiple_files() {
                 // Explicit cwd
                 &["--check", "."],
                 &["--check", "./"],
+                &["--check", "!*.{ts,tsx}"],
             ],
         );
 }

@@ -31,12 +31,13 @@ const ADDITIONAL_JS_EXTENSIONS: &[&str] = &[
 ];
 
 pub fn get_supported_source_type(path: &std::path::Path) -> Option<SourceType> {
-    let extension = path.extension()?.to_string_lossy();
-
     // Standard extensions, also supported by `oxc_span::VALID_EXTENSIONS`
-    if let Ok(source_type) = SourceType::from_extension(&extension) {
+    // NOTE: Use `path` directly for `.d.ts` detection
+    if let Ok(source_type) = SourceType::from_path(path) {
         return Some(source_type);
     }
+
+    let extension = path.extension()?.to_string_lossy();
     // Additional extensions from linguist-languages, which Prettier also supports
     if ADDITIONAL_JS_EXTENSIONS.contains(&extension.as_ref()) {
         return Some(SourceType::default());
