@@ -118,6 +118,10 @@ impl Rule for MaxClassesPerFile {
 
         ctx.diagnostic(max_classes_per_file_diagnostic(class_count, self.max, span));
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().classes().len() > 0
+    }
 }
 
 #[test]
