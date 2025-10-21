@@ -129,6 +129,63 @@ impl OxlintSettings {
             }
         }
     }
+
+    pub fn merge(&self, other: &OxlintSettings) -> OxlintSettings {
+        let json = match (&self.json, &other.json) {
+            (Some(self_json), Some(other_json)) => Some(deep_merge(self_json, other_json)),
+            (Some(self_json), None) => Some(self_json.clone()),
+            (None, Some(other_json)) => Some(other_json.clone()),
+            (None, None) => None,
+        };
+        // Comparing well known settings to their defaults is a hack because we don't know if they were actually left out or not.
+        // TODO: Switch to Option?
+        OxlintSettings {
+            json,
+            jsx_a11y: if self.jsx_a11y == JSXA11yPluginSettings::default() {
+                other.jsx_a11y.clone()
+            } else {
+                self.jsx_a11y.clone()
+            },
+            next: if self.next == NextPluginSettings::default() {
+                other.next.clone()
+            } else {
+                self.next.clone()
+            },
+            react: if self.react == ReactPluginSettings::default() {
+                other.react.clone()
+            } else {
+                self.react.clone()
+            },
+            jsdoc: if self.jsdoc == JSDocPluginSettings::default() {
+                other.jsdoc.clone()
+            } else {
+                self.jsdoc.clone()
+            },
+        }
+    }
+}
+
+fn deep_merge(
+    self_json: &OxlintSettingsJson,
+    other_json: &OxlintSettingsJson,
+) -> OxlintSettingsJson {
+    let mut result = other_json.clone();
+
+    for (key, self_value) in self_json {
+        match (self_value, result.get(key)) {
+            (serde_json::Value::Object(self_obj), Some(serde_json::Value::Object(other_obj))) => {
+                let merged_obj = deep_merge(self_obj, other_obj);
+                result.insert(key.clone(), serde_json::Value::Object(merged_obj));
+            }
+            (self_val, _) => {
+                // Either other doesn't have this key, or one of them is not an object
+                // In both cases, use self's value
+                result.insert(key.clone(), self_val.clone());
+            }
+        }
+    }
+
+    result
 }
 
 #[cfg(test)]
