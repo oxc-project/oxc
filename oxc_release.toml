@@ -3,6 +3,7 @@
 # Release `--name crates`
 [[releases]]
 name = "crates"
+root_crate = "oxc"
 versioned_files = [
   "Cargo.toml",
   "napi/parser/package.json",
