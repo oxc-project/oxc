@@ -3,7 +3,7 @@ use std::{
     sync::mpsc,
 };
 
-use ignore::overrides::OverrideBuilder;
+use ignore::{gitignore::GitignoreBuilder, overrides::OverrideBuilder};
 
 use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
@@ -33,6 +33,9 @@ impl Walk {
             }
         }
 
+        // NOTE: We are using `OverrideBuilder` only for exclusion.
+        // This means there is no way to "re-include" a file once ignored.
+
         // Treat all `!` prefixed patterns as overrides to exclude
         if !exclude_patterns.is_empty() {
             let mut builder = OverrideBuilder::new(cwd);
@@ -46,11 +49,15 @@ impl Walk {
         }
 
         // Handle ignore files
-        for ignore_path in load_ignore_paths(cwd, ignore_paths) {
-            if inner.add_ignore(&ignore_path).is_some() {
+        let mut builder = GitignoreBuilder::new(cwd);
+        for ignore_path in &load_ignore_paths(cwd, ignore_paths) {
+            if builder.add(ignore_path).is_some() {
                 return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
             }
         }
+        // TODO: Support config.ignorePatterns
+        // Use `builder.add_line(None, pattern_str)` here
+        let ignores = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
 
         // NOTE: If return `false` here, it will not be `visit()`ed at all
         inner.filter_entry(move |entry| {
@@ -59,7 +66,9 @@ impl Walk {
                 return false;
             };
 
-            if file_type.is_dir() {
+            let is_dir = file_type.is_dir();
+
+            if is_dir {
                 // We are setting `.hidden(false)` on the `WalkBuilder` below,
                 // it means we want to include hidden files and directories.
                 // However, we (and also Prettier) still skip traversing certain directories.
@@ -76,6 +85,12 @@ impl Walk {
                 if is_skipped_dir {
                     return false;
                 }
+            }
+
+            // Check ignore files, patterns
+            let matched = ignores.matched(entry.path(), is_dir);
+            if matched.is_ignore() && !matched.is_whitelist() {
+                return false;
             }
 
             // NOTE: We can also check `get_supported_source_type()` here to skip.

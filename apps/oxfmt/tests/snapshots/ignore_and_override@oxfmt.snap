@@ -1,0 +1,52 @@
+---
+source: apps/oxfmt/tests/tester.rs
+---
+########## 
+arguments: --check !**/err.js
+working directory: tests/fixtures/ignore_and_override
+----------
+Checking formatting...
+should_format/ok.js (<variable>ms)
+
+Format issues found in above 1 files. Run without `--check` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
+
+########## 
+arguments: --check --ignore-path ignore1
+working directory: tests/fixtures/ignore_and_override
+----------
+Checking formatting...
+
+Expected at least one target file
+----------
+CLI result: NoFilesFound
+----------
+
+########## 
+arguments: --check --ignore-path ignore1 should_format/ok.js
+working directory: tests/fixtures/ignore_and_override
+----------
+Checking formatting...
+should_format/ok.js (<variable>ms)
+
+Format issues found in above 1 files. Run without `--check` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------
+
+########## 
+arguments: --check --ignore-path ignore2
+working directory: tests/fixtures/ignore_and_override
+----------
+Checking formatting...
+should_format/ok.js (<variable>ms)
+
+Format issues found in above 1 files. Run without `--check` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+----------
+CLI result: FormatMismatch
+----------

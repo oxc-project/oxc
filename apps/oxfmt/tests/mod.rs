@@ -182,3 +182,22 @@ fn ignore_patterns() {
             ],
         );
 }
+
+#[test]
+fn ignore_and_override() {
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/ignore_and_override"))
+        .test_and_snapshot_multiple(
+            "ignore_and_override",
+            &[
+                // Ignore err.js
+                &["--check", "!**/err.js"],
+                // Ignore every files
+                &["--check", "--ignore-path", "ignore1"],
+                // Override ignore for should_format/ok.js
+                &["--check", "--ignore-path", "ignore1", "should_format/ok.js"],
+                // ! prefixed line for should_format/ok.js
+                &["--check", "--ignore-path", "ignore2"],
+            ],
+        );
+}
