@@ -224,6 +224,21 @@ impl Rule for Namespace {
             });
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        if !ctx.module_record().has_module_syntax {
+            return false;
+        }
+        if ctx.module_record().import_entries.iter().any(|entry| {
+            matches!(
+                entry.import_name,
+                ImportImportName::NamespaceObject | ImportImportName::Name(_)
+            )
+        }) {
+            return true;
+        }
+        true
+    }
 }
 
 /// If the name is a namespace object in imported module, return the module request name.
