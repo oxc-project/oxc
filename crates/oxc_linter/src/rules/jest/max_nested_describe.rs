@@ -22,6 +22,7 @@ fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
+#[schemars(default)]
 pub struct MaxNestedDescribe {
     /// Maximum allowed depth of nested describe calls.
     pub max: usize,
