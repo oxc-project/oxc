@@ -5,6 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{ConstructorParser, Options};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -54,12 +55,13 @@ declare_oxc_lint!(
     NoInvalidRegexp,
     eslint,
     correctness,
+    config = NoInvalidRegexpConfig,
 );
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Default, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 struct NoInvalidRegexpConfig {
-    #[serde(default, rename = "allowConstructorFlags")]
-    /// Case-sensitive array of flags.
+    /// Case-sensitive array of flags that will be allowed.
     allow_constructor_flags: Vec<char>,
 }
 
