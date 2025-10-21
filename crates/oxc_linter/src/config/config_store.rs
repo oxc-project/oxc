@@ -321,10 +321,6 @@ impl ConfigStore {
         &self.base.base.rules
     }
 
-    pub fn settings(&self) -> &OxlintSettings {
-        &self.base.base.config.settings
-    }
-
     pub fn plugins(&self) -> LintPlugins {
         self.base.base.config.plugins
     }
