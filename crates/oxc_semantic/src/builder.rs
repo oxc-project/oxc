@@ -1573,12 +1573,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_catch_clause(handler);
 
             /* cfg */
-            control_flow!(self, |cfg| {
-                let catch_block_end_ix = cfg.current_node_ix;
-                // TODO: we shouldn't directly change the current node index.
-                cfg.current_node_ix = after_try_block_graph_ix;
-                Some(catch_block_end_ix)
-            })
+            control_flow!(self, |cfg| Some(cfg.current_node_ix))
             /* cfg */
         } else {
             None
@@ -1605,12 +1600,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_block_statement(finalizer);
 
             /* cfg */
-            control_flow!(self, |cfg| {
-                let finally_block_end_ix = cfg.current_node_ix;
-                // TODO: we shouldn't directly change the current node index.
-                cfg.current_node_ix = after_try_block_graph_ix;
-                Some(finally_block_end_ix)
-            })
+            control_flow!(self, |cfg| Some(cfg.current_node_ix))
             /* cfg */
         } else {
             None
@@ -1623,7 +1613,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         control_flow!(self, |cfg| {
-            let after_try_statement_block_ix = cfg.new_basic_block_normal();
             cfg.add_edge(
                 before_try_statement_graph_ix,
                 before_try_block_graph_ix,
@@ -1632,6 +1621,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             if let Some(catch_block_end_ix) = catch_block_end_ix
                 && finally_block_end_ix.is_none()
             {
+                let after_try_statement_block_ix = cfg.new_basic_block_normal();
                 cfg.add_edge(
                     after_try_block_graph_ix,
                     after_try_statement_block_ix,
@@ -1641,6 +1631,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 cfg.add_edge(catch_block_end_ix, after_try_statement_block_ix, EdgeType::Normal);
             }
             if let Some(finally_block_end_ix) = finally_block_end_ix {
+                let after_try_statement_block_ix = cfg.new_basic_block_normal();
                 if catch_block_end_ix.is_some() {
                     cfg.add_edge(
                         finally_block_end_ix,
