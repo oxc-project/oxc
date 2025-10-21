@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::UpdateOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -22,7 +23,8 @@ fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoPlusplus {
     /// Whether to allow `++` and `--` in for loop afterthoughts.
     allow_for_loop_afterthoughts: bool,
@@ -76,22 +78,6 @@ declare_oxc_lint!(
     ///    doSomething(i);
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowForLoopAfterthoughts
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// Pass `"allowForLoopAfterthoughts": true` to allow `++` and `--` in for loop afterthoughts.
-    ///
-    /// Example:
-    /// ```json
-    /// "no-plusplus": [
-    ///   "error",
-    ///   { "allowForLoopAfterthoughts": true }
-    /// ]
-    /// ```
     NoPlusplus,
     eslint,
     restriction,
@@ -99,6 +85,7 @@ declare_oxc_lint!(
     // For example, `++i` and `i++` will be rewritten as `i += 1` even though they are not the same.
     // If the code depends on the order of evaluation, then this might break it.
     conditional_suggestion,
+    config = NoPlusplus,
 );
 
 impl Rule for NoPlusplus {
