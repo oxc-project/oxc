@@ -1702,8 +1702,10 @@ impl<'a> Format<'a> for AstNode<'a, EmptyStatement> {
 
 impl<'a> Format<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f)?;
-        let result = self.write(f);
+        let result =
+            if is_suppressed { FormatSuppressedNode(self.span()).fmt(f) } else { self.write(f) };
         self.format_trailing_comments(f)?;
         result
     }
