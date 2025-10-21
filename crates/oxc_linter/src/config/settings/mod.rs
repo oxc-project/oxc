@@ -317,4 +317,33 @@ mod test {
         assert_eq!(raw_json["unknown-plugin"]["setting"], "value");
         assert_eq!(raw_json["globalSetting"], "value");
     }
+
+    #[test]
+    fn test_merge() {
+        let base = OxlintSettings::from_json_with_raw(&serde_json::json!({
+            "jsx-a11y": { "polymorphicPropName": "role" },
+            "unknown": { "a": 1, "nested": { "x": 1 } }
+        }))
+        .unwrap();
+
+        let other = OxlintSettings::from_json_with_raw(&serde_json::json!({
+            "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] },
+            "unknown": { "b": 2, "nested": { "y": 2 } }
+        }))
+        .unwrap();
+
+        let merged = base.merge(&other);
+
+        // Non-default base values take precedence
+        assert_eq!(merged.jsx_a11y.polymorphic_prop_name, Some("role".into()));
+        // Default base values use other
+        assert_eq!(merged.react.get_link_component_attrs("Link").unwrap(), as_attrs(["to"]));
+
+        // Raw JSON is deep merged
+        let json = merged.json.unwrap();
+        assert_eq!(json["unknown"]["a"], 1); // from base
+        assert_eq!(json["unknown"]["b"], 2); // from other
+        assert_eq!(json["unknown"]["nested"]["x"], 1); // from base
+        assert_eq!(json["unknown"]["nested"]["y"], 2); // from other
+    }
 }
