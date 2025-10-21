@@ -262,7 +262,7 @@ fn is_pow_2_expression(expression: &Expression, ctx: &LintContext<'_>) -> bool {
 /// removes any newlines from the string
 /// removes any duplicate spaces
 fn clean_string(input: &str) -> String {
-    let mut result = String::new();
+    let mut result = String::with_capacity(input.len());
     let mut prev_char = ' ';
 
     for c in input.chars() {

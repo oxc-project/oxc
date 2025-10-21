@@ -130,7 +130,12 @@ impl Rule for JsxFragments {
                             closing_element.span().end,
                             jsx_elem.span().end,
                         ));
-                        let mut replacement = String::new();
+                        let mut replacement = String::with_capacity(
+                            before_opening_tag.len()
+                                + between_opening_tag_and_closing_tag.len()
+                                + after_closing_tag.len()
+                                + "<></>".len(),
+                        );
                         replacement.push_str(before_opening_tag);
                         replacement.push_str("<>");
                         replacement.push_str(between_opening_tag_and_closing_tag);
@@ -156,7 +161,12 @@ impl Rule for JsxFragments {
                             jsx_frag.closing_fragment.span().end,
                             jsx_frag.span().end,
                         ));
-                        let mut replacement = String::new();
+                        let mut replacement = String::with_capacity(
+                            before_opening_tag.len()
+                                + between_opening_tag_and_closing_tag.len()
+                                + after_closing_tag.len()
+                                + "<React.Fragment></React.Fragment>".len(),
+                        );
                         replacement.push_str(before_opening_tag);
                         replacement.push_str("<React.Fragment>");
                         replacement.push_str(between_opening_tag_and_closing_tag);

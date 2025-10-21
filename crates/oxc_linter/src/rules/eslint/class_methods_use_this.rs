@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Deref};
+use std::ops::Deref;
 
 use itertools::Itertools;
 use oxc_ast::{
@@ -13,10 +13,9 @@ use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{LintContext, rule::Rule};
 
-fn class_methods_use_this_diagnostic(span: Span, name: Option<Cow<'_, str>>) -> OxcDiagnostic {
-    let method_name_str = name.map_or(String::new(), |name| format!(" `{name}`"));
-    OxcDiagnostic::warn(format!("Expected method{method_name_str} to have this."))
-        .with_help(format!("Consider converting method{method_name_str} to a static method."))
+fn class_methods_use_this_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Expected method `{name}` to have this."))
+        .with_help(format!("Consider converting method `{name}` to a static method."))
         .with_label(span)
 }
 
@@ -219,8 +218,10 @@ impl Rule for ClassMethodsUseThis {
         }
         let mut finder = ThisFinder::new();
         finder.visit_function_body(function_body);
-        if !finder.has_this {
-            ctx.diagnostic(class_methods_use_this_diagnostic(name.span(), name.name()));
+        if !finder.has_this
+            && let Some(name_str) = name.name()
+        {
+            ctx.diagnostic(class_methods_use_this_diagnostic(name.span(), &name_str));
         }
     }
 }

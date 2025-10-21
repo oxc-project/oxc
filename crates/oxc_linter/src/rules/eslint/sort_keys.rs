@@ -291,7 +291,7 @@ impl Rule for SortKeys {
                     // trailing comma) to the end, we must remove their trailing comma so
                     // the resulting object doesn't end up with an extra comma before `}`.
                     // Also normalize separators between properties to `, ` for clarity.
-                    let mut sorted_text = String::new();
+                    let mut sorted_text = String::with_capacity(8 * indices.len()); // initialize with avg 8 chars per prop
                     let trim_end_commas = |s: &str| -> String {
                         let s = s.trim_end();
                         let mut trimmed = s.to_string();

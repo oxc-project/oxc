@@ -115,7 +115,7 @@ impl Rule for ConsistentTypeSpecifierStyle {
                 ctx.diagnostic_with_fix(
                     consistent_type_specifier_style_diagnostic(item.span(), &self.mode),
                     |fixer| {
-                        let mut import_source = String::new();
+                        let mut import_source = String::with_capacity(128);
 
                         if !value_specifiers.is_empty() {
                             let value_import_declaration =

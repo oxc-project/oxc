@@ -370,7 +370,7 @@ pub fn to_precision(mut num: f64, precision: usize) -> String {
     let precision_i32 = precision as i32;
 
     // Handle sign
-    let mut prefix = String::new();
+    let mut prefix = String::with_capacity(8);
     if num < 0.0 {
         prefix.push('-');
         num = -num;

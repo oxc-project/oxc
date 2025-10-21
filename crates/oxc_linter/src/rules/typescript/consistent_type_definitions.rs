@@ -174,11 +174,6 @@ impl Rule for ConsistentTypeDefinitions {
                     let body_span = &decl.body.span;
                     let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
 
-                    let mut extends = String::new();
-                    for exp in &decl.extends {
-                        write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
-                    }
-
                     ctx.diagnostic_with_fix(
                         consistent_type_definitions_diagnostic(
                             "type",
@@ -186,6 +181,11 @@ impl Rule for ConsistentTypeDefinitions {
                             Span::sized(decl.span.start, 9),
                         ),
                         |fixer| {
+                            let mut extends = String::with_capacity(8 * decl.extends.len());
+                            for exp in &decl.extends {
+                                write!(extends, " & {}", exp.span.source_text(ctx.source_text()))
+                                    .unwrap();
+                            }
                             fixer.replace(
                                 exp.span,
                                 format!("type {name} = {body}{extends}\nexport default {name}"),
@@ -220,11 +220,6 @@ impl Rule for ConsistentTypeDefinitions {
                 let body_span = &decl.body.span;
                 let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
 
-                let mut extends = String::new();
-                for exp in &decl.extends {
-                    write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
-                }
-
                 ctx.diagnostic_with_fix(
                     consistent_type_definitions_diagnostic(
                         "type",
@@ -232,6 +227,11 @@ impl Rule for ConsistentTypeDefinitions {
                         Span::sized(start, 9),
                     ),
                     |fixer| {
+                        let mut extends = String::with_capacity(8 * decl.extends.len());
+                        for exp in &decl.extends {
+                            write!(extends, " & {}", exp.span.source_text(ctx.source_text()))
+                                .unwrap();
+                        }
                         fixer.replace(
                             Span::new(start, decl.span.end),
                             format!("type {name} = {body}{extends}"),

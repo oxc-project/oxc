@@ -322,6 +322,7 @@ impl SortImports {
                     // add a empty string for zip with specifiers
                     paddings.push("");
 
+                    let specifiers_len = specifiers.len();
                     let specifiers = specifiers.iter().sorted_by(|a, b| {
                         let a = a.local.name.as_str();
                         let b = b.local.name.as_str();
@@ -334,7 +335,7 @@ impl SortImports {
                     });
 
                     let sorted_text = specifiers.zip(paddings).fold(
-                        String::new(),
+                        String::with_capacity(specifiers_len * 8),
                         |mut acc, (specifier, padding)| {
                             let _ = acc.write_str(ctx.source_range(specifier.span));
                             let _ = acc.write_str(padding);
