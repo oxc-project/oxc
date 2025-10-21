@@ -23,6 +23,8 @@ use crate::{
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::{GetSpan, Span};
 
+use super::typecast::is_type_cast_node;
+
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
     root: &'b AstNode<'a, CallExpression<'a>>,
@@ -419,13 +421,7 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if f.comments().get_type_cast_comment_index(expression.span()).is_some()
-            || f.comments()
-                .printed_comments()
-                .last()
-                .is_some_and(|c| f.comments().is_type_cast_comment(c))
-                && f.source_text().next_non_whitespace_byte_is(expression.span().end, b')')
-        {
+        if is_type_cast_node(expression, f).is_some() {
             return ChainMember::Node(expression).into();
         }
 

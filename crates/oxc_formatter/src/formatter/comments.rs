@@ -386,6 +386,14 @@ impl<'a> Comments<'a> {
         const TYPE_PATTERN: &[u8] = b"@type";
         const SATISFIES_PATTERN: &[u8] = b"@satisfies";
 
+        /// Checks if a pattern matches at the given position.
+        fn matches_pattern_at(bytes: &[u8], pos: usize, pattern: &[u8]) -> bool {
+            bytes[pos..].starts_with(pattern)
+                && bytes
+                    .get(pos + pattern.len())
+                    .is_some_and(|&byte| byte.is_ascii_whitespace() || byte == b'{')
+        }
+
         if !matches!(comment.content, CommentContent::Jsdoc) {
             return false;
         }
@@ -458,10 +466,4 @@ impl<'a> Comments<'a> {
     pub fn restore_view_limit(&mut self, limit: Option<usize>) {
         self.view_limit = limit;
     }
-}
-
-/// Checks if a pattern matches at the given position.
-fn matches_pattern_at(bytes: &[u8], pos: usize, pattern: &[u8]) -> bool {
-    bytes[pos..].starts_with(pattern)
-        && matches!(bytes.get(pos + pattern.len()), Some(b' ' | b'\t' | b'\n' | b'\r' | b'{'))
 }
