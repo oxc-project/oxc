@@ -19,7 +19,6 @@ use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
     options::{LintOptions as LSPLintOptions, Run},
-    tsgo_linter::TsgoLinter,
 };
 use crate::utils::normalize_path;
 use crate::{ConcurrentHashMap, LINT_CONFIG_FILE};
@@ -35,7 +34,6 @@ pub enum ServerLinterRun {
 
 pub struct ServerLinter {
     isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
-    tsgo_linter: Arc<Option<TsgoLinter>>,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     lint_on_run: Run,
@@ -46,7 +44,6 @@ pub struct ServerLinter {
 #[derive(Debug, Default)]
 struct ServerLinterDiagnostics {
     isolated_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
-    tsgo_linter: Arc<ConcurrentHashMap<String, Option<Vec<DiagnosticReport>>>>,
 }
 
 impl ServerLinterDiagnostics {
@@ -59,29 +56,15 @@ impl ServerLinterDiagnostics {
                 reports.extend(diagnostics.clone());
             }
         }
-        if let Some(entry) = self.tsgo_linter.pin().get(path) {
-            found = true;
-            if let Some(diagnostics) = entry {
-                reports.extend(diagnostics.clone());
-            }
-        }
         if found { Some(reports) } else { None }
     }
 
     pub fn remove_diagnostics(&self, path: &str) {
         self.isolated_linter.pin().remove(path);
-        self.tsgo_linter.pin().remove(path);
     }
 
     pub fn get_cached_files_of_diagnostics(&self) -> Vec<String> {
-        let isolated_files = self.isolated_linter.pin().keys().cloned().collect::<Vec<_>>();
-        let tsgo_files = self.tsgo_linter.pin().keys().cloned().collect::<Vec<_>>();
-
-        let mut files = Vec::with_capacity(isolated_files.len() + tsgo_files.len());
-        files.extend(isolated_files);
-        files.extend(tsgo_files);
-        files.dedup();
-        files
+        self.isolated_linter.pin().keys().cloned().collect::<Vec<_>>()
     }
 }
 
@@ -153,9 +136,10 @@ impl ServerLinter {
 
         let isolated_linter = IsolatedLintHandler::new(
             lint_options,
-            config_store.clone(), // clone because tsgo linter needs it
+            config_store,
             &IsolatedLintHandlerOptions {
                 use_cross_module,
+                type_aware: options.type_aware,
                 root_path: root_path.to_path_buf(),
                 tsconfig_path: options.ts_config_path.as_ref().map(|path| {
                     let path = Path::new(path).to_path_buf();
@@ -175,11 +159,6 @@ impl ServerLinter {
             extended_paths,
             lint_on_run: options.run,
             diagnostics: ServerLinterDiagnostics::default(),
-            tsgo_linter: if options.type_aware {
-                Arc::new(Some(TsgoLinter::new(&root_path, config_store)))
-            } else {
-                Arc::new(None)
-            },
         }
     }
 
@@ -326,24 +305,13 @@ impl ServerLinter {
         content: Option<String>,
         run_type: ServerLinterRun,
     ) -> Option<Vec<DiagnosticReport>> {
-        let (oxlint, tsgolint) = match (run_type, self.lint_on_run) {
-            // run everything on save, or when it is forced
-            (ServerLinterRun::Always, _) | (ServerLinterRun::OnSave, Run::OnSave) => (true, true),
-            // run only oxlint on type
-            // tsgolint does not support memory source_text
-            (ServerLinterRun::OnType, Run::OnType) => (true, false),
-            // it does not match, run nothing
-            (ServerLinterRun::OnType, Run::OnSave) => (false, false),
-            // In onType mode, only TypeScript type checking runs on save
-            // If type_aware is disabled (tsgo_linter is None), skip everything to preserve diagnostics
-            (ServerLinterRun::OnSave, Run::OnType) => {
-                let should_run_tsgo = self.tsgo_linter.as_ref().is_some();
-                (false, should_run_tsgo)
-            }
-        };
+        let run = !matches!(
+            (run_type, self.lint_on_run),
+            (ServerLinterRun::OnType, Run::OnSave) | (ServerLinterRun::OnSave, Run::OnType)
+        );
 
         // return `None` when both tools do not want to be used
-        if !oxlint && !tsgolint {
+        if !run {
             return None;
         }
 
@@ -351,20 +319,12 @@ impl ServerLinter {
             return None;
         }
 
-        if oxlint {
-            let diagnostics = {
-                let mut isolated_linter = self.isolated_linter.lock().await;
-                isolated_linter.run_single(uri, content.clone())
-            };
-            self.diagnostics.isolated_linter.pin().insert(uri.to_string(), diagnostics);
-        }
+        let diagnostics = {
+            let mut isolated_linter = self.isolated_linter.lock().await;
+            isolated_linter.run_single(uri, content.clone())
+        };
 
-        if tsgolint && let Some(tsgo_linter) = self.tsgo_linter.as_ref() {
-            self.diagnostics
-                .tsgo_linter
-                .pin()
-                .insert(uri.to_string(), tsgo_linter.lint_file(uri, content.clone()));
-        }
+        self.diagnostics.isolated_linter.pin().insert(uri.to_string(), diagnostics);
 
         self.diagnostics.get_diagnostics(&uri.to_string())
     }
@@ -466,31 +426,23 @@ mod test {
     fn test_get_diagnostics_found_and_none_entries() {
         let key = "file:///test.js".to_string();
 
-        // Case 1: Both entries present, Some diagnostics
+        // Case 1: Entry present, Some diagnostics
         let diag = DiagnosticReport::default();
         let diag_map = ConcurrentHashMap::default();
-        diag_map.pin().insert(key.clone(), Some(vec![diag.clone()]));
-        let tsgo_map = ConcurrentHashMap::default();
-        tsgo_map.pin().insert(key.clone(), Some(vec![diag]));
+        diag_map.pin().insert(key.clone(), Some(vec![diag]));
 
-        let server_diag = super::ServerLinterDiagnostics {
-            isolated_linter: std::sync::Arc::new(diag_map),
-            tsgo_linter: std::sync::Arc::new(tsgo_map),
-        };
+        let server_diag =
+            super::ServerLinterDiagnostics { isolated_linter: std::sync::Arc::new(diag_map) };
         let result = server_diag.get_diagnostics(&key);
         assert!(result.is_some());
-        assert_eq!(result.unwrap().len(), 2);
+        assert_eq!(result.unwrap().len(), 1);
 
         // Case 2: Entry present, but value is None
         let diag_map_none = ConcurrentHashMap::default();
         diag_map_none.pin().insert(key.clone(), None);
-        let tsgo_map_none = ConcurrentHashMap::default();
-        tsgo_map_none.pin().insert(key.clone(), None);
 
-        let server_diag_none = ServerLinterDiagnostics {
-            isolated_linter: std::sync::Arc::new(diag_map_none),
-            tsgo_linter: std::sync::Arc::new(tsgo_map_none),
-        };
+        let server_diag_none =
+            ServerLinterDiagnostics { isolated_linter: std::sync::Arc::new(diag_map_none) };
         let result_none = server_diag_none.get_diagnostics(&key);
         assert!(result_none.is_some());
         assert_eq!(result_none.unwrap().len(), 0);
@@ -535,7 +487,7 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_lint_on_run_on_save_on_save() {
         Tester::new(
-            "fixtures/linter/lint_on_run/on_type",
+            "fixtures/linter/lint_on_run/on_save",
             Some(LintOptions { type_aware: true, run: Run::OnSave, ..Default::default() }),
         )
         .test_and_snapshot_single_file_with_run_type("on-save.ts", Run::OnSave);

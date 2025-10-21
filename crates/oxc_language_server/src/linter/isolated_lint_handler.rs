@@ -11,8 +11,8 @@ use tower_lsp_server::{UriExt, lsp_types::Uri};
 use oxc_allocator::Allocator;
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, LINTABLE_EXTENSIONS,
-    LintOptions, LintService, LintServiceOptions, Linter, Message, RuntimeFileSystem,
-    create_unused_directives_diagnostics, read_to_arena_str, read_to_string,
+    LintOptions, LintRunner, LintRunnerBuilder, LintServiceOptions, Linter, Message,
+    RuntimeFileSystem, create_unused_directives_diagnostics, read_to_arena_str, read_to_string,
 };
 
 use super::error_with_position::{
@@ -23,12 +23,13 @@ use super::error_with_position::{
 #[derive(Debug, Clone)]
 pub struct IsolatedLintHandlerOptions {
     pub use_cross_module: bool,
+    pub type_aware: bool,
     pub root_path: PathBuf,
     pub tsconfig_path: Option<PathBuf>,
 }
 
 pub struct IsolatedLintHandler {
-    service: LintService,
+    runner: LintRunner,
     directives_coordinator: DirectivesStore,
     unused_directives_severity: Option<AllowWarnDeny>,
 }
@@ -81,11 +82,11 @@ impl IsolatedLintHandler {
             lint_service_options = lint_service_options.with_tsconfig(tsconfig_path);
         }
 
-        let mut service = LintService::new(linter, lint_service_options);
-        service.set_disable_directives_map(directives_coordinator.map());
-
         Self {
-            service,
+            runner: LintRunnerBuilder::new(lint_service_options, linter)
+                .with_type_aware(options.type_aware)
+                .build()
+                .unwrap(),
             directives_coordinator,
             unused_directives_severity: lint_options.report_unused_directive,
         }
@@ -113,14 +114,14 @@ impl IsolatedLintHandler {
         debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
+        let fs = Box::new(IsolatedLintHandlerFileSystem::new(
+            path.to_path_buf(),
+            Arc::from(source_text),
+        ));
+
         let mut messages: Vec<DiagnosticReport> = self
-            .service
-            .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
-                path.to_path_buf(),
-                Arc::from(source_text),
-            )))
-            .with_paths(vec![Arc::from(path.as_os_str())])
-            .run_source()
+            .runner
+            .run_source(&Arc::from(path.as_os_str()), source_text.to_string(), fs)
             .iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
