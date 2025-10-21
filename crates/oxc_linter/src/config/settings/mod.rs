@@ -104,13 +104,6 @@ impl<'de> Deserialize<'de> for OxlintSettings {
 }
 
 impl OxlintSettings {
-    /// Create a new OxlintSettings instance with both parsed settings and raw JSON.
-    /// This allows external plugins to access unknown configuration fields.
-    pub fn from_json_with_raw(json_value: &serde_json::Value) -> Result<Self, serde_json::Error> {
-        let settings = Self::deserialize(json_value)?;
-        Ok(settings)
-    }
-
     pub fn override_settings(&self, settings_to_override: &mut OxlintSettings) {
         // TODO: we need to distinguish between overrides of well known settings being default vs actually being empty.
         // Switch to Option?
@@ -306,7 +299,7 @@ mod test {
             "globalSetting": "value"
         });
 
-        let settings = OxlintSettings::from_json_with_raw(&json_value).unwrap();
+        let settings = OxlintSettings::deserialize(&json_value).unwrap();
 
         // Known fields are parsed correctly
         assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".into()));
@@ -320,13 +313,13 @@ mod test {
 
     #[test]
     fn test_merge() {
-        let base = OxlintSettings::from_json_with_raw(&serde_json::json!({
+        let base = OxlintSettings::deserialize(&serde_json::json!({
             "jsx-a11y": { "polymorphicPropName": "role" },
             "unknown": { "a": 1, "nested": { "x": 1 } }
         }))
         .unwrap();
 
-        let other = OxlintSettings::from_json_with_raw(&serde_json::json!({
+        let other = OxlintSettings::deserialize(&serde_json::json!({
             "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] },
             "unknown": { "b": 2, "nested": { "y": 2 } }
         }))
