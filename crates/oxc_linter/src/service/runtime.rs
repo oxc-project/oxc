@@ -261,12 +261,14 @@ impl Runtime {
     }
 
     fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
-        use oxc_resolver::{ResolveOptions, TsconfigOptions, TsconfigReferences};
+        use oxc_resolver::{
+            ResolveOptions, TsconfigDiscovery, TsconfigOptions, TsconfigReferences,
+        };
         let tsconfig = tsconfig_path.and_then(|path| {
-            path.is_file().then_some(TsconfigOptions {
+            path.is_file().then_some(TsconfigDiscovery::Manual(TsconfigOptions {
                 config_file: path,
                 references: TsconfigReferences::Auto,
-            })
+            }))
         });
         let extension_alias = tsconfig.as_ref().map_or_else(Vec::new, |_| {
             vec![
