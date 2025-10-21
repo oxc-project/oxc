@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -35,7 +36,8 @@ fn index_of_na_n(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct UseIsnan {
     /// Whether to disallow NaN in switch cases and discriminants
     enforce_for_switch_case: bool,
@@ -80,7 +82,8 @@ declare_oxc_lint!(
     UseIsnan,
     eslint,
     correctness,
-    conditional_fix
+    conditional_fix,
+    config = UseIsnan,
 );
 
 impl Rule for UseIsnan {
