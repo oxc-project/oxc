@@ -22,8 +22,14 @@ function lintFileWrapper(filePath: string, bufferId: number, buffer: Uint8Array 
 }
 
 function setSettingsWrapper(settingsJson: Record<string, unknown>) {
+  if (setSettings === null) {
+    const require = createRequire(import.meta.url);
+    // `plugins.js` is in root of `dist`. See `tsdown.config.ts`.
+    ({ loadPlugin, lintFile, setSettings } = require('./plugins.js'));
+  }
   return setSettings(settingsJson);
 }
+
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
