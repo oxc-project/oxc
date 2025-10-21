@@ -73,7 +73,7 @@ let settings_record: Record<string, unknown> = {};
 export function setSettings(settings: unknown) {
   // Freezes to prevent mutation from a plugin.
   // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
-  settings_record = Object.freeze(settings);
+  settings_record = deepFreeze(settings) as Record<string, unknown>;
 }
 
 // Internal data within `Context` that don't want to expose to plugins.
@@ -290,4 +290,28 @@ function resolveMessageFromMessageId(messageId: string, internal: InternalContex
   }
 
   return messages[messageId];
+}
+
+/**
+ * Deep freeze an object, recursively freezing all nested objects and arrays.
+ * This prevents any mutation of the object tree from plugins.
+ *
+ * @param obj - The object to deep freeze
+ * @returns The same object, but deeply frozen
+ */
+function deepFreeze<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach(deepFreeze);
+    return Object.freeze(obj);
+  }
+
+  for (const key of Object.getOwnPropertyNames(obj)) {
+    deepFreeze((obj as any)[key]);
+  }
+
+  return Object.freeze(obj);
 }
