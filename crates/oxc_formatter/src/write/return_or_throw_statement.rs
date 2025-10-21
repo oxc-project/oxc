@@ -121,19 +121,18 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
 
     for left_side in ExpressionLeftSide::from(argument).iter() {
         let start = left_side.span().start;
-        let comments = f.comments().comments_before(start);
+        let comments = f.context().comments();
+        let leading_comments = comments.comments_before(start);
 
-        if f.comments().comments_before_iter(start).any(|comment| {
-            source_text.contains_newline(comment.span)
-                || source_text.is_end_of_line_comment(comment)
+        if leading_comments.iter().any(|comment| {
+            source_text.contains_newline(comment.span) || comments.is_end_of_line_comment(comment)
         }) {
             return true;
         }
 
-        let is_own_line_comment_or_multi_line_comment = |comments: &[Comment]| {
-            comments.iter().any(|comment| {
-                source_text.is_own_line_comment(comment)
-                    || source_text.contains_newline(comment.span)
+        let is_own_line_comment_or_multi_line_comment = |leading_comments: &[Comment]| {
+            leading_comments.iter().any(|comment| {
+                comments.is_own_line_comment(comment) || source_text.contains_newline(comment.span)
             })
         };
 

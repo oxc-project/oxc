@@ -43,11 +43,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.span.start);
-        let has_line_comment = comments.iter().any(|comment| {
+        let comments = f.context().comments();
+        let leading_comments = comments.comments_before(self.span.start);
+        let has_line_comment = leading_comments.iter().any(|comment| {
             comment.is_line()
-                || f.source_text().is_own_line_comment(comment)
-                || f.source_text().is_end_of_line_comment(comment)
+                || comments.is_own_line_comment(comment)
+                || comments.is_end_of_line_comment(comment)
         });
 
         if has_line_comment {
@@ -57,13 +58,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
             //
             // Comments before the catch clause should be printed in the block statement.
             // We cache them here to avoid the `params` printing them accidentally.
-            let printed_comments = f.intern(&FormatLeadingComments::Comments(comments));
+            let printed_comments = f.intern(&FormatLeadingComments::Comments(leading_comments));
             if let Ok(Some(comments)) = printed_comments {
                 f.context_mut().cache_element(&self.span, comments);
             }
-        } else if !comments.is_empty() {
+        } else if !leading_comments.is_empty() {
             // otherwise, print them before `catch`
-            write!(f, [FormatTrailingComments::Comments(comments), space()]);
+            write!(f, [FormatTrailingComments::Comments(leading_comments), space()]);
         }
 
         write!(f, ["catch", space(), self.param(), space()])?;

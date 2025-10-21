@@ -179,10 +179,8 @@ impl<'a> Comments<'a> {
 
     /// Returns comments that are on their own line and end before or at the given position.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
-        let index = self
-            .comments_before_iter(pos)
-            .take_while(|c| self.source_text.is_own_line_comment(c))
-            .count();
+        let index =
+            self.comments_before_iter(pos).take_while(|c| self.is_own_line_comment(c)).count();
         &self.unprinted_comments()[..index]
     }
 
@@ -191,9 +189,9 @@ impl<'a> Comments<'a> {
         let comments = self.unprinted_comments();
         for (index, comment) in comments.iter().enumerate() {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
-                matches!(b, b'\t' | b' ' | b')' | b'=')
+                matches!(b, b'\t' | b' ') || b.is_ascii_punctuation()
             }) {
-                if comment.is_line() || self.source_text.is_end_of_line_comment(comment) {
+                if comment.is_line() || self.is_end_of_line_comment(comment) {
                     return &comments[..=index];
                 }
                 pos = comment.span.end;
@@ -347,10 +345,10 @@ impl<'a> Comments<'a> {
                 break;
             }
 
-            if source_text.is_own_line_comment(comment) {
+            if self.is_own_line_comment(comment) {
                 // Own line comments are typically leading comments for the next node
                 break;
-            } else if self.source_text.is_end_of_line_comment(comment) {
+            } else if self.is_end_of_line_comment(comment) {
                 return &comments[..=comment_index];
             }
 
@@ -408,6 +406,14 @@ impl<'a> Comments<'a> {
             }
         }
         false
+    }
+
+    pub fn is_own_line_comment(&self, comment: &Comment) -> bool {
+        self.source_text.has_newline_before(comment.span.start)
+    }
+
+    pub fn is_end_of_line_comment(&self, comment: &Comment) -> bool {
+        self.source_text.has_newline_after(comment.span.end)
     }
 
     /// Finds the index of a type cast comment before the given span.

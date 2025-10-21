@@ -146,7 +146,7 @@ fn format_trailing_comments<'a>(
                 return &comments[..index];
             }
             // If this comment is a line comment or an end of line comment, so we stop here and return the comments with this comment
-            else if comment.is_line() || source_text.is_end_of_line_comment(comment) {
+            else if comment.is_line() || f.comments().is_end_of_line_comment(comment) {
                 return &comments[..=index];
             }
             // Store the index of the comment before the operator, if no line comment or no new line is found, then return all comments before operator

@@ -42,8 +42,8 @@ impl<'a> Deref for FormatFunction<'a, '_> {
     }
 }
 
-impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+impl<'a> Format<'a> for FormatFunction<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let head = format_once(|f| {
             write!(
                 f,
@@ -148,7 +148,7 @@ impl<'a> FormatWrite<'a> for FormatFunction<'a, '_> {
 
 impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        FormatFunction { function: self, options: FormatFunctionOptions::default() }.write(f)
+        FormatFunction { function: self, options: FormatFunctionOptions::default() }.fmt(f)
     }
 
     fn write_with_options(
@@ -156,7 +156,7 @@ impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {
         options: FormatFunctionOptions,
         f: &mut Formatter<'_, 'a>,
     ) -> FormatResult<()> {
-        FormatFunction { function: self, options }.write(f)
+        FormatFunction { function: self, options }.fmt(f)
     }
 }
 

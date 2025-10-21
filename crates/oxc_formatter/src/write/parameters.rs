@@ -27,6 +27,8 @@ pub fn get_this_param<'a>(parent: &AstNodes<'a>) -> Option<&'a AstNode<'a, TSThi
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        // `function foo /**/ () {}`
+        //               ^^^ keep comments printed before parameters
         let comments = f.context().comments().comments_before(self.span.start);
         if !comments.is_empty() {
             write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
@@ -77,13 +79,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             ParameterLayout::Default => {
                 write!(
                     f,
-                    soft_block_indent(&format_args!(
-                        &ParameterList::with_layout(self, this_param, layout),
-                        format_once(|f| {
-                            let comments = f.context().comments().comments_before(self.span.end);
-                            write!(f, [FormatTrailingComments::Comments(comments)])
-                        })
-                    ))
+                    soft_block_indent(&format_args!(&ParameterList::with_layout(
+                        self, this_param, layout
+                    )))
                 );
             }
         }

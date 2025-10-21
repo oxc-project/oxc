@@ -22,42 +22,37 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
             return Ok(());
         };
 
-        let format_decorators = format_once(|f| {
-            // Check parent to determine formatting context
-            match self.parent {
-                AstNodes::PropertyDefinition(_)
-                | AstNodes::MethodDefinition(_)
-                | AstNodes::AccessorProperty(_) => {
-                    return write!(
-                        f,
-                        [group(&format_args!(
-                            format_once(|f| {
-                                f.join_nodes_with_soft_line().entries(self.iter()).finish()
-                            }),
-                            soft_line_break_or_space()
-                        ))
-                        .should_expand(should_expand_decorators(self, f))]
-                    );
-                }
-                // Parameter decorators
-                AstNodes::FormalParameter(_) => {
-                    write!(f, should_expand_decorators(self, f).then_some(expand_parent()))?;
-                }
-                AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_) => {
-                    write!(f, [hard_line_break()])?;
-                }
-                _ => {
-                    write!(f, [expand_parent()])?;
-                }
+        // Check parent to determine formatting context
+        match self.parent {
+            AstNodes::PropertyDefinition(_)
+            | AstNodes::MethodDefinition(_)
+            | AstNodes::AccessorProperty(_) => {
+                return write!(
+                    f,
+                    [group(&format_args!(
+                        format_once(|f| {
+                            f.join_nodes_with_soft_line().entries(self.iter()).finish()
+                        }),
+                        soft_line_break_or_space()
+                    ))
+                    .should_expand(should_expand_decorators(self, f))]
+                );
             }
+            // Parameter decorators
+            AstNodes::FormalParameter(_) => {
+                write!(f, should_expand_decorators(self, f).then_some(expand_parent()))?;
+            }
+            AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_) => {
+                write!(f, [hard_line_break()])?;
+            }
+            _ => {
+                write!(f, [expand_parent()])?;
+            }
+        }
 
-            f.join_with(&soft_line_break_or_space()).entries(self.iter()).finish()?;
+        f.join_with(&soft_line_break_or_space()).entries(self.iter()).finish()?;
 
-            write!(f, [soft_line_break_or_space()])
-        });
-
-        format_decorators.fmt(f)?;
-        format_trailing_comments_for_last_decorator(last.span.end, f)
+        write!(f, [soft_line_break_or_space()])
     }
 }
 
@@ -113,33 +108,4 @@ fn should_expand_decorators<'a>(
     f: &Formatter<'_, 'a>,
 ) -> bool {
     decorators.iter().any(|decorator| f.source_text().lines_after(decorator.span().end) > 0)
-}
-
-pub fn format_trailing_comments_for_last_decorator(
-    mut start: u32,
-    f: &mut Formatter<'_, '_>,
-) -> FormatResult<()> {
-    let mut comments = f.context().comments().unprinted_comments();
-
-    for (i, comment) in comments.iter().enumerate() {
-        if !f.source_text().all_bytes_match(start, comment.span.start, |b| b.is_ascii_whitespace())
-        {
-            comments = &comments[..i];
-            break;
-        }
-
-        start = comment.span.end;
-    }
-
-    if !comments.is_empty() {
-        write!(
-            f,
-            [group(&format_args!(
-                FormatTrailingComments::Comments(comments),
-                soft_line_break_or_space()
-            ))]
-        )?;
-    }
-
-    Ok(())
 }

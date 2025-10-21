@@ -162,7 +162,7 @@ fn format_left_trailing_comments(
 
     let comments = if end_of_line_comments.is_empty() {
         let comments = f.context().comments().comments_before_character(start, b'=');
-        if comments.iter().any(|c| f.source_text().is_own_line_comment(c)) { &[] } else { comments }
+        if comments.iter().any(|c| f.comments().is_own_line_comment(c)) { &[] } else { comments }
     } else if should_print_as_leading || end_of_line_comments.last().is_some_and(|c| c.is_block()) {
         // No trailing comments for these expressions or if the trailing comment is a block comment
         &[]
@@ -233,7 +233,6 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
             }
             AssignmentLike::PropertyDefinition(property) => {
-                write!(f, property.decorators())?;
                 if property.declare {
                     write!(f, ["declare", space()])?;
                 }

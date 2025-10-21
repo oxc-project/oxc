@@ -10,7 +10,7 @@ use crate::{
     formatter::{
         Formatter,
         prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
+        trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     utils::statement_body::FormatStatementBody,
     write,
@@ -114,7 +114,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
             let comments = if is_single_block_statement {
                 comments.block_comments_before(first_statement.span().start)
             } else {
-                comments.comments_before_character(self.span.start, b'\n')
+                #[expect(clippy::cast_possible_truncation)]
+                const DEFAULT_LEN: u32 = "default".len() as u32;
+                comments.end_of_line_comments_after(self.span.start + DEFAULT_LEN)
             };
 
             if !comments.is_empty() {

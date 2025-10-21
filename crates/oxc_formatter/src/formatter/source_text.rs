@@ -205,12 +205,4 @@ impl<'a> SourceText<'a> {
 
         0
     }
-
-    pub fn is_own_line_comment(&self, comment: &Comment) -> bool {
-        self.has_newline_before(comment.span.start)
-    }
-
-    pub fn is_end_of_line_comment(&self, comment: &Comment) -> bool {
-        self.has_newline_after(comment.span.end)
-    }
 }

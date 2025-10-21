@@ -13,6 +13,7 @@ use crate::{
         separated::FormatSeparatedIter,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
     write::semicolon::OptionalSemicolon,
 };
@@ -30,8 +31,7 @@ pub fn format_import_and_export_source_with_clause<'a>(
     with_clause: Option<&AstNode<'a, WithClause>>,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
-    source.format_leading_comments(f)?;
-    source.write(f)?;
+    FormatNodeWithoutTrailingComments(source).fmt(f)?;
 
     if let Some(with_clause) = with_clause {
         if f.comments().has_comment_before(with_clause.span.start) {
