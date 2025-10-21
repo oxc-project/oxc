@@ -35,10 +35,13 @@ const rule: Rule = {
       node: SPAN,
     });
 
-    context.report({
-      message: `cwd: ${relativePath(context.cwd)}`,
-      node: SPAN,
-    });
+    if (context.cwd.length === 0) {
+      context.report({ message: 'cwd.length === 0', node: SPAN });
+    }
+
+    if (context.cwd !== process.cwd()) {
+      context.report({ message: 'cwd !== process.cwd()', node: SPAN });
+    }
 
     if (this !== rule) context.report({ message: 'this !== rule', node: SPAN });
 

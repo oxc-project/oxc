@@ -89,6 +89,8 @@ export interface InternalContext {
   messages: Record<string, string> | null;
 }
 
+let cachedCwd: string | null = null;
+
 /**
  * Context class.
  *
@@ -135,7 +137,7 @@ export class Context {
   // Getter for current working directory.
   get cwd() {
     getInternal(this, 'access `context.cwd`');
-    return process.cwd();
+    return cachedCwd === null ? (cachedCwd = process.cwd()) : cachedCwd;
   }
 
   // Getter for options for file being linted.
