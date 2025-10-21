@@ -89,6 +89,9 @@ export interface InternalContext {
   messages: Record<string, string> | null;
 }
 
+// Cached current working directory.
+let cachedCwd: string | null = null;
+
 /**
  * Context class.
  *
@@ -130,6 +133,12 @@ export class Context {
   // TODO: Unclear how this differs from `filename`.
   get physicalFilename() {
     return getInternal(this, 'access `context.physicalFilename`').filePath;
+  }
+
+  // Getter for current working directory.
+  get cwd() {
+    getInternal(this, 'access `context.cwd`');
+    return cachedCwd ??= process.cwd();
   }
 
   // Getter for options for file being linted.
