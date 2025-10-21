@@ -47,25 +47,133 @@ impl fmt::Display for BasicBlockId {
 
 pub type Graph = petgraph::graph::DiGraph<BasicBlockId, EdgeType>;
 
+/// Represents the different types of edges in the control flow graph.
+///
+/// Edges connect basic blocks and represent the possible paths of execution
+/// through a program. Each edge type describes a specific kind of control flow
+/// transition between blocks.
 #[derive(Debug, Clone)]
 pub enum EdgeType {
-    /// Conditional jumps
+    /// Represents a conditional branch taken when a condition evaluates to a specific value.
+    ///
+    /// This edge connects the block containing a conditional statement (e.g., `if`, `while`, `for`)
+    /// to the block that executes when the condition is satisfied. Jump edges are typically
+    /// paired with Normal edges to represent the two possible outcomes of a conditional branch.
+    ///
+    /// # Example
+    /// ```js
+    /// if (x > 0) {  // Jump edge to consequent when true
+    ///     foo();
+    /// }
+    /// ```
     Jump,
-    /// Normal control flow path
+
+    /// Represents sequential control flow that follows the natural execution order.
+    ///
+    /// This is the default edge type for straightforward control flow transitions, such as
+    /// falling through from one statement to the next, or the alternative path in a conditional
+    /// branch. Normal edges represent the "else" path or continuation after a conditional.
+    ///
+    /// # Example
+    /// ```js
+    /// statement1;  // Normal edge to next statement
+    /// statement2;
+    /// ```
     Normal,
-    /// Cyclic aka loops
+
+    /// Represents a backward edge that creates a cycle in the control flow graph.
+    ///
+    /// Backedges point from the end of a loop body back to the loop's entry point (the loop
+    /// condition or loop header). These edges are essential for identifying loops and analyzing
+    /// cyclic control flow patterns. Each loop header should have exactly one backedge pointing
+    /// to it.
+    ///
+    /// # Example
+    /// ```js
+    /// while (condition) {  // Backedge from end of body back to condition
+    ///     body;
+    /// }
+    /// ```
     Backedge,
-    /// Marks start of a function subgraph
+
+    /// Marks the entry into a nested function's control flow subgraph.
+    ///
+    /// This edge type separates the control flow of nested function declarations or expressions
+    /// from the containing function's flow. NewFunction edges help maintain proper scope
+    /// boundaries and prevent incorrect reachability analysis across function boundaries.
+    /// These edges are typically filtered out during reachability checks.
+    ///
+    /// # Example
+    /// ```js
+    /// function outer() {
+    ///     function inner() {  // NewFunction edge to inner's CFG
+    ///         // inner's control flow
+    ///     }
+    /// }
+    /// ```
     NewFunction,
-    /// Finally
+
+    /// Represents control flow into a `finally` block.
+    ///
+    /// This edge connects blocks that may transfer control to a `finally` clause, regardless
+    /// of whether execution is normal or exceptional. Finalize edges ensure that cleanup code
+    /// in `finally` blocks is properly represented in the control flow graph, even when the
+    /// try or catch blocks contain early returns or throws.
+    ///
+    /// # Example
+    /// ```js
+    /// try {
+    ///     risky();
+    /// } catch (e) {
+    ///     handle(e);
+    /// } finally {  // Finalize edges from try and catch blocks
+    ///     cleanup();
+    /// }
+    /// ```
     Finalize,
-    /// Error Path
+
+    /// Represents control flow along an error/exception path.
+    ///
+    /// Error edges connect blocks that may throw exceptions to their corresponding error
+    /// handlers (catch blocks or finally blocks). The `ErrorEdgeKind` distinguishes between
+    /// explicit throws and implicit error paths from operations that may throw.
+    ///
+    /// # Example
+    /// ```js
+    /// try {
+    ///     mayThrow();  // Error edge to catch block
+    /// } catch (e) {
+    ///     handle(e);
+    /// }
+    /// ```
     Error(ErrorEdgeKind),
 
-    // misc edges
+    /// Represents a control flow path that can never be taken.
+    ///
+    /// Unreachable edges mark portions of the control flow graph that are statically determined
+    /// to be impossible to execute. These edges are filtered out during reachability analysis
+    /// to avoid false positives. Common sources include code after unconditional returns or
+    /// in branches with constant false conditions.
+    ///
+    /// # Example
+    /// ```js
+    /// return;
+    /// unreachableCode();  // Unreachable edge to this block
+    /// ```
     Unreachable,
-    /// Used to mark the end of a finalizer. It is an experimental approach might
-    /// move to it's respective edge kind enum or get removed altogether.
+
+    /// Marks the convergence point after a finalizer completes.
+    ///
+    /// This edge type is experimental and represents the point where control flow reconverges
+    /// after executing a `finally` block. It helps distinguish between different paths through
+    /// finally blocks (normal completion vs. exceptional completion). This variant may be
+    /// refactored into a more specific edge kind enum or removed in future versions.
+    ///
+    /// # Example
+    /// ```js
+    /// try { a(); } finally { b(); }  // Join edge after finally completes
+    /// c();  // Execution continues here
+    /// ```
     Join,
 }
 
