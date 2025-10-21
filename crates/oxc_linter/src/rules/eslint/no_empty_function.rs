@@ -117,10 +117,12 @@ declare_oxc_lint!(
     ///
     /// Example:
     /// ```json
-    /// "no-empty-function": [
-    ///   "error",
-    ///   { "allow": ["functions"] }
-    /// ]
+    /// {
+    ///   "no-empty-function": [
+    ///     "error",
+    ///     { "allow": ["functions"] }
+    ///   ]
+    /// }
     /// ```
     ///
     /// `allow` accepts the following values:
