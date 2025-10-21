@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Argument, Expression, MethodDefinitionKind},
 };
 use oxc_cfg::{
@@ -57,6 +57,11 @@ enum DefinitelyCallsThisBeforeSuper {
     Yes,
     Maybe(BlockNodeId),
 }
+
+/// Node types that should be in the file in order to run this analysis. Otherwise, the AST
+/// will be skipped for linting.
+const NEEDED_NODE_TYPES: &AstTypesBitset =
+    &AstTypesBitset::from_types(&[AstType::ThisExpression, AstType::Super]);
 
 impl Rule for NoThisBeforeSuper {
     fn run_once(&self, ctx: &LintContext) {
@@ -131,6 +136,10 @@ impl Rule for NoThisBeforeSuper {
                 ctx.diagnostic(no_this_before_super_diagnostic(parent_span));
             }
         }
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains_any(NEEDED_NODE_TYPES)
     }
 }
 
