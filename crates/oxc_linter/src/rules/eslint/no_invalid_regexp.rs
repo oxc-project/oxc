@@ -5,8 +5,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{ConstructorParser, Options};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
-use serde::Deserialize;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
