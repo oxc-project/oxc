@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -23,11 +24,33 @@ fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     d
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ValidTypeof {
-    /// true requires typeof expressions to only be compared to string literals or other typeof expressions, and disallows comparisons to any other value.
+    /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
+    /// expressions with only string literals or other `typeof` expressions, and disallows
+    /// comparisons to any other value. Default is `false`.
+    ///
+    /// With `requireStringLiterals` set to `true`, the following are examples of **incorrect** code:
+    /// ```js
+    /// typeof foo === undefined
+    /// typeof bar == Object
+    /// typeof baz === "strnig"
+    /// typeof qux === "some invalid type"
+    /// typeof baz === anotherVariable
+    /// typeof foo == 5
+    /// ```
+    ///
+    /// With `requireStringLiterals` set to `true`, the following are examples of **correct** code:
+    /// ```js
+    /// typeof foo === "undefined"
+    /// typeof bar == "object"
+    /// typeof baz === "string"
+    /// typeof bar === typeof qux
+    /// ```
     require_string_literals: bool,
 }
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -57,38 +80,11 @@ declare_oxc_lint!(
     /// typeof foo === baz
     /// typeof bar === typeof qux
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### requireStringLiterals
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
-    /// expressions with only string literals or other `typeof` expressions, and disallows
-    /// comparisons to any other value. Default is `false`.
-    ///
-    /// With `requireStringLiterals` set to `true` the following are examples of incorrect code:
-    /// ```js
-    /// typeof foo === undefined
-    /// typeof bar == Object
-    /// typeof baz === "strnig"
-    /// typeof qux === "some invalid type"
-    /// typeof baz === anotherVariable
-    /// typeof foo == 5
-    /// ```
-    ///
-    /// With `requireStringLiterals` set to `true` the following are examples of correct code:
-    /// ```js
-    /// typeof foo === "undefined"
-    /// typeof bar == "object"
-    /// typeof baz === "string"
-    /// typeof bar === typeof qux
-    /// ```
     ValidTypeof,
     eslint,
     correctness,
-    conditional_fix
+    conditional_fix,
+    config = ValidTypeof,
 );
 
 impl Rule for ValidTypeof {
