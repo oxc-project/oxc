@@ -8,6 +8,7 @@ use oxc_semantic::AstNodes;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -35,7 +36,7 @@ impl std::ops::Deref for NoMagicNumbers {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub enum NoMagicNumbersNumber {
     Float(f64),
     BigInt(String),
