@@ -9,9 +9,10 @@ use crate::{
         FormatResult, Formatter,
         prelude::*,
         trivia::{FormatLeadingComments, FormatTrailingComments},
+        write,
     },
     parentheses::NeedsParentheses,
-    utils::typescript::should_hug_type,
+    utils::{suppressed::FormatSuppressedNode, typescript::should_hug_type},
     write,
     write::FormatWrite,
 };
@@ -28,7 +29,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         // should be inlined and not be printed in the multi-line variant
         let should_hug = should_hug_type(self, f);
         if should_hug {
-            return format_union_types(self.types(), true, f);
+            return format_union_types(self.types(), Span::default(), true, f);
         }
 
         // Find the head of the nest union type chain
@@ -66,6 +67,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         };
 
         let types = format_with(|f| {
+            let suppressed_node_span = if f.comments().is_suppressed(self.span.start) {
+                self.types.first().unwrap().span()
+            } else {
+                Span::default()
+            };
+
             if has_leading_comments {
                 write!(f, FormatLeadingComments::Comments(leading_comments))?;
             }
@@ -81,7 +88,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
 
             write!(f, [if_group_breaks(&separator)])?;
 
-            format_union_types(types, false, f)
+            format_union_types(types, suppressed_node_span, false, f)
         });
 
         let content = format_with(|f| {
@@ -121,27 +128,40 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
     }
 }
 
-pub struct FormatTSType<'a, 'b> {
-    next_node_span: Option<Span>,
-    element: &'b AstNode<'a, TSType<'a>>,
+fn format_union_types<'a>(
+    node: &AstNode<'a, Vec<'a, TSType<'a>>>,
+    mut suppressed_node_span: Span,
     should_hug: bool,
-}
+    f: &mut Formatter<'_, 'a>,
+) -> FormatResult<()> {
+    let mut node_iter = node.iter().peekable();
+    while let Some(element) = node_iter.next() {
+        let element_span = element.span();
 
-impl<'a> Format<'a> for FormatTSType<'a, '_> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let format_element = format_once(|f| {
-            self.element.fmt(f)?;
-            Ok(())
-        });
-        if self.should_hug {
-            write!(f, [format_element])?;
+        if suppressed_node_span == element_span {
+            let comments = f.context().comments().comments_before(suppressed_node_span.start);
+            FormatLeadingComments::Comments(comments).fmt(f)?;
+            let needs_parentheses = element.needs_parentheses(f);
+            if needs_parentheses {
+                write!(f, "(")?;
+            }
+            write!(f, [FormatSuppressedNode(element_span)])?;
+            if needs_parentheses {
+                write!(f, ")")?;
+            }
+        } else if should_hug {
+            write!(f, [element])?;
         } else {
-            write!(f, [align(2, &format_element)])?;
+            write!(f, [align(2, &element)])?;
         }
 
-        if let Some(next_node_span) = self.next_node_span {
+        if let Some(next_node_span) = node_iter.peek().map(GetSpan::span) {
+            if f.comments().is_suppressed(next_node_span.start) {
+                suppressed_node_span = next_node_span;
+            }
+
             let comments_before_separator =
-                f.context().comments().comments_before_character(self.element.span().end, b'|');
+                f.context().comments().comments_before_character(element_span.end, b'|');
             FormatTrailingComments::Comments(comments_before_separator).fmt(f)?;
 
             // ```ts
@@ -163,13 +183,13 @@ impl<'a> Format<'a> for FormatTSType<'a, '_> {
                 FormatTrailingComments::Comments(comments).fmt(f)?;
             }
 
-            if self.should_hug {
+            if should_hug {
                 write!(f, [space()])?;
             } else {
                 write!(f, [soft_line_break_or_space()])?;
             }
-            write!(f, ["|"])
-        } else if let AstNodes::TSUnionType(parent) = self.element.parent
+            write!(f, ["|"])?;
+        } else if let AstNodes::TSUnionType(parent) = element.parent
             && parent.needs_parentheses(f)
         {
             // ```ts
@@ -180,25 +200,14 @@ impl<'a> Format<'a> for FormatTSType<'a, '_> {
             // )[]; // comment 3
             //```
             // TODO: We may need to tweak `AstNode<'a, Vec<'a, T>>` iterator as some of Vec's last elements should have the following span.
-            let comments =
-                f.context().comments().end_of_line_comments_after(self.element.span().end);
-            FormatTrailingComments::Comments(comments).fmt(f)
-        } else {
-            Ok(())
+            let comments = f.context().comments().end_of_line_comments_after(element_span.end);
+            write!(f, FormatTrailingComments::Comments(comments))?;
+        }
+
+        if node_iter.peek().is_some() {
+            write!(f, space())?;
         }
     }
-}
 
-fn format_union_types<'a>(
-    node: &AstNode<'a, Vec<'a, TSType<'a>>>,
-    should_hug: bool,
-    f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
-    f.join_with(space())
-        .entries(node.iter().enumerate().map(|(index, item)| FormatTSType {
-            next_node_span: node.get(index + 1).map(GetSpan::span),
-            element: item,
-            should_hug,
-        }))
-        .finish()
+    Ok(())
 }

@@ -1522,6 +1522,10 @@ impl GetSpan for FormatTSSignature<'_, '_> {
 
 impl<'a> Format<'a> for FormatTSSignature<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if f.comments().is_suppressed(self.signature.span().start) {
+            return write!(f, [self.signature]);
+        }
+
         write!(f, [group(&self.signature)])?;
 
         match f.options().semicolons {

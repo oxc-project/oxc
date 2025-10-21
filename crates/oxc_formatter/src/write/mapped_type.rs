@@ -4,6 +4,7 @@ use crate::{
     FormatResult,
     ast_nodes::AstNode,
     formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
+    utils::suppressed::FormatSuppressedNode,
     write,
     write::semicolon::OptionalSemicolon,
 };
@@ -12,6 +13,10 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if f.comments().is_suppressed(self.type_parameter.span.start) {
+            return write!(f, FormatSuppressedNode(self.span));
+        }
+
         let type_parameter = self.type_parameter();
         let name_type = self.name_type();
         let should_expand = has_line_break_before_property_name(self, f.source_text());
@@ -22,7 +27,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         let format_inner = format_with(|f| {
             if should_expand {
                 let comments =
-                    f.context().comments().comments_before_character(self.span.start, b'[');
+                    if f.comments().has_leading_own_line_comment(self.type_parameter.span.start) {
+                        f.context().comments().comments_before(self.type_parameter.span.start)
+                    } else {
+                        f.context().comments().comments_before_character(self.span.start, b'[')
+                    };
                 write!(f, FormatLeadingComments::Comments(comments))?;
             }
 
