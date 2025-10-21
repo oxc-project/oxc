@@ -1,5 +1,6 @@
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 
 use oxc_ast::{
     AstKind,
@@ -29,10 +30,17 @@ fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnos
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 struct NoParamReassignConfig {
+    /// When true, also check for modifications to properties of parameters.
     props: bool,
+    /// An array of parameter names whose property modifications should be ignored.
     ignore_property_modifications_for: FxHashSet<String>,
+    /// An array of regex patterns (as strings) for parameter names whose property modifications should be ignored.
+    /// Note that this uses [Rust regex syntax](https://docs.rs/regex/latest/regex/) and so may not have all features
+    /// available to JavaScript regexes.
+    #[schemars(with = "Vec<String>", default)]
     ignore_property_modifications_for_regex: Vec<Regex>,
 }
 
@@ -73,7 +81,8 @@ declare_oxc_lint!(
     /// ```
     NoParamReassign,
     eslint,
-    restriction
+    restriction,
+    config = NoParamReassignConfig,
 );
 
 impl Rule for NoParamReassign {
