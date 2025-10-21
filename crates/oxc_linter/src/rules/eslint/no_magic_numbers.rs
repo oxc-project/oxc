@@ -7,6 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodes;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -34,23 +35,34 @@ impl std::ops::Deref for NoMagicNumbers {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, JsonSchema)]
 pub enum NoMagicNumbersNumber {
     Float(f64),
     BigInt(String),
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoMagicNumbersConfig {
+    /// An array of numbers to ignore if used as magic numbers. Can include floats or BigInt strings.
     ignore: Vec<NoMagicNumbersNumber>,
+    /// When true, numeric literals used as array indexes are ignored.
     ignore_array_indexes: bool,
+    /// When true, numeric literals used as default values in function parameters and destructuring are ignored.
     ignore_default_values: bool,
+    /// When true, numeric literals used as initial values in class fields are ignored.
     ignore_class_field_initial_values: bool,
+    /// When true, enforces that number constants must be declared using `const` instead of `let` or `var`.
     enforce_const: bool,
+    /// When true, numeric literals used in object properties are considered magic numbers.
     detect_objects: bool,
+    /// When true, numeric literals in TypeScript enums are ignored.
     ignore_enums: bool,
+    /// When true, numeric literals used as TypeScript numeric literal types are ignored.
     ignore_numeric_literal_types: bool,
+    /// When true, numeric literals in readonly class properties are ignored.
     ignore_readonly_class_properties: bool,
+    /// When true, numeric literals used to index TypeScript types are ignored.
     ignore_type_indexes: bool,
 }
 
@@ -225,7 +237,8 @@ declare_oxc_lint!(
     NoMagicNumbers,
     eslint,
     style,
-    pending // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
+    pending, // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
+    config = NoMagicNumbersConfig
 );
 
 #[derive(Debug)]
