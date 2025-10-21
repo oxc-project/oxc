@@ -166,11 +166,17 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                         | AstNodes::ThrowStatement(_)
                         | AstNodes::CallExpression(_)
                         | AstNodes::ImportExpression(_)
-                        | AstNodes::MetaProperty(_)
-                    ) &&
-                    // TODO(prettier): Why not include `NewExpression` ???
-                    !matches!(parent.parent(), AstNodes::Argument(argument) if matches!(argument.parent, AstNodes::CallExpression(_)))
+                        | AstNodes::MetaProperty(_) // TODO(prettier): Why not include `NewExpression` ???
+                )
             }
+            AstNodes::ConditionalExpression(conditional) => !matches!(
+                conditional.parent,
+                AstNodes::ReturnStatement(_)
+                    | AstNodes::ThrowStatement(_)
+                    | AstNodes::CallExpression(_)
+                    | AstNodes::ImportExpression(_)
+                    | AstNodes::MetaProperty(_)
+            ),
             _ => false,
         }
     }

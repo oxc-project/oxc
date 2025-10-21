@@ -10,7 +10,6 @@
 //! Variants of `AstKind` and `AstType` are created for:
 //!
 //! * All structs which are visited, and are not listed in `STRUCTS_BLACK_LIST` below.
-//! * Enums listed in `ENUMS_WHITE_LIST` below.
 
 use quote::{format_ident, quote};
 
@@ -40,15 +39,6 @@ use super::define_generator;
 ///
 /// See also: <https://github.com/oxc-project/oxc/issues/11490>
 const STRUCTS_BLACK_LIST: &[&str] = &["BindingPattern", "Span"];
-
-/// Enums to create an `AstKind` for.
-///
-/// Apart from this list, enums don't have `AstKind`s.
-///
-/// Ideally we don't want any enums to have `AstKind`s.
-/// We are working towards removing all the items from this list.
-/// <https://github.com/oxc-project/oxc/issues/11490>
-const ENUMS_WHITE_LIST: &[&str] = &["Argument"];
 
 /// Generator for `AstKind`, `AstType`, and related code.
 pub struct AstKindGenerator;
@@ -80,20 +70,6 @@ impl Generator for AstKindGenerator {
                 struct_def.name()
             );
             struct_def.kind.has_kind = false;
-        }
-
-        // Set `has_kind = true` for enums in white list
-        for &type_name in ENUMS_WHITE_LIST {
-            let type_def = schema.type_by_name_mut(type_name);
-            let TypeDef::Enum(enum_def) = type_def else {
-                panic!("Type which isn't an enum `{}` in `ENUMS_WHITE_LIST`", type_def.name());
-            };
-            assert!(
-                enum_def.visit.has_visitor(),
-                "Enum `{}` is not visited, cannot have an `AstKind`",
-                enum_def.name()
-            );
-            enum_def.kind.has_kind = true;
         }
     }
 

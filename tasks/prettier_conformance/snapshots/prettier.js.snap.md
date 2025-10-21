@@ -18,7 +18,7 @@ js compatibility: 662/699 (94.71%)
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 96.00% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
-| js/identifier/parentheses/let.js | 💥💥 | 82.27% |
+| js/identifier/parentheses/let.js | 💥💥 | 84.09% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
