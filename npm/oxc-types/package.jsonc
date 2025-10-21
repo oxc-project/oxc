@@ -5,7 +5,7 @@
   "type": "module",
   "keywords": [
     "AST",
-    "Parser"
+    "Parser",
   ],
   "author": "Boshen and oxc contributors",
   "license": "MIT",
@@ -14,13 +14,13 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
-    "directory": "npm/oxc-types"
+    "directory": "npm/oxc-types",
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/Boshen",
   },
   "types": "types.d.ts",
   "files": [
-    "types.d.ts"
-  ]
+    "types.d.ts",
+  ],
 }

@@ -2,9 +2,9 @@
   "name": "compat-data",
   "scripts": {
     "init": "degit compat-table/compat-table#a970fc00cc33b58d0b84d4b290ea46a185c8fcf1 compat-table",
-    "build": "node build.js"
+    "build": "node build.js",
   },
   "devDependencies": {
-    "degit": "2.8.4"
-  }
+    "degit": "2.8.4",
+  },
 }

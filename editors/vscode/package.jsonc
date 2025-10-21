@@ -7,25 +7,25 @@
   "publisher": "oxc",
   "displayName": "Oxc",
   "bugs": {
-    "url": "https://github.com/oxc-project/oxc/issues"
+    "url": "https://github.com/oxc-project/oxc/issues",
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
-    "directory": "editors/vscode"
+    "directory": "editors/vscode",
   },
   "categories": [
-    "Linters"
+    "Linters",
   ],
   "keywords": [
     "linter",
-    "oxc"
+    "oxc",
   ],
   "engines": {
-    "vscode": "^1.93.0"
+    "vscode": "^1.93.0",
   },
   "sponsor": {
-    "url": "https://github.com/sponsors/boshen"
+    "url": "https://github.com/sponsors/boshen",
   },
   "activationEvents": [
     "onLanguage:javascript",
@@ -34,7 +34,7 @@
     "onLanguage:typescriptreact",
     "onLanguage:vue",
     "onLanguage:svelte",
-    "onLanguage:astro"
+    "onLanguage:astro",
   ],
   "main": "./out/main.js",
   "contributes": {
@@ -42,23 +42,23 @@
       {
         "command": "oxc.restartServer",
         "title": "Restart Oxc Server",
-        "category": "Oxc"
+        "category": "Oxc",
       },
       {
         "command": "oxc.toggleEnable",
         "title": "toggle enable",
-        "category": "Oxc"
+        "category": "Oxc",
       },
       {
         "command": "oxc.showOutputChannel",
         "title": "Show Output Channel",
-        "category": "Oxc"
+        "category": "Oxc",
       },
       {
         "command": "oxc.applyAllFixesFile",
         "title": "Fix all auto-fixable problems (file)",
-        "category": "Oxc"
-      }
+        "category": "Oxc",
+      },
     ],
     "configuration": {
       "type": "object",
@@ -69,22 +69,22 @@
           "type": "string",
           "enum": [
             "onSave",
-            "onType"
+            "onType",
           ],
           "default": "onType",
-          "description": "Run the linter on save (onSave) or on type (onType)"
+          "description": "Run the linter on save (onSave) or on type (onType)",
         },
         "oxc.enable": {
           "type": "boolean",
           "default": true,
           "scope": "window",
-          "description": "enable oxc language server"
+          "description": "enable oxc language server",
         },
         "oxc.requireConfig": {
           "scope": "resource",
           "type": "boolean",
           "default": false,
-          "description": "Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces."
+          "description": "Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces.",
         },
         "oxc.trace.server": {
           "type": "string",
@@ -92,38 +92,38 @@
           "enum": [
             "off",
             "messages",
-            "verbose"
+            "verbose",
           ],
           "enumDescriptions": [
             "No traces",
             "Error only",
-            "Full log"
+            "Full log",
           ],
           "default": "off",
-          "description": "Traces the communication between VS Code and the language server."
+          "description": "Traces the communication between VS Code and the language server.",
         },
         "oxc.path.server": {
           "type": "string",
           "scope": "window",
-          "description": "Path to Oxc language server binary. Mostly for testing the language server."
+          "description": "Path to Oxc language server binary. Mostly for testing the language server.",
         },
         "oxc.configPath": {
           "type": [
             "string",
-            "null"
+            "null",
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to oxlint configuration. Keep it empty to enable nested configuration."
+          "description": "Path to oxlint configuration. Keep it empty to enable nested configuration.",
         },
         "oxc.tsConfigPath": {
           "type": [
             "string",
-            "null"
+            "null",
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin."
+          "description": "Path to TypeScript configuration. If your `tsconfig.json` is not at the root, alias paths will not be resolve correctly for the `import` plugin.",
         },
         "oxc.unusedDisableDirectives": {
           "type": "string",
@@ -131,44 +131,44 @@
           "enum": [
             "allow",
             "warn",
-            "deny"
+            "deny",
           ],
           "enumDescriptions": [
             "Allow",
             "Warn",
-            "Deny"
+            "Deny",
           ],
           "default": "allow",
-          "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
+          "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.",
         },
         "oxc.typeAware": {
           "type": "boolean",
           "scope": "resource",
           "default": false,
-          "description": "Enable type-aware linting."
+          "description": "Enable type-aware linting.",
         },
         "oxc.flags": {
           "type": "object",
           "scope": "resource",
           "default": {},
-          "description": "Specific Oxlint flags to pass to the language server."
+          "description": "Specific Oxlint flags to pass to the language server.",
         },
         "oxc.fmt.experimental": {
           "type": "boolean",
           "scope": "resource",
           "default": false,
-          "description": "Enable experimental formatting support. This feature is experimental and might not work as expected."
+          "description": "Enable experimental formatting support. This feature is experimental and might not work as expected.",
         },
         "oxc.fmt.configPath": {
           "type": [
             "string",
-            "null"
+            "null",
           ],
           "scope": "resource",
           "default": null,
-          "description": "Path to an oxfmt configuration file"
-        }
-      }
+          "description": "Path to an oxfmt configuration file",
+        },
+      },
     },
     "jsonValidation": [
       {
@@ -176,10 +176,10 @@
           "oxlintrc.json",
           "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json"
+          ".oxlint.json",
         ],
-        "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json"
-      }
+        "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+      },
     ],
     "languages": [
       {
@@ -188,19 +188,19 @@
           "oxlintrc.json",
           "oxlint.json",
           ".oxlintrc.json",
-          ".oxlint.json"
-        ]
-      }
-    ]
+          ".oxlint.json",
+        ],
+      },
+    ],
   },
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
       "description": "The Extension will always use the Language Server shipped with the Extension.",
       "restrictedConfigurations": [
-        "oxc.path.server"
-      ]
-    }
+        "oxc.path.server",
+      ],
+    },
   },
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
@@ -212,7 +212,7 @@
     "server:build:debug": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server",
     "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_language_server --release",
     "test": "cross-env TEST=true pnpm run compile && vscode-test",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
   },
   "devDependencies": {
     "@types/mocha": "^10.0.9",
@@ -225,12 +225,12 @@
     "ovsx": "^0.10.0",
     "rolldown": "1.0.0-beta.43",
     "tinyglobby": "^0.2.15",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^9.0.1",
   },
   "vsce": {
-    "dependencies": false
-  }
+    "dependencies": false,
+  },
 }
