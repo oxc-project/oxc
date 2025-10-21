@@ -221,9 +221,7 @@ impl Oxlintrc {
             .map(|rule| (**rule).clone())
             .collect::<Vec<_>>();
 
-        // TODO: this ignores the settings from the config being extended.
-        // Implement some sort of inheritance, this currently drops all settings from the other config.
-        let settings = self.settings.clone();
+        let settings = self.settings.merge(&other.settings);
         let env = self.env.clone();
         let globals = self.globals.clone();
 
