@@ -309,34 +309,26 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let mut flags = ParseModuleDeclarationFlags::empty();
-        let kind;
         if self.at(Kind::Global) {
-            kind = TSModuleDeclarationKind::Global;
-            return self.parse_ambient_external_module_declaration(span, kind, modifiers);
+            return self.parse_ambient_external_module_declaration_global(span, modifiers);
         } else if self.eat(Kind::Namespace) {
-            kind = TSModuleDeclarationKind::Namespace;
             flags.insert(ParseModuleDeclarationFlags::Namespace);
+            return self.parse_module_or_namespace_declaration(span, modifiers, flags);
         } else {
             self.expect(Kind::Module);
-            kind = TSModuleDeclarationKind::Module;
             if self.at(Kind::Str) {
-                return self.parse_ambient_external_module_declaration(span, kind, modifiers);
+                return self.parse_ambient_external_module_declaration_string(span, modifiers);
             }
         }
-        self.parse_module_or_namespace_declaration(span, kind, modifiers, flags)
+        self.parse_module_or_namespace_declaration(span, modifiers, flags)
     }
 
-    fn parse_ambient_external_module_declaration(
+    fn parse_ambient_external_module_declaration_global(
         &mut self,
         span: u32,
-        kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        let id = if self.at(Kind::Global) {
-            TSModuleDeclarationName::Identifier(self.parse_binding_identifier())
-        } else {
-            TSModuleDeclarationName::StringLiteral(self.parse_literal_string())
-        };
+        let _id = self.parse_binding_identifier();
         let body = if self.at(Kind::LCurly) {
             let block = self.parse_ts_module_block();
             Some(TSModuleDeclarationBody::TSModuleBlock(block))
@@ -346,9 +338,29 @@ impl<'a> ParserImpl<'a> {
         };
         self.ast.alloc_ts_module_declaration(
             self.end_span(span),
-            id,
+            TSModuleDeclarationKind::Global,
             body,
-            kind,
+            modifiers.contains_declare(),
+        )
+    }
+
+    fn parse_ambient_external_module_declaration_string(
+        &mut self,
+        span: u32,
+        modifiers: &Modifiers<'a>,
+    ) -> Box<'a, TSModuleDeclaration<'a>> {
+        let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
+        let body = if self.at(Kind::LCurly) {
+            let block = self.parse_ts_module_block();
+            Some(TSModuleDeclarationBody::TSModuleBlock(block))
+        } else {
+            self.asi();
+            None
+        };
+        self.ast.alloc_ts_module_declaration(
+            self.end_span(span),
+            TSModuleDeclarationKind::Module(id),
+            body,
             modifiers.contains_declare(),
         )
     }
@@ -365,7 +377,6 @@ impl<'a> ParserImpl<'a> {
     fn parse_module_or_namespace_declaration(
         &mut self,
         span: u32,
-        kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
         flags: ParseModuleDeclarationFlags,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
@@ -373,13 +384,12 @@ impl<'a> ParserImpl<'a> {
         // TODO: missing identifier name in AST.
         // TSModuleDeclarationName::IdentifierName(self.parse_identifier_name());
         // } else {
-            TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
+            self.parse_binding_identifier();
         // };
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
             let decl = self.parse_module_or_namespace_declaration(
                 span,
-                kind,
                 &Modifiers::empty(),
                 flags.union(ParseModuleDeclarationFlags::NestedNamespace),
             );
@@ -393,11 +403,15 @@ impl<'a> ParserImpl<'a> {
             ModifierFlags::DECLARE,
             diagnostics::modifier_cannot_be_used_here,
         );
+        let kind = if flags.contains(ParseModuleDeclarationFlags::Namespace) {
+            TSModuleDeclarationKind::Namespace(id)
+        } else {
+            TSModuleDeclarationKind::Module(TSModuleDeclarationName::Identifier(id))
+        };
         self.ast.alloc_ts_module_declaration(
             self.end_span(span),
-            id,
-            Some(body),
             kind,
+            Some(body),
             modifiers.contains_declare(),
         )
     }

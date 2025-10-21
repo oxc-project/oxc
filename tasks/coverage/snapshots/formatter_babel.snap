@@ -2,6 +2,80 @@ commit: 41d96516
 
 formatter_babel Summary:
 AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2422/2423 (99.96%)
+Positive Passed: 2385/2423 (98.43%)
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/shorthand-ambient-module/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context-babel-7/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-babel-7/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-dts/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval-dts-babel-7/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/valid-namespace-var/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
+Unexpected token
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare-babel-7/input.ts
+Unexpected token
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-value-declaration/input.ts
+Unexpected token
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-value-declaration-babel-7/input.ts
+Unexpected token
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
+Unexpected token
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/not-top-level/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested-declare/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/declare-shorthand/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/global-in-module/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/global-in-module-babel-7/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-babel-7/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare-babel-7/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-export/input.ts
+Unexpected token
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-export-babel-7/input.ts
+Unexpected token
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-func-in-declare-module/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-import-in-declare-module/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-namespace/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var/input.js
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var-2/input.js
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var-babel-7/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module-and-top-level/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
+Expected a semicolon or an implicit semicolon after a statement, but found none

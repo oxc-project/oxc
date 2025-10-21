@@ -288,7 +288,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("ObjectAssignmentTarget", StructDetails { field_order: None }),
         ("TSExportAssignment", StructDetails { field_order: None }),
         ("JSXOpeningFragment", StructDetails { field_order: None }),
-        ("TSModuleDeclaration", StructDetails { field_order: Some(&[0, 1, 2, 4, 5, 3]) }),
+        ("TSModuleDeclaration", StructDetails { field_order: Some(&[0, 1, 2, 4, 3]) }),
         ("RawTransferData", StructDetails { field_order: None }),
         ("JSXExpressionContainer", StructDetails { field_order: None }),
         ("CatchClause", StructDetails { field_order: None }),

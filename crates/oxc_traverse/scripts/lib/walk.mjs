@@ -290,6 +290,11 @@ function makeFieldCode(field) {
  */
 function generateWalkForEnum(type, types) {
   const variantCodes = type.variants.map((variant) => {
+    // Handle fieldless variants
+    if (variant.isFieldless) {
+      return `${type.name}::${variant.name} => {},`;
+    }
+    
     const variantType = types[variant.innerTypeName];
     assert(variantType, `Cannot handle enum variant with type: ${variant.type}`);
 

@@ -1047,6 +1047,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_module_declaration_kind(&mut self, it: &mut TSModuleDeclarationKind<'a>) {
+        walk_ts_module_declaration_kind(self, it);
+    }
+
+    #[inline]
     fn visit_ts_module_declaration_name(&mut self, it: &mut TSModuleDeclarationName<'a>) {
         walk_ts_module_declaration_name(self, it);
     }
@@ -4042,7 +4047,7 @@ pub mod walk_mut {
         let kind = AstType::TSModuleDeclaration;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_module_declaration_name(&mut it.id);
+        visitor.visit_ts_module_declaration_kind(&mut it.id);
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
@@ -4058,6 +4063,19 @@ pub mod walk_mut {
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_module_declaration_kind<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSModuleDeclarationKind<'a>,
+    ) {
+        // No `AstType` for this type
+        match it {
+            TSModuleDeclarationKind::Module(it) => visitor.visit_ts_module_declaration_name(it),
+            TSModuleDeclarationKind::Namespace(it) => visitor.visit_binding_identifier(it),
+            _ => {}
+        }
     }
 
     #[inline]

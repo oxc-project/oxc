@@ -8214,7 +8214,7 @@ impl<'a> AstNode<'a, TSTypePredicateName<'a>> {
 
 impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, TSModuleDeclarationName<'a>> {
+    pub fn id(&self) -> &AstNode<'a, TSModuleDeclarationKind<'a>> {
         let following_span = self.inner.body.as_ref().map(GetSpan::span);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
@@ -8238,11 +8238,6 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn kind(&self) -> TSModuleDeclarationKind {
-        self.inner.kind
-    }
-
-    #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
@@ -8253,6 +8248,32 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
 
     pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span).fmt(f)
+    }
+}
+
+impl<'a> AstNode<'a, TSModuleDeclarationKind<'a>> {
+    #[inline]
+    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+        let parent = self.parent;
+        let node = match self.inner {
+            TSModuleDeclarationKind::Global => {
+                panic!("Fieldless enum variants cannot be converted to AstNodes")
+            }
+            TSModuleDeclarationKind::Module(s) => {
+                panic!(
+                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            TSModuleDeclarationKind::Namespace(s) => {
+                AstNodes::BindingIdentifier(self.allocator.alloc(AstNode {
+                    inner: s,
+                    parent,
+                    allocator: self.allocator,
+                    following_span: self.following_span,
+                }))
+            }
+        };
+        self.allocator.alloc(node)
     }
 }
 

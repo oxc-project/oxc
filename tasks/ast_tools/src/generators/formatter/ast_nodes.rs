@@ -459,6 +459,12 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
     let variant_match_arms = enum_def.variants.iter().map(|variant| {
         let variant_name = &variant.ident();
+        
+        // Handle fieldless variants
+        if variant.is_fieldless() {
+            return quote! { #enum_ident::#variant_name => { panic!("Fieldless enum variants cannot be converted to AstNodes") }, };
+        }
+        
         let field_type = variant.field_type(schema).unwrap();
         let is_box = field_type.is_box();
         let node_type_ident = field_type

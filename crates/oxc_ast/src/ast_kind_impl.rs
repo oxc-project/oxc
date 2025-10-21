@@ -523,7 +523,18 @@ impl AstKind<'_> {
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
-            Self::TSModuleDeclaration(m) => format!("TSModuleDeclaration({})", m.id).into(),
+            Self::TSModuleDeclaration(m) => {
+                let name = match &m.id {
+                    TSModuleDeclarationKind::Global => "global",
+                    TSModuleDeclarationKind::Module(name) => {
+                        return format!("TSModuleDeclaration({name})").into();
+                    }
+                    TSModuleDeclarationKind::Namespace(name) => {
+                        return format!("TSModuleDeclaration({name})").into();
+                    }
+                };
+                format!("TSModuleDeclaration({name})").into()
+            }
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
             Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),
             Self::TSTypeQuery(_) => "TSTypeQuery".into(),

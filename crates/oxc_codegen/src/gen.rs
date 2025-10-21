@@ -3604,11 +3604,15 @@ impl Gen for TSModuleDeclaration<'_> {
         if self.declare {
             p.print_str("declare ");
         }
-        p.print_str(self.kind.as_str());
+        p.print_str(self.id.as_str());
         // If the kind is global, then the id is also `global`, so we don't need to print it
-        if !self.kind.is_global() {
+        if !self.id.is_global() {
             p.print_space_before_identifier();
-            self.id.print(p, ctx);
+            match &self.id {
+                TSModuleDeclarationKind::Module(name) => name.print(p, ctx),
+                TSModuleDeclarationKind::Namespace(name) => name.print(p, ctx),
+                TSModuleDeclarationKind::Global => {}
+            }
         }
 
         if let Some(body) = &self.body {
@@ -3617,7 +3621,11 @@ impl Gen for TSModuleDeclaration<'_> {
                 match body {
                     TSModuleDeclarationBody::TSModuleDeclaration(b) => {
                         p.print_ascii_byte(b'.');
-                        b.id.print(p, ctx);
+                        match &b.id {
+                            TSModuleDeclarationKind::Module(name) => name.print(p, ctx),
+                            TSModuleDeclarationKind::Namespace(name) => name.print(p, ctx),
+                            TSModuleDeclarationKind::Global => {}
+                        }
                         if let Some(b) = &b.body {
                             body = b;
                         } else {

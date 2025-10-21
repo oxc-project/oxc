@@ -2175,7 +2175,7 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_parent_of_ts_module_declaration_name(self) -> bool {
+    pub fn is_parent_of_ts_module_declaration_kind(self) -> bool {
         matches!(self, Self::TSModuleDeclarationId(_))
     }
 
@@ -13966,7 +13966,6 @@ impl<'a, 't> GetAddress for TSTypePredicateWithoutTypeAnnotation<'a, 't> {
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_SPAN: usize = offset_of!(TSModuleDeclaration, span);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_ID: usize = offset_of!(TSModuleDeclaration, id);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_BODY: usize = offset_of!(TSModuleDeclaration, body);
-pub(crate) const OFFSET_TS_MODULE_DECLARATION_KIND: usize = offset_of!(TSModuleDeclaration, kind);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_DECLARE: usize =
     offset_of!(TSModuleDeclaration, declare);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_SCOPE_ID: usize =
@@ -13990,14 +13989,6 @@ impl<'a, 't> TSModuleDeclarationWithoutId<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_BODY)
                 as *const Option<TSModuleDeclarationBody<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSModuleDeclarationKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_KIND)
-                as *const TSModuleDeclarationKind)
         }
     }
 
@@ -14038,18 +14029,10 @@ impl<'a, 't> TSModuleDeclarationWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn id(self) -> &'t TSModuleDeclarationName<'a> {
+    pub fn id(self) -> &'t TSModuleDeclarationKind<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_ID)
-                as *const TSModuleDeclarationName<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t TSModuleDeclarationKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_KIND)
-                as *const TSModuleDeclarationKind)
+                as *const TSModuleDeclarationKind<'a>)
         }
     }
 

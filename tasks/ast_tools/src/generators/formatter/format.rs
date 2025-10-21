@@ -275,11 +275,21 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
     let variant_match_arms = enum_def.variants.iter().map(|variant| {
         let variant_name = &variant.ident();
+        
+        // Handle fieldless variants
+        if variant.is_fieldless() {
+            return quote! {
+                #enum_ident::#variant_name => {
+                    panic!("Fieldless enum variants cannot be formatted")
+                },
+            };
+        }
+        
         let field_type = variant.field_type(schema).unwrap();
         let node_type =
             field_type.maybe_inner_type(schema).map_or_else(|| field_type.ident(), TypeDef::ident);
 
-        Some(quote! {
+        quote! {
             #enum_ident::#variant_name(inner) => {
                 allocator.alloc(AstNode::<#node_type> {
                     inner,
@@ -288,7 +298,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     following_span: self.following_span,
                 }).fmt(f)
             },
-        })
+        }
     });
 
     let inherits_match_arms = enum_def.inherits_types(schema).map(|inherits_type| {

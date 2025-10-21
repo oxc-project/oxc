@@ -3,11 +3,12 @@ use std::cell::Cell;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingIdentifier, IdentifierReference, Program, TSEnumMemberName, TSModuleDeclarationName,
+        BindingIdentifier, IdentifierReference, Program, TSEnumMemberName, TSModuleDeclarationKind,
+        TSModuleDeclarationName,
     },
 };
 use oxc_ast_visit::{
-    Visit,
+    Visit, walk,
     walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
@@ -173,5 +174,21 @@ impl<'a> Visit<'a> for Counter {
     fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
         self.stats.symbols += 1;
         walk_ts_module_declaration_name(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration(&mut self, it: &oxc_ast::ast::TSModuleDeclaration<'a>) {
+        // Count symbols for the module/namespace id
+        match &it.id {
+            TSModuleDeclarationKind::Module(TSModuleDeclarationName::Identifier(_)) => {
+                self.stats.symbols += 1;
+            }
+            TSModuleDeclarationKind::Namespace(_) => {
+                self.stats.symbols += 1;
+            }
+            _ => {}
+        }
+        // Continue walking
+        walk::walk_ts_module_declaration(self, it);
     }
 }

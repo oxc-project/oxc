@@ -1,6 +1,6 @@
 commit: 41d96516
 
-Passed: 712/1217
+Passed: 545/1052
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -324,7 +324,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/269)
+# babel-plugin-transform-class-properties (73/124)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -343,6 +343,9 @@ x Output mismatch
 * assumption-setPublicClassFields/computed/input.js
 x Output mismatch
 
+* assumption-setPublicClassFields/foobar/input.js
+x Output mismatch
+
 * assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
 
@@ -350,12 +353,6 @@ x Output mismatch
 x Output mismatch
 
 * class-name-tdz/general/input.js
-x Output mismatch
-
-* class-name-tdz/static-edgest-case/input.js
-x Output mismatch
-
-* class-name-tdz/static-general/input.js
 x Output mismatch
 
 * class-name-tdz/static-loose/input.js
@@ -373,15 +370,6 @@ rebuilt        : ["babelHelpers"]
 Unresolved references mismatch:
 after transform: ["T"]
 rebuilt        : []
-
-* nested-class/super-call-in-decorator/input.js
-x Output mismatch
-
-* nested-class/super-property-in-accessor-key/input.js
-x Output mismatch
-
-* nested-class/super-property-in-decorator/input.js
-x Output mismatch
 
 * private/class-shadow-builtins/input.mjs
 x Output mismatch
@@ -410,18 +398,19 @@ x Output mismatch
 * private/static-infer-name/input.js
 x Output mismatch
 
+* private/static-self-field/input.js
+x Output mismatch
+
 * private/static-self-method/input.js
-Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(4): ScopeFlags(Function)
-Scope flags mismatch:
-after transform: ScopeId(6): ScopeFlags(StrictMode | Function)
-rebuilt        : ScopeId(6): ScopeFlags(Function)
+x Output mismatch
 
 * private/static-shadow/input.js
 x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
+x Output mismatch
+
+* private-loose/native-classes/input.js
 x Output mismatch
 
 * private-loose/optional-chain-before-member-call/input.js
@@ -469,31 +458,19 @@ x Output mismatch
 * private-loose/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
+* private-loose/reevaluated/input.js
+x Output mismatch
+
 * private-loose/static-infer-name/input.js
 x Output mismatch
 
 * public/class-shadow-builtins/input.mjs
 x Output mismatch
 
-* public/computed/input.js
-x Output mismatch
-
-* public/delete-super-property/input.js
-x Output mismatch
-
-* public/static-infer-name/input.js
+* public/foobar/input.js
 x Output mismatch
 
 * public-loose/class-shadow-builtins/input.mjs
-x Output mismatch
-
-* public-loose/computed/input.js
-x Output mismatch
-
-* public-loose/static-infer-name/input.js
-x Output mismatch
-
-* public-loose/static-super/input.js
 x Output mismatch
 
 * regression/6153/input.js
@@ -550,7 +527,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-methods (46/148)
+# babel-plugin-transform-private-methods (41/148)
 * accessors/tagged-template/input.js
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
@@ -614,6 +591,15 @@ x Output mismatch
 x Output mismatch
 
 * assumption-constantSuper/private-method-super/input.js
+x Output mismatch
+
+* private-method/context/input.js
+x Output mismatch
+
+* private-method/exfiltrated/input.js
+x Output mismatch
+
+* private-method/reassignment/input.js
 x Output mismatch
 
 * private-method/super/input.js
@@ -717,7 +703,13 @@ x Output mismatch
     `----
 
 
+* private-static-method/exfiltrated/input.js
+x Output mismatch
+
 * private-static-method/read-only/input.js
+x Output mismatch
+
+* private-static-method/this/input.js
 x Output mismatch
 
 * private-static-method-loose/async/input.js
@@ -894,11 +886,8 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (25/59)
+# babel-plugin-transform-private-property-in-object (2/39)
 * assumption-privateFieldsAsProperties/accessor/input.js
-x Output mismatch
-
-* assumption-privateFieldsAsProperties/compiled-classes/input.js
 x Output mismatch
 
 * assumption-privateFieldsAsProperties/field/input.js
@@ -928,9 +917,6 @@ x Output mismatch
 * assumption-privateFieldsAsSymbols/accessor/input.js
 x Output mismatch
 
-* assumption-privateFieldsAsSymbols/compiled-classes/input.js
-x Output mismatch
-
 * assumption-privateFieldsAsSymbols/field/input.js
 x Output mismatch
 
@@ -958,37 +944,52 @@ x Output mismatch
 * private/static-shadow/input.js
 x Output mismatch
 
-* private-loose/accessor/input.js
-x Output mismatch
-
-* private-loose/field/input.js
-x Output mismatch
-
-* private-loose/method/input.js
-x Output mismatch
-
-* private-loose/nested-class/input.js
-x Output mismatch
-
-* private-loose/nested-class-other-redeclared/input.js
-x Output mismatch
-
-* private-loose/nested-class-redeclared/input.js
-x Output mismatch
-
-* private-loose/static-accessor/input.js
-x Output mismatch
-
-* private-loose/static-field/input.js
-x Output mismatch
-
-* private-loose/static-method/input.js
-x Output mismatch
-
 * private-loose/static-shadow/input.js
 x Output mismatch
 
+* to-native-fields/accessor/input.js
+x Output mismatch
+
 * to-native-fields/class-expression-in-default-param/input.js
+x Output mismatch
+
+* to-native-fields/class-expression-instance/input.js
+x Output mismatch
+
+* to-native-fields/class-expression-static/input.js
+x Output mismatch
+
+* to-native-fields/field/input.js
+x Output mismatch
+
+* to-native-fields/half-constructed-instance/input.js
+x Output mismatch
+
+* to-native-fields/half-constructed-static/input.js
+x Output mismatch
+
+* to-native-fields/method/input.js
+x Output mismatch
+
+* to-native-fields/multiple-checks/input.js
+x Output mismatch
+
+* to-native-fields/nested-class/input.js
+x Output mismatch
+
+* to-native-fields/nested-class-other-redeclared/input.js
+x Output mismatch
+
+* to-native-fields/nested-class-redeclared/input.js
+x Output mismatch
+
+* to-native-fields/static-accessor/input.js
+x Output mismatch
+
+* to-native-fields/static-field/input.js
+x Output mismatch
+
+* to-native-fields/static-method/input.js
 x Output mismatch
 
 * to-native-fields/static-shadow/input.js
@@ -2491,44 +2492,42 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 * namespace/module-nested/input.ts
-Symbol flags mismatch for "src":
-after transform: SymbolId(0): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "src":
-after transform: SymbolId(0): Span { start: 7, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns1":
-after transform: SymbolId(1): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns1":
-after transform: SymbolId(1): Span { start: 32, end: 35 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns2":
-after transform: SymbolId(3): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns2":
-after transform: SymbolId(3): Span { start: 113, end: 116 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+
+  ! Ambient modules cannot be nested in other modules or namespaces.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+  1 | ,-> module src {
+  2 | |     export namespace ns1 {
+  3 | |       export class foo {
+  4 | |         F1: string = "";
+  5 | |       }
+  6 | |     }
+  7 | |     export namespace ns2 {
+  8 | |       export class foo {
+  9 | |         F1: string = "";
+ 10 | |       }
+ 11 | |     }
+ 12 | `-> }
+    `----
+
 
 * namespace/module-nested-export/input.ts
-Symbol flags mismatch for "src":
-after transform: SymbolId(0): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "src":
-after transform: SymbolId(0): Span { start: 14, end: 17 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns1":
-after transform: SymbolId(1): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns1":
-after transform: SymbolId(1): Span { start: 39, end: 42 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns2":
-after transform: SymbolId(3): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns2":
-after transform: SymbolId(3): Span { start: 120, end: 123 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
+
+  ! Ambient modules cannot be nested in other modules or namespaces.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:8]
+  1 | ,-> export module src {
+  2 | |     export namespace ns1 {
+  3 | |       export class foo {
+  4 | |         F1: string = "";
+  5 | |       }
+  6 | |     }
+  7 | |     export namespace ns2 {
+  8 | |       export class foo {
+  9 | |         F1: string = "";
+ 10 | |       }
+ 11 | |     }
+ 12 | `-> }
+    `----
+
 
 * namespace/multiple/input.ts
 Symbol flags mismatch for "N":

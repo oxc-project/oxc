@@ -4409,6 +4409,35 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
     }
 }
 
+impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationKind<'a>> {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let allocator = self.allocator;
+        let parent = self.parent;
+        match self.inner {
+            TSModuleDeclarationKind::Global => {
+                panic!("Fieldless enum variants cannot be formatted")
+            }
+            TSModuleDeclarationKind::Module(inner) => allocator
+                .alloc(AstNode::<TSModuleDeclarationName> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_span: self.following_span,
+                })
+                .fmt(f),
+            TSModuleDeclarationKind::Namespace(inner) => allocator
+                .alloc(AstNode::<BindingIdentifier> {
+                    inner,
+                    parent,
+                    allocator,
+                    following_span: self.following_span,
+                })
+                .fmt(f),
+        }
+    }
+}
+
 impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {

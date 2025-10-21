@@ -1310,10 +1310,37 @@ after transform: ["Function", "babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod11/input.ts
-x Output mismatch
+
+  ! Ambient modules cannot be nested in other modules or namespaces.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod11/input.ts:3:1]
+  2 |     // @experimentaldecorators: true
+  3 | ,-> module M {
+  4 | |       class C {
+  5 | |           decorator(target: Object, key: string): void { }
+  6 | |   
+  7 | |           @(this.decorator)
+  8 | |           method() { }
+  9 | |       }
+ 10 | `-> }
+    `----
+
 
 * typescript/method/decoratorOnClassMethod12/input.ts
-x Output mismatch
+
+  ! Ambient modules cannot be nested in other modules or namespaces.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod12/input.ts:3:1]
+  2 |     // @experimentaldecorators: true
+  3 | ,-> module M {
+  4 | |       class S {
+  5 | |           decorator(target: Object, key: string): void { }
+  6 | |       }
+  7 | |       class C extends S {
+  8 | |           @(super.decorator)
+  9 | |           method() { }
+ 10 | |       }
+ 11 | `-> }
+    `----
+
 
 * typescript/method/decoratorOnClassMethod13/input.ts
 Bindings mismatch:

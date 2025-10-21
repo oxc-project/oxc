@@ -100,7 +100,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         // Skip empty declaration e.g. `namespace x;`
         let TSModuleDeclaration { span, id, body, scope_id, .. } = decl.unbox();
 
-        let TSModuleDeclarationName::Identifier(ident) = id else {
+        let TSModuleDeclarationKind::Namespace(ident) = id else {
             self.ctx.error(ambient_module_nested(span));
             return;
         };

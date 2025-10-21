@@ -79,7 +79,7 @@ impl Symbol<'_, '_> {
 
 #[inline]
 fn is_ambient_namespace(namespace: &TSModuleDeclaration) -> bool {
-    namespace.declare || namespace.kind.is_global()
+    namespace.declare || namespace.id.is_global()
 }
 
 impl NoUnusedVars {

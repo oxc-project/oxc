@@ -145,13 +145,12 @@ impl Rule for NoNamespace {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return;
         };
-        let TSModuleDeclarationName::Identifier(ident) = &declaration.id else {
-            return;
+        let _ident = match &declaration.id {
+            TSModuleDeclarationKind::Global => return,
+            TSModuleDeclarationKind::Namespace(ident) => ident,
+            TSModuleDeclarationKind::Module(TSModuleDeclarationName::Identifier(ident)) => ident,
+            TSModuleDeclarationKind::Module(TSModuleDeclarationName::StringLiteral(_)) => return,
         };
-
-        if ident.name == "global" {
-            return;
-        }
 
         if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
             return;
@@ -165,12 +164,12 @@ impl Rule for NoNamespace {
 
         let declaration_code = declaration.span.source_text(ctx.source_text());
 
-        let span = match declaration.kind {
+        let span = match &declaration.id {
             TSModuleDeclarationKind::Global => None, // handled above
-            TSModuleDeclarationKind::Module => declaration_code
+            TSModuleDeclarationKind::Module(_) => declaration_code
                 .find("module")
                 .map(|i| Span::sized(declaration.span.start + i as u32, 6)),
-            TSModuleDeclarationKind::Namespace => declaration_code
+            TSModuleDeclarationKind::Namespace(_) => declaration_code
                 .find("namespace")
                 .map(|i| Span::sized(declaration.span.start + i as u32, 9)),
         };

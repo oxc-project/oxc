@@ -1123,7 +1123,7 @@ impl<'a> Declaration<'a> {
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
             Declaration::TSModuleDeclaration(decl) => {
-                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
+                if let TSModuleDeclarationKind::Namespace(ident) = &decl.id {
                     Some(ident)
                 } else {
                     None

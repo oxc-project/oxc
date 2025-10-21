@@ -48,8 +48,8 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 /// with a nested tree of `TSQualifiedName`s as `id`.
 #[ast_meta]
 #[estree(raw_deser = "
-    const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
-        global = kind === 'global',
+    const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.id),
+        global = kind === 'Global',
         start = DESER[u32](POS_OFFSET.span.start),
         end = DESER[u32](POS_OFFSET.span.end),
         declare = DESER[bool](POS_OFFSET.declare);
@@ -161,21 +161,31 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
 
         match &module.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_module)) => {
-                // Nested modules e.g. `module X.Y.Z {}`.
+                // Nested modules e.g. `module X.Y.Z {}` or `namespace X.Y.Z {}`.
                 // Collect all IDs in a `Vec`, in order they appear (i.e. [`X`, `Y`, `Z`]).
                 // Also get the inner `TSModuleBlock`.
                 let mut parts = Vec::with_capacity(4);
 
-                let TSModuleDeclarationName::Identifier(id) = &module.id else { unreachable!() };
-                parts.push(id);
+                match &module.id {
+                    TSModuleDeclarationKind::Namespace(id)
+                    | TSModuleDeclarationKind::Module(TSModuleDeclarationName::Identifier(id)) => {
+                        parts.push(id);
+                    }
+                    _ => unreachable!(),
+                }
 
                 let mut body = None;
                 let mut inner_module = inner_module.as_ref();
                 loop {
-                    let TSModuleDeclarationName::Identifier(id) = &inner_module.id else {
-                        unreachable!()
-                    };
-                    parts.push(id);
+                    match &inner_module.id {
+                        TSModuleDeclarationKind::Namespace(id)
+                        | TSModuleDeclarationKind::Module(TSModuleDeclarationName::Identifier(
+                            id,
+                        )) => {
+                            parts.push(id);
+                        }
+                        _ => unreachable!(),
+                    }
 
                     match &inner_module.body {
                         Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_inner_module)) => {
@@ -209,7 +219,7 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
             }
         }
 
-        state.serialize_field("kind", &module.kind);
+        state.serialize_field("kind", &module.id);
         state.serialize_field("declare", &module.declare);
         state.serialize_field("global", &TSModuleDeclarationGlobal(module));
 
@@ -250,14 +260,14 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
 
 /// Serializer for `global` field of `TSModuleDeclaration`.
 ///
-/// `true` if `kind` is `TSModuleDeclarationKind::Global`.
+/// `true` if `id` is `TSModuleDeclarationKind::Global`.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "THIS.kind === 'global'")]
+#[estree(ts_type = "boolean", raw_deser = "uint8[POS_OFFSET.id] === 0")]
 pub struct TSModuleDeclarationGlobal<'a, 'b>(pub &'b TSModuleDeclaration<'a>);
 
 impl ESTree for TSModuleDeclarationGlobal<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.kind.is_global().serialize(serializer);
+        self.0.id.is_global().serialize(serializer);
     }
 }
 

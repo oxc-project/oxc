@@ -1392,8 +1392,10 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
 Ambient modules cannot be nested in other modules or namespaces.
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-babel-7/input.ts
+Ambient modules cannot be nested in other modules or namespaces.
 Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
@@ -1413,20 +1415,10 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-export/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["X"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): []
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-export-babel-7/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["X"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): []
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/destructuring-in-function-type/input.ts
 Scope children mismatch:
@@ -1673,7 +1665,7 @@ after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var-2/input.js
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-interface/input.ts
 Bindings mismatch:
@@ -1796,44 +1788,10 @@ after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): ["a"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch for "a":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "a":
-after transform: SymbolId(1): Span { start: 20, end: 21 }
-rebuilt        : SymbolId(0): Span { start: 31, end: 32 }
-Symbol redeclarations mismatch for "a":
-after transform: SymbolId(1): [Span { start: 20, end: 21 }, Span { start: 31, end: 32 }]
-rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["M"]
-rebuilt        : []
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var-babel-7/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["M"]
-rebuilt        : ScopeId(0): ["a"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Symbol flags mismatch for "a":
-after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
-rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-Symbol span mismatch for "a":
-after transform: SymbolId(1): Span { start: 20, end: 21 }
-rebuilt        : SymbolId(0): Span { start: 31, end: 32 }
-Symbol redeclarations mismatch for "a":
-after transform: SymbolId(1): [Span { start: 20, end: 21 }, Span { start: 31, end: 32 }]
-rebuilt        : SymbolId(0): []
-Unresolved references mismatch:
-after transform: ["M"]
-rebuilt        : []
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-let/input.ts
 Symbol flags mismatch for "Context":

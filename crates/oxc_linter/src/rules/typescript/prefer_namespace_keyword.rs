@@ -49,8 +49,7 @@ declare_oxc_lint!(
 );
 
 fn is_valid_module(module: &TSModuleDeclaration) -> bool {
-    matches!(module.id, TSModuleDeclarationName::Identifier(_))
-        && module.kind == TSModuleDeclarationKind::Module
+    matches!(module.id, TSModuleDeclarationKind::Module(TSModuleDeclarationName::Identifier(_)))
 }
 
 impl Rule for PreferNamespaceKeyword {
@@ -61,7 +60,12 @@ impl Rule for PreferNamespaceKeyword {
             return;
         }
 
-        let token = ctx.source_range(Span::new(module.span.start, module.id.span().start));
+        let id_span_start = match &module.id {
+            TSModuleDeclarationKind::Module(name) => name.span().start,
+            TSModuleDeclarationKind::Namespace(name) => name.span.start,
+            TSModuleDeclarationKind::Global => return,
+        };
+        let token = ctx.source_range(Span::new(module.span.start, id_span_start));
         let Some(offset) = token.find("module") else {
             return;
         };

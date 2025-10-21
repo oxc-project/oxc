@@ -179,7 +179,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
                 self.add_binding(decl.id.name, KindFlags::All);
             }
             Declaration::TSModuleDeclaration(decl) => {
-                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
+                if let TSModuleDeclarationKind::Namespace(ident) = &decl.id {
                     self.add_binding(ident.name, KindFlags::All);
                 }
             }

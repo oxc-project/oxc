@@ -10,6 +10,7 @@ use typescript as ts;
 pub use javascript::is_function_part_of_if_statement;
 
 pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
+    // println!("checking kind: {:?}", kind);
     match kind {
         AstKind::Program(program) => {
             js::check_duplicate_class_elements(ctx);

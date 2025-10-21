@@ -1391,18 +1391,17 @@ const _: () = {
     assert!(size_of::<TSTypePredicateName>() == 16);
     assert!(align_of::<TSTypePredicateName>() == 8);
 
-    // Padding: 2 bytes
-    assert!(size_of::<TSModuleDeclaration>() == 88);
+    // Padding: 3 bytes
+    assert!(size_of::<TSModuleDeclaration>() == 96);
     assert!(align_of::<TSModuleDeclaration>() == 8);
     assert!(offset_of!(TSModuleDeclaration, span) == 0);
     assert!(offset_of!(TSModuleDeclaration, id) == 8);
-    assert!(offset_of!(TSModuleDeclaration, body) == 64);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 84);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 85);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 80);
+    assert!(offset_of!(TSModuleDeclaration, body) == 72);
+    assert!(offset_of!(TSModuleDeclaration, declare) == 92);
+    assert!(offset_of!(TSModuleDeclaration, scope_id) == 88);
 
-    assert!(size_of::<TSModuleDeclarationKind>() == 1);
-    assert!(align_of::<TSModuleDeclarationKind>() == 1);
+    assert!(size_of::<TSModuleDeclarationKind>() == 64);
+    assert!(align_of::<TSModuleDeclarationKind>() == 8);
 
     assert!(size_of::<TSModuleDeclarationName>() == 56);
     assert!(align_of::<TSModuleDeclarationName>() == 8);
@@ -2998,18 +2997,17 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<TSTypePredicateName>() == 12);
     assert!(align_of::<TSTypePredicateName>() == 4);
 
-    // Padding: 2 bytes
-    assert!(size_of::<TSModuleDeclaration>() == 56);
+    // Padding: 3 bytes
+    assert!(size_of::<TSModuleDeclaration>() == 60);
     assert!(align_of::<TSModuleDeclaration>() == 4);
     assert!(offset_of!(TSModuleDeclaration, span) == 0);
     assert!(offset_of!(TSModuleDeclaration, id) == 8);
-    assert!(offset_of!(TSModuleDeclaration, body) == 40);
-    assert!(offset_of!(TSModuleDeclaration, kind) == 52);
-    assert!(offset_of!(TSModuleDeclaration, declare) == 53);
-    assert!(offset_of!(TSModuleDeclaration, scope_id) == 48);
+    assert!(offset_of!(TSModuleDeclaration, body) == 44);
+    assert!(offset_of!(TSModuleDeclaration, declare) == 56);
+    assert!(offset_of!(TSModuleDeclaration, scope_id) == 52);
 
-    assert!(size_of::<TSModuleDeclarationKind>() == 1);
-    assert!(align_of::<TSModuleDeclarationKind>() == 1);
+    assert!(size_of::<TSModuleDeclarationKind>() == 36);
+    assert!(align_of::<TSModuleDeclarationKind>() == 4);
 
     assert!(size_of::<TSModuleDeclarationName>() == 32);
     assert!(align_of::<TSModuleDeclarationName>() == 4);

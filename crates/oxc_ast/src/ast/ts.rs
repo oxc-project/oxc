@@ -1205,39 +1205,25 @@ pub struct TSModuleDeclaration<'a> {
     /// The name of the module/namespace being declared.
     ///
     /// Note that for `declare global {}`, no symbol will be created for the module name.
-    #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
-    pub id: TSModuleDeclarationName<'a>,
+    // #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
+    pub id: TSModuleDeclarationKind<'a>,
     #[scope(enter_before)]
     #[estree(ts_type = "TSModuleBlock | null")]
     pub body: Option<TSModuleDeclarationBody<'a>>,
-    /// The keyword used to define this module declaration.
-    ///
-    /// Helps discriminate between global overrides vs module declarations vs namespace
-    /// declarations.
-    ///
-    /// ```ts
-    /// namespace Foo {}
-    /// ^^^^^^^^^
-    /// module 'foo' {}
-    /// ^^^^^^
-    /// declare global {}
-    ///         ^^^^^^
-    /// ```
-    pub kind: TSModuleDeclarationKind,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-#[ast]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[ast(visit)]
+#[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
-pub enum TSModuleDeclarationKind {
+pub enum TSModuleDeclarationKind<'a> {
     /// `declare global {}`
     Global = 0,
     /// `declare module 'foo' {}`
-    Module = 1,
+    Module(TSModuleDeclarationName<'a>) = 1,
     /// `namespace Foo {}`
-    Namespace = 2,
+    Namespace(BindingIdentifier<'a>) = 2,
 }
 
 /// The name of a TypeScript [namespace or module declaration](TSModuleDeclaration).

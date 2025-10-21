@@ -4002,10 +4002,25 @@ function walkTSModuleDeclaration(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkTSModuleDeclarationName(pos + 8, ast, visitors);
-  walkOptionTSModuleDeclarationBody(pos + 64, ast, visitors);
+  walkTSModuleDeclarationKind(pos + 8, ast, visitors);
+  walkOptionTSModuleDeclarationBody(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
+}
+
+function walkTSModuleDeclarationKind(pos, ast, visitors) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return;
+    case 1:
+      walkTSModuleDeclarationName(pos + 8, ast, visitors);
+      return;
+    case 2:
+      walkBindingIdentifier(pos + 8, ast, visitors);
+      return;
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationKind`);
+  }
 }
 
 function walkTSModuleDeclarationName(pos, ast, visitors) {

@@ -10330,22 +10330,17 @@ export class TSModuleDeclaration {
 
   get id() {
     const internal = this.#internal;
-    return constructTSModuleDeclarationName(internal.pos + 8, internal.ast);
+    return constructTSModuleDeclarationKind(internal.pos + 8, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructOptionTSModuleDeclarationBody(internal.pos + 64, internal.ast);
-  }
-
-  get kind() {
-    const internal = this.#internal;
-    return constructTSModuleDeclarationKind(internal.pos + 84, internal.ast);
+    return constructOptionTSModuleDeclarationBody(internal.pos + 72, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 85, internal.ast);
+    return constructBool(internal.pos + 92, internal.ast);
   }
 
   toJSON() {
@@ -10355,7 +10350,6 @@ export class TSModuleDeclaration {
       end: this.end,
       id: this.id,
       body: this.body,
-      kind: this.kind,
       declare: this.declare,
     };
   }
@@ -10372,9 +10366,9 @@ function constructTSModuleDeclarationKind(pos, ast) {
     case 0:
       return 'global';
     case 1:
-      return 'module';
+      return constructTSModuleDeclarationName(pos + 8, ast);
     case 2:
-      return 'namespace';
+      return new BindingIdentifier(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationKind`);
   }

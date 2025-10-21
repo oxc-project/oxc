@@ -4973,10 +4973,10 @@ unsafe fn walk_ts_module_declaration<'a, State, Tr: Traverse<'a, State>>(
     let pop_token = ctx.push_stack(Ancestor::TSModuleDeclarationId(
         ancestor::TSModuleDeclarationWithoutId(node, PhantomData),
     ));
-    walk_ts_module_declaration_name(
+    walk_ts_module_declaration_kind(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_ID)
-            as *mut TSModuleDeclarationName,
+            as *mut TSModuleDeclarationKind,
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
@@ -5001,6 +5001,24 @@ unsafe fn walk_ts_module_declaration<'a, State, Tr: Traverse<'a, State>>(
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     ctx.set_current_block_scope_id(previous_block_scope_id);
     traverser.exit_ts_module_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_module_declaration_kind<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut TSModuleDeclarationKind<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_ts_module_declaration_kind(&mut *node, ctx);
+    match &mut *node {
+        TSModuleDeclarationKind::Global => {}
+        TSModuleDeclarationKind::Module(node) => {
+            walk_ts_module_declaration_name(traverser, node as *mut _, ctx)
+        }
+        TSModuleDeclarationKind::Namespace(node) => {
+            walk_binding_identifier(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_ts_module_declaration_kind(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_module_declaration_name<'a, State, Tr: Traverse<'a, State>>(

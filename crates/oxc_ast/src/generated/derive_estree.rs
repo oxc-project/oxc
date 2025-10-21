@@ -2883,12 +2883,12 @@ impl ESTree for TSModuleDeclaration<'_> {
     }
 }
 
-impl ESTree for TSModuleDeclarationKind {
+impl ESTree for TSModuleDeclarationKind<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Global => JsonSafeString("global").serialize(serializer),
-            Self::Module => JsonSafeString("module").serialize(serializer),
-            Self::Namespace => JsonSafeString("namespace").serialize(serializer),
+            Self::Module(it) => it.serialize(serializer),
+            Self::Namespace(it) => it.serialize(serializer),
         }
     }
 }

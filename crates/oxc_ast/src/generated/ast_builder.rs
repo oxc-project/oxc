@@ -4307,20 +4307,16 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     #[inline]
     pub fn declaration_ts_module(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> Declaration<'a> {
-        Declaration::TSModuleDeclaration(
-            self.alloc_ts_module_declaration(span, id, body, kind, declare),
-        )
+        Declaration::TSModuleDeclaration(self.alloc_ts_module_declaration(span, id, body, declare))
     }
 
     /// Build a [`Declaration::TSModuleDeclaration`] with `scope_id`.
@@ -4331,21 +4327,19 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
     #[inline]
     pub fn declaration_ts_module_with_scope_id(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
     ) -> Declaration<'a> {
         Declaration::TSModuleDeclaration(
-            self.alloc_ts_module_declaration_with_scope_id(span, id, body, kind, declare, scope_id),
+            self.alloc_ts_module_declaration_with_scope_id(span, id, body, declare, scope_id),
         )
     }
 
@@ -13471,18 +13465,16 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     #[inline]
     pub fn ts_module_declaration(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> TSModuleDeclaration<'a> {
-        TSModuleDeclaration { span, id, body, kind, declare, scope_id: Default::default() }
+        TSModuleDeclaration { span, id, body, declare, scope_id: Default::default() }
     }
 
     /// Build a [`TSModuleDeclaration`], and store it in the memory arena.
@@ -13494,18 +13486,16 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     #[inline]
     pub fn alloc_ts_module_declaration(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        Box::new_in(self.ts_module_declaration(span, id, body, kind, declare), self.allocator)
+        Box::new_in(self.ts_module_declaration(span, id, body, declare), self.allocator)
     }
 
     /// Build a [`TSModuleDeclaration`] with `scope_id`.
@@ -13517,20 +13507,18 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
     #[inline]
     pub fn ts_module_declaration_with_scope_id(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
     ) -> TSModuleDeclaration<'a> {
-        TSModuleDeclaration { span, id, body, kind, declare, scope_id: Cell::new(Some(scope_id)) }
+        TSModuleDeclaration { span, id, body, declare, scope_id: Cell::new(Some(scope_id)) }
     }
 
     /// Build a [`TSModuleDeclaration`] with `scope_id`, and store it in the memory arena.
@@ -13542,22 +13530,58 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
     #[inline]
     pub fn alloc_ts_module_declaration_with_scope_id(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         Box::new_in(
-            self.ts_module_declaration_with_scope_id(span, id, body, kind, declare, scope_id),
+            self.ts_module_declaration_with_scope_id(span, id, body, declare, scope_id),
             self.allocator,
+        )
+    }
+
+    /// Build a [`TSModuleDeclarationKind::Namespace`].
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The identifier name being bound.
+    #[inline]
+    pub fn ts_module_declaration_kind_namespace<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> TSModuleDeclarationKind<'a>
+    where
+        A1: Into<Atom<'a>>,
+    {
+        TSModuleDeclarationKind::Namespace(self.binding_identifier(span, name))
+    }
+
+    /// Build a [`TSModuleDeclarationKind::Namespace`] with `symbol_id`.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The identifier name being bound.
+    /// * `symbol_id`: Unique identifier for this binding.
+    #[inline]
+    pub fn ts_module_declaration_kind_namespace_with_symbol_id<A1>(
+        self,
+        span: Span,
+        name: A1,
+        symbol_id: SymbolId,
+    ) -> TSModuleDeclarationKind<'a>
+    where
+        A1: Into<Atom<'a>>,
+    {
+        TSModuleDeclarationKind::Namespace(
+            self.binding_identifier_with_symbol_id(span, name, symbol_id),
         )
     }
 
@@ -13652,19 +13676,17 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     #[inline]
     pub fn ts_module_declaration_body_module_declaration(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> TSModuleDeclarationBody<'a> {
         TSModuleDeclarationBody::TSModuleDeclaration(
-            self.alloc_ts_module_declaration(span, id, body, kind, declare),
+            self.alloc_ts_module_declaration(span, id, body, declare),
         )
     }
 
@@ -13676,21 +13698,19 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `id`: The name of the module/namespace being declared.
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     /// * `scope_id`
     #[inline]
     pub fn ts_module_declaration_body_module_declaration_with_scope_id(
         self,
         span: Span,
-        id: TSModuleDeclarationName<'a>,
+        id: TSModuleDeclarationKind<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
     ) -> TSModuleDeclarationBody<'a> {
         TSModuleDeclarationBody::TSModuleDeclaration(
-            self.alloc_ts_module_declaration_with_scope_id(span, id, body, kind, declare, scope_id),
+            self.alloc_ts_module_declaration_with_scope_id(span, id, body, declare, scope_id),
         )
     }
 

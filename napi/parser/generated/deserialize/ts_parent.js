@@ -4560,14 +4560,14 @@ function deserializeTSTypePredicateName(pos) {
 }
 
 function deserializeTSModuleDeclaration(pos) {
-  let kind = deserializeTSModuleDeclarationKind(pos + 84),
-    global = kind === 'global',
+  let kind = deserializeTSModuleDeclarationKind(pos + 8),
+    global = kind === 'Global',
     start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
-    declare = deserializeBool(pos + 85),
+    declare = deserializeBool(pos + 92),
     node,
     previousParent = parent,
-    body = deserializeOptionTSModuleDeclarationBody(pos + 64);
+    body = deserializeOptionTSModuleDeclarationBody(pos + 72);
   if (body === null) {
     node = parent = {
       type: 'TSModuleDeclaration',
@@ -4648,9 +4648,9 @@ function deserializeTSModuleDeclarationKind(pos) {
     case 0:
       return 'global';
     case 1:
-      return 'module';
+      return deserializeTSModuleDeclarationName(pos + 8);
     case 2:
-      return 'namespace';
+      return deserializeBindingIdentifier(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleDeclarationKind`);
   }

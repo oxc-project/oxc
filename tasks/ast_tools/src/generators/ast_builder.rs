@@ -471,6 +471,19 @@ fn generate_builder_methods_for_enum(
     enum_def
         .variants
         .iter()
+        .filter(|variant| {
+            if variant.is_fieldless() {
+                return false;
+            }
+            // Skip variants whose field type is an enum (not a struct)
+            let Some(field_type) = variant.field_type(schema) else { return false };
+            let field_type = if let TypeDef::Box(box_def) = field_type {
+                box_def.inner_type(schema)
+            } else {
+                field_type
+            };
+            matches!(field_type, TypeDef::Struct(_))
+        })
         .map(|variant| {
             generate_builder_method_for_enum_variant(
                 enum_def,
@@ -489,13 +502,21 @@ fn generate_builder_method_for_enum_variant(
     comment_node_id_type_id: TypeId,
     schema: &Schema,
 ) -> TokenStream {
-    let mut variant_type = variant.field_type(schema).unwrap();
+    let mut variant_type = variant.field_type(schema).unwrap_or_else(|| {
+        dbg!(&variant);
+        // dbg!(&schema);
+        panic!("Failed to get variant field type");
+    });
     let mut is_boxed = false;
     if let TypeDef::Box(box_def) = variant_type {
         variant_type = box_def.inner_type(schema);
         is_boxed = true;
     }
-    let TypeDef::Struct(struct_def) = variant_type else { panic!("Unsupported!") };
+    let TypeDef::Struct(struct_def) = variant_type else {
+        dbg!(&variant);
+        dbg!(&variant_type);
+        panic!("Unsupported variant type - expected Struct!");
+    };
 
     let (mut params, generic_params, where_clause, has_default_fields) =
         get_struct_params(struct_def, comment_node_id_type_id, schema);

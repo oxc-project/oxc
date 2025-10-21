@@ -403,7 +403,7 @@ impl Symbol<'_, '_> {
                     return false;
                 };
 
-                module.kind.is_global()
+                module.id.is_global()
             })
     }
 }

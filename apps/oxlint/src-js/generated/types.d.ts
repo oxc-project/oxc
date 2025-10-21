@@ -1476,15 +1476,14 @@ export type TSTypePredicateName = IdentifierName | TSThisType;
 
 export interface TSModuleDeclaration extends Span {
   type: 'TSModuleDeclaration';
-  id: BindingIdentifier | StringLiteral | TSQualifiedName;
+  id: TSModuleDeclarationKind;
   body: TSModuleBlock | null;
-  kind: TSModuleDeclarationKind;
   declare: boolean;
   global: boolean;
   parent?: Node;
 }
 
-export type TSModuleDeclarationKind = 'global' | 'module' | 'namespace';
+export type TSModuleDeclarationKind = 'global' | TSModuleDeclarationName | BindingIdentifier;
 
 export interface TSModuleBlock extends Span {
   type: 'TSModuleBlock';

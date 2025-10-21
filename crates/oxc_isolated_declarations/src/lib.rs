@@ -202,8 +202,15 @@ impl<'a> IsolatedDeclarations<'a> {
                     if let Statement::TSModuleDeclaration(decl) = stmt {
                         // `declare global { ... }` or `declare module "foo" { ... }`
                         // We need to emit it anyway
-                        let is_global = decl.kind.is_global();
-                        if is_global || decl.id.is_string_literal() {
+                        let is_global = decl.id.is_global();
+                        if is_global
+                            || matches!(
+                                decl.id,
+                                TSModuleDeclarationKind::Module(
+                                    TSModuleDeclarationName::StringLiteral(_)
+                                )
+                            )
+                        {
                             transformed_spans.insert(decl.span);
 
                             let mut decl = decl.clone_in(self.ast.allocator);
@@ -514,10 +521,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 _ => continue,
             };
 
-            if decl.kind != TSModuleDeclarationKind::Namespace {
-                continue;
-            }
-            let TSModuleDeclarationName::Identifier(ident) = &decl.id else { continue };
+            let TSModuleDeclarationKind::Namespace(ident) = &decl.id else { continue };
             let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &decl.body else {
                 continue;
             };

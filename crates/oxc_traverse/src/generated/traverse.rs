@@ -2701,6 +2701,21 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_ts_module_declaration_kind(
+        &mut self,
+        node: &mut TSModuleDeclarationKind<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_declaration_kind(
+        &mut self,
+        node: &mut TSModuleDeclarationKind<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_module_declaration_name(
         &mut self,
         node: &mut TSModuleDeclarationName<'a>,

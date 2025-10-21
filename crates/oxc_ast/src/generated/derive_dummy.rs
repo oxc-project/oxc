@@ -2532,14 +2532,13 @@ impl<'a> Dummy<'a> for TSModuleDeclaration<'a> {
             span: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
-            kind: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
         }
     }
 }
 
-impl<'a> Dummy<'a> for TSModuleDeclarationKind {
+impl<'a> Dummy<'a> for TSModuleDeclarationKind<'a> {
     /// Create a dummy [`TSModuleDeclarationKind`].
     ///
     /// Does not allocate any data into arena.

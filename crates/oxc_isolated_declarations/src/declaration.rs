@@ -127,15 +127,21 @@ impl<'a> IsolatedDeclarations<'a> {
         };
 
         // Follows https://github.com/microsoft/TypeScript/pull/54134
-        let kind = TSModuleDeclarationKind::Namespace;
+        // Convert module declarations to namespace in output
+        let id = match &decl.id {
+            TSModuleDeclarationKind::Module(TSModuleDeclarationName::Identifier(ident)) => {
+                TSModuleDeclarationKind::Namespace(ident.clone_in(self.ast.allocator))
+            }
+            // Keep other variants as-is
+            _ => decl.id.clone_in(self.ast.allocator),
+        };
         match body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let inner = self.transform_ts_module_declaration(decl);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    decl.id.clone_in(self.ast.allocator),
+                    id,
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
-                    kind,
                     self.is_declare(),
                 )
             }
@@ -143,9 +149,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 let body = self.transform_ts_module_block(block);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    decl.id.clone_in(self.ast.allocator),
+                    id,
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
-                    kind,
                     self.is_declare(),
                 )
             }
@@ -202,7 +207,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 if !check_binding
                     || matches!(
                         &decl.id,
-                        TSModuleDeclarationName::Identifier(ident)
+                        TSModuleDeclarationKind::Namespace(ident)
                             if self.scope.has_value_reference(&ident.name)
                     )
                 {

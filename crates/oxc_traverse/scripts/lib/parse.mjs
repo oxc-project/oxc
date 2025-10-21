@@ -267,8 +267,16 @@ function parseEnum(name, rawName, lines) {
         typeName = rawTypeName.replace(/<'a>/g, '').replace(/<'a, ?/g, '<'),
         { name: innerTypeName, wrappers } = typeAndWrappers(typeName),
         discriminant = discriminantStr ? +discriminantStr : null;
-      variants.push({ name, typeName, rawTypeName, innerTypeName, wrappers, discriminant });
+      variants.push({ name, typeName, rawTypeName, innerTypeName, wrappers, discriminant, isFieldless: false });
     } else {
+      // Check for fieldless variant (e.g., "Global = 0,")
+      const fieldlessMatch = line.match(/^([A-Za-z]\w*)(?: ?= ?(\d+))?,$/);
+      if (fieldlessMatch) {
+        const [, name, discriminantStr] = fieldlessMatch;
+        const discriminant = discriminantStr ? +discriminantStr : null;
+        variants.push({ name, discriminant, isFieldless: true });
+        continue;
+      }
       const match2 = line.match(/^@inherit ([A-Za-z]+)$/);
       lines.positionPrevious().assert(match2, `Cannot parse line as enum variant: '${line}'`);
       inherits.push(match2[1]);

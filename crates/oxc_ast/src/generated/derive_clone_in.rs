@@ -7228,7 +7228,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclaration<'_> {
             span: CloneIn::clone_in(&self.span, allocator),
             id: CloneIn::clone_in(&self.id, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
-            kind: CloneIn::clone_in(&self.kind, allocator),
             declare: CloneIn::clone_in(&self.declare, allocator),
             scope_id: Default::default(),
         }
@@ -7239,24 +7238,35 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclaration<'_> {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             id: CloneIn::clone_in_with_semantic_ids(&self.id, allocator),
             body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
-            kind: CloneIn::clone_in_with_semantic_ids(&self.kind, allocator),
             declare: CloneIn::clone_in_with_semantic_ids(&self.declare, allocator),
             scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
         }
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationKind {
-    type Cloned = TSModuleDeclarationKind;
+impl<'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationKind<'_> {
+    type Cloned = TSModuleDeclarationKind<'new_alloc>;
 
-    #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        *self
+        match self {
+            Self::Global => TSModuleDeclarationKind::Global,
+            Self::Module(it) => TSModuleDeclarationKind::Module(CloneIn::clone_in(it, allocator)),
+            Self::Namespace(it) => {
+                TSModuleDeclarationKind::Namespace(CloneIn::clone_in(it, allocator))
+            }
+        }
     }
 
-    #[inline(always)]
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        *self
+        match self {
+            Self::Global => TSModuleDeclarationKind::Global,
+            Self::Module(it) => {
+                TSModuleDeclarationKind::Module(CloneIn::clone_in_with_semantic_ids(it, allocator))
+            }
+            Self::Namespace(it) => TSModuleDeclarationKind::Namespace(
+                CloneIn::clone_in_with_semantic_ids(it, allocator),
+            ),
+        }
     }
 }
 

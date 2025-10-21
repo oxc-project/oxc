@@ -2249,14 +2249,18 @@ impl ContentEq for TSModuleDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.body, &other.body)
-            && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.declare, &other.declare)
     }
 }
 
-impl ContentEq for TSModuleDeclarationKind {
+impl ContentEq for TSModuleDeclarationKind<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        self == other
+        match (self, other) {
+            (Self::Global, Self::Global) => true,
+            (Self::Module(a), Self::Module(b)) => a.content_eq(b),
+            (Self::Namespace(a), Self::Namespace(b)) => a.content_eq(b),
+            _ => false,
+        }
     }
 }
 

@@ -1846,6 +1846,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline(always)]
+    fn visit_ts_module_declaration_kind(&mut self, it: &TSModuleDeclarationKind<'a>) {
+        // Enum does not contain a scope. Halt traversal.
+    }
+
+    #[inline(always)]
     fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
         // Enum does not contain a scope. Halt traversal.
     }
