@@ -181,9 +181,15 @@ fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<FormatOption
         })
     } else {
         // If `--config` is not specified, search the nearest config file from cwd upwards
+        // Support both `.json` and `.jsonc`, but prefer `.json` if both exist
         cwd.ancestors().find_map(|dir| {
-            let config_path = dir.join(".oxfmtrc.json");
-            if config_path.exists() { Some(config_path) } else { None }
+            for filename in [".oxfmtrc.json", ".oxfmtrc.jsonc"] {
+                let config_path = dir.join(filename);
+                if config_path.exists() {
+                    return Some(config_path);
+                }
+            }
+            None
         })
     };
 

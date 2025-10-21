@@ -61,6 +61,8 @@ fn write_mode() {
 
 #[test]
 fn config_file_auto_discovery() {
+    // Tests .json takes priority over .jsonc when both exist
+    // config_file/ has both .oxfmtrc.json (semi: true) and .oxfmtrc.jsonc (semi: false)
     Tester::new()
         .with_cwd(PathBuf::from("tests/fixtures/config_file"))
         .test_and_snapshot_multiple("config_file_auto_discovery", &[&["--check"]]);
