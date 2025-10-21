@@ -57,9 +57,13 @@ impl From<&str> for NamedExports {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct FuncStyle {
+    /// The style to enforce. Either "expression" (default) or "declaration".
     style: Style,
+    /// When true, arrow functions are allowed regardless of the style setting.
     allow_arrow_functions: bool,
+    /// When true, functions with type annotations are allowed regardless of the style setting.
     allow_type_annotation: bool,
+    /// Override the style specifically for named exports. Can be "expression", "declaration", or "ignore" (default).
     named_exports: Option<NamedExports>,
 }
 
