@@ -78,7 +78,7 @@ pub use crate::{
     ast_builder_impl::{AstBuilder, NONE},
     ast_kind::{AstKind, AstType},
     ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind},
-    trivia::{CommentsRange, comments_range, has_comments_between},
+    trivia::{CommentsRange, comments_range, has_comments_between, is_inside_comment},
 };
 
 // After experimenting with two types of boxed enum variants:
