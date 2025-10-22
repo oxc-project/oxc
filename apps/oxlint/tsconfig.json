@@ -10,6 +10,6 @@
   "exclude": [
     "node_modules",
     "fixtures",
-    "test/fixtures"
+    "test/fixtures/*/files"
   ]
 }
