@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.8.0] - 2025-10-22
+
+### 🚀 Features
+
+- 381e08c oxfmt: More friendly JSON schema (#14879) (leaysgur)
+- 006708d oxfmt: Support `ignorePatterns` in oxfmtrc (#14875) (leaysgur)
+
+
 
 ## [0.6.0] - 2025-10-20
 

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.8.0] - 2025-10-22
+
+### 🚀 Features
+
+- 006708d oxfmt: Support `ignorePatterns` in oxfmtrc (#14875) (leaysgur)
+
+
 ## [0.7.0] - 2025-10-21
 
 ### 🚀 Features

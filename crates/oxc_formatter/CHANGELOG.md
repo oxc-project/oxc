@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.8.0] - 2025-10-22
+
+### 🚀 Features
+
+- 381e08c oxfmt: More friendly JSON schema (#14879) (leaysgur)
+- 006708d oxfmt: Support `ignorePatterns` in oxfmtrc (#14875) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 64b8226 formatter: Corrct printing leading own line comments before method body (#14886) (Dunqing)
+- 6ce1162 formatter: Remove a redundant space for TSMappedType (#14885) (Dunqing)
+- 5b962a7 formatter: Remove redundant leading space when only the rest part of the array exists (#14884) (Dunqing)
+- 8301d8f formatter: No need to wrap parenthesis for ObjectExpression when it is an expression of a template literal (#14883) (Dunqing)
+- 9397472 formatter: Should not wrap parenthesis for ComputedMemberExpression when it is not an option or it doesn't contain a call expression (#14882) (Dunqing)
+- 3e62277 formatter: Should not add a soft line for the arrow function inside ExpressionContainer with a trailing comment (#14878) (Dunqing)
+- 990916a formatter: Correct handling of leading own line before arrow function body (#14877) (Dunqing)
+- 4a499b5 formatter: Correct printing trailing comments for if statement with non-block consequent (#14857) (Dunqing)
+
+### 🧪 Testing
+
+- 868ff99 formatter: Fix tests using TS syntax with `.js` (#14880) (leaysgur)
+
+
 ## [0.7.0] - 2025-10-21
 
 ### 🚀 Features
