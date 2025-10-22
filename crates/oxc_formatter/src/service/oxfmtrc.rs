@@ -15,44 +15,118 @@ use crate::{
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
+    /// Use tabs for indentation or spaces. (Default: false)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_tabs: Option<bool>,
+    /// Number of spaces per indentation level. (Default: 2)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tab_width: Option<u8>,
+    /// Which end of line characters to apply. (Default: "lf")
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub end_of_line: Option<String>,
+    pub end_of_line: Option<EndOfLineConfig>,
+    /// The line length that the printer will wrap on. (Default: 80)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub print_width: Option<u16>,
+    /// Use single quotes instead of double quotes. (Default: false)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_quote: Option<bool>,
+    /// Use single quotes instead of double quotes in JSX. (Default: false)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jsx_single_quote: Option<bool>,
+    /// Change when properties in objects are quoted. (Default: "as-needed")
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub quote_props: Option<String>,
+    pub quote_props: Option<QuotePropsConfig>,
+    /// Print trailing commas wherever possible. (Default: "all")
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub trailing_comma: Option<String>,
+    pub trailing_comma: Option<TrailingCommaConfig>,
+    /// Print semicolons at the ends of statements. (Default: true)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub semi: Option<bool>,
+    /// Include parentheses around a sole arrow function parameter. (Default: "always")
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub arrow_parens: Option<String>,
+    pub arrow_parens: Option<ArrowParensConfig>,
+    /// Print spaces between brackets in object literals. (Default: true)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_spacing: Option<bool>,
+    /// Put the > of a multi-line JSX element at the end of the last line instead of being alone on the next line. (Default: false)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
+    /// How to wrap object literals when they could fit on one line or span multiple lines. (Default: "preserve")
+    /// NOTE: In addition to Prettier's "preserve" and "collapse", we also support "always".
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub object_wrap: Option<String>,
+    pub object_wrap: Option<ObjectWrapConfig>,
+    /// Put each attribute on a new line in JSX. (Default: false)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
+    /// Experimental: Position of operators in expressions. (Default: "end")
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_operator_position: Option<String>,
-    // TODO: experimental_ternaries
+    pub experimental_operator_position: Option<OperatorPositionConfig>,
+    // TODO: Experimental: Use curious ternaries which move `?` after the condition. (Default: false)
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub experimental_ternaries: Option<bool>,
+    /// Experimental: Sort import statements. Disabled by default.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
+
+    /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_patterns: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+// ---
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum EndOfLineConfig {
+    #[default]
+    Lf,
+    Crlf,
+    Cr,
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum QuotePropsConfig {
+    #[default]
+    AsNeeded,
+    Preserve,
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum TrailingCommaConfig {
+    #[default]
+    All,
+    Es5,
+    None,
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ArrowParensConfig {
+    #[default]
+    Always,
+    Avoid,
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ObjectWrapConfig {
+    #[default]
+    Preserve,
+    Collapse,
+    Always,
+}
+
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum OperatorPositionConfig {
+    Start,
+    #[default]
+    End,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortImportsConfig {
     #[serde(default)]
@@ -61,35 +135,32 @@ pub struct SortImportsConfig {
     pub partition_by_comment: bool,
     #[serde(default)]
     pub sort_side_effects: bool,
-    #[serde(default = "default_order")]
-    pub order: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub order: Option<SortOrderConfig>,
     #[serde(default = "default_true")]
     pub ignore_case: bool,
-}
-
-fn default_order() -> String {
-    "asc".to_string()
 }
 
 fn default_true() -> bool {
     true
 }
 
-impl Default for SortImportsConfig {
-    fn default() -> Self {
-        Self {
-            partition_by_newline: false,
-            partition_by_comment: false,
-            sort_side_effects: false,
-            order: default_order(),
-            ignore_case: default_true(),
-        }
-    }
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum SortOrderConfig {
+    #[default]
+    Asc,
+    Desc,
 }
+
+// ---
 
 impl Oxfmtrc {
     /// # Errors
-    /// Returns error if file cannot be read or parsed
+    /// Returns error if:
+    /// - file cannot be found or read
+    /// - file content is not valid JSONC
+    /// - deserialization fails for string enum values
     pub fn from_file(path: &Path) -> Result<Self, String> {
         // TODO: Use `simdutf8` like `oxc_linter`?
         let mut string = std::fs::read_to_string(path)
@@ -103,6 +174,7 @@ impl Oxfmtrc {
         let json = serde_json::from_str::<serde_json::Value>(&string)
             .map_err(|err| format!("Failed to parse config {}: {err}", path.display()))?;
 
+        // NOTE: String enum deserialization errors are handled here
         Self::deserialize(&json)
             .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
     }
@@ -126,8 +198,11 @@ impl Oxfmtrc {
         // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
         // NOTE: "auto" is not supported
         if let Some(ending) = self.end_of_line {
-            options.line_ending =
-                ending.parse::<LineEnding>().map_err(|e| format!("Invalid endOfLine: {e}"))?;
+            options.line_ending = match ending {
+                EndOfLineConfig::Lf => LineEnding::Lf,
+                EndOfLineConfig::Crlf => LineEnding::Crlf,
+                EndOfLineConfig::Cr => LineEnding::Cr,
+            };
         }
 
         // [Prettier] printWidth: number
@@ -151,31 +226,32 @@ impl Oxfmtrc {
         // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
         // NOTE: "consistent" is not supported
         if let Some(props) = self.quote_props {
-            options.quote_properties =
-                props.parse::<QuoteProperties>().map_err(|e| format!("Invalid quoteProps: {e}"))?;
+            options.quote_properties = match props {
+                QuotePropsConfig::AsNeeded => QuoteProperties::AsNeeded,
+                QuotePropsConfig::Preserve => QuoteProperties::Preserve,
+            };
         }
 
         // [Prettier] trailingComma: "all" | "es5" | "none"
         if let Some(commas) = self.trailing_comma {
-            options.trailing_commas = commas
-                .parse::<TrailingCommas>()
-                .map_err(|e| format!("Invalid trailingComma: {e}"))?;
+            options.trailing_commas = match commas {
+                TrailingCommaConfig::All => TrailingCommas::All,
+                TrailingCommaConfig::Es5 => TrailingCommas::Es5,
+                TrailingCommaConfig::None => TrailingCommas::None,
+            };
         }
 
-        // [Prettier] semi: boolean -> Semicolons
+        // [Prettier] semi: boolean
         if let Some(semi) = self.semi {
             options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
         }
 
         // [Prettier] arrowParens: "avoid" | "always"
         if let Some(parens) = self.arrow_parens {
-            let normalized = match parens.as_str() {
-                "avoid" => "as-needed",
-                _ => &parens,
+            options.arrow_parentheses = match parens {
+                ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
+                ArrowParensConfig::Always => ArrowParentheses::Always,
             };
-            options.arrow_parentheses = normalized
-                .parse::<ArrowParentheses>()
-                .map_err(|e| format!("Invalid arrowParens: {e}"))?;
         }
 
         // [Prettier] bracketSpacing: boolean
@@ -198,37 +274,35 @@ impl Oxfmtrc {
         }
 
         // [Prettier] objectWrap: "preserve" | "collapse"
-        // NOTE: In addition to Prettier, we also support "always"
         if let Some(object_wrap) = self.object_wrap {
-            let normalized = match object_wrap.as_str() {
-                "preserve" => "auto",
-                "collapse" => "never",
-                _ => &object_wrap,
+            options.expand = match object_wrap {
+                ObjectWrapConfig::Preserve => Expand::Auto,
+                ObjectWrapConfig::Collapse => Expand::Never,
+                // NOTE: Our own extension
+                ObjectWrapConfig::Always => Expand::Always,
             };
-            options.expand =
-                normalized.parse::<Expand>().map_err(|e| format!("Invalid objectWrap: {e}"))?;
         }
 
         // [Prettier] experimentalOperatorPosition: "start" | "end"
         if let Some(position) = self.experimental_operator_position {
-            options.experimental_operator_position = position
-                .parse::<OperatorPosition>()
-                .map_err(|e| format!("Invalid experimental_operator_position: {e}"))?;
+            options.experimental_operator_position = match position {
+                OperatorPositionConfig::Start => OperatorPosition::Start,
+                OperatorPositionConfig::End => OperatorPosition::End,
+            };
         }
 
         // Below are our own extensions
 
         if let Some(sort_imports_config) = self.experimental_sort_imports {
-            let order = sort_imports_config
-                .order
-                .parse::<SortOrder>()
-                .map_err(|e| format!("Invalid sort_imports.order: {e}"))?;
-
             options.experimental_sort_imports = Some(SortImports {
                 partition_by_newline: sort_imports_config.partition_by_newline,
                 partition_by_comment: sort_imports_config.partition_by_comment,
                 sort_side_effects: sort_imports_config.sort_side_effects,
-                order,
+                order: sort_imports_config.order.map_or(SortOrder::Asc, |o| match o {
+                    SortOrderConfig::Asc => SortOrder::Asc,
+                    SortOrderConfig::Desc => SortOrder::Desc,
+                }),
+
                 ignore_case: sort_imports_config.ignore_case,
             });
         }
@@ -236,6 +310,8 @@ impl Oxfmtrc {
         Ok(options)
     }
 }
+
+// ---
 
 #[cfg(test)]
 mod tests {
