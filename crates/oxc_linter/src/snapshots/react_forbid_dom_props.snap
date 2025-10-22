@@ -1,0 +1,106 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(forbid-dom-props): Prop "id" is forbidden on DOM Nodes
+   ╭─[forbid_dom_props.tsx:5:37]
+ 4 │                       render: function() {
+ 5 │                         return <div id="bar" />;
+   ·                                     ──
+ 6 │                       }
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Prop "id" is forbidden on DOM Nodes
+   ╭─[forbid_dom_props.tsx:4:37]
+ 3 │                       render() {
+ 4 │                         return <div id="bar" />;
+   ·                                     ──
+ 5 │                       }
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Prop "id" is forbidden on DOM Nodes
+   ╭─[forbid_dom_props.tsx:3:28]
+ 2 │                     const First = (props) => (
+ 3 │                       <div id="foo" />
+   ·                            ──
+ 4 │                     );
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Please use class instead of ClassName
+   ╭─[forbid_dom_props.tsx:3:28]
+ 2 │                     const First = (props) => (
+ 3 │                       <div className="foo" />
+   ·                            ─────────
+ 4 │                     );
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Please use class instead of ClassName
+   ╭─[forbid_dom_props.tsx:3:28]
+ 2 │                     const First = (props) => (
+ 3 │                       <div className="foo">
+   ·                            ─────────
+ 4 │                         <div otherProp="bar" />
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Avoid using otherProp
+   ╭─[forbid_dom_props.tsx:4:30]
+ 3 │                       <div className="foo">
+ 4 │                         <div otherProp="bar" />
+   ·                              ─────────
+ 5 │                       </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Prop "className" is forbidden on DOM Nodes
+   ╭─[forbid_dom_props.tsx:3:28]
+ 2 │                     const First = (props) => (
+ 3 │                       <div className="foo">
+   ·                            ─────────
+ 4 │                         <div otherProp="bar" />
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Avoid using otherProp
+   ╭─[forbid_dom_props.tsx:4:30]
+ 3 │                       <div className="foo">
+ 4 │                         <div otherProp="bar" />
+   ·                              ─────────
+ 5 │                       </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Avoid using the accept attribute on <form>
+   ╭─[forbid_dom_props.tsx:3:29]
+ 2 │                     const First = (props) => (
+ 3 │                       <form accept='file'>
+   ·                             ──────
+ 4 │                         <input type="file" id="videoFile" accept="video/*" />
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Please use class instead of ClassName
+   ╭─[forbid_dom_props.tsx:3:28]
+ 2 │                     const First = (props) => (
+ 3 │                       <div className="foo">
+   ·                            ─────────
+ 4 │                         <input className="boo" />
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Please use class instead of ClassName
+   ╭─[forbid_dom_props.tsx:5:31]
+ 4 │                         <input className="boo" />
+ 5 │                         <span className="foobar">Foobar</span>
+   ·                               ─────────
+ 6 │                         <div otherProp="bar" className="forbiddenClassname" />
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Avoid using otherProp
+   ╭─[forbid_dom_props.tsx:6:30]
+ 5 │                         <span className="foobar">Foobar</span>
+ 6 │                         <div otherProp="bar" className="forbiddenClassname" />
+   ·                              ─────────
+ 7 │                       </div>
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-dom-props): Please use class instead of ClassName
+   ╭─[forbid_dom_props.tsx:6:46]
+ 5 │                         <span className="foobar">Foobar</span>
+ 6 │                         <div otherProp="bar" className="forbiddenClassname" />
+   ·                                              ─────────
+ 7 │                       </div>
+   ╰────
