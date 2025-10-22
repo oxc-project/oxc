@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.24.0] - 2025-10-22
+
+### 🚀 Features
+
+- 8b322d4 editor: Support `oxc.fmt.configPath` configuration (#14639) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 644dfd4 language_server: Make unused directives fixable again (#14872) (Sysix)
+
+### 🧪 Testing
+
+- faada4d editor: Reduce sleep time (#14749) (Sysix)
+
+
 
 
 

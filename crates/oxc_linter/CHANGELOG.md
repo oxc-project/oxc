@@ -4,6 +4,102 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.24.0] - 2025-10-22
+
+### 🚀 Features
+
+- dd1fdd4 linter: Add react/forbid-dom-props rule (#14365) (Mikhail Baev)
+- 8b02074 linter: Merge vitest/prefer-to-be rule into existing jest/prefer-to-be rule implementation (#14738) (Tyler Earls)
+- ba6517b linter: Add `no-warning-comments` rule (#14734) (Iván Ovejero)
+- 5858641 linter: Implement constructor-super rule (#14506) (Tyler Earls)
+- ae2003c semantic: Add `symbol_id` to ts function type binding idents (#14673) (camc314)
+- 9cd7a67 linter/no-unused-vars: Support `ignoreUsingDeclarations` option (#14632) (camc314)
+
+### 🐛 Bug Fixes
+
+- 831974f linter: Postmessage is not called on window (#14192) (Kenzo Wada)
+- 801e1d1 linter: Error on unexpected tokens when declaring lint rule (#14881) (howen)
+- dc03c3a linter/no-invalid-fetch-options: Ignore non static method (#14806) (camc314)
+- 28e76ec oxlint: Resolving JS plugin failing when `extends` is used (#14556) (camc314)
+- aa562f7 linter/no-unused-private-class-members: Fix false positive in default param (#14801) (camc314)
+- ad12974 linter: `no-unused-vars`: allow updates in for loop test/update (#14766) (camchenry)
+- 78ee7b8 linter/plugins: Handle utf16 characters within comment spans (#14768) (Arsh)
+- c69201c linter: Copy over js plugins when applying overrides (#14542) (Arsh)
+- 6bb9902 linter: Improve `jest/no_export` heuristic (#14620) (Arsh)
+- c8ea37d linter: `unicorn/filename-case` report only on the first js block for `astro`, `vue` and `svelte` files (#14599) (Sysix)
+- baab7eb semantic: Fix quote handling in jsdoc parser(#13776) (#14561) (Li Wei)
+
+### 🚜 Refactor
+
+- 1e93ceb linter/no-unwanted-polyfillio: Move `NEXT_POLYFILLED_FEATURES` to shared utils (#14793) (shulaoda)
+- 3bfb8e1 linter: Make `Message.span` public (#14601) (Sysix)
+- 544c092 linter/no-process-env: Restructure match to improve generated node types (#14643) (camc314)
+- 90f5f89 linter: Remove `run_on_symbol` (#14610) (camchenry)
+- b301795 linter: Remove unused allocator param in `Runtime` for LSP & tests (#14489) (Sysix)
+
+### 📚 Documentation
+
+- 3f1c3c7 linter: Add documentation on `ignoreRestSiblings` option for `no-unused-vars` rule (#14807) (howen)
+- 9cd4160 linter: Fix documentation formatting for max_params options (#14744) (Connor Shea)
+- cbdf261 linter: Document no-shadow-restricted-names rule config options. (#14843) (Connor Shea)
+- a6f720b linter: Expose use-isnan rule config options. (#14844) (Connor Shea)
+- 7dc609b linter: Add docs for no-param-reassign config options. (#14849) (Connor Shea)
+- 983c31c linter: Improve the Options documentation for no-empty-function rule (#14789) (Connor Shea)
+- 77e4b30 linter: Add autogen doc support for max_nested_describe in jest plugin. (#14797) (Connor Shea)
+- b6402dd linter: Move documentation comments for the valid-typeof rule to the struct (#14841) (Connor Shea)
+- a02567f linter: Update no-invalid-regexp rule to expose documentation for config options (#14838) (Connor Shea)
+- ebca4a6 linter: Update no-plusplus rule to expose documentation for config options (#14837) (Connor Shea)
+- 1665ab4 linter: Add doc comments for func_style options. (#14847) (Connor Shea)
+- b1fb269 linter: Add configuration docs info for import/namespace rule (#14799) (Connor Shea)
+- c80da95 linter: Add configuration docs to no-useless-escape lint rule. (#14791) (Connor Shea)
+- 7b64f27 linter: Improve `no-plusplus` and `no-irregular-whitespace` rule docs (#14790) (Connor Shea)
+
+### ⚡ Performance
+
+- 11b055e linter: `no-unused-private-class-members`: only run when there are any classes (#14869) (camchenry)
+- 5493278 linter: `no-dupe-class-members`: only run when there are any classes (#14867) (camchenry)
+- ef53462 linter: `no-this-before-super`: only run when file contains super or this (#14866) (camchenry)
+- 19d168a linter: `max-classes-per-file`: skip when no classes (#14865) (camchenry)
+- b8f8ce5 linter: `id-length`: reduce allocations and add more ASCII checks (#14821) (camchenry)
+- bb4347c linter: Use precomputed extension (#14819) (camchenry)
+- 92b4302 linter: `id-length`: check if ident is ASCII before segmenting (#14767) (camchenry)
+- 7be9489 linter: Cache file extension (#14794) (camchenry)
+- 86ecae1 linter: Remove simple `phf_map!` calls (#14701) (camchenry)
+- 2fe9dfa linter: Update `prefer-node-protocol` to use diverging match (#14699) (camchenry)
+- 07db921 linter: Update `catch-error-name` to use top-level match (#14698) (camchenry)
+- 2582a50 linter: Update `no-extra-non-null-assertion` to use diverging match (#14697) (camchenry)
+- 231bac0 linter: Update `typescript/array-type` to only have top-level match (#14696) (camchenry)
+- 6b9b972 linter: Refactor `jsdoc/require-yields` to deref instead of `self.0` (#14695) (camchenry)
+- 9ac561c linter: Inline `is_function_node` calls for some jsdoc rules (#14694) (camchenry)
+- 5e014cb linter: Refactor `jest/require-hook` to use top-level match (#14693) (camchenry)
+- c8d775c linter: Refactor `jest/no-conditional-in-test` to use diverging match (#14692) (camchenry)
+- b666c26 linter: Move root scope check into match arms in `import/no-webpack-loader-syntax` (#14691) (camchenry)
+- be33a15 linter: Refactor `no-amd` to do scope check after node type check (#14690) (camchenry)
+- 71cfeaa linter: Refactor `no-unsafe-finally` to have a diverging match as first statement (#14689) (camchenry)
+- 801bb10 linter: Refactor `no-labels` to use top-level match on node kind (#14688) (camchenry)
+- 1217411 linter: Refactor class-methods-use-this to be analyzed (#14687) (camchenry)
+- f830bea linter: Add codegen support for `is_member_expression_kind` in match (#14677) (camchenry)
+- 400a99a linter: Switch `if !matches!(node.kind(), ...)` to match block (#14650) (camchenry)
+- f2c33f5 linter: Rearrange rules for node type analysis (#14648) (camchenry)
+- 73f2cbb linter: Support getting `as_member_expression_kind()` variants (#14642) (camchenry)
+- 58e17ae linter: Only check for call expr once in `unicorn/no-array-method-this` (#14641) (camchenry)
+- 12a9934 linter: Detect diverging match blocks for node type skipping (#14631) (camchenry)
+- 82196e7 linter: Update `react/prefer-es6-class` to use top-level match (#14630) (camchenry)
+- 48e3348 linter: Update linter codegen to support wildcard with empty tuple (#14611) (camchenry)
+- 0485859 linter: Update `no-const-assign` to run on nodes instead of symbols (#14609) (camchenry)
+- 976bde0 linter: Run `next/no-duplicate-head` on nodes instead of symbols (#14607) (camchenry)
+- c821c50 linter: Switch `no-param-reassign` to run on nodes (#14604) (camchenry)
+- 676ee99 linter: Run `no-class-assign` on class nodes instead of symbols (#14578) (camchenry)
+- 463be73 linter: Support `as_*` for node type codegen (#14582) (camchenry)
+- 8df1e24 linter: Use top-level match for `const-comparisons` (#14581) (camchenry)
+
+### 🧪 Testing
+
+- a64180e linter/no-fallthrough: Add another test case with logical expr (#14832) (camc314)
+- 1fcf56c linter/no-fallthrough: Add test for switch with logical operators + break (#14811) (camc314)
+- cd9ef3e linter: Add test case with function params in no-const-assign (#14674) (camc314)
+
+
 ## [1.23.0] - 2025-10-13
 
 ### 🚀 Features
