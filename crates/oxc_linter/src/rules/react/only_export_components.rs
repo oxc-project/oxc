@@ -255,14 +255,18 @@ impl Rule for OnlyExportComponents {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        let Some(filename) = ctx.file_path().file_name().and_then(|s| s.to_str()) else {
-            return false;
-        };
-
         let should_scan = {
             let ext = ctx.file_extension();
             matches!(ext, Some(e) if e.eq_ignore_ascii_case("tsx") || e.eq_ignore_ascii_case("jsx"))
                 || (self.check_js && matches!(ext, Some(e) if e.eq_ignore_ascii_case("js")))
+        };
+
+        if !should_scan {
+            return false;
+        }
+
+        let Some(filename) = ctx.file_path().file_name().and_then(|s| s.to_str()) else {
+            return false;
         };
 
         let should_skip = filename.contains(".test.")
@@ -270,7 +274,7 @@ impl Rule for OnlyExportComponents {
             || filename.contains(".cy.")
             || filename.contains(".stories.");
 
-        should_scan && !should_skip
+        !should_skip
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
