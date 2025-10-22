@@ -143,7 +143,7 @@ impl Rule for NoAccumulatingSpread {
         let declaration_id = symbols.symbol_declaration(referenced_symbol_id);
         let declaration = ctx.nodes().parent_node(declaration_id);
 
-        check_reduce_usage(declaration, referenced_symbol_id, spread.span, ctx);
+        check_reduce_usage(declaration, referenced_symbol_id, spread.span, node.id(), ctx);
         check_loop_usage(
             declaration,
             ctx.nodes().get_node(declaration_id),
@@ -159,6 +159,7 @@ fn check_reduce_usage<'a>(
     declaration: &AstNode<'a>,
     referenced_symbol_id: SymbolId,
     spread_span: Span,
+    spread_node_id: NodeId,
     ctx: &LintContext<'a>,
 ) {
     let AstKind::FormalParameters(params) = declaration.kind() else {
@@ -183,6 +184,13 @@ fn check_reduce_usage<'a>(
     for parent in ctx.nodes().ancestors(declaration.id()) {
         if let AstKind::CallExpression(call_expr) = parent.kind()
             && is_method_call(call_expr, None, Some(&["reduce", "reduceRight"]), Some(1), Some(2))
+            && ctx
+                .nodes()
+                .ancestors(spread_node_id)
+                .take_while(|n| !n.kind().span().contains_inclusive(declaration.span()))
+                .all(|n| {
+                    !matches!(n.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_))
+                })
         {
             ctx.diagnostic(get_reduce_diagnostic(call_expr, spread_span));
             return;
@@ -449,6 +457,7 @@ fn test() {
         "let foo = {}; for (let i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (const i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",
+        "function doSomething(list) { return list.reduce((acc, each) => { return each.subList.flatMap((subEach) => { return [...acc, subEach.subList] }) }, []) }",
     ];
 
     let fail = vec![
