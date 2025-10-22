@@ -34,13 +34,12 @@ const plugin: Plugin = {
               node: SPAN,
             });
 
-            const acquiredScope = scopeManager.acquire(program as any);
+            const acquiredScope = scopeManager.acquire(program);
             assert.equal(acquiredScope, scopeManager.globalScope);
-            // console.log(scopeManager.scopes.at(-1));
           },
           VariableDeclaration(node) {
             if (node.declarations[0].id.type === 'ObjectPattern') {
-              const variables = context.sourceCode.scopeManager.getDeclaredVariables(node as any);
+              const variables = context.sourceCode.scopeManager.getDeclaredVariables(node);
               context.report({
                 message: `VariableDeclaration declares ${variables.length} variables: ${
                   variables.map(v => v.name).join(', ')
@@ -50,8 +49,8 @@ const plugin: Plugin = {
             }
           },
           FunctionDeclaration(node) {
-            if (node.id.name === 'topLevelFunction') {
-              const topLevelFunctionScope = context.sourceCode.scopeManager.acquire(node as any);
+            if (node.id && node.id.name === 'topLevelFunction') {
+              const topLevelFunctionScope = context.sourceCode.scopeManager.acquire(node)!;
               assert.equal(topLevelFunctionScope.upper, moduleScope);
               context.report({
                 message: `topLevelFunction has ${topLevelFunctionScope.variables.length} local variables: ${
@@ -63,7 +62,7 @@ const plugin: Plugin = {
           },
           TSModuleDeclaration(node) {
             if (node.id.type === 'Identifier' && node.id.name === 'TopLevelModule') {
-              const topLevelModuleScope = context.sourceCode.scopeManager.acquire(node as any);
+              const topLevelModuleScope = context.sourceCode.scopeManager.acquire(node)!;
               assert.equal(topLevelModuleScope.upper, moduleScope);
               context.report({
                 message: `TopLevelModule has ${topLevelModuleScope.variables.length} local variables: ${
@@ -74,9 +73,13 @@ const plugin: Plugin = {
             }
           },
           StaticBlock(node) {
-            const staticBlockScope = context.sourceCode.scopeManager.acquire(node as any);
-            const upperBlock = staticBlockScope.upper.block;
+            const staticBlockScope = context.sourceCode.scopeManager.acquire(node)!;
+            const upperBlock = staticBlockScope.upper!.block;
+            assert('type' in upperBlock);
             assert(upperBlock.type === 'ClassDeclaration');
+            assert('id' in upperBlock);
+            assert(typeof upperBlock.id === 'object' && upperBlock.id !== null);
+            assert('name' in upperBlock.id);
             assert.equal(upperBlock.id.name, 'TestClass');
             context.report({
               message: `TestClass static block has ${staticBlockScope.variables.length} local variables: ${
@@ -86,7 +89,7 @@ const plugin: Plugin = {
             });
           },
           LabeledStatement(node) {
-            const labeledStatementScope = context.sourceCode.scopeManager.acquire(node.body as any);
+            const labeledStatementScope = context.sourceCode.scopeManager.acquire(node.body)!;
             assert.equal(labeledStatementScope.upper, moduleScope);
             context.report({
               message: `LabeledStatement's block has ${labeledStatementScope.variables.length} local variables: ${
