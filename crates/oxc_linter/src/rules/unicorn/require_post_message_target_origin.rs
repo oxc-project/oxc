@@ -95,7 +95,8 @@ fn is_message_port_expression(expr: &Expression<'_>) -> bool {
             return false;
         };
 
-        if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2")) {
+        if member_expr.static_property_name().is_some_and(|name| matches!(name, "port1" | "port2"))
+        {
             return true;
         }
 
