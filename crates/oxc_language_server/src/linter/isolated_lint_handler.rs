@@ -10,9 +10,9 @@ use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, LINTABLE_EXTENSIONS,
-    LintOptions, LintService, LintServiceOptions, Linter, Message, RuntimeFileSystem,
-    create_unused_directives_diagnostics, read_to_arena_str, read_to_string,
+    AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, Fix, LINTABLE_EXTENSIONS,
+    LintOptions, LintService, LintServiceOptions, Linter, Message, PossibleFixes, RuleCommentType,
+    RuntimeFileSystem, read_to_arena_str, read_to_string,
 };
 
 use super::error_with_position::{
@@ -130,27 +130,13 @@ impl IsolatedLintHandler {
             && let Some(directives) = self.directives_coordinator.get(path)
         {
             messages.extend(
-                self.create_unused_directives_messages(&directives, severity)
+                create_unused_directives_messages(&directives, severity, source_text)
                     .iter()
                     .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
             );
         }
 
         messages
-    }
-
-    #[expect(clippy::unused_self)]
-    fn create_unused_directives_messages(
-        &self,
-        directives: &DisableDirectives,
-        severity: AllowWarnDeny,
-    ) -> Vec<Message> {
-        let diagnostics = create_unused_directives_diagnostics(directives, severity);
-        diagnostics
-            .into_iter()
-            // TODO: unused directives should be fixable, `RuleCommentRule.create_fix()` can be used
-            .map(|diagnostic| Message::new(diagnostic, oxc_linter::PossibleFixes::None))
-            .collect()
     }
 
     fn should_lint_path(path: &Path) -> bool {
@@ -162,4 +148,78 @@ impl IsolatedLintHandler {
             .and_then(std::ffi::OsStr::to_str)
             .is_some_and(|ext| wanted_exts.contains(ext))
     }
+}
+
+/// Almost the same as [oxc_linter::create_unused_directives_diagnostics], but returns `Message`s
+/// with a `PossibleFixes` instead of `OxcDiagnostic`s.
+fn create_unused_directives_messages(
+    directives: &DisableDirectives,
+    severity: AllowWarnDeny,
+    source_text: &str,
+) -> Vec<Message> {
+    use oxc_diagnostics::OxcDiagnostic;
+
+    let mut diagnostics = Vec::new();
+    let fix_message = "remove unused disable directive";
+
+    let severity = if severity == AllowWarnDeny::Deny {
+        oxc_diagnostics::Severity::Error
+    } else {
+        oxc_diagnostics::Severity::Warning
+    };
+
+    // Report unused disable comments
+    let unused_disable = directives.collect_unused_disable_comments();
+    for unused_comment in unused_disable {
+        let span = unused_comment.span;
+        match unused_comment.r#type {
+            RuleCommentType::All => {
+                diagnostics.push(Message::new(
+                    OxcDiagnostic::warn(
+                        "Unused eslint-disable directive (no problems were reported).",
+                    )
+                    .with_label(span)
+                    .with_severity(severity),
+                    PossibleFixes::Single(Fix::delete(span).with_message(fix_message)),
+                ));
+            }
+            RuleCommentType::Single(rules) => {
+                for rule in rules {
+                    let rule_message = format!(
+                        "Unused eslint-disable directive (no problems were reported from {}).",
+                        rule.rule_name
+                    );
+                    diagnostics.push(Message::new(
+                        OxcDiagnostic::warn(rule_message)
+                            .with_label(rule.name_span)
+                            .with_severity(severity),
+                        PossibleFixes::Single(
+                            rule.create_fix(source_text, span).with_message(fix_message),
+                        ),
+                    ));
+                }
+            }
+        }
+    }
+
+    // Report unused enable comments
+    let unused_enable = directives.unused_enable_comments();
+    for (rule_name, span) in unused_enable {
+        let message = if let Some(rule_name) = rule_name {
+            format!(
+                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
+            )
+        } else {
+            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
+                .to_string()
+        };
+        diagnostics.push(Message::new(
+            OxcDiagnostic::warn(message).with_label(*span).with_severity(severity),
+            // TODO: fixer
+            // copy the structure of disable directives
+            PossibleFixes::None,
+        ));
+    }
+
+    diagnostics
 }
