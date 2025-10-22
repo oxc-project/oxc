@@ -8672,7 +8672,7 @@ rebuilt        : [ReferenceId(13)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImport.ts
 Symbol reference IDs mismatch for "Observable":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(8), ReferenceId(9)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(0): [ReferenceId(12), ReferenceId(13)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataElidedImportOnDeclare.ts
@@ -8727,22 +8727,22 @@ Reference symbol mismatch for "decorator":
 after transform: SymbolId(0) "decorator"
 rebuilt        : <None>
 Reference flags mismatch for "Promise":
-after transform: ReferenceId(26): ReferenceFlags(Read | Type)
+after transform: ReferenceId(30): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(28): ReferenceFlags(Read)
 Reference flags mismatch for "Promise":
-after transform: ReferenceId(27): ReferenceFlags(Read | Type)
+after transform: ReferenceId(31): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(29): ReferenceFlags(Read)
 Reference flags mismatch for "Promise":
-after transform: ReferenceId(32): ReferenceFlags(Read | Type)
+after transform: ReferenceId(25): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(34): ReferenceFlags(Read)
 Reference flags mismatch for "Promise":
-after transform: ReferenceId(33): ReferenceFlags(Read | Type)
+after transform: ReferenceId(26): ReferenceFlags(Read | Type)
 rebuilt        : ReferenceId(35): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Function", "MethodDecorator", "Object", "Promise", "require"]
 rebuilt        : ["Function", "Object", "Promise", "decorator", "require"]
 Unresolved reference IDs mismatch for "Promise":
-after transform: [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(11), ReferenceId(19), ReferenceId(26), ReferenceId(27), ReferenceId(32), ReferenceId(33)]
+after transform: [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(9), ReferenceId(17), ReferenceId(25), ReferenceId(26), ReferenceId(30), ReferenceId(31)]
 rebuilt        : [ReferenceId(12), ReferenceId(20), ReferenceId(28), ReferenceId(29), ReferenceId(34), ReferenceId(35)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataRestParameterWithImportedType.ts
@@ -8864,7 +8864,7 @@ rebuilt        : ["Object", "database"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
 Symbol reference IDs mismatch for "Yoha":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(5), ReferenceId(6)]
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(9)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/decoratorReferences.ts
@@ -35962,8 +35962,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "TypedPropertyDescriptor", "require"]
-rebuilt        : ["Function", "dec", "require"]
+after transform: ["TypedPropertyDescriptor", "require"]
+rebuilt        : ["dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor2.ts
 Bindings mismatch:
@@ -35976,8 +35976,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "TypedPropertyDescriptor", "require"]
-rebuilt        : ["Function", "dec", "require"]
+after transform: ["TypedPropertyDescriptor", "require"]
+rebuilt        : ["dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor4.ts
 Bindings mismatch:
@@ -35990,8 +35990,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Number", "TypedPropertyDescriptor", "require"]
-rebuilt        : ["Function", "Number", "dec", "require"]
+after transform: ["Number", "TypedPropertyDescriptor", "require"]
+rebuilt        : ["Number", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor5.ts
 Bindings mismatch:
@@ -36004,8 +36004,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Number", "TypedPropertyDescriptor", "require"]
-rebuilt        : ["Function", "Number", "dec", "require"]
+after transform: ["Number", "TypedPropertyDescriptor", "require"]
+rebuilt        : ["Number", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor8.ts
 Bindings mismatch:
@@ -36033,8 +36033,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Number", "TypedPropertyDescriptor", "require"]
-rebuilt        : ["Function", "Number", "dec", "require"]
+after transform: ["Number", "TypedPropertyDescriptor", "require"]
+rebuilt        : ["Number", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor3.ts
 Unresolved references mismatch:
@@ -38551,8 +38551,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "TypedPropertyDescriptor"]
-rebuilt        : ["Function", "dec"]
+after transform: ["TypedPropertyDescriptor"]
+rebuilt        : ["dec"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/decorators/class/decoratorOnClass1.es6.ts
 Bindings mismatch:
@@ -39372,10 +39372,10 @@ Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "dec", "method3"]
 rebuilt        : ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "method3"]
 Reference flags mismatch for "_method":
-after transform: ReferenceId(39): ReferenceFlags(Read | Write)
+after transform: ReferenceId(31): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 Reference flags mismatch for "_method2":
-after transform: ReferenceId(48): ReferenceFlags(Read | Write)
+after transform: ReferenceId(39): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -39396,8 +39396,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Object", "require"]
-rebuilt        : ["Function", "Object", "dec", "require"]
+after transform: ["Object", "require"]
+rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticPrivate.ts
 Bindings mismatch:
@@ -39410,18 +39410,18 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Object", "WeakSet", "require"]
-rebuilt        : ["Function", "Object", "WeakSet", "dec", "require"]
+after transform: ["Object", "WeakSet", "require"]
+rebuilt        : ["Object", "WeakSet", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-static.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "dec", "method3"]
 rebuilt        : ScopeId(0): ["C", "_decorate", "_decorateMetadata", "_method", "_method2", "method3"]
 Reference flags mismatch for "_method":
-after transform: ReferenceId(39): ReferenceFlags(Read | Write)
+after transform: ReferenceId(31): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(2): ReferenceFlags(Write)
 Reference flags mismatch for "_method2":
-after transform: ReferenceId(48): ReferenceFlags(Read | Write)
+after transform: ReferenceId(39): ReferenceFlags(Read | Write)
 rebuilt        : ReferenceId(4): ReferenceFlags(Write)
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -39442,8 +39442,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Object", "require"]
-rebuilt        : ["Function", "Object", "dec", "require"]
+after transform: ["Object", "require"]
+rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-staticPrivate.ts
 Bindings mismatch:
@@ -39453,13 +39453,13 @@ Symbol span mismatch for "D":
 after transform: SymbolId(3): Span { start: 137, end: 138 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(3): [ReferenceId(23), ReferenceId(25)]
-rebuilt        : SymbolId(9): [ReferenceId(20), ReferenceId(30), ReferenceId(33)]
+after transform: SymbolId(3): [ReferenceId(20), ReferenceId(22)]
+rebuilt        : SymbolId(9): [ReferenceId(17), ReferenceId(27), ReferenceId(30)]
 Symbol span mismatch for "D":
 after transform: SymbolId(14): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(10): Span { start: 137, end: 138 }
 Symbol reference IDs mismatch for "D":
-after transform: SymbolId(14): [ReferenceId(28)]
+after transform: SymbolId(14): [ReferenceId(25)]
 rebuilt        : SymbolId(10): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
@@ -39474,8 +39474,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Object", "require"]
-rebuilt        : ["Function", "Object", "dec", "require"]
+after transform: ["Object", "require"]
+rebuilt        : ["Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/classSuper/esDecorators-classDeclaration-classSuper.1.ts
 Bindings mismatch:
@@ -40482,7 +40482,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["_C", "_decorateMetadata", "_defineProperty", "_get_x", "_method", "_set_x", "_y", "dec"]
 rebuilt        : ScopeId(0): ["_C", "_decorateMetadata", "_defineProperty", "_get_x", "_method", "_set_x", "_y"]
 Symbol reference IDs mismatch for "_decorateMetadata":
-after transform: SymbolId(10): [ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(32), ReferenceId(34), ReferenceId(35), ReferenceId(37), ReferenceId(39), ReferenceId(41), ReferenceId(42), ReferenceId(43), ReferenceId(45), ReferenceId(46), ReferenceId(47), ReferenceId(49), ReferenceId(51), ReferenceId(52), ReferenceId(54), ReferenceId(56)]
+after transform: SymbolId(10): [ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(31), ReferenceId(32), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(39), ReferenceId(40), ReferenceId(41), ReferenceId(42), ReferenceId(45), ReferenceId(46), ReferenceId(48), ReferenceId(50)]
 rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
