@@ -13,15 +13,23 @@ pub mod cli {
     };
 }
 
-use std::io::BufWriter;
-
-use cli::{CliRunResult, FormatRunner, format_command};
+// Only include code to run formatter when the `napi` feature is enabled.
+#[cfg(feature = "napi")]
+mod prettier_plugins;
+#[cfg(feature = "napi")]
+mod run;
+#[cfg(feature = "napi")]
+pub use run::*;
 
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
-pub fn format() -> CliRunResult {
+use std::io::BufWriter;
+
+use crate::cli::{CliRunResult, FormatRunner, format_command};
+
+pub fn format_cli() -> CliRunResult {
     init_tracing();
     init_miette();
 
@@ -55,9 +63,14 @@ pub fn format() -> CliRunResult {
     FormatRunner::new(command).run(&mut stdout)
 }
 
+/// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.
+pub(crate) fn init_miette() {
+    miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().build()))).unwrap();
+}
+
 /// To debug `oxc_formatter`:
 /// `OXC_LOG=oxc_formatter oxfmt`
-fn init_tracing() {
+pub(crate) fn init_tracing() {
     use tracing_subscriber::{filter::Targets, prelude::*};
 
     // Usage without the `regex` feature.
@@ -72,9 +85,4 @@ fn init_tracing() {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
-}
-
-// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.
-fn init_miette() {
-    miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().build()))).unwrap();
 }
