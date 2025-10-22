@@ -5,6 +5,9 @@ use oxc_semantic::NodeId;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 
+#[cfg(test)]
+mod tests;
+
 use crate::{
     AstNode,
     context::LintContext,

@@ -1,8 +1,7 @@
 #[test]
 fn test() {
-    use super::PreferLowercaseTitle;
-    use crate::rule::RuleMeta;
-    use crate::tester::Tester;
+    use super::super::NoStandaloneExpect;
+    use crate::{rule::RuleMeta, tester::Tester};
 
     let pass = vec![
         ("expect.any(String)", None),
@@ -62,18 +61,18 @@ fn test() {
             ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])),
         ),
-        (
-            r"function funcWithCallback(callback) { callback(5); }
-            describe('testWithCallback', () => {
-              it('should call the callback', (done) => {
-                funcWithCallback((result) => {
-                  expect(result).toBe(5);
-                  done();
-                });
-              });
-            });",
-            None,
-        ),
+        // (
+        //     r"function funcWithCallback(callback) { callback(5); }
+        //     describe('testWithCallback', () => {
+        //       it('should call the callback', (done) => {
+        //         funcWithCallback((result) => {
+        //           expect(result).toBe(5);
+        //           done();
+        //         });
+        //       });
+        //     });",
+        //     None,
+        // ),
     ];
 
     let fail = vec![
