@@ -70,7 +70,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                 Ok(())
             });
 
-            write!(f, [space(), group(&format_inner_inner)])?;
+            write!(f, [group(&format_inner_inner)])?;
             if let Some(type_annotation) = &self.type_annotation() {
                 write!(f, [":", space(), type_annotation])?;
             }
