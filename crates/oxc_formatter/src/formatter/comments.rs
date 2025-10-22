@@ -189,7 +189,7 @@ impl<'a> Comments<'a> {
         let comments = self.unprinted_comments();
         for (index, comment) in comments.iter().enumerate() {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
-                matches!(b, b'\t' | b' ') || b.is_ascii_punctuation()
+                matches!(b, b'\t' | b' ' | b'=' | b':')
             }) {
                 if comment.is_line() || self.is_end_of_line_comment(comment) {
                     return &comments[..=index];
