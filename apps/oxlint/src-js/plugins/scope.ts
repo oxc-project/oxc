@@ -5,8 +5,13 @@
 import type * as ESTree from '../generated/types.d.ts';
 import type { Program } from '../generated/types.d.ts';
 
+import {
+  analyze,
+  type AnalyzeOptions,
+  GlobalScope,
+  type ScopeManager as TSESLintScopeManager,
+} from '@typescript-eslint/scope-manager';
 import type { Node } from './types.ts';
-import { analyze, GlobalScope, type AnalyzeOptions, type ScopeManager as TSESLintScopeManager } from '@typescript-eslint/scope-manager';
 
 type Identifier =
   | ESTree.IdentifierName
@@ -59,7 +64,7 @@ export class ScopeManager {
    */
   getDeclaredVariables(node: Node): Variable[] {
     return this.#scopeManager.getDeclaredVariables(node as any) as any;
-  };
+  }
 
   /**
    * Get the scope of a given AST node. The gotten scope's `block` property is the node.
