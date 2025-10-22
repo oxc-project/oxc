@@ -1,6 +1,6 @@
 #[test]
 fn test() {
-    use super::PreferLowercaseTitle;
+    use super::NoStandaloneExpect;
     use crate::rule::RuleMeta;
     use crate::tester::Tester;
 

@@ -1,6 +1,6 @@
 #[test]
 fn test() {
-    use super::PreferLowercaseTitle;
+    use super::NoStandaloneExpect;
     use crate::rule::RuleMeta;
     use crate::tester::Tester;
 
@@ -71,6 +71,18 @@ fn test() {
                   done();
                 });
               });
+            });",
+            None,
+        ),
+        (
+            "describe('example', () => {
+                it('should do something', async () => {
+                    render(React.createElement(ExampleComponent));
+
+                    await waitFor(() => {
+                        expect(screen.getByText('Option 2')).toBeInTheDocument();
+                    });
+                });
             });",
             None,
         ),

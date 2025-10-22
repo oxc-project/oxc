@@ -241,3 +241,6 @@ fn is_var_declarator_or_test_block<'a>(
 
     false
 }
+
+#[cfg(test)]
+mod tests;

@@ -106,11 +106,19 @@ pub fn parse_jest_fn_call<'a>(
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
-        if ctx.frameworks().is_jest() && !is_valid_jest_call(&call_chains) {
-            return None;
-        }
+        let is_jest = ctx.frameworks().is_jest();
+        let is_vitest = ctx.frameworks().is_vitest();
 
-        if ctx.frameworks().is_vitest() && !is_valid_vitest_call(&call_chains) {
+        // Validate based on active frameworks
+        // If both are active, accept if valid for either framework
+        let is_valid = match (is_jest, is_vitest) {
+            (true, true) => is_valid_jest_call(&call_chains) || is_valid_vitest_call(&call_chains),
+            (true, false) => is_valid_jest_call(&call_chains),
+            (false, true) => is_valid_vitest_call(&call_chains),
+            (false, false) => true, // No framework active, accept all
+        };
+
+        if !is_valid {
             return None;
         }
 
