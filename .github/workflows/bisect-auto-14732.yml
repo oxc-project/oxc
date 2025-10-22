@@ -105,22 +105,32 @@ jobs:
             cp /tmp/bisect-tests/test-worker.mjs napi/parser/
           fi
           
+          # Install workspace dependencies
+          echo "Installing workspace dependencies..."
+          if [ ! -d node_modules ]; then
+            pnpm install
+          fi
+          
           # Build oxc-parser
           echo "Building oxc-parser..."
           cd napi/parser
           
-          # Install deps if needed
-          if [ ! -d node_modules ]; then
-            pnpm install --ignore-scripts
-          fi
-          
           # Build with allocator feature
-          if ! pnpm build --features allocator --release 2>&1 | tail -5; then
+          if ! pnpm build --features allocator --release; then
             echo "Build failed - skipping this commit"
             exit 125  # Tell git bisect to skip this commit
           fi
           
-          echo "Build completed. Running test..."
+          # Verify native binding was created
+          if [ ! -f "src-js/parser.win32-x64-msvc.node" ]; then
+            echo "ERROR: Native binding not found after build!"
+            echo "Contents of src-js:"
+            ls -la src-js/ | grep -E '(\.node|parser)' || true
+            exit 125  # Skip this commit if binding wasn't created
+          fi
+          
+          echo "✓ Build completed. Native binding verified."
+          echo "Running test..."
           
           # Run test with timeout - if it crashes or times out, it's bad
           if timeout 60 node test-worker-main.mjs 2>&1 | tee test-output.log; then

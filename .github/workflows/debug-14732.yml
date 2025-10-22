@@ -48,13 +48,29 @@ jobs:
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           save-if: false
 
+      - name: Install workspace dependencies
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        shell: bash
+        run: pnpm install
+      
       - name: Build oxc-parser
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/napi/parser
         shell: bash
         run: |
-          pnpm install
+          echo "Building oxc-parser..."
           pnpm build --features allocator --release
-          echo "✓ Build completed"
+          
+          echo ""
+          echo "=== Build completed. Verifying native binding... ==="
+          if [ -f "src-js/parser.win32-x64-msvc.node" ]; then
+            echo "✓ Found native binding: src-js/parser.win32-x64-msvc.node"
+            ls -lh src-js/parser.win32-x64-msvc.node
+          else
+            echo "✗ ERROR: Native binding not found!"
+            echo "Contents of src-js directory:"
+            ls -la src-js/ | grep -E '(\.node|parser)'
+            exit 1
+          fi
 
       - name: Show commit info
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
