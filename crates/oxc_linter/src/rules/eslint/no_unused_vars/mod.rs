@@ -189,7 +189,8 @@ declare_oxc_lint!(
     NoUnusedVars,
     eslint,
     correctness,
-    dangerous_suggestion
+    dangerous_suggestion,
+    config = NoUnusedVarsOptions
 );
 
 impl Deref for NoUnusedVars {

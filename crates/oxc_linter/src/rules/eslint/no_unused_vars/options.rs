@@ -2,10 +2,12 @@ use std::{borrow::Cow, ops::Deref};
 
 use lazy_regex::{Regex, RegexBuilder};
 use oxc_diagnostics::OxcDiagnostic;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 /// See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 #[must_use]
 #[non_exhaustive]
 pub struct NoUnusedVarsOptions {
@@ -34,6 +36,7 @@ pub struct NoUnusedVarsOptions {
     /// var b = 10;
     /// console.log(b);
     /// ```
+    #[schemars(skip)]
     pub vars_ignore_pattern: IgnorePattern<Regex>,
 
     /// Controls how unused arguments are checked.
@@ -65,6 +68,7 @@ pub struct NoUnusedVarsOptions {
     /// }
     /// foo(1, 2);
     /// ```
+    #[schemars(skip)]
     pub args_ignore_pattern: IgnorePattern<Regex>,
 
     /// Using a Rest property it is possible to "omit" properties from an
@@ -108,6 +112,7 @@ pub struct NoUnusedVarsOptions {
     ///   console.error("Error caught in catch block");
     /// }
     /// ```
+    #[schemars(skip)]
     pub caught_errors_ignore_pattern: IgnorePattern<Regex>,
 
     /// This option specifies exceptions within destructuring patterns that will
@@ -132,6 +137,7 @@ pub struct NoUnusedVarsOptions {
     ///     console.log(n);
     /// });
     /// ```
+    #[schemars(skip)]
     pub destructured_array_ignore_pattern: IgnorePattern<Regex>,
 
     /// The `ignoreClassWithStaticInitBlock` option is a boolean (default:
@@ -368,7 +374,8 @@ impl Default for NoUnusedVarsOptions {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub enum VarsOption {
     /// All variables are checked for usage, including those in the global scope.
     #[default]
@@ -383,7 +390,8 @@ impl VarsOption {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 pub enum ArgsOption {
     /// Unused positional arguments that occur before the last used argument
     /// will not be checked, but all named arguments and all positional
@@ -412,7 +420,8 @@ impl ArgsOption {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 #[repr(transparent)]
 pub struct CaughtErrors(bool);
 
