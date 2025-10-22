@@ -1,0 +1,10 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+const [...rest] = arr;
+
+==================== Output ====================
+const [...rest] = arr;
+
+===================== End =====================

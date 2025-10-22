@@ -53,7 +53,8 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
             write!(
                 f,
                 group(&soft_block_indent(&format_once(|f| {
-                    if !self.elements.is_empty() {
+                    let has_element = !self.elements.is_empty();
+                    if has_element {
                         write_array_node(
                             self.elements.len() + usize::from(self.rest.is_some()),
                             self.elements().iter().map(AstNode::as_ref),
@@ -61,7 +62,7 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
                         )?;
                     }
                     if let Some(rest) = self.rest() {
-                        write!(f, [soft_line_break_or_space(), rest]);
+                        write!(f, [has_element.then_some(soft_line_break_or_space()), rest]);
                     }
                     Ok(())
                 })))
