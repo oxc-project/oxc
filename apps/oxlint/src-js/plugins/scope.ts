@@ -6,6 +6,8 @@ import type * as ESTree from '../generated/types.d.ts';
 
 import type { Node } from './types.ts';
 
+export type { ScopeManager } from '@typescript-eslint/scope-manager';
+
 type Identifier =
   | ESTree.IdentifierName
   | ESTree.IdentifierReference
@@ -13,10 +15,6 @@ type Identifier =
   | ESTree.LabelIdentifier
   | ESTree.TSThisParameter
   | ESTree.TSIndexSignatureName;
-
-export class ScopeManager {
-  // TODO
-}
 
 export interface Scope {
   type: ScopeType;

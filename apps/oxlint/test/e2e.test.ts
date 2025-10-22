@@ -177,6 +177,10 @@ describe('oxlint CLI', () => {
     await testFixture('sourceCode_late_access_after_only');
   });
 
+  it.only('should support scopeManager', async () => {
+    await testFixture('scope_manager');
+  });
+
   it('should support selectors', async () => {
     await testFixture('selector');
   });

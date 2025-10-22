@@ -52,6 +52,13 @@ importers:
         version: 3.2.4(@types/node@24.8.1)(@vitest/browser@3.2.4)(jiti@2.6.1)
 
   apps/oxlint:
+    dependencies:
+      '@typescript-eslint/scope-manager':
+        specifier: ^8.46.1
+        version: 8.46.1
+      '@typescript-eslint/types':
+        specifier: ^8.46.1
+        version: 8.46.1
     devDependencies:
       '@types/esquery':
         specifier: ^1.5.4
@@ -1943,6 +1950,10 @@ packages:
 
   '@types/vscode@1.93.0':
     resolution: {integrity: sha512-kUK6jAHSR5zY8ps42xuW89NLcBpw1kOabah7yv38J8MyiYuOHxLQBi0e7zeXbQgVefDy/mZZetqEFC+Fl5eIEQ==}
+
+  '@typescript-eslint/scope-manager@8.46.1':
+    resolution: {integrity: sha512-weL9Gg3/5F0pVQKiF8eOXFZp8emqWzZsOJuWRUNtHT+UNV2xSJegmpCNQHy37aEQIbToTq7RHKhWvOsmbM680A==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@typescript-eslint/types@8.46.1':
     resolution: {integrity: sha512-C+soprGBHwWBdkDpbaRC4paGBrkIXxVlNohadL5o0kfhsXqOC6GYH2S/Obmig+I0HTDl8wMaRySwrfrXVP8/pQ==}
@@ -5643,6 +5654,11 @@ snapshots:
   '@types/sarif@2.1.7': {}
 
   '@types/vscode@1.93.0': {}
+
+  '@typescript-eslint/scope-manager@8.46.1':
+    dependencies:
+      '@typescript-eslint/types': 8.46.1
+      '@typescript-eslint/visitor-keys': 8.46.1
 
   '@typescript-eslint/types@8.46.1': {}
 
