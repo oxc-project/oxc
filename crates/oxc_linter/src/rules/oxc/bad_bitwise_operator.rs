@@ -68,7 +68,7 @@ declare_oxc_lint!(
     /// ```
     BadBitwiseOperator,
     oxc,
-    restriction // Restricted because there are false positives for enum bitflags in TypeScript,
+    restriction, // Restricted because there are false positives for enum bitflags in TypeScript,
                 // e.g. in the vscode repo
     pending
 );

@@ -116,8 +116,13 @@ impl Parse for LintRuleMeta {
             }
         }
 
-        // Ignore the rest
-        input.parse::<proc_macro2::TokenStream>()?;
+        let remaining = input.parse::<proc_macro2::TokenStream>()?;
+        if !remaining.is_empty() {
+            return Err(Error::new_spanned(
+                remaining,
+                "unexpected tokens in rule declaration, missing a comma?",
+            ));
+        }
 
         Ok(Self {
             name: struct_name,

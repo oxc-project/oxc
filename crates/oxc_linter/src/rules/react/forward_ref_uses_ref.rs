@@ -60,7 +60,6 @@ declare_oxc_lint!(
     react,
     correctness,
     suggestion
-    suggestion
 );
 
 fn check_forward_ref_inner<'a>(
