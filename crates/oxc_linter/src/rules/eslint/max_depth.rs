@@ -108,7 +108,7 @@ declare_oxc_lint!(
     /// ```
     MaxDepth,
     eslint,
-    pedantic
+    pedantic,
     config = MaxDepth,
 );
 
