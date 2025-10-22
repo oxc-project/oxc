@@ -199,11 +199,9 @@ mod test {
 
     #[test]
     fn test_is_inside_comment() {
-        let comments = vec![
-            Comment::new(0, 4, CommentKind::Line),
-            Comment::new(10, 20, CommentKind::Block),
-        ]
-        .into_boxed_slice();
+        let comments =
+            vec![Comment::new(0, 4, CommentKind::Line), Comment::new(10, 20, CommentKind::Block)]
+                .into_boxed_slice();
 
         assert!(is_inside_comment(&comments, 2));
         assert!(!is_inside_comment(&comments, 5));
