@@ -181,6 +181,10 @@ describe('oxlint CLI', () => {
     await testFixture('scope_manager');
   });
 
+  it('should support scope helper methods in `context.sourceCode`', async () => {
+    await testFixture('sourceCode_scope_methods');
+  });
+
   it('should support selectors', async () => {
     await testFixture('selector');
   });
