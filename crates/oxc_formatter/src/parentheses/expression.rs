@@ -262,7 +262,7 @@ impl NeedsParentheses<'_> for AstNode<'_, MemberExpression<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, ComputedMemberExpression<'_>> {
     fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
         matches!(self.parent, AstNodes::NewExpression(_))
-            && (!self.optional || member_chain_callee_needs_parens(&self.expression))
+            && (self.optional || member_chain_callee_needs_parens(&self.object))
     }
 }
 
