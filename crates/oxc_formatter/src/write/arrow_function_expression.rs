@@ -172,8 +172,6 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         }
                     });
 
-                let body_is_condition_type =
-                    matches!(arrow_expression, Some(Expression::ConditionalExpression(_)));
                 if body_has_soft_line_break {
                     write!(f, [formatted_signature, space(), format_body])
                 } else {
@@ -184,11 +182,13 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         Some(GroupedCallArgumentLayout::GroupedLastArgument)
                     );
 
-                    let should_add_soft_line = (is_last_call_arg
+                    let should_add_soft_line = is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        || matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(_)));
-                    // TODO: it seems no difference whether check there is a comment or not.
-                    //&& !f.context().comments().has_comments(node.syntax());
+                        || (matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(container)
+                            if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
+
+                    let body_is_condition_type =
+                        matches!(arrow_expression, Some(Expression::ConditionalExpression(_)));
 
                     if body_is_condition_type {
                         write!(
