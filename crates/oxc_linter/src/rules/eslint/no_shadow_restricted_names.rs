@@ -3,6 +3,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 const PRE_DEFINE_VAR: [&str; 5] = ["Infinity", "NaN", "arguments", "eval", "undefined"];
@@ -16,16 +17,18 @@ fn no_shadow_restricted_names_diagnostic(shadowed_name: &str, span: Span) -> Oxc
 #[derive(Debug, Default, Clone)]
 pub struct NoShadowRestrictedNames(Box<NoShadowRestrictedNamesConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoShadowRestrictedNamesConfig {
+    /// If true, also report shadowing of `globalThis`.
     report_global_this: bool,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows the redefining of global variables such as `undefined`, `NaN`, `Infinity`, `eval`
-    /// and `arguments`.
+    /// Disallows the redefining of global variables such as `undefined`, `NaN`, `Infinity`,
+    /// `eval`, and `arguments`.
     ///
     /// ### Why is this bad?
     ///
@@ -78,7 +81,8 @@ declare_oxc_lint!(
     /// ```
     NoShadowRestrictedNames,
     eslint,
-    correctness
+    correctness,
+    config = NoShadowRestrictedNamesConfig
 );
 
 impl Rule for NoShadowRestrictedNames {
