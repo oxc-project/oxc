@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.24.0] - 2025-10-22
+
+### 🚀 Features
+
+- e3d65c3 language_server: Search both .json and .jsonc config file (#14868) (Sysix)
+- 2609c74 language_server: Watch for `fmt.configPath` file content change (#14509) (Sysix)
+- fec2ed9 oxfmt: Use Prettier style config key and value (#14612) (leaysgur)
+- 1b58521 oxfmt,language_server: Enable JSX for all JS source type (#14605) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 644dfd4 language_server: Make unused directives fixable again (#14872) (Sysix)
+- e560cc1 language_server: Fix panic when "disable rule for this line" position is after error span (#14597) (Sysix)
+
+### 🚜 Refactor
+
+- 699c91c language_server: Improve file watching for different tools (#14645) (Sysix)
+- 3bfb8e1 linter: Make `Message.span` public (#14601) (Sysix)
+- 9a589ca language_server: Use Message span for Diagnostic's Range (#14600) (Sysix)
+- b301795 linter: Remove unused allocator param in `Runtime` for LSP & tests (#14489) (Sysix)
+
+### ⚡ Performance
+
+- df48416 language_server: Return `Diagnostic` when relinting all files (#14737) (Sysix)
+- 22ee19f language_server: Avoid creating HashMap in `Backend::did_change_configuration` (#14736) (Sysix)
+- ed922ec language_server: Avoid creating HashMap in `Backend::did_change_watched_files` (#14735) (Sysix)
+
+
 ## [1.23.0] - 2025-10-13
 
 ### 🚀 Features

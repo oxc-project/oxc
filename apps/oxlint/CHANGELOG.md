@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.24.0] - 2025-10-22
+
+### 🚀 Features
+
+- 54ec8e3 linter: Add `cwd` property to JS plugin `Context` (#14814) (magic-akari)
+- 9700a56 linter/plugins: Comment-related APIs (#14715) (Arsh)
+- bec7a7d semantic: Add scope to `TSConstructorType` (#14676) (camc314)
+- b1a9a03 linter/plugins: Implement `SourceCode#getAllComments` (#14589) (Arsh)
+
+### 🐛 Bug Fixes
+
+- 28e76ec oxlint: Resolving JS plugin failing when `extends` is used (#14556) (camc314)
+- 78ee7b8 linter/plugins: Handle utf16 characters within comment spans (#14768) (Arsh)
+- 47d8db1 linter/plugins: Prevent `comments` being accessed after file is linted (#14727) (overlookmotel)
+- 5238891 linter/plugins: Add `comments` field to TS type def for `Program` (#14626) (overlookmotel)
+- 84b2605 linter/plugins: Remove `parent` property from comments (#14624) (overlookmotel)
+- 0961c3a oxlint,oxfmt: Skip traversing `.git` directories (#14590) (Boshen)
+
+### 🚜 Refactor
+
+- 4520695 linter/plugins: Reorganise `SourceCode` methods (#14773) (overlookmotel)
+- 6942d75 linter/plugins: Shorten import of comment-related `SourceCode` methods (#14772) (overlookmotel)
+- b9a3f46 linter/plugins: Move scope-related `SourceCode` methods into separate file (#14771) (overlookmotel)
+- cd068aa linter/plugins: Move token-related `SourceCode` methods into separate file (#14770) (overlookmotel)
+- ec816ba linter/plugins: Move comments-related code into separate file (#14753) (overlookmotel)
+- e9c3b18 linter/plugins: Update outdated comment (#14750) (overlookmotel)
+- 14de671 linter/plugins: Simplify `comments` getter (#14728) (overlookmotel)
+- b402024 linter/plugins: Rename function (#14726) (overlookmotel)
+- 85a2743 linter/plugins, napi/parser: Remove extraneous code from raw transfer deserializers (#14683) (overlookmotel)
+- 2b14abc napi/parser: Shorten raw transfer deserializer for `Comment` (#14623) (overlookmotel)
+
+### 📚 Documentation
+
+- 207b62b linter/plugins: Correct JSDoc comments for `SourceCode` tokens methods (#14776) (overlookmotel)
+- cd266b4 linter/plugins: Improve docs for comments APIs (#14754) (overlookmotel)
+
+### ⚡ Performance
+
+- 10182e8 linter/plugins: Use binary search (#14778) (Arsh)
+- e6f351d linter/plugins: Speed up `SourceCode#getAncestors` (#14747) (overlookmotel)
+- 58ba6d6 linter/plugins: Lazy deserialize comments array (#14637) (Arsh)
+
+### 🎨 Styling
+
+- 3029dfb linter/plugins: Reorder code (#14725) (overlookmotel)
+
+### 🧪 Testing
+
+- 5933097 oxlint: Add test for nested configs importing the same plugin 2x (#14646) (camc314)
+- 6570f36 linter/custom-plugins: Snapshot test start, end, range, and loc for comments (#14779) (Arsh)
+
+
 ## [1.23.0] - 2025-10-13
 
 ### 🐛 Bug Fixes

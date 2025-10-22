@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.24.0] - 2025-10-22
+
+### 🐛 Bug Fixes
+
+- 28e76ec oxlint: Resolving JS plugin failing when `extends` is used (#14556) (camc314)
+
+
 
 
 ## [1.21.0] - 2025-10-08
