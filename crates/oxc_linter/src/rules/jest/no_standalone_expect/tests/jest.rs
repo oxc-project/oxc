@@ -61,18 +61,48 @@ fn test() {
             ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])),
         ),
-        // (
-        //     r"function funcWithCallback(callback) { callback(5); }
-        //     describe('testWithCallback', () => {
-        //       it('should call the callback', (done) => {
-        //         funcWithCallback((result) => {
-        //           expect(result).toBe(5);
-        //           done();
-        //         });
-        //       });
-        //     });",
-        //     None,
-        // ),
+        (
+            r"function funcWithCallback(callback) { callback(5); }
+            describe('testWithCallback', () => {
+              it('should call the callback', (done) => {
+                funcWithCallback((result) => {
+                  expect(result).toBe(5);
+                  done();
+                });
+              });
+            });",
+            None,
+        ),
+        (
+            r"it('should do something', async () => {
+              render();
+
+              await waitFor(() => {
+                expect(screen.getByText('Option 2')).toBeInTheDocument();
+              });
+            });",
+            None,
+        ),
+        (
+            r"it('should do something', () => {
+              waitFor(() => {
+                expect(screen.getByText('Option 2')).toBeInTheDocument();
+              });
+            });",
+            None,
+        ),
+        (
+            r"describe('test suite', () => {
+              it('should work with nested callbacks', () => {
+                someFunction(() => {
+                  anotherFunction(() => {
+                    expect(true).toBe(true);
+                  });
+                });
+              });
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![

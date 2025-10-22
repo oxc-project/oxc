@@ -143,58 +143,71 @@ fn is_correct_place_to_call_expect<'a>(
     id_nodes_mapping: &FxHashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> Option<()> {
-    let mut parent = ctx.nodes().parent_node(node.id());
+    let mut current_node = node;
 
-    // loop until find the closest function body
-    while !matches!(parent.kind(), AstKind::FunctionBody(_) | AstKind::Program(_)) {
-        parent = ctx.nodes().parent_node(parent.id());
-    }
+    // Walk up the tree, checking each function scope
+    loop {
+        let mut current = ctx.nodes().parent_node(current_node.id());
 
-    let parent = ctx.nodes().parent_node(parent.id());
+        // loop until find the closest function body
+        while !matches!(current.kind(), AstKind::FunctionBody(_) | AstKind::Program(_)) {
+            current = ctx.nodes().parent_node(current.id());
+        }
 
-    match parent.kind() {
-        AstKind::Function(function) => {
-            // `function foo() { expect(1).toBe(1); }`
-            if function.is_function_declaration() {
-                return Some(());
+        // If we reached the program root without finding a test block, it's invalid
+        if matches!(current.kind(), AstKind::Program(_)) {
+            return None;
+        }
+
+        let parent = ctx.nodes().parent_node(current.id());
+
+        match parent.kind() {
+            AstKind::Function(function) => {
+                // `function foo() { expect(1).toBe(1); }`
+                if function.is_function_declaration() {
+                    return Some(());
+                }
+
+                if function.is_expression() {
+                    let grandparent = ctx.nodes().parent_node(parent.id());
+
+                    // `test('foo', function () { expect(1).toBe(1) })`
+                    // `const foo = function() {expect(1).toBe(1)}`
+                    if is_var_declarator_or_test_block(
+                        grandparent,
+                        additional_test_block_functions,
+                        id_nodes_mapping,
+                        ctx,
+                    ) {
+                        return Some(());
+                    }
+
+                    // Continue checking parent scopes
+                    current_node = parent;
+                } else {
+                    // Function that's neither a declaration nor expression - shouldn't reach here
+                    return None;
+                }
             }
-
-            if function.is_expression() {
+            AstKind::ArrowFunctionExpression(_) => {
                 let grandparent = ctx.nodes().parent_node(parent.id());
-
-                // `test('foo', function () { expect(1).toBe(1) })`
-                // `const foo = function() {expect(1).toBe(1)}`
-                return if is_var_declarator_or_test_block(
+                // `test('foo', () => expect(1).toBe(1))`
+                // `const foo = () => expect(1).toBe(1)`
+                if is_var_declarator_or_test_block(
                     grandparent,
                     additional_test_block_functions,
                     id_nodes_mapping,
                     ctx,
                 ) {
-                    Some(())
-                } else {
-                    None
-                };
-            }
-        }
-        AstKind::ArrowFunctionExpression(_) => {
-            let grandparent = ctx.nodes().parent_node(parent.id());
-            // `test('foo', () => expect(1).toBe(1))`
-            // `const foo = () => expect(1).toBe(1)`
-            return if is_var_declarator_or_test_block(
-                grandparent,
-                additional_test_block_functions,
-                id_nodes_mapping,
-                ctx,
-            ) {
-                Some(())
-            } else {
-                None
-            };
-        }
-        _ => {}
-    }
+                    return Some(());
+                }
 
-    None
+                // Continue checking parent scopes
+                current_node = parent;
+            }
+            _ => return None,
+        }
+    }
 }
 
 fn is_var_declarator_or_test_block<'a>(
