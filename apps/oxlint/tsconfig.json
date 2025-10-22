@@ -9,6 +9,7 @@
   },
   "exclude": [
     "node_modules",
-    "fixtures"
+    "fixtures",
+    "test/fixtures"
   ]
 }
