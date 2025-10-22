@@ -80,6 +80,10 @@ impl Rule for NoDupeClassMembers {
             }
         });
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().classes().len() > 0
+    }
 }
 
 #[test]
