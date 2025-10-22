@@ -121,13 +121,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         )?;
 
         if let Some(body) = &value.body() {
-            // Handle block comments between method signature and body
-            // Example: method() /* comment */ {}
-            let comments = f.context().comments().comments_before(body.span.start);
-            if !comments.is_empty() {
-                write!(f, [space(), FormatTrailingComments::Comments(comments)])?;
-            }
-            write!(f, [space(), body])?;
+            write!(f, body)?;
         }
         if self.r#type().is_abstract()
             || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
@@ -641,7 +635,7 @@ pub fn format_grouped_parameters_with_return_type<'a>(
     group(&format_once(|f| {
         let mut format_type_parameters = type_parameters.memoized();
         let mut format_parameters = params.memoized();
-        let mut format_return_type = return_type.memoized();
+        let mut format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.
