@@ -976,7 +976,6 @@ fn is_first_in_statement(
                 return true;
             }
             AstNodes::StaticMemberExpression(_)
-            | AstNodes::TemplateLiteral(_)
             | AstNodes::TaggedTemplateExpression(_)
             | AstNodes::ChainExpression(_)
             | AstNodes::CallExpression(_)
