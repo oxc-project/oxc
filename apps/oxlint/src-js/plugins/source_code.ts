@@ -5,6 +5,9 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.j
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
 
+import { analyze, type AnalyzeOptions, type ScopeManager } from '@typescript-eslint/scope-manager';
+import type { TSESTree } from '@typescript-eslint/types';
+
 import visitorKeys from '../generated/keys.js';
 import * as commentMethods from './comments.js';
 import {
@@ -19,7 +22,6 @@ import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
 import type { Program } from '../generated/types.d.ts';
-import type { ScopeManager } from './scope.ts';
 import type { BufferWithArrays, Node, NodeOrToken, Ranged } from './types.ts';
 
 const { max } = Math;
@@ -81,6 +83,7 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
+  scopeManagerInstance = null;
   resetBuffer();
   resetLines();
 }
@@ -94,6 +97,10 @@ export function resetSourceAndAst(): void {
 // 2. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
 //
 // Freeze the object to prevent user mutating it.
+
+// ScopeManager instance for current file (reset between files)
+let scopeManagerInstance: ScopeManager | null = null;
+
 export const SOURCE_CODE = Object.freeze({
   // Get source text.
   get text(): string {
@@ -114,7 +121,22 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get `ScopeManager` for the file.
   get scopeManager(): ScopeManager {
-    throw new Error('`sourceCode.scopeManager` not implemented yet'); // TODO
+    if (!scopeManagerInstance) {
+      if (ast === null) initAst();
+
+      // TODO: these options need to be derived from the project.
+      const defaultOptions: AnalyzeOptions = {
+        globalReturn: false,
+        jsxFragmentName: null,
+        jsxPragma: 'React',
+        lib: ['esnext'],
+        sourceType: ast.sourceType,
+      };
+      // The effectiveness of this assertion depends on our alignment with ESTree.
+      // It could eventually be removed as we align the remaining corner cases and the typegen.
+      scopeManagerInstance = analyze(ast as unknown as TSESTree.Node, defaultOptions);
+    }
+    return scopeManagerInstance;
   },
 
   // Get visitor keys to traverse this AST.
