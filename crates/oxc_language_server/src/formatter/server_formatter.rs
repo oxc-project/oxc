@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use log::warn;
 use oxc_allocator::Allocator;
@@ -13,7 +13,7 @@ use tower_lsp_server::{
 };
 
 use crate::formatter::options::FormatOptions as LSPFormatOptions;
-use crate::{FORMAT_CONFIG_FILE, utils::normalize_path};
+use crate::{FORMAT_CONFIG_FILES, utils::normalize_path};
 pub struct ServerFormatter {
     options: FormatOptions,
 }
@@ -77,10 +77,28 @@ impl ServerFormatter {
         )])
     }
 
+    fn search_config_file(root_path: &Path, config_path: Option<&String>) -> Option<PathBuf> {
+        if let Some(config_path) = config_path {
+            let config = normalize_path(root_path.join(config_path));
+            if config.try_exists().is_ok_and(|exists| exists) {
+                return Some(config);
+            }
+
+            warn!(
+                "Config file not found: {}, searching for `{}` in the root path",
+                config.to_string_lossy(),
+                FORMAT_CONFIG_FILES.join(", ")
+            );
+        }
+
+        FORMAT_CONFIG_FILES.iter().find_map(|&file| {
+            let config = normalize_path(root_path.join(file));
+            config.try_exists().is_ok_and(|exists| exists).then_some(config)
+        })
+    }
+
     fn get_format_options(root_path: &Path, config_path: Option<&String>) -> FormatOptions {
-        let config_path = config_path.map_or(FORMAT_CONFIG_FILE, |v| v);
-        let config = normalize_path(root_path.join(config_path));
-        let oxfmtrc = if config.try_exists().is_ok_and(|exists| exists) {
+        let oxfmtrc = if let Some(config) = Self::search_config_file(root_path, config_path) {
             if let Ok(oxfmtrc) = Oxfmtrc::from_file(&config) {
                 oxfmtrc
             } else {
@@ -90,7 +108,7 @@ impl ServerFormatter {
         } else {
             warn!(
                 "Config file not found: {}, fallback to default config",
-                config.to_string_lossy()
+                config_path.unwrap_or(&FORMAT_CONFIG_FILES.join(", "))
             );
             Oxfmtrc::default()
         };
@@ -105,15 +123,19 @@ impl ServerFormatter {
     }
 
     #[expect(clippy::unused_self)]
-    pub fn get_watcher_patterns(&self, options: &LSPFormatOptions) -> Pattern {
-        options.config_path.as_ref().map_or(FORMAT_CONFIG_FILE, |v| v).to_owned()
+    pub fn get_watcher_patterns(&self, options: &LSPFormatOptions) -> Vec<Pattern> {
+        if let Some(config_path) = options.config_path.as_ref() {
+            return vec![config_path.to_string()];
+        }
+
+        FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
     }
 
     pub fn get_changed_watch_patterns(
         &self,
         old_options: &LSPFormatOptions,
         new_options: &LSPFormatOptions,
-    ) -> Option<Pattern> {
+    ) -> Option<Vec<Pattern>> {
         if old_options != new_options && new_options.experimental {
             return Some(self.get_watcher_patterns(new_options));
         }

@@ -129,13 +129,16 @@ impl WorkspaceWorker {
                 id: format!("watcher-formatter-{}", self.root_uri.as_str()),
                 method: "workspace/didChangeWatchedFiles".to_string(),
                 register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                    watchers: vec![FileSystemWatcher {
-                        glob_pattern: GlobPattern::Relative(RelativePattern {
-                            base_uri: OneOf::Right(self.root_uri.clone()),
-                            pattern: format_patterns
-                        }),
-                        kind: Some(WatchKind::all()), // created, deleted, changed
-                    }]
+                    watchers: format_patterns
+                        .into_iter()
+                        .map(|pattern| FileSystemWatcher {
+                            glob_pattern: GlobPattern::Relative(RelativePattern {
+                                base_uri: OneOf::Right(self.root_uri.clone()),
+                                pattern,
+                            }),
+                            kind: Some(WatchKind::all()), // created, deleted, changed
+                        })
+                        .collect::<Vec<_>>(),
                 })),
             });
         }
@@ -378,7 +381,7 @@ impl WorkspaceWorker {
                 formatting = true;
 
                 // Extract pattern data without holding the lock
-                let pattern = {
+                let patterns = {
                     let formatter_guard = self.server_formatter.read().await;
                     formatter_guard.as_ref().and_then(|formatter| {
                         formatter.get_changed_watch_patterns(
@@ -388,7 +391,7 @@ impl WorkspaceWorker {
                     })
                 };
 
-                if let Some(pattern) = pattern {
+                if let Some(patterns) = patterns {
                     if current_option.format.experimental {
                         // unregister the old watcher
                         unregistrations.push(Unregistration {
@@ -401,13 +404,16 @@ impl WorkspaceWorker {
                         id: format!("watcher-formatter-{}", self.root_uri.as_str()),
                         method: "workspace/didChangeWatchedFiles".to_string(),
                         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                            watchers: vec![FileSystemWatcher {
-                                glob_pattern: GlobPattern::Relative(RelativePattern {
-                                    base_uri: OneOf::Right(self.root_uri.clone()),
-                                    pattern
-                                }),
-                                kind: Some(WatchKind::all()), // created, deleted, changed
-                            }]
+                            watchers: patterns
+                                .into_iter()
+                                .map(|pattern| FileSystemWatcher {
+                                    glob_pattern: GlobPattern::Relative(RelativePattern {
+                                        base_uri: OneOf::Right(self.root_uri.clone()),
+                                        pattern,
+                                    }),
+                                    kind: Some(WatchKind::all()), // created, deleted, changed
+                                })
+                                .collect::<Vec<_>>(),
                         })),
                     });
                 }
@@ -679,7 +685,11 @@ mod test_watchers {
 
             assert_eq!(watchers.len(), 2);
             tester.assert_eq_registration(&watchers[0], "linter", &["**/.oxlintrc.json"]);
-            tester.assert_eq_registration(&watchers[1], "formatter", &[".oxfmtrc.json"]);
+            tester.assert_eq_registration(
+                &watchers[1],
+                "formatter",
+                &[".oxfmtrc.json", ".oxfmtrc.jsonc"],
+            );
         }
 
         #[test]
@@ -835,7 +845,11 @@ mod test_watchers {
 
             assert_eq!(unregistrations.len(), 0);
             assert_eq!(registration.len(), 1);
-            tester.assert_eq_registration(&registration[0], "formatter", &[".oxfmtrc.json"]);
+            tester.assert_eq_registration(
+                &registration[0],
+                "formatter",
+                &[".oxfmtrc.json", ".oxfmtrc.jsonc"],
+            );
         }
 
         #[test]
