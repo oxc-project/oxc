@@ -56,7 +56,6 @@ export class ScopeManager {
 
   /**
    * Get the variables that a given AST node defines. The gotten variables' `def[].node`/`def[].parent` property is the node.
-   * Get the variables that a given AST node defines. The gotten variables' `def[].node`/`def[].parent` property is the node.
    * If the node does not define any variable, this returns an empty array.
    * @param node An AST node to get their variables.
    */
