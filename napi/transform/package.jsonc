@@ -10,15 +10,15 @@
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
-    "test": "tsc && vitest run --dir ./test"
+    "test": "tsc && vitest run --dir ./test",
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": "^20.19.0 || >=22.12.0",
   },
   "description": "Oxc Transformer Node API",
   "keywords": [
     "oxc",
-    "transform"
+    "transform",
   ],
   "author": "Boshen and oxc contributors",
   "license": "MIT",
@@ -27,24 +27,24 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
-    "directory": "napi/transform"
+    "directory": "napi/transform",
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/Boshen",
   },
   "files": [
     "index.d.ts",
     "index.js",
     "browser.js",
-    "webcontainer-fallback.cjs"
+    "webcontainer-fallback.cjs",
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "access": "public",
   },
   "devDependencies": {
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
   },
   "napi": {
     "binaryName": "transform",
@@ -64,12 +64,12 @@
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
       "aarch64-linux-android",
-      "wasm32-wasip1-threads"
+      "wasm32-wasip1-threads",
     ],
     "wasm": {
       "browser": {
-        "fs": false
-      }
-    }
-  }
+        "fs": false,
+      },
+    },
+  },
 }

@@ -11,25 +11,25 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc",
-    "directory": "npm/oxlint"
+    "directory": "npm/oxlint",
   },
   "main": "dist/index.js",
   "bin": {
     "oxlint": "bin/oxlint",
-    "oxc_language_server": "bin/oxc_language_server"
+    "oxc_language_server": "bin/oxc_language_server",
   },
   "types": "dist/index.d.ts",
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/Boshen",
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": "^20.19.0 || >=22.12.0",
   },
   "files": [
     "bin/oxlint",
     "bin/oxc_language_server",
     "configuration_schema.json",
     "dist",
-    "README.md"
-  ]
+    "README.md",
+  ],
 }

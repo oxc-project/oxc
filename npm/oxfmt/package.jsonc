@@ -11,20 +11,20 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc",
-    "directory": "npm/oxfmt"
+    "directory": "npm/oxfmt",
   },
   "bin": {
-    "oxfmt": "bin/oxfmt"
+    "oxfmt": "bin/oxfmt",
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/Boshen",
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": "^20.19.0 || >=22.12.0",
   },
   "files": [
     "bin/oxfmt",
     "configuration_schema.json",
-    "README.md"
-  ]
+    "README.md",
+  ],
 }

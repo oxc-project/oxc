@@ -16,15 +16,15 @@
     "test": "tsc && pnpm run test-node run",
     "test-node": "vitest --dir ./test",
     "test-browser": "vitest -c vitest.config.browser.ts",
-    "bench": "vitest bench --run ./bench.bench.js"
+    "bench": "vitest bench --run ./bench.bench.js",
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": "^20.19.0 || >=22.12.0",
   },
   "description": "Oxc Parser Node API",
   "keywords": [
     "oxc",
-    "parser"
+    "parser",
   ],
   "author": "Boshen and oxc contributors",
   "license": "MIT",
@@ -33,10 +33,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oxc-project/oxc.git",
-    "directory": "napi/parser"
+    "directory": "napi/parser",
   },
   "funding": {
-    "url": "https://github.com/sponsors/Boshen"
+    "url": "https://github.com/sponsors/Boshen",
   },
   "files": [
     "generated/constants.js",
@@ -65,14 +65,14 @@
     "src-js/raw-transfer/supported.js",
     "src-js/raw-transfer/visitor.js",
     "src-js/visit/index.js",
-    "src-js/visit/visitor.js"
+    "src-js/visit/visitor.js",
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "access": "public",
   },
   "dependencies": {
-    "@oxc-project/types": "workspace:^"
+    "@oxc-project/types": "workspace:^",
   },
   "devDependencies": {
     "@codspeed/vitest-plugin": "^5.0.0",
@@ -83,7 +83,7 @@
     "playwright": "^1.51.0",
     "tinypool": "^2.0.0",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
   },
   "napi": {
     "binaryName": "parser",
@@ -103,13 +103,13 @@
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
       "aarch64-linux-android",
-      "wasm32-wasip1-threads"
+      "wasm32-wasip1-threads",
     ],
     "wasm": {
       "browser": {
-        "fs": false
-      }
+        "fs": false,
+      },
     },
-    "dtsHeaderFile": "src-js/header.d.ts"
-  }
+    "dtsHeaderFile": "src-js/header.d.ts",
+  },
 }
