@@ -3,10 +3,10 @@
  */
 
 import type * as ESTree from '../generated/types.d.ts';
+import type { Program } from '../generated/types.d.ts';
 
 import type { Node } from './types.ts';
-
-export type { ScopeManager } from '@typescript-eslint/scope-manager';
+import { analyze, GlobalScope, type AnalyzeOptions, type ScopeManager as TSESLintScopeManager } from '@typescript-eslint/scope-manager';
 
 type Identifier =
   | ESTree.IdentifierName
@@ -15,6 +15,64 @@ type Identifier =
   | ESTree.LabelIdentifier
   | ESTree.TSThisParameter
   | ESTree.TSIndexSignatureName;
+
+/**
+ * @see https://eslint.org/docs/latest/developer-guide/scope-manager-interface#scopemanager-interface
+ */
+// This is a wrapper class around the @typescript-eslint/scope-manager package.
+// We want to control what APIs are exposed to the user to limit breaking changes when we switch our implementation.
+export class ScopeManager {
+  #scopeManager: TSESLintScopeManager;
+
+  constructor(ast: Program) {
+    const defaultOptions: AnalyzeOptions = {
+      globalReturn: false,
+      jsxFragmentName: null,
+      jsxPragma: 'React',
+      lib: ['esnext'],
+      sourceType: ast.sourceType,
+    };
+    // The effectiveness of this assertion depends on our alignment with ESTree.
+    // It could eventually be removed as we align the remaining corner cases and the typegen.
+    this.#scopeManager = analyze(ast as any, defaultOptions);
+  }
+
+  /**
+   * All scopes
+   */
+  get scopes(): Scope[] {
+    return this.#scopeManager.scopes as any;
+  }
+
+  /**
+   * The root scope
+   */
+  get globalScope(): GlobalScope | null {
+    return this.#scopeManager.globalScope;
+  }
+
+  /**
+   * Get the variables that a given AST node defines. The gotten variables' `def[].node`/`def[].parent` property is the node.
+   * Get the variables that a given AST node defines. The gotten variables' `def[].node`/`def[].parent` property is the node.
+   * If the node does not define any variable, this returns an empty array.
+   * @param node An AST node to get their variables.
+   */
+  getDeclaredVariables(node: Node): Variable[] {
+    return this.#scopeManager.getDeclaredVariables(node as any) as any;
+  };
+
+  /**
+   * Get the scope of a given AST node. The gotten scope's `block` property is the node.
+   * This method never returns `function-expression-name` scope. If the node does not have their scope, this returns `null`.
+   *
+   * @param node An AST node to get their scope.
+   * @param inner If the node has multiple scopes, this returns the outermost scope normally.
+   *                If `inner` is `true` then this returns the innermost scope.
+   */
+  acquire(node: Node, inner?: boolean): Scope | null {
+    return this.#scopeManager.acquire(node as any, inner) as any;
+  }
+}
 
 export interface Scope {
   type: ScopeType;
