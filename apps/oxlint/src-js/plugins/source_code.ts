@@ -5,9 +5,6 @@ import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from '../generated/constants.j
 // @ts-expect-error we need to generate `.d.ts` file for this module
 import { deserializeProgramOnly, resetBuffer } from '../../dist/generated/deserialize.js';
 
-import { analyze, type AnalyzeOptions, type ScopeManager } from '@typescript-eslint/scope-manager';
-import type { TSESTree } from '@typescript-eslint/types';
-
 import visitorKeys from '../generated/keys.js';
 import * as commentMethods from './comments.js';
 import {
@@ -18,6 +15,7 @@ import {
   lines,
   resetLines,
 } from './location.js';
+import { ScopeManager } from './scope.js';
 import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
@@ -123,18 +121,7 @@ export const SOURCE_CODE = Object.freeze({
   get scopeManager(): ScopeManager {
     if (!scopeManagerInstance) {
       if (ast === null) initAst();
-
-      // TODO: these options need to be derived from the project.
-      const defaultOptions: AnalyzeOptions = {
-        globalReturn: false,
-        jsxFragmentName: null,
-        jsxPragma: 'React',
-        lib: ['esnext'],
-        sourceType: ast.sourceType,
-      };
-      // The effectiveness of this assertion depends on our alignment with ESTree.
-      // It could eventually be removed as we align the remaining corner cases and the typegen.
-      scopeManagerInstance = analyze(ast as unknown as TSESTree.Node, defaultOptions);
+      scopeManagerInstance = new ScopeManager(ast);
     }
     return scopeManagerInstance;
   },
