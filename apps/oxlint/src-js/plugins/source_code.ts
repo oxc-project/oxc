@@ -119,11 +119,8 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get `ScopeManager` for the file.
   get scopeManager(): ScopeManager {
-    if (!scopeManagerInstance) {
-      if (ast === null) initAst();
-      scopeManagerInstance = new ScopeManager(ast);
-    }
-    return scopeManagerInstance;
+    if (ast === null) initAst();
+    return scopeManagerInstance ??= new ScopeManager(ast);
   },
 
   // Get visitor keys to traverse this AST.
