@@ -37,12 +37,12 @@ const rule: Rule = {
         const isGlobal = sourceCode.isGlobalReference(node);
         context.report({
           message: `isGlobalReference(${name}): ${isGlobal}`,
-          node
+          node,
         });
       },
       FunctionDeclaration(node) {
         const scope = sourceCode.getScope(node);
-        let text = ""
+        let text = '';
         text += `type: ${scope.type}\n`;
         text += `isStrict: ${scope.isStrict}\n`;
         text += `vars: [${scope.variables.map(v => v.name).join(', ')}]\n`;
@@ -51,7 +51,7 @@ const rule: Rule = {
 
         context.report({
           message: `getScope(${node.id.name}): ${text}`,
-          node
+          node,
         });
       },
     };

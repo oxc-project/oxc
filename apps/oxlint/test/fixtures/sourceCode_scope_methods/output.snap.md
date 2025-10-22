@@ -37,7 +37,7 @@
   5 | |     const localConstant = topLevelConstant + param;
   6 | |     return function innerFunction() {
   7 | |       return localConstant + Math.PI;
-  8 | |     }
+  8 | |     };
   9 | `-> }
  10 |     
     `----
@@ -103,7 +103,7 @@
  6 |   return function innerFunction() {
  7 |     return localConstant + Math.PI;
    :            ^^^^^^^^^^^^^
- 8 |   }
+ 8 |   };
    `----
 
   x scope-plugin(scope): isGlobalReference(Math): false
@@ -111,7 +111,7 @@
  6 |   return function innerFunction() {
  7 |     return localConstant + Math.PI;
    :                            ^^^^
- 8 |   }
+ 8 |   };
    `----
 
   x scope-plugin(scope): isGlobalReference(PI): false
@@ -119,7 +119,7 @@
  6 |   return function innerFunction() {
  7 |     return localConstant + Math.PI;
    :                                 ^^
- 8 |   }
+ 8 |   };
    `----
 
   x scope-plugin(scope): getDeclaredVariables(): topLevelExport
