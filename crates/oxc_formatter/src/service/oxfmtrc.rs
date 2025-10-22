@@ -48,6 +48,8 @@ pub struct Oxfmtrc {
     // TODO: experimental_ternaries
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_patterns: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]

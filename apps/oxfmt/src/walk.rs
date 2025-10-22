@@ -18,6 +18,7 @@ impl Walk {
         paths: &[PathBuf],
         ignore_paths: &[PathBuf],
         with_node_modules: bool,
+        ignore_patterns: &[String],
     ) -> Result<Self, String> {
         let (target_paths, exclude_patterns) = normalize_paths(cwd, paths);
 
@@ -55,8 +56,12 @@ impl Walk {
                 return Err(format!("Failed to add ignore file: {}", ignore_path.display()));
             }
         }
-        // TODO: Support config.ignorePatterns
-        // Use `builder.add_line(None, pattern_str)` here
+        // Handle `config.ignorePatterns`
+        for pattern in ignore_patterns {
+            if builder.add_line(None, pattern).is_err() {
+                return Err(format!("Failed to add ignore pattern `{pattern}`"));
+            }
+        }
         let ignores = builder.build().map_err(|_| "Failed to build ignores".to_string())?;
 
         // NOTE: If return `false` here, it will not be `visit()`ed at all

@@ -44,6 +44,15 @@
         }
       ]
     },
+    "ignorePatterns": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
     "jsxSingleQuote": {
       "type": [
         "boolean",

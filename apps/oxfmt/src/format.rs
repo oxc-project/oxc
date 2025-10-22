@@ -7,7 +7,7 @@ use std::{
 };
 
 use oxc_diagnostics::DiagnosticService;
-use oxc_formatter::{FormatOptions, Oxfmtrc};
+use oxc_formatter::Oxfmtrc;
 
 use crate::{
     cli::{CliRunResult, FormatCommand},
@@ -49,8 +49,8 @@ impl FormatRunner {
         // NOTE: Currently, we only load single config file.
         // - from `--config` if specified
         // - else, search nearest for the nearest `.oxfmtrc.json` from cwd upwards
-        let format_options = match load_config(&cwd, basic_options.config.as_ref()) {
-            Ok(options) => options,
+        let config = match load_config(&cwd, basic_options.config.as_ref()) {
+            Ok(config) => config,
             Err(err) => {
                 print_and_flush_stdout(
                     stdout,
@@ -60,11 +60,21 @@ impl FormatRunner {
             }
         };
 
+        let ignore_patterns = config.ignore_patterns.clone().unwrap_or_default();
+        let format_options = match config.into_format_options() {
+            Ok(options) => options,
+            Err(err) => {
+                print_and_flush_stdout(stdout, &format!("Failed to parse configuration.\n{err}\n"));
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+
         let walker = match Walk::build(
             &cwd,
             &paths,
             &ignore_options.ignore_path,
             ignore_options.with_node_modules,
+            &ignore_patterns,
         ) {
             Ok(walker) => walker,
             Err(err) => {
@@ -171,7 +181,7 @@ impl FormatRunner {
 /// Returns error if:
 /// - Config file is specified but not found or invalid
 /// - Config file parsing fails
-fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<FormatOptions, String> {
+fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<Oxfmtrc, String> {
     let config_path = if let Some(config_path) = config_path {
         // If `--config` is explicitly specified, use that path
         Some(if config_path.is_absolute() {
@@ -194,9 +204,9 @@ fn load_config(cwd: &Path, config_path: Option<&PathBuf>) -> Result<FormatOption
     };
 
     match config_path {
-        Some(ref path) => Oxfmtrc::from_file(path)?.into_format_options(),
+        Some(ref path) => Oxfmtrc::from_file(path),
         // Default if not specified and not found
-        None => Ok(FormatOptions::default()),
+        None => Ok(Oxfmtrc::default()),
     }
 }
 

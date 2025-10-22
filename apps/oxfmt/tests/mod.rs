@@ -184,6 +184,22 @@ fn ignore_patterns() {
 }
 
 #[test]
+fn config_ignore_patterns() {
+    Tester::new()
+        .with_cwd(PathBuf::from("tests/fixtures/config_ignore_patterns"))
+        .test_and_snapshot_multiple(
+            "config_ignore_patterns",
+            &[
+                // .oxfmtrc.json contains: ignorePatterns: ["not-formatted/"]
+                // Should not find any files
+                &["--check"],
+                // fmtrc.jsonc also ignores every .js files
+                &["--check", "--config", "fmtrc.jsonc"],
+            ],
+        );
+}
+
+#[test]
 fn ignore_and_override() {
     Tester::new()
         .with_cwd(PathBuf::from("tests/fixtures/ignore_and_override"))
