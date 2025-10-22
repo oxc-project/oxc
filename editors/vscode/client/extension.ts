@@ -331,15 +331,25 @@ function updateStatsBar(
 }
 
 function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionContext): void {
-  const watcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, true);
+  const watcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, !config.requireConfig);
   watcher.onDidCreate(async () => {
-    watcher.dispose();
     allowedToStartServer = true;
     updateStatsBar(context, config.enable);
     if (client && !client.isRunning() && config.enable) {
       await client.start();
     }
   });
+
+  watcher.onDidDelete(async () => {
+    // only can be called when config.requireConfig
+    allowedToStartServer = (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0
+    if(!allowedToStartServer){
+      updateStatsBar(context, false)
+      if(client && client.isRunning()){
+        await client.stop()
+      }
+    }
+  })
 
   context.subscriptions.push(watcher);
 }
