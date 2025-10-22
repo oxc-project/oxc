@@ -159,22 +159,18 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                     };
                 }
 
-                #[expect(clippy::match_same_arms)]
-                let body_has_soft_line_break = arrow_expression.is_none_or(|expression| {
-                    match expression {
+                let body_has_soft_line_break =
+                    arrow_expression.is_none_or(|expression| match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
-                            // TODO: It seems no difference whether check there is a leading comment or not.
-                            // !f.comments().has_leading_own_line_comment(body.span().start)
-                            true
+                            !f.comments().has_leading_own_line_comment(body.span().start)
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
                         _ => {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
                         }
-                    }
-                });
+                    });
 
                 let body_is_condition_type =
                     matches!(arrow_expression, Some(Expression::ConditionalExpression(_)));
