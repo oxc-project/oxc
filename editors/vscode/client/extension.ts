@@ -342,14 +342,14 @@ function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionConte
 
   watcher.onDidDelete(async () => {
     // only can be called when config.requireConfig
-    allowedToStartServer = (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0
-    if(!allowedToStartServer){
-      updateStatsBar(context, false)
-      if(client && client.isRunning()){
-        await client.stop()
+    allowedToStartServer = (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0;
+    if (!allowedToStartServer) {
+      updateStatsBar(context, false);
+      if (client && client.isRunning()) {
+        await client.stop();
       }
     }
-  })
+  });
 
   context.subscriptions.push(watcher);
 }
