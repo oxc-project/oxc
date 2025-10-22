@@ -15,7 +15,7 @@ const jestPackageJson =
 class A {
   #testerConfig;
   constructor() {
-    let basePath =
+    let basePath: string | undefined =
       this.#testerConfig.languageOptions.parserOptions?.tsconfigRootDir;
   }
 }
