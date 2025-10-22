@@ -165,11 +165,15 @@ export function isGlobalReference(node: ESTree.Node): boolean {
     return false;
   }
 
+  // If the identifier is a reference to a global variable, the global scope should have a variable with the name.
   const variable = SOURCE_CODE.scopeManager.globalScope.set.get(name);
+
+  // Global variables are not defined by any node, so they should have no definitions.
   if (!variable || variable.defs.length > 0) {
     return false;
   }
 
+  // If there is a variable by the same name exists in the global scope, we need to check our node is one of its references.
   const { references } = variable;
 
   for (let i = 0; i < references.length; i++) {
