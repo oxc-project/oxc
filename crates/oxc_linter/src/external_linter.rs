@@ -13,10 +13,11 @@ pub type ExternalLinterLoadPluginCb = Arc<
         + Sync,
 >;
 
-pub type ExternalLinterLintFileCb =
-    Arc<dyn Fn(String, Vec<u32>, &Allocator) -> Result<Vec<LintFileResult>, String> + Sync + Send>;
-
-pub type ExternalLinterSetSettingsCb = Arc<dyn Fn(String) + Sync + Send>;
+pub type ExternalLinterLintFileCb = Arc<
+    dyn Fn(String, Vec<u32>, String, &Allocator) -> Result<Vec<LintFileResult>, String>
+        + Sync
+        + Send,
+>;
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum PluginLoadResult {
@@ -50,16 +51,14 @@ pub struct JsFix {
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
-    pub set_settings: ExternalLinterSetSettingsCb,
 }
 
 impl ExternalLinter {
     pub fn new(
         load_plugin: ExternalLinterLoadPluginCb,
         lint_file: ExternalLinterLintFileCb,
-        set_settings: ExternalLinterSetSettingsCb,
     ) -> Self {
-        Self { load_plugin, lint_file, set_settings }
+        Self { load_plugin, lint_file }
     }
 }
 

@@ -60,8 +60,8 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetSettingsCb, JsFix, LintFileResult, PluginLoadResult,
+        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, JsFix,
+        LintFileResult, PluginLoadResult,
     },
     external_plugin_store::{ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -448,10 +448,21 @@ impl Linter {
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
-        // Pass AST and rule IDs to JS
+        let settings_stringified = serde_json::to_string(&self.config.settings())
+            .map_err(|e| {
+                let path = path.to_string_lossy();
+                let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
+                ctx_host.push_diagnostic(Message::new(
+                    OxcDiagnostic::error(message),
+                    PossibleFixes::None,
+                ));
+            })
+            .unwrap_or("{}".to_string());
+
         let result = (external_linter.lint_file)(
             path.to_str().unwrap().to_string(),
             external_rules.iter().map(|(rule_id, _)| rule_id.raw()).collect(),
+            settings_stringified,
             allocator,
         );
         match result {

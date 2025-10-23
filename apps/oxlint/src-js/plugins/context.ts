@@ -70,7 +70,13 @@ let getInternal: (context: Context, actionDescription: string) => InternalContex
 
 let settings_record: Record<string, unknown> = {};
 
-export function setSettings(settings: string) {
+/**
+ * Updates the settings record for the file.
+ * Settings are made immutable so that plugins can't change other plugin's behavior.
+ * TODO(perf): settings are de/serialized once per file to accommodate folder level settings even if the settings haven't changed.
+ * @param settings - Stringified settings for the file
+ */
+export function setSettingsForFile(settings: string) {
   // Freezes to prevent mutation from a plugin.
   // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
   settings_record = deepFreeze(JSON.parse(settings));

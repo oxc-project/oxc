@@ -36,26 +36,12 @@ pub type JsLintFileCb = ThreadsafeFunction<
         u32,                // Buffer ID
         Option<Uint8Array>, // Buffer (optional)
         Vec<u32>,           // Array of rule IDs
+        String,             // Stringified settings effective for the file
     )>,
     // Return value
     String, // `Vec<LintFileResult>`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>)>,
-    // Error status
-    Status,
-    // CalleeHandled
-    false,
->;
-
-/// JS callback to set settings.
-#[napi]
-pub type JsSetSettingsCb = ThreadsafeFunction<
-    // Arguments
-    String,
-    // Return value
-    (),
-    // Arguments (repeated)
-    String,
+    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, String)>,
     // Error status
     Status,
     // CalleeHandled
@@ -68,19 +54,13 @@ pub type JsSetSettingsCb = ThreadsafeFunction<
 /// 1. `args`: Command line arguments (process.argv.slice(2))
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `lint_file`: Lint a file.
-/// 4. `set_settings`: Populate `context.settings` field.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
-pub async fn lint(
-    args: Vec<String>,
-    load_plugin: JsLoadPluginCb,
-    lint_file: JsLintFileCb,
-    set_settings: JsSetSettingsCb,
-) -> bool {
-    lint_impl(args, load_plugin, lint_file, set_settings).report() == ExitCode::SUCCESS
+pub async fn lint(args: Vec<String>, load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
+    lint_impl(args, load_plugin, lint_file).report() == ExitCode::SUCCESS
 }
 
 /// Run the linter.
@@ -88,7 +68,6 @@ fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
-    set_settings: JsSetSettingsCb,
 ) -> CliRunResult {
     init_tracing();
     init_miette();
@@ -113,8 +92,7 @@ fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter =
-        Some(super::js_plugins::create_external_linter(load_plugin, lint_file, set_settings));
+    let external_linter = Some(super::js_plugins::create_external_linter(load_plugin, lint_file));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
         let (_, _) = (load_plugin, lint_file);
