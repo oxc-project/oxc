@@ -305,7 +305,7 @@ impl ConfigStoreBuilder {
                     self.upsert_where(severity, |r| r.category() == *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
-                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
+                    let plugin = super::rules::unalias_plugin_name(plugin);
                     self.upsert_where(severity, |r| r.plugin_name() == plugin && r.name() == rule);
                 }
                 LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
@@ -318,7 +318,7 @@ impl ConfigStoreBuilder {
                     self.rules.retain(|rule, _| rule.category() != *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
-                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
+                    let plugin = super::rules::unalias_plugin_name(plugin);
                     self.rules.retain(|r, _| r.plugin_name() != plugin || r.name() != rule);
                 }
                 LintFilterKind::Generic(name) => self.rules.retain(|rule, _| rule.name() != name),

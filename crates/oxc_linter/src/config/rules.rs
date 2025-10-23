@@ -240,26 +240,24 @@ fn parse_rule_key(name: &str) -> (String, String) {
             name.to_string(),
         );
     };
-    unalias_plugin_name(plugin_name, rule_name)
+    (unalias_plugin_name(plugin_name).to_string(), rule_name.to_string())
 }
 
-pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
-    let (oxlint_plugin_name, rule_name) = match plugin_name {
-        "@typescript-eslint" => ("typescript", rule_name),
+pub(super) fn unalias_plugin_name(plugin_name: &str) -> &str {
+    match plugin_name {
+        "@typescript-eslint" => "typescript",
         // import-x has the same rules but better performance
-        "import-x" => ("import", rule_name),
-        "jsx-a11y" => ("jsx_a11y", rule_name),
-        "react-perf" => ("react_perf", rule_name),
+        "import-x" => "import",
+        "jsx-a11y" => "jsx_a11y",
+        "react-perf" => "react_perf",
         // e.g. "@next/next/google-font-display"
-        "@next" => ("nextjs", rule_name.trim_start_matches("next/")),
+        "@next" => "nextjs",
         // For backwards compatibility, react hook rules reside in the react plugin.
-        "react-hooks" => ("react", rule_name),
+        "react-hooks" => "react",
         // For backwards compatibility, deepscan rules reside in the oxc plugin.
-        "deepscan" => ("oxc", rule_name),
-        _ => (plugin_name, rule_name),
-    };
-
-    (oxlint_plugin_name.to_string(), rule_name.to_string())
+        "deepscan" => "oxc",
+        _ => plugin_name,
+    }
 }
 
 fn parse_rule_value(
