@@ -2,15 +2,11 @@
 /* eslint-disable */
 /** JS callback to lint a file. */
 export type JsLintFileCb =
-  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>) => string)
+  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: string) => string)
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
   ((arg0: string, arg1?: string | undefined | null) => Promise<string>)
-
-/** JS callback to set settings. */
-export type JsSetSettingsCb =
-  ((arg: string) => void)
 
 /**
  * NAPI entry point.
@@ -19,8 +15,7 @@ export type JsSetSettingsCb =
  * 1. `args`: Command line arguments (process.argv.slice(2))
  * 2. `load_plugin`: Load a JS plugin from a file path.
  * 3. `lint_file`: Lint a file.
- * 4. `set_settings`: Populate `context.settings` field.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb, setSettings: JsSetSettingsCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb): Promise<boolean>

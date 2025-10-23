@@ -172,15 +172,6 @@ impl ConfigStoreBuilder {
                 });
             };
 
-            if let Some(settings_json) = &oxlintrc.settings.json {
-                (external_linter.set_settings)(serde_json::to_string(settings_json).map_err(
-                    |e| ConfigBuilderError::InvalidConfigFile {
-                        file: oxlintrc.path.display().to_string(),
-                        reason: e.to_string(),
-                    },
-                )?);
-            }
-
             let resolver = Resolver::new(ResolveOptions {
                 condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
                 ..Default::default()
