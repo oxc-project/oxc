@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Do not attach interactive event handlers to static elements without an interactive role.
+   ╭─[no_static_element_interactions.tsx:1:1]
+ 1 │ <div onMouseDown={() => {}} />;
+   · ──────────────────────────────
+   ╰────
+  help: Use a semantic interactive element (like <button> or <a>) or add an appropriate role if this element must handle interaction.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Do not attach interactive event handlers to static elements without an interactive role.
+   ╭─[no_static_element_interactions.tsx:1:1]
+ 1 │ <div onClick={() => {}} />;
+   · ──────────────────────────
+   ╰────
+  help: Use a semantic interactive element (like <button> or <a>) or add an appropriate role if this element must handle interaction.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Do not attach interactive event handlers to static elements without an interactive role.
+   ╭─[no_static_element_interactions.tsx:1:1]
+ 1 │ <div onKeyUp={() => {}} />;
+   · ──────────────────────────
+   ╰────
+  help: Use a semantic interactive element (like <button> or <a>) or add an appropriate role if this element must handle interaction.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Do not attach interactive event handlers to static elements without an interactive role.
+   ╭─[no_static_element_interactions.tsx:1:1]
+ 1 │ <div role="badrole" onClick={() => {}} />;
+   · ─────────────────────────────────────────
+   ╰────
+  help: Use a semantic interactive element (like <button> or <a>) or add an appropriate role if this element must handle interaction.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Do not attach interactive event handlers to static elements without an interactive role.
+   ╭─[no_static_element_interactions.tsx:1:1]
+ 1 │ <div role={BUTTON} onClick={() => {}} />;
+   · ────────────────────────────────────────
+   ╰────
+  help: Use a semantic interactive element (like <button> or <a>) or add an appropriate role if this element must handle interaction.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Do not attach interactive event handlers to static elements without an interactive role.
+   ╭─[no_static_element_interactions.tsx:1:1]
+ 1 │ <div role={isButton ? "button" : "link"} onClick={() => {}} />;
+   · ──────────────────────────────────────────────────────────────
+   ╰────
+  help: Use a semantic interactive element (like <button> or <a>) or add an appropriate role if this element must handle interaction.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Do not attach interactive event handlers to static elements without an interactive role.
+   ╭─[no_static_element_interactions.tsx:1:1]
+ 1 │ <div onCopy={() => {}} />;
+   · ─────────────────────────
+   ╰────
+  help: Use a semantic interactive element (like <button> or <a>) or add an appropriate role if this element must handle interaction.

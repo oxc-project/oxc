@@ -1701,6 +1701,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_a11y_data"
+version = "0.1.0"
+dependencies = [
+ "oxc_tasks_common",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn",
+]
+
+[[package]]
 name = "oxc_allocator"
 version = "0.95.0"
 dependencies = [
@@ -1726,6 +1739,13 @@ dependencies = [
  "hashbrown 0.16.0",
  "oxc_data_structures 0.95.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-hash",
+]
+
+[[package]]
+name = "oxc_aria_query"
+version = "0.95.0"
+dependencies = [
+ "phf",
 ]
 
 [[package]]
@@ -2157,6 +2177,7 @@ dependencies = [
  "memchr",
  "oxc-schemars",
  "oxc_allocator 0.95.0",
+ "oxc_aria_query",
  "oxc_ast 0.95.0",
  "oxc_ast_macros 0.95.0",
  "oxc_ast_visit 0.95.0",

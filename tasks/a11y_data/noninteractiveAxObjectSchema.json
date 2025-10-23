@@ -1,0 +1,178 @@
+[
+  {
+    "name": "abbr",
+    "attributes": []
+  },
+  {
+    "name": "article",
+    "attributes": []
+  },
+  {
+    "name": "blockquote",
+    "attributes": []
+  },
+  {
+    "name": "br",
+    "attributes": []
+  },
+  {
+    "name": "caption",
+    "attributes": []
+  },
+  {
+    "name": "dd",
+    "attributes": []
+  },
+  {
+    "name": "details",
+    "attributes": []
+  },
+  {
+    "name": "dfn",
+    "attributes": []
+  },
+  {
+    "name": "dialog",
+    "attributes": []
+  },
+  {
+    "name": "dir",
+    "attributes": []
+  },
+  {
+    "name": "dl",
+    "attributes": []
+  },
+  {
+    "name": "dt",
+    "attributes": []
+  },
+  {
+    "name": "figcaption",
+    "attributes": []
+  },
+  {
+    "name": "figure",
+    "attributes": []
+  },
+  {
+    "name": "footer",
+    "attributes": []
+  },
+  {
+    "name": "form",
+    "attributes": []
+  },
+  {
+    "name": "h1",
+    "attributes": []
+  },
+  {
+    "name": "h2",
+    "attributes": []
+  },
+  {
+    "name": "h3",
+    "attributes": []
+  },
+  {
+    "name": "h4",
+    "attributes": []
+  },
+  {
+    "name": "h5",
+    "attributes": []
+  },
+  {
+    "name": "h6",
+    "attributes": []
+  },
+  {
+    "name": "iframe",
+    "attributes": []
+  },
+  {
+    "name": "img",
+    "attributes": [
+      {
+        "name": "usemap"
+      }
+    ]
+  },
+  {
+    "name": "img",
+    "attributes": []
+  },
+  {
+    "name": "label",
+    "attributes": []
+  },
+  {
+    "name": "legend",
+    "attributes": []
+  },
+  {
+    "name": "li",
+    "attributes": []
+  },
+  {
+    "name": "main",
+    "attributes": []
+  },
+  {
+    "name": "mark",
+    "attributes": []
+  },
+  {
+    "name": "marquee",
+    "attributes": []
+  },
+  {
+    "name": "menu",
+    "attributes": []
+  },
+  {
+    "name": "meter",
+    "attributes": []
+  },
+  {
+    "name": "nav",
+    "attributes": []
+  },
+  {
+    "name": "ol",
+    "attributes": []
+  },
+  {
+    "name": "p",
+    "attributes": []
+  },
+  {
+    "name": "pre",
+    "attributes": []
+  },
+  {
+    "name": "progress",
+    "attributes": []
+  },
+  {
+    "name": "ruby",
+    "attributes": []
+  },
+  {
+    "name": "table",
+    "attributes": []
+  },
+  {
+    "name": "time",
+    "attributes": []
+  },
+  {
+    "name": "tr",
+    "attributes": []
+  },
+  {
+    "name": "ul",
+    "attributes": []
+  }
+]
