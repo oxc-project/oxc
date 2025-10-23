@@ -305,6 +305,7 @@ impl ConfigStoreBuilder {
                     self.upsert_where(severity, |r| r.category() == *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
+                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
                     self.upsert_where(severity, |r| r.plugin_name() == plugin && r.name() == rule);
                 }
                 LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
@@ -317,6 +318,7 @@ impl ConfigStoreBuilder {
                     self.rules.retain(|rule, _| rule.category() != *category);
                 }
                 LintFilterKind::Rule(plugin, rule) => {
+                    let (plugin, rule) = super::rules::unalias_plugin_name(plugin, rule);
                     self.rules.retain(|r, _| r.plugin_name() != plugin || r.name() != rule);
                 }
                 LintFilterKind::Generic(name) => self.rules.retain(|rule, _| rule.name() != name),
@@ -855,6 +857,47 @@ mod test {
         let expected_plugins = LintPlugins::ESLINT | LintPlugins::TYPESCRIPT | LintPlugins::NEXTJS;
         let builder = builder.with_builtin_plugins(expected_plugins);
         assert_eq!(expected_plugins, builder.plugins());
+    }
+
+    #[test]
+    fn test_cli_rule_aliases() {
+        let builder = ConfigStoreBuilder::default().and_builtin_plugins(LintPlugins::REACT, true);
+
+        // Assert rule doesn't exist by default
+        assert_eq!(
+            builder
+                .rules
+                .iter()
+                .find(|(r, _)| r.plugin_name() == "react" && r.name() == "exhaustive-deps"),
+            None
+        );
+
+        let builder = builder.with_filter(
+            &LintFilter::new(AllowWarnDeny::Deny, "react-hooks/exhaustive-deps").unwrap(),
+        );
+
+        let (rule, sev) = builder
+            .rules
+            .iter()
+            .find(|(r, _)| r.plugin_name() == "react" && r.name() == "exhaustive-deps")
+            .expect("react/exhaustive-deps should be configured to Deny");
+
+        assert_eq!(rule.plugin_name(), "react");
+        assert_eq!(rule.name(), "exhaustive-deps");
+        assert_eq!(sev, &AllowWarnDeny::Deny);
+
+        let builder = builder.with_filter(
+            &LintFilter::new(AllowWarnDeny::Allow, "react-hooks/exhaustive-deps").unwrap(),
+        );
+
+        // Allowing the rule removes it from rules "overlay"
+        assert_eq!(
+            builder
+                .rules
+                .iter()
+                .find(|(r, _)| r.plugin_name() == "react" && r.name() == "exhaustive-deps"),
+            None
+        );
     }
 
     #[test]

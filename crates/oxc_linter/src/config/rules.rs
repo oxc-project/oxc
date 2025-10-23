@@ -240,7 +240,10 @@ fn parse_rule_key(name: &str) -> (String, String) {
             name.to_string(),
         );
     };
+    unalias_plugin_name(plugin_name, rule_name)
+}
 
+pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
     let (oxlint_plugin_name, rule_name) = match plugin_name {
         "@typescript-eslint" => ("typescript", rule_name),
         // import-x has the same rules but better performance
