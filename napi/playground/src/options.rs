@@ -8,6 +8,7 @@ pub struct OxcOptions {
     pub run: OxcRunOptions,
     pub parser: OxcParserOptions,
     pub linter: Option<OxcLinterOptions>,
+    pub formatter: Option<OxcFormatterOptions>,
     pub transformer: Option<OxcTransformerOptions>,
     pub isolated_declarations: Option<OxcIsolatedDeclarationsOptions>,
     pub codegen: Option<OxcCodegenOptions>,
@@ -23,7 +24,6 @@ pub struct OxcOptions {
 pub struct OxcRunOptions {
     pub lint: bool,
     pub formatter: bool,
-    pub formatter_ir: bool,
     pub transform: bool,
     pub isolated_declarations: bool,
     pub whitespace: bool,
@@ -112,3 +112,55 @@ pub struct OxcMangleOptions {
 #[napi(object)]
 #[derive(Clone, Copy, Default)]
 pub struct OxcCompressOptions;
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcFormatterOptions {
+    /// Use tabs instead of spaces (default: false)
+    pub use_tabs: Option<bool>,
+    /// Number of spaces per indentation level (default: 2)
+    pub tab_width: Option<u8>,
+    /// Line ending type: "lf" | "crlf" | "cr" (default: "lf")
+    pub end_of_line: Option<String>,
+    /// Maximum line width (default: 80)
+    pub print_width: Option<u16>,
+    /// Use single quotes instead of double quotes (default: false)
+    pub single_quote: Option<bool>,
+    /// Use single quotes in JSX (default: false)
+    pub jsx_single_quote: Option<bool>,
+    /// When to add quotes around object properties: "as-needed" | "preserve" (default: "as-needed")
+    pub quote_props: Option<String>,
+    /// Print trailing commas: "all" | "es5" | "none" (default: "all")
+    pub trailing_comma: Option<String>,
+    /// Print semicolons (default: true)
+    pub semi: Option<bool>,
+    /// Include parentheses around arrow function parameters: "always" | "avoid" (default: "always")
+    pub arrow_parens: Option<String>,
+    /// Print spaces between brackets in object literals (default: true)
+    pub bracket_spacing: Option<bool>,
+    /// Put > of multi-line elements at the end of the last line (default: false)
+    pub bracket_same_line: Option<bool>,
+    /// Object wrapping style: "preserve" | "collapse" | "always" (default: "preserve")
+    pub object_wrap: Option<String>,
+    /// Put each attribute on its own line (default: false)
+    pub single_attribute_per_line: Option<bool>,
+    /// Operator position: "start" | "end" (default: "end")
+    pub experimental_operator_position: Option<String>,
+    /// Sort imports configuration
+    pub experimental_sort_imports: Option<OxcSortImportsOptions>,
+}
+
+#[napi(object)]
+#[derive(Default, Clone)]
+pub struct OxcSortImportsOptions {
+    /// Partition imports by newlines (default: false)
+    pub partition_by_newline: Option<bool>,
+    /// Partition imports by comments (default: false)
+    pub partition_by_comment: Option<bool>,
+    /// Sort side effects imports (default: false)
+    pub sort_side_effects: Option<bool>,
+    /// Sort order: "asc" | "desc" (default: "asc")
+    pub order: Option<String>,
+    /// Ignore case when sorting (default: true)
+    pub ignore_case: Option<bool>,
+}

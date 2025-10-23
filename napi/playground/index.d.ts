@@ -68,6 +68,41 @@ export interface OxcDefineOptions {
   define: Record<string, string>
 }
 
+export interface OxcFormatterOptions {
+  /** Use tabs instead of spaces (default: false) */
+  useTabs?: boolean
+  /** Number of spaces per indentation level (default: 2) */
+  tabWidth?: number
+  /** Line ending type: "lf" | "crlf" | "cr" (default: "lf") */
+  endOfLine?: string
+  /** Maximum line width (default: 80) */
+  printWidth?: number
+  /** Use single quotes instead of double quotes (default: false) */
+  singleQuote?: boolean
+  /** Use single quotes in JSX (default: false) */
+  jsxSingleQuote?: boolean
+  /** When to add quotes around object properties: "as-needed" | "preserve" (default: "as-needed") */
+  quoteProps?: string
+  /** Print trailing commas: "all" | "es5" | "none" (default: "all") */
+  trailingComma?: string
+  /** Print semicolons (default: true) */
+  semi?: boolean
+  /** Include parentheses around arrow function parameters: "always" | "avoid" (default: "always") */
+  arrowParens?: string
+  /** Print spaces between brackets in object literals (default: true) */
+  bracketSpacing?: boolean
+  /** Put > of multi-line elements at the end of the last line (default: false) */
+  bracketSameLine?: boolean
+  /** Object wrapping style: "preserve" | "collapse" | "always" (default: "preserve") */
+  objectWrap?: string
+  /** Put each attribute on its own line (default: false) */
+  singleAttributePerLine?: boolean
+  /** Operator position: "start" | "end" (default: "end") */
+  experimentalOperatorPosition?: string
+  /** Sort imports configuration */
+  experimentalSortImports?: OxcSortImportsOptions
+}
+
 export interface OxcInjectOptions {
   /** Map of variable name to module source or [source, specifier] */
   inject: Record<string, string | [string, string]>
@@ -90,6 +125,7 @@ export interface OxcOptions {
   run: OxcRunOptions
   parser: OxcParserOptions
   linter?: OxcLinterOptions
+  formatter?: OxcFormatterOptions
   transformer?: OxcTransformerOptions
   isolatedDeclarations?: OxcIsolatedDeclarationsOptions
   codegen?: OxcCodegenOptions
@@ -111,7 +147,6 @@ export interface OxcParserOptions {
 export interface OxcRunOptions {
   lint: boolean
   formatter: boolean
-  formatterIr: boolean
   transform: boolean
   isolatedDeclarations: boolean
   whitespace: boolean
@@ -120,6 +155,19 @@ export interface OxcRunOptions {
   scope: boolean
   symbol: boolean
   cfg: boolean
+}
+
+export interface OxcSortImportsOptions {
+  /** Partition imports by newlines (default: false) */
+  partitionByNewline?: boolean
+  /** Partition imports by comments (default: false) */
+  partitionByComment?: boolean
+  /** Sort side effects imports (default: false) */
+  sortSideEffects?: boolean
+  /** Sort order: "asc" | "desc" (default: "asc") */
+  order?: string
+  /** Ignore case when sorting (default: true) */
+  ignoreCase?: boolean
 }
 
 export interface OxcTransformerOptions {

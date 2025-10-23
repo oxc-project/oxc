@@ -29,7 +29,11 @@ use oxc::{
     syntax::reference::ReferenceFlags,
     transformer::{TransformOptions, Transformer},
 };
-use oxc_formatter::{FormatOptions, Formatter};
+use oxc_formatter::{
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
+    Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties,
+    QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
+};
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
     ModuleRecord, Oxlintrc,
@@ -41,8 +45,9 @@ use oxc_transformer_plugins::{
 };
 
 use crate::options::{
-    OxcControlFlowOptions, OxcDefineOptions, OxcInjectOptions, OxcIsolatedDeclarationsOptions,
-    OxcLinterOptions, OxcOptions, OxcParserOptions, OxcRunOptions, OxcTransformerOptions,
+    OxcControlFlowOptions, OxcDefineOptions, OxcFormatterOptions, OxcInjectOptions,
+    OxcIsolatedDeclarationsOptions, OxcLinterOptions, OxcOptions, OxcParserOptions, OxcRunOptions,
+    OxcTransformerOptions,
 };
 
 mod options;
@@ -100,6 +105,7 @@ impl Oxc {
             run: ref run_options,
             parser: ref parser_options,
             linter: ref linter_options,
+            formatter: ref formatter_options,
             transformer: ref transform_options,
             control_flow: ref control_flow_options,
             isolated_declarations: ref isolated_declarations_options,
@@ -109,6 +115,7 @@ impl Oxc {
             ..
         } = options;
         let linter_options = linter_options.clone().unwrap_or_default();
+        let formatter_options = formatter_options.clone().unwrap_or_default();
         let transform_options = transform_options.clone().unwrap_or_default();
         let control_flow_options = control_flow_options.clone().unwrap_or_default();
         let codegen_options = codegen_options.clone().unwrap_or_default();
@@ -142,14 +149,7 @@ impl Oxc {
             &allocator,
         );
 
-        // Phase 4: Run formatter
-        let parse_options = ParseOptions {
-            parse_regular_expression: true,
-            allow_return_outside_function: parser_options.allow_return_outside_function,
-            preserve_parens: parser_options.preserve_parens,
-            allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
-        };
-        self.run_formatter(run_options, parse_options, &source_text, source_type);
+        self.run_formatter(run_options, &source_text, source_type, &formatter_options);
 
         let mut scoping = semantic.into_scoping();
 
@@ -414,30 +414,148 @@ impl Oxc {
         }
     }
 
+    fn convert_formatter_options(options: &OxcFormatterOptions) -> FormatOptions {
+        let mut format_options = FormatOptions::default();
+
+        if let Some(use_tabs) = options.use_tabs {
+            format_options.indent_style =
+                if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
+        }
+
+        if let Some(tab_width) = options.tab_width
+            && let Ok(width) = IndentWidth::try_from(tab_width)
+        {
+            format_options.indent_width = width;
+        }
+
+        if let Some(ref end_of_line) = options.end_of_line
+            && let Ok(ending) = end_of_line.parse::<LineEnding>()
+        {
+            format_options.line_ending = ending;
+        }
+
+        if let Some(print_width) = options.print_width
+            && let Ok(width) = LineWidth::try_from(print_width)
+        {
+            format_options.line_width = width;
+        }
+
+        if let Some(single_quote) = options.single_quote {
+            format_options.quote_style =
+                if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+        }
+
+        if let Some(jsx_single_quote) = options.jsx_single_quote {
+            format_options.jsx_quote_style =
+                if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+        }
+
+        if let Some(ref quote_props) = options.quote_props
+            && let Ok(props) = quote_props.parse::<QuoteProperties>()
+        {
+            format_options.quote_properties = props;
+        }
+
+        if let Some(ref trailing_comma) = options.trailing_comma
+            && let Ok(commas) = trailing_comma.parse::<TrailingCommas>()
+        {
+            format_options.trailing_commas = commas;
+        }
+
+        if let Some(semi) = options.semi {
+            format_options.semicolons =
+                if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+        }
+
+        if let Some(ref arrow_parens) = options.arrow_parens {
+            let normalized =
+                if arrow_parens == "avoid" { "as-needed" } else { arrow_parens.as_str() };
+            if let Ok(parens) = normalized.parse::<ArrowParentheses>() {
+                format_options.arrow_parentheses = parens;
+            }
+        }
+
+        if let Some(bracket_spacing) = options.bracket_spacing {
+            format_options.bracket_spacing = BracketSpacing::from(bracket_spacing);
+        }
+
+        if let Some(bracket_same_line) = options.bracket_same_line {
+            format_options.bracket_same_line = BracketSameLine::from(bracket_same_line);
+        }
+
+        if let Some(single_attribute_per_line) = options.single_attribute_per_line {
+            format_options.attribute_position = if single_attribute_per_line {
+                AttributePosition::Multiline
+            } else {
+                AttributePosition::Auto
+            };
+        }
+
+        if let Some(ref object_wrap) = options.object_wrap {
+            let normalized = match object_wrap.as_str() {
+                "preserve" => "auto",
+                "collapse" => "never",
+                _ => object_wrap.as_str(),
+            };
+            if let Ok(expand) = normalized.parse::<Expand>() {
+                format_options.expand = expand;
+            }
+        }
+
+        if let Some(ref position) = options.experimental_operator_position
+            && let Ok(op_position) = position.parse::<OperatorPosition>()
+        {
+            format_options.experimental_operator_position = op_position;
+        }
+
+        if let Some(ref sort_imports_config) = options.experimental_sort_imports {
+            let order = sort_imports_config
+                .order
+                .as_ref()
+                .and_then(|o| o.parse::<SortOrder>().ok())
+                .unwrap_or_default();
+
+            format_options.experimental_sort_imports = Some(SortImports {
+                partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
+                partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
+                sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),
+                order,
+                ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
+            });
+        }
+
+        format_options
+    }
+
     fn run_formatter(
         &mut self,
         run_options: &OxcRunOptions,
-        parser_options: ParseOptions,
         source_text: &str,
         source_type: SourceType,
+        formatter_options: &OxcFormatterOptions,
     ) {
         let allocator = Allocator::default();
-        if run_options.formatter || run_options.formatter_ir {
+        if run_options.formatter {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(ParseOptions { preserve_parens: false, ..parser_options })
+                .with_options(ParseOptions {
+                    preserve_parens: false,
+                    allow_return_outside_function: true,
+                    allow_v8_intrinsics: true,
+                    parse_regular_expression: false,
+                })
                 .parse();
 
-            let formatter = Formatter::new(&allocator, FormatOptions::default());
-            self.formatter_formatted_text = formatter.build(&ret.program);
+            let format_options = Self::convert_formatter_options(formatter_options);
+            let formatter = Formatter::new(&allocator, format_options);
+            let formatted = formatter.format(&ret.program);
+            if run_options.formatter {
+                self.formatter_formatted_text = match formatted.print() {
+                    Ok(printer) => printer.into_code(),
+                    Err(err) => err.to_string(),
+                };
 
-            // if run_options.formatter_ir.unwrap_or_default() {
-            // let formatter_doc = formatter.doc(&ret.program).to_string();
-            // self.formatter_ir_text = {
-            // let ret =
-            // Parser::new(&allocator, &formatter_doc, SourceType::default()).parse();
-            // Formatter::new(&allocator, FormatOptions::default()).build(&ret.program)
-            // };
-            // }
+                self.formatter_ir_text = formatted.into_document().to_string();
+            }
         }
     }
 
