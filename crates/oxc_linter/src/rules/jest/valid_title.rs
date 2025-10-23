@@ -28,6 +28,7 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 pub struct ValidTitleConfig {
     ignore_type_of_test_name: bool,
     ignore_type_of_describe_name: bool,
+    allow_arguments: bool,
     disallowed_words: Vec<CompactStr>,
     ignore_space: bool,
     must_not_match_patterns: FxHashMap<MatchKind, CompiledMatcherAndMessage>,
@@ -45,7 +46,7 @@ impl std::ops::Deref for ValidTitle {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Checks that the titles of Jest blocks are valid.
+    /// Checks that the titles of Jest and Vitest blocks are valid.
     ///
     /// Titles must be:
     /// - not empty,
@@ -84,6 +85,7 @@ declare_oxc_lint!(
     ///     ignoreSpaces?: boolean;
     ///     ignoreTypeOfTestName?: boolean;
     ///     ignoreTypeOfDescribeName?: boolean;
+    ///     allowArguments?: boolean;
     ///     disallowedWords?: string[];
     ///     mustNotMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
     ///     mustMatch?: Partial<Record<'describe' | 'test' | 'it', string>> | string;
@@ -108,6 +110,7 @@ impl Rule for ValidTitle {
 
         let ignore_type_of_test_name = get_as_bool("ignoreTypeOfTestName");
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
+        let allow_arguments = get_as_bool("allowArguments");
         let ignore_space = get_as_bool("ignoreSpaces");
         let disallowed_words = config
             .and_then(|v| v.get("disallowedWords"))
@@ -125,6 +128,7 @@ impl Rule for ValidTitle {
         Self(Box::new(ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
+            allow_arguments,
             disallowed_words,
             ignore_space,
             must_not_match_patterns,
@@ -159,9 +163,28 @@ impl ValidTitle {
             return;
         }
 
+        // Check if extend keyword has been used (vitest feature)
+        if let Some(member) = jest_fn_call.members.first()
+            && member.is_name_equal("extend")
+        {
+            return;
+        }
+
         let Some(arg) = call_expr.arguments.first() else {
             return;
         };
+
+        // Handle typecheck settings - skip for describe when enabled (vitest feature)
+        if ctx.settings().vitest.typecheck
+            && matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe))
+        {
+            return;
+        }
+
+        // Handle allowArguments option (vitest feature)
+        if self.allow_arguments && matches!(arg, Argument::Identifier(_)) {
+            return;
+        }
 
         let need_report_name = match jest_fn_call.kind {
             JestFnKind::General(JestGeneralFnKind::Test) => !self.ignore_type_of_test_name,
@@ -284,15 +307,39 @@ fn compile_matcher_patterns(
 fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAndMessage> {
     match pattern {
         MatcherPattern::String(pattern) => {
-            let reg_str = format!("(?u){}", pattern.as_str()?);
+            let pattern_str = pattern.as_str()?;
+
+            // Check for JS regex literal: /pattern/flags
+            if let Some(stripped) = pattern_str.strip_prefix('/')
+                && let Some(end) = stripped.rfind('/')
+            {
+                let (pat, _flags) = stripped.split_at(end);
+                // For now, ignore flags and just use the pattern
+                let regex = Regex::new(pat).ok()?;
+                return Some((regex, None));
+            }
+
+            // Fallback: treat as a normal Rust regex with Unicode support
+            let reg_str = format!("(?u){pattern_str}");
             let reg = Regex::new(&reg_str).ok()?;
             Some((reg, None))
         }
         MatcherPattern::Vec(pattern) => {
-            let reg_str = pattern.first().and_then(|v| v.as_str()).map(|v| format!("(?u){v}"))?;
-            let reg = Regex::new(&reg_str).ok()?;
+            let pattern_str = pattern.first().and_then(|v| v.as_str())?;
+
+            // Check for JS regex literal: /pattern/flags
+            let regex = if let Some(stripped) = pattern_str.strip_prefix('/')
+                && let Some(end) = stripped.rfind('/')
+            {
+                let (pat, _flags) = stripped.split_at(end);
+                Regex::new(pat).ok()?
+            } else {
+                let reg_str = format!("(?u){pattern_str}");
+                Regex::new(&reg_str).ok()?
+            };
+
             let message = pattern.get(1).and_then(serde_json::Value::as_str).map(CompactStr::from);
-            Some((reg, message))
+            Some((regex, message))
         }
     }
 }
@@ -306,6 +353,7 @@ fn validate_title(
 ) {
     if title.is_empty() {
         Message::EmptyTitle.diagnostic(ctx, span);
+        return;
     }
 
     if !valid_title.disallowed_words.is_empty() {
@@ -585,6 +633,35 @@ fn test() {
             None,
         ),
         ("it(abc, function () {})", Some(serde_json::json!([{ "ignoreTypeOfTestName": true }]))),
+        // Vitest-specific tests with allowArguments option
+        ("it(foo, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        ("describe(bar, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        ("test(baz, () => {});", Some(serde_json::json!([{ "allowArguments": true }]))),
+        // Vitest-specific tests with .extend()
+        (
+            "export const myTest = test.extend({
+                archive: []
+            })",
+            None,
+        ),
+        ("const localTest = test.extend({})", None),
+        (
+            "import { it } from 'vitest'
+
+            const test = it.extend({
+                fixture: [
+                    async ({}, use) => {
+                        setup()
+                        await use()
+                        teardown()
+                    },
+                    { auto: true }
+                ],
+            })
+
+            test('', () => {})",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -927,6 +1004,8 @@ fn test() {
             None,
         ),
         ("it(abc, function () {})", None),
+        // Vitest-specific fail test with allowArguments: false
+        ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
     ];
 
     let fix = vec![
