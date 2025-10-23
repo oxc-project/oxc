@@ -82,6 +82,9 @@ impl<'de> Deserialize<'de> for OxlintSettings {
 
             #[serde(default)]
             jsdoc: JSDocPluginSettings,
+
+            #[serde(default)]
+            vitest: VitestPluginSettings,
         }
 
         // Capture the raw JSON value first
@@ -99,6 +102,7 @@ impl<'de> Deserialize<'de> for OxlintSettings {
             next: well_known_settings.next,
             react: well_known_settings.react,
             jsdoc: well_known_settings.jsdoc,
+            vitest: well_known_settings.vitest,
         })
     }
 }
@@ -153,6 +157,11 @@ impl OxlintSettings {
                 other.jsdoc.clone()
             } else {
                 self.jsdoc.clone()
+            },
+            vitest: if self.vitest == VitestPluginSettings::default() {
+                other.vitest.clone()
+            } else {
+                self.vitest.clone()
             },
         }
     }
