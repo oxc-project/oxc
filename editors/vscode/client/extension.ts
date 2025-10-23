@@ -1,8 +1,13 @@
-import { promises as fsPromises } from 'node:fs';
+import { execFile } from 'node:child_process';
+import { constants as fsConstants, promises as fsPromises } from 'node:fs';
+import { homedir } from 'node:os';
+import { delimiter, dirname, join } from 'node:path';
+import { promisify } from 'node:util';
 
 import {
   commands,
   ExtensionContext,
+  LogOutputChannel,
   StatusBarAlignment,
   StatusBarItem,
   ThemeColor,
@@ -20,7 +25,6 @@ import {
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
-import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
 import { VSCodeConfig } from './VSCodeConfig';
 
@@ -46,6 +50,224 @@ let myStatusBarItem: StatusBarItem;
 // Global flag to check if the user allows us to start the server.
 // When `oxc.requireConfig` is `true`, make sure one `.oxlintrc.json` file is present.
 let allowedToStartServer: boolean;
+
+const execFileAsync = promisify(execFile);
+const nodeExecutableName = process.platform === 'win32' ? 'node.exe' : 'node';
+
+type NodeEnvResolver = (
+  env: NodeJS.ProcessEnv,
+  outputChannel: LogOutputChannel,
+) => Promise<NodeJS.ProcessEnv | null>;
+
+function getPathKey(env: NodeJS.ProcessEnv): string {
+  const existingKey = Object.keys(env).find(key => key.toLowerCase() === 'path');
+  return existingKey ?? (process.platform === 'win32' ? 'Path' : 'PATH');
+}
+
+async function pathExists(candidate: string, mode: number = fsConstants.F_OK): Promise<boolean> {
+  try {
+    await fsPromises.access(candidate, mode);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function prependPath(env: NodeJS.ProcessEnv, directory: string): NodeJS.ProcessEnv {
+  const pathKey = getPathKey(env);
+  const current = env[pathKey] ?? '';
+  const entries = current.split(delimiter).filter(Boolean);
+  if (!entries.includes(directory)) {
+    entries.unshift(directory);
+  }
+  return { ...env, [pathKey]: entries.join(delimiter) };
+}
+
+async function hasNodeInPath(env: NodeJS.ProcessEnv): Promise<boolean> {
+  const whichCommand = process.platform === 'win32' ? 'where' : 'which';
+  try {
+    const { stdout } = await execFileAsync(whichCommand, ['node'], { env });
+    return stdout.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function locateFnmExecutable(env: NodeJS.ProcessEnv): Promise<string | undefined> {
+  const whichCommand = process.platform === 'win32' ? 'where' : 'which';
+  try {
+    await execFileAsync(whichCommand, ['fnm'], { env });
+    return 'fnm';
+  } catch {
+    return undefined;
+  }
+}
+
+function mergeFnmJsonEnv(
+  jsonStr: string,
+  env: NodeJS.ProcessEnv,
+): NodeJS.ProcessEnv | null {
+  try {
+    const updates = JSON.parse(jsonStr) as Record<string, string>;
+    let next = { ...env, ...updates };
+
+    if (process.platform === 'win32' && updates.FNM_MULTISHELL_PATH) {
+      next = prependPath(next, updates.FNM_MULTISHELL_PATH);
+    } else if (updates.FNM_DIR) {
+      next = prependPath(next, updates.FNM_DIR);
+    }
+
+    return next;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveFnmEnv(
+  env: NodeJS.ProcessEnv,
+  outputChannel: LogOutputChannel,
+): Promise<NodeJS.ProcessEnv | null> {
+  const fnmExecutable = await locateFnmExecutable(env);
+  if (!fnmExecutable) {
+    return null;
+  }
+
+  try {
+    const { stdout } = await execFileAsync(fnmExecutable, ['env', '--json'], { env });
+    const parsed = mergeFnmJsonEnv(stdout.toString(), env);
+    if (parsed) {
+      outputChannel.info('Type-aware linting detected Node.js via fnm.');
+      return parsed;
+    }
+  } catch (error) {
+    outputChannel.warn(`Failed to evaluate fnm environment: ${(error as Error).message}`);
+  }
+
+  return null;
+}
+
+async function resolveVoltaEnv(
+  env: NodeJS.ProcessEnv,
+  outputChannel: LogOutputChannel,
+): Promise<NodeJS.ProcessEnv | null> {
+  const voltaHomes = new Set<string>();
+  const envHome = env.VOLTA_HOME ?? process.env.VOLTA_HOME;
+  if (envHome) {
+    voltaHomes.add(envHome);
+  }
+
+  const home = homedir();
+  if (home) {
+    voltaHomes.add(join(home, '.volta'));
+  }
+
+  const localAppData = env.LOCALAPPDATA ?? process.env.LOCALAPPDATA;
+  if (localAppData) {
+    voltaHomes.add(join(localAppData, 'Volta'));
+  }
+
+  const appData = env.APPDATA ?? process.env.APPDATA;
+  if (appData) {
+    voltaHomes.add(join(appData, 'Volta'));
+  }
+
+  for (const voltaHome of voltaHomes) {
+    if (!voltaHome) {
+      continue;
+    }
+    const binDir = join(voltaHome, 'bin');
+    const nodePath = join(binDir, nodeExecutableName);
+    if (await pathExists(nodePath)) {
+      outputChannel.info(`Type-aware linting detected Node.js via Volta at ${binDir}.`);
+      return prependPath(env, binDir);
+    }
+  }
+
+  return null;
+}
+
+async function resolveNvmEnv(
+  env: NodeJS.ProcessEnv,
+  outputChannel: LogOutputChannel,
+): Promise<NodeJS.ProcessEnv | null> {
+  const nvmSymlink = env.NVM_SYMLINK ?? process.env.NVM_SYMLINK;
+  if (nvmSymlink) {
+    const nodePath = join(nvmSymlink, nodeExecutableName);
+    if (await pathExists(nodePath)) {
+      outputChannel.info(`Type-aware linting detected Node.js via nvm-windows at ${nvmSymlink}.`);
+      return prependPath(env, nvmSymlink);
+    }
+  }
+
+  const nvmDir = env.NVM_DIR ?? process.env.NVM_DIR ?? (homedir() ? join(homedir(), '.nvm') : undefined);
+  if (!nvmDir) {
+    return null;
+  }
+
+  const nvmScript = join(nvmDir, 'nvm.sh');
+  if (await pathExists(nvmScript)) {
+    try {
+      const { stdout } = await execFileAsync('bash', ['-lc', `. "${nvmScript}" >/dev/null 2>&1 && nvm which default`], {
+        env,
+      });
+      const nodePath = stdout.toString().trim();
+      if (nodePath) {
+        const binDir = dirname(nodePath);
+        if (await pathExists(nodePath)) {
+          outputChannel.info(`Type-aware linting detected Node.js via nvm at ${binDir}.`);
+          return prependPath(env, binDir);
+        }
+      }
+    } catch {
+      // fall back to inspecting the alias file below
+    }
+  }
+
+  const aliasDefault = join(nvmDir, 'alias', 'default');
+  try {
+    const aliasContent = await fsPromises.readFile(aliasDefault, 'utf8');
+    const version = aliasContent.split(/\s+/).filter(Boolean)[0]?.trim();
+    if (!version || version === 'system' || version.startsWith('lts/')) {
+      return null;
+    }
+    const sanitized = version.startsWith('v') ? version.slice(1) : version;
+    // The following path construction assumes the standard Unix-like nvm directory structure :
+    // $NVM_DIR/versions/node/<version>/bin
+    // nvm-windows is handled separately above via NVM_SYMLINK
+    const binDir = join(nvmDir, 'versions', 'node', sanitized, 'bin');
+    const nodePath = join(binDir, nodeExecutableName);
+    if (await pathExists(nodePath)) {
+      outputChannel.info(`Type-aware linting detected Node.js via nvm default alias at ${binDir}.`);
+      return prependPath(env, binDir);
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
+async function ensureNodeOnPath(env: NodeJS.ProcessEnv, outputChannel: LogOutputChannel): Promise<NodeJS.ProcessEnv> {
+  if (await hasNodeInPath(env)) {
+    return env;
+  }
+
+  const resolvers: NodeEnvResolver[] = [resolveVoltaEnv, resolveFnmEnv, resolveNvmEnv];
+
+  for (const resolver of resolvers) {
+    const resolved = await resolver(env, outputChannel);
+    if (!resolved) {
+      continue;
+    }
+    if (await hasNodeInPath(resolved)) {
+      return resolved;
+    }
+    env = resolved;
+  }
+
+  outputChannel.warn('Type-aware linting is enabled but Node.js could not be located automatically.');
+  return env;
+}
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
@@ -156,13 +378,21 @@ export async function activate(context: ExtensionContext) {
   }
 
   const command = await findBinary();
+  const typeAwareEnabled = configService.languageServerConfig.some(({ options }) => options.typeAware);
+
+  let runEnv: NodeJS.ProcessEnv = {
+    ...process.env,
+    RUST_LOG: process.env.RUST_LOG || 'info',
+  };
+
+  if (typeAwareEnabled) {
+    runEnv = await ensureNodeOnPath(runEnv, outputChannel);
+  }
+
   const run: Executable = {
     command: command!,
     options: {
-      env: {
-        ...process.env,
-        RUST_LOG: process.env.RUST_LOG || 'info',
-      },
+      env: runEnv,
     },
   };
   const serverOptions: ServerOptions = {
