@@ -374,11 +374,10 @@ pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> 
 /// # }
 /// ```
 pub fn format<'ast>(
-    program: &'ast Program<'ast>,
     context: FormatContext<'ast>,
     arguments: Arguments<'_, 'ast>,
 ) -> FormatResult<Formatted<'ast>> {
-    let mut state = FormatState::new(program, context);
+    let mut state = FormatState::new(context);
     let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
 
     buffer.write_fmt(arguments)?;

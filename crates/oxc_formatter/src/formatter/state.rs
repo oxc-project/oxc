@@ -1,8 +1,9 @@
 use oxc_ast::{AstKind, ast::Program};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
-use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
+use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder, prelude::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -12,6 +13,9 @@ use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 pub struct FormatState<'ast> {
     context: FormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
+    // For the document IR printing process
+    /// The interned elements that have been printed to this point
+    printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -26,10 +30,11 @@ impl std::fmt::Debug for FormatState<'_> {
 
 impl<'ast> FormatState<'ast> {
     /// Creates a new state with the given language specific context
-    pub fn new(program: &'ast Program<'ast>, context: FormatContext<'ast>) -> Self {
+    pub fn new(context: FormatContext<'ast>) -> Self {
         Self {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
+            printed_interned_elements: FxHashMap::default(),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }
@@ -54,6 +59,11 @@ impl<'ast> FormatState<'ast> {
     /// The name is unused for production builds and has no meaning on the equality of two group ids.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.group_id_builder.group_id(debug_name)
+    }
+
+    #[expect(clippy::mutable_key_type)]
+    pub fn printed_interned_elements(&mut self) -> &mut FxHashMap<Interned<'ast>, usize> {
+        &mut self.printed_interned_elements
     }
 
     #[cfg(not(debug_assertions))]

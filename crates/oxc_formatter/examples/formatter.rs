@@ -60,17 +60,16 @@ fn main() -> Result<(), String> {
     };
 
     let formatter = Formatter::new(&allocator, options);
+    let formatted = formatter.format(&ret.program);
     if show_ir {
-        let doc = formatter.doc(&ret.program);
-        println!("[");
-        for el in doc.iter() {
-            println!("  {el:?},");
-        }
-        println!("]");
-    } else {
-        let code = formatter.build(&ret.program);
-        println!("{code}");
+        println!("--- IR ---");
+        println!("{}", &formatted.document().to_string());
+        println!("--- End IR ---\n");
     }
 
+    println!("--- Formatted Code ---");
+    let code = formatted.print().map_err(|e| e.to_string())?.into_code();
+    println!("{code}");
+    println!("--- End Formatted Code ---");
     Ok(())
 }

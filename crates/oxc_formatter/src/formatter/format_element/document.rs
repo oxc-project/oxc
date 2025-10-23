@@ -1,12 +1,22 @@
 #![expect(clippy::mutable_key_type)]
+use cow_utils::CowUtils;
 use std::ops::Deref;
 
+use oxc_allocator::Allocator;
+use oxc_ast::Comment;
+use oxc_span::SourceType;
 use rustc_hash::FxHashMap;
 
-use super::{
-    super::{FormatElement, prelude::*},
-    tag::Tag,
+use super::super::prelude::*;
+use super::tag::Tag;
+use crate::formatter::TextSize;
+use crate::formatter::prelude::tag::{DedentMode, GroupMode};
+use crate::{
+    Format, FormatOptions, FormatResult, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    formatter::FormatContext, formatter::Formatter,
 };
+
+use crate::{format, write};
 
 /// A formatted document.
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
@@ -147,430 +157,433 @@ impl<'a> Deref for Document<'a> {
 
 impl std::fmt::Display for Document<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
-        // let formatted = format!(IrFormatContext::default(), [self.elements.as_slice()])
-        // .expect("Formatting not to throw any FormatErrors");
+        let allocator = Allocator::default();
+        let source_text = allocator.alloc_str("");
+        let source_type = SourceType::default();
+        let comments: oxc_allocator::Vec<Comment> = oxc_allocator::Vec::new_in(&allocator);
+        let options = FormatOptions {
+            line_width: LineWidth::default(),
+            indent_style: IndentStyle::Space,
+            indent_width: IndentWidth::default(),
+            line_ending: LineEnding::Lf,
+            ..Default::default()
+        };
+        let context =
+            FormatContext::new(source_text, source_type, comments.as_ref(), &allocator, options);
 
-        // f.write_str(formatted.print().expect("Expected a valid document").as_code())
+        let formatted = format!(context, [self.elements.as_slice()])
+            .expect("Formatting not to throw any FormatErrors");
+
+        f.write_str(formatted.print().expect("Expected a valid document").as_code())
     }
 }
 
-// #[derive(Clone, Default, Debug)]
-// struct IrFormatContext {
-// /// The interned elements that have been printed to this point
-// printed_interned_elements: FxHashMap<Interned, usize>,
-// }
+impl<'a> Format<'a> for &[FormatElement<'a>] {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        use Tag::{
+            EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
+            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
+        };
 
-// impl<'a> FormatContext<'a> for IrFormatContext {
-// type Options = IrFormatOptions;
+        write!(f, [ContentArrayStart])?;
 
-// fn source_text(&self) -> &'a str {
-// ""
-// }
+        let mut tag_stack = Vec::new();
+        let mut first_element = true;
+        let mut in_text = false;
 
-// fn options(&self) -> &Self::Options {
-// &IrFormatOptions
-// }
+        let mut iter = self.iter().peekable();
 
-// // fn source_map(&self) -> Option<&TransformSourceMap> {
-// // None
-// // }
-// }
+        while let Some(element) = iter.next() {
+            if !first_element && !in_text && !element.is_end_tag() {
+                // Write a separator between every two elements
+                write!(f, [text(","), soft_line_break_or_space()])?;
+            }
 
-// impl Format<IrFormatContext> for &[FormatElement] {
-// fn fmt(&self, f: &mut Formatter<IrFormatContext>) -> FormatResult<()> {
-// use Tag::{
-// EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-// EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndVerbatim, StartAlign,
-// StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-// StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartVerbatim,
-// };
+            first_element = false;
 
-// write!(f, [ContentArrayStart])?;
+            match element {
+                element @ (FormatElement::Space
+                | FormatElement::HardSpace
+                | FormatElement::StaticText { .. }
+                | FormatElement::DynamicText { .. }
+                | FormatElement::LocatedTokenText { .. }) => {
+                    if !in_text {
+                        write!(f, [text("\"")])?;
+                    }
 
-// let mut tag_stack = Vec::new();
-// let mut first_element = true;
-// let mut in_text = false;
+                    in_text = true;
 
-// let mut iter = self.iter().peekable();
+                    match element {
+                        FormatElement::Space | FormatElement::HardSpace => {
+                            write!(f, [text(" ")])?;
+                        }
+                        element if element.is_text() => {
+                            // escape quotes
+                            let new_element = match element {
+                                // except for static text because source_position is unknown
+                                FormatElement::StaticText { .. } => element.clone(),
+                                FormatElement::DynamicText { text } => {
+                                    let text = text.cow_replace('"', "\\\"");
+                                    FormatElement::DynamicText {
+                                        text: f.context().allocator().alloc_str(&text),
+                                    }
+                                }
+                                FormatElement::LocatedTokenText { slice, source_position } => {
+                                    let text = slice.cow_replace('"', "\\\"");
+                                    FormatElement::DynamicText {
+                                        text: f.context().allocator().alloc_str(&text),
+                                    }
+                                }
+                                _ => unreachable!(),
+                            };
+                            f.write_element(new_element)?;
+                        }
+                        _ => unreachable!(),
+                    }
 
-// while let Some(element) = iter.next() {
-// if !first_element && !in_text && !element.is_end_tag() {
-// // Write a separator between every two elements
-// write!(f, [text(","), soft_line_break_or_space()])?;
-// }
+                    let is_next_text = iter.peek().is_some_and(|e| e.is_text() || e.is_space());
 
-// first_element = false;
+                    if !is_next_text {
+                        write!(f, [text("\"")])?;
+                        in_text = false;
+                    }
+                }
 
-// match element {
-// element @ (FormatElement::Space
-// | FormatElement::HardSpace
-// | FormatElement::StaticText { .. }
-// | FormatElement::DynamicText { .. }
-// | FormatElement::LocatedTokenText { .. }) => {
-// if !in_text {
-// write!(f, [text("\"")])?;
-// }
+                FormatElement::Line(mode) => match mode {
+                    LineMode::SoftOrSpace => {
+                        write!(f, [text("soft_line_break_or_space")])?;
+                    }
+                    LineMode::Soft => {
+                        write!(f, [text("soft_line_break")])?;
+                    }
+                    LineMode::Hard => {
+                        write!(f, [text("hard_line_break")])?;
+                    }
+                    LineMode::Empty => {
+                        write!(f, [text("empty_line")])?;
+                    }
+                },
+                FormatElement::ExpandParent => {
+                    write!(f, [text("expand_parent")])?;
+                }
 
-// in_text = true;
+                FormatElement::LineSuffixBoundary => {
+                    write!(f, [text("line_suffix_boundary")])?;
+                }
 
-// match element {
-// FormatElement::Space | FormatElement::HardSpace => {
-// write!(f, [text(" ")])?;
-// }
-// element if element.is_text() => {
-// // escape quotes
-// let new_element = match element {
-// // except for static text because source_position is unknown
-// FormatElement::StaticText { .. } => element.clone(),
-// FormatElement::DynamicText { text, source_position } => {
-// let text = text.to_string().replace('"', "\\\"");
-// FormatElement::DynamicText {
-// text: text.into(),
-// source_position: *source_position,
-// }
-// }
-// FormatElement::LocatedTokenText { slice, source_position } => {
-// let text = slice.to_string().replace('"', "\\\"");
-// FormatElement::DynamicText {
-// text: text.into(),
-// source_position: *source_position,
-// }
-// }
-// _ => unreachable!(),
-// };
-// f.write_element(new_element)?;
-// }
-// _ => unreachable!(),
-// }
+                FormatElement::BestFitting(best_fitting) => {
+                    write!(f, [text("best_fitting([")])?;
+                    f.write_elements([
+                        FormatElement::Tag(StartIndent),
+                        FormatElement::Line(LineMode::Hard),
+                    ])?;
 
-// let is_next_text = iter.peek().is_some_and(|e| e.is_text() || e.is_space());
+                    for variant in best_fitting.variants() {
+                        write!(f, [&**variant, hard_line_break()])?;
+                    }
 
-// if !is_next_text {
-// write!(f, [text("\"")])?;
-// in_text = false;
-// }
-// }
+                    f.write_elements([
+                        FormatElement::Tag(EndIndent),
+                        FormatElement::Line(LineMode::Hard),
+                    ])?;
 
-// FormatElement::Line(mode) => match mode {
-// LineMode::SoftOrSpace => {
-// write!(f, [text("soft_line_break_or_space")])?;
-// }
-// LineMode::Soft => {
-// write!(f, [text("soft_line_break")])?;
-// }
-// LineMode::Hard => {
-// write!(f, [text("hard_line_break")])?;
-// }
-// LineMode::Empty => {
-// write!(f, [text("empty_line")])?;
-// }
-// },
-// FormatElement::ExpandParent => {
-// write!(f, [text("expand_parent")])?;
-// }
+                    write!(f, [text("])")])?;
+                }
 
-// FormatElement::LineSuffixBoundary => {
-// write!(f, [text("line_suffix_boundary")])?;
-// }
+                FormatElement::Interned(interned) => {
+                    let mut interned_elements = f.state_mut().printed_interned_elements();
+                    match interned_elements.get(interned).copied() {
+                        None => {
+                            let index = interned_elements.len();
+                            interned_elements.insert(interned.clone(), index);
 
-// FormatElement::BestFitting(best_fitting) => {
-// write!(f, [text("best_fitting([")])?;
-// f.write_elements([
-// FormatElement::Tag(StartIndent),
-// FormatElement::Line(LineMode::Hard),
-// ])?;
+                            write!(
+                                f,
+                                [
+                                    dynamic_text(
+                                        f.context()
+                                            .allocator()
+                                            .alloc_str(&std::format!("<interned {index}>"))
+                                    ),
+                                    space(),
+                                    &&**interned,
+                                ]
+                            )?;
+                        }
+                        Some(reference) => {
+                            write!(
+                                f,
+                                [dynamic_text(
+                                    f.context()
+                                        .allocator()
+                                        .alloc_str(&std::format!("<ref interned *{reference}>"))
+                                )]
+                            )?;
+                        }
+                    }
+                }
 
-// for variant in best_fitting.variants() {
-// write!(f, [&**variant, hard_line_break()])?;
-// }
+                FormatElement::Tag(tag) => {
+                    if tag.is_start() {
+                        first_element = true;
+                        tag_stack.push(tag.kind());
+                    }
+                    // Handle documents with mismatching start/end or superfluous end tags
+                    else {
+                        match tag_stack.pop() {
+                            None => {
+                                // Only write the end tag without any indent to ensure the output document is valid.
+                                write!(
+                                    f,
+                                    [
+                                        text("<END_TAG_WITHOUT_START<"),
+                                        dynamic_text(
+                                            f.context()
+                                                .allocator()
+                                                .alloc_str(&std::format!("{:?}", tag.kind()))
+                                        ),
+                                        text(">>"),
+                                    ]
+                                )?;
+                                first_element = false;
+                                continue;
+                            }
+                            Some(start_kind) if start_kind != tag.kind() => {
+                                write!(
+                                    f,
+                                    [
+                                        ContentArrayEnd,
+                                        text(")"),
+                                        soft_line_break_or_space(),
+                                        text("ERROR<START_END_TAG_MISMATCH<start: "),
+                                        dynamic_text(
+                                            f.context()
+                                                .allocator()
+                                                .alloc_str(&std::format!("{start_kind:?}"))
+                                        ),
+                                        text(", end: "),
+                                        dynamic_text(
+                                            f.context()
+                                                .allocator()
+                                                .alloc_str(&std::format!("{:?}", tag.kind()))
+                                        ),
+                                        text(">>")
+                                    ]
+                                )?;
+                                first_element = false;
+                                continue;
+                            }
+                            _ => {
+                                // all ok
+                            }
+                        }
+                    }
 
-// f.write_elements([
-// FormatElement::Tag(EndIndent),
-// FormatElement::Line(LineMode::Hard),
-// ])?;
+                    match tag {
+                        StartIndent => {
+                            write!(f, [text("indent(")])?;
+                        }
 
-// write!(f, [text("])")])?;
-// }
+                        StartDedent(mode) => {
+                            let label = match mode {
+                                DedentMode::Level => "dedent",
+                                DedentMode::Root => "dedentRoot",
+                            };
 
-// FormatElement::Interned(interned) => {
-// let interned_elements = &mut f.context_mut().printed_interned_elements;
+                            write!(f, [text(label), text("(")])?;
+                        }
 
-// match interned_elements.get(interned).copied() {
-// None => {
-// let index = interned_elements.len();
-// interned_elements.insert(interned.clone(), index);
+                        StartAlign(tag::Align(count)) => {
+                            write!(
+                                f,
+                                [
+                                    text("align("),
+                                    dynamic_text(
+                                        f.context().allocator().alloc_str(&count.to_string()),
+                                    ),
+                                    text(","),
+                                    space(),
+                                ]
+                            )?;
+                        }
 
-// write!(
-// f,
-// [
-// dynamic_text(
-// &std::format!("<interned {index}>"),
-// TextSize::default()
-// ),
-// space(),
-// &&**interned,
-// ]
-// )?;
-// }
-// Some(reference) => {
-// write!(
-// f,
-// [dynamic_text(
-// &std::format!("<ref interned *{reference}>"),
-// TextSize::default()
-// )]
-// )?;
-// }
-// }
-// }
+                        StartLineSuffix => {
+                            write!(f, [text("line_suffix(")])?;
+                        }
 
-// FormatElement::Tag(tag) => {
-// if tag.is_start() {
-// first_element = true;
-// tag_stack.push(tag.kind());
-// }
-// // Handle documents with mismatching start/end or superfluous end tags
-// else {
-// match tag_stack.pop() {
-// None => {
-// // Only write the end tag without any indent to ensure the output document is valid.
-// write!(
-// f,
-// [
-// text("<END_TAG_WITHOUT_START<"),
-// dynamic_text(
-// &std::format!("{:?}", tag.kind()),
-// TextSize::default()
-// ),
-// text(">>"),
-// ]
-// )?;
-// first_element = false;
-// continue;
-// }
-// Some(start_kind) if start_kind != tag.kind() => {
-// write!(
-// f,
-// [
-// ContentArrayEnd,
-// text(")"),
-// soft_line_break_or_space(),
-// text("ERROR<START_END_TAG_MISMATCH<start: "),
-// dynamic_text(
-// &std::format!("{start_kind:?}"),
-// TextSize::default()
-// ),
-// text(", end: "),
-// dynamic_text(
-// &std::format!("{:?}", tag.kind()),
-// TextSize::default()
-// ),
-// text(">>")
-// ]
-// )?;
-// first_element = false;
-// continue;
-// }
-// _ => {
-// // all ok
-// }
-// }
-// }
+                        StartVerbatim(_) => {
+                            write!(f, [text("verbatim(")])?;
+                        }
 
-// match tag {
-// StartIndent => {
-// write!(f, [text("indent(")])?;
-// }
+                        StartGroup(group) => {
+                            write!(f, [text("group(")])?;
 
-// StartDedent(mode) => {
-// let label = match mode {
-// DedentMode::Level => "dedent",
-// DedentMode::Root => "dedentRoot",
-// };
+                            if let Some(group_id) = group.id() {
+                                write!(
+                                    f,
+                                    [
+                                        dynamic_text(
+                                            f.context()
+                                                .allocator()
+                                                .alloc_str(&std::format!("\"{group_id:?}\""))
+                                        ),
+                                        text(","),
+                                        space(),
+                                    ]
+                                )?;
+                            }
 
-// write!(f, [text(label), text("(")])?;
-// }
+                            match group.mode() {
+                                GroupMode::Flat => {}
+                                GroupMode::Expand => {
+                                    write!(f, [text("expand: true,"), space()])?;
+                                }
+                                GroupMode::Propagated => {
+                                    write!(f, [text("expand: propagated,"), space()])?;
+                                }
+                            }
+                        }
 
-// StartAlign(tag::Align(count)) => {
-// write!(
-// f,
-// [
-// text("align("),
-// dynamic_text(&count.to_string(), TextSize::default()),
-// text(","),
-// space(),
-// ]
-// )?;
-// }
+                        StartIndentIfGroupBreaks(id) => {
+                            write!(
+                                f,
+                                [
+                                    text("indent_if_group_breaks("),
+                                    dynamic_text(
+                                        f.context()
+                                            .allocator()
+                                            .alloc_str(&std::format!("\"{id:?}\"")),
+                                    ),
+                                    text(","),
+                                    space(),
+                                ]
+                            )?;
+                        }
 
-// StartLineSuffix => {
-// write!(f, [text("line_suffix(")])?;
-// }
+                        StartConditionalContent(condition) => {
+                            match condition.mode {
+                                PrintMode::Flat => {
+                                    write!(f, [text("if_group_fits_on_line(")])?;
+                                }
+                                PrintMode::Expanded => {
+                                    write!(f, [text("if_group_breaks(")])?;
+                                }
+                            }
 
-// StartVerbatim(_) => {
-// write!(f, [text("verbatim(")])?;
-// }
+                            if let Some(group_id) = condition.group_id {
+                                write!(
+                                    f,
+                                    [
+                                        dynamic_text(
+                                            f.context()
+                                                .allocator()
+                                                .alloc_str(&std::format!("\"{group_id:?}\"")),
+                                        ),
+                                        text(","),
+                                        space(),
+                                    ]
+                                )?;
+                            }
+                        }
 
-// StartGroup(group) => {
-// write!(f, [text("group(")])?;
+                        StartLabelled(label_id) => {
+                            write!(
+                                f,
+                                [
+                                    text("label("),
+                                    dynamic_text(
+                                        f.context()
+                                            .allocator()
+                                            .alloc_str(&std::format!("\"{label_id:?}\"")),
+                                    ),
+                                    text(","),
+                                    space(),
+                                ]
+                            )?;
+                        }
 
-// if let Some(group_id) = group.id() {
-// write!(
-// f,
-// [
-// dynamic_text(
-// &std::format!("\"{group_id:?}\""),
-// TextSize::default()
-// ),
-// text(","),
-// space(),
-// ]
-// )?;
-// }
+                        StartFill => {
+                            write!(f, [text("fill(")])?;
+                        }
 
-// match group.mode() {
-// GroupMode::Flat => {}
-// GroupMode::Expand => {
-// write!(f, [text("expand: true,"), space()])?;
-// }
-// GroupMode::Propagated => {
-// write!(f, [text("expand: propagated,"), space()])?;
-// }
-// }
-// }
+                        StartEntry => {
+                            // handled after the match for all start tags
+                        }
+                        EndEntry => write!(f, [ContentArrayEnd])?,
 
-// StartIndentIfGroupBreaks(id) => {
-// write!(
-// f,
-// [
-// text("indent_if_group_breaks("),
-// dynamic_text(&std::format!("\"{id:?}\""), TextSize::default()),
-// text(","),
-// space(),
-// ]
-// )?;
-// }
+                        EndFill
+                        | EndLabelled
+                        | EndConditionalContent
+                        | EndIndentIfGroupBreaks(_)
+                        | EndAlign
+                        | EndIndent
+                        | EndGroup
+                        | EndLineSuffix
+                        | EndDedent(_)
+                        | EndVerbatim => {
+                            write!(f, [ContentArrayEnd, text(")")])?;
+                        }
+                    }
 
-// StartConditionalContent(condition) => {
-// match condition.mode {
-// PrintMode::Flat => {
-// write!(f, [text("if_group_fits_on_line(")])?;
-// }
-// PrintMode::Expanded => {
-// write!(f, [text("if_group_breaks(")])?;
-// }
-// }
+                    if tag.is_start() {
+                        write!(f, [ContentArrayStart])?;
+                    }
+                }
+            }
+        }
 
-// if let Some(group_id) = condition.group_id {
-// write!(
-// f,
-// [
-// dynamic_text(
-// &std::format!("\"{group_id:?}\""),
-// TextSize::default()
-// ),
-// text(","),
-// space(),
-// ]
-// )?;
-// }
-// }
+        while let Some(top) = tag_stack.pop() {
+            write!(
+                f,
+                [
+                    ContentArrayEnd,
+                    text(")"),
+                    soft_line_break_or_space(),
+                    dynamic_text(
+                        f.context()
+                            .allocator()
+                            .alloc_str(&std::format!("<START_WITHOUT_END<{top:?}>>"))
+                    ),
+                ]
+            )?;
+        }
 
-// StartLabelled(label_id) => {
-// write!(
-// f,
-// [
-// text("label("),
-// dynamic_text(
-// &std::format!("\"{label_id:?}\""),
-// TextSize::default()
-// ),
-// text(","),
-// space(),
-// ]
-// )?;
-// }
+        write!(f, [ContentArrayEnd])
+    }
+}
 
-// StartFill => {
-// write!(f, [text("fill(")])?;
-// }
+struct ContentArrayStart;
 
-// StartEntry => {
-// // handled after the match for all start tags
-// }
-// EndEntry => write!(f, [ContentArrayEnd])?,
+impl<'a> Format<'a> for ContentArrayStart {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        use Tag::{StartGroup, StartIndent};
 
-// EndFill
-// | EndLabelled
-// | EndConditionalContent
-// | EndIndentIfGroupBreaks(_)
-// | EndAlign
-// | EndIndent
-// | EndGroup
-// | EndLineSuffix
-// | EndDedent(_)
-// | EndVerbatim => {
-// write!(f, [ContentArrayEnd, text(")")])?;
-// }
-// };
+        write!(f, [text("[")])?;
 
-// if tag.is_start() {
-// write!(f, [ContentArrayStart])?;
-// }
-// }
-// }
-// }
+        f.write_elements([
+            FormatElement::Tag(StartGroup(tag::Group::new())),
+            FormatElement::Tag(StartIndent),
+            FormatElement::Line(LineMode::Soft),
+        ])
+    }
+}
 
-// while let Some(top) = tag_stack.pop() {
-// write!(
-// f,
-// [
-// ContentArrayEnd,
-// text(")"),
-// soft_line_break_or_space(),
-// dynamic_text(
-// &std::format!("<START_WITHOUT_END<{top:?}>>"),
-// TextSize::default()
-// ),
-// ]
-// )?;
-// }
+struct ContentArrayEnd;
 
-// write!(f, [ContentArrayEnd])
-// }
-// }
+impl<'a> Format<'a> for ContentArrayEnd {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        use Tag::{EndGroup, EndIndent};
+        f.write_elements([
+            FormatElement::Tag(EndIndent),
+            FormatElement::Line(LineMode::Soft),
+            FormatElement::Tag(EndGroup),
+        ])?;
 
-// struct ContentArrayStart;
-
-// impl Format<IrFormatContext> for ContentArrayStart {
-// fn fmt(&self, f: &mut Formatter<IrFormatContext>) -> FormatResult<()> {
-// use Tag::{StartGroup, StartIndent};
-
-// write!(f, [text("[")])?;
-
-// f.write_elements([
-// FormatElement::Tag(StartGroup(tag::Group::new())),
-// FormatElement::Tag(StartIndent),
-// FormatElement::Line(LineMode::Soft),
-// ])
-// }
-// }
-
-// struct ContentArrayEnd;
-
-// impl Format<IrFormatContext> for ContentArrayEnd {
-// fn fmt(&self, f: &mut Formatter<IrFormatContext>) -> FormatResult<()> {
-// use Tag::{EndGroup, EndIndent};
-// f.write_elements([
-// FormatElement::Tag(EndIndent),
-// FormatElement::Line(LineMode::Soft),
-// FormatElement::Tag(EndGroup),
-// ])?;
-
-// write!(f, [text("]")])
-// }
-// }
+        write!(f, [text("]")])
+    }
+}
 
 impl FormatElements for [FormatElement<'_>] {
     fn will_break(&self) -> bool {

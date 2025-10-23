@@ -67,7 +67,7 @@ impl<'a> Formatter<'a> {
         formatted.print().unwrap().into_code()
     }
 
-    fn format(mut self, program: &'a Program<'a>) -> Formatted<'a> {
+    pub fn format(mut self, program: &'a Program<'a>) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
 
@@ -76,9 +76,14 @@ impl<'a> Formatter<'a> {
 
         let experimental_sort_imports = self.options.experimental_sort_imports;
 
-        let context = FormatContext::new(program, self.allocator, self.options);
+        let context = FormatContext::new(
+            program.source_text,
+            program.source_type,
+            &program.comments,
+            self.allocator,
+            self.options,
+        );
         let mut formatted = formatter::format(
-            program,
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
         )
