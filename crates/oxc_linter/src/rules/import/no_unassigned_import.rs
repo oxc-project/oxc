@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde_json::Value;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -5,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -18,8 +20,12 @@ fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUnassignedImport(Box<NoUnassignedImportConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
 pub struct NoUnassignedImportConfig {
+    /// A list of glob patterns to allow unassigned imports for specific modules.
+    /// For example:
+    /// `{ "allow": ["*.css"] }` will allow unassigned imports for any module ending with `.css`.
+    #[serde(rename = "allow", default)]
     globs: Vec<CompactStr>,
 }
 
@@ -68,6 +74,7 @@ declare_oxc_lint!(
     NoUnassignedImport,
     import,
     suspicious,
+    config = NoUnassignedImportConfig
 );
 
 impl Rule for NoUnassignedImport {
