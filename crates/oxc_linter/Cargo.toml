@@ -16,10 +16,10 @@ description.workspace = true
 [features]
 default = []
 ruledocs = [
-    "oxc_macros/ruledocs",
+  "oxc_macros/ruledocs",
 ] # Enables the `ruledocs` feature for conditional compilation
 language_server = [
-    "oxc_data_structures/rope",
+  "oxc_data_structures/rope",
 ] # For the Runtime to support needed information for the language server
 force_test_reporter = []
 
@@ -71,15 +71,10 @@ rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2"] }
 self_cell = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, features = [
-    "preserve_order",
-] } # preserve_order: print config with ordered keys.
+serde_json = { workspace = true, features = ["preserve_order"] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
-time = { version = "0.3.36", default-features = false, features = [
-    "parsing",
-    "std",
-] }
+time = { version = "0.3.36", default-features = false, features = ["parsing", "std"] }
 
 [dev-dependencies]
 insta = { workspace = true }
