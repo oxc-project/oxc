@@ -119,9 +119,9 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
 
 fn wrap_set_settings(cb: JsSetSettingsCb) -> ExternalLinterSetSettingsCb {
     let cb = Arc::new(cb);
-    Arc::new(move |settings_json| {
+    Arc::new(move |settings_stringified| {
         // let cb = Arc::clone(&cb);
-        let status = cb.call(settings_json.clone(), ThreadsafeFunctionCallMode::Blocking);
+        let status = cb.call(settings_stringified, ThreadsafeFunctionCallMode::Blocking);
         assert!(status == Status::Ok, "Failed to set settings: {status:?}");
     })
 }

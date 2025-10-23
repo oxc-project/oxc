@@ -87,7 +87,6 @@ impl<'de> Deserialize<'de> for OxlintSettings {
             vitest: VitestPluginSettings,
         }
 
-        // Capture the raw JSON value first
         let raw_value = serde_json::Value::deserialize(deserializer)?;
 
         let well_known_settings: WellKnownOxlintSettings =

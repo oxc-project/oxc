@@ -16,8 +16,7 @@ pub type ExternalLinterLoadPluginCb = Arc<
 pub type ExternalLinterLintFileCb =
     Arc<dyn Fn(String, Vec<u32>, &Allocator) -> Result<Vec<LintFileResult>, String> + Sync + Send>;
 
-pub type ExternalLinterSetSettingsCb =
-    Arc<dyn Fn(&serde_json::Map<String, serde_json::Value>) + Sync + Send>;
+pub type ExternalLinterSetSettingsCb = Arc<dyn Fn(String) + Sync + Send>;
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum PluginLoadResult {

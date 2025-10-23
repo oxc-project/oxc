@@ -10,7 +10,7 @@ export type JsLoadPluginCb =
 
 /** JS callback to set settings. */
 export type JsSetSettingsCb =
-  ((arg: Record<string, any>) => void)
+  ((arg: string) => void)
 
 /**
  * NAPI entry point.
