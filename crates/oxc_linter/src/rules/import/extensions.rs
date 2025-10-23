@@ -380,37 +380,55 @@ impl Extensions {
         }
     }
 }
-/// Determines if an import specifier is a package import (not relative or path alias)
+/// Determines if an import specifier is a package import (not relative or path alias).
+///
+/// This function implements string-based classification following the ECMAScript module
+/// specifier resolution algorithm, with additional heuristics for build-tool-specific
+/// path aliases (like @/, ~/, #/ commonly used in webpack/vite/tsconfig.json).
+///
+/// Returns `true` for:
+/// - Bare packages: `lodash`, `react`
+/// - Scoped packages: `@babel/core`, `@types/node`, `@x/pkg` (including single-letter scopes)
+/// - Package subpaths: `lodash/fp`, `@babel/core/lib/parser`
+///
+/// Returns `false` for:
+/// - Relative imports: `./foo`, `../bar`
+/// - Absolute paths: `/usr/local/lib`
+/// - Path aliases: `@/`, `~/`, `#/`
 fn is_package_import(module_name: &str) -> bool {
-    // Relative imports start with ./ or ../
+    // Relative imports: ./foo, ../bar, or directory imports (., ..)
     if module_name.starts_with('.') {
         return false;
     }
 
-    // Absolute paths start with /
+    // Absolute paths: /foo
     if module_name.starts_with('/') {
         return false;
     }
 
-    // Check for path aliases with single-char prefix followed by /
-    // Examples: @/, ~/, #/
+    // Handle @ prefix: distinguish path aliases from scoped packages
+    // - @/foo (path alias) → rest = "/foo" → starts with '/'
+    // - @x/pkg (scoped package) → rest = "x/pkg" → doesn't start with '/'
+    // - @babel/core (scoped package) → rest = "babel/core" → doesn't start with '/'
+    if let Some(rest) = module_name.strip_prefix('@') {
+        if rest.starts_with('/') {
+            return false; // Path alias: @/
+        }
+        // Scoped packages must have scope/package format
+        // This includes single-letter scopes like @x/pkg
+        return rest.contains('/');
+    }
+
+    // Other single-char path aliases: ~/, #/
     if module_name.len() >= 2 {
-        let chars: Vec<char> = module_name.chars().collect();
-        if chars.len() >= 2 && chars[1] == '/' {
-            // Single character before slash - this is a path alias
-            return false;
+        let bytes = module_name.as_bytes();
+        if bytes[1] == b'/' && bytes[0] != b'.' && bytes[0] != b'@' {
+            return false; // Path alias like ~/ or #/
         }
     }
 
-    // Scoped packages: @org/pkg where org has length >= 2
-    // This handles @babel/core, @types/node, etc.
-    if module_name.starts_with('@') {
-        // Must have a slash to be a valid scoped package
-        return module_name.contains('/');
-    }
-
-    // Bare imports without slash are packages: 'lodash', 'react'
-    // Bare imports with slash are package subpaths: 'lodash/fp', 'react/dom'
+    // Everything else is a bare package import
+    // Examples: lodash, react, lodash/fp
     true
 }
 
