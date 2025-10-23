@@ -325,10 +325,6 @@ impl ConfigStore {
         self.base.base.config.plugins
     }
 
-    pub fn settings(&self) -> &OxlintSettings {
-        &self.base.base.config.settings
-    }
-
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
