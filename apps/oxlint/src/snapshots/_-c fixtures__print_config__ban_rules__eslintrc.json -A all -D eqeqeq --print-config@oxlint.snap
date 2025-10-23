@@ -30,8 +30,10 @@ working directory:
       "rootDir": []
     },
     "react": {
+      "version": null,
       "formComponents": [],
-      "linkComponents": []
+      "linkComponents": [],
+      "componentWrapperFunctions": []
     },
     "jsdoc": {
       "ignorePrivate": false,
