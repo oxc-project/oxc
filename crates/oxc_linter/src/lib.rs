@@ -448,7 +448,7 @@ impl Linter {
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
-        let settings_stringified = serde_json::to_string(&self.config.settings())
+        let settings_stringified = serde_json::to_string(&self.config.settings().json)
             .map_err(|e| {
                 let path = path.to_string_lossy();
                 let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
