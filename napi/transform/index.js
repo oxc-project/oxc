@@ -109,7 +109,7 @@ function requireNative() {
     }
   } else if (process.platform === 'win32') {
     if (process.arch === 'x64') {
-      if (process.report?.getReport?.()?.header?.osName?.startsWith?.('MINGW')) {
+      if (process.config?.variables?.shlib_suffix === 'dll.a' || process.config?.variables?.node_target_type === 'shared_library') {
         try {
         return require('./transform.win32-x64-gnu.node')
       } catch (e) {
