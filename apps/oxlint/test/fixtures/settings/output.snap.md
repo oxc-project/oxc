@@ -3,6 +3,12 @@
 
 # stdout
 ```
+  x context-settings-plugin(log-settings): setting is-nested: "yes"
+   ,-[files/nested/index.js:1:1]
+ 1 | "nested source file that should be linted with nested config's settings";
+   : ^
+   `----
+
   x context-settings-plugin(log-settings): setting arraySetting: ["item1","item2"]
    ,-[files/test.js:1:1]
  1 | console.log('test file');
@@ -15,8 +21,8 @@
    : ^
    `----
 
-Found 0 warnings and 2 errors.
-Finished in Xms on 1 file using X threads.
+Found 0 warnings and 3 errors.
+Finished in Xms on 2 files using X threads.
 ```
 
 # stderr
