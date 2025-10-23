@@ -1,5 +1,7 @@
 use oxc_ast::{ast::*, match_expression};
 
+use crate::formatter::format_element::contains_newline;
+
 /// This enum tracks the arguments inside a call expressions and checks if they are
 /// simple or not.
 ///
@@ -192,7 +194,7 @@ impl<'a, 'b> From<&'b Expression<'a>> for SimpleArgument<'a, 'b> {
 ///   [`SimpleArgument`].
 pub fn is_simple_template_literal(template: &TemplateLiteral<'_>, depth: u8) -> bool {
     for quasi in &template.quasis {
-        if quasi.value.raw.contains('\n') {
+        if contains_newline(&quasi.value.raw) {
             return false;
         }
     }

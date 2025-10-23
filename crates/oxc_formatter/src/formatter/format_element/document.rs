@@ -5,6 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::{
     super::{FormatElement, prelude::*},
+    contains_newline,
     tag::Tag,
 };
 
@@ -109,8 +110,8 @@ impl Document<'_> {
                         false
                     }
                     FormatElement::StaticText { text }
-                    | FormatElement::DynamicText { text, .. } => text.contains('\n'),
-                    FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
+                    | FormatElement::DynamicText { text, .. } => contains_newline(text),
+                    FormatElement::LocatedTokenText { slice, .. } => contains_newline(slice),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
                     _ => false,
@@ -125,7 +126,7 @@ impl Document<'_> {
             expands
         }
 
-        let mut enclosing: Vec<Enclosing> = Vec::new();
+        let mut enclosing = Vec::new();
         let mut interned = FxHashMap::default();
         propagate_expands(self, &mut enclosing, &mut interned);
     }

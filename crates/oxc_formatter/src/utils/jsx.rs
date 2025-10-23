@@ -7,6 +7,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::QuoteStyle;
 use crate::formatter::Comments;
+use crate::formatter::format_element::contains_newline;
 use crate::{
     FormatResult,
     ast_nodes::{AstNode, AstNodes},
@@ -323,7 +324,7 @@ pub fn jsx_split_children<'a, 'b>(
                 if let Some((_, JsxTextChunk::Whitespace(_whitespace))) = chunks.peek() {
                     match chunks.next() {
                         Some((_, JsxTextChunk::Whitespace(whitespace))) => {
-                            if whitespace.contains('\n') {
+                            if contains_newline(whitespace) {
                                 if chunks.peek().is_none() {
                                     // A text only consisting of whitespace that also contains a new line isn't considered meaningful text.
                                     // It can be entirely removed from the content without changing the semantics.
@@ -358,7 +359,7 @@ pub fn jsx_split_children<'a, 'b>(
                         (_, JsxTextChunk::Whitespace(whitespace)) => {
                             // Only handle trailing whitespace. Words must always be joined by new lines
                             if chunks.peek().is_none() {
-                                if whitespace.contains('\n') {
+                                if contains_newline(whitespace) {
                                     builder.entry(JsxChild::Newline);
                                 } else {
                                     builder.entry(JsxChild::Whitespace);

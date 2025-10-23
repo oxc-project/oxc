@@ -14,6 +14,7 @@ use crate::{
     formatter::{
         Format, FormatElement, FormatResult, Formatter, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
+        format_element::contains_newline,
         prelude::{document::Document, *},
         printer::Printer,
         trivia::{FormatLeadingComments, FormatTrailingComments},
@@ -603,7 +604,7 @@ impl<'a> EachTemplateTable<'a> {
             let print_options = f.options().as_print_options();
             let printed = Printer::new(print_options).print(&root)?;
             let text = f.context().allocator().alloc_str(&printed.into_code());
-            let will_break = text.contains('\n');
+            let will_break = contains_newline(text);
 
             let column = EachTemplateColumn::new(text, will_break);
             builder.entry(EachTemplateElement::Column(column));
@@ -612,7 +613,7 @@ impl<'a> EachTemplateTable<'a> {
                 let quasi_text = quasi.value.raw.as_str();
 
                 // go to the next line if the current element contains a line break
-                if quasi_text.contains('\n') {
+                if contains_newline(quasi_text) {
                     builder.entry(EachTemplateElement::LineBreak);
                 }
             }
