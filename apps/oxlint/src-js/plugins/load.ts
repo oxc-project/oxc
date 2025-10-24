@@ -9,8 +9,8 @@ const ObjectKeys = Object.keys;
 
 // Linter plugin, comprising multiple rules
 export interface Plugin {
-  meta: {
-    name: string;
+  meta?: {
+    name?: string;
   };
   rules: {
     [key: string]: Rule;
@@ -80,11 +80,12 @@ interface PluginDetails {
  * containing try/catch.
  *
  * @param path - Absolute path of plugin file
+ * @param packageName - Optional package name from package.json (fallback if plugin.meta.name is missing)
  * @returns JSON result
  */
-export async function loadPlugin(path: string): Promise<string> {
+export async function loadPlugin(path: string, packageName?: string): Promise<string> {
   try {
-    const res = await loadPluginImpl(path);
+    const res = await loadPluginImpl(path, packageName);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -95,12 +96,13 @@ export async function loadPlugin(path: string): Promise<string> {
  * Load a plugin.
  *
  * @param path - Absolute path of plugin file
+ * @param packageName - Optional package name from package.json (fallback if plugin.meta.name is missing)
  * @returns - Plugin details
  * @throws {Error} If plugin has already been registered
  * @throws {TypeError} If one of plugin's rules is malformed or its `createOnce` method returns invalid visitor
  * @throws {*} If plugin throws an error during import
  */
-async function loadPluginImpl(path: string): Promise<PluginDetails> {
+async function loadPluginImpl(path: string, packageName?: string): Promise<PluginDetails> {
   if (registeredPluginPaths.has(path)) {
     throw new Error('This plugin has already been registered. This is a bug in Oxlint. Please report it.');
   }
@@ -110,7 +112,13 @@ async function loadPluginImpl(path: string): Promise<PluginDetails> {
   registeredPluginPaths.add(path);
 
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
-  const pluginName = plugin.meta.name;
+  // Get plugin name from plugin.meta.name, or fall back to package name from package.json
+  const pluginName = plugin.meta?.name ?? packageName;
+  if (!pluginName) {
+    throw new TypeError(
+      'Plugin must have either meta.name or be loaded from an npm package with a name field in package.json',
+    );
+  }
   const offset = registeredRules.length;
   const { rules } = plugin;
   const ruleNames = ObjectKeys(rules);

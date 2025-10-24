@@ -6,7 +6,7 @@ export type JsLintFileCb =
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
-  ((arg: string) => Promise<string>)
+  ((arg0: string, arg1?: string | undefined | null) => Promise<string>)
 
 /**
  * NAPI entry point.

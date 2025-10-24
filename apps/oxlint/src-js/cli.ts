@@ -6,13 +6,13 @@ import { lint } from './bindings.js';
 let loadPlugin: typeof loadPluginWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 
-function loadPluginWrapper(path: string): Promise<string> {
+function loadPluginWrapper(path: string, packageName?: string): Promise<string> {
   if (loadPlugin === null) {
     const require = createRequire(import.meta.url);
     // `plugins.js` is in root of `dist`. See `tsdown.config.ts`.
     ({ loadPlugin, lintFile } = require('./plugins.js'));
   }
-  return loadPlugin(path);
+  return loadPlugin(path, packageName);
 }
 
 function lintFileWrapper(filePath: string, bufferId: number, buffer: Uint8Array | null, ruleIds: number[]): string {

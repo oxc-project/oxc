@@ -16,11 +16,11 @@ use crate::{lint::CliRunner, result::CliRunResult};
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
     // Arguments
-    String, // Absolute path of plugin file
+    FnArgs<(String, Option<String>)>, // Absolute path of plugin file, optional package name
     // Return value
     Promise<String>, // `PluginLoadResult`, serialized to JSON
     // Arguments (repeated)
-    String,
+    FnArgs<(String, Option<String>)>,
     // Error status
     Status,
     // CalleeHandled
