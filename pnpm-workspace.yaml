@@ -11,9 +11,10 @@ packages:
 catalog:
   '@napi-rs/cli': 3.4.0
   '@napi-rs/wasm-runtime': 1.0.7
+  '@types/node': ^24.0.0
   publint: 0.3.14
   typescript: 5.9.3
-  vitest: 3.2.4
+  vitest: 4.0.1
 
 minimumReleaseAge: 1440
 
@@ -24,6 +25,7 @@ minimumReleaseAgeExclude:
   - '@oxlint-tsgolint/*'
   - '@oxlint/*'
   - '@rolldown/*'
+  - '@vitest/*'
   - oxfmt
   - oxlint
   - oxlint-tsgolint

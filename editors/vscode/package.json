@@ -216,7 +216,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.9",
-    "@types/node": "^24.0.0",
+    "@types/node": "catalog:",
     "@types/vscode": "1.93.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.4.1",
