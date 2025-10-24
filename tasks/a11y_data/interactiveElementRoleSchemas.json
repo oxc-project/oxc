@@ -1,0 +1,363 @@
+[
+  {
+    "name": "a",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "href"
+      }
+    ]
+  },
+  {
+    "name": "area",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "href"
+      }
+    ]
+  },
+  {
+    "name": "button",
+    "attributes": []
+  },
+  {
+    "name": "datalist",
+    "attributes": []
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "button"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "image"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "reset"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "submit"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "checkbox"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "email"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "search"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "tel"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "text"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "url"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "radio"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "search"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "range"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "name": "type",
+        "value": "number"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "type"
+      },
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "list"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "email"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "tel"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "text"
+      }
+    ]
+  },
+  {
+    "name": "input",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "list"
+      },
+      {
+        "name": "type",
+        "value": "url"
+      }
+    ]
+  },
+  {
+    "name": "option",
+    "attributes": []
+  },
+  {
+    "name": "select",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "multiple"
+      },
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "size"
+      }
+    ]
+  },
+  {
+    "name": "select",
+    "attributes": [
+      {
+        "constraints": [
+          ">1"
+        ],
+        "name": "size"
+      }
+    ]
+  },
+  {
+    "name": "select",
+    "attributes": [
+      {
+        "name": "multiple"
+      }
+    ]
+  },
+  {
+    "name": "td",
+    "attributes": []
+  },
+  {
+    "name": "textarea",
+    "attributes": []
+  },
+  {
+    "name": "th",
+    "attributes": []
+  },
+  {
+    "name": "th",
+    "attributes": [
+      {
+        "name": "scope",
+        "value": "col"
+      }
+    ]
+  },
+  {
+    "name": "th",
+    "attributes": [
+      {
+        "name": "scope",
+        "value": "colgroup"
+      }
+    ]
+  },
+  {
+    "name": "th",
+    "attributes": [
+      {
+        "name": "scope",
+        "value": "row"
+      }
+    ]
+  },
+  {
+    "name": "th",
+    "attributes": [
+      {
+        "name": "scope",
+        "value": "rowgroup"
+      }
+    ]
+  },
+  {
+    "name": "tr",
+    "attributes": []
+  }
+]

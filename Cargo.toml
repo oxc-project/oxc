@@ -105,6 +105,7 @@ multiple_crate_versions = "allow"
 # publish = true
 oxc = { version = "0.95.0", path = "crates/oxc" }
 oxc_allocator = { version = "0.95.0", path = "crates/oxc_allocator" }
+oxc_aria_query = { version = "0.95.0", path = "crates/oxc_aria_query" }
 oxc_ast = { version = "0.95.0", path = "crates/oxc_ast" }
 oxc_ast_macros = { version = "0.95.0", path = "crates/oxc_ast_macros" }
 oxc_ast_visit = { version = "0.95.0", path = "crates/oxc_ast_visit" }

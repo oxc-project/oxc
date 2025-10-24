@@ -1,0 +1,302 @@
+[
+  {
+    "name": "address",
+    "attributes": []
+  },
+  {
+    "name": "article",
+    "attributes": []
+  },
+  {
+    "name": "aside",
+    "attributes": []
+  },
+  {
+    "name": "aside",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "aria-label"
+      }
+    ]
+  },
+  {
+    "name": "aside",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "aria-labelledby"
+      }
+    ]
+  },
+  {
+    "name": "blockquote",
+    "attributes": []
+  },
+  {
+    "name": "caption",
+    "attributes": []
+  },
+  {
+    "name": "code",
+    "attributes": []
+  },
+  {
+    "name": "dd",
+    "attributes": []
+  },
+  {
+    "name": "del",
+    "attributes": []
+  },
+  {
+    "name": "details",
+    "attributes": []
+  },
+  {
+    "name": "dfn",
+    "attributes": []
+  },
+  {
+    "name": "dialog",
+    "attributes": []
+  },
+  {
+    "name": "dt",
+    "attributes": []
+  },
+  {
+    "name": "em",
+    "attributes": []
+  },
+  {
+    "name": "fieldset",
+    "attributes": []
+  },
+  {
+    "name": "figure",
+    "attributes": []
+  },
+  {
+    "name": "footer",
+    "attributes": []
+  },
+  {
+    "name": "form",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "aria-label"
+      }
+    ]
+  },
+  {
+    "name": "form",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "aria-labelledby"
+      }
+    ]
+  },
+  {
+    "name": "form",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "name"
+      }
+    ]
+  },
+  {
+    "name": "h1",
+    "attributes": []
+  },
+  {
+    "name": "h2",
+    "attributes": []
+  },
+  {
+    "name": "h3",
+    "attributes": []
+  },
+  {
+    "name": "h4",
+    "attributes": []
+  },
+  {
+    "name": "h5",
+    "attributes": []
+  },
+  {
+    "name": "h6",
+    "attributes": []
+  },
+  {
+    "name": "header",
+    "attributes": []
+  },
+  {
+    "name": "hr",
+    "attributes": []
+  },
+  {
+    "name": "html",
+    "attributes": []
+  },
+  {
+    "name": "img",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "alt"
+      }
+    ]
+  },
+  {
+    "name": "img",
+    "attributes": [
+      {
+        "constraints": [
+          "undefined"
+        ],
+        "name": "alt"
+      }
+    ]
+  },
+  {
+    "name": "img",
+    "attributes": [
+      {
+        "name": "alt",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "name": "ins",
+    "attributes": []
+  },
+  {
+    "name": "li",
+    "attributes": []
+  },
+  {
+    "name": "main",
+    "attributes": []
+  },
+  {
+    "name": "mark",
+    "attributes": []
+  },
+  {
+    "name": "math",
+    "attributes": []
+  },
+  {
+    "name": "menu",
+    "attributes": []
+  },
+  {
+    "name": "meter",
+    "attributes": []
+  },
+  {
+    "name": "nav",
+    "attributes": []
+  },
+  {
+    "name": "ol",
+    "attributes": []
+  },
+  {
+    "name": "optgroup",
+    "attributes": []
+  },
+  {
+    "name": "output",
+    "attributes": []
+  },
+  {
+    "name": "p",
+    "attributes": []
+  },
+  {
+    "name": "progress",
+    "attributes": []
+  },
+  {
+    "name": "section",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "aria-label"
+      }
+    ]
+  },
+  {
+    "name": "section",
+    "attributes": [
+      {
+        "constraints": [
+          "set"
+        ],
+        "name": "aria-labelledby"
+      }
+    ]
+  },
+  {
+    "name": "strong",
+    "attributes": []
+  },
+  {
+    "name": "sub",
+    "attributes": []
+  },
+  {
+    "name": "sup",
+    "attributes": []
+  },
+  {
+    "name": "table",
+    "attributes": []
+  },
+  {
+    "name": "tbody",
+    "attributes": []
+  },
+  {
+    "name": "td",
+    "attributes": []
+  },
+  {
+    "name": "tfoot",
+    "attributes": []
+  },
+  {
+    "name": "thead",
+    "attributes": []
+  },
+  {
+    "name": "time",
+    "attributes": []
+  },
+  {
+    "name": "ul",
+    "attributes": []
+  }
+]

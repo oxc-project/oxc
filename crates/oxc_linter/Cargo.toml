@@ -27,6 +27,7 @@ doctest = true
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
+oxc_aria_query = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }

@@ -1,5 +1,15 @@
 use std::borrow::Cow;
 
+use oxc_aria_query::{
+    Attr,
+    ElementSchema,
+    ABSTRACT_ROLES,
+    INTERACTIVE_ELEMENT_SCHEMA,
+    INTERACTIVE_ROLES,
+    NONINTERACTIVE_AXOBJECT_ELEMENT_SCHEMA,
+    NONINTERACTIVE_ELEMENT_SCHEMA,
+    NONINTERACTIVE_ROLES,
+};
 use oxc_ast::{
     AstKind,
     ast::{
@@ -12,7 +22,10 @@ use oxc_ast::{
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
-use crate::{LintContext, OxlintSettings};
+use crate::{
+    globals::HTML_TAG,
+    LintContext, OxlintSettings,
+};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     match &call_expr.callee {
@@ -104,6 +117,121 @@ pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<
         _ => false,
     }) || has_jsx_prop_ignore_case(&node.opening_element, "dangerouslySetInnerHTML").is_some()
         || has_jsx_prop_ignore_case(&node.opening_element, "children").is_some()
+}
+
+pub fn attributes_comparator<'a>(
+    base_attributes: &'static [Attr],
+    attributes: &'a [JSXAttributeItem<'a>]
+) -> bool {
+    base_attributes.iter().all(|base_attr| {
+        attributes.iter().any(|item| {
+            match item {
+                JSXAttributeItem::Attribute(attr) => {
+                    if base_attr.name != get_jsx_attribute_name(&attr.name) {
+                        return false;
+                    }
+                    match base_attr.value {
+                        Some(expected) => {
+                            if let Some(actual) = get_string_literal_prop_value(item) {
+                                actual == expected
+                            } else {
+                                false
+                            }
+                        }
+                        None => true,
+                    }
+                }
+                // skip spreads and anything that's not a JSXAttribute
+                _ => false,
+            }
+        })
+    })
+}
+
+pub fn is_abstract_role(tag_name: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
+    if !HTML_TAG.contains(tag_name) {
+        return false;
+    }
+
+    let Some(role) = first_valid_role(jsx_opening_el) else { return false; };
+    ABSTRACT_ROLES.contains(&role)
+}
+
+pub fn is_interactive_role(jsx_opening_el: &JSXOpeningElement) -> bool {
+    let Some(role) = first_valid_role(jsx_opening_el) else { return false; };
+
+    INTERACTIVE_ROLES.contains(&role)
+}
+
+pub fn is_noninteractive_role(tag_name: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
+    if !HTML_TAG.contains(tag_name) {
+        return false;
+    }
+
+    let Some(role) = first_valid_role(jsx_opening_el) else { return false; };
+    NONINTERACTIVE_ROLES.contains(&role)
+}
+
+pub fn is_nonliteral_property(jsx_opening_el: &JSXOpeningElement) -> bool {
+    let Some(role) = has_jsx_prop(jsx_opening_el, "role") else { return false; };
+    let Some(role_attr) = role.as_attribute() else { return false; };
+    let Some(value) = role_attr.value.as_ref() else { return false; };
+
+    match value {
+        JSXAttributeValue::StringLiteral(_) => false,
+        JSXAttributeValue::ExpressionContainer(container) => {
+            !matches!(&container.expression, JSXExpression::Identifier(id) if id.name == "undefined")
+        },
+        _ => true,
+    }
+}
+
+pub fn first_valid_role(jsx_opening_el: &JSXOpeningElement) -> Option<String> {
+    has_jsx_prop(jsx_opening_el, "role")
+        .and_then(get_string_literal_prop_value)
+        .map(|value| value.to_ascii_lowercase())
+        .and_then(|lower| {
+            lower
+                .split_whitespace()
+                .find(|name| ABSTRACT_ROLES.contains(name)
+                    || INTERACTIVE_ROLES.contains(name)
+                    || NONINTERACTIVE_ROLES.contains(name))
+                .map(|role| role.to_string())
+        })
+}
+
+pub fn is_noninteractive_element(tag_name: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
+    // Do not test higher level JSX components, as we do not know what
+    // low-level DOM element this maps to.
+    if !HTML_TAG.contains(tag_name) {
+        return false;
+    }
+
+    // <header> elements do not technically have semantics, unless the
+    // element is a direct descendant of <body>, and this plugin cannot
+    // reliably test that.
+    // @see https://www.w3.org/TR/wai-aria-practices/examples/landmarks/banner.html
+    if tag_name == "header" {
+        return false;
+    }
+
+    let element_schema_matcher = |schema: &ElementSchema| {
+        tag_name == schema.name
+            && tag_name != "td" // TODO: investigate why this is needed
+            && attributes_comparator(schema.attributes, jsx_opening_el.attributes.as_slice())
+    };
+
+    if NONINTERACTIVE_ELEMENT_SCHEMA.iter().any(element_schema_matcher) {
+        return true;
+    }
+    if INTERACTIVE_ELEMENT_SCHEMA.iter().any(element_schema_matcher) {
+        return false;
+    }
+    if NONINTERACTIVE_AXOBJECT_ELEMENT_SCHEMA.iter().any(element_schema_matcher) {
+        return true;
+    }
+    false
+
 }
 
 pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {

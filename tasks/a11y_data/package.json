@@ -1,0 +1,11 @@
+{
+  "name": "a11y_data",
+  "scripts": {
+    "init": "node init.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "aria-query": "5.3.2",
+    "axobject-query": "4.1.0"
+  }
+}

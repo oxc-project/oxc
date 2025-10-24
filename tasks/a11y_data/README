@@ -1,0 +1,17 @@
+# oxc_a11y_data
+
+Much of the accessibility (a11y) data used by `eslint-plugin-jsx-a11y` is only available in NPM packages. This crate's purpose is to reproducibly extract and convert only the necessary pieces of those data into Rust data structures, ideally static ones.
+
+`pnpm run init` will generate checked-in JSON files based on data from the `aria-query` and `axobject-query` npm packages. These JSON files do not include the totality of data from those packages and are structured in a way that is meant to be easy to parse in Rust.
+
+`cargo run` will read in those JSON files and produce output in `crates/oxc_aria_query/src/lib.rs`.
+
+## Updating Data
+
+This data can be updated by:
+1. Increment the versions of `aria-query` and/or `axobject-query` in `tasks/a11y_data/package.json`
+2. `pnpm install`
+3. `cd tasks/a11y_data && pnpm run init`
+4. `cargo run`
+
+Changes to the shape of the data from those sources could require changes to the code in one or both of `tasks/a11y_data/init.js` and `tasks/a11y_data/src/lib.rs`.
