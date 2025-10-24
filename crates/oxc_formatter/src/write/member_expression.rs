@@ -127,7 +127,8 @@ fn layout<'a>(
             if no_break || is_member_chain {
                 return StaticMemberLayout::NoBreak;
             }
-            true
+
+            false
         }
         AstNodes::StaticMemberExpression(_) | AstNodes::ComputedMemberExpression(_) => true,
         _ => false,
