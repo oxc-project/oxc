@@ -1628,6 +1628,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
             .enumerate()
         {
             if i == last_index {
+                // The trailing comments of the last heritage should be printed inside the interface declaration
                 joiner.entry(&FormatNodeWithoutTrailingComments(&heritage));
             } else {
                 joiner.entry(&heritage);
