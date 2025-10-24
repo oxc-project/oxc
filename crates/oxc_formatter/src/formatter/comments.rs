@@ -312,7 +312,6 @@ impl<'a> Comments<'a> {
         let Some(following_span) = following_span else {
             // Find dangling comments at the end of the enclosing node
             let comments = self.comments_before(enclosing_span.end);
-
             let mut start = preceding_span.end;
             for (idx, comment) in comments.iter().enumerate() {
                 // Comments inside the preceding node, which should be printed without checking
@@ -333,22 +332,32 @@ impl<'a> Comments<'a> {
         };
 
         let mut comment_index = 0;
-        while let Some(comment) = comments.get(comment_index) {
-            // Check if the comment is before the following node's span
-            if comment.span.end > following_span.start {
-                break;
-            }
+        let mut type_cast_comment = None;
 
-            if matches!(comment.content, CommentContent::Jsdoc)
-                && self.is_type_cast_comment(comment)
+        while let Some(comment) = comments.get(comment_index) {
+            // Stop if the comment:
+            // 1. is over the following node
+            // 2. is after the enclosing node, which means the comment should be printed in the parent node.
+            if comment.span.end > following_span.start
+                || (comment.span.end > enclosing_span.end && enclosing_span != preceding_span)
             {
                 break;
             }
 
-            if self.is_own_line_comment(comment) {
-                // Own line comments are typically leading comments for the next node
+            if following_span.start > enclosing_span.end && comment.span.end <= enclosing_span.end {
+                // Do nothing; this comment is inside the enclosing node, and the following node is outside the enclosing node.
+                // So it must be a trailing comment, continue checking the next comment.
+            } else if self.is_type_cast_comment(comment) {
+                // `A || /* @type {Number} */ (B)`:
+                //      ^^^^^^^^^^^^^^^^^^^^^^^^
+                // Type cast comments should always be treated as leading comment to the following node
+                type_cast_comment = Some(comment);
+                break;
+            } else if self.is_own_line_comment(comment) {
+                // Own-line comments should be treated as leading comments to the following node
                 break;
             } else if self.is_end_of_line_comment(comment) {
+                //End-of-line comments are always trailing comments to the preceding node.
                 return &comments[..=comment_index];
             }
 
@@ -356,7 +365,8 @@ impl<'a> Comments<'a> {
         }
 
         // Find the first comment (from the end) that has non-whitespace/non-paren content after it
-        let mut gap_end = following_span.start;
+        let mut gap_end = type_cast_comment.map_or(following_span.start, |c| c.span.start);
+
         for (idx, comment) in comments[..comment_index].iter().enumerate().rev() {
             if source_text.all_bytes_match(comment.span.end, gap_end, |b| {
                 b.is_ascii_whitespace() || b == b'('

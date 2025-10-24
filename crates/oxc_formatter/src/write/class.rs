@@ -235,14 +235,22 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
                 group(&indent(&format_args!(
                     soft_line_break_or_space(),
                     format_once(|f| {
-                        // the grouping will be applied by the parent
-                        f.join_with(&soft_line_break_or_space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Disallowed,
-                            )
-                            .finish()
+                        let last_index = self.len().saturating_sub(1);
+                        let mut joiner = f.join_with(soft_line_break_or_space());
+
+                        for (i, heritage) in FormatSeparatedIter::new(self.into_iter(), ",")
+                            .with_trailing_separator(TrailingSeparator::Disallowed)
+                            .enumerate()
+                        {
+                            if i == last_index {
+                                // The trailing comments of the last heritage should be printed inside the class declaration
+                                joiner.entry(&FormatNodeWithoutTrailingComments(&heritage));
+                            } else {
+                                joiner.entry(&heritage);
+                            }
+                        }
+
+                        joiner.finish()
                     })
                 )))
             ]
