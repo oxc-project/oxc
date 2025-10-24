@@ -242,8 +242,8 @@ impl Oxlintrc {
         let env = self.env.clone();
         let globals = self.globals.clone();
 
-        let mut overrides = self.overrides.clone();
-        overrides.extend(other.overrides);
+        let mut overrides = other.overrides.clone();
+        overrides.extend(self.overrides.clone());
 
         let plugins = match (self.plugins, other.plugins) {
             (Some(self_plugins), Some(other_plugins)) => Some(self_plugins | other_plugins),
