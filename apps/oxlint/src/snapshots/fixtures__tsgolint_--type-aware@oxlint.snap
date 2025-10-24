@@ -55,7 +55,7 @@ working directory: fixtures/tsgolint
   x typescript-eslint(no-base-to-string): '// Examples of incorrect code for no-base-to-string rule
   | 
   | // These will evaluate to '[object Object]'
-  | ({})' always use Object's default stringification format ('[object Object]') when stringified.
+  | ({})' will use Object's default stringification format ('[object Object]') when stringified.
    ,-[no-base-to-string/index.ts:4:1]
  3 | // These will evaluate to '[object Object]'
  4 | ({}).toString();
@@ -64,7 +64,7 @@ working directory: fixtures/tsgolint
    `----
 
   x typescript-eslint(no-base-to-string): '
-  | ({foo: 'bar'})' always use Object's default stringification format ('[object Object]') when stringified.
+  | ({foo: 'bar'})' will use Object's default stringification format ('[object Object]') when stringified.
    ,-[no-base-to-string/index.ts:5:1]
  4 | ({}).toString();
  5 | ({foo: 'bar'}).toString();
@@ -73,12 +73,20 @@ working directory: fixtures/tsgolint
    `----
 
   x typescript-eslint(no-base-to-string): '
-  | ({foo: 'bar'})' always use Object's default stringification format ('[object Object]') when stringified.
+  | ({foo: 'bar'})' will use Object's default stringification format ('[object Object]') when stringified.
    ,-[no-base-to-string/index.ts:6:1]
  5 | ({foo: 'bar'}).toString();
  6 | ({foo: 'bar'}).toLocaleString();
    : ^^^^^^^^^^^^^^
  7 | 
+   `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected any value in conditional. Use a more specific type to ensure type safety.
+   ,-[no-confusing-void-expression/index.ts:7:16]
+ 6 | // conditional expression
+ 7 | const result = condition ? void foo() : bar();
+   :                ^^^^^^^^^
+ 8 | 
    `----
 
   x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on undefined; it should convey that a return value is being ignored
@@ -98,6 +106,14 @@ working directory: fixtures/tsgolint
    `----
 
   x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on undefined; it should convey that a return value is being ignored
+    ,-[no-confusing-void-expression/index.ts:10:5]
+  9 | // void in conditional
+ 10 | if (void foo()) {
+    :     ^^^^^^^^^^
+ 11 |   // ...
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected nullish value in conditional. The expression is always falsy.
     ,-[no-confusing-void-expression/index.ts:10:5]
   9 | // void in conditional
  10 | if (void foo()) {
@@ -159,14 +175,14 @@ working directory: fixtures/tsgolint
  2 | promise;
    `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[no-floating-promises/index.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
    : ^^^^^^^^
  3 | 
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(require-await): Function has no 'await' expression.
    ,-[no-floating-promises/index.ts:4:1]
@@ -177,14 +193,14 @@ working directory: fixtures/tsgolint
  7 |     
    `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[no-floating-promises/index.ts:8:1]
  7 | 
  8 | returnsPromise().then(() => {});
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  9 | 
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
     ,-[no-floating-promises/index.ts:10:1]
@@ -194,14 +210,14 @@ working directory: fixtures/tsgolint
  11 | 
     `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
     ,-[no-floating-promises/index.ts:10:1]
   9 | 
  10 | Promise.reject("value").catch();
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  11 | 
     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
     ,-[no-floating-promises/index.ts:12:1]
@@ -211,22 +227,22 @@ working directory: fixtures/tsgolint
  13 | 
     `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
     ,-[no-floating-promises/index.ts:12:1]
  11 | 
  12 | Promise.reject("value").finally();
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  13 | 
     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
-  x typescript-eslint(no-floating-promises): An array of Promises may be unintentional. Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking
-  | the expression as ignored with the `void` operator.
+  x typescript-eslint(no-floating-promises): An array of Promises may be unintentional.
     ,-[no-floating-promises/index.ts:14:1]
  13 | 
  14 | [1, 2, 3].map(async (x) => x + 1);
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
+  help: Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking the expression as ignored with the `void` operator.
 
   x typescript-eslint(require-await): Function has no 'await' expression.
     ,-[no-floating-promises/index.ts:14:15]
@@ -235,57 +251,57 @@ working directory: fixtures/tsgolint
     :               ^^^^^^^^^^^^^^^^^^
     `----
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  ! typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[no-floating-promises/src/index.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
    : ^^^^^^^^
  3 | 
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  ! typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[no-floating-promises/src/index.ts:8:1]
  7 | 
  8 | returnsPromise().then(() => {});
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  9 | 
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  ! typescript-eslint(no-floating-promises): Promises must be awaited.
     ,-[no-floating-promises/src/index.ts:10:1]
   9 | 
  10 | Promise.reject("value").catch();
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  11 | 
     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  ! typescript-eslint(no-floating-promises): Promises must be awaited.
     ,-[no-floating-promises/src/index.ts:12:1]
  11 | 
  12 | Promise.reject("value").finally();
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  13 | 
     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
-  ! typescript-eslint(no-floating-promises): An array of Promises may be unintentional. Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking
-  | the expression as ignored with the `void` operator.
+  ! typescript-eslint(no-floating-promises): An array of Promises may be unintentional.
     ,-[no-floating-promises/src/index.ts:14:1]
  13 | 
  14 | [1, 2, 3].map(async (x) => x + 1);
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     `----
+  help: Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking the expression as ignored with the `void` operator.
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[no-floating-promises/src/overrides.ts:4:1]
  3 | }
  4 | returnsPromise().then(() => {});
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(no-for-in-array): For-in loops over arrays skips holes, returns indices as strings, and may visit the prototype chain or other enumerable properties. Use a more robust
   | iteration method such as for-of or array.forEach instead.
@@ -499,11 +515,11 @@ working directory: fixtures/tsgolint
     `----
 
   x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
-   ,-[no-mixed-enums/index.ts:4:10]
- 3 | enum Status {
+   ,-[no-mixed-enums/index.ts:5:12]
  4 |   Open = 1,
-   :          ^
  5 |   Closed = 'closed',
+   :            ^^^^^^^^
+ 6 | }
    `----
 
   x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
@@ -728,12 +744,13 @@ working directory: fixtures/tsgolint
     :                   ^^^^^
     `----
 
-  x typescript-eslint(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
-    ,-[no-unsafe-enum-comparison/index.ts:14:20]
- 13 | // Comparing different enums
- 14 | const comparison = Status.Open === Color.Red;
-    :                    ^^^^^^^^^^^^^^^^^^^^^^^^^
-    `----
+  x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
+   ,-[no-unsafe-enum-comparison/index.ts:4:10]
+ 3 | enum Status {
+ 4 |   Open = 'open',
+   :          ^^^^^^
+ 5 |   Closed = 'closed',
+   `----
 
   x typescript-eslint(no-unsafe-member-access): Unsafe member access .foo on an `any` value.
    ,-[no-unsafe-member-access/index.ts:5:10]
@@ -868,7 +885,7 @@ working directory: fixtures/tsgolint
  12 | }
     `----
 
-  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is null instead.
+  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is unknown instead.
    ,-[no-unsafe-unary-minus/index.ts:4:17]
  3 | declare const value: any;
  4 | const result1 = -value; // unsafe on any
@@ -892,7 +909,7 @@ working directory: fixtures/tsgolint
  11 | 
     `----
 
-  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is object instead.
+  x typescript-eslint(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is { prop: any; } instead.
     ,-[no-unsafe-unary-minus/index.ts:13:17]
  12 | declare const obj: object;
  13 | const result4 = -obj; // unsafe on object
@@ -900,14 +917,6 @@ working directory: fixtures/tsgolint
     `----
 
   x typescript-eslint(no-unsafe-type-assertion): Unsafe type assertion: type 'string' is more narrow than the original type.
-   ,-[non-nullable-type-assertion-style/index.ts:6:17]
- 5 | // Type assertion when non-null assertion would be clearer
- 6 | const result1 = value as string;
-   :                 ^^^^^^^^^^^^^^^
- 7 | 
-   `----
-
-  x typescript-eslint(non-nullable-type-assertion-style): Use a ! assertion to more succinctly remove null and undefined from the type.
    ,-[non-nullable-type-assertion-style/index.ts:6:17]
  5 | // Type assertion when non-null assertion would be clearer
  6 | const result1 = value as string;
@@ -983,14 +992,14 @@ working directory: fixtures/tsgolint
  4 | 
    `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[prefer-promise-reject-errors/index.ts:3:1]
  2 | 
  3 | Promise.reject('error'); // rejecting with string
    : ^^^^^^^^^^^^^^^^^^^^^^^^
  4 | 
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
    ,-[prefer-promise-reject-errors/index.ts:5:1]
@@ -1000,14 +1009,14 @@ working directory: fixtures/tsgolint
  6 | 
    `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[prefer-promise-reject-errors/index.ts:5:1]
  4 | 
  5 | Promise.reject(42); // rejecting with number
    : ^^^^^^^^^^^^^^^^^^^
  6 | 
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
    ,-[prefer-promise-reject-errors/index.ts:7:1]
@@ -1017,14 +1026,14 @@ working directory: fixtures/tsgolint
  8 | 
    `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
    ,-[prefer-promise-reject-errors/index.ts:7:1]
  6 | 
  7 | Promise.reject(true); // rejecting with boolean
    : ^^^^^^^^^^^^^^^^^^^^^
  8 | 
    `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
     ,-[prefer-promise-reject-errors/index.ts:9:1]
@@ -1034,14 +1043,14 @@ working directory: fixtures/tsgolint
  10 | 
     `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
     ,-[prefer-promise-reject-errors/index.ts:9:1]
   8 | 
   9 | Promise.reject({ message: 'error' }); // rejecting with plain object
     : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  10 | 
     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
     ,-[prefer-promise-reject-errors/index.ts:11:1]
@@ -1050,13 +1059,13 @@ working directory: fixtures/tsgolint
     : ^^^^^^^^^^^^^^^^^^^^
     `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void`
-  | operator.
+  x typescript-eslint(no-floating-promises): Promises must be awaited.
     ,-[prefer-promise-reject-errors/index.ts:11:1]
  10 | 
  11 | Promise.reject(null); // rejecting with null
     : ^^^^^^^^^^^^^^^^^^^^^
     `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
    ,-[prefer-reduce-type-parameter/index.ts:6:13]
@@ -1313,7 +1322,7 @@ working directory: fixtures/tsgolint
    :                                       ^
    `----
 
-  x typescript-eslint(no-base-to-string): 'obj' always use Object's default stringification format ('[object Object]') when stringified.
+  x typescript-eslint(no-base-to-string): 'obj' will use Object's default stringification format ('[object Object]') when stringified.
     ,-[restrict-template-expressions/index.ts:9:24]
   8 | // Objects become "[object Object]"
   9 | const str1 = `Value: ${obj}`;
@@ -1321,7 +1330,7 @@ working directory: fixtures/tsgolint
  10 | 
     `----
 
-  x typescript-eslint(restrict-template-expressions): Invalid type "object" of template literal expression.
+  x typescript-eslint(restrict-template-expressions): Invalid type "{ prop: any; }" of template literal expression.
     ,-[restrict-template-expressions/index.ts:9:24]
   8 | // Objects become "[object Object]"
   9 | const str1 = `Value: ${obj}`;
@@ -1337,7 +1346,7 @@ working directory: fixtures/tsgolint
  13 | 
     `----
 
-  x typescript-eslint(restrict-template-expressions): Invalid type "() => void" of template literal expression.
+  x typescript-eslint(restrict-template-expressions): Invalid type "Function" of template literal expression.
     ,-[restrict-template-expressions/index.ts:15:27]
  14 | // Functions become their string representation
  15 | const str3 = `Function: ${fn}`;
@@ -1350,14 +1359,6 @@ working directory: fixtures/tsgolint
  17 | // Arrays of unknown might be unsafe
  18 | const str4 = `Array: ${arr}`;
     :                        ^^^
-    `----
-
-  x typescript-eslint(no-unsafe-return): Unsafe return of a value of type `Promise<any>`.
-    ,-[return-await/index.ts:12:5]
- 11 |     // Should be: return await fetchData();
- 12 |     return fetchData(); // Missing await in try block
-    :     ^^^^^^^^^^^^^^^^^^^
- 13 |   } catch (error) {
     `----
 
   x typescript-eslint(return-await): Returning an awaited promise is required in this context.
@@ -1392,6 +1393,214 @@ working directory: fixtures/tsgolint
  24 |     throw error;
     `----
 
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+   ,-[strict-boolean-expressions/index.ts:6:3]
+ 5 | if (str) { // string is not a boolean
+ 6 |   console.log('string');
+   :   ^^^^^^^^^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+   ,-[strict-boolean-expressions/index.ts:6:11]
+ 5 | if (str) { // string is not a boolean
+ 6 |   console.log('string');
+   :           ^^^
+ 7 | }
+   `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:11:3]
+ 10 | if (num) { // number is not a boolean
+ 11 |   console.log('number');
+    :   ^^^^^^^^^^^
+ 12 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:11:11]
+ 10 | if (num) { // number is not a boolean
+ 11 |   console.log('number');
+    :           ^^^
+ 12 | }
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected object value in conditional. An object is always truthy.
+    ,-[strict-boolean-expressions/index.ts:15:5]
+ 14 | const obj = { foo: 'bar' };
+ 15 | if (obj) { // object is not a boolean
+    :     ^^^
+ 16 |   console.log('object');
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:16:3]
+ 15 | if (obj) { // object is not a boolean
+ 16 |   console.log('object');
+    :   ^^^^^^^^^^^
+ 17 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:16:11]
+ 15 | if (obj) { // object is not a boolean
+ 16 |   console.log('object');
+    :           ^^^
+ 17 | }
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly.
+    ,-[strict-boolean-expressions/index.ts:21:5]
+ 20 | declare const maybeBool: boolean | null;
+ 21 | if (maybeBool) { // nullable boolean
+    :     ^^^^^^^^^
+ 22 |   console.log('maybe');
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:22:3]
+ 21 | if (maybeBool) { // nullable boolean
+ 22 |   console.log('maybe');
+    :   ^^^^^^^^^^^
+ 23 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:22:11]
+ 21 | if (maybeBool) { // nullable boolean
+ 22 |   console.log('maybe');
+    :           ^^^
+ 23 | }
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected nullable string value in conditional. Please handle the nullish and empty string cases explicitly.
+    ,-[strict-boolean-expressions/index.ts:27:5]
+ 26 | declare const maybeString: string | undefined;
+ 27 | if (maybeString) { // should explicitly check !== undefined
+    :     ^^^^^^^^^^^
+ 28 |   console.log(maybeString);
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:28:3]
+ 27 | if (maybeString) { // should explicitly check !== undefined
+ 28 |   console.log(maybeString);
+    :   ^^^^^^^^^^^
+ 29 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:28:11]
+ 27 | if (maybeString) { // should explicitly check !== undefined
+ 28 |   console.log(maybeString);
+    :           ^^^
+ 29 | }
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected object value in conditional. An object is always truthy.
+    ,-[strict-boolean-expressions/index.ts:33:17]
+ 32 | const result1 = str && num;
+ 33 | const result2 = obj || num;
+    :                 ^^^
+ 34 | 
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:37:3]
+ 36 | while (num) {
+ 37 |   console.log('loop');
+    :   ^^^^^^^^^^^
+ 38 |   break;
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:37:11]
+ 36 | while (num) {
+ 37 |   console.log('loop');
+    :           ^^^
+ 38 |   break;
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:43:3]
+ 42 | do {
+ 43 |   console.log('do');
+    :   ^^^^^^^^^^^
+ 44 | } while (str);
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:43:11]
+ 42 | do {
+ 43 |   console.log('do');
+    :           ^^^
+ 44 | } while (str);
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:48:3]
+ 47 | for (let i = 0; i; i++) {
+ 48 |   console.log('for');
+    :   ^^^^^^^^^^^
+ 49 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:48:11]
+ 47 | for (let i = 0; i; i++) {
+ 48 |   console.log('for');
+    :           ^^^
+ 49 | }
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected value in conditional. A union of different types has inconsistent truthiness.
+    ,-[strict-boolean-expressions/index.ts:59:5]
+ 58 | declare const mixed: string | number;
+ 59 | if (mixed) {
+    :     ^^^^^
+ 60 |   console.log('mixed');
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:60:3]
+ 59 | if (mixed) {
+ 60 |   console.log('mixed');
+    :   ^^^^^^^^^^^
+ 61 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:60:11]
+ 59 | if (mixed) {
+ 60 |   console.log('mixed');
+    :           ^^^
+ 61 | }
+    `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected any value in conditional. Use a more specific type to ensure type safety.
+    ,-[strict-boolean-expressions/index.ts:65:5]
+ 64 | declare const anyValue: any;
+ 65 | if (anyValue) {
+    :     ^^^^^^^^
+ 66 |   console.log('any');
+    `----
+
+  x typescript-eslint(no-unsafe-call): Unsafe call of a(n) `any` typed value.
+    ,-[strict-boolean-expressions/index.ts:66:3]
+ 65 | if (anyValue) {
+ 66 |   console.log('any');
+    :   ^^^^^^^^^^^
+ 67 | }
+    `----
+
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .log on an `any` value.
+    ,-[strict-boolean-expressions/index.ts:66:11]
+ 65 | if (anyValue) {
+ 66 |   console.log('any');
+    :           ^^^
+ 67 | }
+    `----
+
   x typescript-eslint(switch-exhaustiveness-check): Switch is not exhaustive
    ,-[switch-exhaustiveness-check/index.ts:6:11]
  5 | function handleStatus(status: Status) {
@@ -1415,6 +1624,15 @@ working directory: fixtures/tsgolint
  10 | `->       return 'Request approved';
  11 |         // Missing 'rejected' case
     `----
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[test.svelte:2:2]
+ 1 | <script>
+ 2 |     debugger;
+   :     ^^^^^^^^^
+ 3 | 
+   `----
+  help: Remove the debugger statement
 
   x typescript-eslint(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
   | If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
@@ -1516,8 +1734,8 @@ working directory: fixtures/tsgolint
  20 | });
     `----
 
-Found 5 warnings and 184 errors.
-Finished in <variable>ms on 42 files using 1 threads.
+Found 5 warnings and 211 errors.
+Finished in <variable>ms on 44 files using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

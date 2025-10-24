@@ -1276,8 +1276,7 @@ mod test {
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint() {
-        // TODO: test with other rules as well once diagnostics are more stable
-        let args = &["--type-aware", "no-floating-promises"];
+        let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 

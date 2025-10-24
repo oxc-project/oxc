@@ -278,6 +278,7 @@ pub(crate) mod typescript {
     pub mod restrict_plus_operands;
     pub mod restrict_template_expressions;
     pub mod return_await;
+    pub mod strict_boolean_expressions;
     pub mod switch_exhaustiveness_check;
     pub mod triple_slash_reference;
     pub mod unbound_method;
@@ -1136,6 +1137,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::restrict_plus_operands,
     typescript::restrict_template_expressions,
     typescript::return_await,
+    typescript::strict_boolean_expressions,
     typescript::switch_exhaustiveness_check,
     typescript::triple_slash_reference,
     typescript::unbound_method,
