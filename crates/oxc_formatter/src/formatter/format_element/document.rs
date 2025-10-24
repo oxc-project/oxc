@@ -605,7 +605,9 @@ impl FormatElements for [FormatElement<'_>] {
                         return true;
                     }
                 }
-
+                FormatElement::Line(line) if line.will_break() => {
+                    return true;
+                }
                 element if ignore_depth == 0 && element.will_break() => {
                     return true;
                 }
