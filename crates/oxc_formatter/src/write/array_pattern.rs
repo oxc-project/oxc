@@ -7,10 +7,7 @@ use crate::{
     Format, FormatResult,
     ast_nodes::{AstNode, AstNodes},
     formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
-    utils::{
-        array::write_array_node,
-        format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-    },
+    utils::array::write_array_node,
     write,
 };
 
@@ -23,23 +20,6 @@ impl<'a> Deref for FormatArrayPattern<'a, '_> {
 
     fn deref(&self) -> &Self::Target {
         self.0
-    }
-}
-
-impl GetSpan for FormatArrayPattern<'_, '_> {
-    fn span(&self) -> Span {
-        // `[a, b]: [a, b]`
-        //  ^^^^^^^^^^^^^^ ArrayPattern's span covers the type annotation if exists,
-        //  ^^^^^^ but we want the span to cover only the pattern itself, otherwise,
-        //         the comments of type annotation will be treated as dangling comments
-        //         of ArrayPattern.
-        if let AstNodes::FormalParameter(param) = self.parent
-            && let Some(ty) = &param.pattern.type_annotation
-        {
-            Span::new(self.span.start, ty.span.start)
-        } else {
-            self.span
-        }
     }
 }
 
@@ -75,11 +55,6 @@ impl<'a> Format<'a> for FormatArrayPattern<'a, '_> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if matches!(self.parent, AstNodes::FormalParameter(param) if param.pattern.type_annotation.is_some())
-        {
-            FormatNodeWithoutTrailingComments(&FormatArrayPattern(self)).fmt(f)
-        } else {
-            FormatArrayPattern(self).fmt(f)
-        }
+        FormatArrayPattern(self).fmt(f)
     }
 }

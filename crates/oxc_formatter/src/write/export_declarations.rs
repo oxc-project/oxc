@@ -28,11 +28,10 @@ fn format_export_keyword_with_class_decorators<'a>(
 ) -> FormatResult<()> {
     // `@decorator export class Cls {}`
     //            ^ print leading comments here
-    let format_leading_comments = |f: &mut Formatter<'_, 'a>| -> FormatResult<()> {
+    let format_leading_comments = format_once(|f| {
         let comments = f.context().comments().comments_before(span.start);
-        FormatLeadingComments::Comments(comments).fmt(f)?;
-        Ok(())
-    };
+        FormatLeadingComments::Comments(comments).fmt(f)
+    });
 
     if let AstNodes::Class(class) = declaration
         && !class.decorators.is_empty()
@@ -41,19 +40,26 @@ fn format_export_keyword_with_class_decorators<'a>(
         // `@decorator export class Cls {}`
         // decorators are placed before the export keyword
         if class.decorators[0].span.end < span.start {
-            write!(f, [class.decorators(), hard_line_break()])?;
-            format_leading_comments(f)?;
-            write!(f, [keyword, space()])
+            write!(
+                f,
+                [class.decorators(), hard_line_break(), format_leading_comments, keyword, space()]
+            )
         } else {
             // `export @decorator class Cls {}`
             // decorators are placed after the export keyword
-            format_leading_comments(f)?;
-            write!(f, [keyword, hard_line_break()])?;
-            write!(f, [class.decorators(), hard_line_break()])
+            write!(
+                f,
+                [
+                    format_leading_comments,
+                    keyword,
+                    hard_line_break(),
+                    class.decorators(),
+                    hard_line_break()
+                ]
+            )
         }
     } else {
-        format_leading_comments(f)?;
-        write!(f, [keyword, space()])
+        write!(f, [format_leading_comments, keyword, space()])
     }
 }
 
@@ -195,14 +201,8 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let comments = f.context().comments().comments_before(self.exported.span().end);
-        let mut len = comments.len();
-        while len != 0 && comments[len - 1].is_block() {
-            len -= 1;
-        }
-        if len != 0 {
-            write!(f, [FormatLeadingComments::Comments(&comments[..len])])?;
-        }
+        let comments = f.context().comments().line_comments_before(self.exported.span().end);
+        write!(f, [FormatLeadingComments::Comments(comments)])?;
 
         write!(f, [self.export_kind()]);
         if self.local.span() == self.exported.span() {

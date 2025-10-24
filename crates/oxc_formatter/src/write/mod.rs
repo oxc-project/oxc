@@ -252,13 +252,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["new", space()]);
-        if self.type_arguments.is_some() {
-            write!(f, [self.callee()]);
-        } else {
-            write!(f, [FormatNodeWithoutTrailingComments(self.callee())]);
-        }
-        write!(f, [self.type_arguments(), self.arguments()])
+        write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()])
     }
 }
 
@@ -962,12 +956,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if matches!(self.parent, AstNodes::FormalParameter(param) if param.pattern.type_annotation.is_some())
-        {
-            FormatNodeWithoutTrailingComments(&ObjectPatternLike::ObjectPattern(self)).fmt(f)
-        } else {
-            ObjectPatternLike::ObjectPattern(self).fmt(f)
-        }
+        ObjectPatternLike::ObjectPattern(self).fmt(f)
     }
 }
 
@@ -1210,16 +1199,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSArrayType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let AstNodes::TSUnionType(union) = self.element_type().as_ast_nodes() {
-            // `TSUnionType` has special logic for comments, so we need to delegate to it.
-            union.fmt(f)?;
-        } else {
-            FormatNodeWithoutTrailingComments(self.element_type()).fmt(f)?;
-        }
-        let comments =
-            f.context().comments().comments_before_character(self.element_type.span().end, b'[');
-        FormatTrailingComments::Comments(comments).fmt(f)?;
-        write!(f, ["[]"])
+        write!(f, [self.element_type(), "[]"])
     }
 }
 

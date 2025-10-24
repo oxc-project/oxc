@@ -177,6 +177,12 @@ impl<'a> Comments<'a> {
         &self.unprinted_comments()[..index]
     }
 
+    /// Returns all block comments that end before or at the given position.
+    pub fn line_comments_before(&self, pos: u32) -> &'a [Comment] {
+        let index = self.comments_before_iter(pos).take_while(|c| c.is_line()).count();
+        &self.unprinted_comments()[..index]
+    }
+
     /// Returns comments that are on their own line and end before or at the given position.
     pub fn own_line_comments_before(&self, pos: u32) -> &'a [Comment] {
         let index =
