@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(prefer-standalone): Prefer standalone components.
+   ╭─[prefer_standalone.tsx:1:26]
+ 1 │ @Component({ standalone: false })
+   ·                          ─────
+ 2 │         class Test {}
+   ╰────

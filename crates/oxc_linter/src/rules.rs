@@ -664,6 +664,7 @@ pub(crate) mod vue {
 }
 
 pub(crate) mod angular {
+    pub mod prefer_standalone;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -1278,4 +1279,5 @@ oxc_macros::declare_all_lint_rules! {
     vue::require_typed_ref,
     vue::valid_define_emits,
     vue::valid_define_props,
+    angular::prefer_standalone,
 }

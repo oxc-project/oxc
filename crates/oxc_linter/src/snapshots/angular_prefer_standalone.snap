@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-angular(prefer-standalone): Prefer standalone components.
+   ╭─[prefer_standalone.tsx:1:14]
+ 1 │ @Component({ standalone: false })
+   ·              ─────────────────
+ 2 │         class Test {}
+   ╰────
+  help: Replace `standalone: false` with ``.
+
+  ⚠ eslint-plugin-angular(prefer-standalone): Prefer standalone components.
+   ╭─[prefer_standalone.tsx:2:13]
+ 1 │ @Component({
+ 2 │             standalone: false,
+   ·             ─────────────────
+ 3 │             template: '<div></div>'
+   ╰────
+  help: Replace `standalone: false` with ``.
+
+  ⚠ eslint-plugin-angular(prefer-standalone): Prefer standalone components.
+   ╭─[prefer_standalone.tsx:1:14]
+ 1 │ @Directive({ standalone: false })
+   ·              ─────────────────
+ 2 │         class Test {}
+   ╰────
+  help: Replace `standalone: false` with ``.
+
+  ⚠ eslint-plugin-angular(prefer-standalone): Prefer standalone components.
+   ╭─[prefer_standalone.tsx:2:13]
+ 1 │ @Directive({
+ 2 │             standalone: false,
+   ·             ─────────────────
+ 3 │             selector: 'x-selector'
+   ╰────
+  help: Replace `standalone: false` with ``.
+
+  ⚠ eslint-plugin-angular(prefer-standalone): Prefer standalone components.
+   ╭─[prefer_standalone.tsx:1:9]
+ 1 │ @Pipe({ standalone: false })
+   ·         ─────────────────
+ 2 │         class Test {}
+   ╰────
+  help: Replace `standalone: false` with ``.
+
+  ⚠ eslint-plugin-angular(prefer-standalone): Prefer standalone components.
+   ╭─[prefer_standalone.tsx:2:13]
+ 1 │ @Pipe({
+ 2 │             standalone: false,
+   ·             ─────────────────
+ 3 │             name: 'pipe-name'
+   ╰────
+  help: Replace `standalone: false` with ``.
