@@ -3837,3 +3837,8 @@ impl RuleRunner for crate::rules::vue::valid_define_props::ValidDefineProps {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
+
+impl RuleRunner for crate::rules::angular::prefer_standalone::PreferStandalone {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}

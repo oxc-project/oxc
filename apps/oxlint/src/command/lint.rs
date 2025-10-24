@@ -313,6 +313,10 @@ pub struct EnablePlugins {
     /// Enable the vue plugin and detect vue usage problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub vue_plugin: OverrideToggle,
+
+    /// Enable the Angular plugin and detect Angular usage problems
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub angular_plugin: OverrideToggle,
 }
 
 /// Enables or disables a boolean option, or leaves it unset.
@@ -389,6 +393,7 @@ impl EnablePlugins {
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
         self.regex_plugin.inspect(|yes| plugins.set(LintPlugins::REGEX, yes));
         self.vue_plugin.inspect(|yes| plugins.set(LintPlugins::VUE, yes));
+        self.angular_plugin.inspect(|yes| plugins.set(LintPlugins::ANGULAR, yes));
 
         // Without this, jest plugins adapted to vitest will not be enabled.
         if self.vitest_plugin.is_enabled() && self.jest_plugin.is_not_set() {

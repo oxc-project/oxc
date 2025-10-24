@@ -505,6 +505,7 @@ fn plugin_name_to_prefix(plugin_name: &'static str) -> &'static str {
         "vitest" => "eslint-plugin-vitest",
         "node" => "eslint-plugin-node",
         "vue" => "eslint-plugin-vue",
+        "angular" => "eslint-plugin-angular",
         "regexp" => "eslint-plugin-regexp",
         _ => plugin_name,
     }

@@ -38,6 +38,8 @@ bitflags! {
         const REGEX = 1 << 13;
         /// `eslint-plugin-vue`
         const VUE = 1 << 14;
+        /// `eslint-plugin-angular`
+        const ANGULAR = 1 << 15;
     }
 }
 
@@ -99,6 +101,7 @@ impl TryFrom<&str> for LintPlugins {
             "node" => Ok(LintPlugins::NODE),
             "regex" => Ok(LintPlugins::REGEX),
             "vue" => Ok(LintPlugins::VUE),
+            "angular" => Ok(LintPlugins::ANGULAR),
             // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
             // making it the default value.
             "eslint" => Ok(LintPlugins::ESLINT),
@@ -125,6 +128,7 @@ impl From<LintPlugins> for &'static str {
             LintPlugins::NODE => "node",
             LintPlugins::REGEX => "regex",
             LintPlugins::VUE => "vue",
+            LintPlugins::ANGULAR => "angular",
             _ => "",
         }
     }

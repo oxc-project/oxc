@@ -46,6 +46,7 @@ impl<'a> Template<'a> {
             RuleKind::Vitest => Path::new("crates/oxc_linter/src/rules/vitest"),
             RuleKind::Regexp => Path::new("crates/oxc_linter/src/rules/regexp"),
             RuleKind::Vue => Path::new("crates/oxc_linter/src/rules/vue"),
+            RuleKind::Angular => Path::new("crates/oxc_linter/src/rules/angular"),
         };
 
         std::fs::create_dir_all(path)?;

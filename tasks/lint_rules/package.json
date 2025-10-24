@@ -4,6 +4,7 @@
   "main": "./src/main.mjs",
   "version": "0.0.0",
   "dependencies": {
+    "@angular-eslint/eslint-plugin": "latest",
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "eslint": "^9.13.0",

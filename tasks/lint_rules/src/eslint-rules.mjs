@@ -41,6 +41,8 @@ import pluginVitest from 'eslint-plugin-vitest';
 import pluginRegexp from 'eslint-plugin-regexp';
 // https://github.com/vuejs/eslint-plugin-vue
 import pluginVue from 'eslint-plugin-vue';
+// https://github.com/angular-eslint/angular-eslint
+import pluginAngular from '@angular-eslint/eslint-plugin';
 
 // destructuring default exports
 const {
@@ -89,6 +91,10 @@ const {
   configs: pluginVueConfigs,
   rules: pluginVueRules,
 } = pluginVue;
+const {
+  configs: pluginAngularConfigs,
+  rules: pluginAngularRules,
+} = pluginAngular;
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginTypeScriptRules = (linter) => {
@@ -317,6 +323,20 @@ const loadPluginVueRules = (linter) => {
   }
 };
 
+/** @param {import("eslint").Linter} linter */
+const loadPluginAngularRules = (linter) => {
+  const pluginAngularRecommendedRules = new Map(
+      Object.entries(pluginAngularConfigs.recommended.rules || {}),
+  );
+  for (const [name, rule] of Object.entries(pluginAngularRules)) {
+    const prefixedName = `angular/${name}`;
+
+    rule.meta.docs.recommended = pluginAngularRecommendedRules.has(prefixedName);
+
+    linter.defineRule(prefixedName, rule);
+  }
+};
+
 /**
  * @typedef {{
  *   npm: string[];
@@ -346,6 +366,7 @@ export const ALL_TARGET_PLUGINS = new Map([
   ['vitest', { npm: ['eslint-plugin-vitest'], issueNo: 4656 }],
   ['regexp', { npm: ['eslint-plugin-regexp'], issueNo: 11439 }],
   ['vue', { npm: ['eslint-plugin-vue'], issueNo: 11440 }],
+  ['angular', { npm: ['@angular-eslint/eslint-plugin'], issueNo: 14958 }],
 ]);
 
 // All rules(including deprecated, recommended) are loaded initially.
@@ -370,4 +391,5 @@ export const loadTargetPluginRules = (linter) => {
   loadPluginVitestRules(linter);
   loadPluginRegexpRules(linter);
   loadPluginVueRules(linter);
+  loadPluginAngularRules(linter);
 };

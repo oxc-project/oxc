@@ -663,6 +663,9 @@ pub(crate) mod vue {
     pub mod valid_define_props;
 }
 
+pub(crate) mod angular {
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::arrow_body_style,

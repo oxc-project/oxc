@@ -95,6 +95,11 @@ const VUE_TEST_PATH: &str =
 const VUE_RULES_PATH: &str =
     "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/lib/rules/";
 
+const ANGULAR_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/angular-eslint/angular-eslint/tree/main/packages/eslint-plugin/tests/rules";
+const ANGULAR_RULES_PATH: &str =
+    "https://raw.githubusercontent.com/angular-eslint/angular-eslint/tree/main/packages/eslint-plugin/src/rules";
+
 struct TestCase {
     source_text: String,
     code: Option<String>,
@@ -1337,6 +1342,7 @@ pub enum RuleKind {
     Vitest,
     Regexp,
     Vue,
+    Angular,
 }
 
 impl TryFrom<&str> for RuleKind {
@@ -1416,6 +1422,7 @@ fn main() {
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Regexp => format!("{REGEXP_TEST_PATH}/{kebab_rule_name}.ts"),
         RuleKind::Vue => format!("{VUE_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Angular => format!("{ANGULAR_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
     let rule_src_path = match rule_kind {
@@ -1434,6 +1441,7 @@ fn main() {
         RuleKind::Vitest => format!("{VITEST_RULES_PATH}/{kebab_rule_name}.ts"),
         RuleKind::Regexp => format!("{REGEXP_RULES_PATH}/{kebab_rule_name}.ts"),
         RuleKind::Vue => format!("{VUE_RULES_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Angular => format!("{ANGULAR_RULES_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
     let language = match rule_kind {
@@ -1638,6 +1646,7 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
         RuleKind::Node => "node".into(),
         RuleKind::Regexp => "regexp".into(),
         RuleKind::Vue => "vue".into(),
+        RuleKind::Angular => "angular".into(),
     }
 }
 
