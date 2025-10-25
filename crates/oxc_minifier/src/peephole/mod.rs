@@ -1,5 +1,6 @@
 mod convert_to_dotted_properties;
 mod fold_constants;
+mod hoist_static_methods;
 mod inline;
 mod minimize_conditional_expression;
 mod minimize_conditions;
@@ -29,6 +30,8 @@ use crate::{
     ctx::{Ctx, TraverseCtx},
     state::MinifierState,
 };
+
+pub use self::hoist_static_methods::HoistStaticMethodsState;
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -113,6 +116,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::insert_static_methods_bindings(program, &mut Ctx::new(ctx));
+
         self.changed = ctx.state.changed;
         if self.changed {
             // Remove unused references by visiting the AST again and diff the collected references.
@@ -250,6 +255,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                 Self::replace_known_global_methods(expr, ctx);
                 Self::substitute_simple_function_call(expr, ctx);
                 Self::substitute_object_or_array_constructor(expr, ctx);
+                Self::hoist_static_methods(expr, ctx);
             }
             Expression::ConditionalExpression(logical_expr) => {
                 Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);

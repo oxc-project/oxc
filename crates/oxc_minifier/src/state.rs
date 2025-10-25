@@ -5,7 +5,7 @@ use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::{Atom, SourceType};
 use oxc_syntax::symbol::SymbolId;
 
-use crate::{CompressOptions, symbol_value::SymbolValues};
+use crate::{CompressOptions, peephole::HoistStaticMethodsState, symbol_value::SymbolValues};
 
 pub struct MinifierState<'a> {
     pub source_type: SourceType,
@@ -20,6 +20,8 @@ pub struct MinifierState<'a> {
     /// Private member usage for classes
     pub class_symbols_stack: ClassSymbolsStack<'a>,
 
+    pub hoist_known_methods_state: HoistStaticMethodsState<'a>,
+
     pub changed: bool,
 }
 
@@ -31,6 +33,7 @@ impl MinifierState<'_> {
             pure_functions: FxHashMap::default(),
             symbol_values: SymbolValues::default(),
             class_symbols_stack: ClassSymbolsStack::new(),
+            hoist_known_methods_state: HoistStaticMethodsState::default(),
             changed: false,
         }
     }
