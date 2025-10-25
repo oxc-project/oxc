@@ -285,7 +285,11 @@ impl RuleRunner for crate::rules::eslint::no_continue::NoContinue {
 }
 
 impl RuleRunner for crate::rules::eslint::no_control_regex::NoControlRegex {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::NewExpression,
+        AstType::RegExpLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -506,7 +510,11 @@ impl RuleRunner for crate::rules::eslint::no_magic_numbers::NoMagicNumbers {
 impl RuleRunner
     for crate::rules::eslint::no_misleading_character_class::NoMisleadingCharacterClass
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::NewExpression,
+        AstType::RegExpLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -804,7 +812,11 @@ impl RuleRunner for crate::rules::eslint::no_unused_vars::NoUnusedVars {
 }
 
 impl RuleRunner for crate::rules::eslint::no_useless_backreference::NoUselessBackreference {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::NewExpression,
+        AstType::RegExpLiteral,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

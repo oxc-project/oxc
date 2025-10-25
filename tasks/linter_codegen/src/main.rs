@@ -25,6 +25,7 @@ mod let_else_detector;
 mod match_detector;
 mod member_expression_kinds;
 mod node_type_set;
+mod regex_node_kinds;
 mod rules;
 mod utils;
 
@@ -45,7 +46,9 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
 
     let member_expression_kinds =
         get_member_expression_kinds().expect("Failed to get member expression kinds");
-    let rule_runner_data = RuleRunnerData { member_expression_kinds };
+    let regex_node_kinds =
+        regex_node_kinds::get_regex_node_kinds().expect("Failed to get regex node kinds");
+    let rule_runner_data = RuleRunnerData { member_expression_kinds, regex_node_kinds };
 
     let mut out = String::new();
     out.push_str("// Auto-generated code, DO NOT EDIT DIRECTLY!\n");
@@ -152,6 +155,16 @@ fn detect_top_level_node_types(
         return Some(node_types);
     }
 
+    // Detect if entire body is call to `run_on_regex_node` and return those node types
+    if run_func.block.stmts.len() == 1
+        && let syn::Stmt::Expr(syn::Expr::Call(call_expr), _) = &run_func.block.stmts[0]
+        && call_expr.args.len() == 3
+        && let syn::Expr::Path(path_expr) = &*call_expr.func
+        && path_expr.path.is_ident("run_on_regex_node")
+    {
+        return Some(rule_runner_data.regex_node_kinds.clone());
+    }
+
     None
 }
 
@@ -199,6 +212,7 @@ enum CollectionResult {
 /// Additional data collected for rule runner impl generation
 struct RuleRunnerData {
     member_expression_kinds: NodeTypeSet,
+    regex_node_kinds: NodeTypeSet,
 }
 
 /// Format Rust code with `rustfmt`.
