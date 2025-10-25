@@ -1066,5 +1066,23 @@
       "electron": "5.0"
     },
     "es": "ES2020"
+  },
+  {
+    "name": "TopLevelAwait",
+    "babel": null,
+    "targets": {
+      "chrome": "89",
+      "opera": "75",
+      "edge": "89",
+      "firefox": "89",
+      "safari": "15.0",
+      "node": "14.8",
+      "deno": "1.0",
+      "ios": "15.0",
+      "samsung": "15.0",
+      "opera_mobile": "63",
+      "electron": "12.0"
+    },
+    "es": "ES2022"
   }
 ]
