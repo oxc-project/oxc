@@ -1421,6 +1421,7 @@ impl<'a> Function<'a> {
     /// `true` for function expressions
     pub fn is_expression(&self) -> bool {
         self.r#type == FunctionType::FunctionExpression
+            || self.r#type == FunctionType::TSEmptyBodyFunctionExpression
     }
 
     /// `true` for function declarations
