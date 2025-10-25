@@ -1,4 +1,3 @@
-use log::info;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
@@ -30,27 +29,38 @@ pub struct LintOptions {
     pub ts_config_path: Option<String>,
     pub unused_disable_directives: UnusedDisableDirectives,
     pub type_aware: bool,
-    pub flags: FxHashMap<String, String>,
+    pub disable_nested_config: bool,
+    pub fix_kind: LintFixKindFlag,
+}
+
+#[derive(Debug, Default, Serialize, PartialEq, Eq, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum LintFixKindFlag {
+    #[default]
+    SafeFix,
+    SafeFixOrSuggestion,
+    DangerousFix,
+    DangerousFixOrSuggestion,
+    None,
+    All,
+}
+
+impl From<LintFixKindFlag> for FixKind {
+    fn from(flag: LintFixKindFlag) -> Self {
+        match flag {
+            LintFixKindFlag::SafeFix => FixKind::SafeFix,
+            LintFixKindFlag::SafeFixOrSuggestion => FixKind::SafeFixOrSuggestion,
+            LintFixKindFlag::DangerousFix => FixKind::DangerousFix,
+            LintFixKindFlag::DangerousFixOrSuggestion => FixKind::DangerousFixOrSuggestion,
+            LintFixKindFlag::None => FixKind::None,
+            LintFixKindFlag::All => FixKind::All,
+        }
+    }
 }
 
 impl LintOptions {
     pub fn use_nested_configs(&self) -> bool {
-        !self.flags.contains_key("disable_nested_config") && self.config_path.is_none()
-    }
-
-    pub fn fix_kind(&self) -> FixKind {
-        self.flags.get("fix_kind").map_or(FixKind::SafeFix, |kind| match kind.as_str() {
-            "safe_fix" => FixKind::SafeFix,
-            "safe_fix_or_suggestion" => FixKind::SafeFixOrSuggestion,
-            "dangerous_fix" => FixKind::DangerousFix,
-            "dangerous_fix_or_suggestion" => FixKind::DangerousFixOrSuggestion,
-            "none" => FixKind::None,
-            "all" => FixKind::All,
-            _ => {
-                info!("invalid fix_kind flag `{kind}`, fallback to `safe_fix`");
-                FixKind::SafeFix
-            }
-        })
+        !self.disable_nested_config && self.config_path.is_none()
     }
 }
 
@@ -72,17 +82,17 @@ impl TryFrom<Value> for LintOptions {
             return Err("no object passed".to_string());
         };
 
+        // deprecated flags field
         let mut flags = FxHashMap::with_capacity_and_hasher(2, FxBuildHasher);
         if let Some(json_flags) = object.get("flags").and_then(|value| value.as_object()) {
             if let Some(disable_nested_config) =
                 json_flags.get("disable_nested_config").and_then(|value| value.as_str())
             {
-                flags
-                    .insert("disable_nested_config".to_string(), disable_nested_config.to_string());
+                flags.insert("disable_nested_config".to_string(), disable_nested_config);
             }
 
             if let Some(fix_kind) = json_flags.get("fix_kind").and_then(|value| value.as_str()) {
-                flags.insert("fix_kind".to_string(), fix_kind.to_string());
+                flags.insert("fix_kind".to_string(), fix_kind);
             }
         }
 
@@ -107,14 +117,30 @@ impl TryFrom<Value> for LintOptions {
             type_aware: object
                 .get("typeAware")
                 .is_some_and(|key| serde_json::from_value::<bool>(key.clone()).unwrap_or_default()),
-            flags,
+            disable_nested_config: object
+                .get("disableNestedConfig")
+                .and_then(|key| serde_json::from_value::<bool>(key.clone()).ok())
+                .unwrap_or(flags.contains_key("disable_nested_config")),
+            fix_kind: object
+                .get("fixKind")
+                .and_then(|key| serde_json::from_value::<LintFixKindFlag>(key.clone()).ok())
+                .unwrap_or_else(|| match flags.get("fix_kind") {
+                    Some(&"safe_fix") => LintFixKindFlag::SafeFix,
+                    Some(&"safe_fix_or_suggestion") => LintFixKindFlag::SafeFixOrSuggestion,
+                    Some(&"dangerous_fix") => LintFixKindFlag::DangerousFix,
+                    Some(&"dangerous_fix_or_suggestion") => {
+                        LintFixKindFlag::DangerousFixOrSuggestion
+                    }
+                    Some(&"none") => LintFixKindFlag::None,
+                    Some(&"all") => LintFixKindFlag::All,
+                    _ => LintFixKindFlag::default(),
+                }),
         })
     }
 }
 
 #[cfg(test)]
 mod test {
-    use rustc_hash::FxHashMap;
     use serde_json::json;
 
     use super::{LintOptions, Run, UnusedDisableDirectives};
@@ -126,10 +152,8 @@ mod test {
             "configPath": "./custom.json",
             "unusedDisableDirectives": "warn",
             "typeAware": true,
-            "flags": {
-                "disable_nested_config": "true",
-                "fix_kind": "dangerous_fix"
-            }
+            "disableNestedConfig": true,
+            "fixKind": "dangerous_fix"
         });
 
         let options = LintOptions::try_from(json).unwrap();
@@ -137,8 +161,8 @@ mod test {
         assert_eq!(options.config_path, Some("./custom.json".into()));
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Warn);
         assert!(options.type_aware);
-        assert_eq!(options.flags.get("disable_nested_config"), Some(&"true".to_string()));
-        assert_eq!(options.flags.get("fix_kind"), Some(&"dangerous_fix".to_string()));
+        assert!(options.disable_nested_config);
+        assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
     }
 
     #[test]
@@ -150,7 +174,8 @@ mod test {
         assert_eq!(options.config_path, None);
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Allow);
         assert!(!options.type_aware);
-        assert!(options.flags.is_empty());
+        assert!(!options.disable_nested_config);
+        assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFix);
     }
 
     #[test]
@@ -163,24 +188,6 @@ mod test {
         let options = LintOptions::try_from(json).unwrap();
         assert_eq!(options.run, Run::OnType); // fallback
         assert_eq!(options.config_path, Some("./custom.json".into()));
-        assert!(options.flags.is_empty());
-    }
-
-    #[test]
-    fn test_invalid_flags_options_json() {
-        let json = json!({
-            "configPath": "./custom.json",
-            "flags": {
-                "disable_nested_config": true, // should be string
-                "fix_kind": "dangerous_fix"
-            }
-        });
-
-        let options = LintOptions::try_from(json).unwrap();
-        assert_eq!(options.run, Run::OnType); // fallback
-        assert_eq!(options.config_path, Some("./custom.json".into()));
-        assert_eq!(options.flags.get("disable_nested_config"), None);
-        assert_eq!(options.flags.get("fix_kind"), Some(&"dangerous_fix".to_string()));
     }
 
     #[test]
@@ -192,10 +199,70 @@ mod test {
             LintOptions { config_path: Some("config.json".to_string()), ..Default::default() };
         assert!(!options.use_nested_configs());
 
-        let mut flags = FxHashMap::default();
-        flags.insert("disable_nested_config".to_string(), "true".to_string());
-
-        let options = LintOptions { flags, ..Default::default() };
+        let options = LintOptions { disable_nested_config: true, ..Default::default() };
         assert!(!options.use_nested_configs());
+    }
+
+    mod deprecated_flags {
+        use serde_json::json;
+
+        use crate::linter::options::LintFixKindFlag;
+
+        use super::{LintOptions, Run, UnusedDisableDirectives};
+
+        #[test]
+        fn test_valid_options_json_deprecated_flags() {
+            let json = json!({
+                "run": "onSave",
+                "configPath": "./custom.json",
+                "unusedDisableDirectives": "warn",
+                "typeAware": true,
+                "flags": {
+                    "disable_nested_config": "true",
+                    "fix_kind": "dangerous_fix"
+                }
+            });
+
+            let options = LintOptions::try_from(json).unwrap();
+            assert_eq!(options.run, Run::OnSave);
+            assert_eq!(options.config_path, Some("./custom.json".into()));
+            assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Warn);
+            assert!(options.type_aware);
+            assert!(options.disable_nested_config);
+            assert_eq!(options.fix_kind, LintFixKindFlag::DangerousFix);
+        }
+
+        #[test]
+        fn test_invalid_flags_options_json() {
+            let json = json!({
+                "configPath": "./custom.json",
+                "flags": {
+                    "disable_nested_config": true, // should be string
+                    "fix_kind": "dangerous_fix"
+                }
+            });
+
+            let options = LintOptions::try_from(json).unwrap();
+            assert_eq!(options.run, Run::OnType); // fallback
+            assert_eq!(options.config_path, Some("./custom.json".into()));
+            assert!(!options.disable_nested_config); // fallback
+            assert_eq!(options.fix_kind, LintFixKindFlag::DangerousFix);
+        }
+
+        #[test]
+        fn test_root_options_overrides_flags() {
+            let json = json!({
+                "disableNestedConfig": false,
+                "fixKind": "safe_fix_or_suggestion",
+                "flags": {
+                    "disable_nested_config": "true",
+                    "fix_kind": "dangerous_fix"
+                }
+            });
+
+            let options = LintOptions::try_from(json).unwrap();
+            assert!(!options.disable_nested_config); // root option takes precedence
+            assert_eq!(options.fix_kind, LintFixKindFlag::SafeFixOrSuggestion);
+        }
     }
 }

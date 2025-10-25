@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
-use oxc_linter::{AllowWarnDeny, LintIgnoreMatcher};
+use oxc_linter::{AllowWarnDeny, FixKind, LintIgnoreMatcher};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tokio::sync::Mutex;
 use tower_lsp_server::lsp_types::{Diagnostic, Pattern, Uri};
@@ -117,6 +117,7 @@ impl ServerLinter {
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
+        let fix_kind = FixKind::from(options.fix_kind.clone());
 
         let use_cross_module = config_builder.plugins().has_import()
             || (use_nested_config
@@ -129,7 +130,7 @@ impl ServerLinter {
         });
 
         let lint_options = LintOptions {
-            fix: options.fix_kind(),
+            fix: fix_kind,
             report_unused_directive: match options.unused_disable_directives {
                 UnusedDisableDirectives::Allow => None, // or AllowWarnDeny::Allow, should be the same?
                 UnusedDisableDirectives::Warn => Some(AllowWarnDeny::Warn),
@@ -373,7 +374,7 @@ impl ServerLinter {
         old_options.config_path != new_options.config_path
             || old_options.ts_config_path != new_options.ts_config_path
             || old_options.use_nested_configs() != new_options.use_nested_configs()
-            || old_options.fix_kind() != new_options.fix_kind()
+            || old_options.fix_kind != new_options.fix_kind
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
@@ -421,22 +422,18 @@ mod test {
         ConcurrentHashMap,
         linter::{
             error_with_position::DiagnosticReport,
-            options::{LintOptions, Run, UnusedDisableDirectives},
+            options::{LintFixKindFlag, LintOptions, Run, UnusedDisableDirectives},
             server_linter::{ServerLinter, ServerLinterDiagnostics},
         },
         tester::{Tester, get_file_path},
     };
-    use rustc_hash::FxHashMap;
 
     #[test]
     fn test_create_nested_configs_with_disabled_nested_configs() {
-        let mut flags = FxHashMap::default();
-        flags.insert("disable_nested_configs".to_string(), "true".to_string());
-
         let mut nested_ignore_patterns = Vec::new();
         let (configs, _) = ServerLinter::create_nested_configs(
             Path::new("/root/"),
-            &LintOptions { flags, ..LintOptions::default() },
+            &LintOptions { disable_nested_config: true, ..LintOptions::default() },
             &mut nested_ignore_patterns,
         );
 
@@ -620,10 +617,7 @@ mod test {
         Tester::new(
             "fixtures/linter/multiple_suggestions",
             Some(LintOptions {
-                flags: FxHashMap::from_iter([(
-                    "fix_kind".to_string(),
-                    "safe_fix_or_suggestion".to_string(),
-                )]),
+                fix_kind: LintFixKindFlag::SafeFixOrSuggestion,
                 ..Default::default()
             }),
         )
