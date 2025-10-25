@@ -1418,9 +1418,10 @@ impl<'a> Function<'a> {
         self.r#type.is_typescript_syntax() || self.body.is_none() || self.declare
     }
 
-    /// `true` for function expressions
+    /// `true` for both function expressions and typescript empty body function expressions
     pub fn is_expression(&self) -> bool {
         self.r#type == FunctionType::FunctionExpression
+            || self.r#type == FunctionType::TSEmptyBodyFunctionExpression
     }
 
     /// `true` for function declarations
