@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 49/49 (100.00%)
 Positive Passed: 49/49 (100.00%)
-Negative Passed: 92/92 (100.00%)
+Negative Passed: 93/93 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -2897,6 +2897,13 @@ Negative Passed: 92/92 (100.00%)
  5 │   accessor 'constructor'
    ·            ─────────────
  6 │ }
+   ╰────
+
+  × Expected `{` but found `;`
+   ╭─[misc/fail/oxc-14944.ts:1:25]
+ 1 │ const x = function foo();
+   ·                         ┬
+   ·                         ╰── `{` expected
    ╰────
 
   × Unexpected token
