@@ -38,8 +38,7 @@ use self::{
 ///   }
 /// }
 /// ```
-#[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema, PartialEq)]
 pub struct OxlintSettings {
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]
@@ -56,6 +55,29 @@ pub struct OxlintSettings {
 
     #[serde(default)]
     pub vitest: VitestPluginSettings,
+}
+
+impl OxlintSettings {
+    /// Deep merge settings (ESLint compatible).
+    /// Self takes priority over other. Nested objects are merged recursively,
+    /// but arrays are replaced (not merged).
+    pub fn merge(self, other: Self) -> Self {
+        Self {
+            jsx_a11y: self.jsx_a11y.merge(other.jsx_a11y),
+            next: self.next.merge(other.next),
+            react: self.react.merge(other.react),
+            jsdoc: self.jsdoc.merge(other.jsdoc),
+            vitest: self.vitest.merge(other.vitest),
+        }
+    }
+
+    /// Deep merge override settings into base settings (for use in overrides).
+    /// This mutates the base settings in place using deep merge semantics.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // Deep merge each plugin's settings
+        let merged = self.clone().merge(base.clone());
+        *base = merged;
+    }
 }
 
 #[cfg(test)]

@@ -4,8 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer};
 
 /// Configure Next.js plugin rules.
-#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq)]
 pub struct NextPluginSettings {
     /// The root directory of the Next.js project.
     ///
@@ -34,6 +33,16 @@ impl NextPluginSettings {
             OneOrMany::One(val) => Cow::Owned(vec![val.clone()]),
             OneOrMany::Many(vec) => Cow::Borrowed(vec),
         }
+    }
+
+    /// Deep merge self into other (self takes priority).
+    /// Arrays are replaced, not merged (ESLint behavior).
+    pub(crate) fn merge(mut self, other: Self) -> Self {
+        // If self has no root_dir, use other's
+        if self.get_root_dirs().is_empty() {
+            self.root_dir = other.root_dir;
+        }
+        self
     }
 }
 

@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::utils::default_true;
 
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md>
-#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, PartialEq)]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
     #[serde(default, rename = "ignorePrivate")]
@@ -179,10 +178,38 @@ impl JSDocPluginSettings {
             _ => original_name,
         }
     }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        // Check if all fields are at their default values
+        !self.ignore_private
+            && !self.ignore_internal
+            && self.ignore_replaces_docs
+            && self.override_replaces_docs
+            && !self.augments_extends_replaces_docs
+            && !self.implements_replaces_docs
+            && !self.exempt_destructured_roots_from_checks
+            && self.tag_name_preference.is_empty()
+    }
+
+    /// Deep merge self into other (self takes priority).
+    pub(crate) fn merge(mut self, mut other: Self) -> Self {
+        // For boolean fields, we need to check if they were explicitly set
+        // Since we can't distinguish between explicitly set false and default false,
+        // we use a heuristic: if self has all defaults, use other's values
+        if self.is_empty() {
+            return other;
+        }
+
+        // Merge HashMap: other's entries + self's entries (self overrides)
+        for (key, value) in other.tag_name_preference {
+            self.tag_name_preference.entry(key).or_insert(value);
+        }
+
+        self
+    }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema, PartialEq)]
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),

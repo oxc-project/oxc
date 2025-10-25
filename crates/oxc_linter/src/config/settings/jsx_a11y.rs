@@ -8,8 +8,7 @@ use serde::{Deserialize, Serialize};
 /// See
 /// [eslint-plugin-jsx-a11y](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y#configurations)'s
 /// configuration for a full reference.
-#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq, Eq)]
 pub struct JSXA11yPluginSettings {
     /// An optional setting that define the prop your code uses to create polymorphic components.
     /// This setting will be used to determine the element type in rules that
@@ -64,4 +63,26 @@ pub struct JSXA11yPluginSettings {
     /// ```
     #[serde(default)]
     pub attributes: FxHashMap<CompactStr, Vec<CompactStr>>,
+}
+
+impl JSXA11yPluginSettings {
+    /// Deep merge self into other (self takes priority)
+    pub(crate) fn merge(mut self, other: Self) -> Self {
+        // If self has polymorphic_prop_name, use it; otherwise use other's
+        if self.polymorphic_prop_name.is_none() {
+            self.polymorphic_prop_name = other.polymorphic_prop_name;
+        }
+
+        // Deep merge components: other's entries + self's entries (self overrides)
+        for (key, value) in other.components {
+            self.components.entry(key).or_insert(value);
+        }
+
+        // Deep merge attributes: other's entries + self's entries (self overrides)
+        for (key, value) in other.attributes {
+            self.attributes.entry(key).or_insert(value);
+        }
+
+        self
+    }
 }

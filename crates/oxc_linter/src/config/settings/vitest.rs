@@ -5,12 +5,26 @@ use serde::{Deserialize, Serialize};
 ///
 /// See [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest)'s
 /// configuration for a full reference.
-#[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq, Eq))]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema, PartialEq, Eq)]
 pub struct VitestPluginSettings {
     /// Whether to enable typecheck mode for Vitest rules.
     /// When enabled, some rules will skip certain checks for describe blocks
     /// to accommodate TypeScript type checking scenarios.
     #[serde(default)]
     pub typecheck: bool,
+}
+
+impl VitestPluginSettings {
+    pub(crate) fn is_empty(&self) -> bool {
+        !self.typecheck
+    }
+
+    /// Deep merge self into other (self takes priority).
+    pub(crate) fn merge(self, other: Self) -> Self {
+        // If self is empty (default), use other's values
+        if self.is_empty() {
+            return other;
+        }
+        self
+    }
 }
