@@ -244,6 +244,10 @@ fn parse_rule_key(name: &str) -> (String, String) {
 }
 
 pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
+    // First normalize the plugin name by stripping eslint-plugin- prefix/suffix
+    let normalized = super::plugins::normalize_plugin_name(plugin_name);
+    let plugin_name = normalized.as_ref();
+
     let (oxlint_plugin_name, rule_name) = match plugin_name {
         "@typescript-eslint" => ("typescript", rule_name),
         // import-x has the same rules but better performance
@@ -466,5 +470,51 @@ mod test {
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
             assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
+    }
+
+    #[test]
+    fn test_normalize_plugin_name_in_rules() {
+        use super::super::plugins::normalize_plugin_name;
+
+        // Test eslint-plugin- prefix stripping
+        assert_eq!(normalize_plugin_name("eslint-plugin-foo"), "foo");
+        assert_eq!(normalize_plugin_name("eslint-plugin-react"), "react");
+        assert_eq!(normalize_plugin_name("eslint-plugin-import"), "import");
+
+        // Test @scope/eslint-plugin suffix stripping
+        assert_eq!(normalize_plugin_name("@foo/eslint-plugin"), "@foo");
+        assert_eq!(normalize_plugin_name("@bar/eslint-plugin"), "@bar");
+
+        // Test @scope/eslint-plugin-name normalization
+        assert_eq!(normalize_plugin_name("@foo/eslint-plugin-bar"), "@foo/bar");
+        assert_eq!(normalize_plugin_name("@typescript-eslint/eslint-plugin"), "@typescript-eslint");
+
+        // Test no change for already normalized names
+        assert_eq!(normalize_plugin_name("react"), "react");
+        assert_eq!(normalize_plugin_name("unicorn"), "unicorn");
+        assert_eq!(normalize_plugin_name("@typescript-eslint"), "@typescript-eslint");
+        assert_eq!(normalize_plugin_name("jsx-a11y"), "jsx-a11y");
+    }
+
+    #[test]
+    fn test_parse_rules_with_eslint_plugin_prefix() {
+        // Test that eslint-plugin- prefix is properly normalized in various formats
+        let rules = OxlintRules::deserialize(&json!({
+            "eslint-plugin-react/jsx-uses-vars": "error",
+            "eslint-plugin-unicorn/no-null": "warn",
+        }))
+        .unwrap();
+
+        let mut rules_iter = rules.rules.iter();
+
+        let r1 = rules_iter.next().unwrap();
+        assert_eq!(r1.rule_name, "jsx-uses-vars");
+        assert_eq!(r1.plugin_name, "react");
+        assert!(r1.severity.is_warn_deny());
+
+        let r2 = rules_iter.next().unwrap();
+        assert_eq!(r2.rule_name, "no-null");
+        assert_eq!(r2.plugin_name, "unicorn");
+        assert!(r2.severity.is_warn_deny());
     }
 }

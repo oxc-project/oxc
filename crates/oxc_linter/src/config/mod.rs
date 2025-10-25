@@ -8,7 +8,7 @@ mod globals;
 mod ignore_matcher;
 mod overrides;
 mod oxlintrc;
-mod plugins;
+pub mod plugins;
 mod rules;
 mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
