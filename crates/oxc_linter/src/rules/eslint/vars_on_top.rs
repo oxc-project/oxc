@@ -99,6 +99,12 @@ impl Rule for VarsOnTop {
         if declaration.kind != VariableDeclarationKind::Var {
             return;
         }
+
+        // Skip TypeScript ambient declarations (declare global, declare module, etc.)
+        if is_in_ambient_typescript_context(node, ctx) {
+            return;
+        }
+
         let parent = ctx.nodes().parent_node(node.id());
 
         match parent.kind() {
@@ -217,6 +223,17 @@ fn check_var_on_top_in_function_scope(
     }
 
     false
+}
+
+fn is_in_ambient_typescript_context(node: &AstNode, ctx: &LintContext) -> bool {
+    ctx.nodes().ancestors(node.id()).any(|ancestor| {
+        if let AstKind::TSModuleDeclaration(module) = ancestor.kind() {
+            // Ambient if it has the `declare` keyword or is a `declare global` block
+            module.declare || module.kind.is_global()
+        } else {
+            false
+        }
+    })
 }
 
 #[test]
@@ -387,6 +404,15 @@ fn test() {
 			        let x;
 			    }
 			}", // {                "ecmaVersion": 2022            }
+        "declare global {
+			    var __CUSTOM_FLAG__: boolean | undefined;
+			}",
+        "declare module 'foo' {
+			    var x: string;
+			}",
+        "declare namespace MyNamespace {
+			    var y: number;
+			}",
     ];
 
     let fail = vec![
