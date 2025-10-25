@@ -34,6 +34,16 @@ impl NextPluginSettings {
             OneOrMany::Many(vec) => Cow::Borrowed(vec),
         }
     }
+
+    /// Deep merge self into other (self takes priority).
+    /// Arrays are replaced, not merged (ESLint behavior).
+    pub(crate) fn merge(mut self, other: Self) -> Self {
+        // If self has no root_dir, use other's
+        if self.get_root_dirs().is_empty() {
+            self.root_dir = other.root_dir;
+        }
+        self
+    }
 }
 
 // Deserialize helper types

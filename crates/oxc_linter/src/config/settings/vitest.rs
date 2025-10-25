@@ -13,3 +13,18 @@ pub struct VitestPluginSettings {
     #[serde(default)]
     pub typecheck: bool,
 }
+
+impl VitestPluginSettings {
+    pub(crate) fn is_empty(&self) -> bool {
+        !self.typecheck
+    }
+
+    /// Deep merge self into other (self takes priority).
+    pub(crate) fn merge(self, other: Self) -> Self {
+        // If self is empty (default), use other's values
+        if self.is_empty() {
+            return other;
+        }
+        self
+    }
+}

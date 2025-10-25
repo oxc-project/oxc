@@ -67,6 +67,23 @@ impl ReactPluginSettings {
     pub fn get_link_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.link_components, name)
     }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.form_components.is_empty() && self.link_components.is_empty()
+    }
+
+    /// Deep merge self into other (self takes priority).
+    /// Arrays are replaced, not merged (ESLint behavior).
+    pub(crate) fn merge(mut self, other: Self) -> Self {
+        // If self has components, use them; otherwise use other's
+        if self.form_components.is_empty() {
+            self.form_components = other.form_components;
+        }
+        if self.link_components.is_empty() {
+            self.link_components = other.link_components;
+        }
+        self
+    }
 }
 
 // Deserialize helper types

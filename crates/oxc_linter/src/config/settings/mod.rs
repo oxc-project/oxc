@@ -107,6 +107,33 @@ impl<'de> Deserialize<'de> for OxlintSettings {
 }
 
 impl OxlintSettings {
+    /// Deep merge settings (ESLint compatible).
+    /// Self takes priority over other. Nested objects are merged recursively,
+    /// but arrays are replaced (not merged).
+    pub fn merge(self, other: Self) -> Self {
+        Self {
+            json: match (self.json, other.json) {
+                (Some(a), Some(b)) => Some(deep_merge(&a, &b)),
+                (Some(a), None) => Some(a),
+                (None, Some(b)) => Some(b),
+                (None, None) => None,
+            },
+            jsx_a11y: self.jsx_a11y.merge(other.jsx_a11y),
+            next: self.next.merge(other.next),
+            react: self.react.merge(other.react),
+            jsdoc: self.jsdoc.merge(other.jsdoc),
+            vitest: self.vitest.merge(other.vitest),
+        }
+    }
+
+    /// Deep merge override settings into base settings (for use in overrides).
+    /// This mutates the base settings in place using deep merge semantics.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // Deep merge each plugin's settings
+        let merged = self.clone().merge(base.clone());
+        *base = merged;
+    }
+
     // Note: We don't merge settings in overrides at present.
     // So this is dead code, but keeping it for now, as we may want to enable merging settings in the future.
     #[expect(dead_code)]
