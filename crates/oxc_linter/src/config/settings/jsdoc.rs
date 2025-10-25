@@ -192,7 +192,7 @@ impl JSDocPluginSettings {
     }
 
     /// Deep merge self into other (self takes priority).
-    pub(crate) fn merge(mut self, mut other: Self) -> Self {
+    pub(crate) fn merge(mut self, other: Self) -> Self {
         // For boolean fields, we need to check if they were explicitly set
         // Since we can't distinguish between explicitly set false and default false,
         // we use a heuristic: if self has all defaults, use other's values
@@ -206,6 +206,28 @@ impl JSDocPluginSettings {
         }
 
         self
+    }
+
+    /// Deep merge self into base (self takes priority), mutating base in place.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // If self has all defaults, don't override base
+        if self.is_empty() {
+            return;
+        }
+
+        // Override base's boolean fields with self's
+        base.ignore_private = self.ignore_private;
+        base.ignore_internal = self.ignore_internal;
+        base.ignore_replaces_docs = self.ignore_replaces_docs;
+        base.override_replaces_docs = self.override_replaces_docs;
+        base.augments_extends_replaces_docs = self.augments_extends_replaces_docs;
+        base.implements_replaces_docs = self.implements_replaces_docs;
+        base.exempt_destructured_roots_from_checks = self.exempt_destructured_roots_from_checks;
+
+        // Deep merge HashMap: self's entries override base's
+        for (key, value) in &self.tag_name_preference {
+            base.tag_name_preference.insert(key.clone(), value.clone());
+        }
     }
 }
 

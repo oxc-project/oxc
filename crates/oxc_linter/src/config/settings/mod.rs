@@ -129,9 +129,12 @@ impl OxlintSettings {
     /// Deep merge override settings into base settings (for use in overrides).
     /// This mutates the base settings in place using deep merge semantics.
     pub(crate) fn merge_into(&self, base: &mut Self) {
-        // Deep merge each plugin's settings
-        let merged = self.clone().merge(base.clone());
-        *base = merged;
+        // Deep merge each plugin's settings in place
+        self.jsx_a11y.merge_into(&mut base.jsx_a11y);
+        self.next.merge_into(&mut base.next);
+        self.react.merge_into(&mut base.react);
+        self.jsdoc.merge_into(&mut base.jsdoc);
+        self.vitest.merge_into(&mut base.vitest);
     }
 
     // Note: We don't merge settings in overrides at present.
