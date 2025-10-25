@@ -204,7 +204,7 @@ fn check_interface_declaration(
     if allow_interfaces == AllowInterfaces::Always {
         return;
     }
-    if let Some(pattern) = allow_with_name.as_ref()
+    if let Some(pattern) = allow_with_name
         && pattern.is_match(interface.id.name.as_str())
     {
         return;
@@ -232,7 +232,7 @@ fn check_type_literal(
     match ctx.nodes().parent_kind(node_id) {
         AstKind::TSIntersectionType(_) => return,
         AstKind::TSTypeAliasDeclaration(alias) => {
-            if let Some(pattern) = allow_with_name.as_ref()
+            if let Some(pattern) = allow_with_name
                 && pattern.is_match(alias.id.name.as_str())
             {
                 return;
