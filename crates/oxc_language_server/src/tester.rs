@@ -162,6 +162,7 @@ impl Tester<'_> {
                         match run_type {
                             Run::OnSave => ServerLinterRun::OnSave,
                             Run::OnType => ServerLinterRun::OnType,
+                            Run::Off => panic!("Linter is disabled"),
                         },
                     )
                     .await
