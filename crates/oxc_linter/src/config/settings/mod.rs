@@ -322,4 +322,120 @@ mod test {
         assert_eq!(raw_json["unknown-plugin"]["setting"], "value");
         assert_eq!(raw_json["globalSetting"], "value");
     }
+
+    #[test]
+    fn test_next_merge_empty_array_vs_unset() {
+        // Test that explicitly setting rootDir: [] overrides parent config
+        let parent = OxlintSettings::deserialize(&serde_json::json!({
+            "next": {
+                "rootDir": ["parent/dir"]
+            }
+        }))
+        .unwrap();
+
+        let child_explicit_empty = OxlintSettings::deserialize(&serde_json::json!({
+            "next": {
+                "rootDir": []
+            }
+        }))
+        .unwrap();
+
+        let child_unset = OxlintSettings::deserialize(&serde_json::json!({})).unwrap();
+        let parent_clone = parent.clone();
+
+        // Child with explicit empty array should override parent
+        let merged_explicit = child_explicit_empty.merge(parent);
+        assert_eq!(merged_explicit.next.get_root_dirs().len(), 0);
+
+        // Child with unset should inherit from parent
+        let merged_unset = child_unset.merge(parent_clone);
+        assert_eq!(merged_unset.next.get_root_dirs().len(), 1);
+        assert_eq!(merged_unset.next.get_root_dirs()[0], "parent/dir");
+    }
+
+    #[test]
+    fn test_react_merge_empty_array_vs_unset() {
+        // Test that explicitly setting components: [] overrides parent config
+        let parent = OxlintSettings::deserialize(&serde_json::json!({
+            "react": {
+                "formComponents": ["ParentForm"],
+                "linkComponents": ["ParentLink"]
+            }
+        }))
+        .unwrap();
+
+        let child_explicit_empty = OxlintSettings::deserialize(&serde_json::json!({
+            "react": {
+                "formComponents": [],
+                "linkComponents": []
+            }
+        }))
+        .unwrap();
+
+        let child_unset = OxlintSettings::deserialize(&serde_json::json!({})).unwrap();
+        let parent_clone = parent.clone();
+
+        // Child with explicit empty arrays should override parent
+        let merged_explicit = child_explicit_empty.merge(parent);
+        assert!(merged_explicit.react.get_form_component_attrs("ParentForm").is_none());
+        assert!(merged_explicit.react.get_link_component_attrs("ParentLink").is_none());
+
+        // Child with unset should inherit from parent
+        let merged_unset = child_unset.merge(parent_clone);
+        assert!(merged_unset.react.get_form_component_attrs("ParentForm").is_some());
+        assert!(merged_unset.react.get_link_component_attrs("ParentLink").is_some());
+    }
+
+    #[test]
+    fn test_merge_into_with_explicit_empty() {
+        // Test merge_into with explicit empty arrays
+        let mut base = OxlintSettings::deserialize(&serde_json::json!({
+            "next": {
+                "rootDir": ["base/dir"]
+            },
+            "react": {
+                "formComponents": ["BaseForm"]
+            }
+        }))
+        .unwrap();
+
+        let override_empty = OxlintSettings::deserialize(&serde_json::json!({
+            "next": {
+                "rootDir": []
+            },
+            "react": {
+                "formComponents": []
+            }
+        }))
+        .unwrap();
+
+        override_empty.merge_into(&mut base);
+
+        // Empty arrays should override base values
+        assert_eq!(base.next.get_root_dirs().len(), 0);
+        assert!(base.react.get_form_component_attrs("BaseForm").is_none());
+    }
+
+    #[test]
+    fn test_merge_into_with_unset() {
+        // Test merge_into with unset values (should not override)
+        let mut base = OxlintSettings::deserialize(&serde_json::json!({
+            "next": {
+                "rootDir": ["base/dir"]
+            },
+            "react": {
+                "formComponents": ["BaseForm"]
+            }
+        }))
+        .unwrap();
+
+        let override_unset = OxlintSettings::deserialize(&serde_json::json!({})).unwrap();
+
+        override_unset.merge_into(&mut base);
+
+        // Unset values should not override base
+        assert_eq!(base.next.get_root_dirs().len(), 1);
+        assert_eq!(base.next.get_root_dirs()[0], "base/dir");
+        assert!(base.react.get_form_component_attrs("BaseForm").is_some());
+    }
 }
