@@ -72,6 +72,20 @@ export let setupContextForFile: (
  */
 let getInternal: (context: Context, actionDescription: string) => InternalContext;
 
+let settings_record: Record<string, unknown> = {};
+
+/**
+ * Updates the settings record for the file.
+ * Settings are made immutable so that plugins can't change other plugin's behavior.
+ * TODO(perf): settings are de/serialized once per file to accommodate folder level settings even if the settings haven't changed.
+ * @param settings - Stringified settings for the file
+ */
+export function setSettingsForFile(settings: string) {
+  // Freezes to prevent mutation from a plugin.
+  // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
+  settings_record = deepFreeze(JSON.parse(settings));
+}
+
 // Internal data within `Context` that don't want to expose to plugins.
 // Stored as `#internal` property of `Context`.
 export interface InternalContext {
@@ -144,6 +158,10 @@ export class Context {
   // Getter for options for file being linted.
   get options() {
     return getInternal(this, 'access `context.options`').options;
+  }
+
+  get settings() {
+    return settings_record;
   }
 
   // Getter for `SourceCode` for file being linted.
@@ -277,4 +295,28 @@ function resolveMessageFromMessageId(messageId: string, internal: InternalContex
   }
 
   return messages[messageId];
+}
+
+/**
+ * Deep freeze an object, recursively freezing all nested objects and arrays.
+ * This prevents any mutation of the object tree from plugins.
+ *
+ * @param obj - The object to deep freeze
+ * @returns The same object, but deeply frozen
+ */
+function deepFreeze<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach(deepFreeze);
+    return Object.freeze(obj);
+  }
+
+  for (const key of Object.getOwnPropertyNames(obj)) {
+    deepFreeze((obj as any)[key]);
+  }
+
+  return Object.freeze(obj);
 }
