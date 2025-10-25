@@ -84,6 +84,18 @@ impl ReactPluginSettings {
         }
         self
     }
+
+    /// Deep merge self into base (self takes priority), mutating base in place.
+    /// Arrays are replaced, not merged (ESLint behavior).
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // If self has components, replace base's
+        if !self.form_components.is_empty() {
+            base.form_components = self.form_components.clone();
+        }
+        if !self.link_components.is_empty() {
+            base.link_components = self.link_components.clone();
+        }
+    }
 }
 
 // Deserialize helper types

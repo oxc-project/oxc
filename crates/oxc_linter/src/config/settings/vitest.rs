@@ -27,4 +27,12 @@ impl VitestPluginSettings {
         }
         self
     }
+
+    /// Deep merge self into base (self takes priority), mutating base in place.
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // If self is not empty, override base's values
+        if !self.is_empty() {
+            base.typecheck = self.typecheck;
+        }
+    }
 }

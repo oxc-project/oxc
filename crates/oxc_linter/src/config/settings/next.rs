@@ -44,6 +44,15 @@ impl NextPluginSettings {
         }
         self
     }
+
+    /// Deep merge self into base (self takes priority), mutating base in place.
+    /// Arrays are replaced, not merged (ESLint behavior).
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // If self has root_dir, replace base's
+        if !self.get_root_dirs().is_empty() {
+            base.root_dir = self.root_dir.clone();
+        }
+    }
 }
 
 // Deserialize helper types
