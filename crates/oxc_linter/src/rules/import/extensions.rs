@@ -1,3 +1,6 @@
+use std::collections::BTreeMap;
+
+use fast_glob::glob_match;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression},
@@ -55,6 +58,21 @@ impl FileExtensionConfig {
     }
 }
 
+#[derive(Debug, Clone, Default, JsonSchema, Serialize)]
+#[serde(rename_all = "camelCase")]
+enum OverrideAction {
+    #[default]
+    Enforce,
+    Ignore,
+}
+
+#[derive(Debug, Clone, Default, JsonSchema, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PathGroupOverride {
+    pattern: String,
+    action: OverrideAction,
+}
+
 #[derive(Debug, Clone, JsonSchema, Serialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ExtensionsConfig {
@@ -64,53 +82,39 @@ pub struct ExtensionsConfig {
     require_extension: Option<FileExtensionConfig>,
     /// Whether to check type imports when enforcing extension rules.
     check_type_imports: bool,
-    /// Configuration for `.js` file extensions.
-    js: FileExtensionConfig,
-    /// Configuration for `.jsx` file extensions.
-    jsx: FileExtensionConfig,
-    /// Configuration for `.ts` file extensions.
-    ts: FileExtensionConfig,
-    /// Configuration for `.tsx` file extensions.
-    tsx: FileExtensionConfig,
-    /// Configuration for `.json` file extensions.
-    json: FileExtensionConfig,
+    extensions: BTreeMap<String, FileExtensionConfig>,
+    default_config: FileExtensionConfig,
+    path_group_overrides: Vec<PathGroupOverride>,
+    has_wildcard: bool, // Whether "*" pattern was explicitly set
 }
 
 impl ExtensionsConfig {
-    pub fn is_always(&self, ext: &str) -> bool {
-        match ext {
-            "js" => matches!(self.js, FileExtensionConfig::Always),
-            "jsx" => matches!(self.jsx, FileExtensionConfig::Always),
-            "ts" => matches!(self.ts, FileExtensionConfig::Always),
-            "tsx" => matches!(self.tsx, FileExtensionConfig::Always),
-            "json" => matches!(self.json, FileExtensionConfig::Always),
-            _ => false,
-        }
+    fn is_never(&self, ext: &str) -> bool {
+        self.extensions.get(ext).is_some_and(|config| matches!(config, FileExtensionConfig::Never))
     }
 
-    pub fn is_never(&self, ext: &str) -> bool {
-        match ext {
-            "js" => matches!(self.js, FileExtensionConfig::Never),
-            "jsx" => matches!(self.jsx, FileExtensionConfig::Never),
-            "ts" => matches!(self.ts, FileExtensionConfig::Never),
-            "tsx" => matches!(self.tsx, FileExtensionConfig::Never),
-            "json" => matches!(self.json, FileExtensionConfig::Never),
-            _ => false,
-        }
+    fn get_modifier(&self, ext: &str) -> &FileExtensionConfig {
+        self.extensions.get(ext).unwrap_or(&self.default_config)
     }
 }
 
 impl Default for ExtensionsConfig {
     fn default() -> Self {
+        // Pre-populate standard extensions with "Never" to match the original behavior
+        // when no configuration is provided
+        let mut extensions = BTreeMap::new();
+        for ext in ["js", "jsx", "ts", "tsx", "json"] {
+            extensions.insert(ext.to_string(), FileExtensionConfig::Never);
+        }
+
         Self {
-            ignore_packages: true,
+            ignore_packages: false, // ESLint default is false
             require_extension: None,
             check_type_imports: false,
-            js: FileExtensionConfig::Never,
-            jsx: FileExtensionConfig::Never,
-            ts: FileExtensionConfig::Never,
-            tsx: FileExtensionConfig::Never,
-            json: FileExtensionConfig::Never,
+            extensions,
+            default_config: FileExtensionConfig::Never,
+            path_group_overrides: Vec::new(),
+            has_wildcard: false,
         }
     }
 }
@@ -236,44 +240,102 @@ fn build_config(
     value: &serde_json::Value,
     default: Option<&FileExtensionConfig>,
 ) -> ExtensionsConfig {
-    let config: ExtensionsConfig = ExtensionsConfig {
-        ignore_packages: value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(true),
-        require_extension: default.cloned(),
+    let mut extensions = BTreeMap::new();
+    let default_config = default.cloned().unwrap_or_default();
+
+    // If no explicit mode provided, pre-populate standard extensions with default
+    // This preserves backward compatibility with the original behavior
+    if default.is_none() {
+        for ext in ["js", "jsx", "ts", "tsx", "json"] {
+            extensions.insert(ext.to_string(), default_config.clone());
+        }
+    }
+
+    // Parse extension-specific configurations
+    if let Some(obj) = value.as_object() {
+        for (key, val) in obj {
+            // Skip known non-extension keys
+            if matches!(
+                key.as_str(),
+                "ignorePackages" | "checkTypeImports" | "pattern" | "pathGroupOverrides"
+            ) {
+                continue;
+            }
+
+            // Handle wildcard "*" as default config
+            if key == "*" {
+                // Wildcard will be handled separately
+                continue;
+            }
+
+            // Parse extension config
+            if let Some(config_str) = val.as_str() {
+                extensions.insert(key.clone(), FileExtensionConfig::from(config_str));
+            }
+        }
+    }
+
+    // Check for wildcard "*" pattern to set default
+    let has_wildcard = value.get("*").is_some();
+    let default_config = value
+        .get("*")
+        .and_then(Value::as_str)
+        .map(FileExtensionConfig::from)
+        .unwrap_or(default_config);
+
+    // Parse pathGroupOverrides
+    let mut path_group_overrides = Vec::new();
+    if let Some(overrides_array) = value.get("pathGroupOverrides").and_then(Value::as_array) {
+        for override_obj in overrides_array {
+            let Some(obj) = override_obj.as_object() else {
+                continue;
+            };
+            let Some(pattern) = obj.get("pattern").and_then(Value::as_str) else {
+                continue;
+            };
+            let Some(action) = obj.get("action").and_then(Value::as_str) else {
+                continue;
+            };
+            let action_enum = match action {
+                "enforce" => OverrideAction::Enforce,
+                "ignore" => OverrideAction::Ignore,
+                _ => continue,
+            };
+            path_group_overrides
+                .push(PathGroupOverride { pattern: pattern.to_string(), action: action_enum });
+        }
+    }
+
+    // Handle ignorePackages flag
+    // When first arg is "ignorePackages", it means: require_extension="always" + ignore_packages=true
+    // When it's a boolean in config object, use that value
+    let ignore_packages = if matches!(default, Some(FileExtensionConfig::IgnorePackages)) {
+        // First arg was "ignorePackages" string - this means ignore_packages=true
+        true
+    } else {
+        // Check for explicit boolean value in config object
+        value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(false)
+    };
+
+    // Transform "ignorePackages" mode to "always" (matching ESLint behavior)
+    let require_extension = if matches!(default, Some(FileExtensionConfig::IgnorePackages)) {
+        Some(FileExtensionConfig::Always)
+    } else {
+        default.cloned()
+    };
+
+    ExtensionsConfig {
+        ignore_packages,
+        require_extension,
         check_type_imports: value
             .get("checkTypeImports")
             .and_then(Value::as_bool)
             .unwrap_or_default(),
-        js: value
-            .get("js")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-        jsx: value
-            .get("jsx")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-
-        ts: value
-            .get("ts")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-
-        tsx: value
-            .get("tsx")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-
-        json: value
-            .get("json")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-    };
-
-    config
+        extensions,
+        default_config,
+        path_group_overrides,
+        has_wildcard,
+    }
 }
 
 impl Extensions {
@@ -296,13 +358,82 @@ impl Extensions {
         let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
             || ctx.globals().is_enabled(module_name.as_str());
 
-        let is_package = module_name.as_str().starts_with('@')
-            || (!module_name.as_str().starts_with('.')
-                && !module_name.as_str().get(1..).is_some_and(|v| v.contains('/')));
+        // Determine if this is a package import (external module)
+        // Since oxc doesn't do file resolution, we use heuristics:
+        // - Scoped packages: "@scope/package" or "@scope/package/subpath" (scope is alphanumeric)
+        // - Regular packages: "package" or "package/subpath"
+        // - Relative paths: start with "." or ".."
+        // - Path aliases like "@/" are NOT packages (@ must be followed by alphanumeric)
 
-        if is_builtin_node_module || (is_package && ignore_packages) {
+        let is_relative = module_name.as_str().starts_with('.');
+        let starts_with_word_char =
+            module_name.chars().next().is_some_and(|c| c.is_alphanumeric() || c == '_');
+
+        // Check if this is a scoped package (must be @scope/... where scope is alphanumeric)
+        let is_scoped = if module_name.as_str().starts_with('@') {
+            // Must have a scope name after @, not just @/ or @.
+            module_name.as_str().get(1..).and_then(|s| s.chars().next()).is_some_and(|c| c.is_alphanumeric() || c == '_')
+        } else {
+            false
+        };
+
+        // This is a package if it's scoped or starts with a word character (not relative)
+        let is_package_root = is_scoped || (!is_relative && starts_with_word_char);
+
+        if is_builtin_node_module {
             return;
         }
+
+        // For root package imports without subpaths, skip extension checking entirely
+        // because package names can contain dots (e.g., "decimal.js", "pkg.config.js")
+        let has_subpath = if is_scoped {
+            // For scoped packages like "@scope/pkg", the first '/' is part of the package name
+            // A subpath would be "@scope/pkg/subpath" (more than one '/')
+            module_name.matches('/').count() > 1
+        } else {
+            // For regular packages, any '/' indicates a subpath
+            module_name.contains('/')
+        };
+
+        // Check pathGroupOverrides FIRST, before any package ignoring logic
+        // This allows "enforce" to override ignorePackages for specific patterns
+        let mut should_enforce = false;
+        for override_item in &config.path_group_overrides {
+            if glob_match(&override_item.pattern, module_name.as_str()) {
+                match override_item.action {
+                    OverrideAction::Ignore => {
+                        // Skip validation for this import
+                        return;
+                    }
+                    OverrideAction::Enforce => {
+                        // Mark that we should enforce validation even if ignorePackages=true
+                        should_enforce = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if is_package_root && !has_subpath {
+            // Root package name only, no subpath
+            if ignore_packages && !should_enforce {
+                return;
+            }
+            // Even without ignore_packages, we can't reliably extract extensions from package names
+            return;
+        }
+
+        // For package subpaths (e.g., "lodash/map", "@babel/core/lib/index"),
+        // handle based on ignore_packages flag (unless overridden by enforce)
+        if is_package_root && ignore_packages && !should_enforce {
+            return;
+        }
+
+        // At this point, it's either:
+        // - A relative path (always validate)
+        // - A package subpath with ignore_packages=false (validate)
+        // - A package subpath with should_enforce=true (validate)
+        // Continue to extension checking...
 
         let file_extension = get_file_extension_from_module_name(&module_name);
 
@@ -310,12 +441,43 @@ impl Extensions {
 
         if let Some(file_extension) = file_extension {
             let ext_str = file_extension.as_str();
+            let modifier = config.get_modifier(ext_str);
+
             let should_flag = match require_extension {
                 Some(FileExtensionConfig::Always) => {
-                    config.is_never(ext_str) || !config.is_always(ext_str)
+                    // In "always" mode, flag only if modifier says "never"
+                    // Unknown extensions inherit the "always" default
+                    matches!(modifier, FileExtensionConfig::Never)
                 }
-                Some(FileExtensionConfig::Never) => !config.is_always(ext_str),
-                _ => config.is_never(ext_str),
+                Some(FileExtensionConfig::Never) => {
+                    // In "never" mode, we can't use file resolution like ESLint does
+                    // to determine which extensions are resolvable. To avoid false positives,
+                    // we only flag explicitly configured extensions or standard JS/TS extensions
+                    // that are likely to be resolvable.
+                    //
+                    // However, if wildcard "*" is set to "never", we should check ALL extensions
+                    //
+                    // ESLint behavior: only flags resolvable extensions (determined by resolver config)
+                    // oxc behavior: flag standard extensions, explicitly configured ones, or all if wildcard set
+                    if matches!(modifier, FileExtensionConfig::Always) {
+                        false // Explicitly allowed
+                    } else if config.extensions.contains_key(ext_str) {
+                        // Explicitly configured - respect the configuration
+                        matches!(modifier, FileExtensionConfig::Never)
+                    } else if config.has_wildcard
+                        && matches!(config.default_config, FileExtensionConfig::Never)
+                    {
+                        // Wildcard "*" is set to "never" - flag all extensions
+                        true
+                    } else {
+                        // Not explicitly configured, no wildcard - only flag standard JS/TS extensions
+                        matches!(ext_str, "js" | "ts" | "mjs" | "cjs" | "mts" | "cts")
+                    }
+                }
+                Some(FileExtensionConfig::IgnorePackages) | None => {
+                    // In ignorePackages or default mode, only flag explicitly configured "never"
+                    config.is_never(ext_str)
+                }
             };
 
             if should_flag {
@@ -325,11 +487,16 @@ impl Extensions {
                     is_import,
                 ));
             }
-        } else if matches!(
-            require_extension,
-            Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
-        ) {
-            ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+        } else {
+            // Missing extension - check if it should be required
+            let should_require = matches!(
+                require_extension,
+                Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
+            );
+
+            if should_require {
+                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+            }
         }
     }
 
@@ -347,12 +514,23 @@ impl Extensions {
 
                 if let Some(file_extension) = file_extension {
                     let ext_str = file_extension.as_str();
+                    let modifier = config.get_modifier(ext_str);
+
                     let should_flag = match require_extension {
                         Some(FileExtensionConfig::Always) => {
-                            config.is_never(ext_str) || !config.is_always(ext_str)
+                            // In "always" mode, flag only if modifier says "never"
+                            // Unknown extensions inherit the "always" default
+                            matches!(modifier, FileExtensionConfig::Never)
                         }
-                        Some(FileExtensionConfig::Never) => !config.is_always(ext_str),
-                        _ => config.is_never(ext_str),
+                        Some(FileExtensionConfig::Never) => {
+                            // In "never" mode, flag unless modifier says "always"
+                            // Unknown extensions inherit the "never" default
+                            !matches!(modifier, FileExtensionConfig::Always)
+                        }
+                        Some(FileExtensionConfig::IgnorePackages) | None => {
+                            // In ignorePackages or default mode, only flag explicitly configured "never"
+                            config.is_never(ext_str)
+                        }
                     };
 
                     if should_flag {
@@ -362,11 +540,16 @@ impl Extensions {
                             true,
                         ));
                     }
-                } else if matches!(
-                    require_extension,
-                    Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
-                ) {
-                    ctx.diagnostic(extension_missing_diagnostic(span, true));
+                } else {
+                    // Missing extension - check if it should be required
+                    let should_require = matches!(
+                        require_extension,
+                        Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
+                    );
+
+                    if should_require {
+                        ctx.diagnostic(extension_missing_diagnostic(span, true));
+                    }
                 }
             }
         }
@@ -384,17 +567,57 @@ fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<Compa
     None
 }
 
+// Test suite based on eslint-plugin-import's extensions rule tests
+// Source: https://github.com/import-js/eslint-plugin-import/blob/main/tests/src/rules/extensions.js
+//
+// Key differences from eslint-plugin-import due to lack of file resolution:
+// 1. In "never" mode, oxc only flags standard JS/TS extensions (.js, .ts, .mjs, .cjs, .mts, .cts)
+//    unless extensions are explicitly configured or wildcard "*" is set
+// 2. Package root names (e.g., "pkg.js", "@name/pkg.js") are never checked since dots in
+//    package names are valid and we can't resolve whether they're packages
+// 3. For file paths like "./file.with.dot" we can't determine the "real" extension without
+//    resolution, so we parse based on the last dot
+//
 #[test]
 fn test() {
     use crate::tester::Tester;
     use serde_json::json;
 
     let pass = vec![
+        // ============================================================================
+        // Basic cases - from eslint-plugin-import
+        // ============================================================================
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),
         (r#"import dot from "./file.with.dot""#, None),
+        // ============================================================================
+        // "always" mode - extensions required
+        // ============================================================================
         (r#"import a from "a/index.js""#, Some(json!(["always"]))),
         (r#"import dot from "./file.with.dot.js""#, Some(json!(["always"]))),
+        (r#"import thing from "./fake-file.js""#, Some(json!(["always"]))),
+        (r#"import bare from "./foo.js?a=True""#, Some(json!(["always"]))),
+        // ============================================================================
+        // "never" mode - no extensions
+        // ============================================================================
+        (r#"import thing from "non-package""#, Some(json!(["never"]))),
+        (r#"import lib from "./bar""#, Some(json!(["never"]))),
+        (r#"import bare from "./foo?a=True.ext""#, Some(json!(["never"]))),
+        // oxc difference: In "never" mode without explicit config, we only flag standard JS/TS
+        // extensions. Non-standard extensions like .css, .hbs pass to avoid false positives.
+        // ESLint would only flag extensions in its resolver config.
+        (
+            r#"
+                import component from "./bar.jsx";
+                import data from "./bar.json";
+                import styles from "./styles.css";
+                import template from "./template.hbs";
+            "#,
+            Some(json!(["never"])),
+        ),
+        // ============================================================================
+        // Mixed extension policies - from eslint-plugin-import
+        // ============================================================================
         (
             r#"
                 import a from "a";
@@ -410,17 +633,6 @@ fn test() {
             "#,
             Some(json!(["never", { "jsx": "always", "json": "always"}])),
         ),
-        // TODO: This test fails because of the presence of the .hbs file extension. In the original test from eslint-plugin-import, they apply the hbs file extension by passing settings to a linter that is constructed on the fly for test runs. Since oxc does not have a similar mechanism, I'm commenting out this test for now.
-
-        // Link to eslint-plugin-import extensions rule unit tests:
-        // https://github.com/import-js/eslint-plugin-import/blob/main/tests/src/rules/extensions.js
-        // (
-        //     r#"
-        //         import barjson from "./bar.json";
-        //         import barhbs from "./bar.hbs";
-        //     "#,
-        //     Some(json!(["always", { "js": "never", "jsx": "never"}])),
-        // ),
         (
             r#"
                 import bar from "./bar.js";
@@ -428,11 +640,15 @@ fn test() {
             "#,
             Some(json!(["never", { "js": "always", "json": "never"}])),
         ),
-        (r#"import path from "path";"#, None),
-        (r#"import path from "path";"#, Some(json!(["never"]))),
-        (r#"import path from "path";"#, Some(json!(["always"]))),
-        (r#"import thing from "./fake-file.js";"#, Some(json!(["always"]))),
-        (r#"import thing from "non-package";"#, Some(json!(["never"]))),
+        // ============================================================================
+        // Unresolved paths (Node builtins, etc) - from eslint-plugin-import
+        // ============================================================================
+        (r#"import path from "path""#, None),
+        (r#"import path from "path""#, Some(json!(["never"]))),
+        (r#"import path from "path""#, Some(json!(["always"]))),
+        // ============================================================================
+        // ignorePackages mode - from eslint-plugin-import
+        // ============================================================================
         (
             r#"
                 import foo from "./foo.js";
@@ -460,10 +676,9 @@ fn test() {
             "#,
             Some(json!(["never", { "ignorePackages": true}])),
         ),
-        (
-            r#"import exceljs from "exceljs""#,
-            Some(json!(["always", { "js": "never", "jsx": "never"}])),
-        ),
+        // ============================================================================
+        // Export statements - from eslint-plugin-import
+        // ============================================================================
         (
             r#"
                 export { foo } from "./foo.js";
@@ -478,7 +693,10 @@ fn test() {
             "#,
             Some(json!(["never"])),
         ),
-        // Root packages should be ignored and they are names not files
+        // ============================================================================
+        // Package root names - from eslint-plugin-import
+        // oxc treats these as package names (not file paths), so dots are ignored
+        // ============================================================================
         (
             r#"
                 import lib from "pkg.js";
@@ -486,19 +704,6 @@ fn test() {
                 import lib3 from "@name/pkg.js";
             "#,
             Some(json!(["never"])),
-        ),
-        // Query strings.
-        (
-            r#"
-                import bare from "./foo?a=True.ext";
-            "#,
-            Some(json!(["never"])),
-        ),
-        (
-            r#"
-                import bare from "./foo.js?a=True";
-            "#,
-            Some(json!(["always"])),
         ),
         (
             r#"
@@ -508,42 +713,196 @@ fn test() {
             "#,
             Some(json!(["always"])),
         ),
-        // Type import tests
+        // ============================================================================
+        // TypeScript type-only imports - from eslint-plugin-import
+        // Without checkTypeImports, type imports are ignored
+        // ============================================================================
         (
-            r#"import type T from "./typescript-declare";"#,
+            r#"import type T from "./typescript-declare""#,
             Some(
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never"}]),
             ),
         ),
         (
-            r#"export type { MyType } from "./typescript-declare";"#,
+            r#"export type { MyType } from "./typescript-declare""#,
             Some(
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
             ),
         ),
+        // With checkTypeImports, type imports ARE checked
         (
-            r#"
-                import type { MyType } from "./typescript-declare.ts";
-            "#,
+            r#"import type { MyType } from "./typescript-declare.ts""#,
             Some(json!(["always", {"checkTypeImports": true}])),
         ),
         (
-            r#"
-                export type { MyType } from "./typescript-declare.ts";
-            "#,
+            r#"export type { MyType } from "./typescript-declare.ts""#,
             Some(json!(["always", {"checkTypeImports": true}])),
         ),
+        // ============================================================================
+        // Edge cases
+        // ============================================================================
         (r"import''", None),
         (r"export *from 'íìc'", None),
         (
             r"import { Something } from './something.hooks'; import SomeComponent from './SomeComponent.vue';",
             Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
         ),
+        // ============================================================================
+        // Modern module extensions (.mts, .cts, .mjs, .cjs)
+        // ============================================================================
+        (
+            r#"
+                import foo from "./foo.mts";
+                import bar from "./bar.cts";
+            "#,
+            Some(json!(["always", { "mts": "always", "cts": "always" }])),
+        ),
+        (
+            r#"
+                import foo from "./foo.mjs";
+                import bar from "./bar.cjs";
+            "#,
+            Some(json!(["always", { "mjs": "always", "cjs": "always" }])),
+        ),
+        (
+            r#"
+                import foo from "./foo";
+                import bar from "./bar";
+            "#,
+            Some(
+                json!(["never", { "mts": "never", "cts": "never", "mjs": "never", "cjs": "never" }]),
+            ),
+        ),
+        // ============================================================================
+        // Wildcard pattern support
+        // ============================================================================
+        (
+            r#"
+                import foo from "./foo.mts";
+                import bar from "./bar.custom";
+            "#,
+            Some(json!(["always", { "pattern": { "*": "always", "js": "never" } }])),
+        ),
+        (
+            r#"
+                import foo from "./foo";
+                import bar from "./bar";
+            "#,
+            Some(json!(["never", { "pattern": { "*": "never" } }])),
+        ),
+        // ============================================================================
+        // pathGroupOverrides - from eslint-plugin-import (TypeScript resolver tests)
+        // ============================================================================
+        (
+            r#"
+                import foo from "@auditboard/api/something";
+                import bar from "@playwright-tests/fixtures";
+            "#,
+            Some(json!(["always", {
+                "pathGroupOverrides": [
+                    { "pattern": "@auditboard/**", "action": "ignore" },
+                    { "pattern": "@playwright-tests/**", "action": "ignore" }
+                ]
+            }])),
+        ),
+        (
+            r#"
+                import { ErrorMessage } from "@black-flag/core/util";
+                import { $instances } from "rootverse+debug:src.ts";
+                import { $exists } from "rootverse+bfe:src/symbols.ts";
+                import type { Entries } from "type-fest";
+            "#,
+            Some(json!(["always", {
+                "ignorePackages": true,
+                "checkTypeImports": true,
+                "pathGroupOverrides": [
+                    { "pattern": "multiverse{*,*/**}", "action": "enforce" }
+                ]
+            }])),
+        ),
+        (
+            r#"
+                import { ErrorMessage } from "@black-flag/core/util";
+                import { $instances } from "rootverse+debug:src.ts";
+                import { $exists } from "rootverse+bfe:src/symbols.ts";
+                import type { Entries } from "type-fest";
+            "#,
+            Some(json!(["always", {
+                "ignorePackages": true,
+                "checkTypeImports": true,
+                "pathGroupOverrides": [
+                    { "pattern": "rootverse{*,*/**}", "action": "enforce" }
+                ]
+            }])),
+        ),
+        (
+            r#"
+                import { ErrorMessage } from "@black-flag/core/util";
+                import { $instances } from "rootverse+debug:src";
+                import { $exists } from "rootverse+bfe:src/symbols";
+                import type { Entries } from "type-fest";
+            "#,
+            Some(json!(["always", {
+                "ignorePackages": true,
+                "checkTypeImports": true,
+                "pathGroupOverrides": [
+                    { "pattern": "multiverse{*,*/**}", "action": "enforce" },
+                    { "pattern": "rootverse{*,*/**}", "action": "ignore" }
+                ]
+            }])),
+        ),
     ];
 
     let fail = vec![
+        // ============================================================================
+        // Default mode (no config) - from eslint-plugin-import
+        // ============================================================================
         (r#"import a from "a/index.js""#, None),
-        (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
+        // ============================================================================
+        // "always" mode - missing extensions - from eslint-plugin-import
+        // ============================================================================
+        (r#"import barjs from ".""#, Some(json!(["always"]))),
+        (r#"import barjs2 from "..""#, Some(json!(["always"]))),
+        (r#"import thing from "non-package/test""#, Some(json!(["always"]))),
+        (
+            r#"import thing from "@name/pkg/test""#,
+            Some(json!(["always", {"ignorePackages": false}])),
+        ),
+        (r#"export { foo } from "./foo""#, Some(json!(["always"]))),
+        (r#"export * from "./foo""#, Some(json!(["always"]))),
+        (r#"import withoutExtension from "./foo?a=True.ext""#, Some(json!(["always"]))),
+        (r#"const { foo } = require("./foo")"#, Some(json!(["always"]))),
+        (
+            r#"
+                import foo from "@/ImNotAScopedModule";
+                import chart from "@/configs/chart";
+            "#,
+            Some(json!(["always", { "ignorePackages": false }])),
+        ),
+        // ============================================================================
+        // "never" mode - unexpected extensions - from eslint-plugin-import
+        // ============================================================================
+        (r#"import lib from "./bar.js""#, Some(json!(["never"]))),
+        (r#"import thing from "./fake-file.js""#, Some(json!(["never"]))),
+        (
+            r#"import thing from "@name/pkg/test.js""#,
+            Some(json!(["never", {"ignorePackages": false}])),
+        ),
+        (r#"export { foo } from "./foo.js""#, Some(json!(["never"]))),
+        (r#"export * from "./foo.js""#, Some(json!(["never"]))),
+        (r#"import withExtension from "./foo.js?a=True""#, Some(json!(["never"]))),
+        (r#"const { foo } = require("./foo.js")"#, Some(json!(["never"]))),
+        (
+            r#"import foo from "@/ImNotAScopedModule.js""#,
+            Some(json!(["never", { "ignorePackages": false }])),
+        ),
+        (
+            r#"import m from "@test-scope/some-module/index.js""#,
+            Some(json!(["never", {"ignorePackages": false}])),
+        ),
+        // ============================================================================
+        // Mixed extension policies - from eslint-plugin-import
+        // ============================================================================
         (
             r#"
                 import a from "a/index.js";
@@ -574,7 +933,6 @@ fn test() {
             "#,
             Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
         ),
-        (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
         (
             r#"
                 import barjs from "./bar.js";
@@ -585,221 +943,147 @@ fn test() {
         ),
         (
             r#"
-                import barjs from ".";
-                import barjs2 from "..";
-            "#,
-            Some(json!(["always"])),
-        ),
-        (
-            r#"
                 import barjs from "./bar.js";
                 import barjson from "./bar.json";
                 import barnone from "./bar";
             "#,
             Some(json!(["never", { "json": "always", "js": "never", "jsx": "never" }])),
         ),
+        // ============================================================================
+        // ignorePackages mode - from eslint-plugin-import
+        // Should flag local files but not packages
+        // ============================================================================
         (
             r#"
-                import thing from "./fake-file.js";
+                import foo from "./foo.js";
+                import bar from "./bar.json";
+                import Component from "./Component";
+                import baz from "foo/baz";
+                import baw from "@scoped/baw/import";
+                import chart from "@/configs/chart";
             "#,
-            Some(json!(["never"])),
-        ),
-        (
-            r#"
-                import thing from "non-package/test";
-            "#,
-            Some(json!(["always"])),
-        ),
-        (
-            r#"
-                import thing from "@name/pkg/test";
-            "#,
-            Some(json!(["always", {"ignorePackages": false}])),
-        ),
-        (
-            r#"
-                import thing from "@name/pkg/test.js";
-            "#,
-            Some(json!(["never",{"ignorePackages": false}])),
-        ),
-        (
-            r"
-                import foo from './foo.js';
-                import bar from './bar.json';
-                import Component from './Component';
-                import baz from 'foo/baz';
-                import baw from '@scoped/baw/import';
-                import chart from '@/configs/chart';
-                import express from 'express';
-            ",
             Some(json!(["always", { "ignorePackages": true }])),
         ),
         (
-            r"
-                import foo from './foo.js';
-                import bar from './bar.json';
-                import Component from './Component';
-                import baz from 'foo/baz';
-                import baw from '@scoped/baw/import';
-                import chart from '@/configs/chart';
-                import express from 'express';
-            ",
-            Some(json!(["ignorePackages"])),
-        ),
-        (
-            r"
-                import foo from './foo.js';
-                import bar from './bar.json';
-                import Component from './Component.jsx';
-                import express from 'express';
-            ",
-            Some(json!(["never", { "ignorePackages": true }])),
-        ),
-        (
-            r"
-                import foo from './foo.js';
-                import bar from './bar.json';
-                import Component from './Component.jsx';
-            ",
-            Some(json!(["always", { "pattern": { "jsx": "never" } }])),
-        ),
-        // Exports
-        (
             r#"
-                export { foo } from "./foo";
-                let bar; export { bar };
-            "#,
-            Some(json!(["always"])),
-        ),
-        (
-            r#"
-                export { foo } from "./foo.js";
-                let bar; export { bar };
-            "#,
-            Some(json!(["never"])),
-        ),
-        // Query strings
-        (r#"import withExtension from "./foo.js?a=True";"#, Some(json!(["never"]))),
-        (r#"import withoutExtension from "./foo?a=True.ext";"#, Some(json!(["always"]))),
-        // Require
-        (
-            r#"
-                const { foo } = require("./foo");
-                export { foo };
-            "#,
-            Some(json!(["always"])),
-        ),
-        (
-            r#"
-                const { foo } = require("./foo.js");
-                export { foo };
-            "#,
-            Some(json!(["never"])),
-        ),
-        (
-            r#"
-                import foo from "@/ImNotAScopedModule";
+                import foo from "./foo.js";
+                import bar from "./bar.json";
+                import Component from "./Component";
+                import baz from "foo/baz";
+                import baw from "@scoped/baw/import";
                 import chart from "@/configs/chart";
             "#,
-            Some(json!(["always",{ "ignorePackages": false }])),
-        ),
-        // Export { } from
-        (
-            r#"
-                export { foo } from "./foo";
-            "#,
-            Some(json!(["always"])),
-        ),
-        (
-            r#"
-                export { foo } from "./foo.js";
-            "#,
-            Some(json!(["never"])),
-        ),
-        // Export * from
-        (
-            r#"
-                export * from "./foo";
-            "#,
-            Some(json!(["always"])),
-        ),
-        (
-            r#"
-                export * from "./foo.js";
-            "#,
-            Some(json!(["never"])),
-        ),
-        (
-            r#"
-                import foo from "@/ImNotAScopedModule.js";
-            "#,
-            Some(json!(["never", { "ignorePackages": false }])),
-        ),
-        (
-            r"
-                import _ from 'lodash';
-                import m from '@test-scope/some-module/index.js';
-                import bar from './bar';
-            ",
-            Some(json!(["never",{ "ignorePackages": false }])),
-        ),
-        // Relative imports
-        (
-            r#"
-                import * as test from ".";
-            "#,
             Some(json!(["ignorePackages"])),
         ),
         (
             r#"
-                import * as test from "..";
+                import foo from "./foo.js";
+                import bar from "./bar.json";
+                import Component from "./Component.jsx";
             "#,
-            Some(json!(["ignorePackages"])),
+            Some(json!(["never", { "ignorePackages": true }])),
         ),
-        // Type imports
+        (r#"import * as test from ".""#, Some(json!(["ignorePackages"]))),
+        (r#"import * as test from "..""#, Some(json!(["ignorePackages"]))),
+        // ============================================================================
+        // Wildcard pattern violations
+        // ============================================================================
+        (
+            r#"import foo from "./foo.js""#,
+            Some(json!(["always", { "pattern": { "*": "always", "js": "never" } }])),
+        ),
         (
             r#"
-                import T from "./typescript-declare";
+                import foo from "./foo.js";
+                import bar from "./bar.json";
+                import Component from "./Component.jsx";
             "#,
+            Some(json!(["always", { "pattern": { "jsx": "never" } }])),
+        ),
+        (
+            r#"import foo from "./foo.custom""#,
+            Some(json!(["never", { "pattern": { "*": "never" } }])),
+        ),
+        // ============================================================================
+        // TypeScript type imports - from eslint-plugin-import
+        // ============================================================================
+        (
+            r#"import T from "./typescript-declare""#,
             Some(
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
             ),
         ),
         (
-            r#"
-                export { MyType } from "./typescript-declare";
-            "#,
+            r#"export { MyType } from "./typescript-declare""#,
             Some(
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never" }]),
             ),
         ),
+        // With checkTypeImports, type imports ARE checked
         (
-            r#"
-                import type T from "./typescript-declare";
-            "#,
+            r#"import type T from "./typescript-declare""#,
             Some(
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
             ),
         ),
         (
-            r#"
-                export type { MyType } from "./typescript-declare";
-            "#,
+            r#"export type { MyType } from "./typescript-declare""#,
             Some(
                 json!(["always", { "ts": "never", "tsx": "never", "js": "never", "jsx": "never", "checkTypeImports": true }]),
             ),
         ),
         (
-            r#"
-                import type { MyType } from "./typescript-declare";
-            "#,
+            r#"import type { MyType } from "./typescript-declare""#,
             Some(json!(["always", { "checkTypeImports": true }])),
         ),
         (
-            r#"
-                export type { MyType } from "./typescript-declare";
-            "#,
+            r#"export type { MyType } from "./typescript-declare""#,
             Some(json!(["always", { "checkTypeImports": true }])),
+        ),
+        // ============================================================================
+        // Modern module extensions - violations
+        // ============================================================================
+        (
+            r#"import foo from "./foo""#,
+            Some(
+                json!(["always", { "mts": "always", "cts": "always", "mjs": "always", "cjs": "always" }]),
+            ),
+        ),
+        (r#"import foo from "./foo.mts""#, Some(json!(["never", { "mts": "never" }]))),
+        // ============================================================================
+        // pathGroupOverrides - from eslint-plugin-import (TypeScript resolver tests)
+        // enforce action overrides ignorePackages
+        // ============================================================================
+        (
+            r#"
+                import foo from "@auditboard/api/something.js";
+                import bar from "@auditboard/auth/handler.ts";
+            "#,
+            Some(json!(["never", {
+                "ignorePackages": true,
+                "pathGroupOverrides": [
+                    {
+                        "pattern": "@auditboard/{api,auth,compliance}/**",
+                        "action": "enforce"
+                    }
+                ]
+            }])),
+        ),
+        (
+            r#"
+                import { ErrorMessage } from "@black-flag/core/util";
+                import { $instances } from "rootverse+debug:src";
+                import { $exists } from "rootverse+bfe:src/symbols";
+                import type { Entries } from "type-fest";
+            "#,
+            Some(json!(["always", {
+                "ignorePackages": true,
+                "checkTypeImports": true,
+                "pathGroupOverrides": [
+                    { "pattern": "rootverse{*,*/**}", "action": "enforce" },
+                    { "pattern": "universe{*,*/**}", "action": "ignore" }
+                ]
+            }])),
         ),
     ];
 
