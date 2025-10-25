@@ -172,32 +172,32 @@ impl Linter {
             .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.iter().any(|e| e == &ext));
 
         loop {
-            let mut rules = rules
+            let semantic = ctx_host.semantic();
+            let rules = rules
                 .iter()
-                .filter(|(rule, _)| rule.should_run(&ctx_host) && !rule.is_tsgolint_rule())
+                .filter(|(rule, _)| {
+                    if rule.is_tsgolint_rule() {
+                        return false;
+                    }
+
+                    // If only the `run` function is implemented, we can skip running the file entirely if the current
+                    // file does not contain any of the relevant AST node types.
+                    if rule.run_info() == RuleRunFunctionsImplemented::Run
+                        && let Some(ast_types) = rule.types_info()
+                        && !semantic.nodes().contains_any(ast_types)
+                    {
+                        return false;
+                    }
+
+                    rule.should_run(&ctx_host)
+                })
                 .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
                 .collect::<Vec<_>>();
-
-            let semantic = ctx_host.semantic();
 
             let should_run_on_jest_node =
                 ctx_host.plugins().has_test() && ctx_host.frameworks().is_test();
 
-            let mut execute_rules = |with_runtime_optimization: bool| {
-                // If only the `run` function is implemented, we can skip running the file entirely if the current
-                // file does not contain any of the relevant AST node types.
-                if with_runtime_optimization {
-                    rules.retain(|(rule, _)| {
-                        let run_info = rule.run_info();
-                        if run_info == RuleRunFunctionsImplemented::Run
-                            && let Some(ast_types) = rule.types_info()
-                        {
-                            semantic.nodes().contains_any(ast_types)
-                        } else {
-                            true
-                        }
-                    });
-                }
+            let execute_rules = |with_runtime_optimization: bool| {
                 // IMPORTANT: We have two branches here for performance reasons:
                 //
                 // 1) Branch where we iterate over each node, then each rule
