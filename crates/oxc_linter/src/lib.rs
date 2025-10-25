@@ -54,7 +54,11 @@ pub use crate::disable_directives::{
     create_unused_directives_diagnostics,
 };
 pub use crate::{
-    bulk_suppressions::{BulkSuppressions, SuppressionsFile, SuppressionEntry, load_suppressions_from_file},
+    bulk_suppressions::{
+        BulkSuppressions, SuppressionsFile, SuppressionEntry, load_suppressions_from_file,
+        ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression,
+        load_eslint_suppressions_from_file,
+    },
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,

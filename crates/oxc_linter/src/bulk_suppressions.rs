@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     path::Path,
     sync::{Arc, Mutex},
 };
@@ -29,6 +29,31 @@ impl Default for SuppressionsFile {
     fn default() -> Self {
         Self {
             suppressions: Vec::new(),
+        }
+    }
+}
+
+/// ESLint-style bulk suppressions format
+/// Maps file paths to rules to suppression counts
+/// Example: { "src/App.tsx": { "no-console": { "count": 2 }, "prefer-const": { "count": 1 } } }
+pub type ESLintBulkSuppressionsData = HashMap<String, HashMap<String, ESLintRuleSuppression>>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ESLintRuleSuppression {
+    pub count: u32,
+}
+
+/// ESLint-style bulk suppressions file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ESLintBulkSuppressionsFile {
+    pub suppressions: ESLintBulkSuppressionsData,
+}
+
+impl Default for ESLintBulkSuppressionsFile {
+    fn default() -> Self {
+        Self {
+            suppressions: HashMap::new(),
         }
     }
 }
@@ -167,10 +192,122 @@ impl BulkSuppressions {
     }
 }
 
+/// ESLint-style bulk suppressions matcher
+#[derive(Debug, Clone)]
+pub struct ESLintBulkSuppressions {
+    suppressions: Arc<ESLintBulkSuppressionsFile>,
+    usage_tracker: Arc<Mutex<HashMap<String, HashMap<String, u32>>>>, // file -> rule -> used_count
+}
+
+impl ESLintBulkSuppressions {
+    pub fn new(suppressions: ESLintBulkSuppressionsFile) -> Self {
+        Self {
+            suppressions: Arc::new(suppressions),
+            usage_tracker: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// Check if a diagnostic should be suppressed
+    pub fn matches(
+        &self,
+        plugin_name: &str,
+        plugin_prefix: &str,
+        rule_name: &str,
+        _span: Span,
+        file_path: &Path,
+    ) -> bool {
+        let file_path_str = file_path.to_string_lossy();
+
+        // Try to find the file in suppressions (exact match or relative path match)
+        let file_key = self.find_file_key(&file_path_str);
+
+        if let Some(file_key) = file_key {
+            if let Some(rules) = self.suppressions.suppressions.get(file_key) {
+                // Try different rule name formats
+                let possible_rule_names = [
+                    rule_name,
+                    &format!("{plugin_name}/{rule_name}"),
+                    &format!("{plugin_prefix}/{rule_name}"),
+                ];
+
+                for &rule_key in &possible_rule_names {
+                    if let Some(rule_suppression) = rules.get(rule_key) {
+                        // Check if we still have suppressions left for this rule
+                        if let Ok(mut tracker) = self.usage_tracker.lock() {
+                            let file_tracker = tracker.entry(file_key.clone()).or_insert_with(HashMap::new);
+                            let used_count = file_tracker.entry(rule_key.to_string()).or_insert(0);
+
+                            if *used_count < rule_suppression.count {
+                                *used_count += 1;
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    /// Find the file key in suppressions data, handling both exact matches and relative paths
+    fn find_file_key(&self, file_path: &str) -> Option<&String> {
+        // First try exact match
+        if self.suppressions.suppressions.contains_key(file_path) {
+            return self.suppressions.suppressions.keys().find(|k| *k == file_path);
+        }
+
+        // Try to find by matching the end of the path (for relative paths)
+        self.suppressions.suppressions.keys().find(|key| {
+            file_path.ends_with(key.as_str()) || key.ends_with(file_path)
+        })
+    }
+
+    /// Get unused suppressions after linting is complete
+    pub fn get_unused_suppressions(&self) -> Vec<(String, String, u32)> {
+        let mut unused = Vec::new();
+
+        if let Ok(tracker) = self.usage_tracker.lock() {
+            for (file_path, file_rules) in &self.suppressions.suppressions {
+                for (rule_name, rule_suppression) in file_rules {
+                    let used_count = tracker
+                        .get(file_path)
+                        .and_then(|rules| rules.get(rule_name))
+                        .copied()
+                        .unwrap_or(0);
+
+                    if used_count < rule_suppression.count {
+                        unused.push((file_path.clone(), rule_name.clone(), rule_suppression.count - used_count));
+                    }
+                }
+            }
+        }
+
+        unused
+    }
+
+    /// Get the suppressions data
+    pub fn suppressions(&self) -> &ESLintBulkSuppressionsFile {
+        &self.suppressions
+    }
+}
+
 /// Load suppressions from a JSON file
 pub fn load_suppressions_from_file(path: &Path) -> Result<SuppressionsFile, std::io::Error> {
     if !path.exists() {
         return Ok(SuppressionsFile::default());
+    }
+
+    let content = std::fs::read_to_string(path)?;
+    serde_json::from_str(&content).map_err(|e| {
+        std::io::Error::new(std::io::ErrorKind::InvalidData, format!("Invalid JSON: {e}"))
+    })
+}
+
+/// Load ESLint-style bulk suppressions from a JSON file
+pub fn load_eslint_suppressions_from_file(path: &Path) -> Result<ESLintBulkSuppressionsFile, std::io::Error> {
+    if !path.exists() {
+        return Ok(ESLintBulkSuppressionsFile::default());
     }
 
     let content = std::fs::read_to_string(path)?;

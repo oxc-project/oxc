@@ -10,7 +10,11 @@ use oxc_span::Span;
 // serde types are now imported from oxc_linter
 
 use crate::result::CliRunResult;
-pub use oxc_linter::{BulkSuppressions, SuppressionsFile, SuppressionEntry, load_suppressions_from_file};
+pub use oxc_linter::{
+    BulkSuppressions, SuppressionsFile, SuppressionEntry, load_suppressions_from_file,
+    ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression,
+    load_eslint_suppressions_from_file,
+};
 
 /// Default name for the suppressions file
 pub const DEFAULT_SUPPRESSIONS_FILE: &str = "eslint-suppressions.json";
