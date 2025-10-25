@@ -538,9 +538,12 @@ impl ConfigStoreBuilder {
             return Ok(());
         }
 
+        // Extract package name from package.json if available
+        let package_name = resolved.package_json().and_then(|pkg| pkg.name().map(String::from));
+
         let result = {
             let plugin_path = plugin_path.clone();
-            (external_linter.load_plugin)(plugin_path).map_err(|e| {
+            (external_linter.load_plugin)(plugin_path, package_name).map_err(|e| {
                 ConfigBuilderError::PluginLoadFailed {
                     plugin_specifier: plugin_specifier.to_string(),
                     error: e.to_string(),

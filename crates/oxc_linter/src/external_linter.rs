@@ -5,7 +5,10 @@ use serde::Deserialize;
 use oxc_allocator::Allocator;
 
 pub type ExternalLinterLoadPluginCb = Arc<
-    dyn Fn(String) -> Result<PluginLoadResult, Box<dyn std::error::Error + Send + Sync>>
+    dyn Fn(
+            String,
+            Option<String>,
+        ) -> Result<PluginLoadResult, Box<dyn std::error::Error + Send + Sync>>
         + Send
         + Sync,
 >;

@@ -40,6 +40,12 @@
    : ^^^^^^^^^
    `----
 
+  x plugin14(no-debugger): Unexpected Debugger Statement
+   ,-[files/index.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+
   x plugin2(no-debugger): Unexpected Debugger Statement
    ,-[files/index.js:1:1]
  1 | debugger;
@@ -88,7 +94,7 @@
    : ^^^^^^^^^
    `----
 
-Found 1 warning and 13 errors.
+Found 1 warning and 14 errors.
 Finished in Xms on 1 file using X threads.
 ```
 

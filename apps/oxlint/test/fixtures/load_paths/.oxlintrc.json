@@ -12,7 +12,8 @@
     "plugin10",
     "plugin11",
     "plugin12",
-    "plugin13"
+    "plugin13",
+    "plugin14"
   ],
   "rules": {
     "plugin1/no-debugger": "error",
@@ -27,6 +28,7 @@
     "plugin10/no-debugger": "error",
     "plugin11/no-debugger": "error",
     "plugin12/no-debugger": "error",
-    "plugin13/no-debugger": "error"
+    "plugin13/no-debugger": "error",
+    "plugin14/no-debugger": "error"
   }
 }
