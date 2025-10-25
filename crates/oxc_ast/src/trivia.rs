@@ -4,6 +4,7 @@
 //! including efficient range-based queries and iteration over comment collections.
 
 use std::{
+    cmp::Ordering,
     iter::FusedIterator,
     ops::{Bound, RangeBounds},
 };
@@ -55,6 +56,39 @@ where
 /// ```
 pub fn has_comments_between(comments: &[Comment], span: Span) -> bool {
     comments_range(comments, span.start..span.end).count() > 0
+}
+
+/// Check if a position falls within any comment
+///
+/// Returns `true` if the specified position is inside any comment's span,
+/// including the start and end positions.
+///
+/// Uses binary search for efficient lookup in O(log n) time.
+///
+/// # Arguments
+///
+/// * `comments` - A slice of comments sorted by starting position
+/// * `pos` - The position to check
+///
+/// # Examples
+///
+/// ```ignore
+/// // Comment spans from position 10 to 20
+/// assert!(is_inside_comment(&comments, 15));  // Inside comment
+/// assert!(!is_inside_comment(&comments, 25)); // Outside comment
+/// ```
+pub fn is_inside_comment(comments: &[Comment], pos: u32) -> bool {
+    comments
+        .binary_search_by(|c| {
+            if pos < c.span.start {
+                Ordering::Greater
+            } else if pos > c.span.end {
+                Ordering::Less
+            } else {
+                Ordering::Equal
+            }
+        })
+        .is_ok()
 }
 
 /// Double-ended iterator over a range of comments, by starting position
@@ -161,5 +195,17 @@ mod test {
         assert_eq!(comments_range(&comments, 1..).count(), full_len.saturating_sub(1));
         assert_eq!(comments_range(&comments, ..18).count(), full_len.saturating_sub(1));
         assert_eq!(comments_range(&comments, ..=18).count(), full_len);
+    }
+
+    #[test]
+    fn test_is_inside_comment() {
+        let comments =
+            vec![Comment::new(0, 4, CommentKind::Line), Comment::new(10, 20, CommentKind::Block)]
+                .into_boxed_slice();
+
+        assert!(is_inside_comment(&comments, 2));
+        assert!(!is_inside_comment(&comments, 5));
+        assert!(is_inside_comment(&comments, 15));
+        assert!(!is_inside_comment(&comments, 21));
     }
 }
