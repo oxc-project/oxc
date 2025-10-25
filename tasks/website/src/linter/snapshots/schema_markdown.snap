@@ -460,13 +460,6 @@ type: `object`
 Configure Next.js plugin rules.
 
 
-#### settings.next.rootDir
-
-
-
-
-
-
 ### settings.react
 
 type: `object`
@@ -479,9 +472,11 @@ Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-r
 
 #### settings.react.formComponents
 
-type: `array`
+type: `[
+  array,
+  null
+]`
 
-default: `[]`
 
 Components used as alternatives to `<form>` for forms, such as `<Formik>`.
 
@@ -513,9 +508,11 @@ Example:
 
 #### settings.react.linkComponents
 
-type: `array`
+type: `[
+  array,
+  null
+]`
 
-default: `[]`
 
 Components used as alternatives to `<a>` for linking, such as `<Link>`.
 
