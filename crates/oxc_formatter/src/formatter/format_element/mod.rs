@@ -43,7 +43,7 @@ pub enum FormatElement<'a> {
         /// The start position of the token in the unformatted source code
         source_position: TextSize,
         /// The token text
-        slice: TokenText,
+        slice: TokenText<'a>,
     },
 
     /// Prevents that line suffixes move past this boundary. Forces the printer to print any pending
