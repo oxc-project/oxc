@@ -5,6 +5,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
 
 use super::Comments;
+use super::format_element::contains_line_terminator;
 
 /// Source text wrapper providing utilities for text analysis in the formatter.
 #[derive(Debug, Clone, Copy)]
@@ -82,7 +83,7 @@ impl<'a> SourceText<'a> {
 
     /// Check if range contains line terminators
     pub fn contains_newline_between(&self, start: u32, end: u32) -> bool {
-        self.slice_range(start, end).chars().any(is_line_terminator)
+        contains_line_terminator(self.slice_range(start, end))
     }
 
     /// Check for newlines before position, stopping at first non-whitespace

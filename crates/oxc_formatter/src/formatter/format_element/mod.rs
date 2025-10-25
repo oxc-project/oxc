@@ -7,10 +7,62 @@ pub mod tag;
 use std::hash::{Hash, Hasher};
 use std::{borrow::Cow, ops::Deref, rc::Rc};
 
+use memchr::memchr;
+
 use super::{
     TagKind, TextSize, TokenText,
     format_element::tag::{LabelId, Tag},
 };
+
+// UTF-8 byte sequences for Unicode line separators
+// LS (\u{2028}) = [0xE2, 0x80, 0xA8]
+// PS (\u{2029}) = [0xE2, 0x80, 0xA9]
+
+/// First byte of both LS and PS UTF-8 encoding
+const LS_OR_PS_FIRST_BYTE: u8 = 0xE2;
+
+/// Last 2 bytes of LS (\u{2028}) UTF-8 encoding
+const LS_LAST_2_BYTES: [u8; 2] = [0x80, 0xA8];
+
+/// Last 2 bytes of PS (\u{2029}) UTF-8 encoding
+const PS_LAST_2_BYTES: [u8; 2] = [0x80, 0xA9];
+
+/// Fast line terminator detection optimized for common cases.
+///
+/// Checks for all JavaScript line terminators:
+/// - Common (99.9% of cases): LF (\n), CR (\r) - uses SIMD
+/// - Rare: Unicode LS (\u{2028}), PS (\u{2029}) - byte-level checks
+///
+/// Uses a single `memchr3` call to search for all potential line terminators,
+/// then validates LS/PS by checking the following bytes.
+#[inline]
+pub fn contains_line_terminator(text: &str) -> bool {
+    let bytes = text.as_bytes();
+
+    // Use memchr3 to search for LF, CR, or potential LS/PS (0xE2)
+    let mut search_start = 0;
+    while let Some(pos) = memchr::memchr3(b'\n', b'\r', LS_OR_PS_FIRST_BYTE, &bytes[search_start..])
+    {
+        let absolute_pos = search_start + pos;
+        match bytes[absolute_pos] {
+            b'\n' | b'\r' => return true,
+            LS_OR_PS_FIRST_BYTE => {
+                // Check if this is actually LS or PS
+                if absolute_pos + 2 < bytes.len() {
+                    let next2 = [bytes[absolute_pos + 1], bytes[absolute_pos + 2]];
+                    if matches!(next2, LS_LAST_2_BYTES | PS_LAST_2_BYTES) {
+                        return true;
+                    }
+                }
+                // False positive - 0xE2 but not LS/PS, continue searching
+                search_start = absolute_pos + 1;
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    false
+}
 
 /// Language agnostic IR for formatting source code.
 ///

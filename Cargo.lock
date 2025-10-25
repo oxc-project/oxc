@@ -2069,6 +2069,7 @@ dependencies = [
  "cow-utils",
  "insta",
  "json-strip-comments",
+ "memchr",
  "oxc-schemars",
  "oxc_allocator 0.95.0",
  "oxc_ast 0.95.0",
