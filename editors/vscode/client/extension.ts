@@ -137,8 +137,7 @@ export async function activate(context: ExtensionContext) {
     outputChannel,
   );
 
-  async function findBinary(): Promise<string> {
-    let bin = configService.getUserServerBinPath();
+  async function findBinary(bin: string | undefined): Promise<string> {
     if (workspace.isTrusted && bin) {
       try {
         await fsPromises.access(bin);
@@ -155,10 +154,20 @@ export async function activate(context: ExtensionContext) {
     );
   }
 
-  const command = await findBinary();
+  const userDefinedBinary = configService.getUserServerBinPath();
+  const command = await findBinary(userDefinedBinary);
   const run: Executable = {
     command: command!,
     options: {
+      // On Windows we need to run the binary in a shell to be able to execute the shell npm bin script.
+      // This is only needed when the user explicitly configures the binary to point to the npm bin script.
+      // The extension is shipped with the `.exe` file, we don't need to run it in a shell.
+      // Searching for the right `.exe` file inside `node_modules/` is not reliable as it depends on
+      // the package manager used (npm, yarn, pnpm, etc) and the package version.
+      // The npm bin script is a shell script that points to the actual binary.
+      // Security: We validated the userDefinedBinary in `configService.getUserServerBinPath()`.
+      shell: process.platform === 'win32' && command === userDefinedBinary &&
+        userDefinedBinary?.endsWith('node_modules\\.bin\\oxc_language_server'),
       env: {
         ...process.env,
         RUST_LOG: process.env.RUST_LOG || 'info',
