@@ -1,0 +1,22 @@
+{
+  "suppressions": [
+    {
+      "files": ["test.js"],
+      "rules": ["no-console"],
+      "line": 2,
+      "column": 0,
+      "end_line": 2,
+      "end_column": 11,
+      "reason": "Existing violation at time of suppression generation"
+    },
+    {
+      "files": ["test.js"],
+      "rules": ["no-debugger"],
+      "line": 3,
+      "column": 0,
+      "end_line": 3,
+      "end_column": 8,
+      "reason": "Existing violation at time of suppression generation"
+    }
+  ]
+}

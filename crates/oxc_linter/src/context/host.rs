@@ -22,6 +22,8 @@ use crate::{
     rules::RuleEnum,
 };
 
+use crate::bulk_suppressions::BulkSuppressions;
+
 use super::{LintContext, plugin_name_to_prefix};
 
 /// Stores shared information about a script block being linted.
@@ -149,6 +151,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// Bulk suppressions loaded from suppressions file
+    pub(super) bulk_suppressions: Option<BulkSuppressions>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -165,6 +169,19 @@ impl<'a> ContextHost<'a> {
         sub_hosts: Vec<ContextSubHost<'a>>,
         options: LintOptions,
         config: Arc<LintConfig>,
+    ) -> Self {
+        Self::new_with_bulk_suppressions(file_path, sub_hosts, options, config, None)
+    }
+
+    /// Create a new ContextHost with optional bulk suppressions
+    /// # Panics
+    /// If `sub_hosts` is empty.
+    pub fn new_with_bulk_suppressions<P: AsRef<Path>>(
+        file_path: P,
+        sub_hosts: Vec<ContextSubHost<'a>>,
+        options: LintOptions,
+        config: Arc<LintConfig>,
+        bulk_suppressions: Option<BulkSuppressions>,
     ) -> Self {
         const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
 
@@ -185,6 +202,7 @@ impl<'a> ContextHost<'a> {
             file_extension,
             config,
             frameworks: options.framework_hints,
+            bulk_suppressions,
         }
         .sniff_for_frameworks()
     }
@@ -225,6 +243,11 @@ impl<'a> ContextHost<'a> {
     /// Shared reference to the [`DisableDirectives`] of the current script block.
     pub fn disable_directives(&self) -> &DisableDirectives {
         &self.current_sub_host().disable_directives
+    }
+
+    /// Shared reference to the bulk suppressions, if any are loaded.
+    pub fn bulk_suppressions(&self) -> Option<&BulkSuppressions> {
+        self.bulk_suppressions.as_ref()
     }
 
     /// Path to the file being linted.

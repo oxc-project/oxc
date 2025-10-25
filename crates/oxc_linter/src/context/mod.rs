@@ -229,8 +229,22 @@ impl<'a> LintContext<'a> {
     /// Add a diagnostic message to the list of diagnostics. Outputs a diagnostic with the current rule
     /// name, severity, and a link to the rule's documentation URL.
     fn add_diagnostic(&self, mut message: Message) {
+        // Check inline directives first (takes precedence)
         if self.parent.disable_directives().contains(self.current_rule_name, message.span) {
             return;
+        }
+
+        // Check bulk suppressions second
+        if let Some(bulk_suppressions) = self.parent.bulk_suppressions() {
+            if bulk_suppressions.matches(
+                self.current_plugin_name,
+                self.current_plugin_prefix,
+                self.current_rule_name,
+                message.span,
+                self.file_path(),
+            ) {
+                return; // Diagnostic is suppressed
+            }
         }
         message.error = message
             .error

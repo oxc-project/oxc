@@ -1,5 +1,9 @@
 mod ignore;
 mod lint;
+pub mod suppressions;
+
+#[cfg(test)]
+mod test_suppressions;
 
 use std::path::PathBuf;
 

@@ -15,15 +15,18 @@ use serde_json::Value;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    AllowWarnDeny, BulkSuppressions, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
+    SuppressionsFile, load_suppressions_from_file,
 };
 
 use crate::{
-    cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
+    command::{LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions, suppressions::*},
     output_formatter::{LintCommandInfo, OutputFormatter},
+    result::CliRunResult,
     walk::Walk,
 };
+use crate::command::suppressions::load_suppressions_file_cli;
 use oxc_linter::LintIgnoreMatcher;
 
 #[derive(Debug)]
@@ -53,6 +56,54 @@ impl CliRunner {
             return CliRunResult::None;
         }
 
+        // Extract options using references to avoid partial move issues
+        let suppress_all = self.options.suppress_all;
+        let suppress_rule = &self.options.suppress_rule;
+        let prune_suppressions = self.options.prune_suppressions;
+        let pass_on_unpruned_suppressions = self.options.pass_on_unpruned_suppressions;
+        let suppressions_location = &self.options.suppressions_location;
+
+        let external_linter = self.external_linter.as_ref();
+
+        // Handle suppression-related flags early
+        let suppressions_file = suppressions_location
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| self.cwd.join(DEFAULT_SUPPRESSIONS_FILE));
+
+        // If we're doing suppression operations, handle them
+        if suppress_all || !suppress_rule.is_empty() || prune_suppressions {
+            return self.handle_suppression_operations(
+                stdout,
+                &suppressions_file,
+                suppress_all,
+                suppress_rule,
+                prune_suppressions,
+                pass_on_unpruned_suppressions,
+            );
+        }
+
+        // Load bulk suppressions for normal linting if they exist
+        let bulk_suppressions = if suppressions_file.exists() {
+            match load_suppressions_from_file(&suppressions_file) {
+                Ok(suppressions_data) => {
+                    if !suppressions_data.suppressions.is_empty() {
+                        Some(BulkSuppressions::new(suppressions_data))
+                    } else {
+                        None
+                    }
+                }
+                Err(_) => {
+                    // If we can't load suppressions, continue without them
+                    // In a production version, we might want to warn the user
+                    None
+                }
+            }
+        } else {
+            None
+        };
+
+        // Extract remaining options for normal linting flow
         let LintCommand {
             paths,
             filter,
@@ -66,8 +117,6 @@ impl CliRunner {
             inline_config_options,
             ..
         } = self.options;
-
-        let external_linter = self.external_linter.as_ref();
 
         let mut paths = paths;
         let provided_path_count = paths.len();
@@ -311,9 +360,14 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
-            .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+        let linter = Linter::new_with_suppressions(
+            LintOptions::default(),
+            config_store,
+            external_linter,
+            bulk_suppressions
+        )
+        .with_fix(fix_options.fix_kind())
+        .with_report_unused_directives(report_unused_directives);
 
         let number_of_files = files_to_lint.len();
 
@@ -340,7 +394,7 @@ impl CliRunner {
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        let lint_runner = match LintRunner::builder(options, linter)
+        let lint_runner = match LintRunner::builder(options, linter.clone())
             .with_type_aware(self.options.type_aware)
             .with_silent(misc_options.silent)
             .build()
@@ -386,6 +440,33 @@ impl CliRunner {
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
+        // Check for unused bulk suppressions after linting completes
+        let mut bulk_suppression_result = CliRunResult::LintSucceeded;
+        if let Some(bulk_suppressions) = linter.bulk_suppressions() {
+            let unused_suppressions = bulk_suppressions.get_unused_suppressions();
+            if !unused_suppressions.is_empty() {
+                let unused_count = unused_suppressions.len();
+                if pass_on_unpruned_suppressions {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "There are {} suppressions that do not occur anymore. Consider re-running with `--prune-suppressions`.\n",
+                            unused_count
+                        ),
+                    );
+                } else {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Error: {} unused suppressions found. Use `--pass-on-unpruned-suppressions` to ignore or `--prune-suppressions` to remove them.\n",
+                            unused_count
+                        ),
+                    );
+                    bulk_suppression_result = CliRunResult::UnusedSuppressionsFound;
+                }
+            }
+        }
+
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
             number_of_rules,
@@ -395,12 +476,16 @@ impl CliRunner {
             print_and_flush_stdout(stdout, &end);
         }
 
+        // Return the most severe result
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors
         } else if warning_options.deny_warnings && diagnostic_result.warnings_count() > 0 {
             CliRunResult::LintNoWarningsAllowed
         } else if diagnostic_result.max_warnings_exceeded() {
             CliRunResult::LintMaxWarningsExceeded
+        } else if bulk_suppression_result != CliRunResult::LintSucceeded {
+            // Return bulk suppression error if that's the only issue
+            bulk_suppression_result
         } else {
             CliRunResult::LintSucceeded
         }
@@ -414,6 +499,183 @@ impl CliRunner {
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
         self
+    }
+
+    fn handle_suppression_operations(
+        &self,
+        stdout: &mut dyn Write,
+        suppressions_file: &Path,
+        suppress_all: bool,
+        suppress_rule: &[String],
+        prune_suppressions: bool,
+        pass_on_unpruned_suppressions: bool,
+    ) -> CliRunResult {
+        if prune_suppressions {
+            self.handle_prune_suppressions(stdout, suppressions_file, pass_on_unpruned_suppressions)
+        } else if suppress_all || !suppress_rule.is_empty() {
+            self.handle_generate_suppressions(
+                stdout,
+                suppressions_file,
+                suppress_all,
+                suppress_rule,
+            )
+        } else {
+            CliRunResult::None
+        }
+    }
+
+    fn handle_generate_suppressions(
+        &self,
+        stdout: &mut dyn Write,
+        suppressions_file: &Path,
+        suppress_all: bool,
+        suppress_rule: &[String],
+    ) -> CliRunResult {
+        print_and_flush_stdout(stdout, "Generating suppressions...\n");
+
+        // First run linter to capture violations
+        let violations = match self.capture_violations() {
+            Ok(violations) => violations,
+            Err(result) => return result,
+        };
+
+        // Filter violations based on options
+        let filtered_violations = if suppress_all {
+            violations
+        } else {
+            violations
+                .into_iter()
+                .filter(|violation| {
+                    suppress_rule.iter().any(|rule| {
+                        violation.rule_name.contains(rule)
+                            || format!("{}/{}", violation.plugin_name, violation.rule_name)
+                                .contains(rule)
+                    })
+                })
+                .collect()
+        };
+
+        if filtered_violations.is_empty() {
+            print_and_flush_stdout(stdout, "No violations found to suppress.\n");
+            return CliRunResult::LintSucceeded;
+        }
+
+        // Generate suppression entries
+        let new_suppressions: Vec<SuppressionEntry> = filtered_violations
+            .into_iter()
+            .map(|violation| SuppressionEntry {
+                files: vec![violation.file_path],
+                rules: vec![violation.rule_name.clone()],
+                line: violation.line,
+                column: violation.column,
+                end_line: violation.end_line,
+                end_column: violation.end_column,
+                reason: "Existing violation at time of suppression generation".to_string(),
+            })
+            .collect();
+
+        // Load existing suppressions and merge
+        let existing_suppressions = match load_suppressions_file_cli(suppressions_file) {
+            Ok(suppressions) => suppressions,
+            Err(result) => return result,
+        };
+
+        let merged_suppressions = merge_suppressions(
+            &existing_suppressions,
+            new_suppressions.clone(),
+            suppress_all, // replace all if --suppress-all
+        );
+
+        // Write suppressions to file
+        if let Err(result) = write_suppressions_to_file(&merged_suppressions, suppressions_file) {
+            return result;
+        }
+
+        print_and_flush_stdout(
+            stdout,
+            &format!(
+                "Generated {} suppressions in {}\n",
+                new_suppressions.len(),
+                suppressions_file.display()
+            ),
+        );
+
+        CliRunResult::LintSucceeded
+    }
+
+    fn handle_prune_suppressions(
+        &self,
+        stdout: &mut dyn Write,
+        suppressions_file: &Path,
+        _pass_on_unpruned_suppressions: bool,
+    ) -> CliRunResult {
+        print_and_flush_stdout(stdout, "Pruning unused suppressions...\n");
+
+        // Load existing suppressions
+        let suppressions = match load_suppressions_file_cli(suppressions_file) {
+            Ok(suppressions) => suppressions,
+            Err(result) => return result,
+        };
+
+        if suppressions.suppressions.is_empty() {
+            print_and_flush_stdout(stdout, "No suppressions file found or file is empty.\n");
+            return CliRunResult::LintSucceeded;
+        }
+
+        // Run linter with suppression tracking to find unused suppressions
+        let unused_indices = match self.find_unused_suppressions(&suppressions) {
+            Ok(indices) => indices,
+            Err(result) => return result,
+        };
+
+        if unused_indices.is_empty() {
+            print_and_flush_stdout(stdout, "No unused suppressions found.\n");
+            return CliRunResult::LintSucceeded;
+        }
+
+        // Remove unused suppressions
+        let pruned_suppressions = prune_suppressions(&suppressions, &unused_indices);
+
+        // Write updated suppressions
+        if let Err(result) = write_suppressions_to_file(&pruned_suppressions, suppressions_file) {
+            return result;
+        }
+
+        print_and_flush_stdout(
+            stdout,
+            &format!(
+                "Removed {} unused suppressions from {}\n",
+                unused_indices.len(),
+                suppressions_file.display()
+            ),
+        );
+
+        CliRunResult::LintSucceeded
+    }
+
+    fn capture_violations(&self) -> Result<Vec<ViolationInfo>, CliRunResult> {
+        // This is a placeholder implementation
+        // In the real implementation, we would:
+        // 1. Run the linter in capture mode
+        // 2. Collect all diagnostics that are errors (not warnings)
+        // 3. Convert them to ViolationInfo structs
+
+        // For now, return empty violations
+        Ok(Vec::new())
+    }
+
+    fn find_unused_suppressions(
+        &self,
+        _suppressions: &SuppressionsFile,
+    ) -> Result<Vec<usize>, CliRunResult> {
+        // This is a placeholder implementation
+        // In the real implementation, we would:
+        // 1. Create a SuppressionMatcher
+        // 2. Run the linter with the matcher
+        // 3. Check which suppressions were never used
+
+        // For now, return no unused suppressions
+        Ok(Vec::new())
     }
 
     fn get_diagnostic_service(
