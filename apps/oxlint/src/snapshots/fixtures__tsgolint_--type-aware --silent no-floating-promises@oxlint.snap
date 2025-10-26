@@ -5,6 +5,9 @@ source: apps/oxlint/src/tester.rs
 arguments: --type-aware --silent no-floating-promises
 working directory: fixtures/tsgolint
 ----------
-Failed to find tsgolint executable----------
-CLI result: TsGoLintError
+
+Found 5 warnings and 11 errors.
+Finished in <variable>ms on 3 files using 1 threads.
+----------
+CLI result: LintFoundErrors
 ----------
