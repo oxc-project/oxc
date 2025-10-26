@@ -60,6 +60,26 @@ pub struct OxlintSettings {
     pub vitest: VitestPluginSettings,
 }
 
+#[derive(Deserialize, Default)]
+// A private struct to deserialize well-known settings from parsed, merged, or extended JSON.
+struct WellKnownOxlintSettings {
+    #[serde(default)]
+    #[serde(rename = "jsx-a11y")]
+    pub jsx_a11y: JSXA11yPluginSettings,
+
+    #[serde(default)]
+    pub next: NextPluginSettings,
+
+    #[serde(default)]
+    pub react: ReactPluginSettings,
+
+    #[serde(default)]
+    pub jsdoc: JSDocPluginSettings,
+
+    #[serde(default)]
+    pub vitest: VitestPluginSettings,
+}
+
 pub type OxlintSettingsJson = serde_json::Map<String, serde_json::Value>;
 
 impl<'de> Deserialize<'de> for OxlintSettings {
@@ -67,26 +87,6 @@ impl<'de> Deserialize<'de> for OxlintSettings {
     where
         D: serde::Deserializer<'de>,
     {
-        // Create a temporary struct without the value field for deserialization
-        #[derive(serde::Deserialize)]
-        struct WellKnownOxlintSettings {
-            #[serde(default)]
-            #[serde(rename = "jsx-a11y")]
-            jsx_a11y: JSXA11yPluginSettings,
-
-            #[serde(default)]
-            next: NextPluginSettings,
-
-            #[serde(default)]
-            react: ReactPluginSettings,
-
-            #[serde(default)]
-            jsdoc: JSDocPluginSettings,
-
-            #[serde(default)]
-            vitest: VitestPluginSettings,
-        }
-
         let raw_value = serde_json::Value::deserialize(deserializer)?;
 
         let well_known_settings: WellKnownOxlintSettings =
@@ -107,21 +107,35 @@ impl<'de> Deserialize<'de> for OxlintSettings {
 }
 
 impl OxlintSettings {
+    /// Mutates `settings_to_override` by reading from `self`.
     pub fn override_settings(&self, settings_to_override: &mut OxlintSettings) {
-        // TODO: we need to distinguish between overrides of well known settings being default vs actually being empty.
-        // Switch to Option?
-        settings_to_override.react = self.react.clone();
-        settings_to_override.jsx_a11y = self.jsx_a11y.clone();
-        settings_to_override.next = self.next.clone();
-        settings_to_override.jsdoc = self.jsdoc.clone();
-
-        if let Some(base_json) = &self.json {
-            if let Some(override_json) = &mut settings_to_override.json {
-                for (key, value) in base_json {
-                    override_json[key] = value.clone();
+        // If `None`, `self` has nothing configured, so we don't need to mutate `settings_to_override` at all.
+        if let Some(self_json) = &self.json {
+            if let Some(override_json) = &settings_to_override.json {
+                let json = deep_merge(self_json, override_json);
+                if let Ok(well_known_settings) = serde_json::from_value::<WellKnownOxlintSettings>(
+                    serde_json::Value::Object(json.clone()),
+                ) {
+                    settings_to_override.json = Some(json);
+                    settings_to_override.jsx_a11y = well_known_settings.jsx_a11y;
+                    settings_to_override.next = well_known_settings.next;
+                    settings_to_override.react = well_known_settings.react;
+                    settings_to_override.jsdoc = well_known_settings.jsdoc;
+                    settings_to_override.vitest = well_known_settings.vitest;
+                } else {
+                    // If serde can't parse `WellKnownOxlintSettings` from the json
+                    // (because of invalid JSON structure in one of the settings structs)
+                    // keep the original settings from `override_json`.
+                    // Should we panic here instead?
+                    settings_to_override.json = Some(self_json.clone());
                 }
             } else {
-                settings_to_override.json = Some(base_json.clone());
+                settings_to_override.json = Some(self_json.clone());
+                settings_to_override.jsx_a11y = self.jsx_a11y.clone();
+                settings_to_override.next = self.next.clone();
+                settings_to_override.react = self.react.clone();
+                settings_to_override.jsdoc = self.jsdoc.clone();
+                settings_to_override.vitest = self.vitest.clone();
             }
         }
     }
@@ -133,47 +147,43 @@ impl OxlintSettings {
             (None, Some(other_json)) => Some(other_json.clone()),
             (None, None) => None,
         };
-        // Comparing well known settings to their defaults is a hack because we don't know if they were actually left out or not.
-        // TODO: Switch to Option?
-        OxlintSettings {
-            json,
-            jsx_a11y: if self.jsx_a11y == JSXA11yPluginSettings::default() {
-                other.jsx_a11y.clone()
-            } else {
-                self.jsx_a11y.clone()
-            },
-            next: if self.next == NextPluginSettings::default() {
-                other.next.clone()
-            } else {
-                self.next.clone()
-            },
-            react: if self.react == ReactPluginSettings::default() {
-                other.react.clone()
-            } else {
-                self.react.clone()
-            },
-            jsdoc: if self.jsdoc == JSDocPluginSettings::default() {
-                other.jsdoc.clone()
-            } else {
-                self.jsdoc.clone()
-            },
-            vitest: if self.vitest == VitestPluginSettings::default() {
-                other.vitest.clone()
-            } else {
-                self.vitest.clone()
-            },
+
+        let well_known_settings = match &json {
+            Some(json) => serde_json::from_value::<WellKnownOxlintSettings>(
+                serde_json::Value::Object(json.clone()),
+            )
+            .ok(),
+            None => None,
+        };
+
+        if let Some(well_known_settings) = well_known_settings {
+            OxlintSettings {
+                json,
+                jsx_a11y: well_known_settings.jsx_a11y,
+                next: well_known_settings.next,
+                react: well_known_settings.react,
+                jsdoc: well_known_settings.jsdoc,
+                vitest: well_known_settings.vitest,
+            }
+        } else {
+            // TODO(perf): we can consume self to avoid clone
+            OxlintSettings {
+                json,
+                jsx_a11y: self.jsx_a11y.clone(),
+                next: self.next.clone(),
+                react: self.react.clone(),
+                jsdoc: self.jsdoc.clone(),
+                vitest: self.vitest.clone(),
+            }
         }
     }
 }
 
-fn deep_merge(
-    self_json: &OxlintSettingsJson,
-    other_json: &OxlintSettingsJson,
-) -> OxlintSettingsJson {
-    let mut result = other_json.clone();
+fn deep_merge(a: &OxlintSettingsJson, b: &OxlintSettingsJson) -> OxlintSettingsJson {
+    let mut result = b.clone();
 
-    for (key, self_value) in self_json {
-        match (self_value, result.get(key)) {
+    for (key, a_value) in a {
+        match (a_value, result.get(key)) {
             (serde_json::Value::Object(self_obj), Some(serde_json::Value::Object(other_obj))) => {
                 let merged_obj = deep_merge(self_obj, other_obj);
                 result.insert(key.clone(), serde_json::Value::Object(merged_obj));
@@ -328,6 +338,7 @@ mod test {
         .unwrap();
 
         let other = OxlintSettings::deserialize(&serde_json::json!({
+            "jsx-a11y": { "attributes": { "for": ["htmlFor", "for"] } },
             "react": { "linkComponents": [{ "name": "Link", "linkAttribute": "to" }] },
             "unknown": { "b": 2, "nested": { "y": 2 } }
         }))
@@ -335,10 +346,22 @@ mod test {
 
         let merged = base.merge(&other);
 
-        // Non-default base values take precedence
-        assert_eq!(merged.jsx_a11y.polymorphic_prop_name, Some("role".into()));
-        // Default base values use other
-        assert_eq!(merged.react.get_link_component_attrs("Link").unwrap(), as_attrs(["to"]));
+        assert_eq!(
+            merged.react.get_link_component_attrs("Link").unwrap(),
+            as_attrs(["to"]),
+            "React settings from the other config are added to the merged settings."
+        );
+
+        assert_eq!(
+            merged.jsx_a11y.polymorphic_prop_name,
+            Some("role".into()),
+            "JSX A11y settings from the base config are added to the merged settings."
+        );
+        assert_eq!(
+            &merged.jsx_a11y.attributes["for"],
+            &["htmlFor", "for"],
+            "JSX A11y settings from one config get merged with JSX A11y settings from the other config."
+        );
 
         // Raw JSON is deep merged
         let json = merged.json.unwrap();
