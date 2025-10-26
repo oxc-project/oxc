@@ -113,21 +113,20 @@ impl OxlintSettings {
         if let Some(self_json) = &self.json {
             if let Some(override_json) = &settings_to_override.json {
                 let json = deep_merge(self_json, override_json);
-                if let Ok(well_known_settings) = serde_json::from_value::<WellKnownOxlintSettings>(
-                    serde_json::Value::Object(json.clone()),
-                ) {
-                    settings_to_override.json = Some(json);
-                    settings_to_override.jsx_a11y = well_known_settings.jsx_a11y;
-                    settings_to_override.next = well_known_settings.next;
-                    settings_to_override.react = well_known_settings.react;
-                    settings_to_override.jsdoc = well_known_settings.jsdoc;
-                    settings_to_override.vitest = well_known_settings.vitest;
-                } else {
-                    // If serde can't parse `WellKnownOxlintSettings` from the json
-                    // (because of invalid JSON structure in one of the settings structs)
-                    // keep the original settings from `override_json`.
-                    // Should we panic here instead?
-                    settings_to_override.json = Some(self_json.clone());
+                match serde_json::from_value::<WellKnownOxlintSettings>(serde_json::Value::Object(
+                    json.clone(),
+                )) {
+                    Ok(well_known_settings) => {
+                        settings_to_override.json = Some(json);
+                        settings_to_override.jsx_a11y = well_known_settings.jsx_a11y;
+                        settings_to_override.next = well_known_settings.next;
+                        settings_to_override.react = well_known_settings.react;
+                        settings_to_override.jsdoc = well_known_settings.jsdoc;
+                        settings_to_override.vitest = well_known_settings.vitest;
+                    }
+                    Err(e) => {
+                        panic!("Failed to parse override settings: {e:?}");
+                    }
                 }
             } else {
                 settings_to_override.json = Some(self_json.clone());
