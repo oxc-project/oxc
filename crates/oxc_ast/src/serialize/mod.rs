@@ -223,6 +223,7 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
                 && let Some(decorator) = class.decorators.first()
             {
                 return cmp::min(start, decorator.span.start);
+            }
         }
         Statement::ExportDefaultDeclaration(decl) => {
             if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration
