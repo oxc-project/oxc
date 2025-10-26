@@ -225,7 +225,7 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
                 }
             }
         }
-              Statement::ExportDefaultDeclaration(decl) => {
+        Statement::ExportDefaultDeclaration(decl) => {
             if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &decl.declaration
                 && let Some(decorator) = class.decorators.first()
             {
