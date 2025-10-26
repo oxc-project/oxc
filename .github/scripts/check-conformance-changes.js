@@ -28,6 +28,8 @@ function getCoverageDependencies() {
 const ALWAYS_RUN_PATHS = [
   'tasks/coverage/',
   'tasks/common/',
+  'tasks/oxc_transform_conformance/',
+  'tasks/oxc_prettier_conformance/',
 ];
 
 /**
