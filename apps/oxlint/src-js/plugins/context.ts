@@ -79,7 +79,7 @@ let settings_record: Record<string, unknown> = {};
 export function setSettingsForFile(settings: string) {
   // Freezes to prevent mutation from a plugin.
   // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
-  settings_record = deepFreeze(JSON.parse(settings));
+  settings_record = deepFreezeSettings(JSON.parse(settings));
 }
 
 // Internal data within `Context` that don't want to expose to plugins.
@@ -299,24 +299,26 @@ function resolveMessageFromMessageId(messageId: string, internal: InternalContex
 }
 
 /**
- * Deep freeze an object, recursively freezing all nested objects and arrays.
- * This prevents any mutation of the object tree from plugins.
+ * Deep freeze the settings object, recursively freezing all nested objects and arrays.
+ * This prevents any mutation of the settings from plugins.
  *
  * @param obj - The object to deep freeze
  * @returns The same object, but deeply frozen
  */
-function deepFreeze<T>(obj: T): T {
+function deepFreezeSettings<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    obj.forEach(deepFreeze);
+    obj.forEach(deepFreezeSettings);
     return Object.freeze(obj);
   }
 
+  // We don't care about symbol properties or circular references
+  // because settings are deserialized from JSON.
   for (const key of Object.getOwnPropertyNames(obj)) {
-    deepFreeze((obj as any)[key]);
+    deepFreezeSettings((obj as any)[key]);
   }
 
   return Object.freeze(obj);
