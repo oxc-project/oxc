@@ -558,6 +558,7 @@ fn test() {
 			            var x;
 			    }
 			}", // {                "ecmaVersion": 2022            }
+        "namespace MyNamespace { const y: number = 123; var z: string; }",
     ];
 
     Tester::new(VarsOnTop::NAME, VarsOnTop::PLUGIN, pass, fail).test_and_snapshot();

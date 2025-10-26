@@ -229,3 +229,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
   help: Consider moving this to the top of the functions scope or using let or const to declare this variable.
+
+  ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
+   ╭─[vars_on_top.tsx:1:48]
+ 1 │ namespace MyNamespace { const y: number = 123; var z: string; }
+   ·                                                ──────────────
+   ╰────
+  help: Consider moving this to the top of the functions scope or using let or const to declare this variable.
