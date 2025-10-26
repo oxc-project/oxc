@@ -162,10 +162,8 @@ impl ConfigStoreBuilder {
         }
 
         let resolver = Resolver::new(ResolveOptions {
-            // We probably want to encourage the simpler "exports" fields for our new config, so we leave this empty.
-            main_fields: vec![],
-            // TODO: look into tsconfig extension behavior - what conditions should oxlint.json use?
-            condition_names: vec!["import".into(), "default".into()],
+            // Look at the "import"-labeled and then "default"-labeled export in package.json "exports" field if multiple are provided.
+            condition_names: vec!["import".into()],
             ..Default::default()
         });
 
