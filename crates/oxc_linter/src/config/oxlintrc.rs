@@ -218,7 +218,7 @@ impl Oxlintrc {
     /// Merges two [Oxlintrc] files together
     /// [Self] takes priority over `other`
     #[must_use]
-    pub fn merge(&self, other: Oxlintrc) -> Oxlintrc {
+    pub fn merge(&self, other: &Oxlintrc) -> Oxlintrc {
         let mut categories = other.categories.clone();
         categories.extend(self.categories.iter());
 
