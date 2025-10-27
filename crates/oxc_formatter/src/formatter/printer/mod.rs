@@ -378,9 +378,7 @@ impl<'a> Printer<'a> {
         } else {
             self.state.measured_group_fits = true;
 
-            let normal_variants = &best_fitting.variants()[..best_fitting.variants().len() - 1];
-
-            for variant in normal_variants {
+            for variant in best_fitting.variants() {
                 // Test if this variant fits and if so, use it. Otherwise try the next
                 // variant.
 
