@@ -224,6 +224,8 @@ pub mod legal {
 * @preserve
 */
 ",
+            // Issue #14953: legal comments above directives
+            "/*!\n * legal comment\n */\n\n\"use strict\";\n\nexport const foo = 'foo';",
         ]
     }
 

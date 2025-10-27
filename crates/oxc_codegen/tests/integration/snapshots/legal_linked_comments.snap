@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 /* @license */
@@ -106,5 +106,18 @@ function foo() {
 /**
 * @preserve
 */
+
+/*! For license information please see test.js */
+########## 9
+/*!
+ * legal comment
+ */
+
+"use strict";
+
+export const foo = 'foo';
+----------
+'use strict';
+export const foo = 'foo';
 
 /*! For license information please see test.js */

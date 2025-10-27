@@ -68,6 +68,7 @@ impl Gen for Hashbang<'_> {
 
 impl Gen for Directive<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.print_comments_at(self.span.start);
         p.add_source_mapping(self.span);
         p.print_indent();
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
