@@ -55,12 +55,6 @@ impl<'a> Formatter<'a> {
         Self { allocator, source_text: "", options }
     }
 
-    /// Formats the given AST `Program` and returns the IR before printing.
-    pub fn doc(mut self, program: &'a Program<'a>) -> Document<'a> {
-        let formatted = self.format(program);
-        formatted.into_document()
-    }
-
     /// Formats the given AST `Program` and returns the formatted string.
     pub fn build(mut self, program: &Program<'a>) -> String {
         let formatted = self.format(program);

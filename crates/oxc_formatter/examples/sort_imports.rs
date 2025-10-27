@@ -60,15 +60,16 @@ fn main() -> Result<(), String> {
     };
 
     let formatter = Formatter::new(&allocator, options);
+    let formatted = formatter.format(&ret.program);
     if show_ir {
-        let doc = formatter.doc(&ret.program);
+        // Do not rely on `Display` of `Document` here, as it shows Prettier IR
         println!("[");
-        for el in doc.iter() {
+        for el in formatted.document().iter() {
             println!("  {el:?},");
         }
         println!("]");
     } else {
-        let code = formatter.build(&ret.program);
+        let code = formatted.print().map_err(|e| e.to_string())?.into_code();
         println!("{code}");
     }
 
