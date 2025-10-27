@@ -1,9 +1,9 @@
-commit: 261630d6
+commit: 8ea03f88
 
 parser_typescript Summary:
-AST Parsed     : 8814/8816 (99.98%)
-Positive Passed: 8803/8816 (99.85%)
-Negative Passed: 1449/3535 (40.99%)
+AST Parsed     : 8825/8827 (99.98%)
+Positive Passed: 8814/8827 (99.85%)
+Negative Passed: 1451/3530 (41.10%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -70,11 +70,17 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anonymousCla
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anyIdenticalToItself.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsObjectIterator01_ES5.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsObjectIterator02_ES5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsObjectIterator03_ES5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsPropertyNameInJsMode1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInObjectLiteral_Js.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsSpreadRestIterables.tsx
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/arithAssignTyping.ts
 
@@ -85,8 +91,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/arrayAssignm
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/arrayAssignmentTest2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/arrayAssignmentTest4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/arrayToLocaleStringES5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignToEnum.ts
 
@@ -116,10 +120,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentTo
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentToReferenceTypes.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionNoReturnType.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/asyncFunctionReturnExpressionErrorSpans.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals1_1.ts
@@ -147,8 +147,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitCallExp
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitedType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitedTypeStrictNull.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/badExternalModuleReference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/baseCheck.ts
 
@@ -179,8 +177,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/binaryArithm
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bindingPatternCannotBeOnlyInferenceSource.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/blockScopedFunctionDeclarationInStrictClass.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/blockScopedFunctionDeclarationInStrictModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/blockScopedFunctionDeclarationStrictES5.ts
 
@@ -344,8 +340,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commaOperato
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commaOperatorLeftSideUnused.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commentOnImportStatement1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedGenericRecursiveBaseClassReference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1.ts
@@ -405,10 +399,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextually
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/continueNotInIterationStatement4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowAliasedDiscriminants.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/copyrightWithNewLine1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/copyrightWithoutNewLine1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/corrupted.ts
 
@@ -524,8 +514,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/dissallowSym
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/divergentAccessorsVisibility1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/doYouNeedToChangeYourTargetLibraryES2015.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/doYouNeedToChangeYourTargetLibraryES2016Plus.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/doYouNeedToChangeYourTargetLibraryES2023.ts
@@ -628,8 +616,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/erasableSynt
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorCause.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForBareSpecifierWithImplicitModuleResolutionNone.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForConflictingExportEqualsValue.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/errorForUsingPropertyOfTypeAsType02.ts
@@ -690,8 +676,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDef
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingInEs5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingInEs5.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingNoDefaultProperty.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqualsDeclaration.ts
@@ -699,6 +683,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqu
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqualsExportModuleEs2015Error.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportNoNamedExports.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportWithoutFromClause.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportWithoutFromClauseInEs5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportWithoutFromClauseNonInstantiatedModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalNamedImports.ts
 
@@ -764,6 +754,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualE
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualMemberMissing.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportEqualsDefaultProperty.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportInterfaceClassAndValueWithDuplicatesInImportList.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportSpecifierForAGlobal.ts
@@ -787,6 +779,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendAndImp
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendArray.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendFromAny.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendGlobalThis.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendGlobalThis2.ts
 
@@ -1118,8 +1112,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModu
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportType.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/javascriptImportDefaultBadExport.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsCheckObjectDefineThisNoCrash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsElementAccessNoContextualTypeCrash.ts
@@ -1186,7 +1178,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryNo
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryQualifiedNameResolutionError.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryQualifiedNameWithEs5.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFragmentFactoryReference.tsx
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxImportForSideEffectsNonExtantNoError.tsx
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxImportSourceNonPragmaComment.tsx
 
@@ -1357,6 +1353,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleProper
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoTsCJS.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoTsESM.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleVariableArrayIndexer.ts
 
@@ -1534,6 +1532,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSe
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSeparatedNewlineString.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation4.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation5.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/potentiallyUncalledDecorators.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/predicateSemantics.ts
@@ -1555,6 +1557,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyTopLe
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privateFieldAssignabilityFromUnknown.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privateNameWeakMapCollision.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/promiseDefinitionTest.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/promisePermutations.ts
 
@@ -1624,6 +1628,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveBas
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveClassReferenceTest.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveComplicatedClasses.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalCrash4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalTypes.ts
@@ -1684,8 +1690,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/returnTypePa
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/returnValueInSetter.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeIntersectionConstraint.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/scopeCheckExtendedClassInsidePublicMethod2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/scopeCheckExtendedClassInsideStaticMethod1.ts
@@ -1706,11 +1710,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/semicolonsIn
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setterWithReturn.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthand-property-es5-es6.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthand-property-es6-amd.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthand-property-es6-es6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthandPropertyUndefined.ts
 
@@ -1737,6 +1737,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spellingSugg
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadInvalidArgumentType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadOfParamsFromGeneratorMakesRequiredParams.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spreadUnionPropOverride.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spyComparisonChecking.ts
 
@@ -1850,6 +1852,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/tooManyTypeP
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/topLevelLambda.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/transformNestedGeneratorsWithTry.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/tripleSlashTypesReferenceWithMissingExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/truthinessCallExpressionCoercion.ts
@@ -1950,8 +1954,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undeclaredBa
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undeclaredMethod.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undeclaredModuleError.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undeclaredVarEmit.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedSymbolReferencedInArrayLiteral1.ts
@@ -2010,11 +2012,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/weakType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/widenedTypes.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/Symbols/ES5SymbolProperty2.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/Symbols/ES5SymbolProperty5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/Symbols/ES5SymbolProperty6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging3.ts
 
@@ -2027,8 +2025,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es2
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction3_es2017.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction_allowJs.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncAwaitIsolatedModules_es2017.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es2017/await_incorrectThisType.ts
 
@@ -2063,8 +2059,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es5
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction10_es6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction3_es6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncAwaitIsolatedModules_es6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncDeclare_es6.ts
 
@@ -2385,8 +2379,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2019/gl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2019/globalThisVarDeclaration.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2020/es2020IntlAPIs.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2020/modules/exportAsNamespace_nonExistent.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment5.ts
 
@@ -2910,11 +2902,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target10.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target9.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target10.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target9.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentAndDeclaration.ts
 
@@ -2959,6 +2947,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/cjsErrors.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/packageJsonImportsErrors.ts
 
@@ -3135,6 +3125,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/internalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/InvalidNonInstantiatedModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/invalidNestedModules.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkExportsObjectAssignPrototypeProperty.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocOptionalParamOrder.ts
 
@@ -3378,6 +3370,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleRes
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeTripleSlash5.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport_allowJs.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeAllowJsPackageSelfName.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsConditionalPackageExports.ts
@@ -3399,6 +3393,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/legacyNodeModulesExportsSpecifierGenerationConditions.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModules1.ts
 
@@ -3447,6 +3443,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportModeDeclarationEmitErrors1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesJson.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesNoDirectoryModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesPackageExports.ts
 
@@ -3682,23 +3680,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression4.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty8.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Symbols/parserES5SymbolProperty9.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/VariableDeclarations/parserVariableDeclaration4.ts
 
@@ -3993,6 +3977,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/pri
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/primitives/null/validNullAssignments.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/primitives/number/invalidNumberAssignments.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/assignFromStringInterface2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/invalidStringAssignments.ts
 
@@ -4831,7 +4817,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Illegal break statement
    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:2:5]
- 1 │ declare module M {
+ 1 │ declare namespace M {
  2 │     break;
    ·     ──────
  3 │     continue;
@@ -4872,7 +4858,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `myFn` has already been declared
    ╭─[typescript/tests/cases/compiler/anyDeclare.ts:3:9]
- 2 │ module myMod {
+ 2 │ namespace myMod {
  3 │     var myFn;
    ·         ──┬─
    ·           ╰── `myFn` has already been declared here
@@ -5012,7 +4998,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `=>` but found `{`
    ╭─[typescript/tests/cases/compiler/arrowFunctionsMissingTokens.ts:2:16]
- 1 │ module missingArrowsWithCurly {
+ 1 │ namespace missingArrowsWithCurly {
  2 │     var a = () { };
    ·                ┬
    ·                ╰── `=>` expected
@@ -5227,11 +5213,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × Identifier `m1a` has already been declared
-   ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:5:8]
+   ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:5:11]
  4 │ 
- 5 │ module m1a { var y = 2; } // error
-   ·        ─┬─
-   ·         ╰── `m1a` has already been declared here
+ 5 │ namespace m1a { var y = 2; } // error
+   ·           ─┬─
+   ·            ╰── `m1a` has already been declared here
  6 │ var m1a = 1; // error
    ·     ─┬─
    ·      ╰── It can not be redeclared here
@@ -5239,11 +5225,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Identifier `m1b` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:8:8]
+    ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:8:11]
   7 │ 
-  8 │ module m1b { export var y = 2; } // error
-    ·        ─┬─
-    ·         ╰── `m1b` has already been declared here
+  8 │ namespace m1b { export var y = 2; } // error
+    ·           ─┬─
+    ·            ╰── `m1b` has already been declared here
   9 │ var m1b = 1; // error
     ·     ─┬─
     ·      ╰── It can not be redeclared here
@@ -5251,11 +5237,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × Identifier `m1d` has already been declared
-    ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:16:8]
+    ╭─[typescript/tests/cases/compiler/augmentedTypesModules.ts:16:11]
  15 │ 
- 16 │ module m1d { // error
-    ·        ─┬─
-    ·         ╰── `m1d` has already been declared here
+ 16 │ namespace m1d { // error
+    ·           ─┬─
+    ·            ╰── `m1d` has already been declared here
  17 │     export class I { foo() { } }
  18 │ }
  19 │ var m1d = 1; // error
@@ -5318,9 +5304,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  27 │ var x6a = 1; // error
     ·     ─┬─
     ·      ╰── `x6a` has already been declared here
- 28 │ module x6a { var y = 2; } // error since instantiated
-    ·        ─┬─
-    ·         ╰── It can not be redeclared here
+ 28 │ namespace x6a { var y = 2; } // error since instantiated
+    ·           ─┬─
+    ·            ╰── It can not be redeclared here
  29 │ 
     ╰────
 
@@ -5330,9 +5316,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  30 │ var x6b = 1; // error
     ·     ─┬─
     ·      ╰── `x6b` has already been declared here
- 31 │ module x6b { export var y = 2; } // error
-    ·        ─┬─
-    ·         ╰── It can not be redeclared here
+ 31 │ namespace x6b { export var y = 2; } // error
+    ·           ─┬─
+    ·            ╰── It can not be redeclared here
  32 │ 
     ╰────
 
@@ -6625,11 +6611,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ╰── `E` has already been declared here
  2 │     A
    ╰────
-   ╭─[typescript/tests/cases/compiler/constEnumErrors.ts:5:8]
+   ╭─[typescript/tests/cases/compiler/constEnumErrors.ts:5:11]
  4 │ 
- 5 │ module E {
-   ·        ┬
-   ·        ╰── It can not be redeclared here
+ 5 │ namespace E {
+   ·           ┬
+   ·           ╰── It can not be redeclared here
  6 │     var x = 1;
    ╰────
 
@@ -6871,7 +6857,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:2:13]
- 1 │ module M {
+ 1 │ namespace M {
  2 │     declare declare var x;
    ·             ───────
  3 │     declare declare function f();
@@ -6890,7 +6876,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:5:13]
  4 │ 
- 5 │     declare declare module N { }  
+ 5 │     declare declare namespace N { }  
    ·             ───────
  6 │ 
    ╰────
@@ -7004,10 +6990,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/dottedModuleName.ts:3:29]
- 2 │     export module N {
+ 2 │     export namespace N {
  3 │     export function f(x:number)=>2*x;
    ·                                ▲
- 4 │     export module X.Y.Z {
+ 4 │     export namespace X.Y.Z {
    ╰────
   help: Try insert a semicolon here
 
@@ -7761,15 +7747,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Unexpected export.
    ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportWithExport.ts:1:8]
- 1 │ export import defaultBinding1, { } from "server";
-   ·        ──────────────────────────────────────────
- 2 │ export import defaultBinding2, { a } from "server";
+ 1 │ export import defaultBinding1, { } from "./server";
+   ·        ────────────────────────────────────────────
+ 2 │ export import defaultBinding2, { a } from "./server";
    ╰────
 
   × Unexpected export.
    ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts:1:8]
- 1 │ export import defaultBinding, * as nameSpaceBinding  from "server";
-   ·        ────────────────────────────────────────────────────────────
+ 1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
+   ·        ──────────────────────────────────────────────────────────────
  2 │ export var x: number = defaultBinding;
    ╰────
 
@@ -7793,8 +7779,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Unexpected export.
    ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingWithExport.ts:1:8]
- 1 │ export import defaultBinding from "server";
-   ·        ────────────────────────────────────
+ 1 │ export import defaultBinding from "./server";
+   ·        ──────────────────────────────────────
  2 │ export var x = defaultBinding;
    ╰────
 
@@ -7921,9 +7907,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportParsingError.ts:1:10]
- 1 │ import { * } from "es6ImportNamedImportParsingError_0";
+ 1 │ import { * } from "./es6ImportNamedImportParsingError_0";
    ·          ─
- 2 │ import defaultBinding, from "es6ImportNamedImportParsingError_0";
+ 2 │ import defaultBinding, from "./es6ImportNamedImportParsingError_0";
    ╰────
 
   × Unexpected export.
@@ -7948,7 +7934,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
- 1 │ module M {
+ 1 │ namespace M {
  2 │     export export var x = 1;
    ·            ──────
  3 │     export export function f() { }
@@ -7956,7 +7942,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
- 1 │ module M {
+ 1 │ namespace M {
  2 │     export export var x = 1;
    ·            ──────
  3 │     export export function f() { }
@@ -7981,14 +7967,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
  4 │ 
- 5 │     export export module N {
+ 5 │     export export namespace N {
    ·            ──────
  6 │         export export class C { }
    ╰────
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
- 5 │     export export module N {
+ 5 │     export export namespace N {
  6 │         export export class C { }
    ·                ──────
  7 │         export export interface I { }
@@ -7996,7 +7982,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
- 5 │     export export module N {
+ 5 │     export export namespace N {
  6 │         export export class C { }
    ·                ──────
  7 │         export export interface I { }
@@ -8021,14 +8007,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × 'export' modifier cannot be used here.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
  4 │ 
- 5 │     export export module N {
+ 5 │     export export namespace N {
    ·            ──────
  6 │         export export class C { }
    ╰────
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
- 11 │ declare module A {
+ 11 │ declare namespace A {
  12 │     export export var x;
     ·            ──────
  13 │     export export function f()
@@ -8036,7 +8022,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
- 11 │ declare module A {
+ 11 │ declare namespace A {
  12 │     export export var x;
     ·            ──────
  13 │     export export function f()
@@ -8061,14 +8047,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × TS(1029): 'export' modifier must precede 'declare' modifier.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
  14 │ 
- 15 │     export export module N {
+ 15 │     export export namespace N {
     ·            ──────
  16 │         export export class C { }
     ╰────
 
   × TS(1029): 'export' modifier must precede 'declare' modifier.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
- 15 │     export export module N {
+ 15 │     export export namespace N {
  16 │         export export class C { }
     ·                ──────
  17 │         export export interface I { }
@@ -8076,7 +8062,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
- 15 │     export export module N {
+ 15 │     export export namespace N {
  16 │         export export class C { }
     ·                ──────
  17 │         export export interface I { }
@@ -8101,7 +8087,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × 'export' modifier cannot be used here.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
  14 │ 
- 15 │     export export module N {
+ 15 │     export export namespace N {
     ·            ──────
  16 │         export export class C { }
     ╰────
@@ -8238,7 +8224,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/extension.ts:16:12]
- 15 │ declare module M {
+ 15 │ declare namespace M {
  16 │     export extension class C {
     ·            ─────────
  17 │         public pe:string;
@@ -9057,9 +9043,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationModuleSyntax.ts:1:7]
- 1 │ module M { }
-   ·       ▲
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationModuleSyntax.ts:1:10]
+ 1 │ namespace M { }
+   ·          ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -9292,7 +9278,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `x2` has already been declared
     ╭─[typescript/tests/cases/compiler/letAndVarRedeclaration.ts:22:9]
- 21 │ module M0 {
+ 21 │ namespace M0 {
  22 │     let x2;
     ·         ─┬
     ·          ╰── `x2` has already been declared here
@@ -9304,7 +9290,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `x2` has already been declared
     ╭─[typescript/tests/cases/compiler/letAndVarRedeclaration.ts:22:9]
- 21 │ module M0 {
+ 21 │ namespace M0 {
  22 │     let x2;
     ·         ─┬
     ·          ╰── `x2` has already been declared here
@@ -9317,7 +9303,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `x2` has already been declared
     ╭─[typescript/tests/cases/compiler/letAndVarRedeclaration.ts:28:9]
- 27 │ module M1 {
+ 27 │ namespace M1 {
  28 │     let x2;
     ·         ─┬
     ·          ╰── `x2` has already been declared here
@@ -9354,7 +9340,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `x11` has already been declared
     ╭─[typescript/tests/cases/compiler/letAndVarRedeclaration.ts:48:9]
- 47 │ module M2 {
+ 47 │ namespace M2 {
  48 │     let x11;
     ·         ─┬─
     ·          ╰── `x11` has already been declared here
@@ -9971,14 +9957,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:2:5]
  1 │ {
- 2 │     module M { }
-   ·     ────────────
+ 2 │     namespace M { }
+   ·     ───────────────
  3 │     export namespace N {
    ╰────
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:3:12]
- 2 │         module M { }
+ 2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
  4 │ │           export interface I { }
  5 │ ╰─▶     }
@@ -10005,22 +9991,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
  1 │ function blah () {
- 2 │     module M { }
-   ·     ────────────
+ 2 │     namespace M { }
+   ·     ───────────────
  3 │     export namespace N {
    ╰────
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:2:5]
  1 │ function blah () {
- 2 │     module M { }
-   ·     ────────────
+ 2 │     namespace M { }
+   ·     ───────────────
  3 │     export namespace N {
    ╰────
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
- 2 │         module M { }
+ 2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
  4 │ │           export interface I { }
  5 │ ╰─▶     }
@@ -10029,7 +10015,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:3:12]
- 2 │         module M { }
+ 2 │         namespace M { }
  3 │ ╭─▶     export namespace N {
  4 │ │           export interface I { }
  5 │ ╰─▶     }
@@ -10073,14 +10059,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:3:9]
  2 │     {
- 3 │         module M { }
-   ·         ────────────
+ 3 │         namespace M { }
+   ·         ───────────────
  4 │         export namespace N {
    ╰────
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:4:16]
- 3 │             module M { }
+ 3 │             namespace M { }
  4 │ ╭─▶         export namespace N {
  5 │ │               export interface I { }
  6 │ ╰─▶         }
@@ -10146,7 +10132,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `M` has already been declared
     ╭─[typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt3.ts:10:12]
-  9 │ module A.M {
+  9 │ namespace A.M {
  10 │     import M = Z.M;
     ·            ┬
     ·            ╰── `M` has already been declared here
@@ -10158,7 +10144,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `M` has already been declared
     ╭─[typescript/tests/cases/compiler/moduleSharesNameWithImportDeclarationInsideIt5.ts:10:12]
-  9 │ module A.M {
+  9 │ namespace A.M {
  10 │     import M = Z.I;
     ·            ┬
     ·            ╰── `M` has already been declared here
@@ -10174,9 +10160,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·             ──────┬─────
    ·                   ╰── `console` has already been declared here
  2 │ 
- 3 │ module console {
-   ·        ───┬───
-   ·           ╰── It can not be redeclared here
+ 3 │ namespace console {
+   ·           ───┬───
+   ·              ╰── It can not be redeclared here
  4 │     export var x = 2;
    ╰────
 
@@ -10186,9 +10172,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ──────┬─────
    ·           ╰── `console` has already been declared here
  2 │ 
- 3 │ module console {
-   ·        ───┬───
-   ·           ╰── It can not be redeclared here
+ 3 │ namespace console {
+   ·           ───┬───
+   ·              ╰── It can not be redeclared here
  4 │     export var x = 2;
    ╰────
 
@@ -10228,23 +10214,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `x` has already been declared
    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:2:9]
- 1 │ module T {
+ 1 │ namespace T {
  2 │     var x = 2;
    ·         ┬
    ·         ╰── `x` has already been declared here
  3 │ 
- 4 │     module x { // error
-   ·            ┬
-   ·            ╰── It can not be redeclared here
+ 4 │     namespace x { // error
+   ·               ┬
+   ·               ╰── It can not be redeclared here
  5 │         export class Bar {
    ╰────
 
   × Identifier `z` has already been declared
-    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:10:12]
+    ╭─[typescript/tests/cases/compiler/nameCollisions.ts:10:15]
   9 │ 
- 10 │     module z {
-    ·            ┬
-    ·            ╰── `z` has already been declared here
+ 10 │     namespace z {
+    ·               ┬
+    ·               ╰── `z` has already been declared here
  11 │         var t;
  12 │     }
  13 │     var z; // error
@@ -11459,7 +11445,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  325 │ 
  326 │ declare export module "anotherParseError2" {
      ·         ──────
- 327 │     module m2 {
+ 327 │     namespace m2 {
      ╰────
 
   × Unexpected token
@@ -12809,34 +12795,34 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × The keyword 'public' is reserved
-   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:8]
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:2:11]
  1 │ "use strict"
- 2 │ module public { }
-   ·        ──────
- 3 │ module private { }
+ 2 │ namespace public { }
+   ·           ──────
+ 3 │ namespace private { }
    ╰────
 
   × The keyword 'private' is reserved
-   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:3:8]
- 2 │ module public { }
- 3 │ module private { }
-   ·        ───────
- 4 │ module public.whatever {
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:3:11]
+ 2 │ namespace public { }
+ 3 │ namespace private { }
+   ·           ───────
+ 4 │ namespace public.whatever {
    ╰────
 
   × The keyword 'public' is reserved
-   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:4:8]
- 3 │ module private { }
- 4 │ module public.whatever {
-   ·        ──────
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:4:11]
+ 3 │ namespace private { }
+ 4 │ namespace public.whatever {
+   ·           ──────
  5 │ }
    ╰────
 
   × The keyword 'private' is reserved
-   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:8]
+   ╭─[typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts:6:11]
  5 │ }
- 6 │ module private.public.foo { }
-   ·        ───────
+ 6 │ namespace private.public.foo { }
+   ·           ───────
    ╰────
 
   × The keyword 'package' is reserved
@@ -13676,9 +13662,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/thisAssignmentInNamespaceDeclaration1.ts:1:7]
- 1 │ module foo {
-   ·       ▲
+   ╭─[typescript/tests/cases/compiler/thisAssignmentInNamespaceDeclaration1.ts:1:10]
+ 1 │ namespace foo {
+   ·          ▲
  2 │     this.bar = 4;
    ╰────
   help: Try insert a semicolon here
@@ -13987,16 +13973,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
  14 │     
- 15 │     module M {} // error
-    ·     ───────────
+ 15 │     namespace M {} // error
+    ·     ──────────────
  16 │         
     ╰────
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/withStatementErrors.ts:15:5]
  14 │     
- 15 │     module M {} // error
-    ·     ───────────
+ 15 │     namespace M {} // error
+    ·     ──────────────
  16 │         
     ╰────
 
@@ -14033,10 +14019,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
-   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:23]
+   ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:26]
  2 │ 
- 3 │ declare module chrome.debugger {
-   ·                       ────────
+ 3 │ declare namespace chrome.debugger {
+   ·                          ────────
  4 │     declare var tabId: number;
    ╰────
 
@@ -14215,7 +14201,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es5/asyncModule_es5.ts:1:1]
- 1 │ async module M {
+ 1 │ async namespace M {
    · ─────
  2 │ }
    ╰────
@@ -14349,7 +14335,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es6/asyncModule_es6.ts:1:1]
- 1 │ async module M {   
+ 1 │ async namespace M {   
    · ─────
  2 │ }
    ╰────
@@ -14704,7 +14690,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `D` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAndVariableWithSameName.ts:5:11]
-  4 │ module M {
+  4 │ namespace M {
   5 │     class D { // error
     ·           ┬
     ·           ╰── `D` has already been declared here
@@ -16743,6 +16729,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnAwait.ts:4:1]
+ 3 │ @dec
+ 4 │ await 1
+   · ─────
+   ╰────
+
+  × Unexpected token
    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnEnum.ts:4:1]
  3 │ @dec
  4 │ enum E {
@@ -16809,8 +16802,8 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnInternalModule.ts:4:1]
  3 │ @dec
- 4 │ module M {
-   · ──────
+ 4 │ namespace M {
+   · ─────────
  5 │     
    ╰────
 
@@ -16819,6 +16812,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ @dec
  4 │ type T = number;
    · ────
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnUsing.ts:4:1]
+ 3 │ @dec
+ 4 │ using 1
+   · ─────
+ 5 │ 
    ╰────
 
   × Unexpected token
@@ -21269,7 +21270,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `from` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/importDefer/importDeferInvalidDefault.ts:1:14]
- 1 │ import defer foo from "a";
+ 1 │ import defer foo from "./a";
    ·              ─┬─
    ·               ╰── `from` expected
  2 │ 
@@ -21277,7 +21278,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `from` but found `{`
    ╭─[typescript/tests/cases/conformance/importDefer/importDeferInvalidNamed.ts:1:14]
- 1 │ import defer { foo } from "a";
+ 1 │ import defer { foo } from "./a";
    ·              ┬
    ·              ╰── `from` expected
  2 │ 
@@ -21285,14 +21286,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `from` but found `*`
    ╭─[typescript/tests/cases/conformance/importDefer/importDeferTypeConflict1.ts:1:19]
- 1 │ import type defer * as ns1 from "a";
+ 1 │ import type defer * as ns1 from "./a";
    ·                   ┬
    ·                   ╰── `from` expected
    ╰────
 
   × Expected `from` but found `type`
    ╭─[typescript/tests/cases/conformance/importDefer/importDeferTypeConflict2.ts:1:14]
- 1 │ import defer type * as ns1 from "a";
+ 1 │ import defer type * as ns1 from "./a";
    ·              ──┬─
    ·                ╰── `from` expected
    ╰────
@@ -21383,7 +21384,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:2:8]
- 1 │ module Inner {
+ 1 │ namespace Inner {
  2 │     var;
    ·        ─
  3 │     let;
@@ -21391,7 +21392,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:4:5]
- 3 │ module Y {
+ 3 │ namespace Y {
  4 │     public class A { s: string }
    ·     ──────
  5 │ 
@@ -21407,7 +21408,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:12:5]
- 11 │ module Y2 {
+ 11 │ namespace Y2 {
  12 │     public class AA<T> { s: T }
     ·     ──────
  13 │     public interface I { id: number }
@@ -21431,15 +21432,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
- 18 │ module Y3 {
- 19 │     public module Module {
+ 18 │ namespace Y3 {
+ 19 │     public namespace Module {
     ·     ──────
  20 │         class A { s: string }
     ╰────
 
   × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
- 24 │ module Y4 {
+ 24 │ namespace Y4 {
  25 │     public enum Color { Blue, Red }
     ·     ──────
  26 │ }
@@ -21447,7 +21448,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:29:5]
- 28 │ module YY {
+ 28 │ namespace YY {
  29 │     private class A { s: string }
     ·     ───────
  30 │ 
@@ -21463,7 +21464,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:37:5]
- 36 │ module YY2 {
+ 36 │ namespace YY2 {
  37 │     private class AA<T> { s: T }
     ·     ───────
  38 │     private interface I { id: number }
@@ -21487,15 +21488,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
- 43 │ module YY3 {
- 44 │     private module Module {
+ 43 │ namespace YY3 {
+ 44 │     private namespace Module {
     ·     ───────
  45 │         class A { s: string }
     ╰────
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
- 49 │ module YY4 {
+ 49 │ namespace YY4 {
  50 │     private enum Color { Blue, Red }
     ·     ───────
  51 │ }
@@ -21503,7 +21504,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:55:5]
- 54 │ module YYY {
+ 54 │ namespace YYY {
  55 │     static class A { s: string }
     ·     ──────
  56 │ 
@@ -21519,7 +21520,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:63:5]
- 62 │ module YYY2 {
+ 62 │ namespace YYY2 {
  63 │     static class AA<T> { s: T }
     ·     ──────
  64 │     static interface I { id: number }
@@ -21543,15 +21544,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
- 69 │ module YYY3 {
- 70 │     static module Module {
+ 69 │ namespace YYY3 {
+ 70 │     static namespace Module {
     ·     ──────
  71 │         class A { s: string }
     ╰────
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:76:5]
- 75 │ module YYY4 {
+ 75 │ namespace YYY4 {
  76 │     static enum Color { Blue, Red }
     ·     ──────
  77 │ }
@@ -21559,7 +21560,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:4:5]
- 3 │ module Y {
+ 3 │ namespace Y {
  4 │     public var x: number = 0;
    ·     ──────
  5 │ }
@@ -21567,7 +21568,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:8:5]
- 7 │ module Y2 {
+ 7 │ namespace Y2 {
  8 │     public function fn(x: string) { }
    ·     ──────
  9 │ }
@@ -21575,7 +21576,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:12:5]
- 11 │ module Y4 {
+ 11 │ namespace Y4 {
  12 │     static var x: number = 0;
     ·     ──────
  13 │ }
@@ -21583,7 +21584,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'static' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:16:5]
- 15 │ module YY {
+ 15 │ namespace YY {
  16 │     static function fn(x: string) { }
     ·     ──────
  17 │ }
@@ -21591,7 +21592,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:20:5]
- 19 │ module YY2 {
+ 19 │ namespace YY2 {
  20 │     private var x: number = 0;
     ·     ───────
  21 │ }
@@ -21599,7 +21600,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:25:5]
- 24 │ module YY3 {
+ 24 │ namespace YY3 {
  25 │     private function fn(x: string) { }
     ·     ───────
  26 │ }
@@ -21607,7 +21608,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Identifier `Point` has already been declared
    ╭─[typescript/tests/cases/conformance/internalModules/moduleDeclarations/invalidInstantiatedModule.ts:2:18]
- 1 │ module M {
+ 1 │ namespace M {
  2 │     export class Point { x: number; y: number }
    ·                  ──┬──
    ·                    ╰── `Point` has already been declared here
@@ -22705,7 +22706,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Invalid Character `¬`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:2:4]
- 1 │ module M {
+ 1 │ namespace M {
  2 │    ¬
    ·    ─
  3 │    class C {
@@ -23062,10 +23063,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:2:7]
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:2:10]
  1 │ var x: TypeModule1.
- 2 │ module TypeModule2 {
-   ·       ▲
+ 2 │ namespace TypeModule2 {
+   ·          ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -23078,7 +23079,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserUnterminatedGeneric2.ts:2:33]
- 1 │ declare module ng {
+ 1 │ declare namespace ng {
  2 │     interfaceICompiledExpression {
    ·                                 ▲
  3 │         (context: any, locals?: any): any;
@@ -23807,7 +23808,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × 'protected' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
- 1 │ protected module M {
+ 1 │ protected namespace M {
    · ─────────
  2 │ }
    ╰────

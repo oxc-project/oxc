@@ -1,8 +1,14 @@
-commit: 41d96516
+commit: 4cc3d888
 
 semantic_babel Summary:
-AST Parsed     : 2423/2423 (100.00%)
-Positive Passed: 2002/2423 (82.62%)
+AST Parsed     : 2440/2440 (100.00%)
+Positive Passed: 2006/2440 (82.21%)
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
+Cannot assign to this expression
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
+Cannot assign to this expression
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -28,6 +34,23 @@ rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 Unexpected new.target expression
 Unexpected new.target expression
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js
+Super calls are not permitted outside constructors or in nested functions inside constructors.
+'super' can only be referenced in members of derived classes or object literal expressions.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-class-field-initializer-babel-7/input.js
+Super calls are not permitted outside constructors or in nested functions inside constructors.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body-babel-7/input.js
+Super calls are not permitted outside constructors or in nested functions inside constructors.
+'super' can only be referenced in members of derived classes or object literal expressions.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-non-constructor-method-babel-7/input.js
+Super calls are not permitted outside constructors or in nested functions inside constructors.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-static-block-babel-7/input.js
+Super calls are not permitted outside constructors or in nested functions inside constructors.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js
 Unexpected new.target expression
@@ -772,6 +795,34 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/enum-as-or-satisfies-brackets/input.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "as":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "satisfies":
+after transform: SymbolId(1): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/enum-as-or-satisfies-brackets-babel-7/input.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch for "as":
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch for "satisfies":
+after transform: SymbolId(1): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export/input.ts
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
@@ -1249,6 +1300,11 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/interface-as-or-satisfies-brackets/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-computed/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -1392,8 +1448,10 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
 Ambient modules cannot be nested in other modules or namespaces.
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-babel-7/input.ts
+Ambient modules cannot be nested in other modules or namespaces.
 Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
@@ -1426,6 +1484,22 @@ after transform: ScopeId(0): ["X"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-as-or-satisfies-brackets/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["as", "satisfies"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/namespace-as-or-satisfies-brackets/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["as", "satisfies"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/destructuring-in-function-type/input.ts
@@ -2430,6 +2504,11 @@ rebuilt        : []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/plain/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/type-as-or-satisfies-equals/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/call/input.ts

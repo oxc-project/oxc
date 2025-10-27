@@ -1,8 +1,8 @@
-commit: baa48a41
+commit: d2940bdb
 
 parser_test262 Summary:
-AST Parsed     : 44510/44517 (99.98%)
-Positive Passed: 44510/44517 (99.98%)
+AST Parsed     : 44644/44651 (99.98%)
+Positive Passed: 44644/44651 (99.98%)
 Negative Passed: 4535/4535 (100.00%)
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 
