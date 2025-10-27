@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
@@ -63,15 +64,13 @@ fn no_map_spread_diagnostic(
     diagnostic.and_labels(others).and_labels(returned_label)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct NoMapSpreadConfig {
     /// Ignore mapped arrays that are re-read after the `map` call.
     ///
     /// Re-used arrays may rely on shallow copying behavior to avoid mutations.
     /// In these cases, `Object.assign` is not really more performant than spreads.
-    ///
-    /// Default: `true`
     #[serde(default = "default_true")]
     ignore_rereads: bool,
     /// Ignore maps on arrays passed as parameters to a function.
@@ -80,7 +79,7 @@ pub struct NoMapSpreadConfig {
     /// comes at the cost of potentially missing spreads that are inefficient.
     /// We recommend turning this off in your `.oxlintrc.json` files.
     ///
-    /// ### Example
+    /// #### Examples
     ///
     /// Examples of **incorrect** code for this rule when `ignoreArgs` is `true`:
     /// ```ts
@@ -98,8 +97,6 @@ pub struct NoMapSpreadConfig {
     ///     return arr.map(x => ({ ...x }));
     /// }
     /// ```
-    ///
-    /// Default: `true`
     #[serde(default = "default_true")]
     ignore_args: bool,
     // todo: ignore_arrays?
@@ -313,7 +310,8 @@ declare_oxc_lint!(
     NoMapSpread,
     oxc,
     nursery, // TODO: make this `perf` once we've battle-tested this a bit
-    conditional_fix_suggestion
+    conditional_fix_suggestion,
+    config = NoMapSpreadConfig,
 );
 
 const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
