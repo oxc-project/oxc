@@ -363,7 +363,7 @@ mod tests {
     #[test]
     fn test_eslint_bulk_suppressions_file_format() {
         let dir = tempdir().unwrap();
-        let file_path = dir.path().join("eslint-suppressions.json");
+        let file_path = dir.path().join("oxlint-suppressions.json");
 
         // Create ESLint-style suppression format
         let content = r#"{

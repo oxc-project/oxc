@@ -68,10 +68,10 @@ oxlint --suppress-all src/App.tsx src/utils.js
 Run linting with an existing suppressions file:
 
 ```bash
-oxlint --suppressions-location eslint-suppressions.json src/
+oxlint --suppressions-location oxlint-suppressions.json src/
 ```
 
-The default suppressions file is `eslint-suppressions.json` in the current directory.
+The default suppressions file is `oxlint-suppressions.json` in the current directory.
 
 ### Updating Suppressions
 

@@ -17,7 +17,7 @@ pub use oxc_linter::{
 };
 
 /// Default name for the suppressions file
-pub const DEFAULT_SUPPRESSIONS_FILE: &str = "eslint-suppressions.json";
+pub const DEFAULT_SUPPRESSIONS_FILE: &str = "oxlint-suppressions.json";
 
 /// Information about a linting violation to be suppressed
 #[derive(Debug, Clone)]

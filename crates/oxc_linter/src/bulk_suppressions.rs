@@ -520,7 +520,7 @@ mod tests {
 
     #[test]
     fn test_load_eslint_suppressions_from_nonexistent_file() {
-        let file_path = Path::new("/nonexistent/path/eslint-suppressions.json");
+        let file_path = Path::new("/nonexistent/path/oxlint-suppressions.json");
 
         let result = load_eslint_suppressions_from_file(&file_path).unwrap();
         assert!(result.suppressions.is_empty());

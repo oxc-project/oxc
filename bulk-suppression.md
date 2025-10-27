@@ -12,7 +12,7 @@ Based on user requirements and ESLint compatibility:
 2. **Generation**: Automatic - run linter, capture violations, write to JSON file
 3. **Unused Handling**: Error by default, with `--pass-on-unpruned-suppressions` to downgrade to success
 4. **Precedence**: Inline directives take precedence over bulk suppressions (ESLint behavior)
-5. **File Location**: Default to `eslint-suppressions.json` in project root, configurable via `--suppressions-location`
+5. **File Location**: Default to `oxlint-suppressions.json` in project root, configurable via `--suppressions-location`
 
 ## Architecture Integration Points
 
@@ -60,7 +60,7 @@ pub prune_suppressions: bool,
 #[bpaf(switch, hide_usage)]
 pub pass_on_unpruned_suppressions: bool,
 
-/// Location of the suppressions file (default: eslint-suppressions.json)
+/// Location of the suppressions file (default: oxlint-suppressions.json)
 #[bpaf(long, argument("PATH"), hide_usage)]
 pub suppressions_location: Option<PathBuf>,
 ```
@@ -205,7 +205,7 @@ User runs: oxlint --fix --suppress-all
 3. Run linter in capture mode
 4. Collect violations (only "error" severity)
 5. Generate SuppressionConfig entries
-6. Write to eslint-suppressions.json
+6. Write to oxlint-suppressions.json
 7. Exit with success
 ```
 
@@ -268,7 +268,7 @@ User runs: oxlint --prune-suppressions
 
 2. **Bulk suppressions** (medium priority)
 
-   - From `eslint-suppressions.json`
+   - From `oxlint-suppressions.json`
 
 3. **Rule configuration** (lowest priority)
 

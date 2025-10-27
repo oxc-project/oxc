@@ -69,7 +69,7 @@ pub struct LintCommand {
     #[bpaf(switch, hide_usage)]
     pub pass_on_unpruned_suppressions: bool,
 
-    /// Location of the suppressions file (default: eslint-suppressions.json)
+    /// Location of the suppressions file (default: oxlint-suppressions.json)
     #[bpaf(long, argument("PATH"), hide_usage)]
     pub suppressions_location: Option<PathBuf>,
 
