@@ -387,11 +387,15 @@ impl<'a> AssignmentLike<'a, '_> {
             }
         }
 
+        if self.should_break_left_hand_side(left_may_break) {
+            return AssignmentLikeLayout::BreakLeftHandSide;
+        }
+
         if self.should_break_after_operator(right_expression, f) {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
-        if self.should_break_left_hand_side(left_may_break) {
+        if self.is_complex_type_alias() {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
@@ -519,10 +523,6 @@ impl<'a> AssignmentLike<'a, '_> {
     /// be broken on multiple lines
     fn should_break_left_hand_side(&self, left_may_break: bool) -> bool {
         if self.is_complex_destructuring() {
-            return true;
-        }
-
-        if self.is_complex_type_alias() {
             return true;
         }
 
