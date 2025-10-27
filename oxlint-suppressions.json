@@ -1,7 +1,0 @@
-{
-  "test.js": {
-    "no-unused-vars": {
-      "count": 1
-    }
-  }
-}

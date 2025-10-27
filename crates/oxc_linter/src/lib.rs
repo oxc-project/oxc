@@ -107,6 +107,7 @@ pub struct Linter {
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     bulk_suppressions: Option<BulkSuppressions>,
+    count_based_suppressions: Option<CountBasedBulkSuppressions>,
 }
 
 impl Linter {
@@ -115,7 +116,7 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, bulk_suppressions: None }
+        Self { options, config, external_linter, bulk_suppressions: None, count_based_suppressions: None }
     }
 
     /// Create a new Linter with bulk suppressions
@@ -125,7 +126,7 @@ impl Linter {
         external_linter: Option<ExternalLinter>,
         bulk_suppressions: Option<BulkSuppressions>,
     ) -> Self {
-        Self { options, config, external_linter, bulk_suppressions }
+        Self { options, config, external_linter, bulk_suppressions, count_based_suppressions: None }
     }
 
     /// Create a new Linter with bulk suppressions, accepting references to avoid cloning
@@ -140,7 +141,8 @@ impl Linter {
             options,
             config,
             external_linter: external_linter.cloned(), // Still need to clone, but only when actually present
-            bulk_suppressions
+            bulk_suppressions,
+            count_based_suppressions: None
         }
     }
 
@@ -151,32 +153,15 @@ impl Linter {
         external_linter: Option<ExternalLinter>,
         count_based_suppressions: Option<CountBasedBulkSuppressions>,
     ) -> Self {
-        // Convert count-based suppressions to old format for compatibility
-        // This is a temporary bridge until the entire system can be updated
-        let bulk_suppressions = count_based_suppressions.map(|cb_suppressions| {
-            // For now, we still need to convert to the old format
-            // In a full optimization, the entire linter would be updated to use count-based suppressions natively
-            let mut old_format_suppressions = Vec::new();
-
-            for suppression in &cb_suppressions.suppressions().suppressions {
-                // Expand count-based suppression to individual entries (temporary compatibility)
-                for _ in 0..suppression.count {
-                    old_format_suppressions.push(SuppressionEntry {
-                        files: suppression.files.clone(),
-                        rules: suppression.rules.clone(),
-                        line: suppression.line,
-                        column: suppression.column,
-                        end_line: suppression.end_line,
-                        end_column: suppression.end_column,
-                        reason: suppression.reason.clone(),
-                    });
-                }
-            }
-
-            BulkSuppressions::new(SuppressionsFile { suppressions: old_format_suppressions })
-        });
-
-        Self { options, config, external_linter, bulk_suppressions }
+        // Store the count-based suppressions directly without conversion
+        // This avoids the O(n) expansion to individual entries
+        Self {
+            options,
+            config,
+            external_linter,
+            bulk_suppressions: None,  // No old format suppressions
+            count_based_suppressions,
+        }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -213,6 +198,11 @@ impl Linter {
         &self.bulk_suppressions
     }
 
+    /// Get reference to count-based bulk suppressions, if any are loaded.
+    pub fn count_based_suppressions(&self) -> &Option<CountBasedBulkSuppressions> {
+        &self.count_based_suppressions
+    }
+
     /// # Panics
     /// Panics if running in debug mode and the number of diagnostics does not match when running with/without optimizations
     pub fn run<'a>(
@@ -236,13 +226,32 @@ impl Linter {
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
-        let mut ctx_host = Rc::new(ContextHost::new_with_bulk_suppressions(
-            path,
-            context_sub_hosts,
-            self.options,
-            config,
-            self.bulk_suppressions.clone(),
-        ));
+        let mut ctx_host = match (&self.bulk_suppressions, &self.count_based_suppressions) {
+            (_, Some(count_based)) => {
+                // Prioritize count-based suppressions when available (memory optimized)
+                Rc::new(ContextHost::new_with_count_based_suppressions(
+                    path,
+                    context_sub_hosts,
+                    self.options,
+                    config,
+                    Some(count_based.clone()),
+                ))
+            }
+            (Some(bulk), None) => {
+                // Fall back to regular bulk suppressions
+                Rc::new(ContextHost::new_with_bulk_suppressions(
+                    path,
+                    context_sub_hosts,
+                    self.options,
+                    config,
+                    Some(bulk.clone()),
+                ))
+            }
+            (None, None) => {
+                // No suppressions
+                Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config))
+            }
+        };
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;

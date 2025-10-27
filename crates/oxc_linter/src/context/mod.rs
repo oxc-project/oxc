@@ -234,9 +234,22 @@ impl<'a> LintContext<'a> {
             return;
         }
 
-        // Check bulk suppressions second
+        // Check bulk suppressions second (old format)
         if let Some(bulk_suppressions) = self.parent.bulk_suppressions() {
             if bulk_suppressions.matches(
+                self.current_plugin_name,
+                self.current_plugin_prefix,
+                self.current_rule_name,
+                message.span,
+                self.file_path(),
+            ) {
+                return; // Diagnostic is suppressed
+            }
+        }
+
+        // Check count-based bulk suppressions third (memory optimized)
+        if let Some(count_based_suppressions) = self.parent.count_based_suppressions() {
+            if count_based_suppressions.matches(
                 self.current_plugin_name,
                 self.current_plugin_prefix,
                 self.current_rule_name,

@@ -16,10 +16,10 @@ use std::collections::HashMap;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, BulkSuppressions, Config, ConfigStore, ConfigStoreBuilder,
+    AllowWarnDeny, BulkSuppressions, CountBasedBulkSuppressions, Config, ConfigStore, ConfigStoreBuilder,
     ESLintBulkSuppressionsFile, ESLintRuleSuppression, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    SuppressionsFile, load_eslint_suppressions_from_file, load_suppressions_from_file,
+    SuppressionsFile, convert_eslint_to_count_based, load_eslint_suppressions_from_file, load_suppressions_from_file,
 };
 
 use crate::command::suppressions::load_suppressions_file_cli;
@@ -87,43 +87,17 @@ impl CliRunner {
 
         // Load bulk suppressions for normal linting if they exist
         // First try ESLint-style, then fall back to old format
-        let bulk_suppressions = if suppressions_file.exists() {
+        let (bulk_suppressions, count_based_suppressions) = if suppressions_file.exists() {
             // Try ESLint-style format first
             match load_eslint_suppressions_from_file(&suppressions_file) {
                 Ok(eslint_suppressions_data) => {
                     if !eslint_suppressions_data.suppressions.is_empty() {
-                        // Convert ESLint format to old format for compatibility
-                        // Note: This creates O(count) entries for memory efficiency concerns
-                        // but is necessary for compatibility with existing BulkSuppressions infrastructure
-                        let mut compat_suppressions = Vec::new();
-                        for (file_path, rules) in &eslint_suppressions_data.suppressions {
-                            for (rule_name, rule_suppression) in rules {
-                                // Create multiple suppression entries based on count
-                                // Each entry represents one suppressible violation
-                                for _ in 0..rule_suppression.count {
-                                    compat_suppressions.push(SuppressionEntry {
-                                        files: vec![file_path.clone()],
-                                        rules: vec![rule_name.clone()],
-                                        line: 1, // Simplified - ESLint format doesn't store exact positions
-                                        column: 0,
-                                        end_line: None,
-                                        end_column: None,
-                                        reason: "ESLint-style bulk suppression".to_string(),
-                                    });
-                                }
-                            }
-                        }
-
-                        if !compat_suppressions.is_empty() {
-                            let bulk_suppressions = BulkSuppressions::new(SuppressionsFile {
-                                suppressions: compat_suppressions,
-                            });
-                            Some(bulk_suppressions)
-                        } else {
-                            None
-                        }
+                        // Use memory-optimized count-based suppressions
+                        let count_based_file = convert_eslint_to_count_based(&eslint_suppressions_data);
+                        let count_based_suppressions = CountBasedBulkSuppressions::new(count_based_file);
+                        (None, Some(count_based_suppressions))
                     } else {
-                        None
+                        (None, None)
                     }
                 }
                 Err(_) => {
@@ -131,21 +105,21 @@ impl CliRunner {
                     match load_suppressions_from_file(&suppressions_file) {
                         Ok(suppressions_data) => {
                             if !suppressions_data.suppressions.is_empty() {
-                                Some(BulkSuppressions::new(suppressions_data))
+                                (Some(BulkSuppressions::new(suppressions_data)), None)
                             } else {
-                                None
+                                (None, None)
                             }
                         }
                         Err(_) => {
                             // If we can't load suppressions, continue without them
                             // In a production version, we might want to warn the user
-                            None
+                            (None, None)
                         }
                     }
                 }
             }
         } else {
-            None
+            (None, None)
         };
 
         // Extract remaining options for normal linting flow
@@ -405,12 +379,34 @@ impl CliRunner {
             .collect::<Vec<Arc<OsStr>>>();
 
         let has_external_linter = external_linter.is_some();
-        let linter = Linter::new_with_suppressions(
-            LintOptions::default(),
-            config_store,
-            external_linter,
-            bulk_suppressions,
-        )
+        let linter = match (bulk_suppressions, count_based_suppressions) {
+            (_, Some(count_based)) => {
+                // Use memory-optimized count-based suppressions when available
+                Linter::new_with_count_based_suppressions(
+                    LintOptions::default(),
+                    config_store,
+                    external_linter,
+                    Some(count_based),
+                )
+            }
+            (Some(bulk), None) => {
+                // Fall back to regular bulk suppressions
+                Linter::new_with_suppressions(
+                    LintOptions::default(),
+                    config_store,
+                    external_linter,
+                    Some(bulk),
+                )
+            }
+            (None, None) => {
+                // No suppressions
+                Linter::new(
+                    LintOptions::default(),
+                    config_store,
+                    external_linter,
+                )
+            }
+        }
         .with_fix(fix_options.fix_kind())
         .with_report_unused_directives(report_unused_directives);
 
@@ -487,28 +483,36 @@ impl CliRunner {
 
         // Check for unused bulk suppressions after linting completes
         let mut bulk_suppression_result = CliRunResult::LintSucceeded;
-        if let Some(bulk_suppressions) = linter.bulk_suppressions() {
-            let unused_suppressions = bulk_suppressions.get_unused_suppressions();
-            if !unused_suppressions.is_empty() {
-                let unused_count = unused_suppressions.len();
-                if pass_on_unpruned_suppressions {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "There are {} suppressions that do not occur anymore. Consider re-running with `--prune-suppressions`.\n",
-                            unused_count
-                        ),
-                    );
-                } else {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Error: {} unused suppressions found. Use `--pass-on-unpruned-suppressions` to ignore or `--prune-suppressions` to remove them.\n",
-                            unused_count
-                        ),
-                    );
-                    bulk_suppression_result = CliRunResult::UnusedSuppressionsFound;
-                }
+
+        // Check unused suppressions for both types
+        let unused_count = if let Some(count_based_suppressions) = linter.count_based_suppressions() {
+            // Count-based suppressions - get unused from count-based tracker
+            count_based_suppressions.get_unused_suppressions().len()
+        } else if let Some(bulk_suppressions) = linter.bulk_suppressions() {
+            // Regular bulk suppressions - get unused from regular tracker
+            bulk_suppressions.get_unused_suppressions().len()
+        } else {
+            0
+        };
+
+        if unused_count > 0 {
+            if pass_on_unpruned_suppressions {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "There are {} suppressions that do not occur anymore. Consider re-running with `--prune-suppressions`.\n",
+                        unused_count
+                    ),
+                );
+            } else {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Error: {} unused suppressions found. Use `--pass-on-unpruned-suppressions` to ignore or `--prune-suppressions` to remove them.\n",
+                        unused_count
+                    ),
+                );
+                bulk_suppression_result = CliRunResult::UnusedSuppressionsFound;
             }
         }
 
