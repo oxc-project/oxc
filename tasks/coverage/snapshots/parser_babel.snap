@@ -1,9 +1,9 @@
-commit: 41d96516
+commit: 4cc3d888
 
 parser_babel Summary:
-AST Parsed     : 2407/2423 (99.34%)
-Positive Passed: 2385/2423 (98.43%)
-Negative Passed: 1665/1755 (94.87%)
+AST Parsed     : 2422/2440 (99.26%)
+Positive Passed: 2395/2440 (98.16%)
+Negative Passed: 1670/1760 (94.89%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -184,6 +184,26 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
+
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js:3:1]
+ 2 │ 
+ 3 │ async() = 1;
+   · ───────
+ 4 │ async() += 1;
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
+
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js:3:2]
+ 2 │ 
+ 3 │ (async()) = 1;
+   ·  ───────
+ 4 │ (async()) += 1;
+   ╰────
+
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 
   × Unexpected new.target expression
@@ -201,6 +221,70 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js:1:1]
+ 1 │ super();
+   · ───────
+ 2 │ super.property;
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js:2:1]
+ 1 │ super();
+ 2 │ super.property;
+   · ─────
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-class-field-initializer-babel-7/input.js
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-class-field-initializer-babel-7/input.js:2:14]
+ 1 │ class Derived extends Base {
+ 2 │   property = super();
+   ·              ───────
+ 3 │ }
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body-babel-7/input.js
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body-babel-7/input.js:2:3]
+ 1 │ function f() {
+ 2 │   super();
+   ·   ───────
+ 3 │   super.property;
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body-babel-7/input.js:3:3]
+ 2 │   super();
+ 3 │   super.property;
+   ·   ─────
+ 4 │ }
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-non-constructor-method-babel-7/input.js
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-non-constructor-method-babel-7/input.js:3:5]
+ 2 │   method() {
+ 3 │     super();
+   ·     ───────
+ 4 │   }
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-static-block-babel-7/input.js
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-static-block-babel-7/input.js:3:5]
+ 2 │   static {
+ 3 │     super();
+   ·     ───────
+ 4 │     super.property;
+   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js
 
@@ -795,6 +879,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                 ╰── `f` has already been declared here
    ╰────
 
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/invalid-assignment-target-type/input.js:3:2]
+ 2 │ 
+ 3 │ [async()] = [];
+   ·  ───────
+ 4 │ ({ a: async() } = {});
+   ╰────
+
   × Expected `;` but found `Identifier`
    ╭─[babel/packages/babel-parser/test/fixtures/core/categorized/for-missing-semicolons/input.js:3:3]
  2 │   var a = 1
@@ -1233,6 +1325,46 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │     return 0;
    ·     ──────
  4 │   }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-class-field-initializer/input.js:2:14]
+ 1 │ class Derived extends Base {
+ 2 │   property = super();
+   ·              ───────
+ 3 │ }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body/input.js:2:3]
+ 1 │ function f() {
+ 2 │   super();
+   ·   ───────
+ 3 │   super.property;
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body/input.js:3:3]
+ 2 │   super();
+ 3 │   super.property;
+   ·   ─────
+ 4 │ }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-non-constructor-method/input.js:3:5]
+ 2 │   method() {
+ 3 │     super();
+   ·     ───────
+ 4 │   }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-static-block/input.js:3:5]
+ 2 │   static {
+ 3 │     super();
+   ·     ───────
+ 4 │     super.property;
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
