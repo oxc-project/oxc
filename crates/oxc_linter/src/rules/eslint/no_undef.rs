@@ -67,6 +67,11 @@ impl Rule for NoUndef {
                     continue;
                 }
 
+                // Check framework-specific globals (e.g., Vue's defineProps in <script setup>)
+                if ctx.frameworks_options().has_global(name) {
+                    continue;
+                }
+
                 // Skip reporting error for 'arguments' if it's in a function scope
                 if name == "arguments"
                     && ctx

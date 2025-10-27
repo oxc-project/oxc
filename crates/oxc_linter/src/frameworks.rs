@@ -102,3 +102,76 @@ pub enum FrameworkOptions {
     Default,  // default
     VueSetup, // context is inside `<script setup>`
 }
+
+/// Vue 3 compiler macros available in `<script setup>`
+/// Reference: https://github.com/vuejs/vue-eslint-parser/blob/5ff1a4fda76b07608cc17687a976c2309f5648e2/src/script-setup/scope-analyzer.ts#L86
+static VUE_SETUP_GLOBALS: [&str; 7] = [
+    "defineProps",
+    "defineEmits",
+    "defineExpose",
+    "withDefaults",
+    "defineOptions",
+    "defineSlots",
+    "defineModel",
+];
+
+impl FrameworkOptions {
+    /// Check if a variable is a framework-specific global in this context.
+    ///
+    /// Returns `true` if the variable is a framework global, `false` otherwise.
+    /// Framework globals are always readonly, as they are compiler macros or
+    /// special identifiers provided by the framework.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_linter::frameworks::FrameworkOptions;
+    ///
+    /// // In a Vue <script setup> context
+    /// let options = FrameworkOptions::VueSetup;
+    /// assert!(options.has_global("defineProps") == true);
+    /// assert!(options.has_global("defineEmits") == true);
+    /// assert!(options.has_global("console") == false);
+    ///
+    /// // No framework globals by default
+    /// let options = FrameworkOptions::Default;
+    /// assert!(options.has_global("defineProps") == false);
+    /// assert!(options.has_global("console") == false);
+    /// ```
+    pub fn has_global(self, var: &str) -> bool {
+        match self {
+            Self::Default => false,
+            Self::VueSetup => VUE_SETUP_GLOBALS.contains(&var),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vue_setup_globals() {
+        // Test all Vue compiler macros
+        let options = FrameworkOptions::VueSetup;
+        assert!(options.has_global("defineProps"));
+        assert!(options.has_global("defineEmits"));
+        assert!(options.has_global("defineExpose"));
+        assert!(options.has_global("defineOptions"));
+        assert!(options.has_global("defineSlots"));
+        assert!(options.has_global("defineModel"));
+        assert!(options.has_global("withDefaults"));
+
+        // Test that non-Vue globals are not included
+        assert!(!options.has_global("console"));
+        assert!(!options.has_global("window"));
+        assert!(!options.has_global("randomVariable"));
+    }
+
+    #[test]
+    fn test_default_no_globals() {
+        // Default context has no framework globals
+        let options = FrameworkOptions::Default;
+        assert!(!options.has_global("defineProps"));
+        assert!(!options.has_global("console"));
+    }
+}
