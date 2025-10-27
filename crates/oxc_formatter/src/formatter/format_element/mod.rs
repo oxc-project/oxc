@@ -103,6 +103,10 @@ impl LineMode {
     pub const fn is_hard(self) -> bool {
         matches!(self, LineMode::Hard)
     }
+
+    pub const fn will_break(self) -> bool {
+        matches!(self, LineMode::Hard | LineMode::Empty)
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -240,7 +244,7 @@ impl FormatElements for FormatElement<'_> {
         match self {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
-            FormatElement::Line(line_mode) => matches!(line_mode, LineMode::Hard | LineMode::Empty),
+            FormatElement::Line(line_mode) => line_mode.will_break(),
             FormatElement::StaticText { text } | FormatElement::DynamicText { text } => {
                 text.contains('\n')
             }
