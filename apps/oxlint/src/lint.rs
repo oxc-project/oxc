@@ -621,6 +621,33 @@ impl CliRunner {
             }
         };
 
+        // When using --suppress-rule, we need to remove existing suppressions for those specific rules
+        // to avoid accumulation on repeated runs
+        if !suppress_all && !suppress_rule.is_empty() {
+            for suppressed_rule in suppress_rule {
+                for file_rules in eslint_suppressions.values_mut() {
+                    // Remove exact rule name matches
+                    file_rules.remove(suppressed_rule);
+
+                    // Also remove prefixed versions (e.g., "eslint/no-console" when suppressing "no-console")
+                    let rules_to_remove: Vec<String> = file_rules.keys()
+                        .filter(|rule| {
+                            rule.ends_with(&format!("/{}", suppressed_rule)) ||
+                            suppressed_rule.contains('/') && rule.as_str() == suppressed_rule
+                        })
+                        .cloned()
+                        .collect();
+
+                    for rule_to_remove in rules_to_remove {
+                        file_rules.remove(&rule_to_remove);
+                    }
+                }
+            }
+
+            // Clean up empty file entries
+            eslint_suppressions.retain(|_, rules| !rules.is_empty());
+        }
+
         // Group violations by file and rule
         for violation in filtered_violations {
             let file_entry =
