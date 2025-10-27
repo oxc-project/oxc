@@ -99,8 +99,10 @@ pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 
 pub enum FrameworkOptions {
-    Default,  // default
-    VueSetup, // context is inside `<script setup>`
+    Default,      // default
+    VueSetup,     // context is inside `<script setup>`
+    SvelteModule, // `<script module>`
+    Svelte,       // `<script>`
 }
 
 /// Vue 3 compiler macros available in `<script setup>`
@@ -114,6 +116,14 @@ static VUE_SETUP_GLOBALS: [&str; 7] = [
     "defineSlots",
     "defineModel",
 ];
+
+/// Svelte runes available in `<script>` context
+/// Reference: https://github.com/sveltejs/svelte/blob/da00abe1162a8e56455e92b79020c4e33290e10e/packages/svelte/src/ambient.d.ts#L23
+static SVELTE_GLOBALS: [&str; 7] =
+    ["$state", "$derived", "$effect", "$props", "$bindable", "$inspect", "$host"];
+
+/// A subset of Svelte runes is available in `<script module>` context.
+static SVELTE_MODULE_GLOBALS: [&str; 4] = ["$state", "$derived", "$effect", "$inspect"];
 
 impl FrameworkOptions {
     /// Check if a variable is a framework-specific global in this context.
@@ -141,6 +151,8 @@ impl FrameworkOptions {
         match self {
             Self::Default => false,
             Self::VueSetup => VUE_SETUP_GLOBALS.contains(&var),
+            Self::SvelteModule => SVELTE_MODULE_GLOBALS.contains(&var),
+            Self::Svelte => SVELTE_GLOBALS.contains(&var),
         }
     }
 }
@@ -165,6 +177,27 @@ mod tests {
         assert!(!options.has_global("console"));
         assert!(!options.has_global("window"));
         assert!(!options.has_global("randomVariable"));
+    }
+
+    #[test]
+    fn test_svelte_globals() {
+        let options = FrameworkOptions::Svelte;
+        assert!(options.has_global("$state"));
+        assert!(options.has_global("$derived"));
+        assert!(options.has_global("$effect"));
+        assert!(options.has_global("$props"));
+        assert!(options.has_global("$bindable"));
+        assert!(options.has_global("$inspect"));
+        assert!(options.has_global("$host"));
+
+        let globals = FrameworkOptions::SvelteModule;
+        assert!(globals.has_global("$state"));
+        assert!(globals.has_global("$derived"));
+        assert!(globals.has_global("$effect"));
+        assert!(globals.has_global("$inspect"));
+        assert!(!globals.has_global("$props"));
+        assert!(!globals.has_global("$bindable"));
+        assert!(!globals.has_global("$host"));
     }
 
     #[test]
