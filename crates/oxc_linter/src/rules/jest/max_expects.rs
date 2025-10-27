@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -16,8 +17,10 @@ fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxExpects {
+    /// Maximum number of `expect()` assertion calls allowed within a single test.
     pub max: usize,
 }
 
@@ -37,7 +40,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// This rule enforces a maximum number of `expect()` calls.
-    /// The following patterns are considered warnings (with the default option of `{ "max": 5 } `):
+    /// The following patterns are considered warnings (with the default max of 5):
     ///
     /// ### Examples
     ///
@@ -64,6 +67,7 @@ declare_oxc_lint!(
     MaxExpects,
     jest,
     style,
+    config = MaxExpects,
 );
 
 impl Rule for MaxExpects {
