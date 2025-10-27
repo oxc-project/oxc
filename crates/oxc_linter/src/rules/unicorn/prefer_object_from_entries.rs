@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -24,8 +25,10 @@ fn prefer_object_from_entries_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferObjectFromEntries(Box<PreferObjectFromEntriesConfig>);
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferObjectFromEntriesConfig {
+    /// Additional functions to treat as equivalents to `Object.fromEntries`.
     functions: Vec<String>,
 }
 
@@ -77,7 +80,8 @@ declare_oxc_lint!(
     PreferObjectFromEntries,
     unicorn,
     style,
-    pending
+    pending,
+    config = PreferObjectFromEntriesConfig,
 );
 
 impl Rule for PreferObjectFromEntries {
