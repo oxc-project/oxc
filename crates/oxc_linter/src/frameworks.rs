@@ -135,8 +135,6 @@ impl FrameworkOptions {
     ///
     /// # Examples
     /// ```
-    /// use oxc_linter::frameworks::FrameworkOptions;
-    ///
     /// // In a Vue <script setup> context
     /// let options = FrameworkOptions::VueSetup;
     /// assert!(options.has_global("defineProps") == true);
