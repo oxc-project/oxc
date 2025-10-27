@@ -9,6 +9,7 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils};
@@ -23,8 +24,10 @@ impl Deref for NoAsyncEndpointHandlers {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoAsyncEndpointHandlersConfig {
+    /// An array of names that are allowed to be async.
     allowed_names: Vec<CompactStr>,
 }
 
@@ -154,21 +157,10 @@ declare_oxc_lint!(
     /// }
     /// app.get('/user', (req, res, next) => asyncHandler(req, res).catch(next))
     /// ```
-    ///
-    /// ## Configuration
-    ///
-    /// This rule takes the following configuration:
-    /// ```ts
-    /// type NoAsyncEndpointHandlersConfig = {
-    ///   /**
-    ///    * An array of names that are allowed to be async.
-    ///    */
-    ///   allowedNames?: string[];
-    /// }
-    /// ```
     NoAsyncEndpointHandlers,
     oxc,
-    suspicious
+    suspicious,
+    config = NoAsyncEndpointHandlersConfig
 );
 
 impl Rule for NoAsyncEndpointHandlers {
