@@ -4,6 +4,8 @@ use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -12,8 +14,10 @@ fn deprecated_function(deprecated: &str, new: &str, span: Span) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JestConfig {
+    /// The version of Jest being used.
     version: String,
 }
 
@@ -26,8 +30,10 @@ impl Default for JestConfig {
 #[derive(Debug, Default, Clone)]
 pub struct NoDeprecatedFunctions(Box<NoDeprecatedFunctionsConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoDeprecatedFunctionsConfig {
+    /// Jest configuration options.
     jest: JestConfig,
 }
 
@@ -46,26 +52,32 @@ declare_oxc_lint!(
     /// either been renamed for clarity, or replaced with more powerful APIs.
     ///
     /// This rule can also autofix a number of these deprecations for you.
+    ///
     /// #### `jest.resetModuleRegistry`
+    ///
     /// This function was renamed to `resetModules` in Jest 15 and removed in Jest 27.
     ///
     /// #### `jest.addMatchers`
+    ///
     /// This function was replaced with `expect.extend` in Jest 17 and removed in Jest 27.
     ///
     /// #### `require.requireActual` & `require.requireMock`
+    ///
     /// These functions were replaced in Jest 21 and removed in Jest 26.
     ///
-    /// Originally, the `requireActual` & `requireMock` the `requireActual`&
-    /// `requireMock` functions were placed onto the `require` function.
+    /// Originally, the `requireActual` and `requireMock` functions were placed
+    /// onto the `require` function.
     ///
     /// These functions were later moved onto the `jest` object in order to be easier
     /// for type checkers to handle, and their use via `require` deprecated. Finally,
     /// the release of Jest 26 saw them removed from the `require` function altogether.
     ///
     /// #### `jest.runTimersToTime`
+    ///
     /// This function was renamed to `advanceTimersByTime` in Jest 22 and removed in Jest 27.
     ///
     /// #### `jest.genMockFromModule`
+    ///
     /// This function was renamed to `createMockFromModule` in Jest 26, and is scheduled for removal in Jest 30.
     ///
     /// ### Why is this bad?
@@ -83,7 +95,8 @@ declare_oxc_lint!(
     NoDeprecatedFunctions,
     jest,
     style,
-    fix
+    fix,
+    config = NoDeprecatedFunctionsConfig,
 );
 
 fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)> {
