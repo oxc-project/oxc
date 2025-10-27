@@ -24,7 +24,6 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     // Manually prints it because class's decorators can be appears before `export class Cls {}`.
     "ExportNamedDeclaration",
     "ExportDefaultDeclaration",
-    "TSClassImplements",
     //
     "JSXElement",
     "JSXFragment",

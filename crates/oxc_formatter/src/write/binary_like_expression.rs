@@ -13,7 +13,6 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{FormatResult, Formatter, trivia::FormatTrailingComments},
     parentheses::NeedsParentheses,
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -294,8 +293,6 @@ enum BinaryLeftOrRightSide<'a, 'b> {
         parent: BinaryLikeExpression<'a, 'b>,
         /// Is the parent the condition of a `if` / `while` / `do-while` / `for` statement?
         inside_condition: bool,
-        /// It is the root of the expression.
-        root: bool,
     },
 }
 
@@ -306,7 +303,6 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
-                root,
             } => {
                 let mut binary_like_expression = *binary_like_expression;
                 // // It's only possible to suppress the formatting of the whole binary expression formatting OR
@@ -401,16 +397,7 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         write!(f, [soft_line_break_or_space()])?;
                     }
 
-                    if *root {
-                        write!(f, FormatNodeWithoutTrailingComments(right))?;
-                        let comments = f
-                            .context()
-                            .comments()
-                            .comments_before(binary_like_expression.span().end);
-                        write!(f, FormatTrailingComments::Comments(comments))
-                    } else {
-                        write!(f, right)
-                    }
+                    write!(f, right)
                 });
 
                 // Doesn't match prettier that only distinguishes between logical and binary
@@ -424,6 +411,16 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                     binary_like_expression,
                     right.as_ast_nodes(),
                 ) || (*inside_parenthesis && logical_operator.is_some()));
+
+                match binary_like_expression.left().as_ast_nodes() {
+                    AstNodes::LogicalExpression(logical) => {
+                        logical.format_trailing_comments(f)?;
+                    }
+                    AstNodes::BinaryExpression(binary) => {
+                        binary.format_trailing_comments(f)?;
+                    }
+                    _ => {}
+                }
 
                 if should_group {
                     // `left` side has printed before `right` side, so that trailing comments of `left` side has been printed,
@@ -489,7 +486,6 @@ fn split_into_left_and_right_sides<'a, 'b>(
     inside_condition: bool,
 ) -> Vec<BinaryLeftOrRightSide<'a, 'b>> {
     fn split_into_left_and_right_sides_inner<'a, 'b>(
-        is_root: bool,
         binary: BinaryLikeExpression<'a, 'b>,
         inside_condition: bool,
         items: &mut Vec<BinaryLeftOrRightSide<'a, 'b>>,
@@ -500,7 +496,6 @@ fn split_into_left_and_right_sides<'a, 'b>(
             // We can flatten the left hand side, so we need to check if we have a nested binary expression
             // that we can flatten.
             split_into_left_and_right_sides_inner(
-                false,
                 // SAFETY: `left` is guaranteed to be a valid binary like expression in `can_flatten()`.
                 BinaryLikeExpression::try_from(left).unwrap(),
                 inside_condition,
@@ -510,11 +505,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
             items.push(BinaryLeftOrRightSide::Left { parent: binary });
         }
 
-        items.push(BinaryLeftOrRightSide::Right {
-            parent: binary,
-            inside_condition,
-            root: is_root,
-        });
+        items.push(BinaryLeftOrRightSide::Right { parent: binary, inside_condition });
     }
 
     // Stores the left and right parts of the binary expression in sequence (rather than nested as they
@@ -522,7 +513,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
     // `with_capacity(2)` because we expect at least 2 items (left and right).
     let mut items = Vec::with_capacity(2);
 
-    split_into_left_and_right_sides_inner(true, binary, inside_condition, &mut items);
+    split_into_left_and_right_sides_inner(binary, inside_condition, &mut items);
 
     items
 }
