@@ -190,6 +190,23 @@ export function initCompiledVisitor(): void {
     enterExit.exit = null;
   }
   enterExitObjectCacheNextIndex = 0;
+
+  // Reset merged visitor type IDs from previous compilation
+  // These arrays must be cleared here in case the previous compilation failed
+  // before reaching the cleanup code in `finalizeCompiledVisitor`
+  mergedLeafVisitorTypeIds.length = 0;
+  mergedEnterVisitorTypeIds.length = 0;
+  mergedExitVisitorTypeIds.length = 0;
+
+  // Reset visit function array cache
+  // Empty all cached arrays and reset index
+  for (let i = 0; i < visitFnArrayCacheNextIndex; i++) {
+    visitFnArrayCache[i].length = 0;
+  }
+  visitFnArrayCacheNextIndex = 0;
+
+  // Reset hasActiveVisitors flag
+  hasActiveVisitors = false;
 }
 
 /**
@@ -409,6 +426,11 @@ export function finalizeCompiledVisitor() {
  * @returns Function which calls all of `visitFns` in turn.
  */
 function mergeVisitFns(visitFns: VisitFn[]): VisitFn {
+  // Validate that visitFns is actually an array
+  if (!isArray(visitFns)) {
+    throw new TypeError(`Expected visitFns to be an array, but got ${typeof visitFns}`);
+  }
+
   const numVisitFns = visitFns.length;
 
   // Get or create merger for merging `numVisitFns` functions
