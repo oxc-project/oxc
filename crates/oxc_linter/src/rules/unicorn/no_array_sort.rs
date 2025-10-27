@@ -5,6 +5,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -15,8 +17,16 @@ fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoArraySort {
+    /// When set to `true` (default), allows `array.sort()` as an expression statement.
+    /// Set to `false` to forbid `Array#sort()` even if it's an expression statement.
+    ///
+    /// Example of **incorrect** code for this rule with `allowExpressionStatement` set to `false`:
+    /// ```js
+    /// array.sort();
+    /// ```
     allow_expression_statement: bool,
 }
 
@@ -47,24 +57,11 @@ declare_oxc_lint!(
     /// ```js
     /// const sorted = [...array].toSorted();
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowExpressionStatement
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// This rule allows `array.sort()` as an expression statement by default,
-    /// Pass allowExpressionStatement: false to forbid `Array#sort()` even if it's an expression statement.
-    ///
-    /// Examples of **incorrect** code for this rule with the `{ "allowExpressionStatement": false }` option:
-    /// ```js
-    /// array.sort();
-    /// ```
     NoArraySort,
     unicorn,
     suspicious,
     fix,
+    config = NoArraySort,
 );
 
 impl Rule for NoArraySort {
