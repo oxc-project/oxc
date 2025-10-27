@@ -99,10 +99,11 @@ pub fn has_jest_imports(module_record: &ModuleRecord) -> bool {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 
 pub enum FrameworkOptions {
-    Default,      // default
-    VueSetup,     // context is inside `<script setup>`
-    SvelteModule, // `<script module>`
-    Svelte,       // `<script>`
+    Default,          // default
+    VueSetup,         // context is inside `<script setup>`
+    SvelteModule,     // `<script module>`
+    Svelte,           // `<script>`
+    AstroFrontmatter, // within `---`-delimited block
 }
 
 /// Vue 3 compiler macros available in `<script setup>`
@@ -153,6 +154,8 @@ impl FrameworkOptions {
             Self::VueSetup => VUE_SETUP_GLOBALS.contains(&var),
             Self::SvelteModule => SVELTE_MODULE_GLOBALS.contains(&var),
             Self::Svelte => SVELTE_GLOBALS.contains(&var),
+            // All of Astro's utilities are grouped under the `Astro` namespace.
+            Self::AstroFrontmatter => var == "Astro",
         }
     }
 }
@@ -198,6 +201,12 @@ mod tests {
         assert!(!globals.has_global("$props"));
         assert!(!globals.has_global("$bindable"));
         assert!(!globals.has_global("$host"));
+    }
+
+    #[test]
+    fn test_astro_frontmatter_globals() {
+        let options = FrameworkOptions::AstroFrontmatter;
+        assert!(options.has_global("Astro"));
     }
 
     #[test]
