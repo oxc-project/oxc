@@ -31,14 +31,32 @@ clone_repo() {
             # Create the directory structure if it doesn't exist
             mkdir -p "$(dirname "$path")"
 
-            # Clone the repository with minimal progress output
-            git clone --quiet --no-progress --single-branch --depth 1 \
-                "https://github.com/$repo.git" "$path"
+            # Check if directory exists
+            if [ -d "$path/.git" ]; then
+                # Directory exists with git repo - update it
+                cd "$path"
+            elif [ -d "$path" ]; then
+                # Directory exists but no git repo - initialize it
+                cd "$path"
+                git init --quiet
+            else
+                # Directory doesn't exist - clone it
+                git clone --quiet --no-progress --single-branch --depth 1 \
+                    "https://github.com/$repo.git" "$path"
+                cd "$path"
+            fi
 
-            # Checkout the specific commit
-            cd "$path"
+            # Add or update remote
+            if git remote | grep -q "^origin$"; then
+                git remote set-url origin "https://github.com/$repo.git"
+            else
+                git remote add origin "https://github.com/$repo.git"
+            fi
+
+            # Fetch and checkout the specific commit
             git fetch --quiet --depth 1 origin "$ref"
-            git checkout --quiet "$ref"
+            git reset --hard "$ref"
+            git clean -f -q
 
             echo "✓ Completed clone of $name"
         ) &
