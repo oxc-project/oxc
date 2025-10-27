@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -23,8 +24,10 @@ fn use_hook(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct RequireHookConfig {
+    /// An array of function names that are allowed to be called outside of hooks.
     allowed_function_calls: Vec<CompactStr>,
 }
 
@@ -157,7 +160,8 @@ declare_oxc_lint!(
     /// ```
     RequireHook,
     jest,
-    style
+    style,
+    config = RequireHookConfig
 );
 
 impl Rule for RequireHook {
