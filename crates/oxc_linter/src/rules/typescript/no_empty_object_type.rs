@@ -9,6 +9,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -25,13 +27,46 @@ fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
 pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 
 #[expect(clippy::struct_field_names)]
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoEmptyObjectTypeConfig {
-    /** Whether to allow empty interfaces. */
+    /// Whether to allow empty interfaces.
+    ///
+    /// Allowed values are:
+    /// - `'always'`: to always allow interfaces with no fields
+    /// - `'never'` _(default)_: to never allow interfaces with no fields
+    /// - `'with-single-extends'`: to allow empty interfaces that `extend` from a single base interface
+    ///
+    /// Examples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:
+    /// ```ts
+    /// interface Base {
+    ///   value: boolean;
+    /// }
+    /// interface Derived extends Base {}
+    /// ```
     allow_interfaces: AllowInterfaces,
-    /** Whether to allow empty object type literals. */
+    /// Whether to allow empty object type literals.
+    ///
+    /// Allowed values are:
+    /// - `'always'`: to always allow object type literals with no fields
+    /// - `'never'` _(default)_: to never allow object type literals with no fields
     allow_object_types: AllowObjectTypes,
-    /** allow interfaces and object type aliases with the configured name pattern (regex) */
+    /// A stringified regular expression to allow interfaces and object type aliases with the configured name.
+    ///
+    /// This can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.
+    ///
+    /// Example of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:
+    /// ```ts
+    /// interface InterfaceValue {}
+    /// type TypeValue = {};
+    /// ```
+    ///
+    /// Example of **correct** code for this rule with `{ allowWithName: 'Props$' }`:
+    /// ```ts
+    /// interface InterfaceProps {}
+    /// type TypeProps = {};
+    /// ```
+    #[serde(skip)] // TODO: Serialize this so it can be documented properly.
     allow_with_name: Option<Regex>,
 }
 
@@ -86,55 +121,10 @@ declare_oxc_lint!(
     /// }
     /// type TypeWith = { property: boolean };
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### `allowInterfaces`
-    ///
-    /// Whether to allow empty interfaces. Default: `"never"`.
-    ///
-    /// Allowed values are:
-    /// - `'always'`: to always allow interfaces with no fields
-    /// - `'never'` _(default)_: to never allow interfaces with no fields
-    /// - `'with-single-extends'`: to allow empty interfaces that `extend` from a single base interface
-    ///
-    /// Examples of **correct** code for this rule with `{ allowInterfaces: 'with-single-extends' }`:
-    /// ```ts
-    /// interface Base {
-    ///   value: boolean;
-    /// }
-    /// interface Derived extends Base {}
-    /// ```
-    ///
-    /// #### `allowObjectTypes`
-    ///
-    /// Whether to allow empty object type literals. Default: `"never"`.
-    ///
-    /// Allowed values are:
-    /// - `'always'`: to always allow object type literals with no fields
-    /// - `'never'` _(default)_: to never allow object type literals with no fields
-    ///
-    /// #### `allowWithName`
-    ///
-    /// A stringified regular expression to allow interfaces and object type aliases with the configured name.
-    ///
-    /// This can be useful if your existing code style includes a pattern of declaring empty types with `{}` instead of `object`.
-    ///
-    /// Example of **incorrect** code for this rule with `{ allowWithName: 'Props$' }`:
-    /// ```ts
-    /// interface InterfaceValue {}
-    /// type TypeValue = {};
-    /// ```
-    ///
-    /// Example of **correct** code for this rule with `{ allowWithName: 'Props$' }`:
-    /// ```ts
-    /// interface InterfaceProps {}
-    /// type TypeProps = {};
-    /// ```
-    ///
     NoEmptyObjectType,
     typescript,
     restriction,
+    config = NoEmptyObjectTypeConfig,
 );
 
 impl Rule for NoEmptyObjectType {
@@ -246,7 +236,8 @@ fn check_type_literal(
     ));
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum AllowInterfaces {
     #[default]
     Never,
@@ -264,7 +255,8 @@ impl From<&str> for AllowInterfaces {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum AllowObjectTypes {
     #[default]
     Never,
