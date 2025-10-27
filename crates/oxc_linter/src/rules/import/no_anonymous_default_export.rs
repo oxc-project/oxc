@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -14,15 +15,24 @@ fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcD
     OxcDiagnostic::warn(msg).with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoAnonymousDefaultExport {
+    /// Allow anonymous array as default export.
     allow_array: bool,
+    /// Allow anonymous arrow function as default export.
     allow_arrow_function: bool,
+    /// Allow anonymous class as default export.
     allow_anonymous_class: bool,
+    /// Allow anonymous function as default export.
     allow_anonymous_function: bool,
+    /// Allow anonymous call expression as default export.
     allow_call_expression: bool,
+    /// Allow anonymous new expression as default export.
     allow_new: bool,
+    /// Allow anonymous literal as default export.
     allow_literal: bool,
+    /// Allow anonymous object as default export.
     allow_object: bool,
 }
 
@@ -97,35 +107,12 @@ declare_oxc_lint!(
     /// export default foo(bar);
     /// ```
     ///
-    /// ### Options
-    ///
-    /// This rule takes an object with the following properties:
-    ///
-    /// - `allowArray`: `boolean` (default: `false`) - Allow anonymous array as default export.
-    /// - `allowArrowFunction`: `boolean` (default: `false`) - Allow anonymous arrow function as default export.
-    /// - `allowAnonymousClass`: `boolean` (default: `false`) - Allow anonymous class as default export.
-    /// - `allowAnonymousFunction`: `boolean` (default: `false`) - Allow anonymous function as default export.
-    /// - `allowCallExpression`: `boolean` (default: `true`) - Allow anonymous call expression as default export.
-    /// - `allowNew`: `boolean` (default: `false`) - Allow anonymous new expression as default export.
-    /// - `allowLiteral`: `boolean` (default: `false`) - Allow anonymous literal as default export.
-    /// - `allowObject`: `boolean` (default: `false`) - Allow anonymous object as default export.
-    ///
     /// By default, all types of anonymous default exports are forbidden,
     /// but any types can be selectively allowed by toggling them on in the options.
-    /// ```json
-    /// "import/no-anonymous-default-export": ["error", {
-    ///    "allowArray": false,
-    ///    "allowArrowFunction": false,
-    ///    "allowAnonymousClass": false,
-    ///    "allowAnonymousFunction": false,
-    ///    "allowCallExpression": true,
-    ///    "allowNew": false,
-    ///    "allowLiteral": false,
-    ///    "allowObject": false
-    /// ```
     NoAnonymousDefaultExport,
     import,
     style,
+    config = NoAnonymousDefaultExport,
 );
 
 impl Rule for NoAnonymousDefaultExport {
