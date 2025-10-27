@@ -1396,7 +1396,7 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
 
     #[inline]
     pub fn value(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_span = None;
+        let following_span = self.following_span;
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
@@ -1623,7 +1623,7 @@ impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_span = None;
+        let following_span = self.following_span;
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -1660,7 +1660,7 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
 
     #[inline]
     pub fn property(&self) -> &AstNode<'a, IdentifierName<'a>> {
-        let following_span = None;
+        let following_span = self.following_span;
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
@@ -2144,7 +2144,7 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_span = None;
+        let following_span = self.following_span;
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -4131,7 +4131,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn items(&self) -> &AstNode<'a, Vec<'a, FormalParameter<'a>>> {
-        let following_span = self.inner.rest.as_deref().map(GetSpan::span);
+        let following_span = self.inner.rest.as_deref().map(GetSpan::span).or(self.following_span);
         self.allocator.alloc(AstNode {
             inner: &self.inner.items,
             allocator: self.allocator,
@@ -4142,7 +4142,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
-        let following_span = None;
+        let following_span = self.following_span;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),

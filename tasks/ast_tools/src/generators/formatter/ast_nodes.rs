@@ -23,13 +23,7 @@ pub fn get_node_type(ty: &TokenStream) -> TokenStream {
 
 /// Based on the printing comments algorithm, the last child of these AST nodes don't need to print comments.
 /// Without following nodes could lead to only print comments that before the end of the node, which is what we want.
-const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] = &[
-    "AssignmentExpression",
-    "FormalParameters",
-    "StaticMemberExpression",
-    "ComputedMemberExpression",
-    "ObjectProperty",
-];
+const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] = &[];
 
 const AST_NODE_WITH_FOLLOWING_NODE_LIST: &[&str] = &["Function", "Class"];
 
