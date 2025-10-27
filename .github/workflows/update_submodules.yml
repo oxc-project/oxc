@@ -1,0 +1,230 @@
+name: Update Submodules
+
+permissions: {}
+
+on:
+  schedule:
+    # Run weekly on Tuesday at 00:00 UTC
+    - cron: "0 0 * * 2"
+  workflow_dispatch: # Allow manual trigger
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: Update submodule SHAs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: oxc-project/setup-node@fdbf0dfd334c4e6d56ceeb77d91c76339c2a0885 # v1.0.4
+      - uses: oxc-project/setup-rust@1ff88fdaffd6ae35c0fb32ccc159340b37d0beac # v1.0.7
+        with:
+          cache-key: conformance
+          tools: just,dprint,cargo-shear@1.3.0
+          components: rustfmt
+
+      - name: Get latest SHAs for all submodules
+        id: get-shas
+        run: |
+          # Define all submodules with their repo URLs
+          declare -A REPOS=(
+            ["TEST262"]="tc39/test262"
+            ["BABEL"]="babel/babel"
+            ["TYPESCRIPT"]="microsoft/TypeScript"
+            ["PRETTIER"]="prettier/prettier"
+            ["ACORN_TEST262"]="oxc-project/acorn-test262"
+            ["NODE_COMPAT_TABLE"]="williamkapke/node-compat-table"
+          )
+
+          # Fetch latest SHA for each repo using GitHub API
+          for name in "${!REPOS[@]}"; do
+            repo="${REPOS[$name]}"
+            echo "Fetching latest SHA for $repo..."
+
+            # Use GitHub API to get latest commit SHA (much faster than cloning)
+            sha=$(curl -s "https://api.github.com/repos/$repo/commits/HEAD" | jq -r .sha)
+
+            # Output the SHA
+            echo "${name}_LATEST=$sha" >> $GITHUB_OUTPUT
+            echo "$name latest SHA: $sha"
+          done
+
+      - name: Get current SHAs from clone-parallel.sh
+        id: current-shas
+        run: |
+          # Extract current SHAs from the script
+          TEST262_CURRENT=$(grep '^TEST262_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          BABEL_CURRENT=$(grep '^BABEL_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          TYPESCRIPT_CURRENT=$(grep '^TYPESCRIPT_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          PRETTIER_CURRENT=$(grep '^PRETTIER_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          ACORN_TEST262_CURRENT=$(grep '^ACORN_TEST262_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          NODE_COMPAT_TABLE_CURRENT=$(grep '^NODE_COMPAT_TABLE_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+
+          echo "TEST262_CURRENT=$TEST262_CURRENT" >> $GITHUB_OUTPUT
+          echo "BABEL_CURRENT=$BABEL_CURRENT" >> $GITHUB_OUTPUT
+          echo "TYPESCRIPT_CURRENT=$TYPESCRIPT_CURRENT" >> $GITHUB_OUTPUT
+          echo "PRETTIER_CURRENT=$PRETTIER_CURRENT" >> $GITHUB_OUTPUT
+          echo "ACORN_TEST262_CURRENT=$ACORN_TEST262_CURRENT" >> $GITHUB_OUTPUT
+          echo "NODE_COMPAT_TABLE_CURRENT=$NODE_COMPAT_TABLE_CURRENT" >> $GITHUB_OUTPUT
+
+          echo "Current SHAs:"
+          echo "  TEST262: $TEST262_CURRENT"
+          echo "  BABEL: $BABEL_CURRENT"
+          echo "  TYPESCRIPT: $TYPESCRIPT_CURRENT"
+          echo "  PRETTIER: $PRETTIER_CURRENT"
+          echo "  ACORN_TEST262: $ACORN_TEST262_CURRENT"
+          echo "  NODE_COMPAT_TABLE: $NODE_COMPAT_TABLE_CURRENT"
+
+      - name: Check if updates are needed
+        id: check-updates
+        env:
+          TEST262_LATEST: ${{ steps.get-shas.outputs.TEST262_LATEST }}
+          TEST262_CURRENT: ${{ steps.current-shas.outputs.TEST262_CURRENT }}
+          BABEL_LATEST: ${{ steps.get-shas.outputs.BABEL_LATEST }}
+          BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
+          TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
+          TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
+          PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
+          PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
+          ACORN_TEST262_LATEST: ${{ steps.get-shas.outputs.ACORN_TEST262_LATEST }}
+          ACORN_TEST262_CURRENT: ${{ steps.current-shas.outputs.ACORN_TEST262_CURRENT }}
+          NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
+          NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
+        run: |
+          updates_needed=false
+          update_summary=""
+
+          # Check each submodule
+          if [ "$TEST262_LATEST" != "$TEST262_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- test262: \`${TEST262_CURRENT:0:7}\` → \`${TEST262_LATEST:0:7}\`\n"
+            echo "TEST262 needs update: $TEST262_CURRENT -> $TEST262_LATEST"
+          fi
+
+          if [ "$BABEL_LATEST" != "$BABEL_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- babel: \`${BABEL_CURRENT:0:7}\` → \`${BABEL_LATEST:0:7}\`\n"
+            echo "BABEL needs update: $BABEL_CURRENT -> $BABEL_LATEST"
+          fi
+
+          if [ "$TYPESCRIPT_LATEST" != "$TYPESCRIPT_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- TypeScript: \`${TYPESCRIPT_CURRENT:0:7}\` → \`${TYPESCRIPT_LATEST:0:7}\`\n"
+            echo "TYPESCRIPT needs update: $TYPESCRIPT_CURRENT -> $TYPESCRIPT_LATEST"
+          fi
+
+          if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- prettier: \`${PRETTIER_CURRENT:0:7}\` → \`${PRETTIER_LATEST:0:7}\`\n"
+            echo "PRETTIER needs update: $PRETTIER_CURRENT -> $PRETTIER_LATEST"
+          fi
+
+          if [ "$ACORN_TEST262_LATEST" != "$ACORN_TEST262_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- acorn-test262: \`${ACORN_TEST262_CURRENT:0:7}\` → \`${ACORN_TEST262_LATEST:0:7}\`\n"
+            echo "ACORN_TEST262 needs update: $ACORN_TEST262_CURRENT -> $ACORN_TEST262_LATEST"
+          fi
+
+          if [ "$NODE_COMPAT_TABLE_LATEST" != "$NODE_COMPAT_TABLE_CURRENT" ]; then
+            updates_needed=true
+            update_summary="${update_summary}- node-compat-table: \`${NODE_COMPAT_TABLE_CURRENT:0:7}\` → \`${NODE_COMPAT_TABLE_LATEST:0:7}\`\n"
+            echo "NODE_COMPAT_TABLE needs update: $NODE_COMPAT_TABLE_CURRENT -> $NODE_COMPAT_TABLE_LATEST"
+          fi
+
+          if [ "$updates_needed" = true ]; then
+            echo "updates_needed=true" >> $GITHUB_OUTPUT
+            echo "update_summary<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$update_summary" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "Updates needed!"
+          else
+            echo "updates_needed=false" >> $GITHUB_OUTPUT
+            echo "No updates needed, all SHAs are current"
+          fi
+
+      - name: Update clone-parallel.sh with new SHAs
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        env:
+          TEST262_LATEST: ${{ steps.get-shas.outputs.TEST262_LATEST }}
+          BABEL_LATEST: ${{ steps.get-shas.outputs.BABEL_LATEST }}
+          TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
+          PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
+          ACORN_TEST262_LATEST: ${{ steps.get-shas.outputs.ACORN_TEST262_LATEST }}
+          NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
+          TEST262_CURRENT: ${{ steps.current-shas.outputs.TEST262_CURRENT }}
+          BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
+          TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
+          PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
+          ACORN_TEST262_CURRENT: ${{ steps.current-shas.outputs.ACORN_TEST262_CURRENT }}
+          NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
+        run: |
+          script_path=".github/scripts/clone-parallel.sh"
+
+          # Update each SHA if it changed
+          if [ "$TEST262_LATEST" != "$TEST262_CURRENT" ]; then
+            sed -i "s/TEST262_SHA=\"$TEST262_CURRENT\"/TEST262_SHA=\"$TEST262_LATEST\"/g" "$script_path"
+            echo "Updated TEST262_SHA"
+          fi
+
+          if [ "$BABEL_LATEST" != "$BABEL_CURRENT" ]; then
+            sed -i "s/BABEL_SHA=\"$BABEL_CURRENT\"/BABEL_SHA=\"$BABEL_LATEST\"/g" "$script_path"
+            echo "Updated BABEL_SHA"
+          fi
+
+          if [ "$TYPESCRIPT_LATEST" != "$TYPESCRIPT_CURRENT" ]; then
+            sed -i "s/TYPESCRIPT_SHA=\"$TYPESCRIPT_CURRENT\"/TYPESCRIPT_SHA=\"$TYPESCRIPT_LATEST\"/g" "$script_path"
+            echo "Updated TYPESCRIPT_SHA"
+          fi
+
+          if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
+            sed -i "s/PRETTIER_SHA=\"$PRETTIER_CURRENT\"/PRETTIER_SHA=\"$PRETTIER_LATEST\"/g" "$script_path"
+            echo "Updated PRETTIER_SHA"
+          fi
+
+          if [ "$ACORN_TEST262_LATEST" != "$ACORN_TEST262_CURRENT" ]; then
+            sed -i "s/ACORN_TEST262_SHA=\"$ACORN_TEST262_CURRENT\"/ACORN_TEST262_SHA=\"$ACORN_TEST262_LATEST\"/g" "$script_path"
+            echo "Updated ACORN_TEST262_SHA"
+          fi
+
+          if [ "$NODE_COMPAT_TABLE_LATEST" != "$NODE_COMPAT_TABLE_CURRENT" ]; then
+            sed -i "s/NODE_COMPAT_TABLE_SHA=\"$NODE_COMPAT_TABLE_CURRENT\"/NODE_COMPAT_TABLE_SHA=\"$NODE_COMPAT_TABLE_LATEST\"/g" "$script_path"
+            echo "Updated NODE_COMPAT_TABLE_SHA"
+          fi
+
+          echo "Updated clone-parallel.sh with new SHAs"
+
+      - name: Run format
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        run: just fmt
+
+      - name: Run coverage tests
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        env:
+          UPDATE_SNAPSHOT: 1
+        run: just coverage
+
+      - name: Create Pull Request
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          token: ${{ secrets.OXC_BOT_PAT }}
+          commit-message: "chore(submodules): update submodule SHAs to latest commits"
+          branch: update-submodules
+          branch-suffix: timestamp
+          base: main
+          title: "chore(submodules): update submodule SHAs to latest commits"
+          assignees: Boshen
+          body: |
+            Updates submodule dependencies to their latest commits.
+
+            ## Changes
+
+            ${{ steps.check-updates.outputs.update_summary }}
+
+            This PR is automatically generated by the [update_submodules workflow](https://github.com/oxc-project/oxc/blob/main/.github/workflows/update_submodules.yml).

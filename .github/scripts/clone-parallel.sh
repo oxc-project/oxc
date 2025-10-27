@@ -1,12 +1,20 @@
 #!/bin/bash
 
 # Clone submodules in parallel for faster setup
-# Usage: ./clone-parallel.sh [test262] [babel] [typescript] [prettier] [acorn-test262]
+# Usage: ./clone-parallel.sh [test262] [babel] [typescript] [prettier] [acorn-test262] [node-compat-table]
 # Arguments: "true" or "false" for each submodule
 
 set -euo pipefail
 
-# Default values
+# Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
+TEST262_SHA="baa48a416c9e9abd698a9010378eccf3d1f4ed1e"
+BABEL_SHA="41d96516130ff48f16eca9f387996c0272125f16"
+TYPESCRIPT_SHA="261630d650c0c961860187bebc86e25c3707c05d"
+PRETTIER_SHA="7584432401a47a26943dd7a9ca9a8e032ead7285"
+ACORN_TEST262_SHA="090bba4ab63458850b294f55b17f2ca0ee982062"
+NODE_COMPAT_TABLE_SHA="ed0d6ba55790519d9ad3f6f776ca2cd303cc1e0b"
+
+# Default values for which submodules to clone
 TEST262=${1:-true}
 BABEL=${2:-true}
 TYPESCRIPT=${3:-true}
@@ -69,12 +77,12 @@ clone_repo() {
 echo "Cloning submodules in parallel..."
 
 # Start all clone operations in parallel
-clone_repo "$TEST262" "tc39/test262" "tasks/coverage/test262" "baa48a416c9e9abd698a9010378eccf3d1f4ed1e" "test262"
-clone_repo "$BABEL" "babel/babel" "tasks/coverage/babel" "41d96516130ff48f16eca9f387996c0272125f16" "babel"
-clone_repo "$TYPESCRIPT" "microsoft/TypeScript" "tasks/coverage/typescript" "261630d650c0c961860187bebc86e25c3707c05d" "typescript"
-clone_repo "$PRETTIER" "prettier/prettier" "tasks/prettier_conformance/prettier" "7584432401a47a26943dd7a9ca9a8e032ead7285" "prettier"
-clone_repo "$ACORN_TEST262" "oxc-project/acorn-test262" "tasks/coverage/acorn-test262" "090bba4ab63458850b294f55b17f2ca0ee982062" "acorn-test262"
-clone_repo "$NODE_COMPAT_TABLE" "williamkapke/node-compat-table" "tasks/coverage/node-compat-table" "ed0d6ba55790519d9ad3f6f776ca2cd303cc1e0b" "node-compat-table"
+clone_repo "$TEST262" "tc39/test262" "tasks/coverage/test262" "$TEST262_SHA" "test262"
+clone_repo "$BABEL" "babel/babel" "tasks/coverage/babel" "$BABEL_SHA" "babel"
+clone_repo "$TYPESCRIPT" "microsoft/TypeScript" "tasks/coverage/typescript" "$TYPESCRIPT_SHA" "typescript"
+clone_repo "$PRETTIER" "prettier/prettier" "tasks/prettier_conformance/prettier" "$PRETTIER_SHA" "prettier"
+clone_repo "$ACORN_TEST262" "oxc-project/acorn-test262" "tasks/coverage/acorn-test262" "$ACORN_TEST262_SHA" "acorn-test262"
+clone_repo "$NODE_COMPAT_TABLE" "williamkapke/node-compat-table" "tasks/coverage/node-compat-table" "$NODE_COMPAT_TABLE_SHA" "node-compat-table"
 
 # Wait for all background processes to complete
 echo "Waiting for all clone operations to complete..."

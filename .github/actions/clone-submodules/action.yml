@@ -33,6 +33,12 @@ inputs:
     type: boolean
     description: Whether to clone acorn-test262 submodule
 
+  node-compat-table:
+    default: true
+    required: false
+    type: boolean
+    description: Whether to clone node-compat-table submodule
+
 runs:
   using: composite
   steps:
@@ -45,10 +51,12 @@ runs:
         TYPESCRIPT: ${{ inputs.typescript }}
         PRETTIER: ${{ inputs.prettier }}
         ACORN_TEST262: ${{ inputs.acorn-test262 }}
+        NODE_COMPAT_TABLE: ${{ inputs.node-compat-table }}
       run: |
         ${GITHUB_WORKSPACE}/.github/scripts/clone-parallel.sh \
           "${TEST_262}" \
           "${BABEL}" \
           "${TYPESCRIPT}" \
           "${PRETTIER}" \
-          "${ACORN_TEST262}"
+          "${ACORN_TEST262}" \
+          "${NODE_COMPAT_TABLE}"
