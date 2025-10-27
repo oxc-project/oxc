@@ -1,43 +1,22 @@
 {
   "lineWidth": 120,
-  "typescript": {
-    "quoteStyle": "preferSingle",
-    "binaryExpression.operatorPosition": "sameLine"
-  },
   "json": {
     "indentWidth": 2
   },
   "toml": {
   },
   "excludes": [
-    "tasks/coverage/node-compat-table",
-    "tasks/coverage/misc",
-    "**/tests/**",
     "**/fixtures/**",
     "**/*.snap.*",
     "**/CHANGELOG.md",
     "pnpm-workspace.yaml",
     "pnpm-lock.yaml",
-    "apps/oxlint/src-js/bindings.js",
-    "apps/oxlint/src-js/bindings.d.ts",
-    "!apps/oxlint/test/fixtures/**",
-    "apps/oxlint/test/fixtures/**/*.snap.md",
-    "napi/{transform,minify,playground}/index.js",
-    "napi/{parser,transform,minify,playground}/**/index.d.ts",
-    "napi/{parser,transform,minify,playground}/**/*.wasi-browser.js",
-    "napi/{parser,transform,minify,playground}/**/*.wasi.cjs",
-    "napi/{parser,transform,minify,playground}/**/wasi-worker-browser.mjs",
-    "napi/{parser,transform,minify,playground}/**/wasi-worker.mjs",
-    "napi/{parser,transform,minify,playground}/**/browser.js",
-    "napi/parser/src-js/bindings.js",
     "npm/*/package.json",
-    "npm/oxlint/configuration_schema.json",
-    "npm/oxc-wasm/**",
+    "npm/{oxlint,oxfmt}/configuration_schema.json",
     "npm/runtime/src",
     ".github/generated/ast_changes_watch_list.yml"
   ],
   "plugins": [
-    "https://plugins.dprint.dev/typescript-0.95.11.wasm",
     "https://plugins.dprint.dev/json-0.21.0.wasm",
     "https://plugins.dprint.dev/markdown-0.20.0.wasm",
     "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.1.wasm",
