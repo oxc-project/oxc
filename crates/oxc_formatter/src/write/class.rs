@@ -112,7 +112,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
             write!(f, "?")?;
         }
 
-        format_grouped_parameters_with_return_type(
+        format_grouped_parameters_with_return_type_for_method(
             value.type_parameters(),
             value.this_param.as_deref(),
             value.params(),
@@ -633,38 +633,75 @@ impl<'a> Format<'a> for ClassPropertySemicolon<'a, '_> {
     }
 }
 
-pub fn format_grouped_parameters_with_return_type<'a>(
+/// Based on <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/function.js#L160-L176>
+pub fn format_grouped_parameters_with_return_type_for_method<'a>(
     type_parameters: Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>>,
     this_param: Option<&TSThisParameter<'a>>,
     params: &AstNode<'a, FormalParameters<'a>>,
     return_type: Option<&AstNode<'a, TSTypeAnnotation<'a>>>,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
+    write!(f, type_parameters)?;
+
     group(&format_once(|f| {
-        let mut format_type_parameters = type_parameters.memoized();
         let mut format_parameters = params.memoized();
         let mut format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.
-        format_type_parameters.inspect(f)?;
         format_parameters.inspect(f)?;
 
-        let group_parameters = should_group_function_parameters(
-            type_parameters.map(AsRef::as_ref),
-            params.parameters_count() + usize::from(this_param.is_some()),
-            return_type.map(AsRef::as_ref),
-            &mut format_return_type,
-            f,
-        )?;
+        let should_break_parameters = should_break_function_parameters(params, f);
+        let should_group_parameters = should_break_parameters
+            || should_group_function_parameters(
+                type_parameters.map(AsRef::as_ref),
+                params.parameters_count() + usize::from(this_param.is_some()),
+                return_type.map(AsRef::as_ref),
+                &mut format_return_type,
+                f,
+            )?;
 
-        if group_parameters {
-            write!(f, [group(&format_args!(format_type_parameters, format_parameters))])
+        if should_group_parameters {
+            write!(f, [group(&format_parameters).should_expand(should_break_parameters)])?;
         } else {
-            write!(f, [format_type_parameters, format_parameters])
-        }?;
+            write!(f, [format_parameters])?;
+        }
 
         write!(f, [format_return_type])
     }))
     .fmt(f)
+}
+
+/// Decide if a constructor parameter list should prefer a
+/// multi-line layout.
+///
+/// If there is more than one parameter, and any parameter has a modifier
+///   (e.g. a TypeScript parameter property like `public/private/protected`, or
+///   `readonly`, etc.), we break the parameters onto multiple lines.
+//
+/// Examples
+/// --------
+/// Multiple params with a modifier → break:
+///
+/// ```ts
+/// // input
+/// constructor(public x: number, y: number) {}
+///
+/// // preferred layout
+/// constructor(
+///   public x: number,
+///   y: number,
+/// ) {}
+/// ```
+///
+/// Single param with a modifier → keep inline:
+///
+/// ```ts
+/// constructor(private id: string) {}
+/// ```
+fn should_break_function_parameters<'a>(
+    params: &AstNode<'a, FormalParameters<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    params.parameters_count() > 1 && params.items().iter().any(|param| param.has_modifier())
 }

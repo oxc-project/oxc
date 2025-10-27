@@ -12,6 +12,7 @@ mod class;
 mod decorators;
 mod export_declarations;
 mod function;
+mod function_type;
 mod import_declaration;
 mod import_expression;
 mod intersection_type;
@@ -82,7 +83,7 @@ use crate::{
 use self::{
     array_expression::FormatArrayExpression,
     arrow_function_expression::is_multiline_template_starting_on_same_line,
-    class::format_grouped_parameters_with_return_type,
+    class::format_grouped_parameters_with_return_type_for_method,
     function::should_group_function_parameters,
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
@@ -190,7 +191,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
                 format_property_key(self.key(), f)?;
             }
 
-            format_grouped_parameters_with_return_type(
+            format_grouped_parameters_with_return_type_for_method(
                 value.type_parameters(),
                 value.this_param.as_deref(),
                 value.params(),
@@ -1541,63 +1542,6 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_grouped_parameters_with_return_type(
-            self.type_parameters(),
-            None,
-            self.params(),
-            self.return_type(),
-            f,
-        )
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self.kind() {
-            TSMethodSignatureKind::Method => {}
-            TSMethodSignatureKind::Get => {
-                write!(f, ["get", space()])?;
-            }
-            TSMethodSignatureKind::Set => {
-                write!(f, ["set", space()])?;
-            }
-        }
-        if self.computed() {
-            write!(f, "[")?;
-        }
-        write!(f, self.key())?;
-        if self.computed() {
-            write!(f, "]")?;
-        }
-        if self.optional() {
-            write!(f, "?")?;
-        }
-
-        format_grouped_parameters_with_return_type(
-            self.type_parameters(),
-            self.this_param.as_deref(),
-            self.params(),
-            self.return_type(),
-            f,
-        )
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["new", space()])?;
-        format_grouped_parameters_with_return_type(
-            self.type_parameters(),
-            None,
-            self.params(),
-            self.return_type(),
-            f,
-        )
-    }
-}
-
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let last_index = self.len().saturating_sub(1);
@@ -1730,62 +1674,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, [self.left(), ".", self.right()])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let format_inner = format_with(|f| {
-            let type_parameters = self.type_parameters();
-            write!(f, type_parameters)?;
-
-            let params = self.params();
-            let return_type = self.return_type();
-            let mut format_parameters = params.memoized();
-            let mut format_return_type = return_type.memoized();
-
-            // Inspect early, in case the `return_type` is formatted before `parameters`
-            // in `should_group_function_parameters`.
-            format_parameters.inspect(f)?;
-
-            let group_parameters = should_group_function_parameters(
-                type_parameters.map(AsRef::as_ref),
-                params.items.len()
-                    + usize::from(params.rest.is_some())
-                    + usize::from(self.this_param.is_some()),
-                Some(&self.return_type),
-                &mut format_return_type,
-                f,
-            )?;
-
-            if group_parameters {
-                write!(f, [group(&format_parameters)])
-            } else {
-                write!(f, [format_parameters])
-            }?;
-
-            write!(f, [space(), format_return_type])
-        });
-
-        write!(f, group(&format_inner))
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let r#abstract = self.r#abstract();
-        let type_parameters = self.type_parameters();
-        let params = self.params();
-        let return_type = self.return_type();
-
-        if r#abstract {
-            write!(f, ["abstract", space()])?;
-        }
-        write!(
-            f,
-            [group(&format_args!("new", space(), type_parameters, params, space(), return_type))]
-        );
-        Ok(())
     }
 }
 

@@ -22,3 +22,29 @@ type A2 = {
   }>
 }
 
+class A3 {
+  constructor(
+    public eventName: string,
+    data?: object,
+  ) { }
+}
+
+class A4 {
+  publicLog<
+    E extends ClassifiedEvent<OmitMetadata<T>>,
+    T extends IGDPRProperty,
+  >(
+    eventName: string, data?: object
+  ) {
+  }
+}
+
+const A5 = {
+  publicLog<
+    E extends ClassifiedEvent<OmitMetadata<T>>,
+    T extends IGDPRProperty,
+  >(
+    eventName: string,
+    data?: object,
+  ) { }
+}
