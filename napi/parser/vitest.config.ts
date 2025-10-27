@@ -1,7 +1,7 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 
 const { env, platform } = process;
-const isEnabled = envValue => envValue === 'true' || envValue === '1';
+const isEnabled = (envValue) => envValue === 'true' || envValue === '1';
 
 const runLazyTests = isEnabled(env.RUN_LAZY_TESTS);
 let runRawTests = runLazyTests || isEnabled(env.RUN_RAW_TESTS) || isEnabled(env.RUN_RAW_RANGE_TESTS);

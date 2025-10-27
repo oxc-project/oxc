@@ -37,11 +37,13 @@ export function initLines(): void {
    */
 
   // Note: `lineStartOffsets` starts as `[0]`
-  let lastOffset = 0, offset, match;
+  let lastOffset = 0,
+    offset,
+    match;
   while ((match = LINE_BREAK_PATTERN.exec(sourceText))) {
     offset = match.index;
     lines.push(sourceText.slice(lastOffset, offset));
-    lineStartOffsets.push(lastOffset = offset + match[0].length);
+    lineStartOffsets.push((lastOffset = offset + match[0].length));
   }
   lines.push(sourceText.slice(lastOffset));
 }
@@ -89,7 +91,9 @@ export function getLineColumnFromOffset(offset: number): LineColumn {
  */
 function getLineColumnFromOffsetUnchecked(offset: number): LineColumn {
   // Binary search `lineStartOffsets` for the line containing `offset`
-  let low = 0, high = lineStartOffsets.length, mid: number;
+  let low = 0,
+    high = lineStartOffsets.length,
+    mid: number;
   do {
     mid = ((low + high) / 2) | 0; // Use bitwise OR to floor the division
     if (offset < lineStartOffsets[mid]) {

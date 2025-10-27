@@ -144,7 +144,7 @@ function analyzeSelector(esquerySelector: EsquerySelector, selector: Selector): 
         } else {
           // Selector only matches intersection of all child selectors.
           // TODO: Could make this faster if `analyzeSelector` always returned an ordered array.
-          nodeTypes = childNodeTypes.filter(nodeType => nodeTypes.includes(nodeType));
+          nodeTypes = childNodeTypes.filter((nodeType) => nodeTypes.includes(nodeType));
         }
       }
       return nodeTypes;

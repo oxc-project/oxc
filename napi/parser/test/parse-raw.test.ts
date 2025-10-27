@@ -30,15 +30,15 @@ import {
 } from './parse-raw-common';
 
 const { env } = process;
-const isEnabled = envValue => envValue === 'true' || envValue === '1';
+const isEnabled = (envValue) => envValue === 'true' || envValue === '1';
 
 const [describeRangeParent, itRangeParent] = isEnabled(env.RUN_RAW_RANGE_TESTS)
   ? [describe, it]
-  : (noop => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
+  : ((noop) => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
 
 const [describeLazy, itLazy] = isEnabled(env.RUN_LAZY_TESTS)
   ? [describe, it]
-  : (noop => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
+  : ((noop) => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
 
 // Worker pool for running test cases.
 // Vitest provides parallelism across test files, but not across cases within a single test file.
@@ -80,22 +80,24 @@ let benchFixtureUrls = [
 // `antd.js` tests sometimes take longer than 5 secs on CI, so skip that fixture in CI.
 // Tried setting `{ timeout: 10_000 }` option, but it didn't work for some reason.
 // TODO: Get longer timeout working and re-enable these tests in CI.
-if (process.env.CI) benchFixtureUrls = benchFixtureUrls.filter(url => !url.endsWith('/antd.js'));
+if (process.env.CI) benchFixtureUrls = benchFixtureUrls.filter((url) => !url.endsWith('/antd.js'));
 
 await mkdir(TARGET_DIR_PATH, { recursive: true });
 
-const benchFixturePaths = await Promise.all(benchFixtureUrls.map(async (url) => {
-  const filename = url.split('/').at(-1),
-    path = pathJoin(TARGET_DIR_PATH, filename);
-  try {
-    await stat(path);
-  } catch {
-    const res = await fetch(url);
-    const sourceText = await res.text();
-    await writeFile(path, sourceText);
-  }
-  return path.slice(ROOT_DIR_PATH.length + 1);
-}));
+const benchFixturePaths = await Promise.all(
+  benchFixtureUrls.map(async (url) => {
+    const filename = url.split('/').at(-1),
+      path = pathJoin(TARGET_DIR_PATH, filename);
+    try {
+      await stat(path);
+    } catch {
+      const res = await fetch(url);
+      const sourceText = await res.text();
+      await writeFile(path, sourceText);
+    }
+    return path.slice(ROOT_DIR_PATH.length + 1);
+  }),
+);
 
 // Test raw transfer output matches JSON snapshots for Test262 test cases.
 //
@@ -113,18 +115,18 @@ for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
 
 describe.concurrent('test262', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262, path));
+  it.each(test262FixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_TEST262, path));
 });
 
 describeRangeParent.concurrent('range & parent test262', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_RANGE_PARENT, path));
+  it.each(test262FixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_RANGE_PARENT, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy test262', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_LAZY, path));
+  it.each(test262FixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_LAZY, path));
 });
 
 // Test raw transfer output matches JSON snapshots for Acorn-JSX test cases.
@@ -132,23 +134,24 @@ describeLazy.concurrent('lazy test262', () => {
 // Only test Acorn-JSX fixtures which Acorn is able to parse.
 // Skip tests which we know we can't pass (listed as failing in `estree_acorn_jsx.snap` snapshot file).
 const jsxFailPaths = await getTestFailurePaths(JSX_SNAPSHOT_PATH, JSX_SHORT_DIR_PATH);
-const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
-  .filter(path => path.endsWith('.jsx') && !jsxFailPaths.has(path));
+const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true })).filter(
+  (path) => path.endsWith('.jsx') && !jsxFailPaths.has(path),
+);
 
 describe.concurrent('JSX', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX, filename));
+  it.each(jsxFixturePaths)('%s', (filename) => runCaseInWorker(TEST_TYPE_JSX, filename));
 });
 
 describeRangeParent.concurrent('range & parent JSX', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_RANGE_PARENT, filename));
+  it.each(jsxFixturePaths)('%s', (filename) => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_RANGE_PARENT, filename));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy JSX', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_LAZY, filename));
+  it.each(jsxFixturePaths)('%s', (filename) => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_LAZY, filename));
 });
 
 // Test raw transfer output matches JSON snapshots for TypeScript test cases.
@@ -160,23 +163,24 @@ describeLazy.concurrent('lazy JSX', () => {
 // We can fail to match the TS-ESLint snapshots where there are syntax errors, because our parser
 // is not recoverable.
 const tsFailPaths = await getTestFailurePaths(TS_SNAPSHOT_PATH, TS_SHORT_DIR_PATH);
-const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true }))
-  .filter(path => path.endsWith('.md') && !tsFailPaths.has(path.slice(0, -3)));
+const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true })).filter(
+  (path) => path.endsWith('.md') && !tsFailPaths.has(path.slice(0, -3)),
+);
 
 describe.concurrent('TypeScript', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS, path));
+  it.each(tsFixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_TS, path));
 });
 
 describeRangeParent.concurrent('range & parent TypeScript', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_RANGE_PARENT, path));
+  it.each(tsFixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_RANGE_PARENT, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy TypeScript', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_LAZY, path));
+  it.each(tsFixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_LAZY, path));
 });
 
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
@@ -204,22 +208,18 @@ describe.concurrent('edge cases', () => {
     // oxlint-disable-next-line jest/expect-expect
     it('TS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.ts', sourceText }));
 
-    itRangeParent(
-      'JS range & parent',
-      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_RANGE_PARENT, { filename: 'dummy.js', sourceText }),
+    itRangeParent('JS range & parent', () =>
+      runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_RANGE_PARENT, { filename: 'dummy.js', sourceText }),
     );
-    itRangeParent(
-      'TS range & parent',
-      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_RANGE_PARENT, { filename: 'dummy.ts', sourceText }),
+    itRangeParent('TS range & parent', () =>
+      runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_RANGE_PARENT, { filename: 'dummy.ts', sourceText }),
     );
 
-    itLazy(
-      'JS lazy',
-      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.js', sourceText }),
+    itLazy('JS lazy', () =>
+      runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.js', sourceText }),
     );
-    itLazy(
-      'TS lazy',
-      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.ts', sourceText }),
+    itLazy('TS lazy', () =>
+      runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.ts', sourceText }),
     );
   });
 });
@@ -227,18 +227,18 @@ describe.concurrent('edge cases', () => {
 // Test raw transfer output matches standard (via JSON) output for some large files
 describe.concurrent('fixtures', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
+  it.each(benchFixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
 
 describeRangeParent.concurrent('range & parent fixtures', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_RANGE_PARENT, path));
+  it.each(benchFixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_RANGE_PARENT, path));
 });
 
 // Check lazy deserialization doesn't throw
 describeLazy.concurrent('lazy fixtures', () => {
   // oxlint-disable-next-line jest/expect-expect
-  it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_LAZY, path));
+  it.each(benchFixturePaths)('%s', (path) => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_LAZY, path));
 });
 
 // Get `Set` containing test paths which failed from snapshot file
@@ -248,9 +248,10 @@ async function getTestFailurePaths(snapshotPath, pathPrefix) {
 
   const snapshot = await readFile(snapshotPath, 'utf8');
   return new Set(
-    snapshot.split('\n')
-      .filter(line => line.startsWith(mismatchPrefix))
-      .map(line => line.slice(mismatchPrefixLen)),
+    snapshot
+      .split('\n')
+      .filter((line) => line.startsWith(mismatchPrefix))
+      .map((line) => line.slice(mismatchPrefixLen)),
   );
 }
 

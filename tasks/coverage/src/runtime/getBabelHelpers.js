@@ -26,9 +26,7 @@ function getBabelHelpers() {
   babel.classApplyDescriptorSet = require('@babel/runtime/helpers/classApplyDescriptorSet');
   babel.classCallCheck = require('@babel/runtime/helpers/classCallCheck');
   babel.classCheckPrivateStaticAccess = require('@babel/runtime/helpers/classCheckPrivateStaticAccess');
-  babel.classCheckPrivateStaticFieldDescriptor = require(
-    '@babel/runtime/helpers/classCheckPrivateStaticFieldDescriptor',
-  );
+  babel.classCheckPrivateStaticFieldDescriptor = require('@babel/runtime/helpers/classCheckPrivateStaticFieldDescriptor');
   babel.classExtractFieldDescriptor = require('@babel/runtime/helpers/classExtractFieldDescriptor');
   babel.classNameTDZError = require('@babel/runtime/helpers/classNameTDZError');
   babel.classPrivateFieldDestructureSet = require('@babel/runtime/helpers/classPrivateFieldDestructureSet');

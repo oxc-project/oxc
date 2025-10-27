@@ -78,7 +78,7 @@ export default function generateWalkFunctionsCode(types) {
 function generateWalkForStruct(type, types) {
   /** @type {Field | undefined} */
   let scopeIdField;
-  const visitedFields = type.fields.filter(field => {
+  const visitedFields = type.fields.filter((field) => {
     if (field.name === 'scope_id' && field.typeName === `Cell<Option<ScopeId>>`) {
       scopeIdField = field;
     }
@@ -90,13 +90,14 @@ function generateWalkForStruct(type, types) {
   let scopeEnterField,
     /** @type {Field | undefined} */
     scopeExitField;
-  let enterScopeCode = '', exitScopeCode = '';
+  let enterScopeCode = '',
+    exitScopeCode = '';
 
   if (scopeArgs && scopeIdField) {
     // Get field to enter scope before
     const enterFieldName = scopeArgs.enterScopeBefore;
     if (enterFieldName) {
-      scopeEnterField = visitedFields.find(field => field.name === enterFieldName);
+      scopeEnterField = visitedFields.find((field) => field.name === enterFieldName);
       assert(
         scopeEnterField,
         `\`ast\` attr says to enter scope before field '${enterFieldName}' ` +
@@ -109,7 +110,7 @@ function generateWalkForStruct(type, types) {
     // Get field to exit scope before
     const exitFieldName = scopeArgs.exitScopeBefore;
     if (exitFieldName) {
-      scopeExitField = visitedFields.find(field => field.name === exitFieldName);
+      scopeExitField = visitedFields.find((field) => field.name === exitFieldName);
       assert(
         scopeExitField,
         `\`ast\` attr says to exit scope before field '${exitFieldName}' ` +
@@ -133,8 +134,9 @@ function generateWalkForStruct(type, types) {
 
     // const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
     // `Function` type is a special case as its flags are set dynamically depending on the parent.
-    let isVarHoistingScope = type.name == 'Function' ||
-      ['Top', 'Function', 'ClassStaticBlock', 'TsModuleBlock'].some(flag => scopeArgs.flags.includes(flag));
+    let isVarHoistingScope =
+      type.name == 'Function' ||
+      ['Top', 'Function', 'ClassStaticBlock', 'TsModuleBlock'].some((flag) => scopeArgs.flags.includes(flag));
     if (isVarHoistingScope) {
       enterScopeCode += `
         let previous_hoist_scope_id = ctx.current_hoist_scope_id();
@@ -164,13 +166,10 @@ function generateWalkForStruct(type, types) {
   const fieldsCodes = visitedFields.map((field, index) => {
     const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`,
       fieldCamelName = snakeToCamel(field.name);
-    const scopeCode = field === scopeEnterField
-      ? enterScopeCode
-      : field === scopeExitField
-      ? exitScopeCode
-      : '';
+    const scopeCode = field === scopeEnterField ? enterScopeCode : field === scopeExitField ? exitScopeCode : '';
 
-    let tagCode = '', retagCode = '';
+    let tagCode = '',
+      retagCode = '';
     if (index === 0) {
       tagCode = `
         let pop_token = ctx.push_stack(
@@ -226,10 +225,7 @@ function generateWalkForStruct(type, types) {
         if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
           iteratorCode = `(*(${fieldCode})).iter_mut().flatten()`;
         } else {
-          assert(
-            field.wrappers.length === 1,
-            `Cannot handle struct field with type ${field.type}`,
-          );
+          assert(field.wrappers.length === 1, `Cannot handle struct field with type ${field.type}`);
           iteratorCode = `&mut *(${fieldCode})`;
         }
         walkVecCode = `
@@ -300,8 +296,10 @@ function generateWalkForEnum(type, types) {
       assert(variant.wrappers.length === 0, `Cannot handle enum variant with type: ${variant.type}`);
     }
 
-    return `${type.name}::${variant.name}(node) => ` +
-      `walk_${camelToSnake(variant.innerTypeName)}(traverser, ${nodeCode} as *mut _, ctx),`;
+    return (
+      `${type.name}::${variant.name}(node) => ` +
+      `walk_${camelToSnake(variant.innerTypeName)}(traverser, ${nodeCode} as *mut _, ctx),`
+    );
   });
 
   const missingVariants = [];
@@ -315,16 +313,13 @@ function generateWalkForEnum(type, types) {
       if (!inheritedType || inheritedType.kind !== 'enum') {
         missingVariants.push(inheritedTypeName);
       } else {
-        variantMatches.push(...inheritedType.variants.map(
-          variant => `${type.name}::${variant.name}(_)`,
-        ));
+        variantMatches.push(...inheritedType.variants.map((variant) => `${type.name}::${variant.name}(_)`));
         inheritedFrom.push(...inheritedType.inherits);
       }
     }
 
     variantCodes.push(
-      `${variantMatches.join(' | ')} => ` +
-        `walk_${camelToSnake(inheritedTypeName)}(traverser, node as *mut _, ctx),`,
+      `${variantMatches.join(' | ')} => ` + `walk_${camelToSnake(inheritedTypeName)}(traverser, node as *mut _, ctx),`,
     );
   }
 

@@ -48,7 +48,7 @@ export function getCommentsBefore(nodeOrToken: NodeOrToken): Comment[] {
   let sliceEnd = 0;
 
   // Binary search for the comment immediately before `nodeOrToken`.
-  for (let lo = 0, hi = commentsLength; lo < hi;) {
+  for (let lo = 0, hi = commentsLength; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].end <= targetStart) {
       sliceEnd = lo = mid + 1;
@@ -103,7 +103,7 @@ export function getCommentsAfter(nodeOrToken: NodeOrToken): Comment[] {
   let sliceEnd = 0;
 
   // Binary search for the comment immediately after `nodeOrToken`.
-  for (let lo = 0, hi = commentsLength; lo < hi;) {
+  for (let lo = 0, hi = commentsLength; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].start < targetEnd) {
       lo = mid + 1;
@@ -147,7 +147,7 @@ export function getCommentsInside(node: Node): Comment[] {
     rangeEnd = range[1];
 
   // Binary search for first comment within `node`'s range.
-  for (let lo = 0, hi = commentsLength; lo < hi;) {
+  for (let lo = 0, hi = commentsLength; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].start < rangeStart) {
       lo = mid + 1;
@@ -158,7 +158,7 @@ export function getCommentsInside(node: Node): Comment[] {
 
   // Binary search for first comment outside `node`'s range.
   // Its index is used as `sliceEnd`, which is exclusive of the slice.
-  for (let lo = sliceStart, hi = commentsLength; lo < hi;) {
+  for (let lo = sliceStart, hi = commentsLength; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].start < rangeEnd) {
       lo = mid + 1;
@@ -185,7 +185,7 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
     betweenRangeStart = nodeOrToken1.range[1];
   let firstCommentBetween = -1;
 
-  for (let lo = 0, hi = commentsLength; lo < hi;) {
+  for (let lo = 0, hi = commentsLength; lo < hi; ) {
     const mid = (lo + hi) >> 1;
     if (comments[mid].start < betweenRangeStart) {
       lo = mid + 1;
@@ -194,6 +194,9 @@ export function commentsExistBetween(nodeOrToken1: NodeOrToken, nodeOrToken2: No
     }
   }
   // Check if it ends before `nodeOrToken2` starts.
-  return 0 <= firstCommentBetween && firstCommentBetween < commentsLength &&
-    comments[firstCommentBetween].end <= nodeOrToken2.range[0];
+  return (
+    0 <= firstCommentBetween &&
+    firstCommentBetween < commentsLength &&
+    comments[firstCommentBetween].end <= nodeOrToken2.range[0]
+  );
 }

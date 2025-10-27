@@ -124,7 +124,7 @@ describe('lodash', async () => {
 });
 
 describe('es-toolkit', async () => {
-  const modules = await getModules('es-toolkit/dist/', 'browser.global.js', 'iife', code => code + '\nwindow._ = _');
+  const modules = await getModules('es-toolkit/dist/', 'browser.global.js', 'iife', (code) => code + '\nwindow._ = _');
   test.each(modules)(info, ({ module: window }) => {
     expect(window._.isObject({})).toBe(true);
   });

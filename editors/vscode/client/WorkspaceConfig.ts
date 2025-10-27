@@ -100,11 +100,11 @@ export class WorkspaceConfig {
     const useNestedConfigs = !('disable_nested_config' in flags);
 
     this._runTrigger = this.configuration.get<Trigger>('lint.run') || 'onType';
-    this._configPath = this.configuration.get<string | null>('configPath') ||
-      (useNestedConfigs ? null : oxlintConfigFileName);
+    this._configPath =
+      this.configuration.get<string | null>('configPath') || (useNestedConfigs ? null : oxlintConfigFileName);
     this._tsConfigPath = this.configuration.get<string | null>('tsConfigPath') ?? null;
-    this._unusedDisableDirectives = this.configuration.get<UnusedDisableDirectives>('unusedDisableDirectives') ??
-      'allow';
+    this._unusedDisableDirectives =
+      this.configuration.get<UnusedDisableDirectives>('unusedDisableDirectives') ?? 'allow';
     this._typeAware = this.configuration.get<boolean>('typeAware') ?? false;
     this._flags = flags;
     this._formattingExperimental = this.configuration.get<boolean>('fmt.experimental') ?? false;

@@ -30,7 +30,7 @@ async function runCodeInHarness(options = {}) {
       if (!module) {
         const code = fs.readFileSync(modulePath, 'utf8');
         if (modulePath.endsWith('json')) {
-          const evaluate = function() {
+          const evaluate = function () {
             this.setExport('default', runInContext('JSON.parse', context)(code));
           };
           module = new SyntheticModule(['default'], evaluate, { context });
@@ -52,7 +52,8 @@ async function runCodeInHarness(options = {}) {
       if (!promise) {
         const module = findModule(where);
         if (module.status === 'unlinked') {
-          promise = module.link(linker)
+          promise = module
+            .link(linker)
             .then(() => module.evaluate())
             .then(() => module);
         } else {
@@ -78,7 +79,7 @@ async function runCodeInHarness(options = {}) {
 
   if (isAsync) {
     await new Promise((resolve, reject) => {
-      context.$DONE = err => err ? reject(err) : resolve();
+      context.$DONE = (err) => (err ? reject(err) : resolve());
       runCode().catch(reject);
     });
   } else {
@@ -127,7 +128,7 @@ const server = createServer((req, res) => {
   }
   if (req.method === 'POST') {
     let body = '';
-    req.on('data', chunk => {
+    req.on('data', (chunk) => {
       body += chunk.toString(); // convert Buffer to string
     });
     req.on('end', async () => {

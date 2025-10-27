@@ -30,7 +30,7 @@ function valueToBoolean(value, defaultValue) {
  */
 function splitValueOptions(value) {
   if (!value) return [];
-  return value.split(',').map(s => s.trim().toLowerCase());
+  return value.split(',').map((s) => s.trim().toLowerCase());
 }
 
 /**
@@ -98,9 +98,9 @@ function getErrorFiles(filePath, options) {
 
   const suffixes = [
     '',
-    ...options.modules.map(module => `(module=${module})`),
-    ...options.targets.map(target => `(target=${target})`),
-    ...options.jsx.map(jsx => `(jsx=${jsx})`),
+    ...options.modules.map((module) => `(module=${module})`),
+    ...options.targets.map((target) => `(target=${target})`),
+    ...options.jsx.map((jsx) => `(jsx=${jsx})`),
   ];
 
   const errorFiles = [];
@@ -179,14 +179,13 @@ export function makeUnitsFromTest(filePath, code) {
 
   // Update source types and filter out unsupported files
   const isModule = testUnitData.length > 1;
-  const validTestUnits = testUnitData
-    .filter(unit => {
-      const sourceType = getSourceType(unit.name, settings);
-      if (!sourceType) return false;
-      if (isModule) sourceType.module = true;
-      unit.sourceType = sourceType;
-      return true;
-    });
+  const validTestUnits = testUnitData.filter((unit) => {
+    const sourceType = getSourceType(unit.name, settings);
+    if (!sourceType) return false;
+    if (isModule) sourceType.module = true;
+    unit.sourceType = sourceType;
+    return true;
+  });
 
   const errorFiles = getErrorFiles(filePath, settings);
 
