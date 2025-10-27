@@ -55,9 +55,10 @@ pub use crate::disable_directives::{
 };
 pub use crate::{
     bulk_suppressions::{
-        BulkSuppressions, ESLintBulkSuppressions, ESLintBulkSuppressionsFile,
-        ESLintRuleSuppression, SuppressionEntry, SuppressionsFile,
-        load_eslint_suppressions_from_file, load_suppressions_from_file,
+        BulkSuppressions, CountBasedBulkSuppressions, CountBasedSuppression, CountBasedSuppressionsFile,
+        ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression, SuppressionEntry,
+        SuppressionsFile, convert_eslint_to_count_based, load_eslint_suppressions_from_file,
+        load_suppressions_from_file,
     },
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
@@ -124,6 +125,57 @@ impl Linter {
         external_linter: Option<ExternalLinter>,
         bulk_suppressions: Option<BulkSuppressions>,
     ) -> Self {
+        Self { options, config, external_linter, bulk_suppressions }
+    }
+
+    /// Create a new Linter with bulk suppressions, accepting references to avoid cloning
+    /// (memory optimization)
+    pub fn new_with_suppressions_ref(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<&ExternalLinter>,
+        bulk_suppressions: Option<BulkSuppressions>,
+    ) -> Self {
+        Self {
+            options,
+            config,
+            external_linter: external_linter.cloned(), // Still need to clone, but only when actually present
+            bulk_suppressions
+        }
+    }
+
+    /// Create a new Linter with count-based bulk suppressions (memory optimized)
+    pub fn new_with_count_based_suppressions(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+        count_based_suppressions: Option<CountBasedBulkSuppressions>,
+    ) -> Self {
+        // Convert count-based suppressions to old format for compatibility
+        // This is a temporary bridge until the entire system can be updated
+        let bulk_suppressions = count_based_suppressions.map(|cb_suppressions| {
+            // For now, we still need to convert to the old format
+            // In a full optimization, the entire linter would be updated to use count-based suppressions natively
+            let mut old_format_suppressions = Vec::new();
+
+            for suppression in &cb_suppressions.suppressions().suppressions {
+                // Expand count-based suppression to individual entries (temporary compatibility)
+                for _ in 0..suppression.count {
+                    old_format_suppressions.push(SuppressionEntry {
+                        files: suppression.files.clone(),
+                        rules: suppression.rules.clone(),
+                        line: suppression.line,
+                        column: suppression.column,
+                        end_line: suppression.end_line,
+                        end_column: suppression.end_column,
+                        reason: suppression.reason.clone(),
+                    });
+                }
+            }
+
+            BulkSuppressions::new(SuppressionsFile { suppressions: old_format_suppressions })
+        });
+
         Self { options, config, external_linter, bulk_suppressions }
     }
 

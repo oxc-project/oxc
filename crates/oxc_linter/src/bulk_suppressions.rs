@@ -82,11 +82,164 @@ impl SuppressionTracker {
     }
 }
 
+/// Count-based suppression entry (memory optimized)
+#[derive(Debug, Clone)]
+pub struct CountBasedSuppression {
+    pub files: Vec<String>,
+    pub rules: Vec<String>,
+    pub count: u32,
+    pub line: u32,
+    pub column: u32,
+    pub end_line: Option<u32>,
+    pub end_column: Option<u32>,
+    pub reason: String,
+}
+
+/// Count-based suppressions file (memory optimized)
+#[derive(Debug, Clone)]
+pub struct CountBasedSuppressionsFile {
+    pub suppressions: Vec<CountBasedSuppression>,
+}
+
+/// Count-based usage tracker
+#[derive(Debug, Default)]
+pub struct CountBasedTracker {
+    /// Maps suppression index to how many times it's been used
+    usage_counts: HashMap<usize, u32>,
+}
+
+impl CountBasedTracker {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Mark a suppression as used (increment usage count)
+    pub fn mark_used(&mut self, index: usize) {
+        *self.usage_counts.entry(index).or_insert(0) += 1;
+    }
+
+    /// Get usage count for a suppression
+    pub fn get_usage_count(&self, index: usize) -> u32 {
+        self.usage_counts.get(&index).copied().unwrap_or(0)
+    }
+
+    /// Get unused suppressions (returns (index, unused_count) pairs)
+    pub fn get_unused_suppressions(&self, suppressions: &[CountBasedSuppression]) -> Vec<(usize, u32)> {
+        let mut unused = Vec::new();
+        for (index, suppression) in suppressions.iter().enumerate() {
+            let used_count = self.get_usage_count(index);
+            if used_count < suppression.count {
+                unused.push((index, suppression.count - used_count));
+            }
+        }
+        unused
+    }
+}
+
 /// Efficient matcher for checking if diagnostics should be suppressed
 #[derive(Debug, Clone)]
 pub struct BulkSuppressions {
     suppressions: Arc<SuppressionsFile>,
     tracker: Arc<Mutex<SuppressionTracker>>,
+}
+
+/// Memory-optimized bulk suppressions matcher
+#[derive(Debug, Clone)]
+pub struct CountBasedBulkSuppressions {
+    suppressions: Arc<CountBasedSuppressionsFile>,
+    tracker: Arc<Mutex<CountBasedTracker>>,
+}
+
+impl CountBasedBulkSuppressions {
+    pub fn new(suppressions: CountBasedSuppressionsFile) -> Self {
+        Self {
+            suppressions: Arc::new(suppressions),
+            tracker: Arc::new(Mutex::new(CountBasedTracker::new())),
+        }
+    }
+
+    /// Check if a diagnostic should be suppressed
+    pub fn matches(
+        &self,
+        plugin_name: &str,
+        plugin_prefix: &str,
+        rule_name: &str,
+        _span: Span,
+        file_path: &Path,
+    ) -> bool {
+        let file_path_str = file_path.to_string_lossy();
+
+        for (index, suppression) in self.suppressions.suppressions.iter().enumerate() {
+            // Check if file matches
+            let file_matches = suppression.files.iter().any(|pattern| {
+                file_path_str.ends_with(pattern)
+                    || pattern == "*"
+                    || file_path_str.contains(pattern)
+            });
+
+            if !file_matches {
+                continue;
+            }
+
+            // Check if rule matches
+            let rule_matches = suppression.rules.iter().any(|rule| {
+                rule == rule_name
+                    || rule == &format!("{plugin_name}/{rule_name}")
+                    || rule == &format!("{plugin_prefix}/{rule_name}")
+            });
+
+            if !rule_matches {
+                continue;
+            }
+
+            // Check if we still have suppressions left for this entry
+            if let Ok(mut tracker) = self.tracker.lock() {
+                let used_count = tracker.get_usage_count(index);
+                if used_count < suppression.count {
+                    tracker.mark_used(index);
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    /// Get unused suppressions after linting is complete
+    pub fn get_unused_suppressions(&self) -> Vec<(usize, u32)> {
+        if let Ok(tracker) = self.tracker.lock() {
+            tracker.get_unused_suppressions(&self.suppressions.suppressions)
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Get the suppressions data
+    pub fn suppressions(&self) -> &CountBasedSuppressionsFile {
+        &self.suppressions
+    }
+}
+
+/// Convert ESLint-style bulk suppressions to count-based format (memory optimized)
+pub fn convert_eslint_to_count_based(eslint_suppressions: &ESLintBulkSuppressionsFile) -> CountBasedSuppressionsFile {
+    let mut suppressions = Vec::new();
+
+    for (file_path, rules) in &eslint_suppressions.suppressions {
+        for (rule_name, rule_suppression) in rules {
+            suppressions.push(CountBasedSuppression {
+                files: vec![file_path.clone()],
+                rules: vec![rule_name.clone()],
+                count: rule_suppression.count,
+                line: 1, // Simplified - ESLint format doesn't store exact positions
+                column: 0,
+                end_line: None,
+                end_column: None,
+                reason: "ESLint-style bulk suppression".to_string(),
+            });
+        }
+    }
+
+    CountBasedSuppressionsFile { suppressions }
 }
 
 impl BulkSuppressions {

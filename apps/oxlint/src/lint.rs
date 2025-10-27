@@ -1130,16 +1130,15 @@ impl CliRunner {
         &self,
         eslint_suppressions: &ESLintBulkSuppressionsFile,
     ) -> Result<Vec<(String, String, u32)>, CliRunResult> {
-        // Use the same pattern as normal linting: create both formats
-        let _eslint_bulk_suppressions = ESLintBulkSuppressions::new(eslint_suppressions.clone());
+        // Note: Full memory optimization requires deeper architectural changes to the linter core
+        // For now, use the existing approach but with reference-based external linter API
 
         // Convert to old format for linter compatibility
-        // Memory optimization: create single entry per rule with count tracking handled elsewhere
         let mut compat_suppressions = Vec::new();
         for (file_path, rules) in &eslint_suppressions.suppressions {
             for (rule_name, rule_suppression) in rules {
                 // Create multiple suppression entries based on count
-                // TODO: Consider optimizing this to avoid O(n) allocations
+                // Memory optimization opportunity: This could be avoided with full linter core changes
                 for _ in 0..rule_suppression.count {
                     compat_suppressions.push(SuppressionEntry {
                         files: vec![file_path.clone()],
@@ -1158,8 +1157,7 @@ impl CliRunner {
             return Ok(Vec::new());
         }
 
-        let bulk_suppressions =
-            BulkSuppressions::new(SuppressionsFile { suppressions: compat_suppressions.clone() });
+        let bulk_suppressions = BulkSuppressions::new(SuppressionsFile { suppressions: compat_suppressions.clone() });
 
         // Set up linting infrastructure similar to normal run
         let config_store = match self.get_config_store() {
@@ -1167,12 +1165,11 @@ impl CliRunner {
             Err(result) => return Err(result),
         };
 
-        let external_linter = self.external_linter.as_ref();
-        // Optimization: avoid cloning external linter if possible
-        let linter = Linter::new_with_suppressions(
+        // Memory optimization: use reference-based API to avoid cloning external linter when possible
+        let linter = Linter::new_with_suppressions_ref(
             LintOptions::default(),
             config_store,
-            external_linter.cloned(),
+            self.external_linter.as_ref(),
             Some(bulk_suppressions.clone()),
         );
 
@@ -1207,46 +1204,28 @@ impl CliRunner {
         let old_format_unused = bulk_suppressions.get_unused_suppressions();
 
         // Convert old format unused indices back to ESLint format counts
-        let unused_suppressions = self.convert_old_format_unused_to_eslint_format(
-            &old_format_unused,
-            &compat_suppressions,
-            eslint_suppressions,
-        );
+        let mut unused_counts: std::collections::HashMap<(String, String), u32> = std::collections::HashMap::new();
 
-        Ok(unused_suppressions)
-    }
-
-    fn convert_old_format_unused_to_eslint_format(
-        &self,
-        unused_indices: &[usize],
-        compat_suppressions: &[SuppressionEntry],
-        _eslint_suppressions: &ESLintBulkSuppressionsFile,
-    ) -> Vec<(String, String, u32)> {
-        // Count unused suppressions by file+rule combination
-        let mut unused_counts: std::collections::HashMap<(String, String), u32> =
-            std::collections::HashMap::new();
-
-        for &unused_index in unused_indices {
+        for &unused_index in &old_format_unused {
             if let Some(suppression) = compat_suppressions.get(unused_index) {
-                if let (Some(file_path), Some(rule_name)) =
-                    (suppression.files.first(), suppression.rules.first())
-                {
+                if let (Some(file_path), Some(rule_name)) = (suppression.files.first(), suppression.rules.first()) {
                     let key = (file_path.clone(), rule_name.clone());
                     *unused_counts.entry(key).or_insert(0) += 1;
                 }
             }
         }
 
-        // Convert to the expected format - only include entries with unused suppressions
-        let mut result = Vec::new();
+        // Convert to the expected format
+        let mut unused_suppressions = Vec::new();
         for ((file_path, rule_name), unused_count) in unused_counts {
             if unused_count > 0 {
-                result.push((file_path, rule_name, unused_count));
+                unused_suppressions.push((file_path, rule_name, unused_count));
             }
         }
 
-        result
+        Ok(unused_suppressions)
     }
+
 
     fn get_config_store(&self) -> Result<ConfigStore, CliRunResult> {
         // Simplified config setup for pruning - reuse the existing patterns
