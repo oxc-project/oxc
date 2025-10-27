@@ -231,8 +231,7 @@ impl<'a> Format<'a> for MemberChain<'a, '_> {
             }
             Ok(())
         });
-
-        let format_expanded = format_with(|f| write!(f, [self.head, indent(&group(&format_tail))]));
+        let format_expanded = format_with(|f| write!(f, [self.head, indent(&format_tail)]));
 
         let format_content = format_with(|f| {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {

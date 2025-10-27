@@ -24,20 +24,7 @@ pub enum ObjectPatternLike<'a, 'b> {
 impl GetSpan for ObjectPatternLike<'_, '_> {
     fn span(&self) -> Span {
         match self {
-            Self::ObjectPattern(node) => {
-                // `{a, b}: {a: number, b: string}`
-                //  ^^^^^^^^^^^^^^ ObjectPattern's span covers the type annotation if exists,
-                //  ^^^^^^ but we want the span to cover only the pattern itself, otherwise,
-                //         the comments of type annotation will be treated as dangling comments
-                //         of ObjectPattern.
-                if let AstNodes::FormalParameter(param) = node.parent
-                    && let Some(ty) = &param.pattern.type_annotation
-                {
-                    Span::new(node.span.start, ty.span.start)
-                } else {
-                    node.span
-                }
-            }
+            Self::ObjectPattern(node) => node.span,
             Self::ObjectAssignmentTarget(node) => node.span,
         }
     }

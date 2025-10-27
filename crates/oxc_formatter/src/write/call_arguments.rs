@@ -124,17 +124,14 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         if let Some(group_layout) = arguments_grouped_layout(call_like_span, self, f) {
             write_grouped_arguments(self, group_layout, f)
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
+            let trailing_operator = FormatTrailingCommas::All.trailing_separator(f.options());
             write!(
                 f,
                 [
                     l_paren_token,
                     soft_block_indent(&format_once(|f| {
                         f.join_with(soft_line_break_or_space())
-                            .entries_with_trailing_separator(
-                                self.iter(),
-                                ",",
-                                TrailingSeparator::Allowed,
-                            )
+                            .entries_with_trailing_separator(self.iter(), ",", trailing_operator)
                             .finish()
                     })),
                     r_paren_token,

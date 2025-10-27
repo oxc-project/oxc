@@ -88,7 +88,7 @@ jobs:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
       - name: Install cross
-        uses: taiki-e/install-action@e43a5023a747770bfcb71ae048541a681714b951 # v2.62.33
+        uses: taiki-e/install-action@c5b1b6f479c32f356cc6f4ba672a47f63853b13b # v2.62.38
         with:
           tool: cross
 
@@ -123,7 +123,7 @@ jobs:
           tar czf $OXFMT_BIN_NAME.tar.gz $OXFMT_BIN_NAME
 
       - name: Upload Binary
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           if-no-files-found: error
           name: binaries-${{ matrix.code-target }}
@@ -160,7 +160,7 @@ jobs:
             echo EOF
           } >> $GITHUB_OUTPUT
 
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           merge-multiple: true
 

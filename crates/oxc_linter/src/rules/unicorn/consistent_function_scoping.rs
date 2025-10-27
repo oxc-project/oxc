@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -51,8 +52,10 @@ fn consistent_function_scoping(
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentFunctionScoping {
+    /// Whether to check scoping with arrow functions.
     check_arrow_functions: bool,
 }
 
@@ -110,21 +113,6 @@ declare_oxc_lint!(
     ///   return doBar;
     /// }
     /// ```
-    /// ### Options
-    ///
-    /// #### checkArrowFunctions
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// Pass `"checkArrowFunctions": false` to disable linting of arrow functions.
-    ///
-    /// Example:
-    /// ```json
-    /// "unicorn/consistent-function-scoping": [
-    ///   "error",
-    ///   { "checkArrowFunctions": false }
-    /// ]
-    /// ```
     ///
     /// ### Limitations
     ///
@@ -166,7 +154,8 @@ declare_oxc_lint!(
     ConsistentFunctionScoping,
     unicorn,
     suspicious,
-    pending
+    pending,
+    config = ConsistentFunctionScoping,
 );
 
 impl Rule for ConsistentFunctionScoping {

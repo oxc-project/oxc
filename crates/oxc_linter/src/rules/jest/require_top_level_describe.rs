@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -34,8 +35,10 @@ fn unexpected_hook(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct RequireTopLevelDescribe {
+    /// The maximum number of top-level `describe` blocks allowed in a test file.
     pub max_number_of_top_level_describes: usize,
 }
 
@@ -96,25 +99,10 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// You can also enforce a limit on the number of describes allowed at the top-level
-    /// using the `maxNumberOfTopLevelDescribes` option:
-    ///
-    /// ```json
-    /// {
-    ///   "jest/require-top-level-describe": [
-    ///     "error",
-    ///     {
-    ///       "maxNumberOfTopLevelDescribes": 2
-    ///     }
-    ///   ]
-    /// }
-    /// ```
     RequireTopLevelDescribe,
     jest,
     style,
+    config = RequireTopLevelDescribe
 );
 
 impl Rule for RequireTopLevelDescribe {

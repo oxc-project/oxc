@@ -1,6 +1,7 @@
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     ModuleRecord,
@@ -16,8 +17,12 @@ fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> O
     .with_help(format!("Loading {total} modules is slow for runtimes and bundlers.\nThe configured threshold is {threshold}.\nSee also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>."))
     .with_labels(labels)
 }
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoBarrelFile {
+    /// The maximum number of modules that can be re-exported via `export *`
+    /// before the rule is triggered.
     threshold: usize,
 }
 
@@ -33,7 +38,7 @@ declare_oxc_lint!(
     /// Disallow the use of barrel files where the file contains `export *` statements,
     /// and the total number of modules exceed a threshold.
     ///
-    /// The default threshold is 100;
+    /// The default threshold is 100.
     ///
     /// ### Why is this bad?
     ///
@@ -64,7 +69,8 @@ declare_oxc_lint!(
     /// ```
     NoBarrelFile,
     oxc,
-    restriction
+    restriction,
+    config = NoBarrelFile,
 );
 
 impl Rule for NoBarrelFile {

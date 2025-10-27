@@ -22,12 +22,7 @@ init:
 
 # Clone or update submodules
 submodules:
-  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262 baa48a416c9e9abd698a9010378eccf3d1f4ed1e
-  just clone-submodule tasks/coverage/babel https://github.com/babel/babel 41d96516130ff48f16eca9f387996c0272125f16
-  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript 261630d650c0c961860187bebc86e25c3707c05d
-  just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier 7584432401a47a26943dd7a9ca9a8e032ead7285
-  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 090bba4ab63458850b294f55b17f2ca0ee982062
-  just clone-submodule tasks/coverage/node-compat-table https://github.com/williamkapke/node-compat-table ed0d6ba55790519d9ad3f6f776ca2cd303cc1e0b
+  .github/scripts/clone-parallel.sh
   just update-transformer-fixtures
 
 # Install git pre-commit hook to format files

@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -16,8 +17,10 @@ fn unexpected_hook_diagonsitc(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoHooks(Box<NoHooksConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoHooksConfig {
+    /// An array of hook function names that are permitted for use.
     allow: Vec<CompactStr>,
 }
 
@@ -81,6 +84,7 @@ declare_oxc_lint!(
     NoHooks,
     jest,
     style,
+    config = NoHooksConfig,
 );
 
 impl Rule for NoHooks {
