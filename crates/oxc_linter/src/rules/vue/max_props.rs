@@ -10,6 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -24,8 +25,10 @@ fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxProps {
+    /// The maximum number of props allowed in a Vue Single File Component (SFC).
     max_props: usize,
 }
 
@@ -65,23 +68,10 @@ declare_oxc_lint!(
     /// })
     /// </script>
     /// ```
-    /// ### Options
-    ///
-    /// This rule takes an object, where you can specify the maximum number of props allowed in a Vue SFC.
-    ///
-    /// ```json
-    /// {
-    ///     "vue/max-props": [
-    ///         "error",
-    ///         {
-    ///             "maxProps": 1
-    ///         }
-    ///     ]
-    /// }
-    /// ```
     MaxProps,
     vue,
     restriction,
+    config = MaxProps,
 );
 
 impl Rule for MaxProps {
