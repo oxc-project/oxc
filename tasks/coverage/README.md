@@ -1,4 +1,4 @@
-# Coverage
+# Coverage tests
 
 Tools are tested against [test262], [babel] and [TypeScript] for conformance.
 
