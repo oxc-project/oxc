@@ -758,6 +758,9 @@ impl CliRunner {
         let mut pruned_data = eslint_suppressions.suppressions.clone();
         let mut total_removed = 0;
 
+        // Collect file paths that need to be removed to avoid borrow checker issues
+        let mut files_to_remove = Vec::new();
+
         for (file_path, rule_name, unused_count) in &unused_suppressions {
             if let Some(file_rules) = pruned_data.get_mut(file_path) {
                 if let Some(rule_suppression) = file_rules.get_mut(rule_name) {
@@ -770,11 +773,16 @@ impl CliRunner {
                     }
                 }
 
-                // Remove file entry if no rules left
+                // Mark file for removal if no rules left
                 if file_rules.is_empty() {
-                    pruned_data.remove(file_path);
+                    files_to_remove.push(file_path.clone());
                 }
             }
+        }
+
+        // Remove empty file entries after processing
+        for file_path in files_to_remove {
+            pruned_data.remove(&file_path);
         }
 
         let pruned_suppressions = ESLintBulkSuppressionsFile { suppressions: pruned_data };
