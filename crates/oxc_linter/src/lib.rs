@@ -140,7 +140,7 @@ impl Linter {
         Self {
             options,
             config,
-            external_linter: external_linter.cloned(), // Still need to clone, but only when actually present
+            external_linter: external_linter.cloned(), // Clone is cheap since ExternalLinter contains Arc<dyn Fn>
             bulk_suppressions,
             count_based_suppressions: None
         }
@@ -160,6 +160,23 @@ impl Linter {
             config,
             external_linter,
             bulk_suppressions: None,  // No old format suppressions
+            count_based_suppressions,
+        }
+    }
+
+    /// Create a new Linter with count-based bulk suppressions, accepting references to avoid cloning
+    /// (memory optimization)
+    pub fn new_with_count_based_suppressions_ref(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<&ExternalLinter>,
+        count_based_suppressions: Option<CountBasedBulkSuppressions>,
+    ) -> Self {
+        Self {
+            options,
+            config,
+            external_linter: external_linter.cloned(), // Clone is cheap since ExternalLinter contains Arc<dyn Fn>
+            bulk_suppressions: None,
             count_based_suppressions,
         }
     }

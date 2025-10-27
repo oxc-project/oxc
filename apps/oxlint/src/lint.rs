@@ -646,10 +646,14 @@ impl CliRunner {
             ESLintBulkSuppressionsFile { suppressions: eslint_suppressions };
         let content = match serde_json::to_string_pretty(&suppressions_file_data) {
             Ok(content) => content,
-            Err(_) => return CliRunResult::SuppressionGenerationFailed,
+            Err(err) => {
+                eprintln!("Failed to serialize suppressions to JSON: {}", err);
+                return CliRunResult::SuppressionGenerationFailed;
+            }
         };
 
-        if let Err(_) = std::fs::write(suppressions_file, content) {
+        if let Err(err) = std::fs::write(suppressions_file, content) {
+            eprintln!("Failed to write suppressions file to {}: {}", suppressions_file.display(), err);
             return CliRunResult::SuppressionGenerationFailed;
         }
 
@@ -778,10 +782,14 @@ impl CliRunner {
         // Write updated suppressions
         let content = match serde_json::to_string_pretty(&pruned_suppressions) {
             Ok(content) => content,
-            Err(_) => return CliRunResult::SuppressionGenerationFailed,
+            Err(err) => {
+                eprintln!("Failed to serialize suppressions to JSON: {}", err);
+                return CliRunResult::SuppressionGenerationFailed;
+            }
         };
 
-        if let Err(_) = fs::write(suppressions_file, content) {
+        if let Err(err) = fs::write(suppressions_file, content) {
+            eprintln!("Failed to write suppressions file to {}: {}", suppressions_file.display(), err);
             return CliRunResult::SuppressionGenerationFailed;
         }
 
@@ -1085,11 +1093,10 @@ impl CliRunner {
             Err(result) => return Err(result),
         };
 
-        let external_linter = self.external_linter.as_ref();
-        let linter = Linter::new_with_suppressions(
+        let linter = Linter::new_with_suppressions_ref(
             LintOptions::default(),
             config_store,
-            external_linter.cloned(),
+            self.external_linter.as_ref(),
             bulk_suppressions.as_ref().map(|bs| (**bs).clone()),
         );
 
@@ -1134,34 +1141,9 @@ impl CliRunner {
         &self,
         eslint_suppressions: &ESLintBulkSuppressionsFile,
     ) -> Result<Vec<(String, String, u32)>, CliRunResult> {
-        // Note: Full memory optimization requires deeper architectural changes to the linter core
-        // For now, use the existing approach but with reference-based external linter API
-
-        // Convert to old format for linter compatibility
-        let mut compat_suppressions = Vec::new();
-        for (file_path, rules) in &eslint_suppressions.suppressions {
-            for (rule_name, rule_suppression) in rules {
-                // Create multiple suppression entries based on count
-                // Memory optimization opportunity: This could be avoided with full linter core changes
-                for _ in 0..rule_suppression.count {
-                    compat_suppressions.push(SuppressionEntry {
-                        files: vec![file_path.clone()],
-                        rules: vec![rule_name.clone()],
-                        line: 1, // Simplified - ESLint format doesn't store exact positions
-                        column: 0,
-                        end_line: None,
-                        end_column: None,
-                        reason: "ESLint-style bulk suppression".to_string(),
-                    });
-                }
-            }
-        }
-
-        if compat_suppressions.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let bulk_suppressions = BulkSuppressions::new(SuppressionsFile { suppressions: compat_suppressions.clone() });
+        // Use memory-optimized count-based suppressions directly instead of converting to old format
+        let count_based_suppressions = convert_eslint_to_count_based(eslint_suppressions);
+        let count_based_bulk_suppressions = CountBasedBulkSuppressions::new(count_based_suppressions);
 
         // Set up linting infrastructure similar to normal run
         let config_store = match self.get_config_store() {
@@ -1169,12 +1151,12 @@ impl CliRunner {
             Err(result) => return Err(result),
         };
 
-        // Memory optimization: use reference-based API to avoid cloning external linter when possible
-        let linter = Linter::new_with_suppressions_ref(
+        // Use reference-based API to avoid cloning external linter when possible
+        let linter = Linter::new_with_count_based_suppressions_ref(
             LintOptions::default(),
             config_store,
             self.external_linter.as_ref(),
-            Some(bulk_suppressions.clone()),
+            Some(count_based_bulk_suppressions.clone()),
         );
 
         // Create LintServiceOptions similar to normal run
@@ -1204,26 +1186,16 @@ impl CliRunner {
             return Err(CliRunResult::TsGoLintError);
         }
 
-        // Check how many of each suppression were actually used by examining the old format tracker
-        let old_format_unused = bulk_suppressions.get_unused_suppressions();
+        // Get unused suppressions directly from count-based tracker (no conversion needed)
+        let unused_suppressions_data = count_based_bulk_suppressions.get_unused_suppressions();
 
-        // Convert old format unused indices back to ESLint format counts
-        let mut unused_counts: std::collections::HashMap<(String, String), u32> = std::collections::HashMap::new();
-
-        for &unused_index in &old_format_unused {
-            if let Some(suppression) = compat_suppressions.get(unused_index) {
-                if let (Some(file_path), Some(rule_name)) = (suppression.files.first(), suppression.rules.first()) {
-                    let key = (file_path.clone(), rule_name.clone());
-                    *unused_counts.entry(key).or_insert(0) += 1;
-                }
-            }
-        }
-
-        // Convert to the expected format
+        // Convert count-based unused data back to the expected format
         let mut unused_suppressions = Vec::new();
-        for ((file_path, rule_name), unused_count) in unused_counts {
-            if unused_count > 0 {
-                unused_suppressions.push((file_path, rule_name, unused_count));
+        for (index, unused_count) in unused_suppressions_data {
+            if let Some(suppression) = count_based_bulk_suppressions.suppressions().suppressions.get(index) {
+                if let (Some(file_path), Some(rule_name)) = (suppression.files.first(), suppression.rules.first()) {
+                    unused_suppressions.push((file_path.clone(), rule_name.clone(), unused_count));
+                }
             }
         }
 

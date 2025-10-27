@@ -153,9 +153,15 @@ pub fn write_suppressions_to_file(
     path: &Path,
 ) -> Result<(), CliRunResult> {
     let content = serde_json::to_string_pretty(suppressions)
-        .map_err(|_| CliRunResult::SuppressionGenerationFailed)?;
+        .map_err(|err| {
+            eprintln!("Failed to serialize suppressions to JSON: {}", err);
+            CliRunResult::SuppressionGenerationFailed
+        })?;
 
-    fs::write(path, content).map_err(|_| CliRunResult::SuppressionGenerationFailed)
+    fs::write(path, content).map_err(|err| {
+        eprintln!("Failed to write suppressions file to {}: {}", path.display(), err);
+        CliRunResult::SuppressionGenerationFailed
+    })
 }
 
 /// Merge new suppressions with existing ones
