@@ -216,10 +216,8 @@ impl NoUselessPathSegments {
     ///
     /// # Examples
     ///
-    /// ```
     /// /path/to/bar/index.js → true (can suggest "./bar")
     /// /path/to/foo.js → false (explicit file, can't simplify)
-    /// ```
     fn resolved_to_index_file(resolved_path: &Path) -> bool {
         resolved_path
             .file_name()
