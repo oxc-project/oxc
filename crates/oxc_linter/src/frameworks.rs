@@ -107,7 +107,7 @@ pub enum FrameworkOptions {
 }
 
 /// Vue 3 compiler macros available in `<script setup>`
-/// Reference: https://github.com/vuejs/vue-eslint-parser/blob/5ff1a4fda76b07608cc17687a976c2309f5648e2/src/script-setup/scope-analyzer.ts#L86
+/// Reference: <https://github.com/vuejs/vue-eslint-parser/blob/5ff1a4fda76b07608cc17687a976c2309f5648e2/src/script-setup/scope-analyzer.ts#L86>
 static VUE_SETUP_GLOBALS: [&str; 7] = [
     "defineProps",
     "defineEmits",
@@ -119,7 +119,7 @@ static VUE_SETUP_GLOBALS: [&str; 7] = [
 ];
 
 /// Svelte runes available in `<script>` context
-/// Reference: https://github.com/sveltejs/svelte/blob/da00abe1162a8e56455e92b79020c4e33290e10e/packages/svelte/src/ambient.d.ts#L23
+/// Reference: <https://github.com/sveltejs/svelte/blob/da00abe1162a8e56455e92b79020c4e33290e10e/packages/svelte/src/ambient.d.ts#L23>
 static SVELTE_GLOBALS: [&str; 7] =
     ["$state", "$derived", "$effect", "$props", "$bindable", "$inspect", "$host"];
 
