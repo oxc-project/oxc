@@ -55,9 +55,9 @@ pub use crate::disable_directives::{
 };
 pub use crate::{
     bulk_suppressions::{
-        BulkSuppressions, SuppressionsFile, SuppressionEntry, load_suppressions_from_file,
-        ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression,
-        load_eslint_suppressions_from_file,
+        BulkSuppressions, ESLintBulkSuppressions, ESLintBulkSuppressionsFile,
+        ESLintRuleSuppression, SuppressionEntry, SuppressionsFile,
+        load_eslint_suppressions_from_file, load_suppressions_from_file,
     },
     config::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,

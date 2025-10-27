@@ -36,6 +36,7 @@ ESLint-style bulk suppressions use a JSON file with the following structure:
 ### Rule Name Formats Supported
 
 The system supports multiple rule name formats:
+
 - Bare rule names: `"no-unused-vars"`
 - Plugin-prefixed names: `"@typescript-eslint/no-unused-vars"`
 - Alternative prefixes: `"typescript/no-unused-vars"`
@@ -43,6 +44,7 @@ The system supports multiple rule name formats:
 ### File Path Matching
 
 File paths are matched flexibly:
+
 - Exact matches: `"src/App.tsx"` matches exactly `src/App.tsx`
 - Relative path matching: `"App.tsx"` matches `src/App.tsx`, `components/App.tsx`, etc.
 - Full path matching: Handles absolute paths appropriately
@@ -126,6 +128,7 @@ pub struct ESLintBulkSuppressionsFile {
 #### 2. Matching Logic
 
 The `ESLintBulkSuppressions` struct provides:
+
 - **Count-based matching**: Tracks usage and prevents over-suppression
 - **File path resolution**: Handles various file path formats
 - **Rule name resolution**: Supports multiple rule naming conventions
@@ -134,10 +137,12 @@ The `ESLintBulkSuppressions` struct provides:
 #### 3. Integration Points
 
 ##### Linter Integration (`crates/oxc_linter/src/context/mod.rs`)
+
 - Suppressions are checked in `add_diagnostic()` method during rule execution
 - Each diagnostic is tested against active suppressions before being reported
 
 ##### CLI Integration (`apps/oxlint/src/lint.rs`)
+
 - Suppression generation during linting process
 - Loading and saving of suppression files
 - Command-line flag handling
@@ -153,11 +158,13 @@ The `ESLintBulkSuppressions` struct provides:
 ### Rule Name Extraction
 
 The system extracts rule names from various diagnostic sources:
+
 - **OxcDiagnostic codes**: Direct rule name extraction
 - **Error message parsing**: Pattern matching for rule names in error text
 - **Semantic error mapping**: Maps semantic analyzer errors to equivalent linting rules
 
 Example mapping:
+
 ```rust
 // Semantic analyzer error -> linting rule
 "Delete of an unqualified identifier in strict mode" => "no-delete-var"
@@ -169,6 +176,7 @@ Example mapping:
 The implementation includes comprehensive tests covering:
 
 ### Unit Tests (`crates/oxc_linter/src/bulk_suppressions.rs`)
+
 - Suppression data structure functionality
 - File and rule matching logic
 - Count-based usage tracking
@@ -176,6 +184,7 @@ The implementation includes comprehensive tests covering:
 - Unused suppression detection
 
 ### Integration Tests (`apps/oxlint/src/command/test_suppressions.rs`)
+
 - CLI flag handling
 - File loading and saving
 - ESLint format compatibility
@@ -197,11 +206,13 @@ cargo test
 ## Compatibility
 
 ### ESLint Compatibility
+
 - File format matches ESLint's bulk suppression format
 - Rule naming conventions are compatible
 - Count-based suppression behavior is identical
 
 ### Migration from Individual Suppressions
+
 - Existing individual suppression entries are still supported
 - Both formats can be used simultaneously
 - Gradual migration path available
@@ -209,12 +220,14 @@ cargo test
 ## Performance Considerations
 
 ### Optimizations
+
 - **HashMap-based lookups**: O(1) average case for file and rule matching
 - **Arc-wrapped data**: Efficient sharing between threads
 - **Lazy file matching**: Only computes expensive path operations when needed
 - **Minimal allocations**: Reuses data structures where possible
 
 ### Memory Usage
+
 - Suppressions are loaded once and shared across all linting contexts
 - Usage tracking uses minimal memory (HashMaps with integer counters)
 - No per-file suppression duplication
@@ -222,11 +235,13 @@ cargo test
 ## Error Handling
 
 ### File Loading Errors
+
 - Missing files result in empty suppression sets (no errors)
 - Invalid JSON files produce clear error messages
 - Malformed suppression entries are skipped with warnings
 
 ### Runtime Errors
+
 - Mutex lock failures are handled gracefully (suppressions continue to work)
 - Invalid file paths are silently ignored
 - Unknown rule names are processed normally (no false matches)
@@ -234,12 +249,14 @@ cargo test
 ## Future Enhancements
 
 ### Planned Features
+
 1. **Glob pattern support** for file paths
 2. **Line/column-based matching** for more precise suppression
 3. **Suppression expiration** based on timestamps
 4. **Integration with IDE extensions** for real-time suppression management
 
 ### Extension Points
+
 - Rule name extraction can be extended for new diagnostic types
 - File matching can be enhanced with more sophisticated patterns
 - Usage tracking can be extended with additional metadata
@@ -249,23 +266,27 @@ cargo test
 ### Common Issues
 
 #### Suppressions Not Working
+
 1. Verify file path matches between suppression file and actual file location
 2. Check rule name format (try both bare name and plugin-prefixed versions)
 3. Ensure suppression count hasn't been exceeded
 4. Verify suppressions file is being loaded (check path and permissions)
 
 #### Unused Suppressions
+
 1. Use `--prune-suppressions` to remove unused entries
 2. Check if files have been moved or deleted
 3. Verify rule names haven't changed
 
 #### Performance Issues
+
 1. Large suppression files are handled efficiently, but consider splitting if needed
 2. Use `--pass-on-unpruned-suppressions` to identify cleanup opportunities
 
 ### Debug Information
 
 Enable debug logging to see suppression matching in action:
+
 ```bash
 RUST_LOG=debug oxlint --suppressions-location my-suppressions.json src/
 ```

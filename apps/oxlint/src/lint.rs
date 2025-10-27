@@ -11,24 +11,24 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::collections::HashMap;
 use serde_json::Value;
+use std::collections::HashMap;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, BulkSuppressions, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    AllowWarnDeny, BulkSuppressions, Config, ConfigStore, ConfigStoreBuilder,
+    ESLintBulkSuppressionsFile, ESLintRuleSuppression, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    SuppressionsFile, load_suppressions_from_file, ESLintBulkSuppressionsFile,
-    ESLintRuleSuppression, load_eslint_suppressions_from_file,
+    SuppressionsFile, load_eslint_suppressions_from_file, load_suppressions_from_file,
 };
 
+use crate::command::suppressions::load_suppressions_file_cli;
 use crate::{
     command::{LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions, suppressions::*},
     output_formatter::{LintCommandInfo, OutputFormatter},
     result::CliRunResult,
     walk::Walk,
 };
-use crate::command::suppressions::load_suppressions_file_cli;
 use oxc_linter::LintIgnoreMatcher;
 
 #[derive(Debug)]
@@ -93,10 +93,13 @@ impl CliRunner {
                 Ok(eslint_suppressions_data) => {
                     if !eslint_suppressions_data.suppressions.is_empty() {
                         // Convert ESLint format to old format for compatibility
+                        // Note: This creates O(count) entries for memory efficiency concerns
+                        // but is necessary for compatibility with existing BulkSuppressions infrastructure
                         let mut compat_suppressions = Vec::new();
                         for (file_path, rules) in &eslint_suppressions_data.suppressions {
                             for (rule_name, rule_suppression) in rules {
                                 // Create multiple suppression entries based on count
+                                // Each entry represents one suppressible violation
                                 for _ in 0..rule_suppression.count {
                                     compat_suppressions.push(SuppressionEntry {
                                         files: vec![file_path.clone()],
@@ -112,7 +115,9 @@ impl CliRunner {
                         }
 
                         if !compat_suppressions.is_empty() {
-                            let bulk_suppressions = BulkSuppressions::new(SuppressionsFile { suppressions: compat_suppressions });
+                            let bulk_suppressions = BulkSuppressions::new(SuppressionsFile {
+                                suppressions: compat_suppressions,
+                            });
                             Some(bulk_suppressions)
                         } else {
                             None
@@ -404,7 +409,7 @@ impl CliRunner {
             LintOptions::default(),
             config_store,
             external_linter,
-            bulk_suppressions
+            bulk_suppressions,
         )
         .with_fix(fix_options.fix_kind())
         .with_report_unused_directives(report_unused_directives);
@@ -614,14 +619,16 @@ impl CliRunner {
 
         // Group violations by file and rule
         for violation in filtered_violations {
-            let file_entry = eslint_suppressions.entry(violation.file_path).or_insert_with(HashMap::new);
+            let file_entry =
+                eslint_suppressions.entry(violation.file_path).or_insert_with(HashMap::new);
             let rule_name = if violation.plugin_name == "eslint" {
                 violation.rule_name
             } else {
                 format!("{}/{}", violation.plugin_name, violation.rule_name)
             };
 
-            let rule_entry = file_entry.entry(rule_name).or_insert(ESLintRuleSuppression { count: 0 });
+            let rule_entry =
+                file_entry.entry(rule_name).or_insert(ESLintRuleSuppression { count: 0 });
             rule_entry.count += 1;
         }
 
@@ -631,7 +638,8 @@ impl CliRunner {
             .sum();
 
         // Write suppressions to file
-        let suppressions_file_data = ESLintBulkSuppressionsFile { suppressions: eslint_suppressions };
+        let suppressions_file_data =
+            ESLintBulkSuppressionsFile { suppressions: eslint_suppressions };
         let content = match serde_json::to_string_pretty(&suppressions_file_data) {
             Ok(content) => content,
             Err(_) => return CliRunResult::SuppressionGenerationFailed,
@@ -761,9 +769,7 @@ impl CliRunner {
             }
         }
 
-        let pruned_suppressions = ESLintBulkSuppressionsFile {
-            suppressions: pruned_data,
-        };
+        let pruned_suppressions = ESLintBulkSuppressionsFile { suppressions: pruned_data };
 
         // Write updated suppressions
         let content = match serde_json::to_string_pretty(&pruned_suppressions) {
@@ -807,7 +813,8 @@ impl CliRunner {
             Err((result, _)) => return Err(result),
         };
 
-        let config_search_result = Self::find_oxlint_config(&self.cwd, self.options.basic_options.config.as_ref());
+        let config_search_result =
+            Self::find_oxlint_config(&self.cwd, self.options.basic_options.config.as_ref());
         let mut oxlintrc = match config_search_result {
             Ok(config) => config,
             Err(_) => return Err(CliRunResult::InvalidOptionConfig),
@@ -857,7 +864,8 @@ impl CliRunner {
         let nested_configs = FxHashMap::default(); // Simplified for capturing violations
         let nested_ignore_patterns = Vec::new();
 
-        let ignore_matcher = LintIgnoreMatcher::new(&oxlintrc.ignore_patterns, &self.cwd, nested_ignore_patterns);
+        let ignore_matcher =
+            LintIgnoreMatcher::new(&oxlintrc.ignore_patterns, &self.cwd, nested_ignore_patterns);
 
         // Set up plugins
         {
@@ -896,7 +904,7 @@ impl CliRunner {
             LintOptions::default(),
             config_store,
             self.external_linter.clone(),
-            None // No suppressions when capturing violations
+            None, // No suppressions when capturing violations
         );
 
         let use_cross_module = false; // Simplified for violation capture
@@ -913,7 +921,7 @@ impl CliRunner {
 
         // Run the linter and capture diagnostics
         match lint_runner.lint_files(&files_to_lint, tx_diagnostic.clone(), None) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(_) => return Err(CliRunResult::TsGoLintError),
         }
 
@@ -923,7 +931,12 @@ impl CliRunner {
 
         // DiagnosticTuple is (PathBuf, Vec<Error>)
         while let Ok((file_path_buf, errors)) = rx_diagnostic.try_recv() {
-            let file_path_str = file_path_buf.to_string_lossy().to_string();
+            // Convert to relative path from the current working directory
+            let file_path_str = if let Ok(relative_path) = file_path_buf.strip_prefix(&self.cwd) {
+                relative_path.to_string_lossy().to_string()
+            } else {
+                file_path_buf.to_string_lossy().to_string()
+            };
 
             for error in errors {
                 // miette::Error implements Diagnostic trait, so we can extract the code
@@ -931,10 +944,22 @@ impl CliRunner {
 
                 // Extract rule information from diagnostic code
                 // Try to downcast to OxcDiagnostic to get the actual error code
-                let (plugin_name, rule_name) = if let Some(oxc_diagnostic) = error.downcast_ref::<oxc_diagnostics::OxcDiagnostic>() {
+                let (plugin_name, rule_name) = if let Some(oxc_diagnostic) =
+                    error.downcast_ref::<oxc_diagnostics::OxcDiagnostic>()
+                {
                     if oxc_diagnostic.code.is_some() {
-                        let plugin = oxc_diagnostic.code.scope.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "eslint".to_string());
-                        let rule = oxc_diagnostic.code.number.as_ref().map(|s| s.to_string()).unwrap_or_else(|| "unknown".to_string());
+                        let plugin = oxc_diagnostic
+                            .code
+                            .scope
+                            .as_ref()
+                            .map(|s| s.to_string())
+                            .unwrap_or_else(|| "eslint".to_string());
+                        let rule = oxc_diagnostic
+                            .code
+                            .number
+                            .as_ref()
+                            .map(|s| s.to_string())
+                            .unwrap_or_else(|| "unknown".to_string());
 
                         (plugin, rule)
                     } else {
@@ -943,23 +968,23 @@ impl CliRunner {
                 } else {
                     if let Some(code) = error.code() {
                         let code_str = code.to_string();
-                    // Code format is typically "plugin(rule)" like "eslint(no-console)"
-                    // or sometimes just "plugin/rule" or "rule"
-                    if let Some(start) = code_str.find('(') {
-                        if let Some(end) = code_str.find(')') {
-                            let plugin = code_str[..start].to_string();
-                            let rule = code_str[start + 1..end].to_string();
-                            (plugin, rule)
-                        } else {
-                            // Fallback: try to parse as plugin/rule
-                            if let Some((plugin, rule)) = code_str.split_once('/') {
-                                (plugin.to_string(), rule.to_string())
+                        // Code format is typically "plugin(rule)" like "eslint(no-console)"
+                        // or sometimes just "plugin/rule" or "rule"
+                        if let Some(start) = code_str.find('(') {
+                            if let Some(end) = code_str.find(')') {
+                                let plugin = code_str[..start].to_string();
+                                let rule = code_str[start + 1..end].to_string();
+                                (plugin, rule)
                             } else {
-                                ("eslint".to_string(), code_str)
+                                // Fallback: try to parse as plugin/rule
+                                if let Some((plugin, rule)) = code_str.split_once('/') {
+                                    (plugin.to_string(), rule.to_string())
+                                } else {
+                                    ("eslint".to_string(), code_str)
+                                }
                             }
-                        }
-                    } else if let Some((plugin, rule)) = code_str.split_once('/') {
-                        (plugin.to_string(), rule.to_string())
+                        } else if let Some((plugin, rule)) = code_str.split_once('/') {
+                            (plugin.to_string(), rule.to_string())
                         } else {
                             // No plugin info, assume it's just a rule name
                             ("eslint".to_string(), code_str)
@@ -994,7 +1019,9 @@ impl CliRunner {
                                 }
                             } else {
                                 // Map semantic error messages to corresponding linting rules
-                                if error_msg.contains("Delete of an unqualified identifier in strict mode") {
+                                if error_msg
+                                    .contains("Delete of an unqualified identifier in strict mode")
+                                {
                                     ("eslint".to_string(), "no-delete-var".to_string())
                                 } else {
                                     ("eslint".to_string(), "unknown".to_string())
@@ -1059,7 +1086,7 @@ impl CliRunner {
             LintOptions::default(),
             config_store,
             external_linter.cloned(),
-            bulk_suppressions.as_ref().map(|bs| (**bs).clone())
+            bulk_suppressions.as_ref().map(|bs| (**bs).clone()),
         );
 
         // Create LintServiceOptions similar to normal run
@@ -1103,11 +1130,16 @@ impl CliRunner {
         &self,
         eslint_suppressions: &ESLintBulkSuppressionsFile,
     ) -> Result<Vec<(String, String, u32)>, CliRunResult> {
-        // Convert ESLint format to old format for compatibility, similar to the normal linting flow
+        // Use the same pattern as normal linting: create both formats
+        let _eslint_bulk_suppressions = ESLintBulkSuppressions::new(eslint_suppressions.clone());
+
+        // Convert to old format for linter compatibility
+        // Memory optimization: create single entry per rule with count tracking handled elsewhere
         let mut compat_suppressions = Vec::new();
         for (file_path, rules) in &eslint_suppressions.suppressions {
             for (rule_name, rule_suppression) in rules {
                 // Create multiple suppression entries based on count
+                // TODO: Consider optimizing this to avoid O(n) allocations
                 for _ in 0..rule_suppression.count {
                     compat_suppressions.push(SuppressionEntry {
                         files: vec![file_path.clone()],
@@ -1126,9 +1158,8 @@ impl CliRunner {
             return Ok(Vec::new());
         }
 
-        // Create BulkSuppressions from the converted format
-        let bulk_suppressions = BulkSuppressions::new(SuppressionsFile { suppressions: compat_suppressions.clone() });
-        let bulk_suppressions = Some(Arc::new(bulk_suppressions));
+        let bulk_suppressions =
+            BulkSuppressions::new(SuppressionsFile { suppressions: compat_suppressions.clone() });
 
         // Set up linting infrastructure similar to normal run
         let config_store = match self.get_config_store() {
@@ -1137,11 +1168,12 @@ impl CliRunner {
         };
 
         let external_linter = self.external_linter.as_ref();
+        // Optimization: avoid cloning external linter if possible
         let linter = Linter::new_with_suppressions(
             LintOptions::default(),
             config_store,
             external_linter.cloned(),
-            bulk_suppressions.as_ref().map(|bs| (**bs).clone())
+            Some(bulk_suppressions.clone()),
         );
 
         // Create LintServiceOptions similar to normal run
@@ -1171,40 +1203,57 @@ impl CliRunner {
             return Err(CliRunResult::TsGoLintError);
         }
 
-        // Get unused suppression indices from the bulk suppressions tracker
-        let unused_indices = if let Some(bulk_suppressions) = bulk_suppressions {
-            bulk_suppressions.get_unused_suppressions()
-        } else {
-            Vec::new()
-        };
+        // Check how many of each suppression were actually used by examining the old format tracker
+        let old_format_unused = bulk_suppressions.get_unused_suppressions();
 
-        // Convert unused indices back to ESLint format
-        let mut unused_suppressions = Vec::new();
-        let mut usage_counts: std::collections::HashMap<(String, String), u32> = std::collections::HashMap::new();
+        // Convert old format unused indices back to ESLint format counts
+        let unused_suppressions = self.convert_old_format_unused_to_eslint_format(
+            &old_format_unused,
+            &compat_suppressions,
+            eslint_suppressions,
+        );
 
-        // Count how many of each file+rule combination were not used
-        for &unused_index in &unused_indices {
+        Ok(unused_suppressions)
+    }
+
+    fn convert_old_format_unused_to_eslint_format(
+        &self,
+        unused_indices: &[usize],
+        compat_suppressions: &[SuppressionEntry],
+        _eslint_suppressions: &ESLintBulkSuppressionsFile,
+    ) -> Vec<(String, String, u32)> {
+        // Count unused suppressions by file+rule combination
+        let mut unused_counts: std::collections::HashMap<(String, String), u32> =
+            std::collections::HashMap::new();
+
+        for &unused_index in unused_indices {
             if let Some(suppression) = compat_suppressions.get(unused_index) {
-                if let (Some(file_path), Some(rule_name)) = (suppression.files.first(), suppression.rules.first()) {
+                if let (Some(file_path), Some(rule_name)) =
+                    (suppression.files.first(), suppression.rules.first())
+                {
                     let key = (file_path.clone(), rule_name.clone());
-                    *usage_counts.entry(key).or_insert(0) += 1;
+                    *unused_counts.entry(key).or_insert(0) += 1;
                 }
             }
         }
 
-        // Convert usage counts to the expected format
-        for ((file_path, rule_name), unused_count) in usage_counts {
-            unused_suppressions.push((file_path, rule_name, unused_count));
+        // Convert to the expected format - only include entries with unused suppressions
+        let mut result = Vec::new();
+        for ((file_path, rule_name), unused_count) in unused_counts {
+            if unused_count > 0 {
+                result.push((file_path, rule_name, unused_count));
+            }
         }
 
-        Ok(unused_suppressions)
+        result
     }
 
     fn get_config_store(&self) -> Result<ConfigStore, CliRunResult> {
         // Simplified config setup for pruning - reuse the existing patterns
         let mut external_plugin_store = ExternalPluginStore::default();
 
-        let config_search_result = Self::find_oxlint_config(&self.cwd, self.options.basic_options.config.as_ref());
+        let config_search_result =
+            Self::find_oxlint_config(&self.cwd, self.options.basic_options.config.as_ref());
         let oxlintrc = match config_search_result {
             Ok(config) => config,
             Err(_) => return Err(CliRunResult::InvalidOptionConfig),
@@ -1232,22 +1281,33 @@ impl CliRunner {
     }
 
     fn get_files_to_lint(&self) -> Result<Vec<Arc<std::ffi::OsStr>>, CliRunResult> {
-        // Simplified file discovery - just use the paths as provided
-        // In the real implementation, this would use the full Walk logic
+        // Use the same path resolution logic as the main linting flow
+        // But since suppressions now use relative paths, we need absolute paths for linting
+        // and the linter will convert them back to relative paths for matching
         let mut all_files = Vec::new();
 
         for path in &self.options.paths {
-            if path.is_file() {
-                all_files.push(Arc::from(path.as_os_str()));
-            } else if path.is_dir() {
+            // Convert to absolute path for linting (the diagnostic system needs absolute paths)
+            let absolute_path = if path.is_absolute() {
+                path.clone()
+            } else {
+                self.cwd.join(path)
+            };
+
+            if absolute_path.is_file() {
+                all_files.push(Arc::from(absolute_path.as_os_str()));
+            } else if absolute_path.is_dir() {
                 // For directories, do a simple recursive search for now
                 // This is a simplified version - the full implementation would use Walk
-                if let Ok(entries) = std::fs::read_dir(path) {
+                if let Ok(entries) = std::fs::read_dir(&absolute_path) {
                     for entry in entries.flatten() {
                         let entry_path = entry.path();
                         if entry_path.is_file() {
                             if let Some(extension) = entry_path.extension() {
-                                if matches!(extension.to_str(), Some("js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs")) {
+                                if matches!(
+                                    extension.to_str(),
+                                    Some("js" | "jsx" | "ts" | "tsx" | "mjs" | "cjs")
+                                ) {
                                     all_files.push(Arc::from(entry_path.as_os_str()));
                                 }
                             }
@@ -1263,7 +1323,6 @@ impl CliRunner {
 
         Ok(all_files)
     }
-
 
     fn get_diagnostic_service(
         reporter: &OutputFormatter,

@@ -1,9 +1,4 @@
-use std::{
-    collections::HashSet,
-    fs,
-    path::Path,
-    rc::Rc,
-};
+use std::{collections::HashSet, fs, path::Path, rc::Rc};
 
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_span::Span;
@@ -11,9 +6,9 @@ use oxc_span::Span;
 
 use crate::result::CliRunResult;
 pub use oxc_linter::{
-    BulkSuppressions, SuppressionsFile, SuppressionEntry, load_suppressions_from_file,
-    ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression,
-    load_eslint_suppressions_from_file,
+    BulkSuppressions, ESLintBulkSuppressions, ESLintBulkSuppressionsFile, ESLintRuleSuppression,
+    SuppressionEntry, SuppressionsFile, load_eslint_suppressions_from_file,
+    load_suppressions_from_file,
 };
 
 /// Default name for the suppressions file

@@ -1,6 +1,6 @@
-use std::io::{stdout, BufWriter};
-use std::process::Termination;
 use oxlint::cli::{CliRunner, lint_command};
+use std::io::{BufWriter, stdout};
+use std::process::Termination;
 
 fn main() {
     // Get command line arguments

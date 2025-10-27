@@ -41,36 +41,43 @@ oxlint --prune-suppressions src/
 ## Changes
 
 ### Core Implementation
+
 - **`crates/oxc_linter/src/bulk_suppressions.rs`** - New module with ESLint format support
 - **`crates/oxc_linter/src/context/mod.rs`** - Integration with diagnostic suppression
 - **`crates/oxc_linter/src/lib.rs`** - Public API exports
 
 ### CLI Integration
+
 - **`apps/oxlint/src/lint.rs`** - Complete violation capture and suppression generation
 - **`apps/oxlint/src/command/suppressions.rs`** - Suppression management utilities
 - **`apps/oxlint/src/command/lint.rs`** - New CLI flags and options
 
 ### Testing
+
 - **`crates/oxc_linter/src/bulk_suppressions.rs`** - 9 comprehensive unit tests
 - **`apps/oxlint/src/command/test_suppressions.rs`** - 19 integration tests covering CLI workflows
 
 ### Documentation
+
 - **`BULK_SUPPRESSIONS.md`** - Complete user and developer documentation
 
 ## Technical Details
 
 ### Core Architecture
+
 - **Count-based matching**: Tracks usage to prevent over-suppression
 - **HashMap-based lookups**: O(1) average case performance for file and rule matching
 - **Thread-safe design**: Uses Arc/Mutex for safe concurrent access
 - **Memory efficient**: Minimal allocations with data structure reuse
 
 ### Rule Name Resolution
+
 - Supports multiple formats: `"no-console"`, `"@typescript-eslint/no-unused-vars"`, `"typescript/no-unused-vars"`
 - Handles semantic analyzer errors by mapping to equivalent linting rules
 - Extracts rule names from diagnostic codes and error messages
 
 ### File Path Matching
+
 - Exact path matching for direct file references
 - Relative path matching for flexible project structures
 - Handles both Unix and Windows path separators
@@ -78,6 +85,7 @@ oxlint --prune-suppressions src/
 ## Test Coverage
 
 ### Unit Tests (9 tests)
+
 - ✅ Basic suppression functionality and count tracking
 - ✅ File path matching (exact, relative, absolute paths)
 - ✅ Rule name format compatibility (bare names, plugin prefixes)
@@ -86,6 +94,7 @@ oxlint --prune-suppressions src/
 - ✅ Error handling for missing files and invalid data
 
 ### Integration Tests (19 tests)
+
 - ✅ ESLint format file loading and parsing
 - ✅ CLI flag handling and command validation
 - ✅ End-to-end suppression workflows
@@ -113,6 +122,7 @@ None. This is a pure addition that maintains full backward compatibility.
 ## Related Issues
 
 Fixes issues with:
+
 - Large-scale suppression management in existing codebases
 - ESLint migration compatibility
 - Automated suppression workflows
