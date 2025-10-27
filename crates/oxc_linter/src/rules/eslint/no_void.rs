@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
@@ -12,8 +13,10 @@ fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoVoid {
+    /// If set to `true`, using `void` as a standalone statement is allowed.
     pub allow_as_statement: bool,
 }
 
@@ -41,18 +44,11 @@ declare_oxc_lint!(
     /// "foo.void()";
     /// "foo.void = bar";
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowAsStatement
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// If set to `true`, using `void` as a standalone statement is allowed.
     NoVoid,
     eslint,
     restriction,
-    suggestion
+    suggestion,
+    config = NoVoid,
 );
 
 impl Rule for NoVoid {
