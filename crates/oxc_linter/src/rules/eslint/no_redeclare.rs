@@ -85,7 +85,9 @@ impl Rule for NoRedeclare {
             let name = ctx.scoping().symbol_name(symbol_id);
             let decl_span = ctx.scoping().symbol_span(symbol_id);
             let is_builtin = self.built_in_globals
-                && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
+                && (GLOBALS["builtin"].contains_key(name)
+                    || ctx.globals().is_enabled(name)
+                    || ctx.frameworks_options().has_global(name));
 
             if is_builtin {
                 ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
