@@ -359,4 +359,176 @@ mod tests {
         let unused = tracker.get_unused_indices(5);
         assert_eq!(unused, vec![1, 3, 4]);
     }
+
+    #[test]
+    fn test_eslint_bulk_suppressions_file_format() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("eslint-suppressions.json");
+
+        // Create ESLint-style suppression format
+        let content = r#"{
+  "src/App.tsx": {
+    "@typescript-eslint/no-unused-vars": { "count": 2 },
+    "no-console": { "count": 1 }
+  },
+  "src/utils.js": {
+    "prefer-const": { "count": 3 }
+  }
+}"#;
+
+        std::fs::write(&file_path, content).unwrap();
+
+        // Load and verify format
+        let loaded = load_eslint_suppressions_from_file(&file_path).unwrap();
+
+        assert_eq!(loaded.suppressions.len(), 2);
+        assert!(loaded.suppressions.contains_key("src/App.tsx"));
+        assert!(loaded.suppressions.contains_key("src/utils.js"));
+
+        let app_rules = loaded.suppressions.get("src/App.tsx").unwrap();
+        assert_eq!(app_rules.get("@typescript-eslint/no-unused-vars").unwrap().count, 2);
+        assert_eq!(app_rules.get("no-console").unwrap().count, 1);
+
+        let utils_rules = loaded.suppressions.get("src/utils.js").unwrap();
+        assert_eq!(utils_rules.get("prefer-const").unwrap().count, 3);
+    }
+
+    #[test]
+    fn test_eslint_bulk_suppressions_integration() {
+        use oxc_span::Span;
+        use std::path::Path;
+
+        // Create ESLint-style suppressions
+        let mut suppressions_data = std::collections::HashMap::new();
+        let mut file_rules = std::collections::HashMap::new();
+
+        file_rules.insert("@typescript-eslint/no-unused-vars".to_string(),
+            ESLintRuleSuppression { count: 10 }); // Increase count to handle multiple test cases
+        file_rules.insert("no-console".to_string(),
+            ESLintRuleSuppression { count: 5 }); // Increase count to handle multiple test cases
+
+        suppressions_data.insert("src/App.tsx".to_string(), file_rules);
+
+        let suppressions_file = ESLintBulkSuppressionsFile {
+            suppressions: suppressions_data,
+        };
+
+        let bulk_suppressions = ESLintBulkSuppressions::new(suppressions_file);
+
+        // Test different file path variations
+        let test_cases = vec![
+            Path::new("src/App.tsx"),
+            Path::new("/project/src/App.tsx"),
+            Path::new("App.tsx"),
+        ];
+
+        let span = Span::new(100, 111);
+
+        // Test exact file match first
+        let file_path = Path::new("src/App.tsx");
+
+        // First TypeScript error should be suppressed
+        assert!(bulk_suppressions.matches("typescript", "@typescript-eslint", "no-unused-vars", span, file_path));
+
+        // Second TypeScript error should be suppressed
+        assert!(bulk_suppressions.matches("typescript", "@typescript-eslint", "no-unused-vars", span, file_path));
+
+        // Console error should be suppressed
+        assert!(bulk_suppressions.matches("eslint", "eslint", "no-console", span, file_path));
+
+        // Test that different file paths can find the same suppression entry
+        for file_path in test_cases {
+            if file_path.to_string_lossy().contains("App.tsx") {
+                // Should match because file path contains App.tsx
+                assert!(bulk_suppressions.matches("typescript", "@typescript-eslint", "no-unused-vars", span, file_path));
+            }
+        }
+    }
+
+    #[test]
+    fn test_eslint_bulk_suppressions_unused_tracking() {
+        use std::collections::HashMap;
+
+        // Create suppressions with various counts
+        let mut suppressions_data = HashMap::new();
+        let mut file_rules = HashMap::new();
+
+        file_rules.insert("no-console".to_string(), ESLintRuleSuppression { count: 5 });
+        file_rules.insert("prefer-const".to_string(), ESLintRuleSuppression { count: 3 });
+        file_rules.insert("no-unused-vars".to_string(), ESLintRuleSuppression { count: 1 });
+
+        suppressions_data.insert("test.js".to_string(), file_rules);
+
+        let suppressions_file = ESLintBulkSuppressionsFile {
+            suppressions: suppressions_data,
+        };
+
+        let bulk_suppressions = ESLintBulkSuppressions::new(suppressions_file);
+        let file_path = std::path::Path::new("test.js");
+        let span = oxc_span::Span::new(100, 111);
+
+        // Use some suppressions
+        bulk_suppressions.matches("eslint", "eslint", "no-console", span, file_path);
+        bulk_suppressions.matches("eslint", "eslint", "no-console", span, file_path);
+        // Leave 3 unused for no-console
+
+        bulk_suppressions.matches("eslint", "eslint", "prefer-const", span, file_path);
+        bulk_suppressions.matches("eslint", "eslint", "prefer-const", span, file_path);
+        bulk_suppressions.matches("eslint", "eslint", "prefer-const", span, file_path);
+        // All prefer-const used
+
+        // Don't use any no-unused-vars
+        // Leave 1 unused for no-unused-vars
+
+        let unused = bulk_suppressions.get_unused_suppressions();
+        assert_eq!(unused.len(), 2);
+
+        let unused_map: HashMap<&str, u32> = unused.iter()
+            .map(|(_, rule, count)| (rule.as_str(), *count))
+            .collect();
+
+        assert_eq!(unused_map.get("no-console"), Some(&3));
+        assert_eq!(unused_map.get("no-unused-vars"), Some(&1));
+        assert_eq!(unused_map.get("prefer-const"), None); // All used
+    }
+
+    #[test]
+    fn test_eslint_format_roundtrip() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("eslint-test.json");
+
+        // Create original ESLint suppressions
+        let mut suppressions_data = std::collections::HashMap::new();
+        let mut file1_rules = std::collections::HashMap::new();
+        file1_rules.insert("no-console".to_string(), ESLintRuleSuppression { count: 2 });
+        file1_rules.insert("@typescript-eslint/no-unused-vars".to_string(), ESLintRuleSuppression { count: 1 });
+        suppressions_data.insert("src/App.tsx".to_string(), file1_rules);
+
+        let mut file2_rules = std::collections::HashMap::new();
+        file2_rules.insert("prefer-const".to_string(), ESLintRuleSuppression { count: 3 });
+        suppressions_data.insert("src/utils.js".to_string(), file2_rules);
+
+        let original = ESLintBulkSuppressionsFile {
+            suppressions: suppressions_data,
+        };
+
+        // Write to file
+        let content = serde_json::to_string_pretty(&original).unwrap();
+        std::fs::write(&file_path, content).unwrap();
+
+        // Load from file
+        let loaded = load_eslint_suppressions_from_file(&file_path).unwrap();
+
+        // Verify structure
+        assert_eq!(loaded.suppressions.len(), 2);
+
+        let app_rules = loaded.suppressions.get("src/App.tsx").unwrap();
+        assert_eq!(app_rules.len(), 2);
+        assert_eq!(app_rules.get("no-console").unwrap().count, 2);
+        assert_eq!(app_rules.get("@typescript-eslint/no-unused-vars").unwrap().count, 1);
+
+        let utils_rules = loaded.suppressions.get("src/utils.js").unwrap();
+        assert_eq!(utils_rules.len(), 1);
+        assert_eq!(utils_rules.get("prefer-const").unwrap().count, 3);
+    }
 }
