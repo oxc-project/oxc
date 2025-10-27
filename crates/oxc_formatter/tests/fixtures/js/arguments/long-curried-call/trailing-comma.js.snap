@@ -1,0 +1,35 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+Event.debounce(
+  call(A, B),
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+)(() => { });
+
+==================== Output ====================
+-------------------------
+{ trailingComma: "none" }
+-------------------------
+Event.debounce(
+  call(A, B),
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+)(() => {});
+
+------------------------
+{ trailingComma: "es5" }
+------------------------
+Event.debounce(
+  call(A, B),
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+)(() => {});
+
+------------------------
+{ trailingComma: "all" }
+------------------------
+Event.debounce(
+  call(A, B),
+  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD,
+)(() => {});
+
+===================== End =====================
