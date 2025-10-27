@@ -237,7 +237,7 @@ fn check_type_literal(
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 enum AllowInterfaces {
     #[default]
     Never,
