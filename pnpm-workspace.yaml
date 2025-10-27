@@ -9,12 +9,12 @@ packages:
   - tasks/mcp
 
 catalog:
-  '@napi-rs/cli': 3.4.0
+  '@napi-rs/cli': 3.4.1
   '@napi-rs/wasm-runtime': 1.0.7
   '@types/node': ^24.0.0
-  publint: 0.3.14
+  publint: 0.3.15
   typescript: 5.9.3
-  vitest: 4.0.1
+  vitest: 4.0.3
 
 minimumReleaseAge: 1440
 
