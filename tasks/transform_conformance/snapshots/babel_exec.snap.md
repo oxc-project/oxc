@@ -1,6 +1,6 @@
 commit: 41d96516
 
-node: v22.20.0
+node: v24.10.0
 
 Passed: 324 of 414 (78.26%)
 
@@ -45,7 +45,7 @@ TypeError: Cannot read properties of undefined (reading 'bind')
 TypeError: e.has is not a function
     at _assertClassBrand (./npm/runtime/src/helpers/assertClassBrand.js:2:44)
     at func (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:10:15)
-    at Function.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:12:13)
+    at Test.method (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:12:13)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-private-static-shadow-exec.test.js:16:14
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
@@ -299,13 +299,13 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js:17:13)
+    at Sub.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js:17:13)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-super-exec.test.js:24:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js:17:14)
+    at B.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js:17:14)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-loose-this-exec.test.js:27:25
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-basic-exec.test.js
@@ -341,19 +341,19 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js:17:13)
+    at Sub.check (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js:17:13)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-super-exec.test.js:24:13
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js:17:14)
+    at B.extract (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js:17:14)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-private-static-method-privateFieldsAsProperties-this-exec.test.js:27:25
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js
 TypeError: "#privateStaticFieldValue" is write-only
     at _writeOnlyError (./npm/runtime/src/helpers/writeOnlyError.js:2:9)
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:7:17)
+    at Cl.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:7:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-get-only-setter-exec.test.js:14:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-access-in-static-field-initializer-exec.test.js
@@ -366,7 +366,7 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-basic-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.getValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-basic-exec.test.js:10:13)
+    at Cl.getValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-basic-exec.test.js:10:13)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-basic-exec.test.js:27:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-destructure-set-exec.test.js
@@ -378,13 +378,13 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js
 TypeError: "#privateStaticFieldValue" is write-only
     at _writeOnlyError (./npm/runtime/src/helpers/writeOnlyError.js:2:9)
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:11:17)
+    at Cl.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:11:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-get-only-setter-exec.test.js:22:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.testUpdates (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js:24:6)
+    at Cl.testUpdates (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js:24:6)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-loose-updates-exec.test.js:47:5
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-access-in-static-field-initializer-exec.test.js
@@ -397,7 +397,7 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-basic-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.getValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-basic-exec.test.js:10:13)
+    at Cl.getValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-basic-exec.test.js:10:13)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-basic-exec.test.js:27:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-destructure-set-exec.test.js
@@ -409,19 +409,19 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js
 TypeError: "#privateStaticFieldValue" is write-only
     at _writeOnlyError (./npm/runtime/src/helpers/writeOnlyError.js:2:9)
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:11:17)
+    at Cl.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:11:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-get-only-setter-exec.test.js:22:12
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js
 TypeError: attempted to use private field on non-instance
     at _classPrivateFieldBase (./npm/runtime/src/helpers/classPrivateFieldLooseBase.js:2:44)
-    at Function.testUpdates (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js:25:6)
+    at Cl.testUpdates (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js:25:6)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsProperties-updates-exec.test.js:48:5
 
 ./fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js
 TypeError: "#privateStaticFieldValue" is write-only
     at _writeOnlyError (./npm/runtime/src/helpers/writeOnlyError.js:2:9)
-    at Function.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:7:17)
+    at Cl.getPrivateStaticFieldValue (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:7:17)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-private-methods-test-fixtures-static-accessors-privateFieldsAsSymbols-get-only-setter-exec.test.js:14:12
 
 ./fixtures/babel/babel-plugin-transform-private-property-in-object-test-fixtures-assumption-privateFieldsAsProperties-method-exec.test.js

@@ -1,6 +1,6 @@
 commit: 41d96516
 
-node: v22.20.0
+node: v24.10.0
 
 Passed: 9 of 11 (81.82%)
 
