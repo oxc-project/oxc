@@ -6,7 +6,15 @@
 
 set -euo pipefail
 
-# Default values
+# Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
+TEST262_SHA="d2940bdbb0e28fd002ec31b89f8182bbf63da092"
+BABEL_SHA="4cc3d8888f3e3ac30d38ccfa4557baa7a4a52714"
+TYPESCRIPT_SHA="8ea03f88d039759018673f229addb87f579f326c"
+PRETTIER_SHA="d452be5cb0d30ac68aa15401fdfff4816ead0573"
+ACORN_TEST262_SHA="994d763f5327046485d985d5596186d3c82f507a"
+NODE_COMPAT_TABLE_SHA="17ac85ca289a2d6fea14a991284e631468efe14c"
+
+# Default values for which submodules to clone
 TEST262=${1:-true}
 BABEL=${2:-true}
 TYPESCRIPT=${3:-true}
