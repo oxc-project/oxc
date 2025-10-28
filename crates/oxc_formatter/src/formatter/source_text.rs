@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::Comment;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::identifier::{is_line_terminator, is_white_space_single_line};
+use oxc_syntax::identifier::{CR, LF, is_line_terminator, is_white_space_single_line};
 
 use super::Comments;
 
@@ -132,13 +132,17 @@ impl<'a> SourceText<'a> {
     /// Count consecutive line breaks after position, returning `0` if only whitespace follows
     pub fn lines_after(&self, end: u32) -> usize {
         let mut count = 0;
-        for char in self.slice_from(end).chars() {
+        let mut chars = self.slice_from(end).chars().peekable();
+        while let Some(char) = chars.next() {
             if is_white_space_single_line(char) {
                 continue;
             }
 
             if is_line_terminator(char) {
                 count += 1;
+                if char == CR && chars.peek() == Some(&LF) {
+                    chars.next();
+                }
                 continue;
             }
 
@@ -169,7 +173,8 @@ impl<'a> SourceText<'a> {
         // Count the newlines in the leading trivia of the next node
         let mut count = 0;
         let mut following_source = self.bytes_from(span.end).iter();
-        for c in self.slice_to(start).chars().rev() {
+        let mut chars = self.slice_to(start).chars().rev().peekable();
+        while let Some(c) = chars.next() {
             if is_white_space_single_line(c) {
                 continue;
             }
@@ -201,8 +206,91 @@ impl<'a> SourceText<'a> {
             }
 
             count += 1;
+            if c == LF && chars.peek() == Some(&CR) {
+                chars.next();
+            }
         }
 
         0
+    }
+}
+
+// NOTE: Our test fixtures are managed under `.gitattributes` to enforce LF line endings.
+// Therefore, we explicitly test CRLF and mixed line endings here.
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_source_text() {
+        let source_text = r"
+const x = 1;
+
+const y = 2;
+
+
+const z = 3;
+"
+        .trim();
+        let source_text = SourceText::new(source_text);
+        let comments = vec![];
+        let comments = Comments::new(source_text, &comments);
+
+        let span_x = Span::new(0, 12);
+        let span_y = Span::new(14, 26);
+        let span_z = Span::new(29, 41);
+        assert_eq!(source_text.text_for(&span_x), "const x = 1;");
+        assert_eq!(source_text.text_for(&span_y), "const y = 2;");
+        assert_eq!(source_text.text_for(&span_z), "const z = 3;");
+
+        assert_eq!(source_text.get_lines_before(span_x, &comments), 0);
+        assert_eq!(source_text.get_lines_before(span_y, &comments), 2);
+        assert_eq!(source_text.get_lines_before(span_z, &comments), 3);
+
+        assert_eq!(source_text.lines_after(span_x.end), 2);
+        assert_eq!(source_text.lines_after(span_y.end), 3);
+        assert_eq!(source_text.lines_after(span_z.end), 0);
+    }
+
+    #[test]
+    fn test_source_text_with_crlf() {
+        let source_text = "const x = 1;\r\n\r\nconst y = 2;\r\n\r\n\r\nconst z = 3;";
+        let source_text = SourceText::new(source_text);
+        let comments = vec![];
+        let comments = Comments::new(source_text, &comments);
+
+        let span_x = Span::new(0, 12);
+        let span_y = Span::new(16, 28);
+        let span_z = Span::new(34, 46);
+        assert_eq!(source_text.text_for(&span_x), "const x = 1;");
+        assert_eq!(source_text.text_for(&span_y), "const y = 2;");
+        assert_eq!(source_text.text_for(&span_z), "const z = 3;");
+
+        assert_eq!(source_text.get_lines_before(span_y, &comments), 2);
+        assert_eq!(source_text.get_lines_before(span_z, &comments), 3);
+
+        assert_eq!(source_text.lines_after(span_x.end), 2);
+        assert_eq!(source_text.lines_after(span_y.end), 3);
+    }
+
+    #[test]
+    fn test_source_text_with_mixed_line_endings() {
+        let source_text = "const x = 1;\n\r\nconst y = 2;\r\n\nconst z = 3;";
+        let source_text = SourceText::new(source_text);
+        let comments = vec![];
+        let comments = Comments::new(source_text, &comments);
+
+        let span_x = Span::new(0, 12);
+        let span_y = Span::new(15, 27);
+        let span_z = Span::new(30, 42);
+        assert_eq!(source_text.text_for(&span_x), "const x = 1;");
+        assert_eq!(source_text.text_for(&span_y), "const y = 2;");
+        assert_eq!(source_text.text_for(&span_z), "const z = 3;");
+
+        assert_eq!(source_text.get_lines_before(span_y, &comments), 2);
+        assert_eq!(source_text.get_lines_before(span_z, &comments), 2);
+
+        assert_eq!(source_text.lines_after(span_x.end), 2);
+        assert_eq!(source_text.lines_after(span_y.end), 2);
     }
 }
