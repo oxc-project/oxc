@@ -24,7 +24,7 @@ fn es_target() {
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
         ("es2021", "class Foo { #a; }"),
-        ("chrome89", r#"export { foo as "string-name" };"#), // test arbitrary module namespace names warning
+        ("es2019", r#"export { foo as "string-name" };"#), // test arbitrary module namespace names warning
     ];
 
     // Test no transformation for esnext.
@@ -88,9 +88,9 @@ fn target_list_fail() {
 
 #[test]
 fn arbitrary_module_namespace_names_warning() {
-    // Test that warning is emitted for Chrome 89 (which doesn't support the feature)
+    // Test that warning is emitted for Chrome 87 (which doesn't support the feature)
     let source = r#"const foo = 1; export { foo as "string-name" };"#;
-    let options = TransformOptions::from_target("chrome89").unwrap();
+    let options = TransformOptions::from_target("chrome87").unwrap();
 
     // Debug: print the option value
     eprintln!(
@@ -123,11 +123,11 @@ fn chrome90_should_not_warn() {
     let ret = Parser::new(&allocator, source, source_type).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    
+
     let options = TransformOptions::from_target("chrome90").unwrap();
     let ret = Transformer::new(&allocator, std::path::Path::new("test.mjs"), &options)
         .build_with_scoping(scoping, &mut program);
-    
+
     assert!(ret.errors.is_empty(), "Expected no warnings for Chrome 90 which supports the feature");
 }
 
@@ -139,11 +139,11 @@ fn multiple_string_literals_emit_multiple_warnings() {
     let ret = Parser::new(&allocator, source, source_type).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    
-    let options = TransformOptions::from_target("chrome89").unwrap();
+
+    let options = TransformOptions::from_target("chrome87").unwrap();
     let ret = Transformer::new(&allocator, std::path::Path::new("test.mjs"), &options)
         .build_with_scoping(scoping, &mut program);
-    
+
     assert_eq!(ret.errors.len(), 2, "Expected 2 warnings for 2 string literals");
 }
 
@@ -155,10 +155,10 @@ fn normal_identifiers_no_warnings() {
     let ret = Parser::new(&allocator, source, source_type).parse();
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    
-    let options = TransformOptions::from_target("chrome89").unwrap();
+
+    let options = TransformOptions::from_target("chrome87").unwrap();
     let ret = Transformer::new(&allocator, std::path::Path::new("test.mjs"), &options)
         .build_with_scoping(scoping, &mut program);
-    
+
     assert!(ret.errors.is_empty(), "Expected no warnings for normal identifiers");
 }

@@ -30,16 +30,16 @@ const customEs2020 = [
     // https://github.com/tc39/ecma262/pull/2154
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#browser_compatibility
     targets: {
-      chrome: '90',
-      opera: '76',
-      edge: '90',
+      chrome: '88',
+      opera: '74',
+      edge: '88',
       firefox: '87',
       safari: '14.1',
       node: '16.0',
-      deno: '1.9',
+      deno: '1.6',
       ios: '14.5',
       samsung: '15.0',
-      opera_mobile: '64',
+      opera_mobile: '63',
       electron: '12.0',
     },
   },

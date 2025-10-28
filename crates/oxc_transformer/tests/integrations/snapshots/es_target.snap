@@ -87,7 +87,7 @@ class Foo {
 	}
 }
 
-########## 11 chrome89
+########## 11 es2019
 export { foo as "string-name" };
 ----------
 
