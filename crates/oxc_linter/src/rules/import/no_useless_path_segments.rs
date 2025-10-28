@@ -192,13 +192,11 @@ impl NoUselessPathSegments {
     ///
     /// # Examples
     ///
-    /// ```
     /// assert!(is_index_filename("index"));
     /// assert!(is_index_filename("index.js"));
     /// assert!(is_index_filename("index.ts"));
     /// assert!(!is_index_filename("index.foo"));
     /// assert!(!is_index_filename("notindex"));
-    /// ```
     fn is_index_filename(name: &str) -> bool {
         name == "index" || Self::is_index_with_extension(name)
     }
@@ -749,13 +747,11 @@ impl NoUselessPathSegments {
 ///
 /// # Examples
 ///
-/// ```
-/// normalize_path("./foo/../bar")  // → "./bar"
-/// normalize_path("./deep//a")     // → "./deep/a"
-/// normalize_path("./../foo")      // → "../foo"
-/// normalize_path("./")            // → "."
-/// normalize_path("./bar/")        // → "./bar"
-/// ```
+/// normalize_path("./foo/../bar") → "./bar"
+/// normalize_path("./deep//a")    → "./deep/a"
+/// normalize_path("./../foo")     → "../foo"
+/// normalize_path("./")           → "."
+/// normalize_path("./bar/")       → "./bar"
 fn normalize_path(path: &str) -> String {
     let path_buf = PathBuf::from(path);
     let mut components = Vec::new();
