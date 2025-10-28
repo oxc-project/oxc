@@ -203,7 +203,9 @@ fn how_to_use(rule: &RuleTableRow) -> String {
     let enable_bash_example = if is_default_plugin {
         format!(r"oxlint {type_aware_flag}--deny {rule_full_name}")
     } else {
-        format!(r"oxlint {type_aware_flag}--deny {rule_full_name} --{normalized_plugin_name}-plugin")
+        format!(
+            r"oxlint {type_aware_flag}--deny {rule_full_name} --{normalized_plugin_name}-plugin"
+        )
     };
     let enable_config_example = if is_default_plugin {
         format!(
