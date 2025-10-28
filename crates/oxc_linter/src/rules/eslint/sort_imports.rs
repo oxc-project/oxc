@@ -10,6 +10,7 @@ use oxc_ast::ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -36,12 +37,18 @@ fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnost
 #[derive(Debug, Default, Clone)]
 pub struct SortImports(Box<SortImportsOptions>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct SortImportsOptions {
+    /// When `true`, the rule ignores case-sensitivity when sorting import names.
     ignore_case: bool,
+    /// When `true`, the rule ignores the sorting of import declarations (the order of `import` statements).
     ignore_declaration_sort: bool,
+    /// When `true`, the rule ignores the sorting of import members within a single import declaration.
     ignore_member_sort: bool,
+    /// When `true`, the rule allows import groups separated by blank lines to be treated independently.
     allow_separated_groups: bool,
+    /// Specifies the sort order of different import syntaxes.
     member_syntax_sort_order: MemberSyntaxSortOrder,
 }
 
@@ -76,7 +83,8 @@ declare_oxc_lint!(
     SortImports,
     eslint,
     style,
-    conditional_fix
+    conditional_fix,
+    config = SortImportsOptions,
 );
 
 impl Rule for SortImports {
@@ -351,7 +359,7 @@ impl SortImports {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
 struct MemberSyntaxSortOrder(Vec<ImportKind>);
 
 impl Default for MemberSyntaxSortOrder {
@@ -403,7 +411,8 @@ impl MemberSyntaxSortOrder {
     }
 }
 
-#[derive(Debug, Default, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Hash, Eq, PartialEq, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum ImportKind {
     // import from 'foo.js'
     #[default]
