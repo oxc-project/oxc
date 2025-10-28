@@ -558,10 +558,17 @@ impl ConfigStoreBuilder {
                 let normalized_name = normalize_plugin_name(&name).into_owned();
 
                 if LintPlugins::try_from(normalized_name.as_str()).is_err() {
-                    external_plugin_store.register_plugin(plugin_path, normalized_name, offset, rule_names);
+                    external_plugin_store.register_plugin(
+                        plugin_path,
+                        normalized_name,
+                        offset,
+                        rule_names,
+                    );
                     Ok(())
                 } else {
-                    Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name: normalized_name })
+                    Err(ConfigBuilderError::ReservedExternalPluginName {
+                        plugin_name: normalized_name,
+                    })
                 }
             }
             PluginLoadResult::Failure(e) => Err(ConfigBuilderError::PluginLoadFailed {
