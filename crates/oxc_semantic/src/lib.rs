@@ -8,7 +8,8 @@
 use std::ops::RangeBounds;
 
 use oxc_ast::{
-    AstKind, Comment, CommentsRange, ast::IdentifierReference, comments_range, has_comments_between,
+    AstKind, Comment, CommentsRange, ast::IdentifierReference, comments_range,
+    has_comments_between, is_inside_comment,
 };
 #[cfg(feature = "cfg")]
 use oxc_cfg::ControlFlowGraph;
@@ -156,6 +157,10 @@ impl<'a> Semantic<'a> {
 
     pub fn has_comments_between(&self, span: Span) -> bool {
         has_comments_between(self.comments, span)
+    }
+
+    pub fn is_inside_comment(&self, pos: u32) -> bool {
+        is_inside_comment(self.comments, pos)
     }
 
     pub fn irregular_whitespaces(&self) -> &[Span] {
