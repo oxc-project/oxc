@@ -21,3 +21,12 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Use named or default imports
+
+  ⚠ eslint-plugin-import(no-namespace): Usage of namespaced aka wildcard "*" imports prohibited
+   ╭─[index.js:3:25]
+ 2 │             import * as zod from 'zod'
+ 3 │             import * as DrizzleKit from 'drizzle-kit/api'
+   ·                         ──────────
+ 4 │             
+   ╰────
+  help: Use named or default imports
