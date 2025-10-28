@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -63,15 +64,26 @@ const STRICT_STRATEGY_CONSTRUCTORS: &[&str] = &[
     "FinalizationRegistry",
 ];
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoInstanceofBuiltinsConfig {
+    /// Additional constructor names to check beyond the default set.
+    /// Use this to extend the rule with additional constructors.
     include: Vec<String>,
+    /// Constructor names to exclude from checking.
     exclude: Vec<String>,
+    /// When `true`, checks `instanceof Error` and suggests using `Error.isError()` instead.
+    /// Requires [the `Error.isError()` function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/isError)
+    /// to be available.
     use_error_is_error: bool,
+    /// Controls which built-in constructors are checked.
+    /// - `"loose"` (default): Only checks Array, Function, Error (if `useErrorIsError` is true), and primitive wrappers
+    /// - `"strict"`: Additionally checks Error types, collections, typed arrays, and other built-in constructors
     strategy: Strategy,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 enum Strategy {
     Strict,
     #[default]
@@ -111,7 +123,8 @@ declare_oxc_lint!(
     NoInstanceofBuiltins,
     unicorn,
     suspicious,
-    pending
+    pending,
+    config = NoInstanceofBuiltinsConfig,
 );
 
 impl Rule for NoInstanceofBuiltins {
