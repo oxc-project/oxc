@@ -7,25 +7,34 @@ use oxc_ast::{AstKind, ast::ObjectPropertyKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct SortKeys(Box<SortKeysOptions>);
 
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 pub enum SortOrder {
     Desc,
     #[default]
     Asc,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct SortKeysOptions {
+    /// Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
     sort_order: SortOrder,
+    /// Whether the sort comparison is case-sensitive (A < a when true).
     case_sensitive: bool,
+    /// Use natural sort order so that, for example, "a2" comes before "a10".
     natural: bool,
+    /// Minimum number of properties required in an object before sorting is enforced.
     min_keys: usize,
+    /// When true, groups of properties separated by a blank line are sorted independently.
     allow_line_separated_groups: bool,
 }
 
@@ -84,7 +93,8 @@ declare_oxc_lint!(
     SortKeys,
     eslint,
     style,
-    conditional_fix
+    conditional_fix,
+    config = SortKeysOptions
 );
 
 impl Rule for SortKeys {
