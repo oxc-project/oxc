@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use schemars::JsonSchema;
 
 use crate::{AstNode, ast_util::get_declaration_of_variable, context::LintContext, rule::Rule};
 
@@ -11,8 +12,11 @@ fn no_typeof_undefined_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoTypeofUndefined {
+    /// If set to `true`, also report `typeof x === "undefined"` when `x` may be a global
+    /// variable that is not declared (commonly checked via `typeof foo === "undefined"`).
     check_global_variables: bool,
 }
 
@@ -39,7 +43,8 @@ declare_oxc_lint!(
     NoTypeofUndefined,
     unicorn,
     pedantic,
-    pending
+    pending,
+    config = NoTypeofUndefined,
 );
 
 impl Rule for NoTypeofUndefined {
