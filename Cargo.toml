@@ -252,6 +252,14 @@ oxc_ast_macros.opt-level = 1
 insta.opt-level = 3
 similar.opt-level = 3
 
+# Re-enable debuginfo for the language server specifically so Rust breakpoints bind when
+# debugging via the "Language Server (Socket)" launch configuration. The top-level
+# `[profile.dev] debug = false` disables DWARF info globally which caused LLDB to only
+# show assembly and ignore source breakpoints in this binary.
+[profile.dev.package.oxc_language_server]
+debug = true
+opt-level = 0
+
 [profile.release.package.oxc_playground_napi]
 opt-level = 'z'
 

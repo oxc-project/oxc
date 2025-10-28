@@ -3,13 +3,25 @@ use tower_lsp_server::lsp_types::Uri;
 
 use crate::{formatter::options::FormatOptions, linter::options::LintOptions};
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
     #[serde(flatten)]
     pub lint: LintOptions,
     #[serde(flatten)]
     pub format: FormatOptions,
+    #[serde(default)]
+    pub supported_extensions: Vec<String>,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Self {
+            lint: LintOptions::default(),
+            format: FormatOptions::default(),
+            supported_extensions: Vec::new(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

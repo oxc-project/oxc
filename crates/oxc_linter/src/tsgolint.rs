@@ -295,13 +295,16 @@ impl TsGoLintState {
     #[cfg(feature = "language_server")]
     pub fn lint_source(
         &self,
-        path: &Arc<OsStr>,
-        source_text: String,
-    ) -> Result<Vec<Message>, String> {
-        let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+        paths: &[Arc<OsStr>],
+    ) -> Result<Vec<(PathBuf, Vec<Message>)>, String> {
+        if paths.is_empty() {
+            return Ok(Vec::new());
+        }
 
-        let json_input = self.json_input(std::slice::from_ref(path), &mut resolved_configs);
+        let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
+        let json_input = self.json_input(paths, &mut resolved_configs);
         let executable_path = self.executable_path.clone();
+        let silent = self.silent;
 
         let handler = std::thread::spawn(move || {
             let child = std::process::Command::new(&executable_path)
@@ -321,99 +324,102 @@ impl TsGoLintState {
             };
 
             let mut stdin = child.stdin.take().expect("Failed to open tsgolint stdin");
-
-            // Write the input synchronously and handle BrokenPipe gracefully in case the child
-            // exits early and closes its stdin.
             let json = serde_json::to_string(&json_input).expect("Failed to serialize JSON");
             if let Err(e) = stdin.write_all(json.as_bytes()) {
-                // If the child closed stdin early, avoid crashing on SIGPIPE/BrokenPipe.
                 if e.kind() != ErrorKind::BrokenPipe {
                     return Err(format!("Failed to write to tsgolint stdin: {e}"));
                 }
             }
-            // Explicitly drop stdin to send EOF to the child.
             drop(stdin);
 
-            // Stream diagnostics as they are emitted, rather than waiting for all output
             let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+            let stdout_handler =
+                std::thread::spawn(move || -> Result<Vec<(PathBuf, Vec<Message>)>, String> {
+                    let msg_iter = TsGoLintMessageStream::new(stdout);
+                    let mut map: FxHashMap<PathBuf, Vec<Message>> = FxHashMap::default();
+                    let mut source_text_cache: FxHashMap<PathBuf, String> = FxHashMap::default();
 
-            let stdout_handler = std::thread::spawn(move || -> Result<Vec<Message>, String> {
-                let msg_iter = TsGoLintMessageStream::new(stdout);
+                    for msg in msg_iter {
+                        match msg {
+                            Ok(TsGoLintMessage::Error(err)) => return Err(err.error),
+                            Ok(TsGoLintMessage::Diagnostic(diag)) => {
+                                let path = diag.file_path.clone();
+                                let Some(resolved_config) = resolved_configs.get(&path) else {
+                                    continue;
+                                };
+                                let severity =
+                                    resolved_config.rules.iter().find_map(|(rule, status)| {
+                                        if rule.name() == diag.rule { Some(*status) } else { None }
+                                    });
+                                let Some(severity) = severity else { continue };
 
-                let mut result = vec![];
+                                let source_text: &str = if silent {
+                                    ""
+                                } else if let Some(st) = source_text_cache.get(&path) {
+                                    st
+                                } else {
+                                    let st = match read_to_string(&path) {
+                                        Ok(content) => content,
+                                        Err(e) => {
+                                            eprintln!(
+                                                "Failed to read file '{}': {}",
+                                                path.display(),
+                                                e
+                                            );
+                                            String::new()
+                                        }
+                                    };
+                                    source_text_cache.insert(path.clone(), st);
+                                    source_text_cache.get(&path).unwrap()
+                                };
 
-                for msg in msg_iter {
-                    match msg {
-                        Ok(TsGoLintMessage::Error(err)) => {
-                            return Err(err.error);
-                        }
-                        Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                            let path = tsgolint_diagnostic.file_path.clone();
-                            let Some(resolved_config) = resolved_configs.get(&path) else {
-                                // If we don't have a resolved config for this path, skip it. We should always
-                                // have a resolved config though, since we processed them already above.
-                                continue;
-                            };
-
-                            let severity =
-                                resolved_config.rules.iter().find_map(|(rule, status)| {
-                                    if rule.name() == tsgolint_diagnostic.rule {
-                                        Some(*status)
-                                    } else {
-                                        None
-                                    }
-                                });
-                            let Some(severity) = severity else {
-                                // If the severity is not found, we should not report the diagnostic
-                                continue;
-                            };
-
-                            let mut message = Message::from_tsgo_lint_diagnostic(
-                                tsgolint_diagnostic,
-                                &source_text,
-                            );
-
-                            message.error.severity = if severity == AllowWarnDeny::Deny {
-                                Severity::Error
-                            } else {
-                                Severity::Warning
-                            };
-
-                            result.push(message);
-                        }
-                        Err(e) => {
-                            return Err(e);
+                                let mut message =
+                                    Message::from_tsgo_lint_diagnostic(diag, source_text);
+                                message.error.severity = if severity == AllowWarnDeny::Deny {
+                                    Severity::Error
+                                } else {
+                                    Severity::Warning
+                                };
+                                map.entry(path).or_default().push(message);
+                            }
+                            Err(e) => return Err(e),
                         }
                     }
-                }
 
-                Ok(result)
-            });
+                    let mut entries: Vec<(PathBuf, Vec<Message>)> = map.into_iter().collect();
+                    entries.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+                    for (_, msgs) in &mut entries {
+                        msgs.sort_unstable_by(|m1, m2| {
+                            let s1 = m1.span;
+                            let s2 = m2.span;
+                            s1.start.cmp(&s2.start).then(s1.end.cmp(&s2.end))
+                        });
+                    }
+                    Ok(entries)
+                });
 
-            // Wait for process to complete and stdout processing to finish
             let exit_status = child.wait().expect("Failed to wait for tsgolint process");
             let stdout_result = stdout_handler.join();
-
             if !exit_status.success() {
                 return Err(format!("tsgolint process exited with status: {exit_status}"));
             }
-
             match stdout_result {
-                Ok(Ok(diagnostics)) => Ok(diagnostics),
+                Ok(Ok(grouped)) => Ok(grouped),
                 Ok(Err(err)) => Err(err),
                 Err(_) => Err("Failed to join stdout processing thread".to_string()),
             }
         });
 
         match handler.join() {
-            Ok(Ok(diagnostics)) => {
-                // Successfully ran tsgolint
-                Ok(diagnostics)
-            }
+            Ok(Ok(res)) => Ok(res),
             Ok(Err(err)) => Err(format!("Error running tsgolint: {err:?}")),
             Err(err) => Err(format!("Error running tsgolint: {err:?}")),
         }
     }
+
+    /// Batch lint multiple paths returning messages grouped per file.
+    /// Falls back to an error (caller should degrade to sequential) if process spawn or streaming fails.
+    #[cfg(feature = "language_server")]
 
     /// Create a JSON input for STDIN of tsgolint in this format:
     ///

@@ -59,6 +59,23 @@
       ]
     },
     {
+      "label": "extension: compile",
+      "type": "npm",
+      "script": "compile",
+      "options": {
+        "cwd": "${workspaceFolder}/editors/vscode"
+      },
+      "group": "build",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "silent",
+        "clear": true
+      },
+      "problemMatcher": [
+        "$tsc"
+      ]
+    },
+    {
       "type": "shell",
       "command": "cd ./editors/vscode && npm run watch",
       "windows": {
@@ -70,6 +87,17 @@
       "presentation": {
         "panel": "dedicated",
         "reveal": "never"
+      }
+    },
+    {
+      "label": "build: extension+rust",
+      "dependsOn": [
+        "extension: compile",
+        "rust: cargo test --no-run"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build"
       }
     }
   ]

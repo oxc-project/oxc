@@ -31,6 +31,7 @@ pub struct LintOptions {
     pub type_aware: bool,
     pub disable_nested_config: bool,
     pub fix_kind: LintFixKindFlag,
+    pub workspace_mode: bool,
 }
 
 #[derive(Debug, Default, Serialize, PartialEq, Eq, Deserialize, Clone)]
@@ -135,6 +136,9 @@ impl TryFrom<Value> for LintOptions {
                     Some(&"all") => LintFixKindFlag::All,
                     _ => LintFixKindFlag::default(),
                 }),
+            workspace_mode: object
+                .get("workspaceMode")
+                .is_some_and(|key| serde_json::from_value::<bool>(key.clone()).unwrap_or_default()),
         })
     }
 }

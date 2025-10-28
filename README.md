@@ -28,6 +28,27 @@ For more information, check out our website at [oxc.rs](https://oxc.rs).
 
 <sub>* Oxidation is the chemical process that creates rust</sub>
 
+## Workspace-wide Linting (Experimental)
+
+Oxlint now supports an optional workspace-wide linting mode in the VS Code extension.
+
+When enabled, all lintable files in the workspace are analyzed eagerly (not only the ones you open). This provides:
+
+- Immediate visibility of problems across the entire codebase in the Problems panel
+- Automatic incremental re-linting of changed files via LSP file watchers
+- Respect for `.gitignore` and oxlint ignore patterns
+- High performance through internal parallelization and batching
+
+Enable it via the VS Code setting: `oxc.lint.workspaceMode`.
+
+Notes:
+- This feature is currently experimental and disabled by default.
+- Designed to scale to large monorepos (thousands of files) while remaining fast.
+- Only re-lints changed files after the initial scan to minimize overhead.
+- Supports common JS/TS framework file extensions (js, mjs, cjs, jsx, ts, mts, cts, tsx, vue, svelte, astro).
+
+Planned improvements include progress reporting during the initial scan and additional configurability (custom include/exclude globs).
+
 ## 🏗️ Design Principles
 
 - **Performance**: Through rigorous performance engineering.

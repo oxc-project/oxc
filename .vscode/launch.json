@@ -3,17 +3,18 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Client",
       "type": "extensionHost",
       "request": "launch",
-      "name": "Launch Client",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}/editors/vscode"],
       "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/editors/vscode/dist/*.js"],
+      "outFiles": ["${workspaceFolder}/editors/vscode/out/**/*.js"],
       "env": {
         "SERVER_PATH_DEV": "${workspaceRoot}/editors/vscode/target/debug/oxc_language_server",
         "RUST_LOG": "debug"
-      }
+      },
+      "preLaunchTask": "build: extension+rust"
     },
     {
       "type": "lldb",
@@ -31,6 +32,61 @@
       }
       // "args": ["--ARGS-TO-OXLINT"],
       // "cwd": "PATH-TO-TEST-PROJECT"
+    },
+    {
+      "name": "Language Server (Socket)",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": ["build", "--package", "oxc_language_server"],
+        "filter": {
+          "name": "oxc_language_server",
+          "kind": "bin"
+        }
+      },
+      "env": {
+        "OXC_LS_LISTEN": "unix:/tmp/oxc_ls.sock",
+        "RUST_LOG": "debug"
+      },
+      "sourceLanguages": ["rust"],
+      "expressions": "native",
+      "stopOnEntry": false,
+      "presentation": {
+        "hidden": true,
+        "group": "",
+        "order": 1
+      }
+    },
+    {
+      "name": "Launch Client (External LS)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/editors/vscode"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/editors/vscode/out/**/*.js"],
+      "env": {
+        "OXC_LS_CONNECT": "unix:/tmp/oxc_ls.sock",
+        "RUST_LOG": "debug"
+      },
+      "presentation": {
+        "hidden": true,
+        "group": "",
+        "order": 1,
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug VS Code Extension and Oxc Language Server",
+      "configurations": ["Language Server (Socket)", "Launch Client (External LS)"],
+      "stopAll": true,
+      "preLaunchTask": "build: extension+rust",
+      "presentation": {
+        "hidden": false,
+        "group": "",
+        "order": 1
+      }
     }
   ]
 }

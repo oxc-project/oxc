@@ -24,6 +24,7 @@ use crate::{
     commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
     file_system::LSPFileSystem,
     linter::server_linter::ServerLinterRun,
+    log_bridge::set_global_client,
     options::{Options, WorkspaceOption},
     worker::WorkspaceWorker,
 };
@@ -207,6 +208,29 @@ impl LanguageServer for Backend {
             }
         }
 
+        // Initialize workspace mode if enabled
+        let mut workspace_diagnostics = Vec::new();
+        if capabilities.dynamic_watchers {
+            for worker in workers {
+                let options = worker.get_options().await;
+                if options.as_ref().is_some_and(|o| o.lint.workspace_mode) {
+                    // Register source file watchers
+                    if let Some(registration) = worker.init_source_file_watchers().await {
+                        registrations.push(registration);
+                    }
+
+                    // Perform initial workspace scan
+                    let diagnostics = worker.lint_workspace().await;
+                    workspace_diagnostics.extend(diagnostics);
+                }
+            }
+        }
+
+        // Publish all workspace diagnostics
+        if !workspace_diagnostics.is_empty() {
+            self.publish_all_diagnostics(&workspace_diagnostics).await;
+        }
+
         if capabilities.dynamic_formatting {
             // check if one workspace has formatting enabled
             let mut started_worker = false;
@@ -361,7 +385,8 @@ impl LanguageServer for Backend {
         }
     }
 
-    /// This notification is sent when a configuration file of a tool changes (example: `.oxlintrc.json`).
+    /// This notification is sent when a configuration file of a tool changes (example: `.oxlintrc.json`)
+    /// or when source files change in workspace mode.
     /// The server will re-lint the affected files and send updated diagnostics.
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_didChangeWatchedFiles>
@@ -381,11 +406,28 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            let Some(diagnostics) = worker.did_change_watched_files(file_event).await else {
-                continue;
-            };
 
-            all_diagnostics.extend(diagnostics);
+            // Check if this is a config file change or source file change
+            if is_source_file(&file_event.uri) {
+                // Source file change - lint the file if workspace mode is enabled
+                let options = worker.get_options().await;
+                if options.as_ref().is_some_and(|o| o.lint.workspace_mode) {
+                    if let Some(diagnostics) =
+                        worker.lint_file(&file_event.uri, None, ServerLinterRun::Always).await
+                    {
+                        all_diagnostics.push((
+                            file_event.uri.to_string(),
+                            diagnostics.into_iter().map(|d| d.diagnostic).collect(),
+                        ));
+                    }
+                }
+            } else {
+                // Config file change - use existing behavior
+                let Some(diagnostics) = worker.did_change_watched_files(file_event).await else {
+                    continue;
+                };
+                all_diagnostics.extend(diagnostics);
+            }
         }
 
         if !all_diagnostics.is_empty() {
@@ -658,6 +700,8 @@ impl Backend {
     /// It also holds the capabilities of the language server and an in-memory file system.
     /// The client is used to communicate with the LSP client.
     pub fn new(client: Client) -> Self {
+        // Register the client for global LSP log bridging.
+        set_global_client(client.clone());
         Self {
             client,
             workspace_workers: Arc::new(RwLock::new(vec![])),
@@ -715,4 +759,19 @@ impl Backend {
         }))
         .await;
     }
+}
+
+/// Check if a URI points to a source file that should be linted
+use tower_lsp_server::UriExt; // bring trait for to_file_path into scope
+
+fn is_source_file(uri: &Uri) -> bool {
+    const SOURCE_EXTENSIONS: &[&str] =
+        &["js", "jsx", "mjs", "cjs", "ts", "tsx", "mts", "cts", "vue", "svelte", "astro"];
+    let Some(path) = uri.to_file_path() else {
+        return false;
+    };
+    let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
+        return false;
+    };
+    SOURCE_EXTENSIONS.contains(&ext)
 }

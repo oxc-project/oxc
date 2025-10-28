@@ -1,0 +1,17 @@
+{
+    // Fix for CodeLLDB v1.11.0+ not showing Rust Vec contents in debugger
+    //
+    // Problem: CodeLLDB v1.11.0+ stopped bundling Rust pretty printers and expects
+    // them to load automatically from the Rust toolchain, but this often fails.
+    // Symptoms: Vec<T> shows only "buf" and "len" instead of expandable elements
+    //
+    // Solution: Manually load the Rust LLDB formatters using preRunCommands
+    // - Uses dynamic path resolution via `rustc --print sysroot` for cross-platform compatibility
+    // - Works on Linux, Windows, and macOS without hardcoded paths
+    //
+    // Reference: https://github.com/vadimcn/codelldb/issues/1166
+    "lldb.launch.initCommands": [
+        // Import external module so its functions (uri_summary) are addressable by name.
+        "script import os, sys; mod_path = os.path.join(os.getcwd(), '.vscode'); print('[codelldb:init] adding', mod_path); sys.path.append(mod_path) if mod_path not in sys.path else None; import lldb_rust_init"
+    ],
+}

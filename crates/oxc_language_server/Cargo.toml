@@ -38,7 +38,7 @@ papaya = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "io-util", "macros", "net"] }
 tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 [dev-dependencies]

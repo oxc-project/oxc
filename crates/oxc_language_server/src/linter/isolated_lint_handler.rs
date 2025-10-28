@@ -3,16 +3,18 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use log::debug;
+use log::{debug, info};
 use oxc_data_structures::rope::Rope;
+use oxc_linter::read_to_string;
 use rustc_hash::FxHashSet;
+use std::collections::HashMap;
 use tower_lsp_server::{UriExt, lsp_types::Uri};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, DirectivesStore, DisableDirectives, Fix, LINTABLE_EXTENSIONS,
     LintOptions, LintService, LintServiceOptions, Linter, Message, PossibleFixes, RuleCommentType,
-    RuntimeFileSystem, read_to_arena_str, read_to_string,
+    RuntimeFileSystem, read_to_arena_str,
 };
 
 use super::error_with_position::{
@@ -137,6 +139,90 @@ impl IsolatedLintHandler {
         }
 
         messages
+    }
+
+    /// Batch lint multiple paths using the underlying parallel runtime.
+    /// Returns a vector of (Uri, DiagnosticReport list). Ignores non-lintable paths silently.
+    pub fn run_workspace(&mut self, paths: &[PathBuf]) -> Vec<(Uri, Vec<DiagnosticReport>)> {
+        // Filter to lintable extensions first.
+        let lintable: Vec<PathBuf> =
+            paths.iter().filter(|p| Self::should_lint_path(p)).cloned().collect();
+        if lintable.is_empty() {
+            return Vec::new();
+        }
+        info!(
+            "[isolated] workspace batch start paths_total={} lintable={}",
+            paths.len(),
+            lintable.len()
+        );
+        let t_batch = Some(std::time::Instant::now());
+        let arc_paths: Vec<Arc<std::ffi::OsStr>> =
+            lintable.iter().map(|p| Arc::from(p.as_os_str())).collect();
+
+        // Run parallel lint across all entry paths.
+        let messages = self.service.with_paths(arc_paths).run_source();
+
+        // Group messages by originating file path.
+        let mut grouped: HashMap<Arc<std::ffi::OsStr>, Vec<Message>> = HashMap::new();
+        for msg in messages {
+            grouped.entry(msg.file_path.clone()).or_default().push(msg);
+        }
+
+        let mut out: Vec<(Uri, Vec<DiagnosticReport>)> = Vec::with_capacity(grouped.len());
+
+        for (file_os, msgs) in grouped.into_iter() {
+            let path_buf = PathBuf::from(file_os.as_ref());
+            // Read source text (skip if unreadable).
+            let Ok(source_text) = read_to_string(&path_buf) else {
+                continue;
+            };
+            let rope = Rope::from_str(&source_text);
+            let Some(uri) = Uri::from_file_path(&path_buf) else {
+                continue;
+            };
+
+            let mut reports: Vec<DiagnosticReport> = msgs
+                .iter()
+                .map(|m| message_to_lsp_diagnostic(m, &uri, &source_text, &rope))
+                .collect();
+
+            // Append unused directives diagnostics if configured
+            if let Some(severity) = self.unused_directives_severity
+                && let Some(directives) = self.directives_coordinator.get(&path_buf)
+            {
+                let unused = create_unused_directives_messages(&directives, severity, &source_text);
+                reports.extend(
+                    unused.iter().map(|m| message_to_lsp_diagnostic(m, &uri, &source_text, &rope)),
+                );
+            }
+
+            // Inverted related span diagnostics
+            let inverted = generate_inverted_diagnostics(&reports, &uri);
+            reports.extend(inverted);
+
+            let count = reports.len();
+            out.push((uri.clone(), reports));
+            info!("[isolated] workspace file uri={} diagnostics={}", uri.as_str(), count);
+        }
+
+        // Stable ordering for deterministic publish (by URI string)
+        out.sort_unstable_by(|a, b| a.0.as_str().cmp(b.0.as_str()));
+        if let Some(t_batch) = t_batch {
+            debug!(
+                "[profile] workspace isolated batch lintable={} output_files={} total_diagnostics={} ms={}",
+                lintable.len(),
+                out.len(),
+                out.iter().map(|(_, ds)| ds.len()).sum::<usize>(),
+                t_batch.elapsed().as_millis()
+            );
+        }
+        info!(
+            "[isolated] workspace batch done lintable={} output_files={} total_diagnostics={}",
+            lintable.len(),
+            out.len(),
+            out.iter().map(|(_, ds)| ds.len()).sum::<usize>()
+        );
+        out
     }
 
     fn should_lint_path(path: &Path) -> bool {

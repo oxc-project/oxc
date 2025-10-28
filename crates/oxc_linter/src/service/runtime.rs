@@ -611,10 +611,27 @@ impl Runtime {
                                 .to_mut()
                                 .replace_range(start..end, &fix_result.fixed_code);
                         }
-                        messages = fix_result.messages;
+                        #[cfg(feature = "language_server")]
+                        {
+                            messages = fix_result
+                                .messages
+                                .into_iter()
+                                .map(|m| m.with_file_path(&module_to_lint.path))
+                                .collect();
+                        }
+                        #[cfg(not(feature = "language_server"))]
+                        {
+                            messages = fix_result.messages;
+                        }
                     }
 
                     if !messages.is_empty() {
+                        #[cfg(feature = "language_server")]
+                        let errors = messages
+                            .into_iter()
+                            .map(|m| m.with_file_path(&module_to_lint.path).into())
+                            .collect();
+                        #[cfg(not(feature = "language_server"))]
                         let errors = messages.into_iter().map(Into::into).collect();
                         let diagnostics = DiagnosticService::wrap_diagnostics(
                             &me.cwd,
@@ -652,6 +669,17 @@ impl Runtime {
                             section_contents.len()
                         );
 
+                        // Pre-compute section boundaries (start, end) for offset mapping before draining.
+                        #[cfg(feature = "language_server")]
+                        let section_bounds: Vec<(u32, u32)> = section_contents
+                            .iter()
+                            .map(|section| {
+                                let start = section.source.start;
+                                let end = start + section.source.source_text.len() as u32;
+                                (start, end)
+                            })
+                            .collect();
+
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
@@ -668,9 +696,12 @@ impl Runtime {
                                 Err(diagnostics) => {
                                     if !diagnostics.is_empty() {
                                         messages.lock().unwrap().extend(
-                                            diagnostics.into_iter().map(|diagnostic| {
-                                                Message::new(diagnostic, PossibleFixes::None)
-                                            }),
+                                            diagnostics
+                                                .into_iter()
+                                                .map(|diagnostic| {
+                                                    Message::new(diagnostic, PossibleFixes::None)
+                                                        .with_file_path(&module_to_lint.path)
+                                                }),
                                         );
                                     }
                                     None
@@ -694,8 +725,23 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
+                        #[cfg(feature = "language_server")]
+                        {
+                            let annotated = section_messages.into_iter().map(|m| {
+                                // Find section offset by span start.
+                                let section_offset = section_bounds
+                                    .iter()
+                                    .find_map(|(s, e)| {
+                                        if m.span.start >= *s && m.span.start < *e { Some(*s) } else { None }
+                                    })
+                                    .unwrap_or(0);
+                                m.with_file_path(&module_to_lint.path).with_section_offset(section_offset)
+                            });
+                            messages.lock().unwrap().extend(annotated);
+                        }
+                        #[cfg(not(feature = "language_server"))]
                         messages.lock().unwrap().extend(
-                            section_messages
+                            section_messages.into_iter().map(|m| m.with_file_path(&module_to_lint.path)),
                         );
                     },
                 );
@@ -720,6 +766,16 @@ impl Runtime {
                     |allocator_guard, ModuleContentDependent { source_text: _, section_contents }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
+                        #[cfg(feature = "language_server")]
+                        let section_bounds: Vec<(u32, u32)> = section_contents
+                            .iter()
+                            .map(|section| {
+                                let start = section.source.start;
+                                let end = start + section.source.source_text.len() as u32;
+                                (start, end)
+                            })
+                            .collect();
+
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
@@ -733,13 +789,19 @@ impl Runtime {
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {
-                                        messages
-                                            .lock()
-                                            .unwrap()
-                                            .extend(errors
-                                        .into_iter()
-                                        .map(|err| Message::new(err, PossibleFixes::None))
-                                    );
+                                        #[cfg(feature = "language_server")]
+                                        messages.lock().unwrap().extend(
+                                            errors.into_iter().map(|err| {
+                                                Message::new(err, PossibleFixes::None)
+                                                    .with_file_path(&module.path)
+                                            }),
+                                        );
+                                        #[cfg(not(feature = "language_server"))]
+                                        messages.lock().unwrap().extend(
+                                            errors
+                                                .into_iter()
+                                                .map(|err| Message::new(err, PossibleFixes::None)),
+                                        );
                                     }
                                     None
                                 }
@@ -750,14 +812,26 @@ impl Runtime {
                             return;
                         }
 
-                        messages.lock().unwrap().extend(
-                            me.linter.run(
-                                Path::new(&module.path),
-                                context_sub_hosts,
-                                allocator_guard
-                            )
-                            ,
+                        let raw = me.linter.run(
+                            Path::new(&module.path),
+                            context_sub_hosts,
+                            allocator_guard,
                         );
+                        #[cfg(feature = "language_server")]
+                        {
+                            let annotated = raw.into_iter().map(|m| {
+                                let section_offset = section_bounds
+                                    .iter()
+                                    .find_map(|(s, e)| {
+                                        if m.span.start >= *s && m.span.start < *e { Some(*s) } else { None }
+                                    })
+                                    .unwrap_or(0);
+                                m.with_file_path(&module.path).with_section_offset(section_offset)
+                            });
+                            messages.lock().unwrap().extend(annotated);
+                        }
+                        #[cfg(not(feature = "language_server"))]
+                        messages.lock().unwrap().extend(raw);
                     },
                 );
             });

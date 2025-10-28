@@ -1,5 +1,7 @@
-use log::debug;
+use log::{debug, info};
 use serde_json::json;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex as StdMutex};
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
@@ -478,11 +480,229 @@ impl WorkspaceWorker {
                     })),
                 });
             }
+
+            // Handle workspace_mode transitions as part of restart logic
+            if current_option.lint.workspace_mode != changed_options.lint.workspace_mode {
+                if changed_options.lint.workspace_mode {
+                    // Register source file watcher and perform initial scan
+                    if let Some(source_registration) = self.init_source_file_watchers().await {
+                        registrations.push(source_registration);
+                    }
+                    let workspace_diagnostics = self.lint_workspace().await;
+                    if !workspace_diagnostics.is_empty() {
+                        if let Some(existing) = &mut diagnostics {
+                            existing.extend(workspace_diagnostics);
+                        } else {
+                            diagnostics = Some(workspace_diagnostics);
+                        }
+                    }
+                } else {
+                    // Unregister source file watcher when disabling
+                    unregistrations.push(Unregistration {
+                        id: format!("watcher-source-files-{}", self.root_uri.as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                    });
+                    // Optionally could clear diagnostics for non-open files here (future enhancement)
+                }
+            }
         }
 
         (diagnostics, registrations, unregistrations, formatting)
     }
+
+    /// Lint all workspace files and return diagnostics
+    pub async fn lint_workspace(&self) -> Vec<(String, Vec<Diagnostic>)> {
+        // Acquire root path; if invalid, no work to do.
+        let Some(root_path) = self.root_uri.to_file_path() else {
+            return vec![];
+        };
+
+        let t_overall = std::time::Instant::now();
+
+        // Acquire supported extensions from options
+        let supported_extensions: Vec<String> = {
+            let guard = self.options.lock().await;
+            guard.as_ref().map(|o| o.supported_extensions.clone()).unwrap_or_default()
+        };
+
+        if supported_extensions.is_empty() {
+            return vec![];
+        }
+
+        // Build a types matcher (same logic as scan_workspace_files) but inline to avoid an extra sequential pass.
+        use ignore::types::TypesBuilder;
+        let all_simple = supported_extensions.iter().all(|ext| !ext.contains('.'));
+        let mut builder = TypesBuilder::new();
+        if all_simple {
+            let glob = format!("*.{{{}}}", supported_extensions.join(","));
+            if let Err(err) = builder.add("oxc", &glob) {
+                debug!("failed to add consolidated glob {glob}: {err}");
+            }
+            builder.select("oxc");
+        } else {
+            for ext in &supported_extensions {
+                let pattern = format!("*.{}", ext);
+                if let Err(err) = builder.add(ext, &pattern) {
+                    debug!("failed to add type pattern {pattern}: {err}");
+                } else {
+                    builder.select(ext);
+                }
+            }
+        }
+        let types_matcher = match builder.build() {
+            Ok(m) => m,
+            Err(err) => {
+                debug!("failed to build types matcher: {err}");
+                return vec![];
+            }
+        };
+
+        // Shared collection for file URIs discovered in parallel.
+        let collected: Arc<StdMutex<Vec<Uri>>> = Arc::new(StdMutex::new(Vec::new()));
+
+        let mut walk_builder = ignore::WalkBuilder::new(&root_path);
+        walk_builder.hidden(false).git_ignore(true).types(types_matcher);
+
+        // Parallel directory traversal. Each thread pushes file URIs into the shared vector.
+        walk_builder.build_parallel().run({
+            let collected = Arc::clone(&collected);
+            move || {
+                let collected = Arc::clone(&collected);
+                Box::new(move |entry: Result<ignore::DirEntry, ignore::Error>| {
+                    if let Ok(e) = entry {
+                        if e.file_type().is_some_and(|ft| ft.is_file()) {
+                            if let Some(uri) = Uri::from_file_path(e.path()) {
+                                if let Ok(mut vec) = collected.lock() {
+                                    vec.push(uri);
+                                }
+                            }
+                        }
+                    }
+                    ignore::WalkState::Continue
+                })
+            }
+        });
+
+        // Extract, sort deterministically.
+        let mut files: Vec<Uri> = match collected.lock() {
+            Ok(guard) => guard.clone(),
+            Err(poisoned) => {
+                log::warn!(
+                    "Poisoned mutex encountered while collecting workspace files. Recovering inner value."
+                );
+                poisoned.into_inner().clone()
+            }
+        };
+        files.sort_unstable_by(|a, b| a.as_str().cmp(b.as_str()));
+        debug!(
+            "[profile] workspace scan root={} files={} ms={}",
+            root_path.display(),
+            files.len(),
+            t_overall.elapsed().as_millis()
+        );
+
+        // If type-aware linting is active, fall back to per-file path to preserve tsgo diagnostics.
+        let server_linter_guard = self.server_linter.read().await;
+        let Some(server_linter) = server_linter_guard.as_ref() else { return vec![] };
+
+        if let Some(tsgo_linter) = server_linter.tsgo_linter.as_ref() {
+            // Filter ignored paths first (matching isolated behavior)
+            let eligible_uris: Vec<Uri> =
+                files.into_iter().filter(|u| !server_linter.is_ignored(u)).collect();
+            info!(
+                "[tsgo] batch start root={} eligible={} (pre-extension-filter)",
+                root_path.display(),
+                eligible_uris.len()
+            );
+            let t_tsgo = std::time::Instant::now();
+            let batch = tsgo_linter.lint_batch(&eligible_uris);
+            let mut out: Vec<(String, Vec<Diagnostic>)> = Vec::with_capacity(batch.len());
+            for (uri, reports) in batch.into_iter() {
+                server_linter.cache_tsgo_diagnostics(&uri, Some(reports.clone()));
+                out.push((uri.to_string(), reports.into_iter().map(|r| r.diagnostic).collect()));
+            }
+            info!(
+                "[tsgo] batch done root={} produced={} elapsed_ms={}",
+                root_path.display(),
+                out.len(),
+                t_tsgo.elapsed().as_millis()
+            );
+            debug!(
+                "[profile] tsgo batch eligible={} produced={} ms={}",
+                eligible_uris.len(),
+                out.len(),
+                t_tsgo.elapsed().as_millis()
+            );
+            debug!("[profile] workspace lint total ms={}", t_overall.elapsed().as_millis());
+            return out;
+        }
+
+        // Batch isolated lint using runtime parallelism.
+        // Filter ignored paths first to match single-file behavior.
+        let filtered_paths: Vec<PathBuf> = files
+            .iter()
+            .filter(|u| !server_linter.is_ignored(u))
+            .filter_map(|u| u.to_file_path().map(|p| p.into_owned()))
+            .collect();
+
+        let batch_reports = server_linter.run_workspace_isolated(&filtered_paths).await;
+
+        let mut out: Vec<(String, Vec<Diagnostic>)> = Vec::with_capacity(batch_reports.len());
+        for (uri, reports) in batch_reports.into_iter() {
+            // Cache isolated diagnostics (tsgo absent in this branch)
+            server_linter.cache_isolated_diagnostics(&uri, Some(reports.clone()));
+            out.push((uri.to_string(), reports.into_iter().map(|r| r.diagnostic).collect()));
+        }
+        debug!(
+            "[profile] isolated batch eligible={} produced={} ms={}",
+            filtered_paths.len(),
+            out.len(),
+            t_overall.elapsed().as_millis()
+        );
+        out
+    }
+
+    /// Register source file watchers for workspace mode
+    pub async fn init_source_file_watchers(&self) -> Option<Registration> {
+        let options_guard = self.options.lock().await;
+        let lint_options = options_guard.as_ref().map(|o| &o.lint)?;
+
+        if !lint_options.workspace_mode {
+            return None;
+        }
+
+        let supported_extensions: Vec<String> =
+            options_guard.as_ref().map(|o| o.supported_extensions.clone()).unwrap_or_default();
+
+        // Build glob patterns from supported extensions ("**/*.ext")
+        let source_patterns: Vec<String> =
+            supported_extensions.iter().map(|ext| format!("**/*.{}", ext)).collect();
+
+        Some(Registration {
+            id: format!("watcher-source-files-{}", self.root_uri.as_str()),
+            method: "workspace/didChangeWatchedFiles".to_string(),
+            register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                watchers: source_patterns
+                    .into_iter()
+                    .map(|pattern| FileSystemWatcher {
+                        glob_pattern: GlobPattern::Relative(RelativePattern {
+                            base_uri: OneOf::Right(self.root_uri.clone()),
+                            pattern,
+                        }),
+                        kind: Some(WatchKind::all()),
+                    })
+                    .collect::<Vec<_>>(),
+            })),
+        })
+    }
+
+    /// Get the current options for this worker
+    pub async fn get_options(&self) -> Option<crate::options::Options> {
+        self.options.lock().await.clone()
+    }
 }
+
+// Removed legacy should_lint_file; TypesBuilder handles extension filtering.
 
 fn range_overlaps(a: Range, b: Range) -> bool {
     a.start <= b.end && a.end >= b.start
@@ -724,6 +944,7 @@ mod test_watchers {
                         experimental: true,
                         config_path: Some("configs/formatter.json".to_string()),
                     },
+                    ..Default::default()
                 },
             );
             let watchers = tester.init_watchers();
@@ -822,6 +1043,7 @@ mod test_watchers {
                     ..Default::default()
                 },
                 format: FormatOptions { experimental: true, ..Default::default() },
+                ..Default::default()
             });
 
             assert_eq!(unregistrations.len(), 1);

@@ -74,6 +74,13 @@
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)"
         },
+        "oxc.lint.workspaceMode": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Enable workspace-wide linting. When enabled, all files in the workspace will be analyzed, not just open files.",
+          "tags": ["experimental"]
+        },
         "oxc.enable": {
           "type": "boolean",
           "default": true,
@@ -157,7 +164,8 @@
           "type": "boolean",
           "scope": "resource",
           "default": false,
-          "description": "Enable experimental formatting support. This feature is experimental and might not work as expected."
+          "description": "Enable experimental formatting support. This feature is experimental and might not work as expected.",
+          "tags": ["experimental"]
         },
         "oxc.fmt.configPath": {
           "type": [

@@ -75,6 +75,13 @@ export interface WorkspaceConfigInterface {
    * `oxc.fmt.configPath`
    */
   ['fmt.configPath']?: string | null;
+  /**
+   * Enable workspace-wide linting (scan all files, not just opened ones)
+   * `oxc.lint.workspaceMode`
+   *
+   * @default false
+   */
+  workspaceMode?: boolean;
 }
 
 export class WorkspaceConfig {
@@ -86,6 +93,7 @@ export class WorkspaceConfig {
   private _flags: Record<string, string> = {};
   private _formattingExperimental: boolean = false;
   private _formattingConfigPath: string | null = null;
+  private _workspaceMode: boolean = false;
 
   constructor(private readonly workspace: WorkspaceFolder) {
     this.refresh();
@@ -109,6 +117,7 @@ export class WorkspaceConfig {
     this._flags = flags;
     this._formattingExperimental = this.configuration.get<boolean>('fmt.experimental') ?? false;
     this._formattingConfigPath = this.configuration.get<string | null>('fmt.configPath') ?? null;
+    this._workspaceMode = this.configuration.get<boolean>('lint.workspaceMode') ?? false;
   }
 
   public effectsConfigChange(event: ConfigurationChangeEvent): boolean {
@@ -134,6 +143,9 @@ export class WorkspaceConfig {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.configPath`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.lint.workspaceMode`, this.workspace)) {
       return true;
     }
     return false;
@@ -215,6 +227,15 @@ export class WorkspaceConfig {
     return this.configuration.update('fmt.configPath', value, ConfigurationTarget.WorkspaceFolder);
   }
 
+  get workspaceMode(): boolean {
+    return this._workspaceMode;
+  }
+
+  updateWorkspaceMode(value: boolean): PromiseLike<void> {
+    this._workspaceMode = value;
+    return this.configuration.update('lint.workspaceMode', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
   public toLanguageServerConfig(): WorkspaceConfigInterface {
     return {
       run: this.runTrigger,
@@ -225,6 +246,7 @@ export class WorkspaceConfig {
       flags: this.flags,
       ['fmt.experimental']: this.formattingExperimental,
       ['fmt.configPath']: this.formattingConfigPath ?? null,
+      workspaceMode: this._workspaceMode,
     };
   }
 }

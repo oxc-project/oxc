@@ -1,4 +1,6 @@
 use std::borrow::Cow;
+#[cfg(feature = "language_server")]
+use std::{ffi::OsStr, sync::Arc};
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
@@ -225,6 +227,8 @@ pub struct Message {
     fixed: bool,
     #[cfg(feature = "language_server")]
     pub section_offset: u32,
+    #[cfg(feature = "language_server")]
+    pub file_path: Arc<OsStr>,
 }
 
 impl Message {
@@ -244,6 +248,8 @@ impl Message {
             fixed: false,
             #[cfg(feature = "language_server")]
             section_offset: 0,
+            #[cfg(feature = "language_server")]
+            file_path: Arc::from(OsStr::new("")), // will be set later via with_file_path
         }
     }
 
@@ -251,6 +257,13 @@ impl Message {
     #[must_use]
     pub fn with_section_offset(mut self, section_offset: u32) -> Self {
         self.section_offset = section_offset;
+        self
+    }
+
+    #[cfg(feature = "language_server")]
+    #[must_use]
+    pub fn with_file_path(mut self, path: &Arc<OsStr>) -> Self {
+        self.file_path = Arc::clone(path);
         self
     }
 

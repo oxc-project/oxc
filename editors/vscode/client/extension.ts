@@ -16,9 +16,11 @@ import {
   ExecuteCommandRequest,
   MessageType,
   ShowMessageNotification,
+  State,
 } from 'vscode-languageclient';
 
-import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import { Executable, LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo } from 'vscode-languageclient/node';
+import * as net from 'node:net';
 
 import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
@@ -27,6 +29,8 @@ import { VSCodeConfig } from './VSCodeConfig';
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
 const commandPrefix = 'oxc';
+
+const RESTART_DELAY_MS = 50;
 
 const enum OxcCommands {
   RestartServer = `${commandPrefix}.restartServer`,
@@ -59,17 +63,36 @@ export async function activate(context: ExtensionContext) {
       return;
     }
 
-    try {
-      if (client.isRunning()) {
-        await client.restart();
-        window.showInformationMessage('oxc server restarted.');
-      } else {
-        await client.start();
+      try {
+
+        const state = (client as LanguageClient)?.state;
+        if (state === State.Starting) {
+          window.showWarningMessage('oxc server is still starting; try restart again in a moment.');
+          return;
+        }
+
+        if (client.isRunning()) {
+          const externalSocketSpec = process.env.OXC_LS_CONNECT;
+          // Use stop()+start() instead of restart() to avoid shutdown while starting error.
+          if (externalSocketSpec) {
+            // External socket: stop sends shutdown/exit internally; wait a tick for server loop.
+            await client.stop();
+            await new Promise(r => setTimeout(r, RESTART_DELAY_MS));
+            await client.start();
+          } else {
+            // Spawned process: restart() is sufficient, but guard against transitional state.
+            await client.restart();
+          }
+          window.showInformationMessage('oxc server restarted.');
+        } else {
+          // Not running (stopped) -> start it.
+          await client.start();
+        }
+      } catch (err) {
+        client.error('Restarting client failed', err, 'force');
       }
-    } catch (err) {
-      client.error('Restarting client failed', err, 'force');
-    }
-  });
+    },
+  );
 
   const showOutputCommand = commands.registerCommand(OxcCommands.ShowOutputChannel, () => {
     client?.outputChannel?.show();
@@ -128,41 +151,105 @@ export async function activate(context: ExtensionContext) {
   );
 
   async function findBinary(): Promise<string> {
-    let bin = configService.getUserServerBinPath();
-    if (workspace.isTrusted && bin) {
+    // 1. User configured path
+    const userBin = configService.getUserServerBinPath();
+    if (workspace.isTrusted && userBin) {
       try {
-        await fsPromises.access(bin);
-        return bin;
+        await fsPromises.access(userBin);
+        outputChannel.info(`Using user configured oxc_language_server: ${userBin}`);
+        return userBin;
       } catch (e) {
-        outputChannel.error(`Invalid bin path: ${bin}`, e);
+        outputChannel.error(`Configured oxc.path.server not accessible: ${userBin}`, e);
       }
     }
+
     const ext = process.platform === 'win32' ? '.exe' : '';
     // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-    return process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
+
+    const releaseCandidate = join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
+    const debugCandidate = join(context.extensionPath, `./target/debug/oxc_language_server${ext}`);
+    const envCandidate = process.env.SERVER_PATH_DEV;
+
+    const candidates = [envCandidate, releaseCandidate, debugCandidate].filter(Boolean) as string[];
+    for (const candidate of candidates) {
+      try {
+        await fsPromises.access(candidate);
+        outputChannel.info(`Using detected oxc_language_server: ${candidate}`);
+        return candidate;
+      } catch {
+        // continue
+      }
+    }
+
+    outputChannel.error(
+      `No oxc_language_server binary found. Tried: ${candidates.join(', ')}\n` +
+      'Build one with: pnpm run server:build:release (or server:build:debug) in editors/vscode.'
+    );
+    // Return release path as last resort (will still fail fast, but message is logged)
+    return releaseCandidate;
   }
 
-  const command = await findBinary();
-  const run: Executable = {
-    command: command!,
-    options: {
-      env: {
-        ...process.env,
-        RUST_LOG: process.env.RUST_LOG || 'info',
+  // External socket mode: if OXC_LS_CONNECT is set, connect instead of spawning.
+  const externalSocketSpec = process.env.OXC_LS_CONNECT;
+  let serverOptions: ServerOptions;
+  if (externalSocketSpec) {
+    const socketPath = externalSocketSpec.replace(/^unix:/, '');
+    outputChannel.info(`Connecting to external oxc_language_server socket: ${socketPath}`);
+    // Retry logic: attempt to connect several times with exponential backoff to avoid race condition.
+    const maxAttempts = 8;
+    const baseDelayMs = 75;
+    serverOptions = () => new Promise<StreamInfo>((resolve, reject) => {
+      let attempt = 0;
+      const tryConnect = () => {
+        attempt += 1;
+        const socket = net.createConnection(socketPath, () => {
+          outputChannel.info(`Connected to external language server after ${attempt} attempt(s).`);
+          resolve({ reader: socket, writer: socket });
+        });
+        socket.on('error', (err) => {
+          socket.destroy();
+          if (attempt < maxAttempts) {
+            const delay = baseDelayMs * (2 ** (attempt - 1));
+            outputChannel.info(`Language server not ready (attempt ${attempt}/${maxAttempts}). Retrying in ${delay}ms...`);
+            setTimeout(tryConnect, delay);
+          } else {
+            outputChannel.error(`Failed to connect to external language server after ${maxAttempts} attempts at ${socketPath}`, err);
+            reject(err);
+          }
+        });
+      };
+      tryConnect();
+    });
+  } else {
+    const command = await findBinary();
+    const run: Executable = {
+      command: command!,
+      options: {
+        env: {
+          ...process.env,
+          RUST_LOG: process.env.RUST_LOG || 'info',
+        },
       },
-    },
-  };
-  const serverOptions: ServerOptions = {
-    run,
-    debug: run,
-  };
+    };
+    serverOptions = {
+      run,
+      debug: run,
+    };
+  }
 
   // see https://github.com/oxc-project/oxc/blob/9b475ad05b750f99762d63094174be6f6fc3c0eb/crates/oxc_linter/src/loader/partial_loader/mod.rs#L17-L20
+  // This list is also sent to the language server to avoid hard-coded duplication of extensions
+  // for workspace scanning & source file watchers.
   const supportedExtensions = ['astro', 'cjs', 'cts', 'js', 'jsx', 'mjs', 'mts', 'svelte', 'ts', 'tsx', 'vue'];
 
-  // If the extension is launched in debug mode then the debug server options are used
-  // Otherwise the run options are used
-  // Options to control the language client
+  // Helper to augment workspace configuration entries with supportedExtensions.
+  type WorkspaceConfigEntry = (typeof configService.languageServerConfig)[number];
+  const withSupportedExtensions = (workspaces: WorkspaceConfigEntry[]) =>
+    workspaces.map((ws: WorkspaceConfigEntry) => ({
+      ...ws,
+      options: { ...ws.options, supportedExtensions },
+    }));
+
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: [
@@ -171,7 +258,7 @@ export async function activate(context: ExtensionContext) {
         scheme: 'file',
       },
     ],
-    initializationOptions: configService.languageServerConfig,
+  initializationOptions: withSupportedExtensions(configService.languageServerConfig),
     outputChannel,
     traceOutputChannel: outputChannel,
     middleware: {
@@ -254,12 +341,12 @@ export async function activate(context: ExtensionContext) {
       return;
     }
 
-    // update the initializationOptions for a possible restart
-    client.clientOptions.initializationOptions = this.languageServerConfig;
+    // update the initializationOptions for a possible restart (keep them augmented)
+    client.clientOptions.initializationOptions = withSupportedExtensions(this.languageServerConfig);
 
     if (configService.effectsWorkspaceConfigChange(event) && client.isRunning()) {
       await client.sendNotification('workspace/didChangeConfiguration', {
-        settings: this.languageServerConfig,
+        settings: withSupportedExtensions(configService.languageServerConfig),
       });
     }
   };
