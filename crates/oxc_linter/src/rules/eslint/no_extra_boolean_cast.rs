@@ -72,7 +72,8 @@ declare_oxc_lint!(
     NoExtraBooleanCast,
     eslint,
     correctness,
-    conditional_fix_or_conditional_suggestion
+    conditional_fix_or_conditional_suggestion,
+    config = NoExtraBooleanCast,
 );
 
 impl Rule for NoExtraBooleanCast {
