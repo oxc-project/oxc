@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::BlockStatement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -11,8 +12,10 @@ fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoEmpty {
+    /// If set to `true`, allows an empty `catch` block without triggering the linter.
     allow_empty_catch: bool,
 }
 
@@ -44,7 +47,8 @@ declare_oxc_lint!(
     NoEmpty,
     eslint,
     restriction,
-    suggestion
+    suggestion,
+    config = NoEmpty,
 );
 
 impl Rule for NoEmpty {
