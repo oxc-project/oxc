@@ -75,6 +75,7 @@ pub use crate::{
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
+pub use crate::config::plugins::normalize_plugin_name;
 use crate::{
     config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings},
     context::ContextHost,
