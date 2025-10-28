@@ -276,20 +276,25 @@ fn build_config(
     let mut path_group_overrides = Vec::new();
     if let Some(overrides_array) = value.get("pathGroupOverrides").and_then(Value::as_array) {
         for override_obj in overrides_array {
-            if let Some(obj) = override_obj.as_object()
-                && let (Some(pattern), Some(action)) = (
-                    obj.get("pattern").and_then(Value::as_str),
-                    obj.get("action").and_then(Value::as_str),
-                )
-            {
-                let action_enum = match action {
-                    "enforce" => OverrideAction::Enforce,
-                    "ignore" => OverrideAction::Ignore,
-                    _ => continue,
-                };
-                path_group_overrides
-                    .push(PathGroupOverride { pattern: pattern.to_string(), action: action_enum });
-            }
+            let obj = match override_obj.as_object() {
+                Some(obj) => obj,
+                None => continue,
+            };
+            let pattern = match obj.get("pattern").and_then(Value::as_str) {
+                Some(pattern) => pattern,
+                None => continue,
+            };
+            let action = match obj.get("action").and_then(Value::as_str) {
+                Some(action) => action,
+                None => continue,
+            };
+            let action_enum = match action {
+                "enforce" => OverrideAction::Enforce,
+                "ignore" => OverrideAction::Ignore,
+                _ => continue,
+            };
+            path_group_overrides
+                .push(PathGroupOverride { pattern: pattern.to_string(), action: action_enum });
         }
     }
 
@@ -359,7 +364,7 @@ impl Extensions {
         // Check if this is a scoped package (must be @scope/... where scope is alphanumeric)
         let is_scoped = if module_name.as_str().starts_with('@') {
             // Must have a scope name after @, not just @/ or @.
-            module_name.chars().nth(1).is_some_and(|c| c.is_alphanumeric() || c == '_')
+            module_name.as_str().get(1..).and_then(|s| s.chars().next()).is_some_and(|c| c.is_alphanumeric() || c == '_')
         } else {
             false
         };
