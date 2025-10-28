@@ -2820,6 +2820,7 @@ version = "1.24.0"
 dependencies = [
  "bpaf",
  "cow-utils",
+ "env_logger",
  "ignore",
  "insta",
  "lazy-regex",
@@ -2830,6 +2831,7 @@ dependencies = [
  "oxc-miette",
  "oxc_allocator 0.95.0",
  "oxc_diagnostics 0.95.0",
+ "oxc_language_server",
  "oxc_linter",
  "oxc_span 0.95.0",
  "rayon",
@@ -2839,6 +2841,7 @@ dependencies = [
  "simdutf8",
  "tempfile",
  "tokio",
+ "tower-lsp-server",
  "tracing-subscriber",
 ]
 
