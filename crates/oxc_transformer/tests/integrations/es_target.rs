@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
+use oxc_allocator::Allocator;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{ESTarget, TransformOptions};
+use oxc_transformer::{ESTarget, TransformOptions, Transformer};
 
 use crate::{codegen, test};
 
@@ -21,6 +24,7 @@ fn es_target() {
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
         ("es2021", "class Foo { #a; }"),
+        ("chrome89", r#"export { foo as "string-name" };"#), // test arbitrary module namespace names warning
     ];
 
     // Test no transformation for esnext.
@@ -80,4 +84,33 @@ fn target_list_fail() {
         let result = TransformOptions::from_target(target);
         assert_eq!(result.unwrap_err().to_string(), expected);
     }
+}
+
+#[test]
+fn arbitrary_module_namespace_names_warning() {
+    // Test that warning is emitted for Chrome 89 (which doesn't support the feature)
+    let source = r#"const foo = 1; export { foo as "string-name" };"#;
+    let options = TransformOptions::from_target("chrome89").unwrap();
+
+    // Debug: print the option value
+    eprintln!(
+        "arbitrary_module_namespace_names: {}",
+        options.env.es2020.arbitrary_module_namespace_names
+    );
+
+    // For module code, we need to use mjs source type
+    let source_type = SourceType::mjs();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source, source_type).parse();
+    let mut program = ret.program;
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let ret = Transformer::new(&allocator, std::path::Path::new("test.mjs"), &options)
+        .build_with_scoping(scoping, &mut program);
+
+    // Should have warnings
+    assert!(!ret.errors.is_empty(), "Expected warnings for arbitrary module namespace names");
+
+    // Check that the warning message is correct
+    let error_msg = format!("{:?}", ret.errors[0]);
+    assert!(error_msg.contains("Arbitrary module namespace identifier names"));
 }

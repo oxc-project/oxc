@@ -25,6 +25,24 @@ const customEs2020 = [
       electron: '5.0',
     },
   },
+  {
+    name: 'ArbitraryModuleNamespaceNames',
+    // https://github.com/tc39/ecma262/pull/2154
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#browser_compatibility
+    targets: {
+      chrome: '90',
+      opera: '76',
+      edge: '90',
+      firefox: '87',
+      safari: '14.1',
+      node: '16.0',
+      deno: '1.9',
+      ios: '14.5',
+      samsung: '15.0',
+      opera_mobile: '64',
+      electron: '12.0',
+    },
+  },
 ].map(f('ES2020'));
 
 module.exports = [...customEs2020];
