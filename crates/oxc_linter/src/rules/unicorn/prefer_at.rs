@@ -9,6 +9,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
@@ -28,9 +30,14 @@ fn prefer_at_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferAt(Box<PreferAtConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferAtConfig {
+    /// Check all index access, not just special patterns like `array.length - 1`.
+    /// When enabled, `array[0]`, `array[1]`, etc. will also be flagged.
     check_all_index_access: bool,
+    /// List of function names to treat as "get last element" functions.
+    /// These functions will be checked for `.at(-1)` usage.
     get_last_element_functions: Vec<String>,
 }
 
@@ -70,7 +77,8 @@ declare_oxc_lint!(
     PreferAt,
     unicorn,
     pedantic,
-    dangerous_fix
+    dangerous_fix,
+    config = PreferAtConfig,
 );
 
 impl Rule for PreferAt {
