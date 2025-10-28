@@ -64,33 +64,41 @@ pub type JsLintFileCb = ThreadsafeFunction<
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
 pub async fn lint(args: Vec<String>, load_plugin: JsLoadPluginCb, lint_file: JsLintFileCb) -> bool {
-    lint_impl(args, load_plugin, lint_file).report() == ExitCode::SUCCESS
+    lint_impl(args, load_plugin, lint_file).await.report() == ExitCode::SUCCESS
 }
 
 /// Run the linter.
-fn lint_impl(
+async fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
     lint_file: JsLintFileCb,
 ) -> CliRunResult {
-    init_tracing();
-    init_miette();
-
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
 
-    let cmd = crate::cli::lint_command();
-    let command = match cmd.run_inner(&*args) {
-        Ok(cmd) => cmd,
-        Err(e) => {
-            e.print_message(100);
-            return if e.exit_code() == 0 {
-                CliRunResult::LintSucceeded
-            } else {
-                CliRunResult::InvalidOptionConfig
-            };
+    let command = {
+        let cmd = crate::cli::lint_command();
+        match cmd.run_inner(&*args) {
+            Ok(cmd) => cmd,
+            Err(e) => {
+                e.print_message(100);
+                return if e.exit_code() == 0 {
+                    CliRunResult::LintSucceeded
+                } else {
+                    CliRunResult::InvalidOptionConfig
+                };
+            }
         }
     };
+
+    // If --lsp flag is set, run the language server
+    if command.lsp {
+        crate::lsp::run_lsp().await;
+        return CliRunResult::LintSucceeded;
+    }
+
+    init_tracing();
+    init_miette();
 
     command.handle_threads();
 

@@ -147,6 +147,8 @@ Arguments:
 ## Available options:
 - **`    --rules`** &mdash; 
   list all the rules that are currently registered
+- **`    --lsp`** &mdash; 
+  Start the language server
 - **`    --disable-nested-config`** &mdash; 
   Disables the automatic loading of nested configuration files.
 - **`    --type-aware`** &mdash; 

@@ -29,6 +29,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_diagnostics = { workspace = true }
+oxc_language_server = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_span = { workspace = true }
 
@@ -44,7 +45,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 tempfile = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "io-std", "macros"] }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
