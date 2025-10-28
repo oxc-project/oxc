@@ -3,11 +3,17 @@
   "private": true,
   "packageManager": "pnpm@10.19.0",
   "scripts": {
+    // Build all NAPI packages and apps for production
     "build": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build",
+    // Build all NAPI packages and apps for development (faster, with debug info)
     "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
+    // Build all NAPI packages and apps for testing
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
+    // Run tests for all NAPI packages and apps
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
+    // Format code using oxfmt
     "fmt": "oxfmt -c oxfmtrc.jsonc",
+    // Lint code with type checking enabled
     "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
   },
   "devDependencies": {
