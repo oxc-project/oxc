@@ -5,6 +5,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{JSDoc, JSDocTag};
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -77,18 +78,22 @@ declare_oxc_lint!(
     /// ```
     RequireYields,
     jsdoc,
-    correctness
+    correctness,
+    config = RequireYieldsConfig,
 );
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct RequireYieldsConfig {
-    #[serde(default = "default_exempted_by", rename = "exemptedBy")]
+    /// Functions with these tags will be exempted from the lint rule.
+    #[serde(default = "default_exempted_by")]
     exempted_by: Vec<String>,
-    #[serde(default, rename = "forceRequireYields")]
+    /// When `true`, all generator functions must have a `@yields` tag, even if they don't yield a value or have an empty body.
     force_require_yields: bool,
-    #[serde(default, rename = "withGeneratorTag")]
+    /// When `true`, require `@yields` when a `@generator` tag is present.
     with_generator_tag: bool,
 }
+
 impl Default for RequireYieldsConfig {
     fn default() -> Self {
         Self {
