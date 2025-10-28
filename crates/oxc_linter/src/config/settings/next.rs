@@ -4,8 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize, Serializer};
 
 /// Configure Next.js plugin rules.
-#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq)]
 pub struct NextPluginSettings {
     /// The root directory of the Next.js project.
     ///
@@ -24,15 +23,36 @@ pub struct NextPluginSettings {
     /// }
     /// ```
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "rootDir")]
-    root_dir: OneOrMany<String>,
+    root_dir: Option<OneOrMany<String>>,
 }
 
 impl NextPluginSettings {
     pub fn get_root_dirs(&self) -> Cow<'_, [String]> {
         match &self.root_dir {
-            OneOrMany::One(val) => Cow::Owned(vec![val.clone()]),
-            OneOrMany::Many(vec) => Cow::Borrowed(vec),
+            Some(OneOrMany::One(val)) => Cow::Owned(vec![val.clone()]),
+            Some(OneOrMany::Many(vec)) => Cow::Borrowed(vec),
+            None => Cow::Owned(vec![]),
+        }
+    }
+
+    /// Deep merge self into other (self takes priority).
+    /// Arrays are replaced, not merged (ESLint behavior).
+    pub(crate) fn merge(mut self, other: Self) -> Self {
+        // If self has no root_dir, use other's
+        if self.root_dir.is_none() {
+            self.root_dir = other.root_dir;
+        }
+        self
+    }
+
+    /// Deep merge self into base (self takes priority), mutating base in place.
+    /// Arrays are replaced, not merged (ESLint behavior).
+    pub(crate) fn merge_into(&self, base: &mut Self) {
+        // If self has root_dir, replace base's
+        if self.root_dir.is_some() {
+            base.root_dir = self.root_dir.clone();
         }
     }
 }

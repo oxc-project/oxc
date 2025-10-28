@@ -744,13 +744,12 @@ working directory: fixtures/tsgolint
     :                   ^^^^^
     `----
 
-  x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
-   ,-[no-unsafe-enum-comparison/index.ts:4:10]
- 3 | enum Status {
- 4 |   Open = 'open',
-   :          ^^^^^^
- 5 |   Closed = 'closed',
-   `----
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .Open on an `any` value.
+    ,-[no-unsafe-enum-comparison/index.ts:14:27]
+ 13 | // Comparing different enums
+ 14 | const comparison = Status.Open === Color.Red;
+    :                           ^^^^
+    `----
 
   x typescript-eslint(no-unsafe-member-access): Unsafe member access .foo on an `any` value.
    ,-[no-unsafe-member-access/index.ts:5:10]
@@ -1609,22 +1608,6 @@ working directory: fixtures/tsgolint
  7 |     case 'pending':
    `----
 
-  x typescript-eslint(no-unsafe-enum-comparison): The case statement does not have a shared enum type with the switch predicate.
-   ,-[switch-exhaustiveness-check/index.ts:7:5]
- 6 |       switch (status) {
- 7 | ,->     case 'pending':
- 8 | `->       return 'Waiting for approval';
- 9 |         case 'approved':
-   `----
-
-  x typescript-eslint(no-unsafe-enum-comparison): The case statement does not have a shared enum type with the switch predicate.
-    ,-[switch-exhaustiveness-check/index.ts:9:5]
-  8 |           return 'Waiting for approval';
-  9 | ,->     case 'approved':
- 10 | `->       return 'Request approved';
- 11 |         // Missing 'rejected' case
-    `----
-
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[test.svelte:2:2]
  1 | <script>
@@ -1734,7 +1717,7 @@ working directory: fixtures/tsgolint
  20 | });
     `----
 
-Found 5 warnings and 211 errors.
+Found 5 warnings and 209 errors.
 Finished in <variable>ms on 44 files using 1 threads.
 ----------
 CLI result: LintFoundErrors

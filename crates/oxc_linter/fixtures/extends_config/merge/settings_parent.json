@@ -1,0 +1,10 @@
+{
+  "settings": {
+    "jsx-a11y": {
+      "polymorphicPropName": "as",
+      "components": {
+        "Link": "a"
+      }
+    }
+  }
+}
