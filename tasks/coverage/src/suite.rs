@@ -20,7 +20,7 @@ use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
 use walkdir::WalkDir;
 
-use crate::{AppArgs, Driver, snap_root, workspace_root};
+use crate::{AppArgs, Driver, file_discovery::DiscoveredFiles, snap_root, workspace_root};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TestResult {
@@ -47,6 +47,24 @@ pub struct CoverageReport<'a, T> {
 pub trait Suite<T: Case> {
     fn run(&mut self, name: &str, args: &AppArgs) {
         self.read_test_cases(name, args);
+
+        if args.debug {
+            self.get_test_cases_mut().iter_mut().for_each(|case| {
+                println!("{}", case.path().to_string_lossy());
+                case.run();
+            });
+        } else {
+            self.get_test_cases_mut().par_iter_mut().for_each(Case::run);
+        }
+
+        self.run_coverage(name, args);
+    }
+
+    fn run_with_discovered_files(&mut self, name: &str, args: &AppArgs, files: &DiscoveredFiles) {
+        self.load_test_cases(files);
+        if args.filter.is_none() {
+            self.save_extra_test_cases();
+        }
 
         if args.debug {
             self.get_test_cases_mut().iter_mut().for_each(|case| {
@@ -89,6 +107,17 @@ pub trait Suite<T: Case> {
 
     fn save_test_cases(&mut self, cases: Vec<T>);
     fn save_extra_test_cases(&mut self) {}
+
+    fn load_test_cases(&mut self, files: &DiscoveredFiles) {
+        let cases = files
+            .files
+            .par_iter()
+            .map(|file| T::new(file.path.clone(), file.code.clone()))
+            .filter(|case| !case.skip_test_case())
+            .collect::<Vec<_>>();
+
+        self.save_test_cases(cases);
+    }
 
     fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
         let test_path = workspace_root();
