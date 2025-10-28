@@ -6,6 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -18,12 +19,25 @@ fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NumericSeparatorsStyle(Box<NumericSeparatorsStyleConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NumericSeparatorsStyleConfig {
+    /// Only enforce the rule when the numeric literal already contains a separator (`_`).
+    ///
+    /// When `true`, numbers without separators are left as-is; when `false` (default),
+    /// grouping will be enforced for eligible numbers even if they don't include separators yet.
     only_if_contains_separator: bool,
+    /// Configuration for hexadecimal literals (e.g. `0xAB_CD`, `0Xab_cd`, and bigint variants).
+    /// Controls how digits are grouped and when separators are applied.
     hexadecimal: NumericBaseConfig,
+    /// Configuration for binary literals (e.g. `0b1010_0001` and bigint variants).
+    /// Controls how digits are grouped and when separators are applied.
     binary: NumericBaseConfig,
+    /// Configuration for octal literals (e.g. `0o1234_5670` and bigint variants).
+    /// Controls how digits are grouped and when separators are applied.
     octal: NumericBaseConfig,
+    /// Configuration for decimal numbers (integers, fraction parts, and exponents).
+    /// Controls how digits are grouped and when separators are applied.
     number: NumericBaseConfig,
 }
 
@@ -87,7 +101,8 @@ declare_oxc_lint!(
     NumericSeparatorsStyle,
     unicorn,
     style,
-    fix
+    fix,
+    config = NumericSeparatorsStyleConfig,
 );
 
 impl Rule for NumericSeparatorsStyle {
@@ -271,9 +286,14 @@ impl NumericSeparatorsStyle {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 struct NumericBaseConfig {
+    /// The number of digits per group when inserting numeric separators.
+    /// For example, a `groupLength` of 3 formats `1234567` as `1_234_567`.
     group_length: usize,
+    /// The minimum number of digits required before grouping is applied.
+    /// Values with fewer digits than this threshold will not be grouped.
     minimum_digits: usize,
 }
 impl NumericBaseConfig {
