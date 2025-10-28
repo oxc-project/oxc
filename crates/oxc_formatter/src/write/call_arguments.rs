@@ -264,53 +264,115 @@ pub fn arguments_grouped_layout(
     args: &[Argument],
     f: &Formatter<'_, '_>,
 ) -> Option<GroupedCallArgumentLayout> {
-    if should_group_first_argument(call_like_span, args, f) {
-        Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-    } else if should_group_last_argument(call_like_span, args, f) {
-        Some(GroupedCallArgumentLayout::GroupedLastArgument)
+    // For exactly 2 arguments, we need to check both grouping strategies.
+    // To avoid redundant `can_group_expression_argument` calls, we handle this case specially.
+    if args.len() == 2 {
+        let [first, second] = args else { unreachable!("args.len() == 2 guarantees two elements") };
+        let first = first.as_expression()?;
+        let second = second.as_expression()?;
+
+        // Call `can_group_expression_argument` only once for the second argument
+        let second_can_group = can_group_expression_argument(second, f);
+        let second_can_group_fn = || second_can_group;
+
+        // Check if we should group the last argument (second)
+        if should_group_last_argument_impl(
+            call_like_span,
+            Some(first),
+            second,
+            second_can_group_fn,
+            f,
+        ) {
+            return Some(GroupedCallArgumentLayout::GroupedLastArgument);
+        }
+
+        // Check if we should group the first argument instead
+        // Reuse the already-computed `second_can_group` value
+        should_group_first_argument_impl(call_like_span, first, second, second_can_group, f)
+            .then_some(GroupedCallArgumentLayout::GroupedFirstArgument)
     } else {
-        None
+        // For other cases (not exactly 2 arguments), only check last argument grouping
+        should_group_last_argument(call_like_span, args, f)
+            .then_some(GroupedCallArgumentLayout::GroupedLastArgument)
     }
 }
 
 /// Checks if the first argument requires grouping
-fn should_group_first_argument(
+fn should_group_first_argument_impl(
     call_like_span: Span,
-    args: &[Argument],
+    first: &Expression,
+    second: &Expression,
+    second_can_group: bool,
     f: &Formatter<'_, '_>,
 ) -> bool {
-    let mut iter = args.iter();
-    match (iter.next().and_then(|a| a.as_expression()), iter.next().and_then(|a| a.as_expression()))
-    {
-        (Some(first), Some(second)) if iter.next().is_none() => {
-            match &first {
-                Expression::FunctionExpression(_) => {}
-                // Arrow expressions that are a plain expression or are a chain
-                // don't get grouped as the first argument, since they'll either
-                // fit entirely on the line or break fully. Only a single arrow
-                // with a block body can be grouped to collapse the braces.
-                Expression::ArrowFunctionExpression(arrow) => {
-                    if arrow.expression {
-                        return false;
-                    }
-                }
-                _ => return false,
+    match first {
+        Expression::FunctionExpression(_) => {}
+        // Arrow expressions that are a plain expression or are a chain
+        // don't get grouped as the first argument, since they'll either
+        // fit entirely on the line or break fully. Only a single arrow
+        // with a block body can be grouped to collapse the braces.
+        Expression::ArrowFunctionExpression(arrow) => {
+            if arrow.expression {
+                return false;
             }
+        }
+        _ => return false,
+    }
 
-            if matches!(
-                second,
-                Expression::ArrowFunctionExpression(_)
-                    | Expression::FunctionExpression(_)
-                    | Expression::ConditionalExpression(_)
-            ) {
+    if matches!(
+        second,
+        Expression::ArrowFunctionExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ConditionalExpression(_)
+    ) {
+        return false;
+    }
+
+    !f.comments().has_comment(call_like_span.start, first.span(), second.span().start)
+        && !second_can_group
+        && is_relatively_short_argument(second)
+}
+
+/// Core logic for checking if the last argument should be grouped.
+/// Takes the penultimate argument as an Expression for the 2-argument case,
+/// or extracts it from the arguments array for other cases.
+fn should_group_last_argument_impl(
+    call_like_span: Span,
+    penultimate: Option<&Expression>,
+    last: &Expression,
+    last_can_group_fn: impl FnOnce() -> bool,
+    f: &Formatter<'_, '_>,
+) -> bool {
+    // Check if penultimate and last are the same type (both Object or both Array)
+    if let Some(penultimate) = penultimate
+        && matches!(
+            (penultimate, last),
+            (Expression::ObjectExpression(_), Expression::ObjectExpression(_))
+                | (Expression::ArrayExpression(_), Expression::ArrayExpression(_))
+        )
+    {
+        return false;
+    }
+
+    let previous_span = penultimate.map_or(call_like_span.start, |e| e.span().end);
+    if f.comments().has_comment(previous_span, last.span(), call_like_span.end) {
+        return false;
+    }
+
+    if !last_can_group_fn() {
+        return false;
+    }
+
+    match last {
+        Expression::ArrayExpression(array) if penultimate.is_some() => {
+            // Not for `useEffect`
+            if matches!(penultimate, Some(Expression::ArrowFunctionExpression(_))) {
                 return false;
             }
 
-            !f.comments().has_comment(call_like_span.start, first.span(), second.span().start)
-                && !can_group_expression_argument(second, f)
-                && is_relatively_short_argument(second)
+            !can_concisely_print_array_list(array.span, &array.elements, f)
         }
-        _ => false,
+        _ => true,
     }
 }
 
@@ -321,50 +383,13 @@ fn should_group_last_argument(
     f: &Formatter<'_, '_>,
 ) -> bool {
     let mut iter = args.iter();
-    let last = iter.next_back();
+    let Some(last) = iter.next_back().unwrap().as_expression() else {
+        return false;
+    };
 
-    match last.and_then(|arg| arg.as_expression()) {
-        Some(last) => {
-            let penultimate = iter.next_back();
-            if let Some(penultimate) = &penultimate
-                && matches!(
-                    (penultimate, last),
-                    (Argument::ObjectExpression(_), Expression::ObjectExpression(_))
-                        | (Argument::ArrayExpression(_), Expression::ArrayExpression(_))
-                )
-            {
-                return false;
-            }
-
-            let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
-            if f.comments().has_comment(previous_span, last.span(), call_like_span.end) {
-                return false;
-            }
-
-            if !can_group_expression_argument(last, f) {
-                return false;
-            }
-
-            match last {
-                Expression::ArrayExpression(array) if args.len() > 1 => {
-                    // Not for `useEffect`
-                    if args.len() == 2
-                        && matches!(penultimate, Some(Argument::ArrowFunctionExpression(_)))
-                    {
-                        return false;
-                    }
-
-                    if can_concisely_print_array_list(array.span, &array.elements, f) {
-                        return false;
-                    }
-
-                    true
-                }
-                _ => true,
-            }
-        }
-        _ => false,
-    }
+    let penultimate = iter.next_back().and_then(|arg| arg.as_expression());
+    let last_can_group_fn = || can_group_expression_argument(last, f);
+    should_group_last_argument_impl(call_like_span, penultimate, last, last_can_group_fn, f)
 }
 
 /// Check if `ty` is a relatively simple type annotation, allowing a few
