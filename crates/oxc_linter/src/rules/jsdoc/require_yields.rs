@@ -85,7 +85,7 @@ declare_oxc_lint!(
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct RequireYieldsConfig {
-    /// When using the same tag in `exemptedBy`, functions with those tags will be exempted from the rule.
+    /// Functions with these tags will be exempted from the lint rule.
     #[serde(default = "default_exempted_by")]
     exempted_by: Vec<String>,
     /// When `true`, all generator functions must have a `@yields` tag, even if they don't yield a value or have an empty body.
