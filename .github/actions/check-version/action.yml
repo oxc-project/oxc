@@ -1,0 +1,51 @@
+name: Check version
+
+description: Check if package version has changed
+
+inputs:
+  file-name:
+    required: true
+    type: string
+    description: Path to the package.json file to check
+
+  file-url:
+    required: false
+    type: string
+    description: URL to compare version against (e.g., https://unpkg.com/oxlint@latest/package.json)
+
+  diff-search:
+    required: false
+    type: boolean
+    default: false
+    description: Use git diff to check for version changes instead of comparing with external URL
+
+outputs:
+  version:
+    description: The version from the package.json
+    value: ${{ steps.version.outputs.version }}
+  version_changed:
+    description: Whether the version has changed
+    value: ${{ steps.version.outputs.changed }}
+
+runs:
+  using: composite
+  steps:
+    - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+    - name: Check version changes
+      uses: EndBug/version-check@5102328418c0130d66ca712d755c303e93368ce2 # v2.1.7
+      id: version
+      with:
+        static-checking: ${{ inputs.diff-search == false && 'localIsNew' || '' }}
+        diff-search: ${{ inputs.diff-search }}
+        file-url: ${{ inputs.file-url }}
+        file-name: ${{ inputs.file-name }}
+
+    - name: Print version
+      if: steps.version.outputs.changed == 'true'
+      shell: bash
+      env:
+        VERSION_NUMBER: ${{ steps.version.outputs.version }}
+        VERSION_TYPE: ${{ steps.version.outputs.version_type }}
+      run: |
+        echo "Version change found! New version: ${VERSION_NUMBER} (${VERSION_TYPE})"
