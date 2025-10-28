@@ -86,6 +86,8 @@ impl ServerLinterDiagnostics {
 }
 
 impl ServerLinter {
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
     pub fn new(root_uri: &Uri, options: &LSPLintOptions) -> Self {
         let root_path = root_uri.to_file_path().unwrap();
         let mut nested_ignore_patterns = Vec::new();

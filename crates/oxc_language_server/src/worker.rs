@@ -56,6 +56,9 @@ impl WorkspaceWorker {
     /// e.g. root URI: file:///path/to/root
     ///      responsible for: file:///path/to/root/file.js
     ///      not responsible for: file:///path/to/other/file.js
+    ///
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
     pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
         if let Some(path) = uri.to_file_path() {
             return path.starts_with(self.root_uri.to_file_path().unwrap());
@@ -336,6 +339,9 @@ impl WorkspaceWorker {
     }
 
     /// Handle server configuration changes from the client
+    ///
+    /// # Panics
+    /// Panics if the root URI cannot be converted to a file path.
     pub async fn did_change_configuration(
         &self,
         changed_options: &Options,
