@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout, clippy::disallowed_methods)]
 
 // Core
+mod file_discovery;
 mod runtime;
 mod suite;
 // Suites
@@ -22,6 +23,7 @@ use tools::estree::{AcornJsxSuite, EstreeJsxCase, EstreeTypescriptCase};
 use crate::{
     babel::{BabelCase, BabelSuite},
     driver::Driver,
+    file_discovery::{DiscoveredFiles, FileDiscoveryConfig},
     misc::{MiscCase, MiscSuite},
     node_compat_table::NodeCompatSuite,
     suite::Suite,
@@ -67,49 +69,511 @@ impl AppArgs {
     }
 
     pub fn run_default(&self) {
-        self.run_parser();
-        self.run_semantic();
-        self.run_codegen();
-        self.run_formatter();
-        self.run_transformer();
+        // Process each suite sequentially to minimize memory usage and I/O operations
+        // Each suite is: 1) walked once, 2) files read once, 3) all tools run, 4) memory freed
+        self.process_test262_suite();
+        self.process_babel_suite();
+        self.process_typescript_suite();
+        self.process_misc_suite();
         self.run_transpiler();
-        self.run_minifier();
-        self.run_estree();
+    }
+
+    fn process_test262_suite(&self) {
+        // Discover files once (1 directory walk + 1 file read)
+        let files = {
+            let suite = Test262Suite::<Test262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "test262",
+            })
+        };
+
+        // Run all tools sequentially with the same files
+        Test262Suite::<Test262Case>::new().run_with_discovered_files(
+            "parser_test262",
+            self,
+            &files,
+        );
+        Test262Suite::<SemanticTest262Case>::new().run_with_discovered_files(
+            "semantic_test262",
+            self,
+            &files,
+        );
+        Test262Suite::<CodegenTest262Case>::new().run_with_discovered_files(
+            "codegen_test262",
+            self,
+            &files,
+        );
+        Test262Suite::<FormatterTest262Case>::new().run_with_discovered_files(
+            "formatter_test262",
+            self,
+            &files,
+        );
+        Test262Suite::<TransformerTest262Case>::new().run_with_discovered_files(
+            "transformer_test262",
+            self,
+            &files,
+        );
+        Test262Suite::<MinifierTest262Case>::new().run_with_discovered_files(
+            "minifier_test262",
+            self,
+            &files,
+        );
+        Test262Suite::<EstreeTest262Case>::new().run_with_discovered_files(
+            "estree_test262",
+            self,
+            &files,
+        );
+        // Files dropped here, memory freed
+    }
+
+    fn process_babel_suite(&self) {
+        let files = {
+            let suite = BabelSuite::<BabelCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "babel",
+            })
+        };
+
+        BabelSuite::<BabelCase>::new().run_with_discovered_files("parser_babel", self, &files);
+        BabelSuite::<SemanticBabelCase>::new().run_with_discovered_files(
+            "semantic_babel",
+            self,
+            &files,
+        );
+        BabelSuite::<CodegenBabelCase>::new().run_with_discovered_files(
+            "codegen_babel",
+            self,
+            &files,
+        );
+        BabelSuite::<FormatterBabelCase>::new().run_with_discovered_files(
+            "formatter_babel",
+            self,
+            &files,
+        );
+        BabelSuite::<TransformerBabelCase>::new().run_with_discovered_files(
+            "transformer_babel",
+            self,
+            &files,
+        );
+        BabelSuite::<MinifierBabelCase>::new().run_with_discovered_files(
+            "minifier_babel",
+            self,
+            &files,
+        );
+    }
+
+    fn process_typescript_suite(&self) {
+        let files = {
+            let suite = TypeScriptSuite::<TypeScriptCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "typescript",
+            })
+        };
+
+        TypeScriptSuite::<TypeScriptCase>::new().run_with_discovered_files(
+            "parser_typescript",
+            self,
+            &files,
+        );
+        TypeScriptSuite::<SemanticTypeScriptCase>::new().run_with_discovered_files(
+            "semantic_typescript",
+            self,
+            &files,
+        );
+        TypeScriptSuite::<CodegenTypeScriptCase>::new().run_with_discovered_files(
+            "codegen_typescript",
+            self,
+            &files,
+        );
+        TypeScriptSuite::<FormatterTypeScriptCase>::new().run_with_discovered_files(
+            "formatter_typescript",
+            self,
+            &files,
+        );
+        TypeScriptSuite::<TransformerTypeScriptCase>::new().run_with_discovered_files(
+            "transformer_typescript",
+            self,
+            &files,
+        );
+        TypeScriptSuite::<EstreeTypescriptCase>::new().run_with_discovered_files(
+            "estree_typescript",
+            self,
+            &files,
+        );
+    }
+
+    fn process_misc_suite(&self) {
+        let files = {
+            let suite = MiscSuite::<MiscCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "misc",
+            })
+        };
+
+        MiscSuite::<MiscCase>::new().run_with_discovered_files("parser_misc", self, &files);
+        MiscSuite::<SemanticMiscCase>::new().run_with_discovered_files(
+            "semantic_misc",
+            self,
+            &files,
+        );
+        MiscSuite::<CodegenMiscCase>::new().run_with_discovered_files("codegen_misc", self, &files);
+        MiscSuite::<FormatterMiscCase>::new().run_with_discovered_files(
+            "formatter_misc",
+            self,
+            &files,
+        );
+        MiscSuite::<TransformerMiscCase>::new().run_with_discovered_files(
+            "transformer_misc",
+            self,
+            &files,
+        );
     }
 
     pub fn run_parser(&self) {
-        Test262Suite::<Test262Case>::new().run("parser_test262", self);
-        BabelSuite::<BabelCase>::new().run("parser_babel", self);
-        TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
-        MiscSuite::<MiscCase>::new().run("parser_misc", self);
+        let test262_files = {
+            let suite = Test262Suite::<Test262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "parser_test262",
+            })
+        };
+
+        let babel_files = {
+            let suite = BabelSuite::<BabelCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "parser_babel",
+            })
+        };
+
+        let typescript_files = {
+            let suite = TypeScriptSuite::<TypeScriptCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "parser_typescript",
+            })
+        };
+
+        let misc_files = {
+            let suite = MiscSuite::<MiscCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "parser_misc",
+            })
+        };
+
+        Test262Suite::<Test262Case>::new().run_with_discovered_files(
+            "parser_test262",
+            self,
+            &test262_files,
+        );
+        BabelSuite::<BabelCase>::new().run_with_discovered_files(
+            "parser_babel",
+            self,
+            &babel_files,
+        );
+        TypeScriptSuite::<TypeScriptCase>::new().run_with_discovered_files(
+            "parser_typescript",
+            self,
+            &typescript_files,
+        );
+        MiscSuite::<MiscCase>::new().run_with_discovered_files("parser_misc", self, &misc_files);
     }
 
     pub fn run_semantic(&self) {
-        Test262Suite::<SemanticTest262Case>::new().run("semantic_test262", self);
-        BabelSuite::<SemanticBabelCase>::new().run("semantic_babel", self);
-        TypeScriptSuite::<SemanticTypeScriptCase>::new().run("semantic_typescript", self);
-        MiscSuite::<SemanticMiscCase>::new().run("semantic_misc", self);
+        let test262_files = {
+            let suite = Test262Suite::<SemanticTest262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "semantic_test262",
+            })
+        };
+
+        let babel_files = {
+            let suite = BabelSuite::<SemanticBabelCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "semantic_babel",
+            })
+        };
+
+        let typescript_files = {
+            let suite = TypeScriptSuite::<SemanticTypeScriptCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "semantic_typescript",
+            })
+        };
+
+        let misc_files = {
+            let suite = MiscSuite::<SemanticMiscCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "semantic_misc",
+            })
+        };
+
+        Test262Suite::<SemanticTest262Case>::new().run_with_discovered_files(
+            "semantic_test262",
+            self,
+            &test262_files,
+        );
+        BabelSuite::<SemanticBabelCase>::new().run_with_discovered_files(
+            "semantic_babel",
+            self,
+            &babel_files,
+        );
+        TypeScriptSuite::<SemanticTypeScriptCase>::new().run_with_discovered_files(
+            "semantic_typescript",
+            self,
+            &typescript_files,
+        );
+        MiscSuite::<SemanticMiscCase>::new().run_with_discovered_files(
+            "semantic_misc",
+            self,
+            &misc_files,
+        );
     }
 
     pub fn run_codegen(&self) {
-        Test262Suite::<CodegenTest262Case>::new().run("codegen_test262", self);
-        BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
-        TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
-        MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
+        let test262_files = {
+            let suite = Test262Suite::<CodegenTest262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "codegen_test262",
+            })
+        };
+
+        let babel_files = {
+            let suite = BabelSuite::<CodegenBabelCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "codegen_babel",
+            })
+        };
+
+        let typescript_files = {
+            let suite = TypeScriptSuite::<CodegenTypeScriptCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "codegen_typescript",
+            })
+        };
+
+        let misc_files = {
+            let suite = MiscSuite::<CodegenMiscCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "codegen_misc",
+            })
+        };
+
+        Test262Suite::<CodegenTest262Case>::new().run_with_discovered_files(
+            "codegen_test262",
+            self,
+            &test262_files,
+        );
+        BabelSuite::<CodegenBabelCase>::new().run_with_discovered_files(
+            "codegen_babel",
+            self,
+            &babel_files,
+        );
+        TypeScriptSuite::<CodegenTypeScriptCase>::new().run_with_discovered_files(
+            "codegen_typescript",
+            self,
+            &typescript_files,
+        );
+        MiscSuite::<CodegenMiscCase>::new().run_with_discovered_files(
+            "codegen_misc",
+            self,
+            &misc_files,
+        );
     }
 
     pub fn run_formatter(&self) {
-        Test262Suite::<FormatterTest262Case>::new().run("formatter_test262", self);
-        BabelSuite::<FormatterBabelCase>::new().run("formatter_babel", self);
-        TypeScriptSuite::<FormatterTypeScriptCase>::new().run("formatter_typescript", self);
-        MiscSuite::<FormatterMiscCase>::new().run("formatter_misc", self);
+        let test262_files = {
+            let suite = Test262Suite::<FormatterTest262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "formatter_test262",
+            })
+        };
+
+        let babel_files = {
+            let suite = BabelSuite::<FormatterBabelCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "formatter_babel",
+            })
+        };
+
+        let typescript_files = {
+            let suite = TypeScriptSuite::<FormatterTypeScriptCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "formatter_typescript",
+            })
+        };
+
+        let misc_files = {
+            let suite = MiscSuite::<FormatterMiscCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "formatter_misc",
+            })
+        };
+
+        Test262Suite::<FormatterTest262Case>::new().run_with_discovered_files(
+            "formatter_test262",
+            self,
+            &test262_files,
+        );
+        BabelSuite::<FormatterBabelCase>::new().run_with_discovered_files(
+            "formatter_babel",
+            self,
+            &babel_files,
+        );
+        TypeScriptSuite::<FormatterTypeScriptCase>::new().run_with_discovered_files(
+            "formatter_typescript",
+            self,
+            &typescript_files,
+        );
+        MiscSuite::<FormatterMiscCase>::new().run_with_discovered_files(
+            "formatter_misc",
+            self,
+            &misc_files,
+        );
     }
 
     pub fn run_transformer(&self) {
-        Test262Suite::<TransformerTest262Case>::new().run("transformer_test262", self);
-        BabelSuite::<TransformerBabelCase>::new().run("transformer_babel", self);
-        TypeScriptSuite::<TransformerTypeScriptCase>::new().run("transformer_typescript", self);
-        MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self);
+        let test262_files = {
+            let suite = Test262Suite::<TransformerTest262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "transformer_test262",
+            })
+        };
+
+        let babel_files = {
+            let suite = BabelSuite::<TransformerBabelCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "transformer_babel",
+            })
+        };
+
+        let typescript_files = {
+            let suite = TypeScriptSuite::<TransformerTypeScriptCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "transformer_typescript",
+            })
+        };
+
+        let misc_files = {
+            let suite = MiscSuite::<TransformerMiscCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "transformer_misc",
+            })
+        };
+
+        Test262Suite::<TransformerTest262Case>::new().run_with_discovered_files(
+            "transformer_test262",
+            self,
+            &test262_files,
+        );
+        BabelSuite::<TransformerBabelCase>::new().run_with_discovered_files(
+            "transformer_babel",
+            self,
+            &babel_files,
+        );
+        TypeScriptSuite::<TransformerTypeScriptCase>::new().run_with_discovered_files(
+            "transformer_typescript",
+            self,
+            &typescript_files,
+        );
+        MiscSuite::<TransformerMiscCase>::new().run_with_discovered_files(
+            "transformer_misc",
+            self,
+            &misc_files,
+        );
     }
 
     pub fn run_transpiler(&self) {
@@ -117,9 +581,54 @@ impl AppArgs {
     }
 
     pub fn run_estree(&self) {
-        Test262Suite::<EstreeTest262Case>::new().run("estree_test262", self);
-        AcornJsxSuite::<EstreeJsxCase>::new().run("estree_acorn_jsx", self);
-        TypeScriptSuite::<EstreeTypescriptCase>::new().run("estree_typescript", self);
+        let test262_files = {
+            let suite = Test262Suite::<EstreeTest262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "estree_test262",
+            })
+        };
+
+        let acorn_jsx_files = {
+            let suite = AcornJsxSuite::<EstreeJsxCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "estree_acorn_jsx",
+            })
+        };
+
+        let typescript_files = {
+            let suite = TypeScriptSuite::<EstreeTypescriptCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "estree_typescript",
+            })
+        };
+
+        Test262Suite::<EstreeTest262Case>::new().run_with_discovered_files(
+            "estree_test262",
+            self,
+            &test262_files,
+        );
+        AcornJsxSuite::<EstreeJsxCase>::new().run_with_discovered_files(
+            "estree_acorn_jsx",
+            self,
+            &acorn_jsx_files,
+        );
+        TypeScriptSuite::<EstreeTypescriptCase>::new().run_with_discovered_files(
+            "estree_typescript",
+            self,
+            &typescript_files,
+        );
     }
 
     /// # Panics
@@ -135,9 +644,54 @@ impl AppArgs {
     }
 
     pub fn run_minifier(&self) {
-        Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self);
-        BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self);
-        NodeCompatSuite::<MinifierNodeCompatCase>::new().run("minifier_node_compat", self);
+        let test262_files = {
+            let suite = Test262Suite::<MinifierTest262Case>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "minifier_test262",
+            })
+        };
+
+        let babel_files = {
+            let suite = BabelSuite::<MinifierBabelCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "minifier_babel",
+            })
+        };
+
+        let node_compat_files = {
+            let suite = NodeCompatSuite::<MinifierNodeCompatCase>::new();
+            DiscoveredFiles::discover(&FileDiscoveryConfig {
+                test_root: suite.get_test_root(),
+                filter: self.filter.as_deref(),
+                skip_test_path: Box::new(|path| suite.skip_test_path(path)),
+                skip_test_crawl: suite.skip_test_crawl(),
+                suite_name: "minifier_node_compat",
+            })
+        };
+
+        Test262Suite::<MinifierTest262Case>::new().run_with_discovered_files(
+            "minifier_test262",
+            self,
+            &test262_files,
+        );
+        BabelSuite::<MinifierBabelCase>::new().run_with_discovered_files(
+            "minifier_babel",
+            self,
+            &babel_files,
+        );
+        NodeCompatSuite::<MinifierNodeCompatCase>::new().run_with_discovered_files(
+            "minifier_node_compat",
+            self,
+            &node_compat_files,
+        );
     }
 }
 
