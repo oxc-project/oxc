@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::class::ClassId;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
@@ -16,9 +17,12 @@ fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcD
 #[derive(Debug, Default, Clone)]
 pub struct MaxClassesPerFile(Box<MaxClassesPerFileConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxClassesPerFileConfig {
+    /// The maximum number of classes allowed per file.
     pub max: usize,
+    /// Whether to ignore class expressions when counting classes.
     pub ignore_expressions: bool,
 }
 
@@ -65,6 +69,7 @@ declare_oxc_lint!(
     MaxClassesPerFile,
     eslint,
     pedantic,
+    config = MaxClassesPerFileConfig,
 );
 
 impl Rule for MaxClassesPerFile {
