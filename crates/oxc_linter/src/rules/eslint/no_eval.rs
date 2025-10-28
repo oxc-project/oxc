@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -15,8 +16,15 @@ fn no_eval_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eval can be harmful.").with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoEval {
+    /// This `allowIndirect` option allows indirect `eval()` calls.
+    ///
+    /// Indirect calls to `eval`(e.g., `window['eval']`) are less dangerous
+    /// than direct calls because they cannot dynamically change the scope.
+    /// Indirect `eval()` calls also typically have less impact on performance
+    /// compared to direct calls, as they do not invoke JavaScript's scope chain.
     allow_indirect: bool,
 }
 
@@ -77,30 +85,10 @@ declare_oxc_lint!(
     ///   static eval() { }
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowIndirect
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// This `allowIndirect` option allows indirect `eval()` calls.
-    ///
-    /// Indirect calls to `eval`(e.g., `window['eval']`) are less dangerous
-    /// than direct calls because they cannot dynamically change the scope.
-    /// Indirect `eval()` calls also typically have less impact on performance
-    /// compared to direct calls, as they do not invoke JavaScript's scope chain.
-    ///
-    /// Example:
-    /// ```json
-    /// "eslint/no-eval": [
-    ///   "error",
-    ///   { "allowIndirect": true }
-    /// ]
-    /// ```
     NoEval,
     eslint,
-    correctness
+    correctness,
+    config = NoEval,
 );
 
 impl Rule for NoEval {
