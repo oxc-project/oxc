@@ -90,14 +90,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
         node: &mut ImportSpecifier<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.arbitrary_module_namespace_names {
-            if let ModuleExportName::StringLiteral(literal) = &node.imported {
-                let warning = OxcDiagnostic::warn(
-                    "Arbitrary module namespace identifier names are not available in the configured target environment.",
-                )
-                .with_label(literal.span);
-                self.ctx.error(warning);
-            }
+        if self.options.arbitrary_module_namespace_names
+            && let ModuleExportName::StringLiteral(literal) = &node.imported
+        {
+            let warning = OxcDiagnostic::warn(
+                "Arbitrary module namespace identifier names are not available in the configured target environment.",
+            )
+            .with_label(literal.span);
+            self.ctx.error(warning);
         }
     }
 
@@ -129,14 +129,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
         node: &mut ExportAllDeclaration<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.options.arbitrary_module_namespace_names {
-            if let Some(ModuleExportName::StringLiteral(literal)) = &node.exported {
-                let warning = OxcDiagnostic::warn(
-                    "Arbitrary module namespace identifier names are not available in the configured target environment.",
-                )
-                .with_label(literal.span);
-                self.ctx.error(warning);
-            }
+        if self.options.arbitrary_module_namespace_names
+            && let Some(ModuleExportName::StringLiteral(literal)) = &node.exported
+        {
+            let warning = OxcDiagnostic::warn(
+                "Arbitrary module namespace identifier names are not available in the configured target environment.",
+            )
+            .with_label(literal.span);
+            self.ctx.error(warning);
         }
     }
 }
