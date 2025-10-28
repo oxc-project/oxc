@@ -80,10 +80,7 @@ pub struct ExtensionsConfig {
 
 impl ExtensionsConfig {
     fn is_never(&self, ext: &str) -> bool {
-        self.extensions
-            .get(ext)
-            .map(|config| matches!(config, FileExtensionConfig::Never))
-            .unwrap_or(false)
+        self.extensions.get(ext).is_some_and(|config| matches!(config, FileExtensionConfig::Never))
     }
 
     fn get_modifier(&self, ext: &str) -> &FileExtensionConfig {
@@ -279,21 +276,19 @@ fn build_config(
     let mut path_group_overrides = Vec::new();
     if let Some(overrides_array) = value.get("pathGroupOverrides").and_then(Value::as_array) {
         for override_obj in overrides_array {
-            if let Some(obj) = override_obj.as_object() {
-                if let (Some(pattern), Some(action)) = (
+            if let Some(obj) = override_obj.as_object()
+                && let (Some(pattern), Some(action)) = (
                     obj.get("pattern").and_then(Value::as_str),
                     obj.get("action").and_then(Value::as_str),
-                ) {
-                    let action_enum = match action {
-                        "enforce" => OverrideAction::Enforce,
-                        "ignore" => OverrideAction::Ignore,
-                        _ => continue,
-                    };
-                    path_group_overrides.push(PathGroupOverride {
-                        pattern: pattern.to_string(),
-                        action: action_enum,
-                    });
-                }
+                )
+            {
+                let action_enum = match action {
+                    "enforce" => OverrideAction::Enforce,
+                    "ignore" => OverrideAction::Ignore,
+                    _ => continue,
+                };
+                path_group_overrides
+                    .push(PathGroupOverride { pattern: pattern.to_string(), action: action_enum });
             }
         }
     }
@@ -359,12 +354,12 @@ impl Extensions {
 
         let is_relative = module_name.as_str().starts_with('.');
         let starts_with_word_char =
-            module_name.chars().next().map_or(false, |c| c.is_alphanumeric() || c == '_');
+            module_name.chars().next().is_some_and(|c| c.is_alphanumeric() || c == '_');
 
         // Check if this is a scoped package (must be @scope/... where scope is alphanumeric)
         let is_scoped = if module_name.as_str().starts_with('@') {
             // Must have a scope name after @, not just @/ or @.
-            module_name.chars().nth(1).map_or(false, |c| c.is_alphanumeric() || c == '_')
+            module_name.chars().nth(1).is_some_and(|c| c.is_alphanumeric() || c == '_')
         } else {
             false
         };
@@ -481,12 +476,10 @@ impl Extensions {
             }
         } else {
             // Missing extension - check if it should be required
-            let should_require = match require_extension {
-                Some(FileExtensionConfig::Always) | Some(FileExtensionConfig::IgnorePackages) => {
-                    true
-                }
-                _ => false,
-            };
+            let should_require = matches!(
+                require_extension,
+                Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
+            );
 
             if should_require {
                 ctx.diagnostic(extension_missing_diagnostic(span, is_import));
@@ -536,11 +529,10 @@ impl Extensions {
                     }
                 } else {
                     // Missing extension - check if it should be required
-                    let should_require = match require_extension {
-                        Some(FileExtensionConfig::Always)
-                        | Some(FileExtensionConfig::IgnorePackages) => true,
-                        _ => false,
-                    };
+                    let should_require = matches!(
+                        require_extension,
+                        Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
+                    );
 
                     if should_require {
                         ctx.diagnostic(extension_missing_diagnostic(span, true));
