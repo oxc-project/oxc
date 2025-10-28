@@ -167,6 +167,7 @@ declare_oxc_lint!(
     ExplicitModuleBoundaryTypes,
     typescript,
     restriction,
+    config = Config,
 );
 
 impl Rule for ExplicitModuleBoundaryTypes {
