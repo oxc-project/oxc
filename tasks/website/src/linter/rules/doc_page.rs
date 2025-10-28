@@ -196,9 +196,9 @@ fn how_to_use(rule: &RuleTableRow) -> String {
         format!("{}/{}", normalized_plugin_name, rule.name)
     };
     let is_default_plugin = is_default_plugin(plugin);
-    let is_tsgolint_rule = &rule.is_tsgolint_rule;
+    let is_tsgolint_rule = rule.is_tsgolint_rule;
 
-    let type_aware_flag = if *is_tsgolint_rule { "--type-aware " } else { "" };
+    let type_aware_flag = if is_tsgolint_rule { "--type-aware " } else { "" };
 
     let enable_bash_example = if is_default_plugin {
         format!(r"oxlint {type_aware_flag}--deny {rule_full_name}")
