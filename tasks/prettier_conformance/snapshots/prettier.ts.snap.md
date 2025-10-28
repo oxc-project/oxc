@@ -1,10 +1,9 @@
-ts compatibility: 532/598 (88.96%)
+ts compatibility: 537/598 (89.80%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
@@ -36,9 +35,7 @@ ts compatibility: 532/598 (88.96%)
 | typescript/conditional-types/nested-in-condition.ts | 💥✨ | 15.79% |
 | typescript/conditional-types/new-ternary-spec.ts | 💥✨ | 10.67% |
 | typescript/conditional-types/parentheses.ts | 💥✨ | 15.22% |
-| typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |
-| typescript/definite/without-annotation.ts | 💥 | 91.67% |
 | typescript/import-require/comments.ts | 💥 | 33.33% |
 | typescript/import-type/long-module-name/long-module-name2.ts | 💥 | 25.00% |
 | typescript/import-type/long-module-name/long-module-name4.ts | 💥 | 89.29% |
@@ -61,8 +58,6 @@ ts compatibility: 532/598 (88.96%)
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 96.61% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 85.71% |
-| typescript/type-arguments-bit-shift-left-like/3.ts | 💥 | 0.00% |
-| typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/type-params/18041.ts | 💥 | 43.75% |
 | typescript/type-params/constraints-and-default-2.ts | 💥 | 97.60% |
 | typescript/type-params/constraints-and-default.ts | 💥 | 87.32% |

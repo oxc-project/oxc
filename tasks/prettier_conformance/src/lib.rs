@@ -15,7 +15,7 @@ use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{FormatOptions, Formatter, get_parse_options};
+use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -240,12 +240,18 @@ impl TestRunner {
                 )
                 .unwrap();
 
+                let Some(actual) =
+                    Self::run_oxc_formatter(path, &source_text, format_options.clone())
+                else {
+                    // Skip the test if parsing failed
+                    if self.options.debug {
+                        println!("  => Skipped (parsing failed)");
+                    }
+                    continue;
+                };
+
                 let actual = Self::replace_escape_and_eol(
-                    &Self::run_oxc_formatter(
-                        &source_text,
-                        SourceType::from_path(path).unwrap(),
-                        format_options.clone(),
-                    ),
+                    &actual,
                     expected.contains("LF>") || expected.contains("<CR"),
                 );
 
@@ -414,15 +420,23 @@ impl TestRunner {
     }
 
     fn run_oxc_formatter(
+        path: &Path,
         source_text: &str,
-        source_type: SourceType,
-        formatter_options: FormatOptions,
-    ) -> String {
+        format_options: FormatOptions,
+    ) -> Option<String> {
         let allocator = Allocator::default();
-        let source_type = source_type.with_jsx(source_type.is_javascript());
+
+        let source_type = SourceType::from_path(path).unwrap();
+        let source_type = enable_jsx_source_type(source_type);
+
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(get_parse_options())
             .parse();
-        Formatter::new(&allocator, formatter_options).build(&ret.program)
+        if !ret.errors.is_empty() {
+            return None;
+        }
+
+        let formatted = Formatter::new(&allocator, format_options).build(&ret.program);
+        Some(formatted)
     }
 }

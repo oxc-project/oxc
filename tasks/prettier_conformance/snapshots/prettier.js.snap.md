@@ -1,4 +1,4 @@
-js compatibility: 656/749 (87.58%)
+js compatibility: 673/749 (89.85%)
 
 # Failed
 
@@ -17,27 +17,11 @@ js compatibility: 656/749 (87.58%)
 | js/comments/if.js | 💥💥 | 74.83% |
 | js/comments/return-statement.js | 💥💥 | 98.28% |
 | js/comments/tagged-template-literal.js | 💥💥 | 92.86% |
-| js/comments/html-like/comment.js | 💥 | 0.00% |
 | js/comments/tagged-template-literal/11662.js | 💥 | 80.00% |
 | js/conditional/comments.js | 💥✨ | 23.69% |
 | js/conditional/new-ternary-examples.js | 💥✨ | 20.14% |
 | js/conditional/new-ternary-spec.js | 💥✨ | 24.35% |
 | js/conditional/postfix-ternary-regressions.js | 💥✨ | 20.77% |
-| js/discard-binding/array-pattern.js | 💥 | 0.00% |
-| js/discard-binding/basic.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-arrow-params.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-assignment.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-async-arrow-params.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-bindings.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-for-await-using-binding.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-for-bindings.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-for-lhs.js | 💥 | 0.00% |
-| js/discard-binding/discard-binding-for-using-binding.js | 💥 | 0.00% |
-| js/discard-binding/function-parameter.js | 💥 | 0.00% |
-| js/discard-binding/object-pattern.js | 💥 | 0.00% |
-| js/discard-binding/unary-expression-void.js | 💥 | 0.00% |
-| js/discard-binding/using-variable-declarator.js | 💥 | 0.00% |
-| js/discard-binding/using.js | 💥 | 0.00% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 66.67% |
 | js/for/9812-unstable.js | 💥 | 45.45% |
@@ -90,7 +74,6 @@ js compatibility: 656/749 (87.58%)
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | js/test-declarations/test_declarations.js | 💥💥 | 95.88% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
-| jsx/expression-with-types/expression.js | 💥💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |

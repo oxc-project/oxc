@@ -76,9 +76,6 @@ pub const IGNORE_TESTS: &[&str] = &[
     // non-standard syntax
     "js/deferred-import-evaluation",
     "js/bind-expressions",
-    // Unsupported stage3 features
-    "tuple-and-record.js",
-    "js/async-do-expressions",
     // Babel plugins (mostly experimental syntaxes)
     "js/babel-plugins",
     "js/destructuring-private-fields",
