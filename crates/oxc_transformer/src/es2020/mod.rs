@@ -107,7 +107,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         if self.options.arbitrary_module_namespace_names {
-            // Check the exported name (the "as" part)
             if let ModuleExportName::StringLiteral(literal) = &node.exported {
                 let warning = OxcDiagnostic::warn(
                     "Arbitrary module namespace identifier names are not available in the configured target environment.",
@@ -115,7 +114,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ES2020<'a, '_> {
                 .with_label(literal.span);
                 self.ctx.error(warning);
             }
-            // Check the local name (before "as")
             if let ModuleExportName::StringLiteral(literal) = &node.local {
                 let warning = OxcDiagnostic::warn(
                     "Arbitrary module namespace identifier names are not available in the configured target environment.",
