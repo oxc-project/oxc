@@ -4,9 +4,10 @@ use log::warn;
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
-    FormatOptions, Formatter, Oxfmtrc, enable_jsx_source_type, get_supported_source_type,
+    FormatOptions, Formatter, Oxfmtrc, enable_jsx_source_type, get_parse_options,
+    get_supported_source_type,
 };
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::Parser;
 use tower_lsp_server::{
     UriExt,
     lsp_types::{Pattern, Position, Range, TextEdit, Uri},
@@ -42,14 +43,7 @@ impl ServerFormatter {
 
         let allocator = Allocator::new();
         let ret = Parser::new(&allocator, &source_text, source_type)
-            .with_options(ParseOptions {
-                parse_regular_expression: false,
-                // Enable all syntax features
-                allow_v8_intrinsics: true,
-                allow_return_outside_function: true,
-                // `oxc_formatter` expects this to be false
-                preserve_parens: false,
-            })
+            .with_options(get_parse_options())
             .parse();
 
         if !ret.errors.is_empty() {

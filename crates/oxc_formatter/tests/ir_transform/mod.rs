@@ -39,23 +39,14 @@ pub fn assert_format(code: &str, options: &FormatOptions, expected: &str) {
 
 fn format_code(code: &str, options: &FormatOptions) -> String {
     use oxc_allocator::Allocator;
-    use oxc_formatter::Formatter;
-    use oxc_parser::{ParseOptions, Parser};
+    use oxc_formatter::{Formatter, get_parse_options};
+    use oxc_parser::Parser;
     use oxc_span::SourceType;
 
     let allocator = Allocator::new();
     let source_type = SourceType::from_path("dummy.tsx").unwrap();
 
-    let ret = Parser::new(&allocator, code, source_type)
-        .with_options(ParseOptions {
-            parse_regular_expression: false,
-            // Enable all syntax features
-            allow_v8_intrinsics: true,
-            allow_return_outside_function: true,
-            // `oxc_formatter` expects this to be false
-            preserve_parens: false,
-        })
-        .parse();
+    let ret = Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
 
     if let Some(error) = ret.errors.first() {
         panic!("💥 Parser error: {}", error.message);

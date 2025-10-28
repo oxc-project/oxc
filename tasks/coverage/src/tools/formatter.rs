@@ -2,10 +2,10 @@ use std::path::{Path, PathBuf};
 
 use oxc::{
     allocator::Allocator,
-    parser::{ParseOptions, Parser, ParserReturn},
+    parser::{Parser, ParserReturn},
     span::SourceType,
 };
-use oxc_formatter::{FormatOptions, Formatter};
+use oxc_formatter::{FormatOptions, Formatter, get_parse_options};
 
 use crate::{
     babel::BabelCase,
@@ -20,21 +20,14 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let options = FormatOptions::default();
 
     let allocator = Allocator::default();
-    let parse_options = ParseOptions {
-        parse_regular_expression: false,
-        // Enable all syntax features
-        allow_v8_intrinsics: true,
-        allow_return_outside_function: true,
-        // `oxc_formatter` expects this to be false
-        preserve_parens: false,
-    };
     let ParserReturn { program, .. } =
-        Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
+        Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
     let source_text1 = Formatter::new(&allocator, options.clone()).build(&program);
 
     let allocator = Allocator::default();
-    let ParserReturn { program, errors, .. } =
-        Parser::new(&allocator, &source_text1, source_type).with_options(parse_options).parse();
+    let ParserReturn { program, errors, .. } = Parser::new(&allocator, &source_text1, source_type)
+        .with_options(get_parse_options())
+        .parse();
 
     if !errors.is_empty() {
         return TestResult::ParseError(

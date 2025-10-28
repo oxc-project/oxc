@@ -3,9 +3,9 @@ use std::{env::current_dir, fs, path::Path, str::FromStr};
 use oxc_allocator::Allocator;
 use oxc_formatter::{
     ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, Formatter, IndentStyle,
-    IndentWidth, LineWidth, QuoteStyle, Semicolons, TrailingCommas,
+    IndentWidth, LineWidth, QuoteStyle, Semicolons, TrailingCommas, get_parse_options,
 };
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 type OptionSet = serde_json::Map<String, serde_json::Value>;
@@ -141,14 +141,8 @@ fn format_options_display(json: &OptionSet) -> String {
 /// Format a source file with given options
 fn format_source(source_text: &str, source_type: SourceType, options: FormatOptions) -> String {
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type)
-        .with_options(ParseOptions {
-            parse_regular_expression: false,
-            allow_v8_intrinsics: true,
-            allow_return_outside_function: true,
-            preserve_parens: false,
-        })
-        .parse();
+    let ret =
+        Parser::new(&allocator, source_text, source_type).with_options(get_parse_options()).parse();
 
     let formatter = Formatter::new(&allocator, options);
     formatter.build(&ret.program)

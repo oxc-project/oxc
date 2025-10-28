@@ -1,6 +1,19 @@
 use std::ffi::OsStr;
 
+use oxc_parser::ParseOptions;
 use oxc_span::SourceType;
+
+pub fn get_parse_options() -> ParseOptions {
+    ParseOptions {
+        // Do not need to parse regexp
+        parse_regular_expression: false,
+        // Enable all syntax features
+        allow_return_outside_function: true,
+        allow_v8_intrinsics: true,
+        // `oxc_formatter` expects this to be `false`, otherwise panics
+        preserve_parens: false,
+    }
+}
 
 // Additional extensions from linguist-languages, which Prettier also supports
 // - https://github.com/ikatyang-collab/linguist-languages/blob/d1dc347c7ced0f5b42dd66c7d1c4274f64a3eb6b/data/JavaScript.js

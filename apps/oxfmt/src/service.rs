@@ -5,8 +5,8 @@ use rayon::prelude::*;
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
-use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_parser::Parser;
 
 use crate::{command::OutputOptions, walk::WalkEntry};
 
@@ -53,14 +53,7 @@ impl FormatService {
         let allocator = Allocator::new();
 
         let ret = Parser::new(&allocator, &source_text, source_type)
-            .with_options(ParseOptions {
-                parse_regular_expression: false,
-                // Enable all syntax features
-                allow_v8_intrinsics: true,
-                allow_return_outside_function: true,
-                // `oxc_formatter` expects this to be false
-                preserve_parens: false,
-            })
+            .with_options(get_parse_options())
             .parse();
         if !ret.errors.is_empty() {
             let diagnostics = DiagnosticService::wrap_diagnostics(

@@ -14,8 +14,8 @@
 use std::{fs, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::{BracketSameLine, FormatOptions, Formatter, Semicolons};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_formatter::{BracketSameLine, FormatOptions, Formatter, Semicolons, get_parse_options};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
 
@@ -34,14 +34,7 @@ fn main() -> Result<(), String> {
 
     // Parse the source code
     let ret = Parser::new(&allocator, &source_text, source_type)
-        .with_options(ParseOptions {
-            parse_regular_expression: false,
-            // Enable all syntax features
-            allow_v8_intrinsics: true,
-            allow_return_outside_function: true,
-            // `oxc_formatter` expects this to be false
-            preserve_parens: false,
-        })
+        .with_options(get_parse_options())
         .parse();
 
     // Report any parsing errors

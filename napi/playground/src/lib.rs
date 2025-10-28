@@ -32,7 +32,7 @@ use oxc::{
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
     Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties,
-    QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas,
+    QuoteStyle, Semicolons, SortImports, SortOrder, TrailingCommas, get_parse_options,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -537,12 +537,7 @@ impl Oxc {
         let allocator = Allocator::default();
         if run_options.formatter {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(ParseOptions {
-                    preserve_parens: false,
-                    allow_return_outside_function: true,
-                    allow_v8_intrinsics: true,
-                    parse_regular_expression: false,
-                })
+                .with_options(get_parse_options())
                 .parse();
 
             let format_options = Self::convert_formatter_options(formatter_options);
