@@ -5,13 +5,16 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExtendNative(Box<NoExtendNativeConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoExtendNativeConfig {
     /// A list of objects which are allowed to be exceptions to the rule.
     exceptions: Vec<CompactStr>,
@@ -68,6 +71,7 @@ declare_oxc_lint!(
     NoExtendNative,
     eslint,
     suspicious,
+    config = NoExtendNativeConfig,
 );
 
 impl Rule for NoExtendNative {
