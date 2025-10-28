@@ -3,7 +3,7 @@ source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./.oxlintrc.json>`_\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./.oxlintrc.json>`_\] \[**`--lsp`**\] \[_`PATH`_\]...
 
 ## Basic Configuration
 - **`-c`**, **`--config`**=_`<./.oxlintrc.json>`_ &mdash; 
@@ -147,6 +147,8 @@ Arguments:
 ## Available options:
 - **`    --rules`** &mdash; 
   list all the rules that are currently registered
+- **`    --lsp`** &mdash; 
+  Start the language server
 - **`    --disable-nested-config`** &mdash; 
   Disables the automatic loading of nested configuration files.
 - **`    --type-aware`** &mdash; 

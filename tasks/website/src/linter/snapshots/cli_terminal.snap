@@ -2,7 +2,7 @@
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
-Usage: [-c=<./.oxlintrc.json>] [PATH]...
+Usage: [-c=<./.oxlintrc.json>] [--lsp] [PATH]...
 
 Basic Configuration
     -c, --config=<./.oxlintrc.json>  Oxlint configuration file (experimental)
@@ -91,6 +91,7 @@ Available positional items:
 
 Available options:
         --rules               list all the rules that are currently registered
+        --lsp                 Start the language server
         --disable-nested-config  Disables the automatic loading of nested configuration files.
         --type-aware          Enables rules that require type information.
     -h, --help                Prints help information
