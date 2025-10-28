@@ -19,25 +19,14 @@ jobs:
     name: Check version
     runs-on: ubuntu-latest
     outputs:
-      version_changed: ${{ steps.version.outputs.changed }}
-      version: ${{ steps.version.outputs.version }}
+      version_changed: ${{ steps.check.outputs.version_changed }}
+      version: ${{ steps.check.outputs.version }}
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-
-      - name: Check version changes
-        uses: EndBug/version-check@5102328418c0130d66ca712d755c303e93368ce2 # v2.1.7
-        id: version
+      - uses: ./.github/actions/check-version
+        id: check
         with:
-          static-checking: localIsNew
-          file-url: https://unpkg.com/oxlint@latest/package.json
           file-name: npm/oxlint/package.json
-
-      - name: Print version
-        if: steps.version.outputs.changed == 'true'
-        env:
-          NEW_VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          echo "Version change found! New version: ${NEW_VERSION}"
+          file-url: https://unpkg.com/oxlint@latest/package.json
 
   build:
     needs: check

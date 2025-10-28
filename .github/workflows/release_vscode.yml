@@ -22,26 +22,14 @@ jobs:
     name: Check version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ env.version }}
-      version_changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.check.outputs.version }}
+      version_changed: ${{ steps.check.outputs.version_changed }}
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-
-      - name: Check vscode version changes
-        uses: EndBug/version-check@5102328418c0130d66ca712d755c303e93368ce2 # v2.1.7
-        id: version
+      - uses: ./.github/actions/check-version
+        id: check
         with:
-          diff-search: true
           file-name: editors/vscode/package.json
-
-      - name: Set version name
-        if: steps.version.outputs.changed == 'true'
-        env:
-          VERSION_NUMBER: ${{ steps.version.outputs.version }}
-          VERSION_TYPE: ${{ steps.version.outputs.version_type }}
-        run: |
-          echo "Version change found! New version: ${VERSION_NUMBER} (${VERSION_TYPE})"
-          echo "version=${VERSION_NUMBER}" >> $GITHUB_ENV
+          diff-search: true
 
   build:
     needs: check
