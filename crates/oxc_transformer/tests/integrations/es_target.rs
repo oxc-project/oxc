@@ -1,10 +1,7 @@
 use std::str::FromStr;
 
-use oxc_allocator::Allocator;
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{ESTarget, TransformOptions, Transformer};
+use oxc_transformer::{ESTarget, TransformOptions};
 
 use crate::{codegen, test};
 
