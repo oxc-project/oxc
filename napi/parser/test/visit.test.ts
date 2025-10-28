@@ -245,12 +245,7 @@ describe('visit', () => {
     const code2 = 'let z';
     const program2 = parseSync('test.js', code2).program;
     visitor.visit(program2);
-    expect(visited).toStrictEqual([
-      'enter: Program',
-      'enter: Identifier z',
-      'exit: Identifier z',
-      'exit: Program',
-    ]);
+    expect(visited).toStrictEqual(['enter: Program', 'enter: Identifier z', 'exit: Identifier z', 'exit: Program']);
   });
 });
 

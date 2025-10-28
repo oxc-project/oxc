@@ -2,10 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const readAllImplementedRuleNames = async () => {
-  const rulesFile = await readFile(
-    resolve('crates/oxc_linter/src/rules.rs'),
-    'utf8',
-  );
+  const rulesFile = await readFile(resolve('crates/oxc_linter/src/rules.rs'), 'utf8');
 
   /** @type {Set<string>} */
   const rules = new Set();
@@ -26,10 +23,7 @@ const readAllImplementedRuleNames = async () => {
     }
 
     if (found) {
-      let prefixedName = line
-        .replaceAll(',', '')
-        .replaceAll('::', '/')
-        .replaceAll('_', '-');
+      let prefixedName = line.replaceAll(',', '').replaceAll('::', '/').replaceAll('_', '-');
 
       // Ignore no reference rules
       if (prefixedName.startsWith('oxc/')) continue;
@@ -319,7 +313,7 @@ const getArrayEntries = (constName, fileContent) => {
         line
           .replace(/"/g, '')
           .split(',')
-          .filter((s) => s !== '')
+          .filter((s) => s !== ''),
       ),
   );
 };
@@ -332,17 +326,9 @@ const getArrayEntries = (constName, fileContent) => {
  *
  * @param {RuleEntries} ruleEntries
  */
-export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
-  ruleEntries,
-) => {
-  const typescriptCompatibleRulesFile = await readFile(
-    'crates/oxc_linter/src/utils/mod.rs',
-    'utf8',
-  );
-  const rules = getArrayEntries(
-    'TYPESCRIPT_COMPATIBLE_ESLINT_RULES',
-    typescriptCompatibleRulesFile,
-  );
+export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (ruleEntries) => {
+  const typescriptCompatibleRulesFile = await readFile('crates/oxc_linter/src/utils/mod.rs', 'utf8');
+  const rules = getArrayEntries('TYPESCRIPT_COMPATIBLE_ESLINT_RULES', typescriptCompatibleRulesFile);
 
   for (const rule of rules) {
     const typescriptRuleEntry = ruleEntries.get(`typescript/${rule}`);
@@ -361,17 +347,9 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
  * override the status of the Vitest rules to match the Jest rules.
  * @param {RuleEntries} ruleEntries
  */
-export const syncVitestPluginStatusWithJestPluginStatus = async (
-  ruleEntries,
-) => {
-  const vitestCompatibleRulesFile = await readFile(
-    'crates/oxc_linter/src/utils/mod.rs',
-    'utf8',
-  );
-  const rules = getArrayEntries(
-    'VITEST_COMPATIBLE_JEST_RULES',
-    vitestCompatibleRulesFile,
-  );
+export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
+  const vitestCompatibleRulesFile = await readFile('crates/oxc_linter/src/utils/mod.rs', 'utf8');
+  const rules = getArrayEntries('VITEST_COMPATIBLE_JEST_RULES', vitestCompatibleRulesFile);
 
   for (const rule of rules) {
     const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);

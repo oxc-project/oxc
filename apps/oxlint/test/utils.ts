@@ -40,9 +40,8 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
 
   stdout = normalizeStdout(stdout);
   stderr = normalizeStdout(stderr);
-  let snapshot = `# Exit code\n${exitCode}\n\n` +
-    `# stdout\n\`\`\`\n${stdout}\`\`\`\n\n` +
-    `# stderr\n\`\`\`\n${stderr}\`\`\`\n`;
+  let snapshot =
+    `# Exit code\n${exitCode}\n\n` + `# stdout\n\`\`\`\n${stdout}\`\`\`\n\n` + `# stderr\n\`\`\`\n${stderr}\`\`\`\n`;
 
   if (options.getExtraSnapshotData) {
     const extraSnapshots = await options.getExtraSnapshotData(fixtureDirPath);

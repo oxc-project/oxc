@@ -45,10 +45,10 @@ var FUNC_TOSTRING = `
             if (!/^F[0-9]{6}N$/.test(n)) {
                 n = "F" + ++id + "N";
                 ${
-  Object.getOwnPropertyDescriptor(Function.prototype, 'name').configurable
-    ? 'Object.defineProperty(this, "name", { get: () => n });'
-    : ''
-}
+                  Object.getOwnPropertyDescriptor(Function.prototype, 'name').configurable
+                    ? 'Object.defineProperty(this, "name", { get: () => n });'
+                    : ''
+                }
             }
             return "function " + n + "() {...}";
         }
@@ -58,25 +58,25 @@ var FUNC_TOSTRING = `
 export function run_code(code, prepend_code = '') {
   var stdout = '';
   var original_write = process.stdout.write;
-  process.stdout.write = function(chunk) {
+  process.stdout.write = function (chunk) {
     stdout += chunk;
   };
   try {
     const global = {
       console: {
-        log: function(msg) {
+        log: function (msg) {
           if (arguments.length == 1 && typeof msg == 'string') {
             return console.log(msg);
           }
           return console.log.apply(
             console,
-            [].map.call(arguments, function(arg) {
+            [].map.call(arguments, function (arg) {
               return safe_log(arg, 3);
             }),
           );
         },
       },
-      id: x => x,
+      id: (x) => x,
       leak: () => {},
       pass: () => {
         global.console.log('PASS');
@@ -86,15 +86,7 @@ export function run_code(code, prepend_code = '') {
       },
     };
     global.global = global;
-    vm.runInNewContext(
-      [
-        FUNC_TOSTRING,
-        '!function() {',
-        prepend_code + code,
-        '}();',
-      ].join('\n'),
-      global,
-    );
+    vm.runInNewContext([FUNC_TOSTRING, '!function() {', prepend_code + code, '}();'].join('\n'), global);
     return stdout;
   } catch (ex) {
     return ex;

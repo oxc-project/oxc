@@ -38,14 +38,13 @@ export async function getModules(
   let code = fs.readFileSync(p, 'utf8');
   code = modifyCode ? modifyCode(code) : code;
   return Promise.all(
-    minifyOptions.concat(transformOptions)
-      .map(async ({ type, ...options }) => {
-        const modifiedCode = {
-          minify: oxcMinify,
-          transform: oxcTransform,
-        }[type](fileName, code).code;
-        return { module: await fsRequire(modifiedCode, format), type, options };
-      }),
+    minifyOptions.concat(transformOptions).map(async ({ type, ...options }) => {
+      const modifiedCode = {
+        minify: oxcMinify,
+        transform: oxcTransform,
+      }[type](fileName, code).code;
+      return { module: await fsRequire(modifiedCode, format), type, options };
+    }),
   );
 }
 

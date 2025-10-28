@@ -20,7 +20,8 @@ describe('isolated declaration', () => {
   it('matches output', () => {
     const ret = isolatedDeclaration('test.ts', code, { sourcemap: true });
     expect(ret).toMatchObject({
-      code: '/**\n' +
+      code:
+        '/**\n' +
         '* jsdoc 1\n' +
         '*/\n' +
         'export declare class A {\n' +

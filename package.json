@@ -7,12 +7,14 @@
     "build-dev": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-dev",
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
+    "fmt": "oxfmt -c oxfmtrc.jsonc",
     "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.2",
     "@napi-rs/cli": "catalog:",
     "emnapi": "1.6.0",
+    "oxfmt": "^0.8.0",
     "oxlint": "^1.24.0",
     "oxlint-tsgolint": "0.3.0",
     "publint": "catalog:",

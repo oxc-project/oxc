@@ -37,7 +37,7 @@ export class Visitor {
   }
 
   static {
-    getVisitorsArrTemp = visitor => visitor.#visitorsArr;
+    getVisitorsArrTemp = (visitor) => visitor.#visitorsArr;
   }
 }
 
@@ -116,7 +116,7 @@ function createVisitorsArr(visitor) {
  * @returns {function} - Combined visitor function
  */
 function combineVisitFunctions(visit1, visit2) {
-  return function(node) {
+  return function (node) {
     visit1(node);
     visit2(node);
   };

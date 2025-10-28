@@ -164,7 +164,8 @@ const ONE_GIB = 1 << 30;
 // freed. We don't want to block it from freeing memory, but if it's not done that yet, there's no
 // point creating a new buffer, when one already exists.
 const CLEAR_BUFFERS_TIMEOUT = 10_000; // 10 seconds
-const buffers = [], oldBuffers = [];
+const buffers = [],
+  oldBuffers = [];
 let clearBuffersTimeout = null;
 
 const textEncoder = new TextEncoder();

@@ -75,9 +75,8 @@ export function parseAsyncLazy(filename, sourceText, options) {
 // which don't support it. e.g. Prettier supports NodeJS v14.
 // Raw transfer is disabled on NodeJS before v22, so it doesn't matter if this is `null` on old NodeJS
 // - it'll never be accessed in that case.
-const bufferRecycleRegistry = typeof FinalizationRegistry === 'undefined'
-  ? null
-  : new FinalizationRegistry(returnBufferToCache);
+const bufferRecycleRegistry =
+  typeof FinalizationRegistry === 'undefined' ? null : new FinalizationRegistry(returnBufferToCache);
 
 /**
  * Get an object with getters which lazy deserialize AST and other data from buffer.

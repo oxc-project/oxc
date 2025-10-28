@@ -53,78 +53,68 @@ export async function activate(context: ExtensionContext) {
     ? (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0
     : true;
 
-  const restartCommand = commands.registerCommand(
-    OxcCommands.RestartServer,
-    async () => {
-      if (client === undefined) {
-        window.showErrorMessage('oxc client not found');
-        return;
-      }
+  const restartCommand = commands.registerCommand(OxcCommands.RestartServer, async () => {
+    if (client === undefined) {
+      window.showErrorMessage('oxc client not found');
+      return;
+    }
 
-      try {
-        if (client.isRunning()) {
-          await client.restart();
-          window.showInformationMessage('oxc server restarted.');
-        } else {
-          await client.start();
-        }
-      } catch (err) {
-        client.error('Restarting client failed', err, 'force');
-      }
-    },
-  );
-
-  const showOutputCommand = commands.registerCommand(
-    OxcCommands.ShowOutputChannel,
-    () => {
-      client?.outputChannel?.show();
-    },
-  );
-
-  const toggleEnable = commands.registerCommand(
-    OxcCommands.ToggleEnable,
-    async () => {
-      await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
-
-      if (client === undefined || !allowedToStartServer) {
-        return;
-      }
-
+    try {
       if (client.isRunning()) {
-        if (!configService.vsCodeConfig.enable) {
-          await client.stop();
-        }
+        await client.restart();
+        window.showInformationMessage('oxc server restarted.');
       } else {
-        if (configService.vsCodeConfig.enable) {
-          await client.start();
-        }
+        await client.start();
       }
-    },
-  );
+    } catch (err) {
+      client.error('Restarting client failed', err, 'force');
+    }
+  });
 
-  const applyAllFixesFile = commands.registerCommand(
-    OxcCommands.ApplyAllFixesFile,
-    async () => {
-      if (!client) {
-        window.showErrorMessage('oxc client not found');
-        return;
-      }
-      const textEditor = window.activeTextEditor;
-      if (!textEditor) {
-        window.showErrorMessage('active text editor not found');
-        return;
-      }
+  const showOutputCommand = commands.registerCommand(OxcCommands.ShowOutputChannel, () => {
+    client?.outputChannel?.show();
+  });
 
-      const params = {
-        command: LspCommands.FixAll,
-        arguments: [{
+  const toggleEnable = commands.registerCommand(OxcCommands.ToggleEnable, async () => {
+    await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
+
+    if (client === undefined || !allowedToStartServer) {
+      return;
+    }
+
+    if (client.isRunning()) {
+      if (!configService.vsCodeConfig.enable) {
+        await client.stop();
+      }
+    } else {
+      if (configService.vsCodeConfig.enable) {
+        await client.start();
+      }
+    }
+  });
+
+  const applyAllFixesFile = commands.registerCommand(OxcCommands.ApplyAllFixesFile, async () => {
+    if (!client) {
+      window.showErrorMessage('oxc client not found');
+      return;
+    }
+    const textEditor = window.activeTextEditor;
+    if (!textEditor) {
+      window.showErrorMessage('active text editor not found');
+      return;
+    }
+
+    const params = {
+      command: LspCommands.FixAll,
+      arguments: [
+        {
           uri: textEditor.document.uri.toString(),
-        }],
-      };
+        },
+      ],
+    };
 
-      await client.sendRequest(ExecuteCommandRequest.type, params);
-    },
-  );
+    await client.sendRequest(ExecuteCommandRequest.type, params);
+  });
 
   const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
 
@@ -149,10 +139,7 @@ export async function activate(context: ExtensionContext) {
     }
     const ext = process.platform === 'win32' ? '.exe' : '';
     // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-    return (
-      process.env.SERVER_PATH_DEV ??
-        join(context.extensionPath, `./target/release/oxc_language_server${ext}`)
-    );
+    return process.env.SERVER_PATH_DEV ?? join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
   }
 
   const command = await findBinary();
@@ -178,10 +165,12 @@ export async function activate(context: ExtensionContext) {
   // Options to control the language client
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
-    documentSelector: [{
-      pattern: `**/*.{${supportedExtensions.join(',')}}`,
-      scheme: 'file',
-    }],
+    documentSelector: [
+      {
+        pattern: `**/*.{${supportedExtensions.join(',')}}`,
+        scheme: 'file',
+      },
+    ],
     initializationOptions: configService.languageServerConfig,
     outputChannel,
     traceOutputChannel: outputChannel,
@@ -197,7 +186,7 @@ export async function activate(context: ExtensionContext) {
       },
       workspace: {
         configuration: (params: ConfigurationParams) => {
-          return params.items.map(item => {
+          return params.items.map((item) => {
             if (item.section !== 'oxc_language_server') {
               return null;
             }
@@ -213,11 +202,7 @@ export async function activate(context: ExtensionContext) {
   };
 
   // Create the language client and start the client.
-  client = new LanguageClient(
-    languageClientName,
-    serverOptions,
-    clientOptions,
-  );
+  client = new LanguageClient(languageClientName, serverOptions, clientOptions);
 
   const onNotificationDispose = client.onNotification(ShowMessageNotification.type, (params) => {
     switch (params.type) {
@@ -273,12 +258,9 @@ export async function activate(context: ExtensionContext) {
     client.clientOptions.initializationOptions = this.languageServerConfig;
 
     if (configService.effectsWorkspaceConfigChange(event) && client.isRunning()) {
-      await client.sendNotification(
-        'workspace/didChangeConfiguration',
-        {
-          settings: this.languageServerConfig,
-        },
-      );
+      await client.sendNotification('workspace/didChangeConfiguration', {
+        settings: this.languageServerConfig,
+      });
     }
   };
 
@@ -300,15 +282,9 @@ export async function deactivate(): Promise<void> {
   client = undefined;
 }
 
-function updateStatsBar(
-  context: ExtensionContext,
-  enable: boolean,
-) {
+function updateStatsBar(context: ExtensionContext, enable: boolean) {
   if (!myStatusBarItem) {
-    myStatusBarItem = window.createStatusBarItem(
-      StatusBarAlignment.Right,
-      100,
-    );
+    myStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Right, 100);
     myStatusBarItem.command = OxcCommands.ToggleEnable;
     context.subscriptions.push(myStatusBarItem);
     myStatusBarItem.show();

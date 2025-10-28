@@ -67,9 +67,8 @@ void (async () => {
   //
   const results = await Promise.allSettled(
     Array.from(targetPluginNames).map((pluginName) => {
-      const pluginMeta = /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (
-        ALL_TARGET_PLUGINS.get(pluginName)
-      );
+      const pluginMeta =
+        /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (ALL_TARGET_PLUGINS.get(pluginName));
       const content = renderMarkdown(pluginName, pluginMeta, ruleEntries);
 
       if (!values.update) return Promise.resolve(content);

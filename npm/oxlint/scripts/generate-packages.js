@@ -13,9 +13,7 @@ const MANIFEST_PATH = resolve(OXLINT_ROOT, 'package.json'); // <REPO ROOT>/npm/o
 const OXLINT_DIST_SRC = resolve(REPO_ROOT, 'apps/oxlint/dist'); // <REPO ROOT>/apps/oxlint/dist
 const OXLINT_DIST_DEST = resolve(OXLINT_ROOT, 'dist'); // <REPO ROOT>/npm/oxlint/dist
 
-const rootManifest = JSON.parse(
-  fs.readFileSync(MANIFEST_PATH).toString('utf-8'),
-);
+const rootManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH).toString('utf-8'));
 
 const LIBC_MAPPING = {
   gnu: 'glibc',
@@ -82,14 +80,9 @@ function generateNativePackage(target) {
 function writeManifest() {
   const manifestPath = resolve(PACKAGES_ROOT, OXLINT_BIN_NAME, 'package.json');
 
-  const manifestData = JSON.parse(
-    fs.readFileSync(manifestPath).toString('utf-8'),
-  );
+  const manifestData = JSON.parse(fs.readFileSync(manifestPath).toString('utf-8'));
 
-  const nativePackages = TARGETS.map((target) => [
-    `@${OXLINT_BIN_NAME}/${target}`,
-    rootManifest.version,
-  ]);
+  const nativePackages = TARGETS.map((target) => [`@${OXLINT_BIN_NAME}/${target}`, rootManifest.version]);
 
   manifestData.version = rootManifest.version;
   manifestData.optionalDependencies = Object.fromEntries(nativePackages);
@@ -101,7 +94,7 @@ function writeManifest() {
   };
   manifestData.peerDependenciesMeta = {
     'oxlint-tsgolint': {
-      'optional': true,
+      optional: true,
     },
   };
 

@@ -125,14 +125,14 @@ export class NodeArray extends Array {
      * @param {Proxy} proxy - Proxy wrapping `NodeArray` object
      * @returns {Object} - Internal properties object
      */
-    getInternalFromProxy = proxy => proxy[ARRAY].#internal;
+    getInternalFromProxy = (proxy) => proxy[ARRAY].#internal;
 
     /**
      * Get length of `NodeArray`.
      * @param {NodeArray} arr - `NodeArray` object
      * @returns {number} - Array length
      */
-    getLength = arr => arr.#internal.length;
+    getLength = (arr) => arr.#internal.length;
 
     /**
      * Get element of `NodeArray` at index `index`.

@@ -170,8 +170,11 @@ function validateAndConformFix(fix: unknown): Fix {
   // Note: `ownKeys(fix).length === 2` rules out `fix` having a custom `toJSON` method.
   const fixPrototype = getPrototypeOf(fix);
   if (
-    (fixPrototype === ObjectPrototype || fixPrototype === null) && ownKeys(fix).length === 2 &&
-    getPrototypeOf(range) === ArrayPrototype && !hasOwn(range, 'toJSON') && range.length === 2 &&
+    (fixPrototype === ObjectPrototype || fixPrototype === null) &&
+    ownKeys(fix).length === 2 &&
+    getPrototypeOf(range) === ArrayPrototype &&
+    !hasOwn(range, 'toJSON') &&
+    range.length === 2 &&
     typeof text === 'string'
   ) {
     return fix;

@@ -103,11 +103,13 @@ The following format options are supported in `options.json`:
 ## Running Tests
 
 ### Run all tests
+
 ```bash
 cargo test -p oxc_formatter --test mod
 ```
 
 ### Run tests in a specific directory
+
 ```bash
 # Run all tests in the js/comments directory
 cargo test -p oxc_formatter fixtures::js::comments
@@ -120,16 +122,19 @@ cargo test -p oxc_formatter fixtures::js::comments::test
 ```
 
 ### Accept new/changed snapshots
+
 ```bash
 cargo insta test --accept -p oxc_formatter --test mod
 ```
 
 ### Accept snapshots for specific tests
+
 ```bash
 FILTER="arrow" cargo insta test --accept -p oxc_formatter --test mod
 ```
 
 ### Review snapshots interactively
+
 ```bash
 cargo insta review -p oxc_formatter
 ```

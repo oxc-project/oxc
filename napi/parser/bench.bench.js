@@ -23,7 +23,8 @@ let fixtureUrls = [
 ];
 
 // For sharding in CI - specify single fixture to run benchmarks on
-let benchStandard = bench, benchRaw = bench;
+let benchStandard = bench,
+  benchRaw = bench;
 let shard = process.env.SHARD;
 if (shard) {
   shard *= 1;
@@ -41,21 +42,23 @@ if (shard) {
 const cacheDirPath = pathJoin(import.meta.dirname, '../../target');
 
 // Load fixtures
-const fixtures = await Promise.all(fixtureUrls.map(async (url) => {
-  const filename = url.split('/').at(-1),
-    path = pathJoin(cacheDirPath, filename);
+const fixtures = await Promise.all(
+  fixtureUrls.map(async (url) => {
+    const filename = url.split('/').at(-1),
+      path = pathJoin(cacheDirPath, filename);
 
-  let code;
-  try {
-    code = await readFile(path, 'utf8');
-  } catch {
-    const res = await fetch(url);
-    code = await res.text();
-    await writeFile(path, code);
-  }
+    let code;
+    try {
+      code = await readFile(path, 'utf8');
+    } catch {
+      const res = await fetch(url);
+      code = await res.text();
+      await writeFile(path, code);
+    }
 
-  return { filename, code };
-}));
+    return { filename, code };
+  }),
+);
 
 // Run benchmarks
 for (const { filename, code } of fixtures) {

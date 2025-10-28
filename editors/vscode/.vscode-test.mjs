@@ -8,10 +8,7 @@ mkdirSync('./test_workspace', { recursive: true });
 mkdirSync('./test_workspace_second', { recursive: true });
 
 const multiRootWorkspaceConfig = {
-  'folders': [
-    { 'path': 'test_workspace' },
-    { 'path': 'test_workspace_second' },
-  ],
+  folders: [{ path: 'test_workspace' }, { path: 'test_workspace_second' }],
 };
 writeFileSync(multiRootWorkspaceFile, JSON.stringify(multiRootWorkspaceConfig, null, 2));
 
@@ -28,10 +25,7 @@ export default defineConfig({
       ],
       env: {
         SINGLE_FOLDER_WORKSPACE: 'true',
-        SERVER_PATH_DEV: path.resolve(
-          import.meta.dirname,
-          `./target/debug/oxc_language_server${ext}`,
-        ),
+        SERVER_PATH_DEV: path.resolve(import.meta.dirname, `./target/debug/oxc_language_server${ext}`),
       },
       mocha: {
         timeout: 10_000,
@@ -46,10 +40,7 @@ export default defineConfig({
       ],
       env: {
         MULTI_FOLDER_WORKSPACE: 'true',
-        SERVER_PATH_DEV: path.resolve(
-          import.meta.dirname,
-          `./target/debug/oxc_language_server${ext}`,
-        ),
+        SERVER_PATH_DEV: path.resolve(import.meta.dirname, `./target/debug/oxc_language_server${ext}`),
       },
       mocha: {
         timeout: 10_000,

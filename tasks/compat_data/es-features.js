@@ -11,17 +11,13 @@ const es5 = [
     name: 'MemberExpressionLiterals',
     es: 'ES5',
     babel: 'transform-member-expression-literals',
-    features: [
-      'Object/array literal extensions / Reserved words as property names',
-    ],
+    features: ['Object/array literal extensions / Reserved words as property names'],
   },
   {
     name: 'PropertyLiterals',
     es: 'ES5',
     babel: 'transform-property-literals',
-    features: [
-      'Object/array literal extensions / Reserved words as property names',
-    ],
+    features: ['Object/array literal extensions / Reserved words as property names'],
   },
   {
     name: 'ReservedWords',
@@ -117,10 +113,7 @@ const es2015 = [
   {
     name: 'StickyRegex',
     babel: 'transform-sticky-regex',
-    features: [
-      'RegExp "y" and "u" flags / "y" flag, lastIndex',
-      'RegExp "y" and "u" flags / "y" flag',
-    ],
+    features: ['RegExp "y" and "u" flags / "y" flag, lastIndex', 'RegExp "y" and "u" flags / "y" flag'],
   },
   {
     name: 'UnicodeEscapes',

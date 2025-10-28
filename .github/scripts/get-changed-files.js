@@ -20,7 +20,7 @@ function githubApi(path) {
       path,
       headers: {
         'User-Agent': 'oxc-changed-files',
-        'Accept': 'application/vnd.github.v3+json',
+        Accept: 'application/vnd.github.v3+json',
       },
     };
 
@@ -30,17 +30,19 @@ function githubApi(path) {
       options.headers['Authorization'] = `token ${token}`;
     }
 
-    https.get(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          resolve(JSON.parse(data));
-        } else {
-          reject(new Error(`GitHub API error: ${res.statusCode} ${data}`));
-        }
-      });
-    }).on('error', reject);
+    https
+      .get(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            resolve(JSON.parse(data));
+          } else {
+            reject(new Error(`GitHub API error: ${res.statusCode} ${data}`));
+          }
+        });
+      })
+      .on('error', reject);
   });
 }
 
@@ -72,12 +74,12 @@ async function getChangedFiles() {
       // For PR, use GitHub API to get changed files
       console.error(`Getting changed files for PR #${prNumber}`);
       const prFiles = await githubApi(`/repos/${repository}/pulls/${prNumber}/files?per_page=100`);
-      files = prFiles.map(f => f.filename);
+      files = prFiles.map((f) => f.filename);
     } else if (sha && repository) {
       // For push to main, get the commit and compare with parent
       console.error(`Getting changed files for commit ${sha}`);
       const commit = await githubApi(`/repos/${repository}/commits/${sha}`);
-      files = commit.files ? commit.files.map(f => f.filename) : [];
+      files = commit.files ? commit.files.map((f) => f.filename) : [];
     } else {
       // No valid parameters for API calls
       console.error('Error: Missing required environment variables for GitHub API');
@@ -91,7 +93,7 @@ async function getChangedFiles() {
   }
 
   console.error(`Changed files (${files.length}):`);
-  files.forEach(f => console.error(`  - ${f}`));
+  files.forEach((f) => console.error(`  - ${f}`));
 
   return files;
 }
@@ -101,11 +103,11 @@ module.exports = { getChangedFiles };
 // If run directly as a script, output changed files as JSON
 if (require.main === module) {
   getChangedFiles()
-    .then(files => {
+    .then((files) => {
       console.log(JSON.stringify(files));
       process.exit(0);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('Error:', error);
       console.log(JSON.stringify(null));
       process.exit(1);

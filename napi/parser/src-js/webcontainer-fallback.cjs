@@ -1,9 +1,7 @@
 const fs = require('node:fs');
 const childProcess = require('node:child_process');
 
-const pkg = JSON.parse(
-  fs.readFileSync(require.resolve('oxc-parser/package.json'), 'utf-8'),
-);
+const pkg = JSON.parse(fs.readFileSync(require.resolve('oxc-parser/package.json'), 'utf-8'));
 const version = pkg.version;
 const baseDir = `/tmp/oxc-parser-${version}`;
 const bindingEntry = `${baseDir}/node_modules/@oxc-parser/binding-wasm32-wasi/parser.wasi.cjs`;

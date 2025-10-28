@@ -240,7 +240,7 @@ export function addVisitorToCompiled(visitor) {
     } else {
       // Not leaf node - store enter+exit pair
       if (existing === null) {
-        const enterExit = compiledVisitor[typeId] = getEnterExitObject();
+        const enterExit = (compiledVisitor[typeId] = getEnterExitObject());
         if (isExit) {
           enterExit.exit = visitFn;
         } else {

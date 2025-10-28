@@ -29,7 +29,7 @@ function exec(command) {
  */
 function getCrateDependencies(packages, options = {}) {
   const pkgs = Array.isArray(packages) ? packages : [packages];
-  const packageArgs = pkgs.map(pkg => `-p ${pkg}`).join(' ');
+  const packageArgs = pkgs.map((pkg) => `-p ${pkg}`).join(' ');
 
   let command = `cargo tree ${packageArgs} -f "{lib}" -e normal --no-dedupe --prefix none`;
 
@@ -51,7 +51,7 @@ function getCrateDependencies(packages, options = {}) {
   }
 
   // Filter out the queried packages themselves
-  return output.split('\n').filter(dep => dep && !pkgs.includes(dep));
+  return output.split('\n').filter((dep) => dep && !pkgs.includes(dep));
 }
 
 /**
@@ -69,7 +69,7 @@ function checkFilesAffectCrates(changedFiles, crates, additionalPaths = []) {
   // Check if any changed file affects a crate
   for (const crate of crates) {
     const cratePath = `crates/${crate}/`;
-    if (changedFiles.some(file => file.startsWith(cratePath))) {
+    if (changedFiles.some((file) => file.startsWith(cratePath))) {
       console.error(`File affects crate ${crate}`);
       return true;
     }
@@ -77,7 +77,7 @@ function checkFilesAffectCrates(changedFiles, crates, additionalPaths = []) {
 
   // Check additional paths
   for (const path of additionalPaths) {
-    if (changedFiles.some(file => file.startsWith(path))) {
+    if (changedFiles.some((file) => file.startsWith(path))) {
       console.error(`File affects path ${path}`);
       return true;
     }

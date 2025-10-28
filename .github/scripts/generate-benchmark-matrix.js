@@ -31,7 +31,7 @@ function checkGlobalChanges(changedFiles) {
   }
 
   for (const file of changedFiles) {
-    if (GLOBAL_FILES.some(globalFile => file === globalFile || file.endsWith(`/${globalFile}`))) {
+    if (GLOBAL_FILES.some((globalFile) => file === globalFile || file.endsWith(`/${globalFile}`))) {
       console.error(`Global file changed: ${file}`);
       return true;
     }
@@ -89,14 +89,14 @@ function isComponentAffected(component, changedFiles) {
   // Check if any dependency files changed
   for (const dep of dependencies) {
     const depPath = `crates/${dep}/`;
-    if (changedFiles.some(file => file.startsWith(depPath))) {
+    if (changedFiles.some((file) => file.startsWith(depPath))) {
       console.error(`  Component ${component} affected by changes in ${depPath}`);
       return true;
     }
   }
 
   // Check benchmark and common task files
-  if (changedFiles.some(file => file.startsWith('tasks/benchmark/') || file.startsWith('tasks/common/'))) {
+  if (changedFiles.some((file) => file.startsWith('tasks/benchmark/') || file.startsWith('tasks/common/'))) {
     console.error(`  Component ${component} affected by benchmark/common file changes`);
     return true;
   }
@@ -113,7 +113,7 @@ async function determineAffectedComponents() {
 
   // Manual trigger - run all benchmarks
   if (changedFiles === null) {
-    return ALL_COMPONENTS.map(component => ({
+    return ALL_COMPONENTS.map((component) => ({
       component,
       feature: getFeatureForComponent(component),
     }));
@@ -122,7 +122,7 @@ async function determineAffectedComponents() {
   // Check for global changes
   if (checkGlobalChanges(changedFiles)) {
     console.error('Global changes detected - will run all benchmarks');
-    return ALL_COMPONENTS.map(component => ({
+    return ALL_COMPONENTS.map((component) => ({
       component,
       feature: getFeatureForComponent(component),
     }));
@@ -144,7 +144,7 @@ async function determineAffectedComponents() {
   if (affectedComponents.length === 0) {
     console.error('\nNo components were affected by the changes');
   } else {
-    console.error(`\nAffected components: ${affectedComponents.map(obj => obj.component).join(', ')}`);
+    console.error(`\nAffected components: ${affectedComponents.map((obj) => obj.component).join(', ')}`);
   }
 
   return affectedComponents;
@@ -165,7 +165,7 @@ async function main() {
     if (affectedComponents.length === 0) {
       console.error('::notice title=No benchmarks to run::No components were affected by the changes');
     } else {
-      const componentNames = affectedComponents.map(obj => obj.component).join(', ');
+      const componentNames = affectedComponents.map((obj) => obj.component).join(', ');
       console.error(`::notice title=Running benchmarks::Affected components: ${componentNames}`);
     }
 
@@ -173,7 +173,7 @@ async function main() {
   } catch (error) {
     console.error('Error generating benchmark matrix:', error);
     // On error, run all benchmarks as a fallback
-    const fallbackMatrix = ALL_COMPONENTS.map(component => ({
+    const fallbackMatrix = ALL_COMPONENTS.map((component) => ({
       component,
       feature: getFeatureForComponent(component),
     }));
