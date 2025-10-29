@@ -1,0 +1,1 @@
+type T1 = string | unknown;

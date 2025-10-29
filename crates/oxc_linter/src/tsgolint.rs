@@ -90,11 +90,6 @@ impl TsGoLintState {
                 .stdout(std::process::Stdio::piped())
                 .stderr(stderr());
 
-            #[cfg(any(test, feature = "force_test_reporter"))]
-            {
-                cmd.env("GOMAXPROCS", "1");
-            }
-
             if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
                 cmd.arg(format!("-trace={trace_file}"));
             }
