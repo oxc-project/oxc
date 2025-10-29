@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -16,15 +17,12 @@ fn no_explicit_any_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoExplicitAny {
     /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
-    ///
-    /// `false` by default.
     fix_to_unknown: bool,
     /// Whether to ignore rest parameter arrays.
-    ///
-    /// `false` by default.
     ignore_rest_args: bool,
 }
 
@@ -70,22 +68,11 @@ declare_oxc_lint!(
     /// function greet(param: Array<string>): string {}
     /// function greet(param: Array<string>): Array<string> {}
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### `ignoreRestArgs`
-    ///
-    /// A boolean to specify if arrays from the rest operator are considered ok. `false` by
-    /// default.
-    ///
-    /// #### `fixToUnknown`
-    ///
-    /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
-    /// `false` by default.
     NoExplicitAny,
     typescript,
     restriction,
-    conditional_fix
+    conditional_fix,
+    config = NoExplicitAny,
 );
 
 impl Rule for NoExplicitAny {
