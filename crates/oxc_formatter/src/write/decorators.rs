@@ -73,7 +73,6 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.format_leading_comments(f)?;
         write!(f, ["@"]);
 
         // Determine if parentheses are required around decorator expressions

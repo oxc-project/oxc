@@ -1,0 +1,16 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+class A {
+  // comment shouldn't break the decorators grouping
+  @memoize onContextMenu() { }
+}
+
+==================== Output ====================
+class A {
+  // comment shouldn't break the decorators grouping
+  @memoize onContextMenu() {}
+}
+
+===================== End =====================

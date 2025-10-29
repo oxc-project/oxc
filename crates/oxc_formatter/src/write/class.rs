@@ -54,25 +54,14 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
 
 impl<'a> Format<'a> for (&AstNode<'a, ClassElement<'a>>, Option<&AstNode<'a, ClassElement<'a>>>) {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let decorators = match self.0.as_ast_nodes() {
-            AstNodes::MethodDefinition(method) => {
-                write!(f, [method.decorators(), method])
-            }
-            AstNodes::PropertyDefinition(property) => {
-                write!(f, [property.decorators(), property])
-            }
-            AstNodes::AccessorProperty(accessor) => {
-                write!(f, [accessor.decorators(), accessor])
-            }
-            _ => write!(f, self.0),
-        };
-
-        write!(f, [ClassPropertySemicolon::new(self.0, self.1)])
+        write!(f, [self.0, ClassPropertySemicolon::new(self.0, self.1)])
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.decorators()])?;
+
         if let Some(accessibility) = &self.accessibility {
             write!(f, [accessibility.as_str(), space()])?;
         }
@@ -160,6 +149,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.decorators()])?;
+
         if let Some(accessibility) = self.accessibility() {
             write!(f, [accessibility.as_str(), space()])?;
         }

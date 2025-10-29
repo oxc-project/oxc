@@ -233,6 +233,8 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
             }
             AssignmentLike::PropertyDefinition(property) => {
+                write!(f, [property.decorators()])?;
+
                 if property.declare {
                     write!(f, ["declare", space()])?;
                 }
