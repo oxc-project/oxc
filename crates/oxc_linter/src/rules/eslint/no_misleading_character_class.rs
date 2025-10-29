@@ -6,6 +6,7 @@ use oxc_regular_expression::{
     visit::{RegExpAstKind, Visit},
 };
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::run_on_regex_node};
 
@@ -29,8 +30,27 @@ fn zwj_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected joined character sequence in character class.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoMisleadingCharacterClass {
+    /// When set to `true`, the rule allows any grouping of code points
+    /// inside a character class as long as they are written using escape sequences.
+    ///
+    /// Examples of **incorrect** code for this rule with `{ "allowEscape": true }`:
+    /// ```javascript
+    /// /[\uD83D]/; // backslash can be omitted
+    /// new RegExp("[\ud83d" + "\udc4d]");
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `{ "allowEscape": true }`:
+    /// ```javascript
+    /// /[\ud83d\udc4d]/;
+    /// /[\u00B7\u0300-\u036F]/u;
+    /// /[👨\u200d👩]/u;
+    /// new RegExp("[\x41\u0301]");
+    /// new RegExp(`[\u{1F1EF}\u{1F1F5}]`, "u");
+    /// new RegExp("[\\u{1F1EF}\\u{1F1F5}]", "u");
+    /// ```
     allow_escape: bool,
 }
 
@@ -77,32 +97,10 @@ declare_oxc_lint!(
     /// /[\u00B7\u0300-\u036F]/u;
     /// new RegExp("^[\u{1F1EF}\u{1F1F5}]", "u");
     /// ```
-    ///
-    /// #### Options
-    ///
-    /// This rule has an object option:
-    ///
-    /// - `allowEscape`: When set to `true`, the rule allows any grouping of code points
-    /// inside a character class as long as they are written using escape sequences.
-    ///
-    /// Examples of **incorrect** code for this rule with `{ "allowEscape": true }`:
-    /// ```javascript
-    /// /[\uD83D]/; // backslash can be omitted
-    /// new RegExp("[\ud83d" + "\udc4d]");
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule with `{ "allowEscape": true }`:
-    /// ```javascript
-    /// /[\ud83d\udc4d]/;
-    /// /[\u00B7\u0300-\u036F]/u;
-    /// /[👨\u200d👩]/u;
-    /// new RegExp("[\x41\u0301]");
-    /// new RegExp(`[\u{1F1EF}\u{1F1F5}]`, "u");
-    /// new RegExp("[\\u{1F1EF}\\u{1F1F5}]", "u");
-    /// ```
     NoMisleadingCharacterClass,
     eslint,
     nursery, // TODO: change category to `correctness`, after oxc-project/oxc#13660 and oxc-project/oxc#13436
+    config = NoMisleadingCharacterClass,
 );
 
 #[derive(Debug)]
