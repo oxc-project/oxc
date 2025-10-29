@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
@@ -58,7 +59,8 @@ declare_oxc_lint!(
     /// ```
     EmptyTags,
     jsdoc,
-    restriction
+    restriction,
+    config = EmptyTagsConfig,
 );
 
 const EMPTY_TAGS: [&str; 18] = [
@@ -82,9 +84,10 @@ const EMPTY_TAGS: [&str; 18] = [
     "static",
 ];
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 struct EmptyTagsConfig {
-    #[serde(default)]
+    /// Additional tags to check for their descriptions.
     tags: Vec<String>,
 }
 
