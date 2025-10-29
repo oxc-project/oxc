@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -18,8 +19,12 @@ fn no_optional_chaining_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoOptionalChaining(Box<NoOptionalChainingConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoOptionalChainingConfig {
+    /// A custom help message to display when optional chaining is found.
+    /// For example, "Our output target is ES2016, and optional chaining results in verbose
+    /// helpers and should be avoided."
     message: String,
 }
 
@@ -52,28 +57,10 @@ declare_oxc_lint!(
     /// const foo = obj?.foo;
     /// obj.fn?.();
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///     "no-optional-chaining": [
-    ///         "error",
-    ///         {
-    ///             "message": "Our output target is ES2016, and optional chaining results in verbose
-    ///             helpers and should be avoided.",
-    ///         }
-    ///     ]
-    ///   }
-    /// }
-    /// ```
-    ///
-    /// - `message`: A custom help message to display when optional chaining is found.
-    ///
     NoOptionalChaining,
     oxc,
     restriction,
+    config = NoOptionalChainingConfig,
 );
 
 impl Rule for NoOptionalChaining {
