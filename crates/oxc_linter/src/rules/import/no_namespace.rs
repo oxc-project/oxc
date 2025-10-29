@@ -107,19 +107,11 @@ impl Rule for NoNamespace {
             ImportImportName::NamespaceObject => {
                 let source = entry.module_request.name();
 
-                if self.ignore.is_empty() {
-                    ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
-                } else {
-                    if !source.contains('.') {
-                        return;
-                    }
-
-                    if self.ignore.iter().any(|pattern| {
-                        glob_match(pattern.as_str(), source.trim_start_matches("./"))
-                    }) {
-                        return;
-                    }
-
+                if self.ignore.is_empty()
+                    || self.ignore.iter().all(|pattern| {
+                        !glob_match(pattern.as_str(), source.trim_start_matches("./"))
+                    })
+                {
                     ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
                 }
             }
@@ -152,6 +144,13 @@ fn test() {
         (r"import * as foo from 'foo';", None),
         (r"import defaultExport, * as foo from 'foo';", None),
         (r"import * as foo from './foo';", None),
+        (
+            r"
+            import * as zod from 'zod'
+            import * as DrizzleKit from 'drizzle-kit/api'
+            ",
+            Some(serde_json::json!([{ "ignore": ["zod"] }])),
+        ),
     ];
 
     Tester::new(NoNamespace::NAME, NoNamespace::PLUGIN, pass, fail)
