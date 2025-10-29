@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -15,8 +16,22 @@ fn no_useless_computed_key_diagnostic(span: Span, raw: Option<Atom>) -> OxcDiagn
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUselessComputedKey {
+    /// The `enforceForClassMembers` option controls whether the rule applies to
+    /// class members (methods and properties).
+    ///
+    /// Examples of **correct** code for this rule with the `{ "enforceForClassMembers": false }` option:
+    /// ```js
+    /// class SomeClass {
+    ///     ["foo"] = "bar";
+    ///     [42] = "baz";
+    ///     get ['b']() {}
+    ///     set ['c'](value) {}
+    ///     static ["foo"] = "bar";
+    /// }
+    /// ```
     enforce_for_class_members: bool,
 }
 
@@ -90,30 +105,11 @@ declare_oxc_lint!(
     ///     static ["prototype"]; // runtime error, it would be a parsing error without `[]`
     /// }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### enforceForClassMembers
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// The `enforceForClassMembers` option controls whether the rule applies to
-    /// class members (methods and properties).
-    ///
-    /// Examples of **correct** code for this rule with the `{ "enforceForClassMembers": false }` option:
-    /// ```js
-    /// class SomeClass {
-    ///     ["foo"] = "bar";
-    ///     [42] = "baz";
-    ///     get ['b']() {}
-    ///     set ['c'](value) {}
-    ///     static ["foo"] = "bar";
-    /// }
-    /// ```
     NoUselessComputedKey,
     eslint,
     style,
-    pending
+    pending,
+    config = NoUselessComputedKey,
 );
 
 impl Rule for NoUselessComputedKey {
