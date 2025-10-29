@@ -28,7 +28,7 @@ pub struct NoMultiAssign {
     /// x.one = y.one = 1;
     /// ```
     ///
-    /// Examples of **incorrect** code this option set to `true`:
+    /// Examples of **incorrect** code for this option set to `true`:
     /// ```js
     /// let a = b = "baz";
     ///
