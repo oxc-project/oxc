@@ -606,6 +606,7 @@ impl WorkspaceWorker {
         let Some(server_linter) = server_linter_guard.as_ref() else { return vec![] };
 
         if let Some(tsgo_linter) = server_linter.tsgo_linter.as_ref() {
+            use std::collections::HashMap;
             // Filter ignored paths first (matching isolated behavior)
             let eligible_uris: Vec<Uri> =
                 files.into_iter().filter(|u| !server_linter.is_ignored(u)).collect();
@@ -615,25 +616,76 @@ impl WorkspaceWorker {
                 eligible_uris.len()
             );
             let t_tsgo = std::time::Instant::now();
-            let batch = tsgo_linter.lint_batch(&eligible_uris);
-            let mut out: Vec<(String, Vec<Diagnostic>)> = Vec::with_capacity(batch.len());
-            for (uri, reports) in batch.into_iter() {
-                server_linter.cache_tsgo_diagnostics(&uri, Some(reports.clone()));
-                out.push((uri.to_string(), reports.into_iter().map(|r| r.diagnostic).collect()));
-            }
+            let tsgo_batch = tsgo_linter.lint_batch(&eligible_uris);
             info!(
                 "[tsgo] batch done root={} produced={} elapsed_ms={}",
                 root_path.display(),
-                out.len(),
+                tsgo_batch.len(),
                 t_tsgo.elapsed().as_millis()
             );
             debug!(
                 "[profile] tsgo batch eligible={} produced={} ms={}",
                 eligible_uris.len(),
-                out.len(),
+                tsgo_batch.len(),
                 t_tsgo.elapsed().as_millis()
             );
-            debug!("[profile] workspace lint total ms={}", t_overall.elapsed().as_millis());
+
+            // Collect tsgo diagnostics first
+            let mut merged: HashMap<String, Vec<Diagnostic>> =
+                HashMap::with_capacity(tsgo_batch.len());
+            for (uri, reports) in tsgo_batch.into_iter() {
+                server_linter.cache_tsgo_diagnostics(&uri, Some(reports.clone()));
+                let key = uri.to_string();
+                let diags: Vec<Diagnostic> = reports.into_iter().map(|r| r.diagnostic).collect();
+                merged.entry(key).or_default().extend(diags);
+            }
+
+            // Run isolated workspace lint (regular JS/TS rules excluding tsgo-specific ones)
+            let isolated_paths: Vec<PathBuf> = eligible_uris
+                .iter()
+                .filter_map(|u| u.to_file_path().map(|p| p.into_owned()))
+                .collect();
+            let t_isolated = std::time::Instant::now();
+            let isolated_batch = server_linter.run_workspace_isolated(&isolated_paths).await;
+            debug!(
+                "[profile] isolated (with tsgo) eligible={} produced={} ms={}",
+                isolated_paths.len(),
+                isolated_batch.len(),
+                t_isolated.elapsed().as_millis()
+            );
+            for (uri, reports) in isolated_batch.into_iter() {
+                server_linter.cache_isolated_diagnostics(&uri, Some(reports.clone()));
+                let key = uri.to_string();
+                merged.entry(key).or_default().extend(reports.into_iter().map(|r| r.diagnostic));
+            }
+
+            // Stabilize ordering and positions
+            let mut out: Vec<(String, Vec<Diagnostic>)> = merged
+                .into_iter()
+                .map(|(uri, mut diags)| {
+                    diags.sort_by(|a, b| {
+                        (
+                            a.range.start.line,
+                            a.range.start.character,
+                            a.range.end.line,
+                            a.range.end.character,
+                        )
+                            .cmp(&(
+                                b.range.start.line,
+                                b.range.start.character,
+                                b.range.end.line,
+                                b.range.end.character,
+                            ))
+                    });
+                    (uri, diags)
+                })
+                .collect();
+            out.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+            debug!(
+                "[profile] workspace lint total (tsgo+isolated) ms={} merged_files={}",
+                t_overall.elapsed().as_millis(),
+                out.len()
+            );
             return out;
         }
 

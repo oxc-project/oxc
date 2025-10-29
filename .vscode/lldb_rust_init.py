@@ -14,8 +14,10 @@ home = os.environ.get("HOME", "")
 if home:
     cargo_bin = os.path.join(home, ".cargo", "bin")
     path = os.environ.get("PATH", "")
-    if cargo_bin not in path.split(":"):
-        os.environ["PATH"] = cargo_bin + (":" + path if path else "")
+    parts = path.split(os.pathsep) if path else []
+    if cargo_bin not in parts:
+        # Prepend cargo_bin preserving existing PATH using the correct platform-specific separator.
+        os.environ["PATH"] = os.pathsep.join([cargo_bin] + parts)
         log("PATH prepended with", cargo_bin)
 else:
     log("HOME unset; skipping PATH prepend")
@@ -112,7 +114,7 @@ try:
         'type summary add -e -x -F lldb_rust_init.uri_summary "^(.*(::)+)(Url|Uri)$" --category Rust'
     )
     log("Registered custom Url/Uri summary")
-except Exception as e:  # noqa: BLE001
+except Exception as e:
     log("Failed to register custom Url/Uri summary:", e)
 
 log("Rust formatter initialization complete")

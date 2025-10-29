@@ -91,6 +91,78 @@ impl ServerLinterDiagnostics {
 }
 
 impl ServerLinter {
+    /// Batch lint a set of URIs, merging isolated (oxlint) and type-aware (tsgo) diagnostics when applicable.
+    /// Caller must provide URIs already filtered for ignore patterns if desired; this method re-checks ignores.
+    pub async fn lint_workspace_batch(&self, uris: &[Uri]) -> Vec<(String, Vec<Diagnostic>)> {
+        // Early exit if nothing to process or no isolated linter.
+        if uris.is_empty() {
+            return Vec::new();
+        }
+
+        // Filter out ignored again for safety (cheap).
+        let filtered: Vec<Uri> = uris.iter().filter(|u| !self.is_ignored(u)).cloned().collect();
+        if filtered.is_empty() {
+            return Vec::new();
+        }
+
+        let type_aware_active = self.tsgo_linter.as_ref().is_some();
+        use std::collections::HashMap;
+        let t_overall = Instant::now();
+
+        // Always run isolated batch first (includes JS + TS non-type-aware rules).
+        let isolated_paths: Vec<PathBuf> = filtered
+            .iter()
+            .filter_map(|u| u.to_file_path().map(|p| p.into_owned()))
+            .collect();
+        let t_isolated = Instant::now();
+        let isolated_batch = self.run_workspace_isolated(&isolated_paths).await;
+        debug!(
+            "[profile] batch isolated files={} ms={}",
+            isolated_batch.len(),
+            t_isolated.elapsed().as_millis()
+        );
+
+        let mut merged: HashMap<String, Vec<Diagnostic>> = HashMap::with_capacity(isolated_batch.len());
+        for (uri, reports) in isolated_batch.into_iter() {
+            self.cache_isolated_diagnostics(&uri, Some(reports.clone()));
+            let key = uri.to_string();
+            merged.entry(key).or_default().extend(reports.into_iter().map(|r| r.diagnostic));
+        }
+
+        // Run tsgo batch only if active.
+        if type_aware_active {
+            if let Some(tsgo) = self.tsgo_linter.as_ref() {
+                let t_tsgo = Instant::now();
+                let tsgo_batch = tsgo.lint_batch(&filtered);
+                info!("[tsgo] batch done produced={} ms={}", tsgo_batch.len(), t_tsgo.elapsed().as_millis());
+                debug!(
+                    "[profile] tsgo batch eligible={} produced={} ms={}",
+                    filtered.len(),
+                    tsgo_batch.len(),
+                    t_tsgo.elapsed().as_millis()
+                );
+                for (uri, reports) in tsgo_batch.into_iter() {
+                    self.cache_tsgo_diagnostics(&uri, Some(reports.clone()));
+                    let key = uri.to_string();
+                    merged.entry(key).or_default().extend(reports.into_iter().map(|r| r.diagnostic));
+                }
+            }
+        }
+
+        let mut out: Vec<(String, Vec<Diagnostic>)> = merged
+            .into_iter()
+            .map(|(uri, mut diags)| {
+                diags.sort_by(|a, b| {
+                    (a.range.start.line, a.range.start.character, a.range.end.line, a.range.end.character)
+                        .cmp(&(b.range.start.line, b.range.start.character, b.range.end.line, b.range.end.character))
+                });
+                (uri, diags)
+            })
+            .collect();
+        out.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        debug!("[profile] batch total files={} ms={}", out.len(), t_overall.elapsed().as_millis());
+        out
+    }
     pub fn new(root_uri: &Uri, options: &LSPLintOptions) -> Self {
         let root_path = root_uri.to_file_path().unwrap();
         let mut nested_ignore_patterns = Vec::new();
@@ -299,15 +371,14 @@ impl ServerLinter {
     }
 
     pub async fn revalidate_diagnostics(&self, uris: Vec<Uri>) -> Vec<(String, Vec<Diagnostic>)> {
+        // Use batch path when workspace_mode is enabled (regardless of type-aware), else fallback to sequential.
+        if self.workspace_mode {
+            return self.lint_workspace_batch(&uris).await;
+        }
         let mut diagnostics = Vec::with_capacity(uris.len());
         for uri in uris {
-            if let Some(file_diagnostic) =
-                self.run_single(&uri, None, ServerLinterRun::Always).await
-            {
-                diagnostics.push((
-                    uri.to_string(),
-                    file_diagnostic.into_iter().map(|d| d.diagnostic).collect(),
-                ));
+            if let Some(file_diagnostic) = self.run_single(&uri, None, ServerLinterRun::Always).await {
+                diagnostics.push((uri.to_string(), file_diagnostic.into_iter().map(|d| d.diagnostic).collect()));
             }
         }
         diagnostics

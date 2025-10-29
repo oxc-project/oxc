@@ -11,7 +11,10 @@
     //
     // Reference: https://github.com/vadimcn/codelldb/issues/1166
     "lldb.launch.initCommands": [
-        // Import external module so its functions (uri_summary) are addressable by name.
-        "script import os, sys; mod_path = os.path.join(os.getcwd(), '.vscode'); print('[codelldb:init] adding', mod_path); sys.path.append(mod_path) if mod_path not in sys.path else None; import lldb_rust_init"
+        // Import Rust LLDB formatters and custom URI summaries
+        "script import sys; sys.path.append('.vscode'); import lldb_rust_init"
     ],
+    "lldb.showDisassembly": "auto",
+    "lldb.dereferencePointers": true,
+    "lldb.consoleMode": "commands",
 }
