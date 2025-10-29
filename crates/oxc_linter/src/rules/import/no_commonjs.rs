@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -14,10 +15,35 @@ fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoCommonjs {
+    /// If `allowPrimitiveModules` option is set to true, the following is valid:
+    ///
+    /// ```js
+    /// module.exports = "foo";
+    /// module.exports = function rule(context) {
+    ///   return { /* ... */ };
+    /// };
+    /// ```
+    ///
+    /// but this is still reported:
+    ///
+    /// ```js
+    /// module.exports = { x: "y" };
+    /// exports.z = function bark() { /* ... */ };
+    /// ```
     allow_primitive_modules: bool,
+    /// If set to `true`, `require` calls are valid:
+    ///
+    /// ```js
+    /// var mod = require("./mod");
+    /// ```
+    ///
+    /// but `module.exports` is reported as usual.
     allow_require: bool,
+    /// When set to `true`, allows conditional `require()` calls (e.g., inside `if` statements or try-catch blocks).
+    /// This is useful for places where you need to conditionally load via commonjs requires if ESM imports are not supported.
     allow_conditional_require: bool,
 }
 
@@ -69,41 +95,10 @@ declare_oxc_lint!(
     ///   fs = require("fs");
     /// } catch (error) {}
     /// ```
-    ///
-    /// ### Allow require
-    ///
-    /// If `allowRequire` option is set to `true`, `require` calls are valid:
-    ///
-    /// ```js
-    /// var mod = require("./mod");
-    /// ```
-    ///
-    /// but `module.exports` is reported as usual.
-    ///
-    /// ### Allow conditional require
-    ///
-    /// By default, conditional requires are allowed, If the `allowConditionalRequire` option is set to `false`, they will be reported.
-    ///
-    /// ### Allow primitive modules
-    ///
-    /// If `allowPrimitiveModules` option is set to true, the following is valid:
-    ///
-    /// ```js
-    /// module.exports = "foo";
-    /// module.exports = function rule(context) {
-    ///   return { /* ... */ };
-    /// };
-    /// ```
-    ///
-    /// but this is still reported:
-    ///
-    /// ```js
-    /// module.exports = { x: "y" };
-    /// exports.z = function bark() { /* ... */ };
-    /// ```
     NoCommonjs,
     import,
-    restriction
+    restriction,
+    config = NoCommonjs,
 );
 
 fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
