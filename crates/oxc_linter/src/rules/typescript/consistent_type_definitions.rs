@@ -117,9 +117,9 @@ impl Rule for ConsistentTypeDefinitions {
                 {
                     let start = if decl.declare {
                         let base_start = decl.span.start + 7;
-                        ctx.source_range(Span::new(base_start, decl.span.end))
-                            .find("type")
-                            .map_or(base_start + 1, |v| u32::try_from(v).unwrap_or(0) + base_start)
+
+                        ctx.find_next_token_from(base_start, "type")
+                            .map_or(base_start + 1, |v| v + base_start)
                     } else {
                         decl.span.start
                     };
@@ -201,9 +201,9 @@ impl Rule for ConsistentTypeDefinitions {
             {
                 let start = if decl.declare {
                     let base_start = decl.span.start + 7;
-                    ctx.source_range(Span::new(base_start, decl.span.end))
-                        .find("interface")
-                        .map_or(base_start + 1, |v| u32::try_from(v).unwrap_or(0) + base_start)
+
+                    ctx.find_next_token_from(base_start, "interface")
+                        .map_or(base_start + 1, |v| v + base_start)
                 } else {
                     decl.span.start
                 };
@@ -383,6 +383,8 @@ fn test() {
         ("declareinterface S {}", Some(serde_json::json!(["type"]))),
         ("export declaretype S={}", Some(serde_json::json!(["interface"]))),
         ("export declareinterface S {}", Some(serde_json::json!(["type"]))),
+        ("declare /* interface */ interface T { x: number; };", Some(serde_json::json!(["type"]))),
+        ("declare /* type */ type T =  { x: number; };", Some(serde_json::json!(["interface"]))),
     ];
 
     let fix = vec![

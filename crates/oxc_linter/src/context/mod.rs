@@ -135,6 +135,19 @@ impl<'a> LintContext<'a> {
         span.source_text(self.parent.semantic().source_text())
     }
 
+    /// Finds the next occurrence of the given token in the source code,
+    /// starting from the specified position, skipping over comments.
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
+        let source =
+            self.source_range(Span::new(start, self.parent.semantic().source_text().len() as u32));
+
+        source
+            .match_indices(token)
+            .find(|(a, _)| !self.is_inside_comment(start + *a as u32))
+            .map(|(a, _)| a as u32)
+    }
+
     /// Path to the file currently being linted.
     #[inline]
     pub fn file_path(&self) -> &Path {
