@@ -110,11 +110,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
         });
 
         let is_hug_parameter = matches!(self.parent, AstNodes::FormalParameters(params) if {
-            let this_param = get_this_param(self.parent);
-            let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent {
-                can_avoid_parentheses(arrow, f)
+            let (parentheses_not_needed, this_param) = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent {
+                (can_avoid_parentheses(arrow, f), None)
             } else {
-                false
+                (false, get_this_param(params.parent))
             };
             should_hug_function_parameters(params, this_param, parentheses_not_needed, f)
         });

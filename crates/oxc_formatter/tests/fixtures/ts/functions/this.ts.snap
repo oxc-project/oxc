@@ -1,0 +1,17 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+function paragraph(
+  this: marked.Renderer,
+  { tokens }: marked.Tokens.Paragraph
+): string {
+}
+
+==================== Output ====================
+function paragraph(
+  this: marked.Renderer,
+  { tokens }: marked.Tokens.Paragraph,
+): string {}
+
+===================== End =====================
