@@ -1454,8 +1454,6 @@ dependencies = [
  "napi-sys",
  "nohash-hasher",
  "rustc-hash",
- "serde",
- "serde_json",
  "tokio",
 ]
 
