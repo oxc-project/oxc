@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -16,9 +17,12 @@ fn no_rest_spread_properties_diagnostic(
 #[derive(Debug, Default, Clone)]
 pub struct NoRestSpreadProperties(Box<NoRestSpreadPropertiesOptions>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoRestSpreadPropertiesOptions {
+    /// A message to display when object spread properties are found.
     object_spread_message: String,
+    /// A message to display when object rest properties are found.
     object_rest_message: String,
 }
 
@@ -50,29 +54,10 @@ declare_oxc_lint!(
     /// let { x, ...y } = z;
     /// let z = { x, ...y };
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// ```json
-    /// {
-    ///   "rules": {
-    ///     "no-rest-spread-properties": [
-    ///         "error",
-    ///         {
-    ///             "objectSpreadMessage": "Object spread properties are not allowed.",
-    ///             "objectRestMessage": "Object rest properties are not allowed."
-    ///         }
-    ///     ]
-    ///   }
-    /// }
-    /// ```
-    ///
-    /// - `objectSpreadMessage`: A message to display when object spread properties are found.
-    /// - `objectRestMessage`: A message to display when object rest properties are found.
-    ///
     NoRestSpreadProperties,
     oxc,
     restriction,
+    config = NoRestSpreadPropertiesOptions,
 );
 
 impl Rule for NoRestSpreadProperties {
