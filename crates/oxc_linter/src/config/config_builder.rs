@@ -60,7 +60,15 @@ impl ConfigStoreBuilder {
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths, warnings: Vec::new() }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+            warnings: Vec::new(),
+        }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -74,7 +82,15 @@ impl ConfigStoreBuilder {
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths, warnings: Vec::new() }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            extended_paths,
+            warnings: Vec::new(),
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -228,15 +244,15 @@ impl ConfigStoreBuilder {
             let all_rules = builder.get_all_rules();
 
             oxlintrc
-                    .rules
-                    .override_rules(
-                        &mut builder.rules,
-                        &mut builder.external_rules,
-                        &all_rules,
-                        external_plugin_store,
-                        &mut builder.warnings,
-                    )
-                    .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+                .rules
+                .override_rules(
+                    &mut builder.rules,
+                    &mut builder.external_rules,
+                    &all_rules,
+                    external_plugin_store,
+                    &mut builder.warnings,
+                )
+                .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
         }
 
         Ok(builder)
