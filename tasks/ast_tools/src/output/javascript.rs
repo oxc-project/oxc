@@ -1,7 +1,4 @@
-use std::{
-    io::Write,
-    process::{Command, Stdio},
-};
+use std::{fs, process::Command};
 
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use rayon::prelude::*;
@@ -30,30 +27,52 @@ pub fn print_javascript(code: &str, generator_path: &str) -> String {
     format(&code)
 }
 
-/// Format JS/TS code with `dprint`.
+/// Format JS/TS code with `oxfmt`.
 fn format(source_text: &str) -> String {
-    let mut dprint = Command::new("dprint")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .args(["fmt", "--stdin", "placeholder_filename.ts"])
-        .spawn()
-        .expect("Failed to run dprint (is it installed?)");
+    // Create a temporary file with a unique name using timestamp + thread id hash
+    let tmp_dir = std::env::temp_dir();
+    let tmp_file = tmp_dir.join(format!("ast_tools_format_{:?}.ts", std::thread::current().id()));
 
-    let stdin = dprint.stdin.as_mut().unwrap();
-    stdin.write_all(source_text.as_bytes()).unwrap();
-    stdin.flush().unwrap();
+    // Write source text to temp file
+    if let Err(e) = fs::write(&tmp_file, source_text) {
+        logln!("FAILED TO WRITE temp file:\n{e}");
+        return source_text.to_string();
+    }
 
-    let output = dprint.wait_with_output().unwrap();
-    if output.status.success() {
-        String::from_utf8(output.stdout).unwrap()
+    let root_path =
+        std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("..").join("..");
+
+    let oxfmt_path = root_path.join("node_modules").join(".bin").join("oxfmt");
+    let oxfmt_config_path = root_path.join("oxfmtrc.jsonc");
+
+    // Run oxfmt on the temp file
+    let output = Command::new(oxfmt_path)
+        .arg("-c")
+        .arg(oxfmt_config_path)
+        .arg(&tmp_file)
+        .output()
+        .expect("Failed to run oxfmt (is it installed?)");
+
+    // Read the formatted content
+    let result = if output.status.success() {
+        fs::read_to_string(&tmp_file).unwrap_or_else(|e| {
+            logln!("FAILED TO READ formatted file:\n{e}");
+            source_text.to_string()
+        })
     } else {
         // Formatting failed. Return unformatted code, to aid debugging.
-        let error =
-            String::from_utf8(output.stderr).unwrap_or_else(|_| "Unknown error".to_string());
-        logln!("FAILED TO FORMAT JS/TS code:\n{error}");
+        logln!(
+            "FAILED TO FORMAT JS/TS code:\n stderr: {}\n stdout: {}",
+            String::from_utf8_lossy(&output.stderr),
+            String::from_utf8_lossy(&output.stdout)
+        );
         source_text.to_string()
-    }
+    };
+
+    // Clean up temp file
+    let _ = fs::remove_file(&tmp_file);
+
+    result
 }
 
 /// Trait to generate several variants of JS code.

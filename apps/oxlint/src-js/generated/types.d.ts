@@ -1,8 +1,8 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
-import { Comment, Span } from '../plugins/types.ts';
-export { Comment, Span };
+import { Span, Comment } from '../plugins/types.ts';
+export { Span, Comment };
 
 export interface Program extends Span {
   type: 'Program';
@@ -587,12 +587,10 @@ export interface DebuggerStatement extends Span {
   parent?: Node;
 }
 
-export type BindingPattern =
-  & ({
-    optional?: boolean;
-    typeAnnotation?: TSTypeAnnotation | null;
-  })
-  & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
+export type BindingPattern = {
+  optional?: boolean;
+  typeAnnotation?: TSTypeAnnotation | null;
+} & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
 
 export type BindingPatternKind = BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern;
 
@@ -677,11 +675,9 @@ export interface FormalParameterRest extends Span {
   value?: null;
 }
 
-export type FormalParameter =
-  & ({
-    decorators?: Array<Decorator>;
-  })
-  & BindingPattern;
+export type FormalParameter = {
+  decorators?: Array<Decorator>;
+} & BindingPattern;
 
 export interface TSParameterProperty extends Span {
   type: 'TSParameterProperty';
