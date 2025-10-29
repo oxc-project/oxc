@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
@@ -14,7 +15,7 @@ fn check_tag_names_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct CheckTagNames(Box<CheckTagnamesConfig>);
+pub struct CheckTagNames(Box<CheckTagNamesConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -44,7 +45,7 @@ declare_oxc_lint!(
     /// /** @param */
     /// ```
     ///
-    /// ### Options
+    /// ### Settings
     ///
     /// Configuration for allowed tags is done via [`settings.jsdoc.tagNamePreference`](/docs/guide/usage/linter/config-file-reference.html#settings-jsdoc-tagnamepreference).
     /// There is no CLI-only parameter for this rule.
@@ -79,16 +80,22 @@ declare_oxc_lint!(
     /// ```
     CheckTagNames,
     jsdoc,
-    correctness
+    correctness,
+    config = CheckTagNamesConfig,
 );
 
-#[derive(Debug, Default, Clone, Deserialize)]
-struct CheckTagnamesConfig {
-    #[serde(default, rename = "definedTags")]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+struct CheckTagNamesConfig {
+    /// Additional tag names to allow.
     defined_tags: Vec<String>,
-    #[serde(default, rename = "jsxTags")]
+    /// Whether to allow JSX-related tags:
+    /// - `jsx`
+    /// - `jsxFrag`
+    /// - `jsxImportSource`
+    /// - `jsxRuntime`
     jsx_tags: bool,
-    #[serde(default)]
+    /// If typed is `true`, disallow tags that are unnecessary/duplicative of TypeScript functionality.
     typed: bool,
 }
 
