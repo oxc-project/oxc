@@ -6,6 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 fn no_unneeded_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary use of boolean literals in conditional expression")
@@ -19,8 +20,14 @@ fn no_unneeded_ternary_conditional_expression_diagnostic(span: Span) -> OxcDiagn
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUnneededTernary {
+    /// Whether to allow the default assignment pattern `x ? x : y`.
+    ///
+    /// When set to `false`, the rule also flags cases like `x ? x : y` and suggests using
+    /// the logical OR form `x || y` instead. When `true` (default), such default assignments
+    /// are allowed and not reported.
     default_assignment: bool,
 }
 
@@ -63,7 +70,8 @@ declare_oxc_lint!(
     NoUnneededTernary,
     eslint,
     suspicious,
-    fix_dangerous
+    fix_dangerous,
+    config = NoUnneededTernary,
 );
 
 impl Rule for NoUnneededTernary {
