@@ -356,7 +356,10 @@ pub fn should_hug_function_parameters<'a>(
         BindingPatternKind::BindingIdentifier(_) => {
             parentheses_not_needed
                 || only_parameter.pattern.type_annotation.as_ref().is_some_and(|ann| {
-                    matches!(&ann.type_annotation, TSType::TSTypeLiteral(literal))
+                    matches!(
+                        &ann.type_annotation,
+                        TSType::TSTypeLiteral(_) | TSType::TSMappedType(_)
+                    )
                 })
         }
     }
