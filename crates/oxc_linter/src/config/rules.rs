@@ -87,21 +87,21 @@ impl OxlintRules {
                 let severity = rule_config.severity;
 
                 if LintPlugins::try_from(plugin_name).is_ok() {
-                      let rule = rules_map.get(&plugin_name).copied().or_else(|| {
-                    all_rules
-                        .iter()
-                        .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-                });
-                if let Some(rule) = rule {
-                    rules_to_replace.push((rule.read_json(config), severity));
-                } else {
-                    // Warn about configuring a builtin rule while the plugin is not enabled.
-                    // This helps users detect misconfigurations like "promise/param-names" while having "plugins": []
-                    warnings.push(format!(
+                    let rule = rules_map.get(&plugin_name).copied().or_else(|| {
+                        all_rules
+                            .iter()
+                            .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                    });
+                    if let Some(rule) = rule {
+                        rules_to_replace.push((rule.read_json(config), severity));
+                    } else {
+                        // Warn about configuring a builtin rule while the plugin is not enabled.
+                        // This helps users detect misconfigurations like "promise/param-names" while having "plugins": []
+                        warnings.push(format!(
                         "WARNING: rule '{}/{}' is configured but the '{}' plugin is not enabled. Enable the plugin in the 'plugins' list (e.g. \"plugins\": [\"{}\"]) or remove the rule from your config.",
                         plugin_name, rule_name, plugin_name, plugin_name
                     ));
-                }
+                    }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
                     // and that rule name is valid for that plugin.
