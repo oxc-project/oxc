@@ -32,7 +32,7 @@ suiteSetup(async () => {
 });
 
 teardown(async () => {
-  await workspace.getConfiguration('oxc').update('flags', undefined);
+  await workspace.getConfiguration('oxc').update('fixKind', undefined);
   await workspace.getConfiguration('oxc').update('tsConfigPath', undefined);
   await workspace.getConfiguration('oxc').update('typeAware', undefined);
   await workspace.getConfiguration('oxc').update('fmt.experimental', undefined);
@@ -137,7 +137,7 @@ suite('E2E Diagnostics', () => {
   // We can check the changed with kind with `vscode.executeCodeActionProvider`
   // but to be safe that everything works, we will check the applied changes.
   // This way we can be sure that everything works as expected.
-  test('auto detect changing `fix_kind` flag with fixAll command', async () => {
+  test('auto detect changing `fixKind` with fixAll command', async () => {
     const originalContent = 'if (foo == null) { bar();}';
 
     await createOxlintConfiguration({
@@ -163,9 +163,7 @@ suite('E2E Diagnostics', () => {
     const content = await workspace.fs.readFile(fileUri);
 
     strictEqual(content.toString(), originalContent);
-    await workspace.getConfiguration('oxc').update('flags', {
-      fix_kind: 'all',
-    });
+    await workspace.getConfiguration('oxc').update('fixKind', 'all');
     // wait for server to update the internal linter
     await sleep(500);
     await workspace.saveAll();

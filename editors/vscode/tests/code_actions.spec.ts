@@ -29,8 +29,7 @@ teardown(async () => {
   const vsConfig = workspace.getConfiguration('oxc');
   const wsConfig = workspace.getConfiguration('oxc', fixturesWorkspaceUri());
   await vsConfig.update('unusedDisableDirectives', undefined);
-  await wsConfig.update('flags', undefined, ConfigurationTarget.WorkspaceFolder);
-
+  await wsConfig.update('fixKind', undefined, ConfigurationTarget.WorkspaceFolder);
   await workspace.getConfiguration('editor').update('codeActionsOnSave', undefined);
   await workspace.saveAll();
 });
@@ -154,9 +153,7 @@ suite('code actions', () => {
     );
     strictEqual(quickFixesNoFix.length, 2);
 
-    await workspace.getConfiguration('oxc', fixturesWorkspaceUri()).update('flags', {
-      'fix_kind': 'dangerous_fix',
-    }, ConfigurationTarget.WorkspaceFolder);
+    await workspace.getConfiguration('oxc', fixturesWorkspaceUri()).update('fixKind', 'dangerous_fix', ConfigurationTarget.WorkspaceFolder);
     await workspace.saveAll();
 
     const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(

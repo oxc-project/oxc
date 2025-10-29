@@ -147,10 +147,39 @@
           "default": false,
           "description": "Enable type-aware linting."
         },
+        "oxc.disableNestedConfig": {
+          "type": "boolean",
+          "scope": "resource",
+          "default": false,
+          "description": "Disable searching for nested configuration files. When set to true, only the configuration file specified in `oxc.configPath` (if any) will be used."
+        },
+        "oxc.fixKind": {
+          "type": "string",
+          "scope": "resource",
+          "enum": [
+            "safe_fix",
+            "safe_fix_or_suggestion",
+            "dangerous_fix",
+            "dangerous_fix_or_suggestion",
+            "none",
+            "all"
+          ],
+          "enumDescriptions": [
+            "Only safe fixes will be applied",
+            "Safe fixes or suggestions will be applied",
+            "Safe and dangerous fixes will be applied",
+            "Safe and dangerous fixes or suggestions will be applied",
+            "No fixes will be applied",
+            "All fixes and suggestions will be applied"
+          ],
+          "default": "safe_fix",
+          "description": "Specify the kind of fixes to suggest/apply."
+        },
         "oxc.flags": {
           "type": "object",
           "scope": "resource",
           "default": {},
+          "deprecationMessage": "deprecated since 1.25.0, use `oxc.fixKind` or `oxc.disableNestedConfig` instead.",
           "description": "Specific Oxlint flags to pass to the language server."
         },
         "oxc.fmt.experimental": {

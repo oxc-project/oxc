@@ -7,6 +7,15 @@ export type Trigger = 'onSave' | 'onType';
 
 type UnusedDisableDirectives = 'allow' | 'warn' | 'deny';
 
+export enum FixKind {
+  SafeFix = 'safe_fix',
+  SafeFixOrSuggestion = 'safe_fix_or_suggestion',
+  DangerousFix = 'dangerous_fix',
+  DangerousFixOrSuggestion = 'dangerous_fix_or_suggestion',
+  None = 'none',
+  All = 'all',
+}
+
 /**
  * See `"contributes.configuration"` in `package.json`
  */
@@ -55,6 +64,20 @@ export interface WorkspaceConfigInterface {
   typeAware: boolean;
 
   /**
+   * Disable nested config files detection
+   * `oxc.disableNestedConfig`
+   * @default false
+   */
+  disableNestedConfig: boolean;
+
+  /**
+   * Fix kind to use when applying fixes
+   * `oxc.fixKind`
+   * @default 'safe_fix'
+   */
+  fixKind: FixKind;
+
+  /**
    * Additional flags to pass to the LSP binary
    * `oxc.flags`
    *
@@ -83,7 +106,8 @@ export class WorkspaceConfig {
   private _runTrigger: Trigger = 'onType';
   private _unusedDisableDirectives: UnusedDisableDirectives = 'allow';
   private _typeAware: boolean = false;
-  private _flags: Record<string, string> = {};
+  private _disableNestedConfig: boolean = false;
+  private _fixKind: FixKind = FixKind.SafeFix;
   private _formattingExperimental: boolean = false;
   private _formattingConfigPath: string | null = null;
 
@@ -97,16 +121,28 @@ export class WorkspaceConfig {
 
   public refresh(): void {
     const flags = this.configuration.get<Record<string, string>>('flags') ?? {};
-    const useNestedConfigs = !('disable_nested_config' in flags);
+
+    // `configuration.get` takes the default value from the package.json, which is always `safe_fix`.
+    // We need to check the deprecated flags.fix_kind for the real default value.
+    let fixKind = this.configuration.get<FixKind>('fixKind');
+    if (fixKind === FixKind.SafeFix && flags.fix_kind !== undefined && flags.fix_kind !== 'safe_fix') {
+      fixKind = flags.fix_kind as FixKind;
+    }
+
+    // the same for disabledNestedConfig
+    let disableNestedConfig = this.configuration.get<boolean>('disableNestedConfig');
+    if (disableNestedConfig === false && flags.disable_nested_config === 'true') {
+      disableNestedConfig = true;
+    }
 
     this._runTrigger = this.configuration.get<Trigger>('lint.run') || 'onType';
-    this._configPath =
-      this.configuration.get<string | null>('configPath') || (useNestedConfigs ? null : oxlintConfigFileName);
+    this._configPath = this.configuration.get<string | null>('configPath') ?? null;
     this._tsConfigPath = this.configuration.get<string | null>('tsConfigPath') ?? null;
     this._unusedDisableDirectives =
       this.configuration.get<UnusedDisableDirectives>('unusedDisableDirectives') ?? 'allow';
     this._typeAware = this.configuration.get<boolean>('typeAware') ?? false;
-    this._flags = flags;
+    this._disableNestedConfig = disableNestedConfig ?? false;
+    this._fixKind = fixKind ?? FixKind.SafeFix;
     this._formattingExperimental = this.configuration.get<boolean>('fmt.experimental') ?? false;
     this._formattingConfigPath = this.configuration.get<string | null>('fmt.configPath') ?? null;
   }
@@ -127,13 +163,20 @@ export class WorkspaceConfig {
     if (event.affectsConfiguration(`${ConfigService.namespace}.typeAware`, this.workspace)) {
       return true;
     }
-    if (event.affectsConfiguration(`${ConfigService.namespace}.flags`, this.workspace)) {
+    if (event.affectsConfiguration(`${ConfigService.namespace}.disableNestedConfig`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.fixKind`, this.workspace)) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.experimental`, this.workspace)) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.fmt.configPath`, this.workspace)) {
+      return true;
+    }
+    // deprecated settings in flags
+    if (event.affectsConfiguration(`${ConfigService.namespace}.flags`, this.workspace)) {
       return true;
     }
     return false;
@@ -188,13 +231,22 @@ export class WorkspaceConfig {
     return this.configuration.update('typeAware', value, ConfigurationTarget.WorkspaceFolder);
   }
 
-  get flags(): Record<string, string> {
-    return this._flags;
+  get disableNestedConfig(): boolean {
+    return this._disableNestedConfig;
   }
 
-  updateFlags(value: Record<string, string>): PromiseLike<void> {
-    this._flags = value;
-    return this.configuration.update('flags', value, ConfigurationTarget.WorkspaceFolder);
+  updateDisableNestedConfig(value: boolean): PromiseLike<void> {
+    this._disableNestedConfig = value;
+    return this.configuration.update('disableNestedConfig', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
+  get fixKind(): FixKind {
+    return this._fixKind;
+  }
+
+  updateFixKind(value: FixKind): PromiseLike<void> {
+    this._fixKind = value;
+    return this.configuration.update('fixKind', value, ConfigurationTarget.WorkspaceFolder);
   }
 
   get formattingExperimental(): boolean {
@@ -222,9 +274,15 @@ export class WorkspaceConfig {
       tsConfigPath: this.tsConfigPath ?? null,
       unusedDisableDirectives: this.unusedDisableDirectives,
       typeAware: this.typeAware,
-      flags: this.flags,
+      disableNestedConfig: this.disableNestedConfig,
+      fixKind: this.fixKind,
       ['fmt.experimental']: this.formattingExperimental,
       ['fmt.configPath']: this.formattingConfigPath ?? null,
+      // deprecated, kept for backward compatibility
+      flags: {
+        disable_nested_config: this.disableNestedConfig ? 'true' : 'false',
+        ...(this.fixKind ? { fix_kind: this.fixKind } : {}),
+      },
     };
   }
 }
