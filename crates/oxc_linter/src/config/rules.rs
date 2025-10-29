@@ -66,6 +66,7 @@ impl OxlintRules {
         external_rules_for_override: &mut FxHashMap<ExternalRuleId, AllowWarnDeny>,
         all_rules: &[RuleEnum],
         external_plugin_store: &ExternalPluginStore,
+        warnings: &mut Vec<String>,
     ) -> Result<(), ExternalRuleLookupError> {
         let mut rules_to_replace = vec![];
 
