@@ -17,7 +17,7 @@ fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoMultiAssign {
     /// When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field.
     ///
-    /// Examples of **correct** code for this option set to `false`:
+    /// Examples of **correct** code for this option set to `true`:
     /// ```js
     /// let a;
     /// let b;
