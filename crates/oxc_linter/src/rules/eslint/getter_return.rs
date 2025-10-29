@@ -15,6 +15,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -28,8 +29,10 @@ fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct GetterReturn {
+    /// When set to `true`, allows getters to implicitly return `undefined` with a `return` statement containing no expression.
     pub allow_implicit: bool,
 }
 
@@ -79,7 +82,8 @@ declare_oxc_lint!(
     /// ```
     GetterReturn,
     eslint,
-    nursery
+    nursery,
+    config = GetterReturn
 );
 
 impl Rule for GetterReturn {
