@@ -509,7 +509,9 @@ struct TsGoLintDiagnosticPayload {
     pub range: Range,
     pub rule: String,
     pub message: RuleMessage,
+    #[serde(default)]
     pub fixes: Vec<Fix>,
+    #[serde(default)]
     pub suggestions: Vec<Suggestion>,
     pub file_path: PathBuf,
 }
@@ -1029,5 +1031,76 @@ mod test {
                 },
             ])
         );
+    }
+
+    #[test]
+    fn test_diagnostic_payload_deserialize_without_fixes_or_suggestions() {
+        use super::TsGoLintDiagnosticPayload;
+
+        // Test payload with both fixes and suggestions omitted
+        let json = r#"{
+            "range": {"pos": 0, "end": 10},
+            "rule": "no-unused-vars",
+            "message": {
+                "id": "msg_id",
+                "description": "Variable is unused",
+                "help": null
+            },
+            "file_path": "test.ts"
+        }"#;
+
+        let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json).unwrap();
+        assert_eq!(payload.fixes.len(), 0);
+        assert_eq!(payload.suggestions.len(), 0);
+        assert_eq!(payload.rule, "no-unused-vars");
+
+        // Test payload with only fixes omitted
+        let json_with_suggestions = r#"{
+            "range": {"pos": 0, "end": 10},
+            "rule": "no-unused-vars",
+            "message": {
+                "id": "msg_id",
+                "description": "Variable is unused",
+                "help": null
+            },
+            "suggestions": [
+                {
+                    "message": {
+                        "id": "suggestion_id",
+                        "description": "Remove unused variable",
+                        "help": null
+                    },
+                    "fixes": []
+                }
+            ],
+            "file_path": "test.ts"
+        }"#;
+
+        let payload: TsGoLintDiagnosticPayload =
+            serde_json::from_str(json_with_suggestions).unwrap();
+        assert_eq!(payload.fixes.len(), 0);
+        assert_eq!(payload.suggestions.len(), 1);
+
+        // Test payload with only suggestions omitted
+        let json_with_fixes = r#"{
+            "range": {"pos": 0, "end": 10},
+            "rule": "no-unused-vars",
+            "message": {
+                "id": "msg_id",
+                "description": "Variable is unused",
+                "help": null
+            },
+            "fixes": [
+                {
+                    "text": "fixed",
+                    "range": {"pos": 0, "end": 5}
+                }
+            ],
+            "file_path": "test.ts"
+        }"#;
+
+        let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json_with_fixes).unwrap();
+        assert_eq!(payload.fixes.len(), 1);
+        assert_eq!(payload.suggestions.len(), 0);
     }
 }
