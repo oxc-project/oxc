@@ -99,9 +99,8 @@ impl OxlintRules {
                         // Warn about configuring a builtin rule while the plugin is not enabled.
                         // This helps users detect misconfigurations like "promise/param-names" while having "plugins": []
                         warnings.push(format!(
-                        "WARNING: rule '{}/{}' is configured but the '{}' plugin is not enabled. Enable the plugin in the 'plugins' list (e.g. \"plugins\": [\"{}\"]) or remove the rule from your config.",
-                        plugin_name, rule_name, plugin_name, plugin_name
-                    ));
+                            "WARNING: rule '{plugin_name}/{rule_name}' is configured but the '{plugin_name}' plugin is not enabled. Enable the plugin in the 'plugins' list (e.g. \"plugins\": [\"{plugin_name}\"]) or remove the rule from your config.",
+                        ));
                     }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
@@ -386,8 +385,15 @@ mod test {
         let rules_config = OxlintRules::deserialize(rules_rc).unwrap();
         let mut external_rules_for_override = FxHashMap::default();
         let external_linter_store = ExternalPluginStore::default();
+        let mut warnings = Vec::new();
         rules_config
-            .override_rules(rules, &mut external_rules_for_override, &RULES, &external_linter_store)
+            .override_rules(
+                rules,
+                &mut external_rules_for_override,
+                &RULES,
+                &external_linter_store,
+                &mut warnings,
+            )
             .unwrap();
     }
 
