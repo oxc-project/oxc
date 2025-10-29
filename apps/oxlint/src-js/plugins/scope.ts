@@ -37,14 +37,16 @@ export class ScopeManager {
     };
     // The effectiveness of this assertion depends on our alignment with ESTree.
     // It could eventually be removed as we align the remaining corner cases and the typegen.
-    this.#scopeManager = analyze(ast as any, defaultOptions);
+    // @ts-expect-error // TODO: our types don't quite align yet
+    this.#scopeManager = analyze(ast, defaultOptions);
   }
 
   /**
    * All scopes
    */
   get scopes(): Scope[] {
-    return this.#scopeManager.scopes as any;
+    // @ts-expect-error // TODO: our types don't quite align yet
+    return this.#scopeManager.scopes;
   }
 
   /**
@@ -60,7 +62,8 @@ export class ScopeManager {
    * @param node An AST node to get their variables.
    */
   getDeclaredVariables(node: ESTree.Node): Variable[] {
-    return this.#scopeManager.getDeclaredVariables(node as any) as any;
+    // @ts-expect-error // TODO: our types don't quite align yet
+    return this.#scopeManager.getDeclaredVariables(node);
   }
 
   /**
@@ -72,7 +75,8 @@ export class ScopeManager {
    *                If `inner` is `true` then this returns the innermost scope.
    */
   acquire(node: ESTree.Node, inner?: boolean): Scope | null {
-    return this.#scopeManager.acquire(node as any, inner) as any;
+    // @ts-expect-error // TODO: our types don't quite align yet
+    return this.#scopeManager.acquire(node, inner);
   }
 }
 
