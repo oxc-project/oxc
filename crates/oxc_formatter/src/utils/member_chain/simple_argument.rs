@@ -51,6 +51,10 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
         self.is_simple_impl(0)
     }
 
+    pub fn is_simple_with_depth(&self, depth: u8) -> bool {
+        self.is_simple_impl(depth)
+    }
+
     fn is_simple_impl(&self, depth: u8) -> bool {
         if depth >= 2 {
             return false;

@@ -449,20 +449,20 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
 fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
     match argument {
         Expression::BinaryExpression(binary) => {
-            SimpleArgument::from(&binary.left).is_simple()
-                && SimpleArgument::from(&binary.right).is_simple()
+            SimpleArgument::from(&binary.left).is_simple_with_depth(1)
+                && SimpleArgument::from(&binary.right).is_simple_with_depth(1)
         }
         Expression::LogicalExpression(logical) => {
-            SimpleArgument::from(&logical.left).is_simple()
-                && SimpleArgument::from(&logical.right).is_simple()
+            SimpleArgument::from(&logical.left).is_simple_with_depth(1)
+                && SimpleArgument::from(&logical.right).is_simple_with_depth(1)
         }
         Expression::TSAsExpression(expr) => {
             is_simple_ts_type(&expr.type_annotation)
-                && SimpleArgument::from(&expr.expression).is_simple()
+                && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
         Expression::TSSatisfiesExpression(expr) => {
             is_simple_ts_type(&expr.type_annotation)
-                && SimpleArgument::from(&expr.expression).is_simple()
+                && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
         Expression::RegExpLiteral(_) => true,
         Expression::CallExpression(call) => match call.arguments.len() {
