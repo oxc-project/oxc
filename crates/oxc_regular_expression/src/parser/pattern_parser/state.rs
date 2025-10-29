@@ -1,9 +1,9 @@
 use oxc_span::Atom;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use crate::parser::reader::Reader;
 
-/// Currently all of properties are read only from outside of this module.
+/// NOTE: Currently all of properties are read-only from outside of this module.
 /// Even inside of this module, it is not changed after initialized.
 #[derive(Debug)]
 pub struct State<'a> {
@@ -49,12 +49,7 @@ impl<'a> State<'a> {
     }
 }
 
-enum SimpleUnit<'a> {
-    Open,
-    Close,
-    Pipe,
-    GroupName(Atom<'a>),
-}
+// ---
 
 /// Returns: Result<(num_of_left_parens, capturing_group_names), duplicated_named_capturing_group_offsets>
 fn parse_capturing_groups<'a>(
@@ -67,18 +62,12 @@ fn parse_capturing_groups<'a>(
     //   (?=...), (?!...), (?<=...), (?<!...)
     let mut num_of_left_capturing_parens = 0;
 
-    // Collect capturing group names
-    let mut group_names: FxHashMap<Atom<'a>, (u32, u32)> = FxHashMap::default();
-    // At the same time, check duplicates
-    // If you want to process this most efficiently:
-    // - define a scope for each Disjunction
-    // - then check for duplicates for each `|` while inheriting the parent-child relationship
-    // ref. https://source.chromium.org/chromium/chromium/src/+/main:v8/src/regexp/regexp-parser.cc;l=1644
-    // However, duplicates are rare in the first place.
-    // And as long as it works simply, this may be enough.
-    let mut may_duplicates: FxHashMap<Atom<'a>, DuplicatedNamedCapturingGroupOffsets> =
-        FxHashMap::default();
-    let mut simplified: Vec<SimpleUnit<'a>> = vec![];
+    // Track all named groups with their depth and alternative path
+    let mut named_groups: Vec<NamedGroupInfo<'a>> = Vec::new();
+    let mut group_names: FxHashSet<Atom<'a>> = FxHashSet::default();
+
+    // Track alternatives and depth
+    let mut tracker = AlternativeTracker::new();
 
     let mut in_escape = false;
     let mut in_character_class = false;
@@ -92,22 +81,22 @@ fn parse_capturing_groups<'a>(
         } else if cp == ']' as u32 {
             in_character_class = false;
         } else if !in_character_class && cp == '|' as u32 {
-            simplified.push(SimpleUnit::Pipe);
+            tracker.mark_alternative();
         } else if !in_character_class && cp == ')' as u32 {
-            simplified.push(SimpleUnit::Close);
+            tracker.exit_group();
         } else if !in_character_class && cp == '(' as u32 {
             reader.advance();
+            tracker.enter_group();
 
-            simplified.push(SimpleUnit::Open);
-
-            // Skip IgnoreGroup
+            // Check for non-capturing groups and lookarounds
+            // Note: these still increase depth but don't count as capturing groups
             if reader.eat2('?', ':')
-            // Skip LookAroundAssertion
                 || reader.eat2('?', '=')
                 || reader.eat2('?', '!')
                 || reader.eat3('?', '<', '=')
                 || reader.eat3('?', '<', '!')
             {
+                // Non-capturing group or lookaround - depth already incremented
                 continue;
             }
 
@@ -127,16 +116,28 @@ fn parse_capturing_groups<'a>(
 
                 if reader.eat('>') {
                     let group_name = reader.atom(span_start, span_end);
+                    let alternative_path = tracker.get_alternative_path();
 
-                    simplified.push(SimpleUnit::GroupName(group_name));
-                    // Check duplicates later
-                    if let Some(last_span) = group_names.get(&group_name) {
-                        let entry = may_duplicates.entry(group_name).or_default();
-                        entry.push(*last_span);
-                        entry.push((span_start, span_end));
-                    } else {
-                        group_names.insert(group_name, (span_start, span_end));
+                    // Check for duplicates with existing groups
+                    for existing in &named_groups {
+                        if existing.name == group_name {
+                            // Check if they can participate together
+                            if !AlternativeTracker::can_participate(
+                                &existing.alternative_path,
+                                &alternative_path,
+                            ) {
+                                // True duplicate - return error
+                                return Err(vec![existing.span, (span_start, span_end)]);
+                            }
+                        }
                     }
+
+                    named_groups.push(NamedGroupInfo {
+                        name: group_name,
+                        span: (span_start, span_end),
+                        alternative_path,
+                    });
+                    group_names.insert(group_name);
 
                     continue;
                 }
@@ -149,62 +150,71 @@ fn parse_capturing_groups<'a>(
         reader.advance();
     }
 
-    // Check duplicates and emit error if exists
-    if !may_duplicates.is_empty() {
-        // Check must be done for each group name
-        for (group_name, spans) in may_duplicates {
-            let iter = simplified.iter().clone();
+    Ok((num_of_left_capturing_parens, group_names))
+}
 
-            let mut alternative_depth = FxHashSet::default();
-            let mut depth = 0_u32;
-            let mut is_first = true;
+/// Tracks which alternatives at each depth level have been seen.
+/// Used to determine if duplicate named groups are in different alternatives.
+#[derive(Debug)]
+struct AlternativeTracker {
+    /// Current nesting depth
+    depth: u32,
+    /// Current alternative index at each depth level (stack-based)
+    /// Each level represents the alternative index at that nesting depth
+    current_alternative: Vec<u32>,
+}
 
-            'outer: for token in iter {
-                match token {
-                    SimpleUnit::Open => {
-                        depth += 1;
-                    }
-                    SimpleUnit::Close => {
-                        // May panic if the pattern has invalid, unbalanced parens
-                        depth = depth.saturating_sub(1);
-                    }
-                    SimpleUnit::Pipe => {
-                        if !is_first {
-                            alternative_depth.insert(depth);
-                        }
-                    }
-                    SimpleUnit::GroupName(name) => {
-                        // Check target group name only
-                        if *name != group_name {
-                            continue;
-                        }
-                        // Skip the first one, because it is not duplicated
-                        if is_first {
-                            is_first = false;
-                            continue;
-                        }
+impl AlternativeTracker {
+    fn new() -> Self {
+        Self { depth: 0, current_alternative: vec![0] }
+    }
 
-                        // If left outer `|` is found, both can participate
-                        // `|(?<n>)`
-                        //  ^   ^ depth: 1
-                        //  ^ depth: 0
-                        for i in (0..depth).rev() {
-                            if alternative_depth.contains(&i) {
-                                // Remove it, next duplicates requires another `|`
-                                alternative_depth.remove(&i);
-                                continue 'outer;
-                            }
-                        }
-
-                        return Err(spans);
-                    }
-                }
-            }
+    fn enter_group(&mut self) {
+        self.depth += 1;
+        while self.current_alternative.len() <= self.depth as usize {
+            self.current_alternative.push(0);
         }
     }
 
-    Ok((num_of_left_capturing_parens, group_names.keys().copied().collect()))
+    fn exit_group(&mut self) {
+        if let Some(alt) = self.current_alternative.get_mut(self.depth as usize) {
+            *alt = 0;
+        }
+        self.depth = self.depth.saturating_sub(1);
+    }
+
+    fn mark_alternative(&mut self) {
+        if let Some(alt) = self.current_alternative.get_mut(self.depth as usize) {
+            *alt += 1;
+        }
+    }
+
+    fn get_alternative_path(&self) -> Vec<u32> {
+        self.current_alternative.iter().take((self.depth + 1) as usize).copied().collect()
+    }
+
+    fn can_participate(alt1: &[u32], alt2: &[u32]) -> bool {
+        let min_len = alt1.len().min(alt2.len());
+        // Check as prefixes, if they differ at any level,
+        // it means they are in different alternatives, so they can participate together.
+        for i in 0..min_len {
+            if alt1[i] != alt2[i] {
+                return true;
+            }
+        }
+        false
+    }
 }
+
+/// Tracks information about a named capturing group
+#[derive(Debug, Clone)]
+struct NamedGroupInfo<'a> {
+    name: Atom<'a>,
+    span: (u32, u32),
+    alternative_path: Vec<u32>,
+}
+
+// ---
 
 #[cfg(test)]
 mod tests {
@@ -225,6 +235,12 @@ mod tests {
             ("(foo)(?<n>bar)(?<nn>baz)", (3, 2)),
             ("(?<n>.)(?<m>.)|(?<n>..)|(?<m>.)", (4, 2)),
             ("(?<n>.)(?<m>.)|(?:..)|(?<m>.)", (3, 2)),
+            // Test exit_group reset behavior: consecutive groups at same depth
+            ("((?<a>x))((?<b>y))|(?<c>z)", (5, 3)), // 2 outer groups + 2 inner named + 1 named = 5 total
+            ("((?<a>x))|((?<a>y))", (4, 1)), // 2 outer + 2 inner named = 4 total, 1 unique name
+            // Nested groups with alternatives
+            ("((?<a>x)|((?<a>y)))", (4, 1)), // 1 outer + 1 named + 1 inner + 1 named = 4 total
+            ("(((?<a>x))|((?<b>y)))|(((?<a>z))|((?<b>w)))", (10, 2)), // Complex nesting
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
@@ -238,9 +254,15 @@ mod tests {
 
     #[test]
     fn duplicated_named_capturing_groups() {
-        for source_text in
-            ["(?<n>.)(?<n>..)", "(?<n>.(?<n>..))", "|(?<n>.(?<n>..))", "(?<m>.)|(?<n>.(?<n>..))"]
-        {
+        for source_text in [
+            "(?<n>.)(?<n>..)",
+            "(?<n>.(?<n>..))",
+            "|(?<n>.(?<n>..))",
+            "(?<m>.)|(?<n>.(?<n>..))",
+            // Test consecutive groups with same name in same alternative (should be error)
+            "((?<a>x))((?<a>y))((?<a>z))",
+            "(?<n>a)((?<n>b))",
+        ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
             assert!(parse_capturing_groups(&mut reader).is_err(), "{source_text}");
