@@ -68,7 +68,7 @@ export let setupContextForFile: (context: Context, ruleIndex: number, filePath: 
  */
 let getInternal: (context: Context, actionDescription: string) => InternalContext;
 
-let settings_record: Record<string, unknown> = {};
+let settingsRecord: Record<string, unknown> = {};
 
 /**
  * Updates the settings record for the file.
@@ -79,7 +79,7 @@ let settings_record: Record<string, unknown> = {};
 export function setSettingsForFile(settings: string) {
   // Freezes to prevent mutation from a plugin.
   // If there's a use case for it, we can become less restrictive without a breaking change - not the other way around.
-  settings_record = deepFreezeSettings(JSON.parse(settings));
+  settingsRecord = deepFreezeSettings(JSON.parse(settings));
 }
 
 // Internal data within `Context` that don't want to expose to plugins.
@@ -158,7 +158,7 @@ export class Context {
   }
 
   get settings() {
-    return settings_record;
+    return settingsRecord;
   }
 
   // Getter for `SourceCode` for file being linted.
