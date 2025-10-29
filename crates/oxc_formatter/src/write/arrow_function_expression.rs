@@ -10,7 +10,10 @@ use crate::{
         Buffer, Comments, Format, FormatError, FormatResult, Formatter, SourceText,
         buffer::RemoveSoftLinesBuffer,
         prelude::*,
-        trivia::{FormatLeadingComments, format_trailing_comments},
+        trivia::{
+            DanglingIndentMode, FormatDanglingComments, FormatLeadingComments,
+            FormatTrailingComments, format_trailing_comments,
+        },
     },
     options::FormatTrailingCommas,
     utils::{assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide},
@@ -502,34 +505,46 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
-                        if should_format_comments {
-                            // A grouped layout implies that the arrow chain is trying to be rendered
-                            // in a condensed, single-line format (at least the signatures, not
-                            // necessarily the body). In that case, we _need_ to prevent the leading
-                            // comments from inserting line breaks. But if it's _not_ a grouped layout,
-                            // then we want to _force_ the line break so that the leading comments
-                            // don't inadvertently end up on the previous line after the fat arrow.
-                            if is_grouped_call_arg_layout {
-                                write!(f, [space(), format_leading_comments(arrow.span())])?;
+                        let format_leading_comments = format_once(|f| {
+                            if should_format_comments {
+                                // A grouped layout implies that the arrow chain is trying to be rendered
+                                // in a condensed, single-line format (at least the signatures, not
+                                // necessarily the body). In that case, we _need_ to prevent the leading
+                                // comments from inserting line breaks. But if it's _not_ a grouped layout,
+                                // then we want to _force_ the line break so that the leading comments
+                                // don't inadvertently end up on the previous line after the fat arrow.
+                                if is_grouped_call_arg_layout {
+                                    write!(f, [space(), format_leading_comments(arrow.span())])
+                                } else {
+                                    write!(
+                                        f,
+                                        [
+                                            soft_line_break_or_space(),
+                                            format_leading_comments(arrow.span())
+                                        ]
+                                    )
+                                }
                             } else {
-                                write!(
-                                    f,
-                                    [
-                                        soft_line_break_or_space(),
-                                        format_leading_comments(arrow.span())
-                                    ]
-                                )?;
+                                Ok(())
                             }
-                        }
+                        });
 
+                        let start = arrow.span().start;
                         write!(
                             f,
-                            [format_signature(
-                                arrow,
-                                is_grouped_call_arg_layout,
-                                is_first,
-                                self.options.cache_mode
-                            )]
+                            [
+                                FormatContentWithCacheMode::new(
+                                    Span::new(start, start),
+                                    format_leading_comments,
+                                    self.options.cache_mode,
+                                ),
+                                format_signature(
+                                    arrow,
+                                    is_grouped_call_arg_layout,
+                                    is_first,
+                                    self.options.cache_mode
+                                )
+                            ]
                         )
                     });
 
@@ -559,7 +574,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 Ok(())
             });
 
-            write!(f, [group(&join_signatures).should_expand(*expand_signatures)])
+            group(&join_signatures).should_expand(*expand_signatures).fmt(f)
         });
 
         let format_tail_body_inner = format_with(|f| {
@@ -607,14 +622,6 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     write!(f, [format_tail_body])?;
                 }
             }
-
-            // Format the trailing comments of all arrow function EXCEPT the first one because
-            // the comments of the head get formatted as part of the `FormatJsArrowFunctionExpression` call.
-            // TODO: It seems unneeded in the current oxc implementation?
-            // for arrow in self.arrows().skip(1) {
-            //     write!(f, format_trailing_comments(arrow.span().end))?;
-            // }
-
             Ok(())
         });
 
@@ -758,12 +765,12 @@ fn format_signature<'a, 'b>(
             )?;
         }
 
-        // TODO: for case `a = (x: any): x is string /* comment */ => {}`
-        // if f.comments().has_dangling_comments(arrow.span()) {
-        //     write!(f, [space(), format_dangling_comments(arrow.span())])?;
-        // }
-
-        Ok(())
+        // Print comments before the fat arrow (`=>`)
+        let comments_before_fat_arrow =
+            f.context().comments().comments_before_character(arrow.params.span().end, b'=');
+        let content =
+            format_once(|f| FormatTrailingComments::Comments(comments_before_fat_arrow).fmt(f));
+        write!(f, [FormatContentWithCacheMode::new(arrow.span, content, cache_mode)])
     })
 }
 
