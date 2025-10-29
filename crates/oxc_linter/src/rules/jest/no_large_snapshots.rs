@@ -9,6 +9,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::LintContext,
@@ -35,10 +37,15 @@ fn too_long_snapshot(line_limit: usize, line_count: usize, span: Span) -> OxcDia
 #[derive(Debug, Default, Clone)]
 pub struct NoLargeSnapshots(Box<NoLargeSnapshotsConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoLargeSnapshotsConfig {
+    /// Maximum number of lines allowed for external snapshot files.
     pub max_size: usize,
+    /// Maximum number of lines allowed for inline snapshots.
     pub inline_max_size: usize,
+    /// A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
+    /// Snapshot names can be specified as regular expressions.
     pub allowed_snapshots: FxHashMap<CompactStr, Vec<CompactStr>>,
 }
 
@@ -140,6 +147,7 @@ declare_oxc_lint!(
     NoLargeSnapshots,
     jest,
     style,
+    config = NoLargeSnapshotsConfig,
 );
 
 impl Rule for NoLargeSnapshots {
