@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
@@ -16,8 +17,14 @@ fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUnsafeNegation {
+    /// The `enforceForOrderingRelations` option determines whether negation is allowed
+    /// on the left-hand side of ordering relational operators (<, >, <=, >=).
+    ///
+    /// The purpose is to avoid expressions such as `!a < b` (which is equivalent to `(a ? 0 : 1) < b`)
+    /// when what is really intended is `!(a < b)`.
     enforce_for_ordering_relations: bool,
 }
 
@@ -48,22 +55,11 @@ declare_oxc_lint!(
     ///
     /// if (!(obj instanceof Ctor)) {}
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### enforceForOrderingRelations
-    ///
-    /// `{ type: boolean, default: false }`
-    ///
-    /// The `enforceForOrderingRelations` option determines whether negation is allowed
-    /// on the left-hand side of ordering relational operators (<, >, <=, >=).
-    ///
-    /// The purpose is to avoid expressions such as `!a < b` (which is equivalent to `(a ? 0 : 1) < b`)
-    /// when what is really intended is `!(a < b)`.
     NoUnsafeNegation,
     eslint,
     correctness,
-    fix
+    fix,
+    config = NoUnsafeNegation,
 );
 
 impl Rule for NoUnsafeNegation {
