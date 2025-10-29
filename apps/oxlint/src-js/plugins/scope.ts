@@ -4,7 +4,12 @@
 
 import type * as ESTree from '../generated/types.d.ts';
 
-import type { Node } from './types.ts';
+import {
+  analyze,
+  type AnalyzeOptions,
+  type ScopeManager as TSESLintScopeManager,
+} from '@typescript-eslint/scope-manager';
+import { SOURCE_CODE } from './source_code.js';
 
 type Identifier =
   | ESTree.IdentifierName
@@ -14,8 +19,65 @@ type Identifier =
   | ESTree.TSThisParameter
   | ESTree.TSIndexSignatureName;
 
+/**
+ * @see https://eslint.org/docs/latest/developer-guide/scope-manager-interface#scopemanager-interface
+ */
+// This is a wrapper class around the @typescript-eslint/scope-manager package.
+// We want to control what APIs are exposed to the user to limit breaking changes when we switch our implementation.
 export class ScopeManager {
-  // TODO
+  #scopeManager: TSESLintScopeManager;
+
+  constructor(ast: ESTree.Program) {
+    const defaultOptions: AnalyzeOptions = {
+      globalReturn: false,
+      jsxFragmentName: null,
+      jsxPragma: 'React',
+      lib: ['esnext'],
+      sourceType: ast.sourceType,
+    };
+    // The effectiveness of this assertion depends on our alignment with ESTree.
+    // It could eventually be removed as we align the remaining corner cases and the typegen.
+    // @ts-expect-error // TODO: our types don't quite align yet
+    this.#scopeManager = analyze(ast, defaultOptions);
+  }
+
+  /**
+   * All scopes
+   */
+  get scopes(): Scope[] {
+    // @ts-expect-error // TODO: our types don't quite align yet
+    return this.#scopeManager.scopes;
+  }
+
+  /**
+   * The root scope
+   */
+  get globalScope(): Scope | null {
+    return this.#scopeManager.globalScope as any;
+  }
+
+  /**
+   * Get the variables that a given AST node defines. The gotten variables' `def[].node`/`def[].parent` property is the node.
+   * If the node does not define any variable, this returns an empty array.
+   * @param node An AST node to get their variables.
+   */
+  getDeclaredVariables(node: ESTree.Node): Variable[] {
+    // @ts-expect-error // TODO: our types don't quite align yet
+    return this.#scopeManager.getDeclaredVariables(node);
+  }
+
+  /**
+   * Get the scope of a given AST node. The gotten scope's `block` property is the node.
+   * This method never returns `function-expression-name` scope. If the node does not have their scope, this returns `null`.
+   *
+   * @param node An AST node to get their scope.
+   * @param inner If the node has multiple scopes, this returns the outermost scope normally.
+   *                If `inner` is `true` then this returns the innermost scope.
+   */
+  acquire(node: ESTree.Node, inner?: boolean): Scope | null {
+    // @ts-expect-error // TODO: our types don't quite align yet
+    return this.#scopeManager.acquire(node, inner);
+  }
 }
 
 export interface Scope {
@@ -24,7 +86,7 @@ export interface Scope {
   upper: Scope | null;
   childScopes: Scope[];
   variableScope: Scope;
-  block: Node;
+  block: ESTree.Node;
   variables: Variable[];
   set: Map<string, Variable>;
   references: Reference[];
@@ -74,8 +136,8 @@ export interface Reference {
 export interface Definition {
   type: DefinitionType;
   name: Identifier;
-  node: Node;
-  parent: Node | null;
+  node: ESTree.Node;
+  parent: ESTree.Node | null;
 }
 
 export type DefinitionType =
@@ -92,9 +154,43 @@ export type DefinitionType =
  * @param node - `Identifier` node to check.
  * @returns `true` if the identifier is a reference to a global variable.
  */
-// oxlint-disable-next-line no-unused-vars
-export function isGlobalReference(node: Node): boolean {
-  throw new Error('`sourceCode.isGlobalReference` not implemented yet'); // TODO
+export function isGlobalReference(node: ESTree.Node): boolean {
+  // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L934-L962
+  if (!node) {
+    throw new TypeError('Missing required argument: node.');
+  }
+
+  if (node.type !== 'Identifier') {
+    return false;
+  }
+
+  const { name } = node;
+  if (typeof name !== 'string') {
+    return false;
+  }
+
+  const globalScope = SOURCE_CODE.scopeManager.scopes[0];
+  if (!globalScope) return false;
+
+  // If the identifier is a reference to a global variable, the global scope should have a variable with the name.
+  const variable = globalScope.set.get(name);
+
+  // Global variables are not defined by any node, so they should have no definitions.
+  if (!variable || variable.defs.length > 0) {
+    return false;
+  }
+
+  // If there is a variable by the same name exists in the global scope, we need to check our node is one of its references.
+  const { references } = variable;
+
+  for (let i = 0; i < references.length; i++) {
+    const reference = references[i];
+    if (reference.identifier === node) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -103,9 +199,9 @@ export function isGlobalReference(node: Node): boolean {
  * @param node - The node for which the variables are obtained.
  * @returns An array of variable nodes representing the variables that `node` defines.
  */
-// oxlint-disable-next-line no-unused-vars
-export function getDeclaredVariables(node: Node): Variable[] {
-  throw new Error('`sourceCode.getDeclaredVariables` not implemented yet'); // TODO
+export function getDeclaredVariables(node: ESTree.Node): Variable[] {
+  // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L904
+  return SOURCE_CODE.scopeManager.getDeclaredVariables(node);
 }
 
 /**
@@ -113,18 +209,27 @@ export function getDeclaredVariables(node: Node): Variable[] {
  * @param node - The node to get the scope of.
  * @returns The scope information for this node.
  */
-// oxlint-disable-next-line no-unused-vars
-export function getScope(node: Node): Scope {
-  throw new Error('`sourceCode.getScope` not implemented yet'); // TODO
-}
+export function getScope(node: ESTree.Node): Scope {
+  // ref: https://github.com/eslint/eslint/blob/e7cda3bdf1bdd664e6033503a3315ad81736b200/lib/languages/js/source-code/source-code.js#L862-L892
+  if (!node) {
+    throw new TypeError('Missing required argument: node.');
+  }
 
-/**
- * Mark a variable as used in the current scope
- * @param name - The name of the variable to mark as used.
- * @param refNode? - The closest node to the variable reference.
- * @returns `true` if the variable was found and marked as used, `false` if not.
- */
-// oxlint-disable-next-line no-unused-vars
-export function markVariableAsUsed(name: string, refNode: Node): boolean {
-  throw new Error('`sourceCode.markVariableAsUsed` not implemented yet'); // TODO
+  const { scopeManager } = SOURCE_CODE;
+  const inner = node.type !== 'Program';
+
+  // Traverse up the AST to find a `Node` whose scope can be acquired.
+  for (let current: any = node; current; current = current.parent) {
+    const scope = scopeManager.acquire(current, inner);
+
+    if (scope) {
+      if (scope.type === 'function-expression-name') {
+        return scope.childScopes[0];
+      }
+
+      return scope;
+    }
+  }
+
+  return scopeManager.scopes[0];
 }

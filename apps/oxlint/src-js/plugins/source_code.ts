@@ -15,11 +15,11 @@ import {
   lines,
   resetLines,
 } from './location.js';
+import { ScopeManager } from './scope.js';
 import * as scopeMethods from './scope.js';
 import * as tokenMethods from './tokens.js';
 
 import type { Program } from '../generated/types.d.ts';
-import type { ScopeManager } from './scope.ts';
 import type { BufferWithArrays, Node, NodeOrToken, Ranged } from './types.ts';
 
 const { max } = Math;
@@ -81,6 +81,7 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
+  scopeManagerInstance = null;
   resetBuffer();
   resetLines();
 }
@@ -94,6 +95,10 @@ export function resetSourceAndAst(): void {
 // 2. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
 //
 // Freeze the object to prevent user mutating it.
+
+// ScopeManager instance for current file (reset between files)
+let scopeManagerInstance: ScopeManager | null = null;
+
 export const SOURCE_CODE = Object.freeze({
   // Get source text.
   get text(): string {
@@ -114,7 +119,8 @@ export const SOURCE_CODE = Object.freeze({
 
   // Get `ScopeManager` for the file.
   get scopeManager(): ScopeManager {
-    throw new Error('`sourceCode.scopeManager` not implemented yet'); // TODO
+    if (ast === null) initAst();
+    return (scopeManagerInstance ??= new ScopeManager(ast));
   },
 
   // Get visitor keys to traverse this AST.
@@ -216,7 +222,6 @@ export const SOURCE_CODE = Object.freeze({
   isGlobalReference: scopeMethods.isGlobalReference,
   getDeclaredVariables: scopeMethods.getDeclaredVariables,
   getScope: scopeMethods.getScope,
-  markVariableAsUsed: scopeMethods.markVariableAsUsed,
 
   // Token methods
   getTokens: tokenMethods.getTokens,
