@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -11,8 +12,32 @@ fn no_multi_assign_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoMultiAssign {
+    /// When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field.
+    ///
+    /// Examples of **correct** code for this option set to `true`:
+    /// ```js
+    /// let a;
+    /// let b;
+    /// a = b = "baz";
+    ///
+    /// const x = {};
+    /// const y = {};
+    /// x.one = y.one = 1;
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this option set to `true`:
+    /// ```js
+    /// let a = b = "baz";
+    ///
+    /// const foo = bar = 1;
+    ///
+    /// class Foo {
+    ///     a = b = 10;
+    /// }
+    /// ```
     ignore_non_declaration: bool,
 }
 
@@ -71,38 +96,10 @@ declare_oxc_lint!(
     /// a = "quux";
     /// b = "quux";
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// This rule has an object option:
-    /// * `"ignoreNonDeclaration"`: When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field. Default is `false`.
-    ///
-    /// #### ignoreNonDeclaration
-    ///
-    /// Examples of **correct** code for the `{ "ignoreNonDeclaration": true }` option:
-    /// ```js
-    /// let a;
-    /// let b;
-    /// a = b = "baz";
-    ///
-    /// const x = {};
-    /// const y = {};
-    /// x.one = y.one = 1;
-    /// ```
-    ///
-    /// Examples of **incorrect** code for the `{ "ignoreNonDeclaration": true }` option:
-    /// ```js
-    /// let a = b = "baz";
-    ///
-    /// const foo = bar = 1;
-    ///
-    /// class Foo {
-    ///     a = b = 10;
-    /// }
-    /// ```
     NoMultiAssign,
     eslint,
     style,
+    config = NoMultiAssign,
 );
 
 impl Rule for NoMultiAssign {
