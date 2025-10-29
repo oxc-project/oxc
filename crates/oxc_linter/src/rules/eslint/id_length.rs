@@ -7,6 +7,7 @@ use oxc_ast::ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 use icu_segmenter::GraphemeClusterSegmenter;
@@ -24,7 +25,8 @@ fn id_length_is_too_long_diagnostic(span: Span, config_max: u64) -> OxcDiagnosti
 const DEFAULT_MAX_LENGTH: u64 = u64::MAX;
 const DEFAULT_MIN_LENGTH: u64 = 2;
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum PropertyKind {
     #[default]
     Always,
@@ -48,24 +50,41 @@ impl Deref for IdLength {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct IdLengthConfig {
+    /// An array of regex patterns for identifiers to exclude from the rule.
+    /// For example, `["^x.*"]` would exclude all identifiers starting with "x".
+    #[schemars(with = "Vec<String>")]
     exception_patterns: Vec<Regex>,
+    /// An array of identifier names that are excluded from the rule.
+    /// For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
     exceptions: Vec<String>,
+    /// The maximum number of graphemes allowed in an identifier.
+    /// Defaults to no maximum (effectively unlimited).
     max: u64,
+    /// The minimum number of graphemes required in an identifier.
     min: u64,
+    /// When set to `"never"`, property names are not checked for length.
+    /// When set to `"always"` (default), property names are checked just like other identifiers.
     properties: PropertyKind,
 }
 
-impl Default for IdLength {
+impl Default for IdLengthConfig {
     fn default() -> Self {
-        Self(Box::new(IdLengthConfig {
+        Self {
             exception_patterns: vec![],
             exceptions: vec![],
             max: DEFAULT_MAX_LENGTH,
             min: DEFAULT_MIN_LENGTH,
             properties: PropertyKind::default(),
-        }))
+        }
+    }
+}
+
+impl Default for IdLength {
+    fn default() -> Self {
+        Self(Box::new(IdLengthConfig::default()))
     }
 }
 
@@ -149,6 +168,7 @@ declare_oxc_lint!(
     IdLength,
     eslint,
     style,
+    config = IdLengthConfig
 );
 
 impl Rule for IdLength {
