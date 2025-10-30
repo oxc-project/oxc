@@ -133,10 +133,6 @@ importers:
         version: 4.0.10(@types/node@24.9.1)(@vitest/browser-playwright@4.0.6)(jiti@2.6.1)
 
   editors/vscode:
-    dependencies:
-      vscode-languageclient:
-        specifier: ^9.0.1
-        version: 9.0.1
     devDependencies:
       '@types/mocha':
         specifier: ^10.0.9
@@ -162,15 +158,15 @@ importers:
       ovsx:
         specifier: ^0.10.0
         version: 0.10.6
-      rolldown:
-        specifier: 1.0.0-beta.51
-        version: 1.0.0-beta.51
-      tinyglobby:
-        specifier: ^0.2.15
-        version: 0.2.15
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.16.6(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      vscode-languageclient:
+        specifier: ^9.0.1
+        version: 9.0.1
 
   napi/minify:
     devDependencies:

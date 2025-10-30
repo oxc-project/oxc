@@ -1,6 +1,7 @@
 {
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
+  "type": "module",
   "license": "MIT",
   "version": "1.29.0",
   "icon": "icon.png",
@@ -22,7 +23,7 @@
     "oxc"
   ],
   "engines": {
-    "vscode": "^1.93.0"
+    "vscode": "^1.100.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
@@ -239,7 +240,7 @@
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
-    "compile": "rolldown -c rolldown.config.ts",
+    "compile": "tsdown",
     "watch": "pnpm run compile --watch",
     "package": "vsce package --no-dependencies -o oxc_language_server.vsix",
     "install-extension": "code --install-extension oxc_language_server.vsix --force",
@@ -259,11 +260,8 @@
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^10.0.0",
     "ovsx": "^0.10.0",
-    "rolldown": "1.0.0-beta.51",
-    "tinyglobby": "^0.2.15",
-    "typescript": "catalog:"
-  },
-  "dependencies": {
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
     "vscode-languageclient": "^9.0.1"
   },
   "vsce": {
