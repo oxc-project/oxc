@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.9.0] - 2025-10-30
+
+### 🚜 Refactor
+
+- 5de99c2 formatter: Export unified way to get_parse_options (#15027) (leaysgur)
+
+
 ## [0.8.0] - 2025-10-22
 
 ### 🚀 Features
