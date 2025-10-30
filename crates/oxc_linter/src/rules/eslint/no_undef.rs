@@ -241,11 +241,11 @@ fn test() {
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test_and_snapshot();
 
-    let pass = vec![];
-    let fail = vec![(
+    let pass = vec![(
         "if (typeof anUndefinedVar === 'string') {}",
-        Some(serde_json::json!([{ "typeof": true }])),
+        Some(serde_json::json!([{ "typeOf": true }])),
     )];
+    let fail = vec![];
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test();
 
