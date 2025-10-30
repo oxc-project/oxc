@@ -12,9 +12,13 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 #[derive(Debug, Clone, Default, JsonSchema)]
 #[serde(renameAll = "camelCase", default)]
 pub struct NoExtraneousClass {
+    /// Allow classes that only have a constructor.
     allow_constructor_only: bool,
+    /// Allow empty classes.
     allow_empty: bool,
+    /// Allow classes with only static members.
     allow_static_only: bool,
+    /// Allow classes with decorators.
     allow_with_decorator: bool,
 }
 
@@ -78,7 +82,8 @@ declare_oxc_lint!(
     NoExtraneousClass,
     typescript,
     suspicious,
-    dangerous_suggestion
+    dangerous_suggestion,
+    config = NoExtraneousClass,
 );
 
 fn empty_class_diagnostic(span: Span, has_decorators: bool) -> OxcDiagnostic {
