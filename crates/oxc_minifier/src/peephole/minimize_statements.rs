@@ -1131,10 +1131,9 @@ impl<'a> PeepholeOptimizations {
         ctx: &Ctx<'a, '_>,
         non_scoped_literal_only: bool,
     ) -> bool {
-        // TODO: we should skip this compression when direct eval exists
-        //       because the code inside eval may reference the variable
-
-        if Self::keep_top_level_var_in_script_mode(ctx) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
             return false;
         }
 
@@ -1169,30 +1168,32 @@ impl<'a> PeepholeOptimizations {
         declarations: &mut Vec<'a, VariableDeclarator<'a>>,
         ctx: &Ctx<'a, '_>,
     ) -> bool {
-        // TODO: we should skip this compression when direct eval exists
-        //       because the code inside eval may reference the variable
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+            || kind.is_using()
+        {
+            return false;
+        }
 
         let mut changed = false;
-        if !Self::keep_top_level_var_in_script_mode(ctx) && !kind.is_using() {
-            let mut i = 1;
-            while i < declarations.len() {
-                let (prev_decls, [decl, ..]) = declarations.split_at_mut(i) else { unreachable!() };
-                let Some(decl_init) = &mut decl.init else {
-                    i += 1;
-                    continue;
-                };
-                let old_len = prev_decls.len();
-                let new_len = Self::substitute_single_use_symbol_in_expression_from_declarators(
-                    decl_init, prev_decls, ctx, false,
-                );
-                if old_len != new_len {
-                    changed = true;
-                    let drop_count = old_len - new_len;
-                    declarations.drain(i - drop_count..i);
-                    i -= drop_count;
-                }
+        let mut i = 1;
+        while i < declarations.len() {
+            let (prev_decls, [decl, ..]) = declarations.split_at_mut(i) else { unreachable!() };
+            let Some(decl_init) = &mut decl.init else {
                 i += 1;
+                continue;
+            };
+            let old_len = prev_decls.len();
+            let new_len = Self::substitute_single_use_symbol_in_expression_from_declarators(
+                decl_init, prev_decls, ctx, false,
+            );
+            if old_len != new_len {
+                changed = true;
+                let drop_count = old_len - new_len;
+                declarations.drain(i - drop_count..i);
+                i -= drop_count;
             }
+            i += 1;
         }
         changed
     }

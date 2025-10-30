@@ -178,7 +178,11 @@ impl<'a> Normalize {
     fn convert_const_to_let(decl: &mut VariableDeclaration<'a>, ctx: &TraverseCtx<'a>) {
         // checking whether the current scope is the root scope instead of
         // checking whether any variables are exposed to outside (e.g. `export` in ESM)
-        if decl.kind.is_const() && ctx.current_scope_id() != ctx.scoping().root_scope_id() {
+        if decl.kind.is_const()
+            && ctx.current_scope_id() != ctx.scoping().root_scope_id()
+            // direct eval may have a assignment inside
+            && !ctx.current_scope_flags().contains_direct_eval()
+        {
             let all_declarations_are_only_read =
                 decl.declarations.iter().flat_map(|d| d.id.get_binding_identifiers()).all(|id| {
                     ctx.scoping()
@@ -429,6 +433,7 @@ mod test {
         test_same("const x = 1"); // keep top-level (can be replaced with "let" if it's ESM and not exported)
         test("{ const x = 1 }", "{ let x = 1 }");
         test_same("{ const x = 1; x = 2 }"); // keep assign error
+        test_same("{ const x = 1; eval('x = 2') }"); // keep assign error
         test("{ const x = 1, y = 2 }", "{ let x = 1, y = 2 }");
         test("{ const { x } = { x: 1 } }", "{ let { x } = { x: 1 } }");
         test("{ const [x] = [1] }", "{ let [x] = [1] }");

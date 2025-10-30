@@ -52,7 +52,9 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &f.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
             return;
         }
         if !ctx.scoping().symbol_is_unused(symbol_id) {
@@ -69,7 +71,9 @@ impl<'a> PeepholeOptimizations {
         }
         let Some(id) = &c.id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        if Self::keep_top_level_var_in_script_mode(ctx) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
             return;
         }
         if !ctx.scoping().symbol_is_unused(symbol_id) {
@@ -129,11 +133,17 @@ mod test {
         test_options("function foo() {}", "", &options);
         test_same_options("function foo() { bar } foo()", &options);
         test_same_options("export function foo() {} foo()", &options);
+        test_same_options("function foo() { bar } eval('foo()')", &options);
     }
 
     #[test]
     fn remove_unused_class_declaration() {
         let options = CompressOptions::smallest();
+        test_options("class C {}", "", &options);
+        test_same_options("export class C {}", &options);
+        test_options("class C {} C", "", &options);
+        test_same_options("class C {} eval('C')", &options);
+
         // extends
         test_options("class C {}", "", &options);
         test_options("class C extends Foo {}", "Foo", &options);

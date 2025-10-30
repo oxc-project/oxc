@@ -26,6 +26,7 @@ fn test_keep_names(source_text: &str, expected: &str) {
 fn test_inline_single_use_variable() {
     test_same("function wrapper(arg0, arg1) {using x = foo; return x}");
     test_same("async function wrapper(arg0, arg1) { await using x = foo; return x}");
+    test_same("function wrapper(arg0) { eval('x'); var x = arg0; return x }");
 
     test(
         "
@@ -251,6 +252,8 @@ fn test_inline_past_readonly_variable() {
 
 #[test]
 fn test_within_same_variable_declarations() {
+    test_same("function wrapper() { eval('a'); for (var a = foo, b = a; bar;) return b }");
+
     test_script(
         "var a = foo, b = a; for (; bar;) console.log(b)",
         "for (var a = foo, b = a; bar;) console.log(b)",

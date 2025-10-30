@@ -11,6 +11,10 @@ impl<'a> PeepholeOptimizations {
     /// This function uses the private member usage collected during the main traverse
     /// to remove unused private fields and methods from the class body.
     pub fn remove_unused_private_members(body: &mut ClassBody<'a>, ctx: &mut Ctx<'a, '_>) {
+        if ctx.current_scope_flags().contains_direct_eval() {
+            return;
+        }
+
         let old_len = body.body.len();
         body.body.retain(|element| match element {
             ClassElement::PropertyDefinition(prop) => {
@@ -113,6 +117,7 @@ mod test {
             "class C { public = 1; #used = 3; method() { return this.public + this.#used; } } new C();",
         );
         test_same("class C { #unused = foo(); method() { return 1; } } new C();");
+        test_same("class C { #used = 1; method() { return eval('this.#used'); } } new C();");
     }
 
     #[test]
@@ -128,6 +133,9 @@ mod test {
         );
         test_same(
             "class C { #helper() { return 1; } method() { return this.#helper(); } } new C();",
+        );
+        test_same(
+            "class C { #helper() { return 1; } method() { return eval('this.#helper()'); } } new C();",
         );
     }
 

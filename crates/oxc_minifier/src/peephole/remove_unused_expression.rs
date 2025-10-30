@@ -636,7 +636,9 @@ impl<'a> PeepholeOptimizations {
         else {
             return false;
         };
-        if Self::keep_top_level_var_in_script_mode(ctx) {
+        if Self::keep_top_level_var_in_script_mode(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
             return false;
         }
         let reference_id = ident.reference_id();
@@ -1076,6 +1078,7 @@ mod test {
         let options = CompressOptions::smallest();
         test_options("var x = 1; x = 2;", "", &options);
         test_options("var x = 1; x = foo();", "foo()", &options);
+        test_same_options("var x = 1; x = 2, eval('x')", &options);
         test_same_options("export var foo; foo = 0;", &options);
         test_same_options("var x = 1; x = 2, foo(x)", &options);
         test_same_options("function foo() { return t = x(); } foo();", &options);

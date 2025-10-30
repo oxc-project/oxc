@@ -88,14 +88,14 @@ const v = [];
 class A extends v {} // TypeError
 ```
 
-### No Direct `eval` or `Function` Constructor
+### Variables declared in direct `eval` are not referenced outside the eval
 
-Code doesn't dynamically evaluate strings as code. We intend to change this assumption to optional in the future.
+Variables declared in direct `eval` are not referenced outside the eval, which is only allowed in non-strict mode.
 
 ```javascript
 // The minifier assumes this never happens:
 eval('var x = 1');
-new Function('return x');
+console.log(x); // 1
 ```
 
 ### No side effects from accessing to a global variable named `arguments`
