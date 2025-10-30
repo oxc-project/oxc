@@ -5,14 +5,7 @@ use tower_lsp_server::{
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
 
-use crate::{
-    linter::{
-        options::{LintOptions, Run},
-        server_linter::ServerLinterRun,
-    },
-    options::Options,
-    worker::WorkspaceWorker,
-};
+use crate::{linter::options::LintOptions, options::Options, worker::WorkspaceWorker};
 
 use super::linter::error_with_position::DiagnosticReport;
 
@@ -123,48 +116,15 @@ impl Tester<'_> {
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
     /// and return the resulting diagnostics in a custom snapshot format.
     pub fn test_and_snapshot_single_file(&self, relative_file_path: &str) {
-        self.test_and_snapshot_single_file_with_run_type(
-            relative_file_path,
-            self.options.as_ref().map_or(Run::default(), |o| o.run),
-        );
+        self.test_and_snapshot_multiple_file(&[relative_file_path]);
     }
 
     pub fn test_and_snapshot_multiple_file(&self, relative_file_paths: &[&str]) {
-        self.test_and_snapshot_multiple_file_with_run_type(
-            relative_file_paths,
-            self.options.as_ref().map_or(Run::default(), |o| o.run),
-        );
-    }
-
-    pub fn test_and_snapshot_single_file_with_run_type(
-        &self,
-        relative_file_path: &str,
-        run_type: Run,
-    ) {
-        self.test_and_snapshot_multiple_file_with_run_type(&[relative_file_path], run_type);
-    }
-
-    #[expect(clippy::disallowed_methods)]
-    pub fn test_and_snapshot_multiple_file_with_run_type(
-        &self,
-        relative_file_paths: &[&str],
-        run_type: Run,
-    ) {
         let mut snapshot_result = String::new();
         for relative_file_path in relative_file_paths {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
             let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
-                self.create_workspace_worker()
-                    .await
-                    .lint_file(
-                        &uri,
-                        None,
-                        match run_type {
-                            Run::OnSave => ServerLinterRun::OnSave,
-                            Run::OnType => ServerLinterRun::OnType,
-                        },
-                    )
-                    .await
+                self.create_workspace_worker().await.lint_file(&uri, None).await
             });
 
             let snapshot = if let Some(reports) = reports {
@@ -184,10 +144,12 @@ impl Tester<'_> {
             );
         }
 
+        #[expect(clippy::disallowed_methods)]
         let snapshot_name = self.relative_root_dir.replace('/', "_");
         let mut settings = insta::Settings::clone_current();
         settings.set_prepend_module_to_snapshot(false);
         settings.set_omit_expression(true);
+        #[expect(clippy::disallowed_methods)]
         settings.set_snapshot_suffix(relative_file_paths.join("_").replace('\\', "/"));
         settings.bind(|| {
             insta::assert_snapshot!(snapshot_name, snapshot_result);
