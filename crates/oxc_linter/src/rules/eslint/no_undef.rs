@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -10,8 +11,10 @@ fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUndef {
+    /// The `typeOf` option allows the rule to ignore undefined variables used in a `typeof` expression.
     type_of: bool,
 }
 
@@ -33,7 +36,8 @@ declare_oxc_lint!(
     /// ```
     NoUndef,
     eslint,
-    nursery
+    nursery,
+    config = NoUndef,
 );
 
 impl Rule for NoUndef {
