@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
-    IndentWidth,
+    EmbeddedFormatter, IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator},
     format, format_args,
     formatter::{
@@ -43,8 +43,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
         quasi.format_leading_comments(f);
 
-        if should_format_embedded_template(self, f) {
-            write_embedded_template(self, f)
+        if let Some(result) = write_embedded_template(self, f) {
+            result
         } else if is_test_each_pattern(&self.tag) {
             let template = &EachTemplateTable::from_template(quasi, f)?;
             // Use table formatting
@@ -697,54 +697,31 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
     }
 }
 
-/// Check if a tagged template should be formatted with the embedded formatter.
-fn should_format_embedded_template<'a>(
-    tagged_template: &AstNode<'a, TaggedTemplateExpression<'a>>,
-    f: &Formatter<'_, 'a>,
-) -> bool {
-    // Don't format if suppressed with prettier-ignore
-    if f.comments().is_suppressed(tagged_template.span().start) {
-        return false;
-    }
-
-    // Only format if we have an embedded formatter
-    if f.context().embedded_formatter().is_none() {
-        return false;
-    }
-
-    // Only format simple identifiers as tags (e.g., css, gql, html)
-    if extract_tag_name(&tagged_template.tag).is_none() {
-        return false;
-    }
-
-    // Only format templates with a single quasi (no expressions)
-    let quasi = tagged_template.quasi();
-    quasi.quasis.len() == 1
-}
-
 /// Write a tagged template formatted with the embedded formatter.
 fn write_embedded_template<'a>(
-    tagged_template: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
-) -> FormatResult<()> {
-    let tag_name = extract_tag_name(&tagged_template.tag)
-        .expect("should_format_embedded_template should have checked this");
+) -> Option<FormatResult<()>> {
+    let quasi = &tagged.quasi;
+    if !quasi.is_no_substitution_template() {
+        return None;
+    }
 
-    let quasi = tagged_template.quasi();
-    let template_content = quasi
-        .quasis
-        .first()
-        .expect("should_format_embedded_template should have checked this")
-        .value
-        .raw
-        .as_str();
+    let Expression::Identifier(ident) = &tagged.tag else {
+        return None;
+    };
 
-    let embedded_formatter = f
-        .context()
-        .embedded_formatter()
-        .expect("should_format_embedded_template should have been called first");
+    let tag_name = ident.name.as_str();
+    // Check if the tag is supported by the embedded formatter
+    if !EmbeddedFormatter::is_supported_tag(tag_name) {
+        return None;
+    }
 
-    if let Ok(formatted) = embedded_formatter.format(&tag_name, template_content) {
+    // Get the embedded formatter from the context
+    let embedded_formatter = f.context().embedded_formatter()?;
+    let template_content = quasi.quasis[0].value.raw.as_str();
+
+    if let Ok(formatted) = embedded_formatter.format(tag_name, template_content) {
         let trimmed = formatted.trim_end();
 
         // Split into lines and create format elements for each line
@@ -769,7 +746,7 @@ fn write_embedded_template<'a>(
         // - Indented content (each line will be indented)
         // - Hard line break (newline before closing backtick)
         // - Closing backtick
-        write!(
+        Some(write!(
             f,
             [
                 text("`"),
@@ -777,22 +754,8 @@ fn write_embedded_template<'a>(
                 hard_line_break(),
                 text("`")
             ]
-        )
+        ))
     } else {
-        // If formatting fails, fall back to default template formatting
-        let template = TemplateLike::TemplateLiteral(quasi);
-        write!(f, template)
-    }
-}
-
-/// Extract the tag name from a tagged template expression.
-/// Returns the tag name if it's a simple identifier (e.g., "css", "html", "gql").
-/// Returns None for complex expressions (e.g., "styled.div", "lib.css").
-fn extract_tag_name(tag: &Expression) -> Option<String> {
-    match tag {
-        Expression::Identifier(ident) => Some(ident.name.to_string()),
-        // For now, we only support simple identifiers as tags
-        // Could be extended to support member expressions like styled.div in the future
-        _ => None,
+        None
     }
 }

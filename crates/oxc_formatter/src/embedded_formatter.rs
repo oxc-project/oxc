@@ -16,10 +16,18 @@ pub struct EmbeddedFormatter {
     callback: EmbeddedFormatterCallback,
 }
 
+/// See <apps/oxfmt/src-js/embedded.ts> for supported tags.
+const SUPPORTED_TAGS: &[&str] = &["css", "styled", "gql", "graphql", "html", "md", "markdown"];
+
 impl EmbeddedFormatter {
     /// Create a new embedded formatter with the given callback.
     pub fn new(callback: EmbeddedFormatterCallback) -> Self {
         Self { callback }
+    }
+
+    /// Check if the given tag name is supported for embedded formatting.
+    pub fn is_supported_tag(tag_name: &str) -> bool {
+        SUPPORTED_TAGS.contains(&tag_name)
     }
 
     /// Format embedded code with the given tag name.

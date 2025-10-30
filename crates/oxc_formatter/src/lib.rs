@@ -87,7 +87,7 @@ impl<'a> Formatter<'a> {
             self.allocator,
             self.options,
         );
-        context.set_embedded_formatter(self.embedded_formatter.clone());
+        context.set_embedded_formatter(self.embedded_formatter);
         let mut formatted = formatter::format(
             context,
             formatter::Arguments::new(&[formatter::Argument::new(&program_node)]),
