@@ -1,0 +1,10 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware
+working directory: fixtures/tsgolint_config_error
+----------
+Error running tsgolint: "exit status: exit status: 0, error: Option 'baseUrl' has been removed. Please remove it from your configuration."----------
+CLI result: TsGoLintError
+----------

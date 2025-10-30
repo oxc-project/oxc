@@ -179,96 +179,107 @@ impl TsGoLintState {
                             return Err(err.error);
                         }
                         Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                            let path = tsgolint_diagnostic.file_path.clone();
-                            let Some(resolved_config) = resolved_configs.get(&path) else {
-                                // If we don't have a resolved config for this path, skip it. We should always
-                                // have a resolved config though, since we processed them already above.
-                                continue;
-                            };
+                            match tsgolint_diagnostic {
+                                TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
+                                    let path = tsgolint_diagnostic.file_path.clone();
 
-                            let severity =
-                                resolved_config.rules.iter().find_map(|(rule, status)| {
-                                    if rule.name() == tsgolint_diagnostic.rule {
-                                        Some(*status)
-                                    } else {
-                                        None
-                                    }
-                                });
-                            let Some(severity) = severity else {
-                                // If the severity is not found, we should not report the diagnostic
-                                continue;
-                            };
+                                    let Some(resolved_config) = resolved_configs.get(&path) else {
+                                        // If we don't have a resolved config for this path, skip it. We should always
+                                        // have a resolved config though, since we processed them already above.
+                                        continue;
+                                    };
 
-                            let span = Span::new(
-                                tsgolint_diagnostic.range.pos,
-                                tsgolint_diagnostic.range.end,
-                            );
+                                    let severity =
+                                        resolved_config.rules.iter().find_map(|(rule, status)| {
+                                            if rule.name() == tsgolint_diagnostic.rule {
+                                                Some(*status)
+                                            } else {
+                                                None
+                                            }
+                                        });
+                                    let Some(severity) = severity else {
+                                        // If the severity is not found, we should not report the diagnostic
+                                        continue;
+                                    };
 
-                            let should_skip = {
-                                if let Some(directives) = disable_directives_map.get(&path) {
-                                    directives.contains(&tsgolint_diagnostic.rule, span)
-                                        || directives.contains(
-                                            &format!(
-                                                "typescript-eslint/{}",
-                                                tsgolint_diagnostic.rule
-                                            ),
-                                            span,
-                                        )
-                                        || directives.contains(
-                                            &format!(
-                                                "@typescript-eslint/{}",
-                                                tsgolint_diagnostic.rule
-                                            ),
-                                            span,
-                                        )
-                                } else {
-                                    debug_assert!(
-                                        false,
-                                        "disable_directives_map should have an entry for every file we linted"
+                                    let span = Span::new(
+                                        tsgolint_diagnostic.range.pos,
+                                        tsgolint_diagnostic.range.end,
                                     );
-                                    false
+
+                                    let should_skip = {
+                                        if let Some(directives) = disable_directives_map.get(&path)
+                                        {
+                                            directives.contains(&tsgolint_diagnostic.rule, span)
+                                                || directives.contains(
+                                                    &format!(
+                                                        "typescript-eslint/{}",
+                                                        tsgolint_diagnostic.rule
+                                                    ),
+                                                    span,
+                                                )
+                                                || directives.contains(
+                                                    &format!(
+                                                        "@typescript-eslint/{}",
+                                                        tsgolint_diagnostic.rule
+                                                    ),
+                                                    span,
+                                                )
+                                        } else {
+                                            debug_assert!(
+                                                false,
+                                                "disable_directives_map should have an entry for every file we linted"
+                                            );
+                                            false
+                                        }
+                                    };
+
+                                    if should_skip {
+                                        continue;
+                                    }
+
+                                    let oxc_diagnostic: OxcDiagnostic =
+                                        OxcDiagnostic::from(tsgolint_diagnostic);
+
+                                    let oxc_diagnostic = oxc_diagnostic.with_severity(
+                                        if severity == AllowWarnDeny::Deny {
+                                            Severity::Error
+                                        } else {
+                                            Severity::Warning
+                                        },
+                                    );
+
+                                    let source_text: &str = if self.silent {
+                                        // The source text is not needed in silent mode.
+                                        // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
+                                        ""
+                                    } else if let Some(source_text) = source_text_map.get(&path) {
+                                        source_text.as_str()
+                                    } else {
+                                        let source_text =
+                                            read_to_string(&path).unwrap_or_else(|_| String::new());
+                                        // Insert and get a reference to the inserted string
+                                        let entry = source_text_map
+                                            .entry(path.clone())
+                                            .or_insert(source_text);
+                                        entry.as_str()
+                                    };
+
+                                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                                        cwd_clone.clone(),
+                                        path.clone(),
+                                        source_text,
+                                        vec![oxc_diagnostic],
+                                    );
+
+                                    if error_sender.send((path, diagnostics)).is_err() {
+                                        // Receiver has been dropped, stop processing
+                                        return Ok(());
+                                    }
                                 }
-                            };
-
-                            if should_skip {
-                                continue;
-                            }
-
-                            let oxc_diagnostic: OxcDiagnostic =
-                                OxcDiagnostic::from(tsgolint_diagnostic);
-
-                            let oxc_diagnostic =
-                                oxc_diagnostic.with_severity(if severity == AllowWarnDeny::Deny {
-                                    Severity::Error
-                                } else {
-                                    Severity::Warning
-                                });
-
-                            let source_text: &str = if self.silent {
-                                // The source text is not needed in silent mode.
-                                // The source text is only here to wrap the line before and after into a nice `oxc_diagnostic` Error
-                                ""
-                            } else if let Some(source_text) = source_text_map.get(&path) {
-                                source_text.as_str()
-                            } else {
-                                let source_text =
-                                    read_to_string(&path).unwrap_or_else(|_| String::new());
-                                // Insert and get a reference to the inserted string
-                                let entry =
-                                    source_text_map.entry(path.clone()).or_insert(source_text);
-                                entry.as_str()
-                            };
-
-                            let diagnostics = DiagnosticService::wrap_diagnostics(
-                                cwd_clone.clone(),
-                                path.clone(),
-                                source_text,
-                                vec![oxc_diagnostic],
-                            );
-
-                            if error_sender.send((path, diagnostics)).is_err() {
-                                // Receiver has been dropped, stop processing
-                                return Ok(());
+                                TsGoLintDiagnostic::Internal(e) => {
+                                    return Err(e.message.description);
+                                }
                             }
                         }
                         Err(e) => {
@@ -385,38 +396,45 @@ impl TsGoLintState {
                             return Err(err.error);
                         }
                         Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
-                            let path = tsgolint_diagnostic.file_path.clone();
-                            let Some(resolved_config) = resolved_configs.get(&path) else {
-                                // If we don't have a resolved config for this path, skip it. We should always
-                                // have a resolved config though, since we processed them already above.
-                                continue;
-                            };
+                            match tsgolint_diagnostic {
+                                TsGoLintDiagnostic::Rule(tsgolint_diagnostic) => {
+                                    let path = tsgolint_diagnostic.file_path.clone();
+                                    let Some(resolved_config) = resolved_configs.get(&path) else {
+                                        // If we don't have a resolved config for this path, skip it. We should always
+                                        // have a resolved config though, since we processed them already above.
+                                        continue;
+                                    };
 
-                            let severity =
-                                resolved_config.rules.iter().find_map(|(rule, status)| {
-                                    if rule.name() == tsgolint_diagnostic.rule {
-                                        Some(*status)
+                                    let severity =
+                                        resolved_config.rules.iter().find_map(|(rule, status)| {
+                                            if rule.name() == tsgolint_diagnostic.rule {
+                                                Some(*status)
+                                            } else {
+                                                None
+                                            }
+                                        });
+                                    let Some(severity) = severity else {
+                                        // If the severity is not found, we should not report the diagnostic
+                                        continue;
+                                    };
+
+                                    let mut message = Message::from_tsgo_lint_diagnostic(
+                                        tsgolint_diagnostic,
+                                        &source_text,
+                                    );
+
+                                    message.error.severity = if severity == AllowWarnDeny::Deny {
+                                        Severity::Error
                                     } else {
-                                        None
-                                    }
-                                });
-                            let Some(severity) = severity else {
-                                // If the severity is not found, we should not report the diagnostic
-                                continue;
-                            };
+                                        Severity::Warning
+                                    };
 
-                            let mut message = Message::from_tsgo_lint_diagnostic(
-                                tsgolint_diagnostic,
-                                &source_text,
-                            );
-
-                            message.error.severity = if severity == AllowWarnDeny::Deny {
-                                Severity::Error
-                            } else {
-                                Severity::Warning
-                            };
-
-                            result.push(message);
+                                    result.push(message);
+                                }
+                                TsGoLintDiagnostic::Internal(e) => {
+                                    return Err(e.message.description);
+                                }
+                            }
                         }
                         Err(e) => {
                             return Err(e);
@@ -545,17 +563,51 @@ pub struct Rule {
     pub name: String,
 }
 
+/// Diagnostic kind discriminator
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum DiagnosticKind {
+    Rule = 0,
+    Internal = 1,
+}
+
+impl Serialize for DiagnosticKind {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u8(*self as u8)
+    }
+}
+
+impl<'de> Deserialize<'de> for DiagnosticKind {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = u8::deserialize(deserializer)?;
+        match value {
+            0 => Ok(DiagnosticKind::Rule),
+            1 => Ok(DiagnosticKind::Internal),
+            _ => Err(serde::de::Error::custom(format!("Invalid DiagnosticKind value: {value}"))),
+        }
+    }
+}
+
 /// Represents the raw output binary data from `tsgolint`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TsGoLintDiagnosticPayload {
+    pub kind: DiagnosticKind,
     pub range: Range,
-    pub rule: String,
     pub message: RuleMessage,
-    #[serde(default)]
+    pub file_path: Option<String>,
+    // Only for kind="rule"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub fixes: Vec<Fix>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub suggestions: Vec<Suggestion>,
-    pub file_path: PathBuf,
 }
 
 /// Represents the error payload from `tsgolint`.
@@ -571,7 +623,13 @@ pub enum TsGoLintMessage {
 }
 
 #[derive(Debug, Clone)]
-pub struct TsGoLintDiagnostic {
+pub enum TsGoLintDiagnostic {
+    Rule(TsGoLintRuleDiagnostic),
+    Internal(TsGoLintInternalDiagnostic),
+}
+
+#[derive(Debug, Clone)]
+pub struct TsGoLintRuleDiagnostic {
     pub range: Range,
     pub rule: String,
     pub message: RuleMessage,
@@ -581,12 +639,26 @@ pub struct TsGoLintDiagnostic {
 }
 
 #[derive(Debug, Clone)]
+pub struct TsGoLintInternalDiagnostic {
+    pub message: RuleMessage,
+}
+
+#[derive(Debug, Clone)]
 pub struct TsGoLintError {
     pub error: String,
 }
 
 impl From<TsGoLintDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintDiagnostic) -> Self {
+        match val {
+            TsGoLintDiagnostic::Rule(d) => d.into(),
+            TsGoLintDiagnostic::Internal(d) => d.into(),
+        }
+    }
+}
+
+impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
+    fn from(val: TsGoLintRuleDiagnostic) -> Self {
         let mut d = OxcDiagnostic::warn(val.message.description)
             .with_label(Span::new(val.range.pos, val.range.end))
             .with_error_code("typescript-eslint", val.rule);
@@ -596,11 +668,16 @@ impl From<TsGoLintDiagnostic> for OxcDiagnostic {
         d
     }
 }
+impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
+    fn from(val: TsGoLintInternalDiagnostic) -> Self {
+        OxcDiagnostic::error(val.message.description)
+    }
+}
 
 #[cfg(feature = "language_server")]
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    fn from_tsgo_lint_diagnostic(mut val: TsGoLintDiagnostic, source_text: &str) -> Self {
+    fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
         use std::{borrow::Cow, mem};
 
         let mut fixes =
@@ -827,13 +904,26 @@ fn parse_single_message(
                 serde_json::from_str::<TsGoLintDiagnosticPayload>(&payload_str)
                     .map_err(TsGoLintMessageParseError::InvalidDiagnosticPayload)?;
 
-            Ok(TsGoLintMessage::Diagnostic(TsGoLintDiagnostic {
-                range: diagnostic_payload.range,
-                rule: diagnostic_payload.rule,
-                message: diagnostic_payload.message,
-                fixes: diagnostic_payload.fixes,
-                suggestions: diagnostic_payload.suggestions,
-                file_path: diagnostic_payload.file_path,
+            Ok(TsGoLintMessage::Diagnostic(match diagnostic_payload.kind {
+                DiagnosticKind::Rule => TsGoLintDiagnostic::Rule(TsGoLintRuleDiagnostic {
+                    rule: diagnostic_payload
+                        .rule
+                        .expect("Rule name must be present for rule diagnostics"),
+                    range: diagnostic_payload.range,
+                    message: diagnostic_payload.message,
+                    fixes: diagnostic_payload.fixes,
+                    suggestions: diagnostic_payload.suggestions,
+                    file_path: PathBuf::from(
+                        diagnostic_payload
+                            .file_path
+                            .expect("File path must be present for rule diagnostics"),
+                    ),
+                }),
+                DiagnosticKind::Internal => {
+                    TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
+                        message: diagnostic_payload.message,
+                    })
+                }
             }))
         }
     }
@@ -842,7 +932,6 @@ fn parse_single_message(
 /// Tries to find the `tsgolint` executable. In priority order, this will check:
 /// 1. The `OXLINT_TSGOLINT_PATH` environment variable.
 /// 2. The `tsgolint` binary in the current working directory's `node_modules/.bin` directory.
-/// 3. The `tsgolint` binary in the system PATH.
 ///
 /// # Errors
 /// Returns an error if `OXLINT_TSGOLINT_PATH` is set but does not exist or is not a file.
@@ -918,12 +1007,12 @@ mod test {
 
     use crate::{
         fixer::{Message, PossibleFixes},
-        tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintDiagnostic},
+        tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {
-        let diagnostic = TsGoLintDiagnostic {
+        let diagnostic = TsGoLintRuleDiagnostic {
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
@@ -954,7 +1043,7 @@ mod test {
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_fixes() {
-        let diagnostic = TsGoLintDiagnostic {
+        let diagnostic = TsGoLintRuleDiagnostic {
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
@@ -985,7 +1074,7 @@ mod test {
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_multiple_suggestions() {
-        let diagnostic = TsGoLintDiagnostic {
+        let diagnostic = TsGoLintRuleDiagnostic {
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
@@ -1039,7 +1128,7 @@ mod test {
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_with_fix_and_suggestions() {
-        let diagnostic = TsGoLintDiagnostic {
+        let diagnostic = TsGoLintRuleDiagnostic {
             range: Range { pos: 0, end: 10 },
             rule: "some_rule".into(),
             message: RuleMessage {
@@ -1081,6 +1170,7 @@ mod test {
 
         // Test payload with both fixes and suggestions omitted
         let json = r#"{
+            "kind": 0,
             "range": {"pos": 0, "end": 10},
             "rule": "no-unused-vars",
             "message": {
@@ -1094,10 +1184,11 @@ mod test {
         let payload: TsGoLintDiagnosticPayload = serde_json::from_str(json).unwrap();
         assert_eq!(payload.fixes.len(), 0);
         assert_eq!(payload.suggestions.len(), 0);
-        assert_eq!(payload.rule, "no-unused-vars");
+        assert_eq!(payload.rule, Some("no-unused-vars".to_string()));
 
         // Test payload with only fixes omitted
         let json_with_suggestions = r#"{
+            "kind": 0,
             "range": {"pos": 0, "end": 10},
             "rule": "no-unused-vars",
             "message": {
@@ -1125,6 +1216,7 @@ mod test {
 
         // Test payload with only suggestions omitted
         let json_with_fixes = r#"{
+            "kind": 0,
             "range": {"pos": 0, "end": 10},
             "rule": "no-unused-vars",
             "message": {

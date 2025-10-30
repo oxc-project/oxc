@@ -1323,4 +1323,11 @@ mod test {
             .with_cwd("fixtures/tsgolint_disable_directives".into())
             .test_and_snapshot(args);
     }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_error() {
+        let args = &["--type-aware"];
+        Tester::new().with_cwd("fixtures/tsgolint_config_error".into()).test_and_snapshot(args);
+    }
 }
