@@ -2,6 +2,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, module_record::ExportEntry, rule::Rule};
 
@@ -14,7 +16,8 @@ fn prefer_default_export_diagnostic(span: Span, target: Target) -> OxcDiagnostic
     OxcDiagnostic::warn(msg).with_help("Prefer a default export").with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Target {
     #[default]
     Single,
@@ -27,8 +30,12 @@ impl From<&str> for Target {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferDefaultExport {
+    /// Configuration option to specify the target type for preferring default exports.
+    /// - `"single"`: Prefer default export when there is only one export in the module.
+    /// - `"any"`: Prefer default export in any module that has exports.
     target: Target,
 }
 
@@ -69,6 +76,7 @@ declare_oxc_lint!(
     PreferDefaultExport,
     import,
     style,
+    config = PreferDefaultExport,
 );
 
 impl Rule for PreferDefaultExport {
