@@ -4,6 +4,8 @@ use oxc_ast::ast::{Statement, TSModuleReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -19,12 +21,24 @@ fn absolute_first_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 pub struct First {
+    /// Examples of **incorrect** code for this rule with `"absolute-first"`:
+    /// ```js
+    /// import { x } from './foo';
+    /// import { y } from 'bar'
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `"absolute-first"`:
+    /// ```js
+    /// import { y } from 'bar';
+    /// import { x } from './foo'
+    /// ```
     absolute_first: AbsoluteFirst,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum AbsoluteFirst {
     AbsoluteFirst,
     #[default]
@@ -67,26 +81,11 @@ declare_oxc_lint!(
     /// import { y } from './bar';
     /// export { x, y }
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// with `"absolute-first"`:
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// import { x } from './foo';
-    /// import { y } from 'bar'
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```js
-    /// import { y } from 'bar';
-    /// import { x } from './foo'
-    /// ```
     First,
     import,
     style,
-    pending  // TODO: fixer
+    pending,  // TODO: fixer
+    config = First,
 );
 
 fn is_relative_path(path: &str) -> bool {
