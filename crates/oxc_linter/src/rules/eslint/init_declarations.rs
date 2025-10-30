@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -23,7 +24,8 @@ fn init_declarations_diagnostic(span: Span, mode: &Mode, identifier_name: &str) 
         .with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum Mode {
     #[default]
     Always,
@@ -36,9 +38,14 @@ impl Mode {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct InitDeclarations {
+    /// When set to `"always"` (default), requires that variables be initialized on declaration.
+    /// When set to `"never"`, disallows initialization during declaration.
     mode: Mode,
+    /// When set to `true`, allows uninitialized variables in the init expression of `for`, `for-in`, and `for-of` loops.
+    /// Only applies when mode is set to `"never"`.
     ignore_for_loop_init: bool,
 }
 
@@ -109,7 +116,8 @@ declare_oxc_lint!(
     /// ```
     InitDeclarations,
     eslint,
-    style
+    style,
+    config = InitDeclarations,
 );
 
 impl Rule for InitDeclarations {
