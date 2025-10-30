@@ -23,6 +23,8 @@ fn absolute_first_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 pub struct First {
+    /// Whether to enforce absolute imports before relative imports.
+    ///
     /// Examples of **incorrect** code for this rule with `"absolute-first"`:
     /// ```js
     /// import { x } from './foo';
