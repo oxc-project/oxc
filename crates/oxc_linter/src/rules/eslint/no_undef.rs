@@ -15,7 +15,8 @@ fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
 #[serde(default)]
 pub struct NoUndef {
     /// When set to `true`, warns on undefined variables used in a `typeof` expression.
-    #[serde(rename = "typeof")] // This field can't be called typeof directly, as that's a keyword in Rust.
+    #[serde(rename = "typeof")]
+    // This field can't be called typeof directly, as that's a keyword in Rust.
     type_of: bool,
 }
 
