@@ -144,6 +144,7 @@ fn layout<'a>(
         AstNodes::StaticMemberExpression(_)
             | AstNodes::ComputedMemberExpression(_)
             | AstNodes::ChainExpression(_)
+            | AstNodes::TSNonNullExpression(_)
     ) {
         first_non_static_member_ancestor = first_non_static_member_ancestor.parent();
     }
