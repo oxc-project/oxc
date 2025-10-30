@@ -344,9 +344,7 @@ impl<'a> Comments<'a> {
             // Stop if the comment:
             // 1. is over the following node
             // 2. is after the enclosing node, which means the comment should be printed in the parent node.
-            if comment.span.end > following_span.start
-                || (comment.span.end > enclosing_span.end && enclosing_span != preceding_span)
-            {
+            if comment.span.end > following_span.start || comment.span.end > enclosing_span.end {
                 break;
             }
 

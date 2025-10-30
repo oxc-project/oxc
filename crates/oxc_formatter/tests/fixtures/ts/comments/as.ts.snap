@@ -1,0 +1,12 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+(activeService as unknown as QuickInputController) /* TS fail */
+  .pick();
+
+==================== Output ====================
+(activeService as unknown as QuickInputController) /* TS fail */
+  .pick();
+
+===================== End =====================

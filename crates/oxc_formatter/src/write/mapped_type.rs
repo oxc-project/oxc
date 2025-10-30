@@ -56,6 +56,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                 if let Some(name_type) = &name_type {
                     write!(f, [space(), "as", space(), name_type])?;
                 }
+                type_parameter.format_trailing_comments(f)?;
                 write!(f, "]")?;
                 if let Some(optional) = self.optional() {
                     write!(

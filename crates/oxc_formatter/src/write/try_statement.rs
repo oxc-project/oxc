@@ -115,6 +115,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
             write!(f, self.pattern())?;
         }
 
+        self.format_trailing_comments(f)?;
+
         write!(f, ")")
     }
 }
