@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_promise,
@@ -21,10 +22,14 @@ fn catch_or_return_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct CatchOrReturn(Box<CatchOrReturnConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct CatchOrReturnConfig {
+    /// Whether to allow `finally()` as a termination method.
     allow_finally: bool,
+    /// Whether to allow `then()` with two arguments as a termination method.
     allow_then: bool,
+    /// List of allowed termination methods (e.g., `catch`, `done`).
     termination_method: Vec<CompactStr>,
 }
 
@@ -77,6 +82,7 @@ declare_oxc_lint!(
     CatchOrReturn,
     promise,
     restriction,
+    config = CatchOrReturnConfig,
 );
 
 impl Rule for CatchOrReturn {
