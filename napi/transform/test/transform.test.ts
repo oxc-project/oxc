@@ -317,7 +317,7 @@ describe('inject plugin', () => {
     const code = 'console.log(a)';
     const ret = transform('test.tsx', code, {
       inject: {
-        'a': 'foo"',
+        a: 'foo"',
       },
     });
     expect(ret.code).toEqual('import a from "foo\\"";\nconsole.log(a);\n');
