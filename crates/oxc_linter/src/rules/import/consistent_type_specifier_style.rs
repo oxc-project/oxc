@@ -28,7 +28,7 @@ fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDia
     OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone,  Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Mode {
     #[default]
