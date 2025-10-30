@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -19,10 +20,14 @@ fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessRename(Box<NoUselessRenameConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUselessRenameConfig {
+    /// When set to `true`, allows using the same name in destructurings.
     ignore_destructuring: bool,
+    /// When set to `true`, allows renaming imports to the same name.
     ignore_import: bool,
+    /// When set to `true`, allows renaming exports to the same name.
     ignore_export: bool,
 }
 
@@ -60,7 +65,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessRename,
     eslint,
-    correctness
+    correctness,
+    config = NoUselessRenameConfig,
 );
 
 impl Rule for NoUselessRename {
