@@ -288,7 +288,7 @@ pub fn arguments_grouped_layout(
 
         // Check if we should group the first argument instead
         // Reuse the already-computed `second_can_group` value
-        should_group_first_argument_impl(call_like_span, first, second, second_can_group, f)
+        should_group_first_argument(call_like_span, first, second, second_can_group, f)
             .then_some(GroupedCallArgumentLayout::GroupedFirstArgument)
     } else {
         // For other cases (not exactly 2 arguments), only check last argument grouping
@@ -298,7 +298,7 @@ pub fn arguments_grouped_layout(
 }
 
 /// Checks if the first argument requires grouping
-fn should_group_first_argument_impl(
+fn should_group_first_argument(
     call_like_span: Span,
     first: &Expression,
     second: &Expression,
