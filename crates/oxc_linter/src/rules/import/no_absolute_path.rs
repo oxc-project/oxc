@@ -24,21 +24,19 @@ pub struct NoAbsolutePath {
     /// If set to `true`, dependency paths for ES6-style import statements will be resolved:
     ///
     /// ```js
-    /// /*eslint import/no-absolute-path: ['error', { esmodule: true }]*/
     /// import foo from '/foo'; // reported
     /// ```
     esmodule: bool,
     /// If set to `true`, dependency paths for CommonJS-style require calls will be resolved:
     ///
     /// ```js
-    /// /*eslint import/no-absolute-path: ['error', { commonjs: true }]*/
     /// var foo = require('/foo'); // reported
     /// ```
     commonjs: bool,
     /// If set to `true`, dependency paths for AMD-style define and require calls will be resolved:
     ///
     /// ```js
-    /// /*eslint import/no-absolute-path: ['error', { commonjs: false, amd: true }]*/
+    /// /* eslint import/no-absolute-path: ['error', { commonjs: false, amd: true }] */
     /// define(['/foo'], function (foo) { /*...*/ }) // reported
     /// require(['/foo'], function (foo) { /*...*/ }) // reported
     ///
