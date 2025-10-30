@@ -281,6 +281,9 @@ suite('E2E Diagnostics', () => {
     await workspace.getConfiguration('oxc').update('fmt.experimental', true);
     await workspace.getConfiguration('editor').update('defaultFormatter', 'oxc.oxc-vscode');
     await loadFixture('formatting');
+
+    await sleep(500);
+
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'formatting.ts');
 
     const document = await workspace.openTextDocument(fileUri);
