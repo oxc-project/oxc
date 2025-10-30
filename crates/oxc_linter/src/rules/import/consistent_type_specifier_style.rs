@@ -7,6 +7,8 @@ use oxc_codegen::{Context, Gen};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, SPAN, Span};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
@@ -26,7 +28,8 @@ fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDia
     OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Mode {
     #[default]
     PreferTopLevel,
@@ -39,8 +42,12 @@ impl Mode {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentTypeSpecifierStyle {
+    /// Specify whether to prefer top-level type-only imports or inline type specifiers.
+    /// - `"prefer-top-level"`: `import type { Foo } from 'foo'`
+    /// - `"prefer-inline"`: `import { type Foo } from 'foo'`
     mode: Mode,
 }
 
@@ -59,31 +66,32 @@ declare_oxc_lint!(
     ///
     /// Examples of incorrect code for the default `prefer-top-level` option:
     /// ```typescript
-    /// import {type Foo} from 'Foo';
-    /// import Foo, {type Bar} from 'Foo';
+    /// import { type Foo } from 'Foo';
+    /// import Foo, { type Bar } from 'Foo';
     /// ```
     ///
     /// Examples of correct code for the default option:
     /// ```typescript
-    /// import type {Foo} from 'Foo';
-    /// import type Foo, {Bar} from 'Foo';
+    /// import type { Foo } from 'Foo';
+    /// import type Foo, { Bar } from 'Foo';
     /// ```
     ///
     /// Examples of incorrect code for the `prefer-inline` option:
     /// ```typescript
-    /// import type {Foo} from 'Foo';
-    /// import type Foo, {Bar} from 'Foo';
+    /// import type { Foo } from 'Foo';
+    /// import type Foo, { Bar } from 'Foo';
     /// ```
     ///
     /// Examples of correct code for the `prefer-inline` option:
     /// ```typescript
-    /// import {type Foo} from 'Foo';
-    /// import Foo, {type Bar} from 'Foo';
+    /// import { type Foo } from 'Foo';
+    /// import Foo, { type Bar } from 'Foo';
     /// ```
     ConsistentTypeSpecifierStyle,
     import,
     style,
-    conditional_fix
+    conditional_fix,
+    config = ConsistentTypeSpecifierStyle,
 );
 
 impl Rule for ConsistentTypeSpecifierStyle {
