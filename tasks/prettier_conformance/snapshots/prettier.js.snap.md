@@ -1,4 +1,4 @@
-js compatibility: 673/749 (89.85%)
+js compatibility: 684/749 (91.32%)
 
 # Failed
 
@@ -43,8 +43,6 @@ js compatibility: 673/749 (89.85%)
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/logical-expressions/multiple-comments/17192.js | 💥 | 60.00% |
 | js/method-chain/issue-17457.js | 💥 | 0.00% |
-| js/no-semi/issue2006.js | 💥💥 | 75.00% |
-| js/no-semi/no-semi.js | 💥💥 | 98.90% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
@@ -52,15 +50,7 @@ js compatibility: 673/749 (89.85%)
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/require/comments.js | 💥 | 81.25% |
 | js/require/long-module-name.js | 💥 | 18.18% |
-| js/reserved-word/interfaces.js | 💥 | 85.71% |
-| js/reserved-word/let.js | 💥 | 85.71% |
-| js/reserved-word/yield.js | 💥 | 85.71% |
-| js/sequence-break/break.js | 💥 | 90.91% |
-| js/sequence-expression/expression.js | 💥 | 33.33% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
-| js/sequence-expression/return.js | 💥 | 50.00% |
-| js/sequence-expression/no-semi/expression.js | 💥 | 50.00% |
-| js/strings/non-octal-eight-and-nine.js | 💥💥 | 71.43% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | js/ternaries/binary.js | 💥💥💥💥✨✨✨✨ | 18.42% |
 | js/ternaries/func-call.js | 💥💥💥💥✨✨✨✨ | 25.00% |
@@ -76,7 +66,6 @@ js compatibility: 673/749 (89.85%)
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

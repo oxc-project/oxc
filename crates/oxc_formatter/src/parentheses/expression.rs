@@ -579,14 +579,15 @@ impl NeedsParentheses<'_> for AstNode<'_, SequenceExpression<'_>> {
             return false;
         }
 
-        !matches!(
-            self.parent,
+        match self.parent {
             AstNodes::ReturnStatement(_)
+            | AstNodes::ThrowStatement(_)
             // There's a precedence for writing `x++, y++`
             | AstNodes::ForStatement(_)
-            | AstNodes::ExpressionStatement(_)
-            | AstNodes::SequenceExpression(_)
-        )
+            | AstNodes::SequenceExpression(_) => false,
+            AstNodes::ExpressionStatement(stmt) => !stmt.is_arrow_function_body(),
+            _ => true,
+        }
     }
 }
 

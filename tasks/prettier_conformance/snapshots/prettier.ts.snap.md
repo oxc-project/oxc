@@ -1,4 +1,4 @@
-ts compatibility: 537/598 (89.80%)
+ts compatibility: 538/598 (89.97%)
 
 # Failed
 
@@ -6,7 +6,6 @@ ts compatibility: 537/598 (89.80%)
 | :-------- | :--------------: | :---------: |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/jsx/regex.js | 💥💥💥💥 | 75.00% |
 | jsx/optional-chaining/optional-chaining.jsx | 💥 | 85.96% |
 | jsx/single-attribute-per-line/single-attribute-per-line.js | 💥✨ | 43.37% |
 | jsx/text-wrap/test.js | 💥 | 99.56% |

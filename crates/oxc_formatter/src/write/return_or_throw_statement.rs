@@ -95,7 +95,7 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
             && has_argument_leading_comments(argument, f)
         {
             write!(f, [text("("), &block_indent(&argument), text(")")])
-        } else if is_binary_or_sequence_argument(argument) {
+        } else if argument.is_binaryish() {
             write!(
                 f,
                 [group(&format_args!(
@@ -104,6 +104,8 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
                     if_group_breaks(&text(")"))
                 ))]
             )
+        } else if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
+            write!(f, [group(&format_args!(text("("), soft_block_indent(&argument), text(")")))])
         } else {
             write!(f, argument)
         }
@@ -168,11 +170,7 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
     false
 }
 
+#[inline]
 fn is_binary_or_sequence_argument(argument: &Expression) -> bool {
-    matches!(
-        argument,
-        Expression::BinaryExpression(_)
-            | Expression::LogicalExpression(_)
-            | Expression::SequenceExpression(_)
-    )
+    matches!(argument, Expression::BinaryExpression(_) | Expression::LogicalExpression(_))
 }
