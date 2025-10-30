@@ -47,8 +47,8 @@ pub struct OperatorAssignment {
     ///
     /// Example:
     /// ```json
-    /// "eslint/max-nested-callbacks": ["error", "always"]
-    /// "eslint/max-nested-callbacks": ["error", "never"]
+    /// "eslint/operator-assignment": ["error", "always"]
+    /// "eslint/operator-assignment": ["error", "never"]
     /// ```
     mode: Mode,
 }
