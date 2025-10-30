@@ -4,45 +4,6 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
-## [0.9.0] - 2025-10-30
-
-### 🚀 Features
-
-- 8fe7e85 formatter: Support printing Formatter IR (#14855) (Dunqing)
-
-### 🐛 Bug Fixes
-
-- a6b6ef8 formatter: Correct calculating layout for `TSNonNullExpression` in `StaticMemberExpression` (#15065) (Dunqing)
-- 99bd995 formatter: Print parenthesis for sequence expression in `ReturnStatement` and `ExpressionStatement` (#15062) (Dunqing)
-- f3fb998 formatter: Correct printing comments for `TSAsExpression` (#15061) (Dunqing)
-- 1e4a018 formatter: Correct checking of the short argument for `CallArguments` (#15055) (Dunqing)
-- c0dfd9b formatter: Print comments before fat arrow as-is for `ArrowFunctionExpression` (#15050) (Dunqing)
-- 206b519 formatter: Should hug parameter with `TSMappedType` type annotation (#15049) (Dunqing)
-- e48c604 formatter: Incorrect formatting of a function with `this` parameter (#15031) (Dunqing)
-- a9f0c45 formatter: Decorators and class method on the same line shouldn't be broken by a leading comment of the method (#15029) (Dunqing)
-- 43d74e4 formatter: Handle `<CRLF>` for `SourceText` (#15016) (leaysgur)
-- 34fab40 formatter: Correct calculating layout for `ChainExpression` in `StaticMemberExpression` (#14986) (Dunqing)
-- 68dc101 formatter: Should not break when the parent of root of `StaticMemberExpression` is used as the `Argument` of `NewExpression` (#14985) (Dunqing)
-- 071b739 formatter: Align the short argument handling for UnaryExpression with Prettier (#14984) (Dunqing)
-- 3940f3a formatter: `BestFitting` doesn't exactly matches the `conditinalGroup` behavior in Prettier (#14983) (Dunqing)
-- 4a84e44 formatter: Align the logic of printing type parameters, parameters, and return type for functions with Prettier (#14942) (Dunqing)
-- 68c1f2a formatter: Non-nested static member expressions will never break (#14929) (Dunqing)
-- 42adc47 formatter: Check whether a type alias is complex when its right hand side never break (#14928) (Dunqing)
-- e501f13 formatter: Should not add a trailing comma for long curried calls when `trailingComma` is es5 (#14913) (Dunqing)
-
-### 🚜 Refactor
-
-- 7d64291 formatter: Simplify printing ClassElement with a semicolon (#15030) (Dunqing)
-- 5de99c2 formatter: Export unified way to get_parse_options (#15027) (leaysgur)
-- f6f22e2 formatter: Clean up unneeded implementations for printing comments (#14935) (Dunqing)
-- 7a2b9d1 formatter: Improve printing trailing comments (#14934) (Dunqing)
-- ba10caa formatter: Align printing trailing comments with Prettier (#14927) (Dunqing)
-- 597c9e8 formatter: Remove redundunt public API (#14915) (leaysgur)
-
-### ⚡ Performance
-
-- 467b3a1 formatter: Optimize grouping logic for call arguments (#15033) (Dunqing)
-
 
 ## [0.8.0] - 2025-10-22
 
