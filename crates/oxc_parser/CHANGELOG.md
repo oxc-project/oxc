@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.96.0] - 2025-10-30
+
+### 🐛 Bug Fixes
+
+- 384ea3c parser: Report err on missing function body in expression (#14946) (camc314)
+
+
 ## [0.95.0] - 2025-10-15
 
 ### 🚜 Refactor
