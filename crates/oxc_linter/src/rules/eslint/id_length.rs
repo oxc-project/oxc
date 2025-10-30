@@ -39,7 +39,7 @@ impl PropertyKind {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct IdLength(Box<IdLengthConfig>);
 
 impl Deref for IdLength {
@@ -79,12 +79,6 @@ impl Default for IdLengthConfig {
             min: DEFAULT_MIN_LENGTH,
             properties: PropertyKind::default(),
         }
-    }
-}
-
-impl Default for IdLength {
-    fn default() -> Self {
-        Self(Box::new(IdLengthConfig::default()))
     }
 }
 
