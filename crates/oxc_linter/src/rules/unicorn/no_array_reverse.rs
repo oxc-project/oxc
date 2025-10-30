@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -15,8 +16,16 @@ fn no_array_reverse_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoArrayReverse {
+    /// This rule allows `array.reverse()` as an expression statement by default.
+    /// Set to `false` to forbid `Array#reverse()` even if it's an expression statement.
+    ///
+    /// Examples of **incorrect** code for this rule with this option set to `false`:
+    /// ```js
+    /// array.reverse();
+    /// ```
     allow_expression_statement: bool,
 }
 
@@ -47,24 +56,11 @@ declare_oxc_lint!(
     /// ```js
     /// const reversed = [...array].toReversed();
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### allowExpressionStatement
-    ///
-    /// `{ type: boolean, default: true }`
-    ///
-    /// This rule allow `array.reverse()` as an expression statement by default,
-    /// Pass allowExpressionStatement: false to forbid `Array#reverse()` even it's an expression statement.
-    ///
-    /// Examples of **incorrect** code for this rule with the `{ "allowExpressionStatement": false }` option:
-    /// ```js
-    /// array.reverse();
-    /// ```
     NoArrayReverse,
     unicorn,
     suspicious,
     fix,
+    config = NoArrayReverse,
 );
 
 impl Rule for NoArrayReverse {
