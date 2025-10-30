@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
@@ -20,9 +21,12 @@ fn max_dependencies_diagnostic<S: Into<Cow<'static, str>>>(
 #[derive(Debug, Default, Clone)]
 pub struct MaxDependencies(Box<MaxDependenciesConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct MaxDependenciesConfig {
+    /// Maximum number of dependencies allowed in a module.
     max: usize,
+    /// Whether to ignore type imports when counting dependencies.
     ignore_type_imports: bool,
 }
 
@@ -70,6 +74,7 @@ declare_oxc_lint!(
     MaxDependencies,
     import,
     pedantic,
+    config = MaxDependenciesConfig,
 );
 
 impl Rule for MaxDependencies {
