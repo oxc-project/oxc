@@ -530,7 +530,7 @@ fn test() {
             r"
             const Comp = () => (
               <html>
-
+                
               </html>
             );
             ",
