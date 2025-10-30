@@ -17,6 +17,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
@@ -26,7 +27,8 @@ fn child_of_html_element(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct JsxNoUselessFragment {
     /// Allow fragments with a single expression child.
     pub allow_expressions: bool,
@@ -39,7 +41,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Fragments are a useful tool when you need to group multiple children without adding a node to the DOM tree. However, sometimes you might end up with a fragment with a single child. When this child is an element, string, or expression, it's not necessary to use a fragment.
+    /// Fragments are a useful tool when you need to group multiple children without adding a
+    /// node to the DOM tree. However, sometimes you might end up with a fragment with a single
+    /// child. When this child is an element, string, or expression, it's not necessary to
+    /// use a fragment.
     ///
     /// ### Examples
     ///
@@ -57,7 +62,8 @@ declare_oxc_lint!(
     JsxNoUselessFragment,
     react,
     pedantic,
-    suggestion
+    suggestion,
+    config = JsxNoUselessFragment,
 );
 
 impl Rule for JsxNoUselessFragment {
@@ -524,7 +530,7 @@ fn test() {
             r"
             const Comp = () => (
               <html>
-                
+
               </html>
             );
             ",
