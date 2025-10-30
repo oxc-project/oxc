@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -24,9 +25,10 @@ fn no_unsafe_arithmetic_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoUnsafeOptionalChaining {
-    /// Disallow arithmetic operations on optional chaining expressions (Default false).
+    /// Disallow arithmetic operations on optional chaining expressions.
     /// If this is true, this rule warns arithmetic operations on optional chaining expressions, which possibly result in NaN.
     disallow_arithmetic_operators: bool,
 }
@@ -55,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     NoUnsafeOptionalChaining,
     eslint,
-    correctness
+    correctness,
+    config = NoUnsafeOptionalChaining,
 );
 
 impl Rule for NoUnsafeOptionalChaining {
