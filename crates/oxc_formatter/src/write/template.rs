@@ -740,5 +740,5 @@ fn try_format_embedded_template<'a>(
         Ok(())
     });
 
-    Some(write!(f, [text("`"), block_indent(&format_content), text("`")]))
+    Some(write!(f, ["`", block_indent(&format_content), "`"]))
 }
