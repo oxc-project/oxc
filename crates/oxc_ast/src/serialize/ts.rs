@@ -285,8 +285,6 @@ impl ESTree for TSMappedTypeOptional<'_, '_> {
     }
 }
 
-
-
 /// Serializer for `expression` field of `TSClassImplements`.
 ///
 /// Our AST represents `X.Y` in `class C implements X.Y {}` as a `TSQualifiedName`.

@@ -22,17 +22,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         let name_type = self.name_type();
         let should_expand = has_line_break_before_property_name(self, f.source_text());
 
-        let type_annotation_has_leading_comment =
-            f.comments().has_comment_before(key.span.start);
+        let type_annotation_has_leading_comment = f.comments().has_comment_before(key.span.start);
 
         let format_inner = format_with(|f| {
             if should_expand {
-                let comments =
-                    if f.comments().has_leading_own_line_comment(self.key.span.start) {
-                        f.context().comments().comments_before(self.key.span.start)
-                    } else {
-                        f.context().comments().comments_before_character(self.span.start, b'[')
-                    };
+                let comments = if f.comments().has_leading_own_line_comment(self.key.span.start) {
+                    f.context().comments().comments_before(self.key.span.start)
+                } else {
+                    f.context().comments().comments_before_character(self.span.start, b'[')
+                };
                 write!(f, FormatLeadingComments::Comments(comments))?;
             }
 
