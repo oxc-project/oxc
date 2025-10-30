@@ -3,6 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -10,8 +11,12 @@ fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(default)]
 pub struct NoUndef {
+    /// When set to `true`, warns on undefined variables used in a `typeof` expression.
+    #[serde(rename = "typeof")]
+    // This field can't be called typeof directly, as that's a keyword in Rust.
     type_of: bool,
 }
 
@@ -33,7 +38,8 @@ declare_oxc_lint!(
     /// ```
     NoUndef,
     eslint,
-    nursery
+    nursery,
+    config = NoUndef,
 );
 
 impl Rule for NoUndef {
@@ -237,7 +243,10 @@ fn test() {
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test_and_snapshot();
 
-    let pass = vec![];
+    let pass = vec![(
+        "if (typeof anUndefinedVar === 'string') {}",
+        Some(serde_json::json!([{ "typeof": false }])),
+    )];
     let fail = vec![(
         "if (typeof anUndefinedVar === 'string') {}",
         Some(serde_json::json!([{ "typeof": true }])),
