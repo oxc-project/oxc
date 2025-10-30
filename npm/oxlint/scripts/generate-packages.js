@@ -90,7 +90,7 @@ function writeManifest() {
   // Do not automatically install 'oxlint-tsgolint'.
   // https://docs.npmjs.com/cli/v11/configuring-npm/package-json#peerdependenciesmeta
   manifestData.peerDependencies = {
-    'oxlint-tsgolint': '>=0.3.0',
+    'oxlint-tsgolint': '>=0.4.0',
   };
   manifestData.peerDependenciesMeta = {
     'oxlint-tsgolint': {

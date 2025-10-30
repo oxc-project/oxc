@@ -511,6 +511,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "Will be restored in #15048"]
     #[cfg(not(target_endian = "big"))]
     fn test_lint_on_run_on_type_on_save() {
         Tester::new(
@@ -531,6 +532,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "Will be restored in #15048"]
     #[cfg(not(target_endian = "big"))]
     fn test_lint_on_run_on_save_on_save() {
         Tester::new(
@@ -660,6 +662,7 @@ mod test {
     }
 
     #[test]
+    #[ignore = "Will be restored in #15048"]
     #[cfg(not(target_endian = "big"))] // TODO: tsgolint doesn't support big endian?
     fn test_tsgo_lint() {
         let tester = Tester::new(

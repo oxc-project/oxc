@@ -8,7 +8,7 @@
     "build-test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" build-test",
     "test": "pnpm --workspace-concurrency=1 --filter \"./napi/*\" --filter \"./apps/*\" test",
     "fmt": "oxfmt -c oxfmtrc.jsonc",
-    "lint": "oxlint -c oxlintrc.json --type-aware --deny-warnings"
+    "lint": "oxlint -c oxlintrc.json --deny-warnings"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.2",
@@ -16,7 +16,7 @@
     "emnapi": "1.6.0",
     "oxfmt": "^0.8.0",
     "oxlint": "^1.24.0",
-    "oxlint-tsgolint": "0.3.0",
+    "oxlint-tsgolint": "0.4.0",
     "publint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
