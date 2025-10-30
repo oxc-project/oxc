@@ -43,7 +43,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
         quasi.format_leading_comments(f);
 
-        if let Some(result) = write_embedded_template(self, f) {
+        if let Some(result) = try_format_embedded_template(self, f) {
             result
         } else if is_test_each_pattern(&self.tag) {
             let template = &EachTemplateTable::from_template(quasi, f)?;
@@ -697,8 +697,9 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
     }
 }
 
-/// Write a tagged template formatted with the embedded formatter.
-fn write_embedded_template<'a>(
+/// Try to format a tagged template with the embedded formatter if supported.
+/// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
+fn try_format_embedded_template<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> Option<FormatResult<()>> {
@@ -721,41 +722,23 @@ fn write_embedded_template<'a>(
     let embedded_formatter = f.context().embedded_formatter()?;
     let template_content = quasi.quasis[0].value.raw.as_str();
 
-    if let Ok(formatted) = embedded_formatter.format(tag_name, template_content) {
-        let trimmed = formatted.trim_end();
+    let Ok(formatted) = embedded_formatter.format(tag_name, template_content) else {
+        return None;
+    };
 
-        // Split into lines and create format elements for each line
-        let allocator = f.context().allocator();
-        let lines: Vec<_> = trimmed.split('\n').collect();
+    // Format with proper template literal structure:
+    // - Opening backtick
+    // - Hard line break (newline after backtick)
+    // - Indented content (each line will be indented)
+    // - Hard line break (newline before closing backtick)
+    // - Closing backtick
+    let format_content = format_once(|f: &mut Formatter<'_, 'a>| {
+        let content = f.context().allocator().alloc_str(&formatted);
+        for line in content.split('\n') {
+            write!(f, [dynamic_text(line), hard_line_break()])?;
+        }
+        Ok(())
+    });
 
-        // Build the formatted content with proper indentation
-        let formatted_content = format_with(|f| {
-            for (i, line) in lines.iter().enumerate() {
-                if i > 0 {
-                    write!(f, [hard_line_break()])?;
-                }
-                let allocated_line = allocator.alloc_str(line);
-                write!(f, [dynamic_text(allocated_line)])?;
-            }
-            Ok(())
-        });
-
-        // Format with proper template literal structure:
-        // - Opening backtick
-        // - Hard line break (newline after backtick)
-        // - Indented content (each line will be indented)
-        // - Hard line break (newline before closing backtick)
-        // - Closing backtick
-        Some(write!(
-            f,
-            [
-                text("`"),
-                indent(&format_args!(hard_line_break(), formatted_content)),
-                hard_line_break(),
-                text("`")
-            ]
-        ))
-    } else {
-        None
-    }
+    Some(write!(f, [text("`"), block_indent(&format_content), text("`")]))
 }
