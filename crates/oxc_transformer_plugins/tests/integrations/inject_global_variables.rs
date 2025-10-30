@@ -363,3 +363,64 @@ fn is_reference() {
         config,
     );
 }
+
+#[test]
+fn escape_source_with_double_quote() {
+    // Test case from issue: source string containing a double quote should be escaped
+    let config =
+        InjectGlobalVariablesConfig::new(vec![InjectImport::default_specifier("foo\"", "a")]);
+    test(
+        "console.log(a)",
+        r#"
+        import a from "foo\"";
+        console.log(a)
+        "#,
+        config,
+    );
+}
+
+#[test]
+fn escape_source_with_single_quote() {
+    // Source string containing a single quote should be escaped when using single quotes
+    let config =
+        InjectGlobalVariablesConfig::new(vec![InjectImport::default_specifier("foo'", "a")]);
+    // Note: The test helper uses single_quote: true in codegen options
+    test(
+        "console.log(a)",
+        r#"
+        import a from 'foo\'';
+        console.log(a)
+        "#,
+        config,
+    );
+}
+
+#[test]
+fn escape_source_with_backslash() {
+    // Source string containing a backslash should be escaped
+    let config =
+        InjectGlobalVariablesConfig::new(vec![InjectImport::default_specifier("foo\\bar", "a")]);
+    test(
+        "console.log(a)",
+        r#"
+        import a from 'foo\\bar';
+        console.log(a)
+        "#,
+        config,
+    );
+}
+
+#[test]
+fn escape_source_with_newline() {
+    // Source string containing a newline should be escaped
+    let config =
+        InjectGlobalVariablesConfig::new(vec![InjectImport::default_specifier("foo\nbar", "a")]);
+    test(
+        "console.log(a)",
+        r#"
+        import a from 'foo\nbar';
+        console.log(a)
+        "#,
+        config,
+    );
+}
