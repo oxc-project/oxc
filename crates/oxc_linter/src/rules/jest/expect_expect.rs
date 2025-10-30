@@ -11,6 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::scope::ScopeFlags;
+use schemars::JsonSchema;
 
 use crate::{
     ast_util::get_declaration_of_variable,
@@ -30,10 +31,14 @@ fn expect_expect_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ExpectExpect(Box<ExpectExpectConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ExpectExpectConfig {
+    /// A list of function names that should be treated as assertion functions.
     assert_function_names_jest: Vec<CompactStr>,
+    /// A list of function names that should be treated as assertion functions.
     assert_function_names_vitest: Vec<CompactStr>,
+    /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
 }
 
@@ -67,7 +72,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    ///  People may forget to add assertions.
+    /// People may forget to add assertions.
     ///
     /// ### Examples
     ///
@@ -91,7 +96,8 @@ declare_oxc_lint!(
     /// ```
     ExpectExpect,
     jest,
-    correctness
+    correctness,
+    config = ExpectExpectConfig,
 );
 
 impl Rule for ExpectExpect {
