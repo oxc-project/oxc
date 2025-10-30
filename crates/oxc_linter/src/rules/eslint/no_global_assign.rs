@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{config::GlobalValue, context::LintContext, rule::Rule};
 
@@ -12,9 +13,12 @@ fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoGlobalAssign(Box<NoGlobalAssignConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoGlobalAssignConfig {
-    excludes: Vec<CompactStr>,
+    /// List of global variable names to exclude from this rule.
+    /// Globals listed here can be assigned to without triggering warnings.
+    exceptions: Vec<CompactStr>,
 }
 
 impl std::ops::Deref for NoGlobalAssign {
@@ -32,7 +36,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// In almost all cases, you don’t want to assign a value to these global variables as doing so could result in losing access to important functionality.
+    /// In almost all cases, you don't want to assign a value to these global variables as doing so could result in losing access to important functionality.
     ///
     /// ### Examples
     ///
@@ -42,7 +46,8 @@ declare_oxc_lint!(
     /// ```
     NoGlobalAssign,
     eslint,
-    correctness
+    correctness,
+    config = NoGlobalAssignConfig
 );
 
 impl Rule for NoGlobalAssign {
@@ -50,7 +55,7 @@ impl Rule for NoGlobalAssign {
         let obj = value.get(0);
 
         Self(Box::new(NoGlobalAssignConfig {
-            excludes: obj
+            exceptions: obj
                 .and_then(|v| v.get("exceptions"))
                 .and_then(serde_json::Value::as_array)
                 .unwrap_or(&vec![])
@@ -68,7 +73,7 @@ impl Rule for NoGlobalAssign {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write()
-                    && !self.excludes.iter().any(|n| n == name)
+                    && !self.exceptions.iter().any(|n| n == name)
                     && ctx
                         .get_global_variable_value(name)
                         .is_some_and(|global| global == GlobalValue::Readonly)
