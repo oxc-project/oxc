@@ -4,6 +4,93 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.25.0] - 2025-10-30
+
+### 💥 BREAKING CHANGES
+
+- 659fd37 linter: [**BREAKING**] `tsgolint`: request fixes when necessary (#15048) (camchenry)
+
+### 🚀 Features
+
+- ed24d60 linter: Expose tsgolint program diagnostics (#15080) (camc314)
+- 23660c9 linter: `tsgolint`: handle omitted fixes and suggestions (#15047) (camchenry)
+- 3e15cdd linter/strict-boolean-expression: Add rule (#14930) (camc314)
+- bd74603 linter: Add support for vitest/valid-title rule (#12085) (Tyler Earls)
+
+### 🐛 Bug Fixes
+
+- e41dee5 linter/consistent-type-definition: Skip comments when looking for token (#14909) (camc314)
+- 806f9ba linter: Search system PATH for tsgolint executable (#14861) (magic-akari)
+- ee68089 linter: Normalize JS plugin names (#15010) (Peter Wagenet)
+- 5eaaa8e linter: Prevent underflow in count_comment_lines for JSX files (#15026) (ityuany)
+- 88577a8 import/no-namespace: Remove dot special case (#15032) (Arsh)
+- 55ee962 linter/vars-on-top: False positive with typescript declare block (#14952) (Hamir Mahal)
+- 2de9f39 linter/plugins: Fall back to package name if meta.name is missing (#14938) (Peter Wagenet)
+- 5ace84b linter/no-empty-object-type: Parse `"allowWithName"` as regular expressions (#14943) (Arsh)
+- 3e29d23 linter: Use aliases when parsing cli rules (#14912) (Arsh)
+- b94b6aa linter/explicit-module-boundary-types: False negative with export default function (#14905) (camc314)
+- 7060863 linter/no-standaline-expect: False positive with expect in callback (#14902) (camc314)
+- dc5a71b linter/no-accumulating-spread: False positive in nested callbacks within reduce (#14898) (camc314)
+
+### 📚 Documentation
+
+- e15c91c linter: Add configuration option docs for eslint/init-declarations rule. (#15085) (Connor Shea)
+- f4505bc linter: Add configuration option docs for eslint/id-length rule. (#15083) (Connor Shea)
+- dd4c9d2 linter: Add configuration option docs for eslint/getter-return rule. (#15081) (Connor Shea)
+- 008e67a linter: Add configuration option docs for jest/no-large-snapshots rule. (#15079) (Connor Shea)
+- 31daf79 linter: Add configuration option docs for import/no-commonjs rule. (#15077) (Connor Shea)
+- 9bf8ebe linter: Add configuration option docs for jsdoc/check-tag-names rule. (#15076) (Connor Shea)
+- 491ab5e linter: Add configuration option docs for jsdoc/no-defaults rule. (#15074) (Connor Shea)
+- 2602d7e linter: Add configuration option docs for jsdoc/empty-tags rule. (#15072) (Connor Shea)
+- c3a92e0 linter: Add configuration option docs for oxc/no-rest-spread-properties rule. (#15070) (Connor Shea)
+- c7c9213 linter: Add configuration option docs for oxc/no-optional-chaining rule. (#15071) (Connor Shea)
+- 47a616f linter: Add configuration option docs for typescript/no-empty-object-type rule. (#14968) (Connor Shea)
+- fcc1e25 linter: Add configuration option docs for typescript/no-explicit-any rule. (#15051) (Connor Shea)
+- 1b88934 linter: Add configuration option docs for eslint/no-multi-assign rule. (#15052) (Connor Shea)
+- 909d4b9 linter: Add configuration option docs for eslint/no-unsafe-negation rule. (#15053) (Connor Shea)
+- f60763b linter: Add configuration option docs for eslint/no-useless-computed-key rule. (#15054) (Connor Shea)
+- c8911d4 linter: Add configuration option docs for eslint/no-unneeded-ternary rule. (#15056) (Connor Shea)
+- 9fc6374 linter: Add configuration option docs for eslint/no-misleading-character-class rule. (#15058) (Connor Shea)
+- 7656e2b linter: Add configuration option docs for eslint/sort-imports rule. (#15013) (Connor Shea)
+- bb06039 linter: Add configuration option docs for unicorn/no-instanceof-builtins rule. (#14999) (Connor Shea)
+- a4af5ff linter: Add configuration option docs for unicorn/no-typeof-undefined rule. (#15001) (Connor Shea)
+- ac2ed39 linter: Add configuration option docs for unicorn/numeric-separators-style rule. (#15002) (Connor Shea)
+- 5ce3e33 linter: Add configuration option docs for unicorn/prefer-object-from-entries rule. (#15003) (Connor Shea)
+- 07aea72 linter: Add configuration option docs for eslint/sort-keys rule. (#15014) (Connor Shea)
+- 35b36e0 linter: Add configuration option docs for eslint/no-eval rule. (#15015) (Connor Shea)
+- d222b85 linter: Add configuration option docs for eslint/no-empty rule. (#15017) (Connor Shea)
+- 83bbc37 linter: Add configuration option docs for eslint/no-extend-native rule. (#15018) (Connor Shea)
+- aade2fe linter: Add configuration option docs for eslint/no-extra-boolean-cast rule. (#15019) (Connor Shea)
+- bae0c09 linter: Add configuration option docs for jsdoc/require-yields rule. (#15024) (Connor Shea)
+- 06c77b6 linter: Add configuration option docs for unicorn/prefer-at rule. (#15023) (Connor Shea)
+- 54b2cb4 linter: Add configuration option docs for eslint/max-classes-per-file rule. (#15022) (Connor Shea)
+- b5acda7 linter: Add configuration option docs for typescript/explicit-module-boundary-types rule. (#15021) (Connor Shea)
+- a0c6162 linter: Add configuration option docs for vue/max-props rule. (#14966) (Connor Shea)
+- 3ec59c0 linter: Add configuration option docs for no-async-endpoint-handlers rule. (#14965) (Connor Shea)
+- 7a275fd linter: Add configuration option docs for no-map-spread rule. (#14964) (Connor Shea)
+- 0002b7c linter: Add configuration option docs for no-barrel-file rule. (#14963) (Connor Shea)
+- fd4b7ab linter: Add configuration option docs for unicorn/consistent-function-scoping rule. (#14969) (Connor Shea)
+- aa339b3 linter: Add configuration option docs for eslint/no-void rule. (#14970) (Connor Shea)
+- af8bdae linter: Add configuration option docs for import/no-anonymous-default-export rule. (#14971) (Connor Shea)
+- 5a81953 linter: Add configuration option docs for jest/require-hook rule. (#14972) (Connor Shea)
+- 1be268d linter: Add configuration option docs for jest/require-top-level-describe rule. (#14973) (Connor Shea)
+- 860a58c linter: Add configuration option docs for jest/no-hooks rule. (#14974) (Connor Shea)
+- b69b586 linter: Add configuration option docs for jest/max-expects rule. (#14975) (Connor Shea)
+- 2e02fe0 linter: Add configuration option docs for jest/no-deprecated-functions rule (#14976) (Connor Shea)
+- cdc6c4f linter: Add configuration option docs for unicorn/no-array-sort rule. (#14977) (Connor Shea)
+- 40eb394 linter/no-unassigned-import-config: Add auto generated config docs (#14918) (camc314)
+
+### ⚡ Performance
+
+- a9f68b2 linter: Move up rule retainment into initial collection to reduce allocation size (#14822) (camchenry)
+- b27c5b9 linter: Add codegen support for regex nodes (#14874) (camchenry)
+
+### 🧪 Testing
+
+- bf898e5 linter: Increase stability of tsgolint test cases (#15063) (camc314)
+- 49da411 linter/no-standalone-expect: Fix tests (#14901) (camc314)
+
+
 ## [1.24.0] - 2025-10-22
 
 ### 🚀 Features
