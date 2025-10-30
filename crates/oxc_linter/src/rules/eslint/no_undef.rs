@@ -12,9 +12,10 @@ fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(default)]
 pub struct NoUndef {
-    /// The `typeOf` option allows the rule to ignore undefined variables used in a `typeof` expression.
+    /// When set to `true`, warns on undefined variables used in a `typeof` expression.
+    #[serde(rename = "typeof")] // This field can't be called typeof directly, as that's a keyword in Rust.
     type_of: bool,
 }
 
@@ -241,11 +242,11 @@ fn test() {
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test_and_snapshot();
 
-    let pass = vec![(
+    let pass = vec![];
+    let fail = vec![(
         "if (typeof anUndefinedVar === 'string') {}",
-        Some(serde_json::json!([{ "typeOf": true }])),
+        Some(serde_json::json!([{ "typeof": true }])),
     )];
-    let fail = vec![];
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test();
 
