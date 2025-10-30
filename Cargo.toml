@@ -198,7 +198,7 @@ lazy-regex = "3.4.1" # Lazy regex compilation
 log = "0.4.28" # Logging facade
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.7.5" # Fast byte searching
-miette = { package = "oxc-miette", version = "2.5.0", features = ["fancy-no-syscall"] } # Error reporting
+miette = { package = "oxc-miette", version = "2.6.0", features = ["fancy-no-syscall"] } # Error reporting
 mimalloc-safe = "0.1.54" # Fast allocator
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers

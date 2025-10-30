@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -28,11 +29,12 @@ impl std::ops::Deref for PreferNumberProperties {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct PreferNumberPropertiesConfig {
-    // default is true
+    /// If set to `true`, checks for usage of `Infinity` and `-Infinity` as global variables.
     check_infinity: bool,
-    // default is true
+    /// If set to `true`, checks for usage of `NaN` as a global variable.
     check_nan: bool,
 }
 
@@ -75,7 +77,8 @@ declare_oxc_lint!(
     PreferNumberProperties,
     unicorn,
     restriction,
-    dangerous_fix
+    dangerous_fix,
+    config = PreferNumberPropertiesConfig,
 );
 
 impl Rule for PreferNumberProperties {
