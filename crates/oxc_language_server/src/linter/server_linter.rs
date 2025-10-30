@@ -598,7 +598,7 @@ mod test {
     #[test]
     fn test_invalid_syntax_file() {
         Tester::new("fixtures/linter/invalid_syntax", None)
-            .test_and_snapshot_single_file("debugger.ts");
+            .test_and_snapshot_multiple_file(&["debugger.ts", "invalid.vue"]);
     }
 
     #[test]
