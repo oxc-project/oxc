@@ -363,3 +363,39 @@ fn is_reference() {
         config,
     );
 }
+
+#[test]
+fn import_meta() {
+    // handles import.meta
+    let config = InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+        "foo",
+        None,
+        "import.meta",
+    )]);
+    test(
+        "console.log(import.meta)",
+        "
+        import { default as $inject_import_meta } from 'foo';
+        console.log($inject_import_meta);
+        ",
+        config,
+    );
+}
+
+#[test]
+fn import_meta_property() {
+    // handles import.meta.foo
+    let config = InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier(
+        "bar",
+        None,
+        "import.meta.foo",
+    )]);
+    test(
+        "console.log(import.meta.foo)",
+        "
+        import { default as $inject_import_meta_foo } from 'bar';
+        console.log($inject_import_meta_foo);
+        ",
+        config,
+    );
+}

@@ -616,6 +616,25 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         cur_part_name = &THIS_ATOM;
                         None
                     }
+                    Expression::MetaProperty(meta) => {
+                        // Handle import.meta
+                        // When we encounter a MetaProperty, we need to verify that the remaining
+                        // parts match ["import", "meta"]
+                        if meta.meta.name == "import" && meta.property.name == "meta" {
+                            // At this point, i is the current position we're checking
+                            // We need the next two parts (going backwards) to be "meta" then "import"
+                            // i.e., parts[i-1] == "meta" and parts[i-2] == "import"
+                            if i >= 2
+                                && dot_define.parts[i - 1].as_str() == "meta"
+                                && dot_define.parts[i - 2].as_str() == "import"
+                            {
+                                // Successfully matched import.meta at the expected position
+                                // Return true if we've consumed all parts (i == 2)
+                                return i == 2;
+                            }
+                        }
+                        None
+                    }
                     _ => None,
                 }
             } else {
