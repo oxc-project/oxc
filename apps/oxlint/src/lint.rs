@@ -213,6 +213,9 @@ impl CliRunner {
             None
         };
 
+        // Store max_warnings from config before oxlintrc is consumed
+        let config_max_warnings = oxlintrc.max_warnings;
+
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
@@ -301,7 +304,7 @@ impl CliRunner {
             _ => None,
         };
         let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options, config_max_warnings);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
@@ -421,13 +424,17 @@ impl CliRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
+        config_max_warnings: Option<usize>,
     ) -> (DiagnosticService, DiagnosticSender) {
+        // CLI flag takes precedence over config file
+        let max_warnings = warning_options.max_warnings.or(config_max_warnings);
+        
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
                 .with_silent(misc_options.silent)
-                .with_max_warnings(warning_options.max_warnings),
+                .with_max_warnings(max_warnings),
             sender,
         )
     }
@@ -519,6 +526,19 @@ impl CliRunner {
 
         // iterate over each config and build the ConfigStore
         for (dir, oxlintrc) in nested_oxlintrc {
+            // Validate that nested configs don't have maxWarnings
+            if oxlintrc.max_warnings.is_some() {
+                let config_path = oxlintrc.path.display();
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Error: 'maxWarnings' option is only valid in the root configuration file.\n\
+                         Found in nested config: {config_path}\n"
+                    ),
+                );
+                return Err(CliRunResult::InvalidOptionConfig);
+            }
+            
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((
                 oxlintrc.ignore_patterns.clone(),
