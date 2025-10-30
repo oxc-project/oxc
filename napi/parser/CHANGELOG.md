@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.96.0] - 2025-10-30
+
+### 🚀 Features
+
+- bec7a7d semantic: Add scope to `TSConstructorType` (#14676) (camc314)
+
+### 🐛 Bug Fixes
+
+- 597340e ast-tools: Use oxfmt to format generated code (#15064) (camc314)
+- 84b2605 linter/plugins: Remove `parent` property from comments (#14624) (overlookmotel)
+
+### 🚜 Refactor
+
+- 14de671 linter/plugins: Simplify `comments` getter (#14728) (overlookmotel)
+- 85a2743 linter/plugins, napi/parser: Remove extraneous code from raw transfer deserializers (#14683) (overlookmotel)
+- 2b14abc napi/parser: Shorten raw transfer deserializer for `Comment` (#14623) (overlookmotel)
+
+
 ## [0.95.0] - 2025-10-15
 
 ### 🚀 Features

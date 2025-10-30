@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.96.0] - 2025-10-30
+
+### 🐛 Bug Fixes
+
+- 2bc1978 transformer/legacy-decorator: Correct generating metadata for getter/setter methods (#14495) (Dunqing)
+
+
 ## [0.95.0] - 2025-10-15
 
 ### 🚀 Features
