@@ -10,6 +10,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
@@ -24,15 +26,24 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct ExplicitFunctionReturnType(Box<ExplicitFunctionReturnTypeConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ExplicitFunctionReturnTypeConfig {
+    /// Whether to allow expressions as function return types. When `true`, allows functions that immediately return an expression without a return type annotation.
     allow_expressions: bool,
+    /// Whether to allow typed function expressions. When `true`, allows function expressions that are assigned to a typed variable or parameter.
     allow_typed_function_expressions: bool,
+    /// Whether to allow arrow functions that use `as const` assertion on their return value.
     allow_direct_const_assertion_in_arrow_functions: bool,
+    /// Whether to allow concise arrow functions that start with the `void` keyword.
     allow_concise_arrow_function_expressions_starting_with_void: bool,
+    /// Whether to allow functions that do not have generic type parameters.
     allow_functions_without_type_parameters: bool,
+    /// Array of function names that are exempt from requiring return type annotations.
     allowed_names: FxHashSet<CompactStr>,
+    /// Whether to allow higher-order functions (functions that return another function) without return type annotations.
     allow_higher_order_functions: bool,
+    /// Whether to allow immediately invoked function expressions (IIFEs) without return type annotations.
     allow_iifes: bool,
 }
 
@@ -123,6 +134,7 @@ declare_oxc_lint!(
     ExplicitFunctionReturnType,
     typescript,
     restriction,
+    config = ExplicitFunctionReturnTypeConfig,
 );
 
 fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
