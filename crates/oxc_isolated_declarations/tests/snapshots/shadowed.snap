@@ -13,5 +13,8 @@ export type Bar = {
 type Func = () => void;
 export type FuncType = Func;
 type Module = () => void;
+declare namespace Module {
+	const x = 1;
+}
 export type ModuleType = Module;
 export {};
