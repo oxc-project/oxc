@@ -3,6 +3,7 @@
 
 mod command;
 mod lint;
+mod lsp;
 mod output_formatter;
 mod result;
 mod walk;
@@ -12,7 +13,7 @@ mod tester;
 
 /// Re-exported CLI-related items for use in `tasks/website`.
 pub mod cli {
-    pub use super::{command::*, lint::CliRunner, result::CliRunResult};
+    pub use super::{command::*, lint::CliRunner, lsp::run_lsp, result::CliRunResult};
 }
 
 // Only include code to run linter when the `napi` feature is enabled.

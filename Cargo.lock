@@ -2830,6 +2830,7 @@ dependencies = [
  "oxc-miette",
  "oxc_allocator 0.95.0",
  "oxc_diagnostics 0.95.0",
+ "oxc_language_server",
  "oxc_linter",
  "oxc_span 0.95.0",
  "rayon",
