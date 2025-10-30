@@ -33,7 +33,7 @@ pub struct ValidExpectConfig {
     min_args: usize,
     /// Maximum number of arguments `expect` should be called with.
     max_args: usize,
-    /// When `true`, assertions that are async must always be awaited even in some contexts.
+    /// When `true`, async assertions must be awaited in all contexts (not just return statements).
     always_await: bool,
 }
 
