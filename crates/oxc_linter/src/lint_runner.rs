@@ -10,7 +10,8 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_span::Span;
 
 use crate::{
-    AllowWarnDeny, DisableDirectives, LintService, LintServiceOptions, Linter, TsGoLintState,
+    AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter,
+    TsGoLintState,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -129,6 +130,7 @@ pub struct LintRunnerBuilder {
     type_aware_enabled: bool,
     lint_service_options: LintServiceOptions,
     silent: bool,
+    fix_kind: FixKind,
 }
 
 impl LintRunnerBuilder {
@@ -138,6 +140,7 @@ impl LintRunnerBuilder {
             type_aware_enabled: false,
             lint_service_options,
             silent: false,
+            fix_kind: FixKind::None,
         }
     }
 
@@ -153,6 +156,12 @@ impl LintRunnerBuilder {
         self
     }
 
+    #[must_use]
+    pub fn with_fix_kind(mut self, fix_kind: FixKind) -> Self {
+        self.fix_kind = fix_kind;
+        self
+    }
+
     /// # Errors
     /// Returns an error if the type-aware linter fails to initialize.
     pub fn build(self) -> Result<LintRunner, String> {
@@ -162,6 +171,7 @@ impl LintRunnerBuilder {
             match TsGoLintState::try_new(
                 self.lint_service_options.cwd(),
                 self.regular_linter.config.clone(),
+                self.fix_kind,
             ) {
                 Ok(state) => Some(state.with_silent(self.silent)),
                 Err(e) => return Err(e),

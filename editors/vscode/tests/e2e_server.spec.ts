@@ -265,6 +265,8 @@ suite('E2E Diagnostics', () => {
     await loadFixture('type_aware');
     const firstDiagnostics = await getDiagnostics('index.ts');
 
+    await workspace.getConfiguration('oxc').update('fixKind', 'all');
+
     strictEqual(firstDiagnostics.length, 0);
 
     await workspace.getConfiguration('oxc').update('typeAware', true);

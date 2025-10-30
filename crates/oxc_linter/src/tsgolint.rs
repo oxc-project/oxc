@@ -14,6 +14,7 @@ use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
+use crate::FixKind;
 #[cfg(feature = "language_server")]
 use crate::fixer::{CompositeFix, Message, PossibleFixes};
 
@@ -29,24 +30,46 @@ pub struct TsGoLintState {
     /// If `oxlint` will output the diagnostics or not.
     /// When `silent` is true, we do not need to access the file system for nice diagnostics messages.
     silent: bool,
+    /// If `true`, request that fixes be returned from `tsgolint`.
+    fix: bool,
+    /// If `true`, request that suggestions be returned from `tsgolint`.
+    fix_suggestions: bool,
 }
 
 impl TsGoLintState {
-    pub fn new(cwd: &Path, config_store: ConfigStore) -> Self {
+    pub fn new(cwd: &Path, config_store: ConfigStore, fix_kind: FixKind) -> Self {
         let executable_path =
             try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint"));
 
-        TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false }
+        TsGoLintState {
+            config_store,
+            executable_path,
+            cwd: cwd.to_path_buf(),
+            silent: false,
+            fix: fix_kind.contains(FixKind::Fix),
+            fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+        }
     }
 
     /// Try to create a new TsGoLintState, returning an error if the executable cannot be found.
     ///
     /// # Errors
     /// Returns an error if the tsgolint executable cannot be found.
-    pub fn try_new(cwd: &Path, config_store: ConfigStore) -> Result<Self, String> {
+    pub fn try_new(
+        cwd: &Path,
+        config_store: ConfigStore,
+        fix_kind: FixKind,
+    ) -> Result<Self, String> {
         let executable_path = try_find_tsgolint_executable(cwd)?;
 
-        Ok(TsGoLintState { config_store, executable_path, cwd: cwd.to_path_buf(), silent: false })
+        Ok(TsGoLintState {
+            config_store,
+            executable_path,
+            cwd: cwd.to_path_buf(),
+            silent: false,
+            fix: fix_kind.contains(FixKind::Fix),
+            fix_suggestions: fix_kind.contains(FixKind::Suggestion),
+        })
     }
 
     /// Set to `true` to skip file system reads.
@@ -89,6 +112,14 @@ impl TsGoLintState {
                 .stdin(std::process::Stdio::piped())
                 .stdout(std::process::Stdio::piped())
                 .stderr(stderr());
+
+            if self.fix {
+                cmd.arg("-fix");
+            }
+
+            if self.fix_suggestions {
+                cmd.arg("-fix-suggestions");
+            }
 
             if let Ok(trace_file) = std::env::var("OXLINT_TSGOLINT_TRACE") {
                 cmd.arg(format!("-trace={trace_file}"));
@@ -298,12 +329,23 @@ impl TsGoLintState {
         let json_input = self.json_input(std::slice::from_ref(path), &mut resolved_configs);
         let executable_path = self.executable_path.clone();
 
+        let fix = self.fix;
+        let fix_suggestions = self.fix_suggestions;
         let handler = std::thread::spawn(move || {
-            let child = std::process::Command::new(&executable_path)
-                .arg("headless")
+            let mut cmd = std::process::Command::new(&executable_path);
+            cmd.arg("headless")
                 .stdin(std::process::Stdio::piped())
-                .stdout(std::process::Stdio::piped())
-                .spawn();
+                .stdout(std::process::Stdio::piped());
+
+            if fix {
+                cmd.arg("-fix");
+            }
+
+            if fix_suggestions {
+                cmd.arg("-fix-suggestions");
+            }
+
+            let child = cmd.spawn();
 
             let mut child = match child {
                 Ok(c) => c,

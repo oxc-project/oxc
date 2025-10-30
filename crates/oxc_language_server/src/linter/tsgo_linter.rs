@@ -5,8 +5,8 @@ use std::{
 
 use oxc_data_structures::rope::Rope;
 use oxc_linter::{
-    ConfigStore, LINTABLE_EXTENSIONS, TsGoLintState, loader::LINT_PARTIAL_LOADER_EXTENSIONS,
-    read_to_string,
+    ConfigStore, FixKind, LINTABLE_EXTENSIONS, TsGoLintState,
+    loader::LINT_PARTIAL_LOADER_EXTENSIONS, read_to_string,
 };
 use rustc_hash::FxHashSet;
 use tower_lsp_server::{UriExt, lsp_types::Uri};
@@ -20,8 +20,8 @@ pub struct TsgoLinter {
 }
 
 impl TsgoLinter {
-    pub fn new(root_uri: &Path, config_store: ConfigStore) -> Self {
-        let state = TsGoLintState::new(root_uri, config_store);
+    pub fn new(root_uri: &Path, config_store: ConfigStore, fix_kind: FixKind) -> Self {
+        let state = TsGoLintState::new(root_uri, config_store, fix_kind);
         Self { state }
     }
 
