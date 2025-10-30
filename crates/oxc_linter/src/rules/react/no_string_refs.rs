@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -28,8 +29,10 @@ fn string_in_ref_deprecated(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoStringRefs {
+    /// Disallow template literals in addition to string literals.
     no_template_literals: bool,
 }
 
@@ -77,7 +80,8 @@ declare_oxc_lint!(
     /// ```
     NoStringRefs,
     react,
-    correctness
+    correctness,
+    config = NoStringRefs,
 );
 
 fn contains_string_literal(
