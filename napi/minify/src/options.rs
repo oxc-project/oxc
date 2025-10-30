@@ -2,7 +2,66 @@ use napi::Either;
 use napi_derive::napi;
 
 use oxc_compat::EngineTargets;
-use oxc_minifier::TreeShakeOptions;
+
+#[napi(object)]
+pub struct TreeShakeOptions {
+    /// Whether to respect the pure annotations.
+    ///
+    /// Pure annotations are comments that mark an expression as pure.
+    /// For example: @__PURE__ or #__NO_SIDE_EFFECTS__.
+    ///
+    /// @default true
+    pub annotations: Option<bool>,
+
+    /// Whether to treat this function call as pure.
+    ///
+    /// This function is called for normal function calls, new calls, and
+    /// tagged template calls.
+    pub manual_pure_functions: Option<Vec<String>>,
+
+    /// Whether property read accesses have side effects.
+    ///
+    /// @default 'always'
+    #[napi(ts_type = "boolean | 'always'")]
+    pub property_read_side_effects: Option<Either<bool, String>>,
+
+    /// Whether accessing a global variable has side effects.
+    ///
+    /// Accessing a non-existing global variable will throw an error.
+    /// Global variable may be a getter that has side effects.
+    ///
+    /// @default true
+    pub unknown_global_side_effects: Option<bool>,
+}
+
+impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
+    type Error = String;
+
+    fn try_from(o: &TreeShakeOptions) -> Result<Self, Self::Error> {
+        let default = oxc_minifier::TreeShakeOptions::default();
+        Ok(oxc_minifier::TreeShakeOptions {
+            annotations: o.annotations.unwrap_or(default.annotations),
+            manual_pure_functions: o
+                .manual_pure_functions
+                .clone()
+                .unwrap_or(default.manual_pure_functions),
+            property_read_side_effects: match &o.property_read_side_effects {
+                Some(Either::A(false)) => oxc_minifier::PropertyReadSideEffects::None,
+                Some(Either::A(true)) => oxc_minifier::PropertyReadSideEffects::All,
+                Some(Either::B(s)) if s == "always" => oxc_minifier::PropertyReadSideEffects::All,
+                Some(Either::B(s)) => {
+                    return Err(format!(
+                        "Invalid propertyReadSideEffects value: '{s}'. Expected 'always'."
+                    ));
+                }
+                None => default.property_read_side_effects,
+            },
+            unknown_global_side_effects: o
+                .unknown_global_side_effects
+                .unwrap_or(default.unknown_global_side_effects),
+        })
+    }
+}
 
 #[napi(object)]
 pub struct CompressOptions {
@@ -61,6 +120,9 @@ pub struct CompressOptions {
 
     /// Limit the maximum number of iterations for debugging purpose.
     pub max_iterations: Option<u8>,
+
+    /// Treeshake options.
+    pub treeshake: Option<TreeShakeOptions>,
 }
 
 impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
@@ -87,7 +149,10 @@ impl TryFrom<&CompressOptions> for oxc_minifier::CompressOptions {
                 None => default.unused,
             },
             keep_names: o.keep_names.as_ref().map(Into::into).unwrap_or_default(),
-            treeshake: TreeShakeOptions::default(),
+            treeshake: match &o.treeshake {
+                Some(ts) => oxc_minifier::TreeShakeOptions::try_from(ts)?,
+                None => oxc_minifier::TreeShakeOptions::default(),
+            },
             drop_labels: o
                 .drop_labels
                 .as_ref()
