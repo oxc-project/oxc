@@ -62,7 +62,7 @@ impl Rule for NoRestrictedGlobals {
             Value::Array(arr) => arr.iter().fold(FxHashMap::default(), |mut acc, v| match v {
                 // "no-restricted-globals": ["error", "event"]
                 Value::String(name) => {
-                    acc.insert(name.to_string(), String::new());
+                    acc.insert(name.clone(), String::new());
                     acc
                 }
                 // "no-restricted-globals": ["error", { "name": "event", "message": "Use local parameter instead." }]

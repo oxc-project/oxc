@@ -464,7 +464,7 @@ fn test() {
         ),
     ];
 
-    let _fix = vec![
+    let _fix = [
         (
             "const fn = (a?: number = 5) => {};",
             "const fn = (a = 5) => {};",

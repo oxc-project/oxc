@@ -465,7 +465,7 @@ impl<'a> State<'a> {
             .map(|arg| {
                 let case = TestCase::new(self.source_text, arg);
                 if let Some(group_comment) = self.expression_to_group_comment_map.get(&arg.span()) {
-                    case.with_group_comment(group_comment.to_string())
+                    case.with_group_comment(group_comment.clone())
                 } else {
                     case
                 }

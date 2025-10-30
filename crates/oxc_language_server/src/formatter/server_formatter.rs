@@ -119,7 +119,7 @@ impl ServerFormatter {
     #[expect(clippy::unused_self)]
     pub fn get_watcher_patterns(&self, options: &LSPFormatOptions) -> Vec<Pattern> {
         if let Some(config_path) = options.config_path.as_ref() {
-            return vec![config_path.to_string()];
+            return vec![config_path.clone()];
         }
 
         FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()

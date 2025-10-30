@@ -30,7 +30,7 @@ pub fn get_file_uri(relative_file_path: &str) -> Uri {
 fn get_snapshot_from_report(report: &DiagnosticReport) -> String {
     let code = match &report.diagnostic.code {
         Some(NumberOrString::Number(code)) => code.to_string(),
-        Some(NumberOrString::String(code)) => code.to_string(),
+        Some(NumberOrString::String(code)) => code.clone(),
         None => "None".to_string(),
     };
     let code_description_href = match &report.diagnostic.code_description {
