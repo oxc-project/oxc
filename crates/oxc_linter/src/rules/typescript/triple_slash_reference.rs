@@ -3,6 +3,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize,Serialize};
 
 use crate::{
     context::{ContextHost, LintContext},
@@ -18,25 +20,35 @@ fn triple_slash_reference_diagnostic(ref_kind: &str, span: Span) -> OxcDiagnosti
 #[derive(Debug, Default, Clone)]
 pub struct TripleSlashReference(Box<TripleSlashReferenceConfig>);
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct TripleSlashReferenceConfig {
+    /// What to enforce for `/// <reference lib="..." />` references.
     lib: LibOption,
+    /// What to enforce for `/// <reference path="..." />` references.
     path: PathOption,
+    /// What to enforce for `/// <reference types="..." />` references.
     types: TypesOption,
 }
-#[derive(Debug, Default, Clone, PartialEq)]
+
+#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum LibOption {
     #[default]
     Always,
     Never,
 }
-#[derive(Debug, Default, Clone, PartialEq)]
+
+#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum PathOption {
     Always,
     #[default]
     Never,
 }
-#[derive(Debug, Default, Clone, PartialEq)]
+
+#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum TypesOption {
     Always,
     Never,
@@ -70,7 +82,8 @@ declare_oxc_lint!(
     /// ```
     TripleSlashReference,
     typescript,
-    correctness
+    correctness,
+    config = TripleSlashReferenceConfig,
 );
 
 impl Rule for TripleSlashReference {
