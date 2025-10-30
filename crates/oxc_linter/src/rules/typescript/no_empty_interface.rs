@@ -2,6 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -19,8 +20,10 @@ fn no_empty_interface_extend_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoEmptyInterface {
+    /// When set to `true`, allows empty interfaces that extend a single interface.
     allow_single_extends: bool,
 }
 
@@ -54,7 +57,8 @@ declare_oxc_lint!(
     /// ```
     NoEmptyInterface,
     typescript,
-    style
+    style,
+    config = NoEmptyInterface,
 );
 
 impl Rule for NoEmptyInterface {
