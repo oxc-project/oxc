@@ -4,6 +4,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -23,11 +24,16 @@ fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(
 #[derive(Debug, Default, Clone)]
 pub struct ValidExpect(Box<ValidExpectConfig>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ValidExpectConfig {
+    /// List of matchers that are considered async and therefore require awaiting (e.g. `toResolve`, `toReject`).
     async_matchers: Vec<String>,
+    /// Minimum number of arguments `expect` should be called with.
     min_args: usize,
+    /// Maximum number of arguments `expect` should be called with.
     max_args: usize,
+    /// When `true`, assertions that are async must always be awaited even in some contexts.
     always_await: bool,
 }
 
@@ -90,7 +96,8 @@ declare_oxc_lint!(
     /// ```
     ValidExpect,
     jest,
-    correctness
+    correctness,
+    config = ValidExpectConfig,
 );
 
 impl Rule for ValidExpect {
