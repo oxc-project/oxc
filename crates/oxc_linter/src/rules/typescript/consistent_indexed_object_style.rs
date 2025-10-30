@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -18,8 +19,11 @@ fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> O
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ConsistentIndexedObjectStyle {
+    /// When set to `true`, enforces the use of `Record` type for indexed object types.
+    /// When set to `false`, enforces the use of indexed signature types.
     is_record_mode: bool,
 }
 
@@ -87,7 +91,8 @@ declare_oxc_lint!(
     ConsistentIndexedObjectStyle,
     typescript,
     style,
-    conditional_fix
+    conditional_fix,
+    config = ConsistentIndexedObjectStyle,
 );
 
 impl Rule for ConsistentIndexedObjectStyle {
