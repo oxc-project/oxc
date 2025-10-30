@@ -428,7 +428,7 @@ impl CliRunner {
     ) -> (DiagnosticService, DiagnosticSender) {
         // CLI flag takes precedence over config file
         let max_warnings = warning_options.max_warnings.or(config_max_warnings);
-        
+
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
@@ -538,7 +538,7 @@ impl CliRunner {
                 );
                 return Err(CliRunResult::InvalidOptionConfig);
             }
-            
+
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((
                 oxlintrc.ignore_patterns.clone(),
