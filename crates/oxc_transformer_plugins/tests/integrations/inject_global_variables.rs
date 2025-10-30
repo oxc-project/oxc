@@ -387,10 +387,10 @@ fn escape_source_with_single_quote() {
     // Note: The test helper uses single_quote: true in codegen options
     test(
         "console.log(a)",
-        r#"
+        r"
         import a from 'foo\'';
         console.log(a)
-        "#,
+        ",
         config,
     );
 }
@@ -402,10 +402,10 @@ fn escape_source_with_backslash() {
         InjectGlobalVariablesConfig::new(vec![InjectImport::default_specifier("foo\\bar", "a")]);
     test(
         "console.log(a)",
-        r#"
+        r"
         import a from 'foo\\bar';
         console.log(a)
-        "#,
+        ",
         config,
     );
 }
@@ -417,10 +417,10 @@ fn escape_source_with_newline() {
         InjectGlobalVariablesConfig::new(vec![InjectImport::default_specifier("foo\nbar", "a")]);
     test(
         "console.log(a)",
-        r#"
+        r"
         import a from 'foo\nbar';
         console.log(a)
-        "#,
+        ",
         config,
     );
 }
