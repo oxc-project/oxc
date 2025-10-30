@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.25.0] - 2025-10-30
+
+### 💥 BREAKING CHANGES
+
+- 659fd37 linter: [**BREAKING**] `tsgolint`: request fixes when necessary (#15048) (camchenry)
+
+### 🚜 Refactor
+
+- b1e1531 language_server: Extract library interface from main.rs (#15036) (Boshen)
+- 5de99c2 formatter: Export unified way to get_parse_options (#15027) (leaysgur)
+- b55df7f language_server: Move sub option for `flags` to the root + deprecate flags (#14933) (Sysix)
+
+
 ## [1.24.0] - 2025-10-22
 
 ### 🚀 Features

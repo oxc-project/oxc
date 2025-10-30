@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.25.0] - 2025-10-30
+
+### 💥 BREAKING CHANGES
+
+- 659fd37 linter: [**BREAKING**] `tsgolint`: request fixes when necessary (#15048) (camchenry)
+
+### 🐛 Bug Fixes
+
+- 5a2832d editor: Stop client when delete .oxlintrc.json with `oxc.requireConfig` (#14897) (Liang Mi)
+
+### 🚜 Refactor
+
+- 8d8d508 editor: Flatten `flags` options (#15006) (Sysix)
+
+
 ## [1.24.0] - 2025-10-22
 
 ### 🚀 Features

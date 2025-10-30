@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.25.0] - 2025-10-30
+
+### 💥 BREAKING CHANGES
+
+- 659fd37 linter: [**BREAKING**] `tsgolint`: request fixes when necessary (#15048) (camchenry)
+
+### 🚀 Features
+
+- ed24d60 linter: Expose tsgolint program diagnostics (#15080) (camc314)
+- f7bef73 linter/plugins: Scope manager API (#14890) (Arsh)
+- 3e15cdd linter/strict-boolean-expression: Add rule (#14930) (camc314)
+- bd74603 linter: Add support for vitest/valid-title rule (#12085) (Tyler Earls)
+
+### 🐛 Bug Fixes
+
+- 597340e ast-tools: Use oxfmt to format generated code (#15064) (camc314)
+- 2de9f39 linter/plugins: Fall back to package name if meta.name is missing (#14938) (Peter Wagenet)
+
+### 🧪 Testing
+
+- bf898e5 linter: Increase stability of tsgolint test cases (#15063) (camc314)
+
+
 ## [1.24.0] - 2025-10-22
 
 ### 🚀 Features

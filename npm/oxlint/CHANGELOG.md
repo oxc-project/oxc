@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.25.0] - 2025-10-30
+
+### 🚀 Features
+
+- bd74603 linter: Add support for vitest/valid-title rule (#12085) (Tyler Earls)
+
+
 ## [1.24.0] - 2025-10-22
 
 ### 🐛 Bug Fixes
