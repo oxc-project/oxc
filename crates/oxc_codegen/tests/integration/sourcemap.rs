@@ -31,6 +31,62 @@ fn incorrect_ast() {
     assert!(ret.map.is_some(), "sourcemap exists");
 }
 
+/// Test that sourcemaps don't contain invalid tokens for positions beyond source content.
+/// This addresses the issue where oxc_codegen adds semicolons/newlines and creates tokens
+/// for positions that don't exist in the original source.
+/// See: https://github.com/rolldown/rolldown/pull/6750
+#[test]
+fn no_invalid_tokens_beyond_source() {
+    let test_cases = vec![
+        // Export statement without trailing semicolon
+        "export default { foo }",
+        // Variable declaration without trailing semicolon
+        "const a = 1",
+        // Function without trailing semicolon
+        "function foo() { return 42 }",
+        // Object with shorthand property
+        "const obj = { foo }",
+    ];
+
+    for source_text in test_cases {
+        let allocator = Allocator::default();
+        let source_type = SourceType::mjs();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+
+        let result = Codegen::new()
+            .with_options(CodegenOptions {
+                source_map_path: Some(PathBuf::from("test.js")),
+                ..Default::default()
+            })
+            .build(&ret.program);
+
+        let map = result.map.unwrap();
+        // Verify all tokens have source positions within bounds
+        for token in map.get_tokens() {
+            if let Some(source_id) = token.get_source_id()
+                && let Some(content) = map.get_source_content(source_id)
+            {
+                let src_line = token.get_src_line() as usize;
+                let src_col = token.get_src_col() as usize;
+
+                let lines: Vec<&str> = content.split('\n').collect();
+                assert!(
+                    src_line < lines.len(),
+                    "Invalid token: line {src_line} is beyond source line count {} for source '{source_text}'",
+                    lines.len(),
+                );
+
+                let line_content = lines[src_line];
+                let line_len_utf16: usize = line_content.chars().map(char::len_utf16).sum();
+                assert!(
+                    src_col < line_len_utf16,
+                    "Invalid token: column {src_col} is beyond line length {line_len_utf16} for line '{line_content}' in source '{source_text}'",
+                );
+            }
+        }
+    }
+}
+
 #[test]
 #[cfg(not(target_endian = "big"))] // we run big endian tests on docker that does not have node installed
 fn stacktrace_is_correct() {

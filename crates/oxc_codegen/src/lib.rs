@@ -889,6 +889,16 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
             && !span.is_empty()
         {
+            // Validate that span.end is within source content bounds.
+            // When oxc_codegen adds punctuation (semicolons, newlines) that don't exist in the
+            // original source, span.end may be at or beyond the source content length.
+            // We should not create sourcemap tokens for such positions as they would be invalid.
+            if let Some(source_text) = self.source_text {
+                #[expect(clippy::cast_possible_truncation)]
+                if span.end >= source_text.len() as u32 {
+                    return;
+                }
+            }
             sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
         }
     }
