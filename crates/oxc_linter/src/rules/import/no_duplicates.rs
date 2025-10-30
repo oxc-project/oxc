@@ -5,6 +5,7 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 
 use crate::{
     context::LintContext,
@@ -36,8 +37,16 @@ where
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-duplicates.md>
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoDuplicates {
+    /// When set to `true`, prefer inline type imports instead of separate type import
+    /// statements for TypeScript code.
+    ///
+    /// Examples of **correct** code with this option set to `true`:
+    /// ```typescript
+    /// import { Foo, type Bar } from './module';
+    /// ```
     prefer_inline: bool,
 }
 
@@ -76,7 +85,8 @@ declare_oxc_lint!(
     /// ```
     NoDuplicates,
     import,
-    style
+    style,
+    config = NoDuplicates,
 );
 
 impl Rule for NoDuplicates {
