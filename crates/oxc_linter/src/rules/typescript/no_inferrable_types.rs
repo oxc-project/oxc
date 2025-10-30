@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -17,9 +18,12 @@ fn no_inferrable_types_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoInferrableTypes {
+    /// When set to `true`, ignores type annotations on function parameters.
     ignore_parameters: bool,
+    /// When set to `true`, ignores type annotations on class properties.
     ignore_properties: bool,
 }
 
@@ -52,7 +56,8 @@ declare_oxc_lint!(
     NoInferrableTypes,
     typescript,
     style,
-    pending
+    pending,
+    config = NoInferrableTypes,
 );
 
 impl Rule for NoInferrableTypes {
