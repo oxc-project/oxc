@@ -3138,15 +3138,9 @@ impl Gen for TSMappedType<'_> {
             None => {}
         }
         p.print_str("[");
-        self.type_parameter.name.print(p, ctx);
-        if let Some(constraint) = &self.type_parameter.constraint {
-            p.print_str(" in ");
-            constraint.print(p, ctx);
-        }
-        if let Some(default) = &self.type_parameter.default {
-            p.print_str(" = ");
-            default.print(p, ctx);
-        }
+        self.key.print(p, ctx);
+        p.print_str(" in ");
+        self.constraint.print(p, ctx);
         if let Some(name_type) = &self.name_type {
             p.print_str(" as ");
             name_type.print(p, ctx);

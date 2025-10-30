@@ -10661,27 +10661,27 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: The type parameter name (e.g., `P` in `[P in keyof T]`)
+    /// * `constraint`: The constraint (e.g., `keyof T` in `[P in keyof T]`)
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     #[inline]
-    pub fn ts_type_mapped_type<T1>(
+    pub fn ts_type_mapped_type(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
-    ) -> TSType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSType<'a> {
         TSType::TSMappedType(self.alloc_ts_mapped_type(
             span,
-            type_parameter,
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -10695,29 +10695,29 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: The type parameter name (e.g., `P` in `[P in keyof T]`)
+    /// * `constraint`: The constraint (e.g., `keyof T` in `[P in keyof T]`)
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
     #[inline]
-    pub fn ts_type_mapped_type_with_scope_id<T1>(
+    pub fn ts_type_mapped_type_with_scope_id(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
-    ) -> TSType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSType<'a> {
         TSType::TSMappedType(self.alloc_ts_mapped_type_with_scope_id(
             span,
-            type_parameter,
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -14329,27 +14329,27 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: The type parameter name (e.g., `P` in `[P in keyof T]`)
+    /// * `constraint`: The constraint (e.g., `keyof T` in `[P in keyof T]`)
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     #[inline]
-    pub fn ts_mapped_type<T1>(
+    pub fn ts_mapped_type(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
-    ) -> TSMappedType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSMappedType<'a> {
         TSMappedType {
             span,
-            type_parameter: type_parameter.into_in(self.allocator),
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -14365,28 +14365,28 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: The type parameter name (e.g., `P` in `[P in keyof T]`)
+    /// * `constraint`: The constraint (e.g., `keyof T` in `[P in keyof T]`)
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     #[inline]
-    pub fn alloc_ts_mapped_type<T1>(
+    pub fn alloc_ts_mapped_type(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
-    ) -> Box<'a, TSMappedType<'a>>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> Box<'a, TSMappedType<'a>> {
         Box::new_in(
             self.ts_mapped_type(
                 span,
-                type_parameter,
+                key,
+                constraint,
                 name_type,
                 type_annotation,
                 optional,
@@ -14403,29 +14403,29 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: The type parameter name (e.g., `P` in `[P in keyof T]`)
+    /// * `constraint`: The constraint (e.g., `keyof T` in `[P in keyof T]`)
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
     #[inline]
-    pub fn ts_mapped_type_with_scope_id<T1>(
+    pub fn ts_mapped_type_with_scope_id(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
-    ) -> TSMappedType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSMappedType<'a> {
         TSMappedType {
             span,
-            type_parameter: type_parameter.into_in(self.allocator),
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -14441,30 +14441,30 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: The type parameter name (e.g., `P` in `[P in keyof T]`)
+    /// * `constraint`: The constraint (e.g., `keyof T` in `[P in keyof T]`)
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
     #[inline]
-    pub fn alloc_ts_mapped_type_with_scope_id<T1>(
+    pub fn alloc_ts_mapped_type_with_scope_id(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
-    ) -> Box<'a, TSMappedType<'a>>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> Box<'a, TSMappedType<'a>> {
         Box::new_in(
             self.ts_mapped_type_with_scope_id(
                 span,
-                type_parameter,
+                key,
+                constraint,
                 name_type,
                 type_annotation,
                 optional,

@@ -1483,15 +1483,12 @@ pub struct TSConstructorType<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint),
-    field_order(key, constraint, name_type, type_annotation, optional, readonly, span),
-)]
 pub struct TSMappedType<'a> {
     pub span: Span,
-    /// Key type parameter, e.g. `P` in `[P in keyof T]`.
-    #[estree(skip)]
-    pub type_parameter: Box<'a, TSTypeParameter<'a>>,
+    /// The type parameter name (e.g., `P` in `[P in keyof T]`)
+    pub key: BindingIdentifier<'a>,
+    /// The constraint (e.g., `keyof T` in `[P in keyof T]`)
+    pub constraint: TSType<'a>,
     pub name_type: Option<TSType<'a>>,
     pub type_annotation: Option<TSType<'a>>,
     /// Optional modifier on type annotation

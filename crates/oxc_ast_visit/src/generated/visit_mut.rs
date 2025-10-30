@@ -4230,7 +4230,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_type_parameter(&mut it.type_parameter);
+        visitor.visit_binding_identifier(&mut it.key);
+        visitor.visit_ts_type(&mut it.constraint);
         if let Some(name_type) = &mut it.name_type {
             visitor.visit_ts_type(name_type);
         }

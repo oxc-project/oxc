@@ -2692,11 +2692,12 @@ impl<'a> Dummy<'a> for TSConstructorType<'a> {
 impl<'a> Dummy<'a> for TSMappedType<'a> {
     /// Create a dummy [`TSMappedType`].
     ///
-    /// Has cost of making 1 allocation (80 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            type_parameter: Dummy::dummy(allocator),
+            key: Dummy::dummy(allocator),
+            constraint: Dummy::dummy(allocator),
             name_type: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),

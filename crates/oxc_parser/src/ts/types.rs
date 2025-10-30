@@ -591,22 +591,12 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.expect(Kind::LBrack);
-        let type_parameter_span = self.start_span();
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
         }
-        let name = self.parse_binding_identifier();
+        let key = self.parse_binding_identifier();
         self.expect(Kind::In);
         let constraint = self.parse_ts_type();
-        let type_parameter = self.alloc(self.ast.ts_type_parameter(
-            self.end_span(type_parameter_span),
-            name,
-            Some(constraint),
-            None,
-            false,
-            false,
-            false,
-        ));
 
         let name_type = if self.eat(Kind::As) { Some(self.parse_ts_type()) } else { None };
         self.expect(Kind::RBrack);
@@ -635,7 +625,8 @@ impl<'a> ParserImpl<'a> {
 
         self.ast.ts_type_mapped_type(
             self.end_span(span),
-            type_parameter,
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
