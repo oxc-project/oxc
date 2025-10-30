@@ -1350,4 +1350,41 @@ mod test {
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/tsgolint_config_error".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_max_warnings_config_zero() {
+        // maxWarnings: 0 should fail when there are warnings
+        let args = &["-c", ".oxlintrc.json", "test.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_config_threshold_exceeded() {
+        // maxWarnings: 5 should fail when there are 6 warnings
+        let args = &["-c", "oxlintrc-5-warnings.json", "many-warnings.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_config_threshold_not_exceeded() {
+        // maxWarnings: 5 should pass when there are 2 warnings
+        let args = &["-c", "oxlintrc-5-warnings.json", "test.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_cli_override() {
+        // CLI --max-warnings should override config file
+        let args = &["-c", ".oxlintrc.json", "--max-warnings", "10", "test.js"];
+        Tester::new().with_cwd("fixtures/max_warnings_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_nested_config_error() {
+        // maxWarnings in nested config should produce an error
+        let args = &["subdir/test.js"];
+        Tester::new()
+            .with_cwd("fixtures/max_warnings_nested_error".into())
+            .test_and_snapshot(args);
+    }
 }

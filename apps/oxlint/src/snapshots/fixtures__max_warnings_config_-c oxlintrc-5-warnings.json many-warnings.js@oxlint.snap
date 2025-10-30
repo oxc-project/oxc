@@ -1,0 +1,67 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c oxlintrc-5-warnings.json many-warnings.js
+working directory: fixtures/max_warnings_config
+----------
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[many-warnings.js:2:1]
+ 1 | // This file has 6 warnings
+ 2 | debugger;
+   : ^^^^^^^^^
+ 3 | console.log("1");
+   `----
+  help: Remove the debugger statement
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+   ,-[many-warnings.js:3:1]
+ 2 | debugger;
+ 3 | console.log("1");
+   : ^^^^^^^^^^^
+ 4 | debugger;
+   `----
+  help: Delete this console statement.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[many-warnings.js:4:1]
+ 3 | console.log("1");
+ 4 | debugger;
+   : ^^^^^^^^^
+ 5 | console.log("2");
+   `----
+  help: Remove the debugger statement
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+   ,-[many-warnings.js:5:1]
+ 4 | debugger;
+ 5 | console.log("2");
+   : ^^^^^^^^^^^
+ 6 | debugger;
+   `----
+  help: Delete this console statement.
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[many-warnings.js:6:1]
+ 5 | console.log("2");
+ 6 | debugger;
+   : ^^^^^^^^^
+ 7 | console.log("3");
+   `----
+  help: Remove the debugger statement
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+   ,-[many-warnings.js:7:1]
+ 6 | debugger;
+ 7 | console.log("3");
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 6 warnings and 0 errors.
+Exceeded maximum number of warnings. Found 6.
+Finished in <variable>ms on 1 file with 90 rules using 1 threads.
+----------
+CLI result: LintMaxWarningsExceeded
+----------
