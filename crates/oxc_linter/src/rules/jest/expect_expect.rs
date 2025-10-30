@@ -36,7 +36,7 @@ pub struct ExpectExpect(Box<ExpectExpectConfig>);
 pub struct ExpectExpectConfig {
     /// A list of function names that should be treated as assertion functions.
     assert_function_names_jest: Vec<CompactStr>,
-    /// A list of function names that should be treated as assertion functions.
+    /// A list of function names that should be treated as assertion functions for Vitest.
     assert_function_names_vitest: Vec<CompactStr>,
     /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
