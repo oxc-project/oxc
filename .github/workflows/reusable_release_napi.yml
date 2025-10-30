@@ -167,7 +167,7 @@ jobs:
             cd napi/${{ inputs.name }}
             export COREPACK_INTEGRITY_KEYS=0
             sudo corepack enable
-            pnpm install
+            pnpm install --ignore-scripts # postinstall: The current platform (freebsd) and architecture (x64) is not supported.
             pnpm build --target x86_64-unknown-freebsd
             rm -rf node_modules
             rm -rf target
