@@ -9,6 +9,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::GetPrecedence;
+use schemars::JsonSchema;
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_member_expression};
@@ -22,7 +24,8 @@ fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> Oxc
     OxcDiagnostic::warn(msg).with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Mode {
     #[default]
     Always,
@@ -35,8 +38,18 @@ impl Mode {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct OperatorAssignment {
+    /// This rule has a single string option:
+    /// * `always` requires assignment operator shorthand where possible
+    /// * `never` disallows assignment operator shorthand
+    ///
+    /// Example:
+    /// ```json
+    /// "eslint/max-nested-callbacks": ["error", "always"]
+    /// "eslint/max-nested-callbacks": ["error", "never"]
+    /// ```
     mode: Mode,
 }
 
@@ -85,26 +98,11 @@ declare_oxc_lint!(
     /// x = x + y;
     /// x.y = x.y / a.b;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// This rule has a single string option:
-    ///
-    /// `{ type: string, default: "always" }`
-    ///
-    /// * `always` requires assignment operator shorthand where possible
-    /// * `never` disallows assignment operator shorthand
-    ///
-    /// Example:
-    /// ```json
-    /// "eslint/max-nested-callbacks": ["error", "always"]
-    ///
-    /// "eslint/max-nested-callbacks": ["error", "never"]
-    /// ```
     OperatorAssignment,
     eslint,
     style,
-    fix_dangerous
+    fix_dangerous,
+    config = OperatorAssignment,
 );
 
 impl Rule for OperatorAssignment {
