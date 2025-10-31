@@ -2905,7 +2905,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Exclude", "K", "NewKeyType"]
+after transform: ["Exclude", "NewKeyType"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/mapped-as-babel-7/input.ts
@@ -2913,7 +2913,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Exclude", "K", "NewKeyType"]
+after transform: ["Exclude", "NewKeyType"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/mapped-babel-7/input.ts

@@ -1387,7 +1387,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(10), ScopeId(14), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(23)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7), ScopeId(8)]
 Unresolved references mismatch:
-after transform: ["Function", "K", "Parameters"]
+after transform: ["Function", "Parameters"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/callSignatureFunctionOverload.ts
@@ -1798,9 +1798,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/circularConstrain
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["P"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/circularConstructorWithReturn.ts
 Scope children mismatch:
@@ -1821,16 +1818,16 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Reference symbol mismatch for "reproduce":
-after transform: SymbolId(4) "reproduce"
+after transform: SymbolId(5) "reproduce"
 rebuilt        : <None>
 Reference symbol mismatch for "reproduce":
-after transform: SymbolId(4) "reproduce"
+after transform: SymbolId(5) "reproduce"
 rebuilt        : <None>
 Reference symbol mismatch for "reproduce":
-after transform: SymbolId(4) "reproduce"
+after transform: SymbolId(5) "reproduce"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["reproduce"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/circularGetAccessor.ts
@@ -1866,7 +1863,7 @@ Reference symbol mismatch for "foo2":
 after transform: SymbolId(0) "foo2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Capitalize", "P"]
+after transform: ["Capitalize"]
 rebuilt        : ["foo2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/circularReferenceInImport.ts
@@ -1896,10 +1893,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "connect":
-after transform: SymbolId(23) "connect"
+after transform: SymbolId(24) "connect"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Exclude", "Extract", "P", "Partial", "Pick"]
+after transform: ["Exclude", "Extract", "Partial", "Pick"]
 rebuilt        : ["connect"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classDeclarationMergedInModuleWithContinuation.ts
@@ -2117,16 +2114,16 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(9), ScopeId(12), ScopeId(13)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(17): [ReferenceId(18)]
+after transform: SymbolId(18): [ReferenceId(18)]
 rebuilt        : SymbolId(0): []
 Reference symbol mismatch for "Class":
 after transform: SymbolId(5) "Class"
 rebuilt        : <None>
 Reference symbol mismatch for "string":
-after transform: SymbolId(16) "string"
+after transform: SymbolId(17) "string"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["JSON", "K"]
+after transform: ["JSON"]
 rebuilt        : ["Class", "JSON", "string"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classVarianceCircularity.ts
@@ -2513,76 +2510,76 @@ Scope flags mismatch:
 after transform: ScopeId(32): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "SyntaxKind":
-after transform: SymbolId(45): SymbolFlags(ConstEnum)
+after transform: SymbolId(49): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "SyntaxKind":
-after transform: SymbolId(45): [ReferenceId(67), ReferenceId(72), ReferenceId(74), ReferenceId(76), ReferenceId(78), ReferenceId(80), ReferenceId(203)]
+after transform: SymbolId(49): [ReferenceId(67), ReferenceId(72), ReferenceId(74), ReferenceId(76), ReferenceId(78), ReferenceId(80), ReferenceId(203)]
 rebuilt        : SymbolId(0): [ReferenceId(11)]
 Reference symbol mismatch for "buildOverload":
-after transform: SymbolId(43) "buildOverload"
+after transform: SymbolId(47) "buildOverload"
 rebuilt        : <None>
 Reference symbol mismatch for "updateImportDeclaration":
-after transform: SymbolId(70) "updateImportDeclaration"
+after transform: SymbolId(74) "updateImportDeclaration"
 rebuilt        : <None>
 Reference symbol mismatch for "updateImportDeclaration":
-after transform: SymbolId(70) "updateImportDeclaration"
+after transform: SymbolId(74) "updateImportDeclaration"
 rebuilt        : <None>
 Reference symbol mismatch for "every":
-after transform: SymbolId(82) "every"
+after transform: SymbolId(86) "every"
 rebuilt        : <None>
 Reference symbol mismatch for "isModifier":
-after transform: SymbolId(66) "isModifier"
+after transform: SymbolId(70) "isModifier"
 rebuilt        : <None>
 Reference symbol mismatch for "isArray":
-after transform: SymbolId(100) "isArray"
+after transform: SymbolId(104) "isArray"
 rebuilt        : <None>
 Reference symbol mismatch for "isExpression":
-after transform: SymbolId(60) "isExpression"
+after transform: SymbolId(64) "isExpression"
 rebuilt        : <None>
 Reference symbol mismatch for "isAssertClause":
-after transform: SymbolId(62) "isAssertClause"
+after transform: SymbolId(66) "isAssertClause"
 rebuilt        : <None>
 Reference symbol mismatch for "every":
-after transform: SymbolId(82) "every"
+after transform: SymbolId(86) "every"
 rebuilt        : <None>
 Reference symbol mismatch for "isDecorator":
-after transform: SymbolId(68) "isDecorator"
+after transform: SymbolId(72) "isDecorator"
 rebuilt        : <None>
 Reference symbol mismatch for "isArray":
-after transform: SymbolId(100) "isArray"
+after transform: SymbolId(104) "isArray"
 rebuilt        : <None>
 Reference symbol mismatch for "isImportClause":
-after transform: SymbolId(64) "isImportClause"
+after transform: SymbolId(68) "isImportClause"
 rebuilt        : <None>
 Reference symbol mismatch for "isExpression":
-after transform: SymbolId(60) "isExpression"
+after transform: SymbolId(64) "isExpression"
 rebuilt        : <None>
 Reference symbol mismatch for "isAssertClause":
-after transform: SymbolId(62) "isAssertClause"
+after transform: SymbolId(66) "isAssertClause"
 rebuilt        : <None>
 Reference symbol mismatch for "DISALLOW_DECORATORS":
-after transform: SymbolId(102) "DISALLOW_DECORATORS"
+after transform: SymbolId(106) "DISALLOW_DECORATORS"
 rebuilt        : <None>
 Reference symbol mismatch for "every":
-after transform: SymbolId(82) "every"
+after transform: SymbolId(86) "every"
 rebuilt        : <None>
 Reference symbol mismatch for "modifiers":
-after transform: SymbolId(124) "modifiers"
+after transform: SymbolId(128) "modifiers"
 rebuilt        : <None>
 Reference symbol mismatch for "isModifier":
-after transform: SymbolId(66) "isModifier"
+after transform: SymbolId(70) "isModifier"
 rebuilt        : <None>
 Reference symbol mismatch for "every":
-after transform: SymbolId(82) "every"
+after transform: SymbolId(86) "every"
 rebuilt        : <None>
 Reference symbol mismatch for "modifiers":
-after transform: SymbolId(124) "modifiers"
+after transform: SymbolId(128) "modifiers"
 rebuilt        : <None>
 Reference symbol mismatch for "isDecorator":
-after transform: SymbolId(68) "isDecorator"
+after transform: SymbolId(72) "isDecorator"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Extract", "P", "Parameters", "undefined"]
+after transform: ["Extract", "Parameters", "undefined"]
 rebuilt        : ["DISALLOW_DECORATORS", "buildOverload", "every", "isArray", "isAssertClause", "isDecorator", "isExpression", "isImportClause", "isModifier", "modifiers", "undefined", "updateImportDeclaration"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences4.ts
@@ -3622,9 +3619,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/comparisonOfParti
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -3811,9 +3805,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/computedTypesKeyo
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/conditionalEqualityTestingNullability.ts
 Bindings mismatch:
@@ -3875,9 +3866,6 @@ rebuilt        : ScopeId(2): []
 Scope children mismatch:
 after transform: ScopeId(10): [ScopeId(11)]
 rebuilt        : ScopeId(3): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeDiscriminatingLargeUnionRegularTypeFetchingSpeedReasonable.ts
 Scope children mismatch:
@@ -3900,10 +3888,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(10), ScopeId(13), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Reference symbol mismatch for "f":
-after transform: SymbolId(11) "f"
+after transform: SymbolId(12) "f"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Partial", "undefined"]
+after transform: ["Partial", "undefined"]
 rebuilt        : ["f", "undefined"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/conditionalTypeSimplification.ts
@@ -4430,9 +4418,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/constraintOfRecur
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(13)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constraintReferencingTypeParameterFromSameTypeParameterList.ts
 Scope children mismatch:
@@ -4546,16 +4531,16 @@ Bindings mismatch:
 after transform: ScopeId(12): []
 rebuilt        : ScopeId(2): ["propName"]
 Symbol flags mismatch for "propName":
-after transform: SymbolId(13): SymbolFlags(FunctionScopedVariable | TypeParameter)
+after transform: SymbolId(16): SymbolFlags(FunctionScopedVariable | TypeParameter)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "propName":
-after transform: SymbolId(13): Span { start: 526, end: 534 }
+after transform: SymbolId(16): Span { start: 526, end: 534 }
 rebuilt        : SymbolId(2): Span { start: 551, end: 569 }
 Symbol reference IDs mismatch for "propName":
-after transform: SymbolId(13): [ReferenceId(13), ReferenceId(14), ReferenceId(15)]
+after transform: SymbolId(16): [ReferenceId(13), ReferenceId(14), ReferenceId(15)]
 rebuilt        : SymbolId(2): [ReferenceId(4)]
 Symbol redeclarations mismatch for "propName":
-after transform: SymbolId(13): [Span { start: 526, end: 534 }, Span { start: 551, end: 569 }]
+after transform: SymbolId(16): [Span { start: 526, end: 534 }, Span { start: 551, end: 569 }]
 rebuilt        : SymbolId(2): []
 Reference symbol mismatch for "forceMatch":
 after transform: SymbolId(1) "forceMatch"
@@ -4564,13 +4549,13 @@ Reference symbol mismatch for "testD":
 after transform: SymbolId(0) "testD"
 rebuilt        : <None>
 Reference symbol mismatch for "forceMatch2":
-after transform: SymbolId(4) "forceMatch2"
+after transform: SymbolId(5) "forceMatch2"
 rebuilt        : <None>
 Reference symbol mismatch for "testD":
 after transform: SymbolId(0) "testD"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["key", "prop"]
+after transform: []
 rebuilt        : ["forceMatch", "forceMatch2", "testD"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualExpressionTypecheckingDoesntBlowStack.ts
@@ -4635,10 +4620,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "pipe":
-after transform: SymbolId(6) "pipe"
+after transform: SymbolId(7) "pipe"
 rebuilt        : <None>
 Reference symbol mismatch for "repeat":
-after transform: SymbolId(15) "repeat"
+after transform: SymbolId(16) "repeat"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Exclude"]
@@ -4655,7 +4640,7 @@ Reference symbol mismatch for "f":
 after transform: SymbolId(0) "f"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["P"]
+after transform: []
 rebuilt        : ["f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualReturnTypeOfIIFE.ts
@@ -4849,10 +4834,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "MyMDXComponent":
-after transform: SymbolId(7) "MyMDXComponent"
+after transform: SymbolId(8) "MyMDXComponent"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Key"]
+after transform: []
 rebuilt        : ["MyMDXComponent"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix3.ts
@@ -4866,10 +4851,10 @@ Reference symbol mismatch for "test1":
 after transform: SymbolId(1) "test1"
 rebuilt        : <None>
 Reference symbol mismatch for "test2":
-after transform: SymbolId(5) "test2"
+after transform: SymbolId(6) "test2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["test1", "test2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypeBasedOnIntersectionWithAnyInTheMix5.ts
@@ -4880,19 +4865,19 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "app":
-after transform: SymbolId(30) "app"
+after transform: SymbolId(31) "app"
 rebuilt        : <None>
 Reference symbol mismatch for "reactive":
-after transform: SymbolId(23) "reactive"
+after transform: SymbolId(24) "reactive"
 rebuilt        : <None>
 Reference symbol mismatch for "inject":
-after transform: SymbolId(28) "inject"
+after transform: SymbolId(29) "inject"
 rebuilt        : <None>
 Reference symbol mismatch for "ThemeSymbol":
-after transform: SymbolId(27) "ThemeSymbol"
+after transform: SymbolId(28) "ThemeSymbol"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Readonly", "Record", "Symbol", "ThisType", "key"]
+after transform: ["Readonly", "Record", "Symbol", "ThisType"]
 rebuilt        : ["ThemeSymbol", "app", "inject", "reactive"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypeCaching.ts
@@ -4969,10 +4954,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "parse":
-after transform: SymbolId(2) "parse"
+after transform: SymbolId(3) "parse"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["k"]
+after transform: []
 rebuilt        : ["parse"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypeShouldBeLiteral.ts
@@ -5005,13 +4990,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "DEFAULT_TABS_TAG":
-after transform: SymbolId(7): [ReferenceId(17), ReferenceId(21)]
+after transform: SymbolId(8): [ReferenceId(17), ReferenceId(21)]
 rebuilt        : SymbolId(0): []
 Reference symbol mismatch for "TabGroup":
-after transform: SymbolId(17) "TabGroup"
+after transform: SymbolId(18) "TabGroup"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Event", "Exclude", "P", "const"]
+after transform: ["Event", "Exclude", "const"]
 rebuilt        : ["TabGroup"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextualTyping13.ts
@@ -5400,7 +5385,7 @@ Reference symbol mismatch for "ab":
 after transform: SymbolId(3) "ab"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Symbol"]
+after transform: ["Symbol"]
 rebuilt        : ["Symbol", "ab", "f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contravariantInferenceAndTypeGuard.ts
@@ -5425,10 +5410,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "foo":
-after transform: SymbolId(5) "foo"
+after transform: SymbolId(6) "foo"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Record"]
+after transform: ["Record"]
 rebuilt        : ["foo"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contravariantOnlyInferenceWithAnnotatedOptionalParameter.ts
@@ -5794,25 +5779,25 @@ Scope children mismatch:
 after transform: ScopeId(53): [ScopeId(54), ScopeId(55), ScopeId(56), ScopeId(58), ScopeId(59), ScopeId(60)]
 rebuilt        : ScopeId(21): [ScopeId(22), ScopeId(23), ScopeId(24)]
 Symbol reference IDs mismatch for "BAR_LOOKUP":
-after transform: SymbolId(139): [ReferenceId(232)]
+after transform: SymbolId(148): [ReferenceId(232)]
 rebuilt        : SymbolId(74): []
 Reference symbol mismatch for "r1":
-after transform: SymbolId(7) "r1"
+after transform: SymbolId(8) "r1"
 rebuilt        : <None>
 Reference symbol mismatch for "r2":
-after transform: SymbolId(8) "r2"
+after transform: SymbolId(9) "r2"
 rebuilt        : <None>
 Reference symbol mismatch for "xx":
-after transform: SymbolId(56) "xx"
+after transform: SymbolId(61) "xx"
 rebuilt        : <None>
 Reference symbol mismatch for "bar":
-after transform: SymbolId(131) "bar"
+after transform: SymbolId(139) "bar"
 rebuilt        : <None>
 Reference symbol mismatch for "makeCompleteLookupMapping":
-after transform: SymbolId(133) "makeCompleteLookupMapping"
+after transform: SymbolId(141) "makeCompleteLookupMapping"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["DocumentEventMap", "Item", "K", "P", "Partial", "ReadonlyArray", "Record", "Required", "console", "const", "document", "undefined"]
+after transform: ["DocumentEventMap", "Partial", "ReadonlyArray", "Record", "Required", "console", "const", "document", "undefined"]
 rebuilt        : ["bar", "console", "document", "makeCompleteLookupMapping", "r1", "r2", "undefined", "xx"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/covariance1.ts
@@ -6991,10 +6976,10 @@ Reference symbol mismatch for "stringWrapper":
 after transform: SymbolId(2) "stringWrapper"
 rebuilt        : <None>
 Reference symbol mismatch for "unwrap":
-after transform: SymbolId(9) "unwrap"
+after transform: SymbolId(10) "unwrap"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Key", "Record"]
+after transform: ["Record"]
 rebuilt        : ["objWrapper", "stringWrapper", "unwrap"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitAliasExportStar.ts
@@ -7289,9 +7274,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitEx
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitExpandoWithGenericConstraint.ts
 Bindings mismatch:
@@ -7441,9 +7423,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Scope children mismatch:
 after transform: ScopeId(13): [ScopeId(14)]
 rebuilt        : ScopeId(2): []
-Unresolved references mismatch:
-after transform: ["P"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGenericTypeParamerSerialization3.ts
 Scope children mismatch:
@@ -7568,9 +7547,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitKeywordDestructuring.ts
 Scope children mismatch:
@@ -7613,7 +7589,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["K", "Parameters", "Record"]
+after transform: ["Parameters", "Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePreservesTypeParameterConstraint.ts
@@ -7627,40 +7603,37 @@ Bindings mismatch:
 after transform: ScopeId(22): []
 rebuilt        : ScopeId(2): ["o"]
 Symbol flags mismatch for "entriesOf":
-after transform: SymbolId(26): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
+after transform: SymbolId(31): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch for "entriesOf":
-after transform: SymbolId(26): Span { start: 1339, end: 1348 }
+after transform: SymbolId(31): Span { start: 1339, end: 1348 }
 rebuilt        : SymbolId(2): Span { start: 1406, end: 1415 }
 Symbol reference IDs mismatch for "entriesOf":
-after transform: SymbolId(26): [ReferenceId(54)]
+after transform: SymbolId(31): [ReferenceId(54)]
 rebuilt        : SymbolId(2): []
 Symbol redeclarations mismatch for "entriesOf":
-after transform: SymbolId(26): [Span { start: 1339, end: 1348 }, Span { start: 1406, end: 1415 }]
+after transform: SymbolId(31): [Span { start: 1339, end: 1348 }, Span { start: 1406, end: 1415 }]
 rebuilt        : SymbolId(2): []
 Symbol flags mismatch for "o":
-after transform: SymbolId(28): SymbolFlags(FunctionScopedVariable | TypeParameter)
+after transform: SymbolId(33): SymbolFlags(FunctionScopedVariable | TypeParameter)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "o":
-after transform: SymbolId(28): Span { start: 1419, end: 1420 }
+after transform: SymbolId(33): Span { start: 1419, end: 1420 }
 rebuilt        : SymbolId(3): Span { start: 1437, end: 1441 }
 Symbol reference IDs mismatch for "o":
-after transform: SymbolId(28): [ReferenceId(51), ReferenceId(53), ReferenceId(55)]
+after transform: SymbolId(33): [ReferenceId(51), ReferenceId(53), ReferenceId(55)]
 rebuilt        : SymbolId(3): [ReferenceId(1)]
 Symbol redeclarations mismatch for "o":
-after transform: SymbolId(28): [Span { start: 1419, end: 1420 }, Span { start: 1437, end: 1441 }]
+after transform: SymbolId(33): [Span { start: 1419, end: 1420 }, Span { start: 1437, end: 1441 }]
 rebuilt        : SymbolId(3): []
 Unresolved references mismatch:
-after transform: ["Object", "Partial", "Pick", "Required", "k"]
+after transform: ["Object", "Partial", "Pick", "Required"]
 rebuilt        : ["Object"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePropertyFromNumericStringKey.ts
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMergedAliasWithConst.ts
 Bindings mismatch:
@@ -7749,9 +7722,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNe
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(5)]
 rebuilt        : ScopeId(1): []
-Unresolved references mismatch:
-after transform: ["Object", "Property", "key"]
-rebuilt        : ["Object"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNestedGenerics.ts
 Scope children mismatch:
@@ -7825,7 +7795,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Capitalize", "K"]
+after transform: ["Capitalize"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks2.ts
@@ -7836,7 +7806,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Capitalize", "K"]
+after transform: ["Capitalize"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks3.ts
@@ -7847,7 +7817,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Capitalize", "K"]
+after transform: ["Capitalize"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitOptionalMappedTypePropertyNoStrictNullChecks4.ts
@@ -7939,9 +7909,9 @@ after transform: ScopeId(0): ["Q", "T", "create", "fun", "fun2"]
 rebuilt        : ScopeId(0): ["create", "fun", "fun2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRecursiveConditionalAliasPreserved.ts
-Unresolved references mismatch:
-after transform: ["K1", "LengthKey"]
-rebuilt        : []
+Bindings mismatch:
+after transform: ScopeId(0): ["Power", "power"]
+rebuilt        : ScopeId(0): ["power"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRedundantTripleSlashModuleAugmentation.ts
 Scope children mismatch:
@@ -8000,7 +7970,7 @@ Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8)]
 rebuilt        : ScopeId(1): []
 Unresolved references mismatch:
-after transform: ["K", "Record"]
+after transform: ["Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitSpreadStringlyKeyedEnum.ts
@@ -8117,12 +8087,12 @@ rebuilt        : SymbolId(0): [ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules1.ts
 Unresolved references mismatch:
-after transform: ["Error", "K", "Promise", "Property", "Readonly", "ReadonlyArray"]
+after transform: ["Error", "Promise", "Readonly", "ReadonlyArray"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingAlternativeContainingModules2.ts
 Unresolved references mismatch:
-after transform: ["Error", "K", "Promise", "Property", "Readonly", "ReadonlyArray"]
+after transform: ["Error", "Promise", "Readonly", "ReadonlyArray"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingTypeAlias2.ts
@@ -8769,9 +8739,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/deferredCondition
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(34), ScopeId(35), ScopeId(36), ScopeId(37), ScopeId(39), ScopeId(42)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes2.ts
 Scope children mismatch:
@@ -8786,7 +8753,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "f1":
-after transform: SymbolId(10) "f1"
+after transform: SymbolId(11) "f1"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Extract"]
@@ -8812,9 +8779,6 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Unresolved references mismatch:
-after transform: ["P", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/deleteExpressionMustBeOptional.ts
 Bindings mismatch:
@@ -8824,46 +8788,46 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
+after transform: SymbolId(5) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
+after transform: SymbolId(5) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "b":
-after transform: SymbolId(5) "b"
+after transform: SymbolId(6) "b"
 rebuilt        : <None>
 Reference symbol mismatch for "b":
-after transform: SymbolId(5) "b"
+after transform: SymbolId(6) "b"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
@@ -8877,76 +8841,76 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(3) "f"
+after transform: SymbolId(4) "f"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "g":
-after transform: SymbolId(4) "g"
+after transform: SymbolId(5) "g"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
-after transform: SymbolId(5) "a"
+after transform: SymbolId(6) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
-after transform: SymbolId(5) "a"
+after transform: SymbolId(6) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "b":
-after transform: SymbolId(6) "b"
+after transform: SymbolId(7) "b"
 rebuilt        : <None>
 Reference symbol mismatch for "b":
-after transform: SymbolId(6) "b"
+after transform: SymbolId(7) "b"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Partial"]
@@ -14338,22 +14302,22 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(10), ScopeId(12), ScopeId(16)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol reference IDs mismatch for "XXX":
-after transform: SymbolId(35): [ReferenceId(44), ReferenceId(46)]
+after transform: SymbolId(36): [ReferenceId(44), ReferenceId(46)]
 rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "implement":
-after transform: SymbolId(28) "implement"
+after transform: SymbolId(29) "implement"
 rebuilt        : <None>
 Reference symbol mismatch for "succeed":
 after transform: SymbolId(16) "succeed"
 rebuilt        : <None>
 Reference symbol mismatch for "inner":
-after transform: SymbolId(38) "inner"
+after transform: SymbolId(39) "inner"
 rebuilt        : <None>
 Reference symbol mismatch for "outer":
-after transform: SymbolId(39) "outer"
+after transform: SymbolId(40) "outer"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "ReadonlyArray"]
+after transform: ["ReadonlyArray"]
 rebuilt        : ["implement", "inner", "outer", "succeed"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallInferenceWithGenericLocalFunction.ts
@@ -14685,7 +14649,7 @@ Reference symbol mismatch for "combineReducers":
 after transform: SymbolId(3) "combineReducers"
 rebuilt        : <None>
 Reference symbol mismatch for "foo":
-after transform: SymbolId(7) "foo"
+after transform: SymbolId(8) "foo"
 rebuilt        : <None>
 Reference symbol mismatch for "combineReducers":
 after transform: SymbolId(3) "combineReducers"
@@ -14694,13 +14658,13 @@ Reference symbol mismatch for "combineReducers":
 after transform: SymbolId(3) "combineReducers"
 rebuilt        : <None>
 Reference symbol mismatch for "foo":
-after transform: SymbolId(7) "foo"
+after transform: SymbolId(8) "foo"
 rebuilt        : <None>
 Reference symbol mismatch for "withH":
-after transform: SymbolId(10) "withH"
+after transform: SymbolId(11) "withH"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "P"]
+after transform: []
 rebuilt        : ["combineReducers", "foo", "withH"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericFunctionSpecializations1.ts
@@ -14756,10 +14720,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(14), ScopeId(15)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Reference symbol mismatch for "unboxify":
-after transform: SymbolId(2) "unboxify"
+after transform: SymbolId(3) "unboxify"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["P", "k"]
+after transform: []
 rebuilt        : ["unboxify"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericFunctionsNotContextSensitive.ts
@@ -14787,9 +14751,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericIndexedAcc
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Unresolved references mismatch:
-after transform: ["K", "Object"]
-rebuilt        : ["Object"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericInference2.ts
 Bindings mismatch:
@@ -15315,10 +15276,10 @@ Scope children mismatch:
 after transform: ScopeId(7): [ScopeId(8), ScopeId(10)]
 rebuilt        : ScopeId(3): []
 Reference symbol mismatch for "f":
-after transform: SymbolId(19) "f"
+after transform: SymbolId(22) "f"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/homomorphicMappedTypeIntersectionAssignability.ts
@@ -15334,7 +15295,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(8)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Array", "K"]
+after transform: ["Array"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/homomorphicMappedTypeWithNonHomomorphicInstantiationSpreadable1.ts
@@ -15345,10 +15306,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "func1":
-after transform: SymbolId(2) "func1"
+after transform: SymbolId(3) "func1"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["I", "K", "PropertyKey", "Record"]
+after transform: ["PropertyKey", "Record"]
 rebuilt        : ["func1"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/icomparable.ts
@@ -15389,7 +15350,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(15)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Unresolved references mismatch:
-after transform: ["K", "Omit", "Pick", "Required"]
+after transform: ["Omit", "Pick", "Required"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/identityAndDivergentNormalizedTypes.ts
@@ -15871,7 +15832,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "g":
-after transform: SymbolId(2) "g"
+after transform: SymbolId(3) "g"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
@@ -15882,7 +15843,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["P", "Pick"]
+after transform: ["Pick"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/indexedAccessToThisTypeOnIntersection01.ts
@@ -15943,13 +15904,13 @@ Reference symbol mismatch for "genericFn3":
 after transform: SymbolId(12) "genericFn3"
 rebuilt        : <None>
 Reference symbol mismatch for "obj":
-after transform: SymbolId(20) "obj"
+after transform: SymbolId(21) "obj"
 rebuilt        : <None>
 Reference symbol mismatch for "key":
-after transform: SymbolId(21) "key"
+after transform: SymbolId(22) "key"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "P", "Record", "Required"]
+after transform: ["Record", "Required"]
 rebuilt        : ["genericFn1", "genericFn2", "genericFn3", "key", "obj"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/indirectTypeParameterReferences.ts
@@ -15994,7 +15955,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["K", "Pick"]
+after transform: ["Pick"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes2.ts
@@ -16148,13 +16109,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9), ScopeId(10)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "extractPrimitivesOld":
-after transform: SymbolId(5) "extractPrimitivesOld"
+after transform: SymbolId(6) "extractPrimitivesOld"
 rebuilt        : <None>
 Reference symbol mismatch for "extractPrimitivesNew":
-after transform: SymbolId(12) "extractPrimitivesNew"
+after transform: SymbolId(14) "extractPrimitivesNew"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Key"]
+after transform: []
 rebuilt        : ["extractPrimitivesNew", "extractPrimitivesOld"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferSecondaryParameter.ts
@@ -16212,7 +16173,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(9), ScopeId(12), ScopeId(14), ScopeId(17), ScopeId(18), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(26), ScopeId(29), ScopeId(30), ScopeId(31)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Exclude", "KeyType", "k"]
+after transform: ["Exclude"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferTypeParameterConstraints.ts
@@ -16270,9 +16231,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceAndSelfR
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
-Unresolved references mismatch:
-after transform: ["P"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferenceDoesNotAddUndefinedOrNull.ts
 Bindings mismatch:
@@ -16451,7 +16409,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["Date", "key"]
+after transform: ["Date"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inferentialTypingObjectLiteralMethod1.ts
@@ -17720,7 +17678,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(10), ScopeId(15), ScopeId(19)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Extract", "Key"]
+after transform: ["Extract"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/intersectionOfMixinConstructorTypeAndNonConstructorType.ts
@@ -18411,10 +18369,10 @@ Scope children mismatch:
 after transform: ScopeId(4): [ScopeId(5), ScopeId(9)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
 Symbol reference IDs mismatch for "TestObject":
-after transform: SymbolId(3): [ReferenceId(11), ReferenceId(15)]
+after transform: SymbolId(4): [ReferenceId(11), ReferenceId(15)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Unresolved references mismatch:
-after transform: ["Function", "K", "React"]
+after transform: ["Function", "React"]
 rebuilt        : ["React"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsCompatability.tsx
@@ -18490,12 +18448,12 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromConfigPickedOverGlobalOne.tsx
 Unresolved references mismatch:
-after transform: ["JSX", "K"]
+after transform: ["JSX"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromPragmaPickedOverGlobalOne.tsx
 Unresolved references mismatch:
-after transform: ["JSX", "K"]
+after transform: ["JSX"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceReexports.tsx
@@ -18564,13 +18522,13 @@ Symbol reference IDs mismatch for "sym":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(12), ReferenceId(14), ReferenceId(20), ReferenceId(29), ReferenceId(31), ReferenceId(37), ReferenceId(53)]
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(13), ReferenceId(16)]
 Reference symbol mismatch for "x":
-after transform: SymbolId(5) "x"
+after transform: SymbolId(6) "x"
 rebuilt        : <None>
 Reference symbol mismatch for "x":
-after transform: SymbolId(5) "x"
+after transform: SymbolId(6) "x"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Exclude", "K", "PropertyKey", "Record", "Symbol"]
+after transform: ["Exclude", "PropertyKey", "Record", "Symbol"]
 rebuilt        : ["Symbol", "x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/keyofGenericExtendingClassDoubleLayer.ts
@@ -18814,10 +18772,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4)]
 Symbol reference IDs mismatch for "Table":
-after transform: SymbolId(3): [ReferenceId(14), ReferenceId(17), ReferenceId(22), ReferenceId(25)]
+after transform: SymbolId(4): [ReferenceId(14), ReferenceId(17), ReferenceId(22), ReferenceId(25)]
 rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(3)]
 Unresolved references mismatch:
-after transform: ["Array", "K", "Pick", "Record"]
+after transform: ["Array", "Pick", "Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/m7Bugs.ts
@@ -18855,9 +18813,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedArrayTupleI
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(13)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedToToIndexSignatureInference.ts
 Bindings mismatch:
@@ -18873,19 +18828,19 @@ Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "E":
-after transform: SymbolId(9): SymbolFlags(RegularEnum)
+after transform: SymbolId(10): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "E":
-after transform: SymbolId(9): [ReferenceId(8), ReferenceId(10), ReferenceId(14)]
+after transform: SymbolId(10): [ReferenceId(8), ReferenceId(10), ReferenceId(14)]
 rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(7)]
 Reference symbol mismatch for "fn":
 after transform: SymbolId(0) "fn"
 rebuilt        : <None>
 Reference symbol mismatch for "a":
-after transform: SymbolId(4) "a"
+after transform: SymbolId(5) "a"
 rebuilt        : <None>
 Reference symbol mismatch for "enumValues":
-after transform: SymbolId(5) "enumValues"
+after transform: SymbolId(6) "enumValues"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Record"]
@@ -18896,16 +18851,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(13), ScopeId(15)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["P", "PropertyKey", "Record", "k"]
+after transform: ["PropertyKey", "Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeCircularReferenceInAccessor.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(9)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeContextualTypesApplied.ts
 Bindings mismatch:
@@ -18918,28 +18870,28 @@ Reference symbol mismatch for "mapped1":
 after transform: SymbolId(2) "mapped1"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped2":
-after transform: SymbolId(5) "mapped2"
+after transform: SymbolId(6) "mapped2"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped3":
-after transform: SymbolId(8) "mapped3"
+after transform: SymbolId(10) "mapped3"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped4":
-after transform: SymbolId(11) "mapped4"
+after transform: SymbolId(14) "mapped4"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped5":
-after transform: SymbolId(14) "mapped5"
+after transform: SymbolId(18) "mapped5"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped6":
-after transform: SymbolId(18) "mapped6"
+after transform: SymbolId(23) "mapped6"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped7":
-after transform: SymbolId(21) "mapped7"
+after transform: SymbolId(27) "mapped7"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped8":
-after transform: SymbolId(24) "mapped8"
+after transform: SymbolId(31) "mapped8"
 rebuilt        : <None>
 Reference symbol mismatch for "mapped9":
-after transform: SymbolId(27) "mapped9"
+after transform: SymbolId(35) "mapped9"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
@@ -18952,9 +18904,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
-Unresolved references mismatch:
-after transform: ["T", "console", "require"]
-rebuilt        : ["console", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericInstantiationPreservesHomomorphism.ts
 Bindings mismatch:
@@ -18963,9 +18912,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeGenericInstantiationPreservesInlineForm.ts
 Scope children mismatch:
@@ -18975,7 +18921,7 @@ Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4)]
 rebuilt        : ScopeId(2): []
 Unresolved references mismatch:
-after transform: ["K", "Record", "Required"]
+after transform: ["Record", "Required"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeInferenceAliasSubstitution.ts
@@ -18994,10 +18940,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "h":
-after transform: SymbolId(5) "h"
+after transform: SymbolId(6) "h"
 rebuilt        : <None>
 Reference symbol mismatch for "h":
-after transform: SymbolId(5) "h"
+after transform: SymbolId(6) "h"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
@@ -19010,9 +18956,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeMultiInference.ts
 Bindings mismatch:
@@ -19036,7 +18979,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "chain":
-after transform: SymbolId(5) "chain"
+after transform: SymbolId(6) "chain"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
@@ -19046,9 +18989,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeOverArr
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeParameterConstraint.ts
 Scope children mismatch:
@@ -19079,16 +19019,16 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Reference symbol mismatch for "type":
-after transform: SymbolId(6) "type"
+after transform: SymbolId(7) "type"
 rebuilt        : <None>
 Reference symbol mismatch for "type":
-after transform: SymbolId(6) "type"
+after transform: SymbolId(7) "type"
 rebuilt        : <None>
 Reference symbol mismatch for "type":
-after transform: SymbolId(6) "type"
+after transform: SymbolId(7) "type"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["k"]
+after transform: []
 rebuilt        : ["type"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeTupleConstraintAssignability.ts
@@ -19102,10 +19042,10 @@ Scope children mismatch:
 after transform: ScopeId(16): [ScopeId(17)]
 rebuilt        : ScopeId(1): []
 Reference symbol mismatch for "TupleSchema":
-after transform: SymbolId(21) "TupleSchema"
+after transform: SymbolId(23) "TupleSchema"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "P", "Readonly", "k"]
+after transform: ["Readonly"]
 rebuilt        : ["TupleSchema"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeWithAsClauseAndLateBoundProperty2.ts
@@ -19113,7 +19053,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Exclude", "K"]
+after transform: ["Exclude"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mappedTypeWithNameClauseAppliedToArrayType.ts
@@ -19124,13 +19064,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "doArrayStuff":
-after transform: SymbolId(3) "doArrayStuff"
+after transform: SymbolId(4) "doArrayStuff"
 rebuilt        : <None>
 Reference symbol mismatch for "x":
-after transform: SymbolId(5) "x"
+after transform: SymbolId(6) "x"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["doArrayStuff", "x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/memberAccessOnConstructorType.ts
@@ -19630,7 +19570,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["Object", "key"]
+after transform: ["Object"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mixingApparentTypeOverrides.ts
@@ -21312,7 +21252,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["K", "Partial"]
+after transform: ["Partial"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nestedInfinitelyExpandedRecursiveTypes.ts
@@ -21452,14 +21392,11 @@ Scope flags mismatch:
 after transform: ScopeId(14): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(5): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "GatewayOpcode":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
+after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol reference IDs mismatch for "GatewayOpcode":
-after transform: SymbolId(12): [ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(27), ReferenceId(28)]
+after transform: SymbolId(14): [ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(27), ReferenceId(28)]
 rebuilt        : SymbolId(5): []
-Unresolved references mismatch:
-after transform: ["O", "T", "arguments"]
-rebuilt        : ["arguments"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/newArrays.ts
 Scope flags mismatch:
@@ -21518,16 +21455,16 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "object":
-after transform: SymbolId(11) "object"
+after transform: SymbolId(13) "object"
 rebuilt        : <None>
 Reference symbol mismatch for "string":
-after transform: SymbolId(14) "string"
+after transform: SymbolId(16) "string"
 rebuilt        : <None>
 Reference symbol mismatch for "optional":
-after transform: SymbolId(15) "optional"
+after transform: SymbolId(17) "optional"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Record", "k"]
+after transform: ["Record"]
 rebuilt        : ["object", "optional", "string"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/noCircularitySelfReferentialGetter2.ts
@@ -21538,16 +21475,16 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "object":
-after transform: SymbolId(11) "object"
+after transform: SymbolId(13) "object"
 rebuilt        : <None>
 Reference symbol mismatch for "string":
-after transform: SymbolId(14) "string"
+after transform: SymbolId(16) "string"
 rebuilt        : <None>
 Reference symbol mismatch for "optional":
-after transform: SymbolId(15) "optional"
+after transform: SymbolId(17) "optional"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Record", "k"]
+after transform: ["Record"]
 rebuilt        : ["object", "optional", "string"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
@@ -21880,7 +21817,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["K", "NonNullable"]
+after transform: ["NonNullable"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/nondistributiveConditionalTypeInfer.ts
@@ -21975,37 +21912,37 @@ Symbol reference IDs mismatch for "E1":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4), ReferenceId(5), ReferenceId(32)]
 rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(8)]
 Symbol flags mismatch for "N1":
-after transform: SymbolId(15): SymbolFlags(RegularEnum)
+after transform: SymbolId(17): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "N1":
-after transform: SymbolId(15): [ReferenceId(18), ReferenceId(38)]
+after transform: SymbolId(17): [ReferenceId(18), ReferenceId(38)]
 rebuilt        : SymbolId(6): [ReferenceId(23)]
 Symbol flags mismatch for "N2":
-after transform: SymbolId(18): SymbolFlags(RegularEnum)
+after transform: SymbolId(20): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "N2":
-after transform: SymbolId(18): [ReferenceId(19), ReferenceId(44)]
+after transform: SymbolId(20): [ReferenceId(19), ReferenceId(44)]
 rebuilt        : SymbolId(8): [ReferenceId(31)]
 Reference symbol mismatch for "E2":
 after transform: SymbolId(4) "E2"
 rebuilt        : <None>
 Reference symbol mismatch for "val":
-after transform: SymbolId(14) "val"
+after transform: SymbolId(16) "val"
 rebuilt        : <None>
 Reference symbol mismatch for "val":
-after transform: SymbolId(14) "val"
+after transform: SymbolId(16) "val"
 rebuilt        : <None>
 Reference symbol mismatch for "val":
-after transform: SymbolId(14) "val"
+after transform: SymbolId(16) "val"
 rebuilt        : <None>
 Reference symbol mismatch for "val":
-after transform: SymbolId(14) "val"
+after transform: SymbolId(16) "val"
 rebuilt        : <None>
 Reference symbol mismatch for "E":
-after transform: SymbolId(22) "E"
+after transform: SymbolId(25) "E"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["E", "E2", "val"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/numericIndexerConstraint3.ts
@@ -22127,7 +22064,7 @@ Symbol reference IDs mismatch for "Strs":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(25)]
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7)]
 Symbol flags mismatch for "Nums":
-after transform: SymbolId(11): SymbolFlags(RegularEnum)
+after transform: SymbolId(12): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/objectLiteralIndexerNoImplicitAny.ts
@@ -22156,10 +22093,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "setupImages":
-after transform: SymbolId(7) "setupImages"
+after transform: SymbolId(9) "setupImages"
 rebuilt        : <None>
 Reference symbol mismatch for "test":
-after transform: SymbolId(12) "test"
+after transform: SymbolId(14) "test"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["File", "require"]
@@ -22274,7 +22211,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["K", "NonNullable"]
+after transform: ["NonNullable"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/overload2.ts
@@ -22799,7 +22736,7 @@ Reference symbol mismatch for "keys":
 after transform: SymbolId(54) "keys"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Partial"]
+after transform: ["Partial"]
 rebuilt        : ["keys"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/partialTypeNarrowedToByTypeGuard.ts
@@ -24668,7 +24605,7 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/propTypeValidatorInference.ts
 Unresolved references mismatch:
-after transform: ["Error", "Exclude", "K", "NonNullable", "Partial", "Pick"]
+after transform: ["Error", "Exclude", "NonNullable", "Partial", "Pick"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/propagateNonInferrableType.ts
@@ -24722,7 +24659,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(33), ScopeId(35)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["K", "NonNullable", "Parameters", "Record", "ReturnType"]
+after transform: ["NonNullable", "Parameters", "Record", "ReturnType"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite2.ts
@@ -24730,7 +24667,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(9), ScopeId(13), ScopeId(19), ScopeId(21), ScopeId(25), ScopeId(31), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(44), ScopeId(48), ScopeId(51), ScopeId(53), ScopeId(56), ScopeId(62), ScopeId(64), ScopeId(71), ScopeId(73), ScopeId(81), ScopeId(88), ScopeId(92), ScopeId(98), ScopeId(100), ScopeId(103), ScopeId(108), ScopeId(110), ScopeId(115), ScopeId(117), ScopeId(119), ScopeId(124), ScopeId(131), ScopeId(136), ScopeId(145), ScopeId(147), ScopeId(149), ScopeId(152), ScopeId(156), ScopeId(160), ScopeId(162), ScopeId(168), ScopeId(173), ScopeId(177), ScopeId(179), ScopeId(181), ScopeId(183), ScopeId(186), ScopeId(188), ScopeId(190), ScopeId(193), ScopeId(197)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Exclude", "Function", "K", "P", "ReadonlyArray", "Required"]
+after transform: ["Exclude", "Function", "ReadonlyArray", "Required"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reExportUndefined2.ts
@@ -25014,7 +24951,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(10), ScopeId(12), ScopeId(16), ScopeId(24), ScopeId(25), ScopeId(33), ScopeId(36), ScopeId(37), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(44), ScopeId(46)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Array", "K"]
+after transform: ["Array"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalEvaluationNonInfinite.ts
@@ -25039,7 +24976,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(14), ScopeId(15), ScopeId(18), ScopeId(22), ScopeId(25)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["NonNullable", "P", "Record"]
+after transform: ["NonNullable", "Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveExcessPropertyChecks.ts
@@ -25154,9 +25091,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveReverseM
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Unresolved references mismatch:
-after transform: ["K"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveSpecializationOfExtendedTypeWithError.ts
 Scope children mismatch:
@@ -25189,34 +25123,34 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7), ScopeId(10), ScopeId(12)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "opt1":
-after transform: SymbolId(18) "opt1"
+after transform: SymbolId(21) "opt1"
 rebuilt        : <None>
 Reference symbol mismatch for "opt2":
-after transform: SymbolId(19) "opt2"
+after transform: SymbolId(22) "opt2"
 rebuilt        : <None>
 Reference symbol mismatch for "opt3":
-after transform: SymbolId(20) "opt3"
+after transform: SymbolId(23) "opt3"
 rebuilt        : <None>
 Reference symbol mismatch for "opt1":
-after transform: SymbolId(18) "opt1"
+after transform: SymbolId(21) "opt1"
 rebuilt        : <None>
 Reference symbol mismatch for "opt2":
-after transform: SymbolId(19) "opt2"
+after transform: SymbolId(22) "opt2"
 rebuilt        : <None>
 Reference symbol mismatch for "opt3":
-after transform: SymbolId(20) "opt3"
+after transform: SymbolId(23) "opt3"
 rebuilt        : <None>
 Reference symbol mismatch for "opt1":
-after transform: SymbolId(18) "opt1"
+after transform: SymbolId(21) "opt1"
 rebuilt        : <None>
 Reference symbol mismatch for "opt2":
-after transform: SymbolId(19) "opt2"
+after transform: SymbolId(22) "opt2"
 rebuilt        : <None>
 Reference symbol mismatch for "opt3":
-after transform: SymbolId(20) "opt3"
+after transform: SymbolId(23) "opt3"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Array", "k"]
+after transform: ["Array"]
 rebuilt        : ["opt1", "opt2", "opt3"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveTypeComparison.ts
@@ -25320,9 +25254,6 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "Type":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(14), ReferenceId(33)]
 rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(8)]
-Unresolved references mismatch:
-after transform: ["K", "console"]
-rebuilt        : ["console"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
 Bindings mismatch:
@@ -25537,9 +25468,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4)]
 rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["P"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/restParameterAssignmentCompatibility.ts
 Symbol reference IDs mismatch for "T":
@@ -25564,9 +25492,6 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4)]
 rebuilt        : ScopeId(1): []
-Unresolved references mismatch:
-after transform: ["P"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/restUnion2.ts
 Bindings mismatch:
@@ -25666,7 +25591,7 @@ Reference symbol mismatch for "conforms":
 after transform: SymbolId(0) "conforms"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["conforms"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedIntersectionInference1.ts
@@ -25677,10 +25602,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Reference symbol mismatch for "withKeyedObj":
-after transform: SymbolId(6) "withKeyedObj"
+after transform: SymbolId(8) "withKeyedObj"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["withKeyedObj"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedIntersectionInference2.ts
@@ -25691,10 +25616,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4)]
 Reference symbol mismatch for "withTupleLike":
-after transform: SymbolId(6) "withTupleLike"
+after transform: SymbolId(8) "withTupleLike"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["withTupleLike"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTupleContext.ts
@@ -25708,19 +25633,19 @@ Reference symbol mismatch for "test1":
 after transform: SymbolId(0) "test1"
 rebuilt        : <None>
 Reference symbol mismatch for "test2":
-after transform: SymbolId(4) "test2"
+after transform: SymbolId(5) "test2"
 rebuilt        : <None>
 Reference symbol mismatch for "create":
-after transform: SymbolId(11) "create"
+after transform: SymbolId(14) "create"
 rebuilt        : <None>
 Reference symbol mismatch for "create":
-after transform: SymbolId(11) "create"
+after transform: SymbolId(14) "create"
 rebuilt        : <None>
 Reference symbol mismatch for "test4":
-after transform: SymbolId(19) "test4"
+after transform: SymbolId(23) "test4"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Record"]
+after transform: ["Record"]
 rebuilt        : ["create", "test1", "test2", "test4"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeAssignableToIndex.ts
@@ -25728,7 +25653,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["K", "Record"]
+after transform: ["Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeContextualTypesPerElementOfTupleConstraint.ts
@@ -25742,7 +25667,7 @@ Reference symbol mismatch for "bindAll":
 after transform: SymbolId(2) "bindAll"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["EventTarget", "Extract", "HTMLButtonElement", "K", "Parameters"]
+after transform: ["EventTarget", "Extract", "HTMLButtonElement", "Parameters"]
 rebuilt        : ["bindAll"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeDeepDeclarationEmit.ts
@@ -25753,13 +25678,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "SimpleStringValidator":
-after transform: SymbolId(7) "SimpleStringValidator"
+after transform: SymbolId(8) "SimpleStringValidator"
 rebuilt        : <None>
 Reference symbol mismatch for "ObjValidator":
-after transform: SymbolId(8) "ObjValidator"
+after transform: SymbolId(9) "ObjValidator"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["ObjValidator", "SimpleStringValidator"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
@@ -25770,13 +25695,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(11)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Reference symbol mismatch for "configureStore":
-after transform: SymbolId(14) "configureStore"
+after transform: SymbolId(15) "configureStore"
 rebuilt        : <None>
 Reference symbol mismatch for "configureStore":
-after transform: SymbolId(14) "configureStore"
+after transform: SymbolId(15) "configureStore"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["configureStore"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypePrimitiveConstraintProperty.ts
@@ -25790,16 +25715,13 @@ Reference symbol mismatch for "test":
 after transform: SymbolId(0) "test"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["test"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeRecursiveInference.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Unresolved references mismatch:
-after transform: ["K", "console", "undefined"]
-rebuilt        : ["console", "undefined"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedUnionInference.ts
 Bindings mismatch:
@@ -25824,7 +25746,7 @@ Reference symbol mismatch for "unionType":
 after transform: SymbolId(25) "unionType"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "const"]
+after transform: ["const"]
 rebuilt        : ["createExtractor", "isIdentifier", "isStringLiteral", "unionType"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reversedRecusiveTypeInstantiation.ts
@@ -27605,7 +27527,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(14), ScopeId(16), ScopeId(19)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Array", "Partial", "ReadonlyArray", "key"]
+after transform: ["Array", "Partial", "ReadonlyArray"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/specializationError.ts
@@ -27944,7 +27866,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Record", "key"]
+after transform: ["Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/stackDepthLimitCastingType.ts
@@ -28278,7 +28200,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(9), ScopeId(10), ScopeId(12), ScopeId(16), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(30), ScopeId(32), ScopeId(37), ScopeId(40)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Exclude", "Extract", "JSX", "Omit", "Partial", "Pick", "key"]
+after transform: ["Exclude", "Extract", "JSX", "Omit", "Partial", "Pick"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/subclassThisTypeAssignable02.ts
@@ -28325,7 +28247,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
-after transform: ["P", "Record"]
+after transform: ["Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/substitutionTypePassedToExtends.ts
@@ -28352,13 +28274,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "withBoundary":
-after transform: SymbolId(4) "withBoundary"
+after transform: SymbolId(5) "withBoundary"
 rebuilt        : <None>
 Reference symbol mismatch for "withoutBoundary":
-after transform: SymbolId(7) "withoutBoundary"
+after transform: SymbolId(8) "withoutBoundary"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["key"]
+after transform: []
 rebuilt        : ["withBoundary", "withoutBoundary"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/subtypeReductionUnionConstraints.ts
@@ -28652,10 +28574,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "createStore":
-after transform: SymbolId(4) "createStore"
+after transform: SymbolId(5) "createStore"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Capitalize", "K", "Omit"]
+after transform: ["Capitalize", "Omit"]
 rebuilt        : ["createStore"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/templateLiteralsAndDecoratorMetadata.ts
@@ -28699,11 +28621,8 @@ Scope children mismatch:
 after transform: ScopeId(4): [ScopeId(5)]
 rebuilt        : ScopeId(4): []
 Symbol reference IDs mismatch for "C":
-after transform: SymbolId(4): [ReferenceId(5), ReferenceId(8)]
+after transform: SymbolId(5): [ReferenceId(5), ReferenceId(8)]
 rebuilt        : SymbolId(3): [ReferenceId(6)]
-Unresolved references mismatch:
-after transform: ["K", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/thisExpressionOfGenericObject.ts
 Symbol reference IDs mismatch for "MyClass1":
@@ -29080,10 +28999,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(8), ScopeId(9), ScopeId(10)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "set":
-after transform: SymbolId(7) "set"
+after transform: SymbolId(10) "set"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Exclude", "Pick", "Required", "SK1"]
+after transform: ["Exclude", "Pick", "Required"]
 rebuilt        : ["set"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeAliasDoesntMakeModuleInstantiated.ts
@@ -29235,10 +29154,10 @@ Reference symbol mismatch for "hasOwnProperty":
 after transform: SymbolId(0) "hasOwnProperty"
 rebuilt        : <None>
 Reference symbol mismatch for "arrayLikeOrIterable":
-after transform: SymbolId(4) "arrayLikeOrIterable"
+after transform: SymbolId(5) "arrayLikeOrIterable"
 rebuilt        : <None>
 Reference symbol mismatch for "arrayLikeOrIterable":
-after transform: SymbolId(4) "arrayLikeOrIterable"
+after transform: SymbolId(5) "arrayLikeOrIterable"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["ArrayLike", "Iterable", "PropertyKey"]
@@ -29255,10 +29174,10 @@ Reference symbol mismatch for "hasOwnProperty":
 after transform: SymbolId(0) "hasOwnProperty"
 rebuilt        : <None>
 Reference symbol mismatch for "arrayLikeOrIterable":
-after transform: SymbolId(4) "arrayLikeOrIterable"
+after transform: SymbolId(5) "arrayLikeOrIterable"
 rebuilt        : <None>
 Reference symbol mismatch for "arrayLikeOrIterable":
-after transform: SymbolId(4) "arrayLikeOrIterable"
+after transform: SymbolId(5) "arrayLikeOrIterable"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["ArrayLike", "Iterable", "PropertyKey"]
@@ -29581,7 +29500,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Unresolved references mismatch:
-after transform: ["P", "Record"]
+after transform: ["Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeParameterFixingWithConstraints.ts
@@ -29656,7 +29575,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 Unresolved references mismatch:
-after transform: ["Array", "K"]
+after transform: ["Array"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typePredicateStructuralMatch.ts
@@ -29907,7 +29826,7 @@ Reference symbol mismatch for "isB":
 after transform: SymbolId(74) "isB"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["isA", "isB", "isC"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeVariableTypeGuards.ts
@@ -30856,9 +30775,6 @@ rebuilt        : SymbolId(5): [ReferenceId(8)]
 Symbol reference IDs mismatch for "Type":
 after transform: SymbolId(23): [ReferenceId(51), ReferenceId(60)]
 rebuilt        : SymbolId(9): []
-Unresolved references mismatch:
-after transform: ["k"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/varianceProblingAndZeroOrderIndexSignatureRelationsAlign2.ts
 Scope children mismatch:
@@ -30888,16 +30804,13 @@ rebuilt        : SymbolId(5): [ReferenceId(8)]
 Symbol reference IDs mismatch for "Type":
 after transform: SymbolId(23): [ReferenceId(51), ReferenceId(60)]
 rebuilt        : SymbolId(9): []
-Unresolved references mismatch:
-after transform: ["k"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/varianceRepeatedlyPropegatesWithUnreliableFlag.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["K", "Pick", "Record"]
+after transform: ["Pick", "Record"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/verbatim-declarations-parameters.ts
@@ -30985,10 +30898,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "test":
-after transform: SymbolId(16) "test"
+after transform: SymbolId(17) "test"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Readonly", "Record", "ThisType"]
+after transform: ["Readonly", "Record", "ThisType"]
 rebuilt        : ["test"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/vueLikeDataAndPropsInference2.ts
@@ -30999,10 +30912,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "test":
-after transform: SymbolId(16) "test"
+after transform: SymbolId(17) "test"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Readonly", "Record", "ThisType"]
+after transform: ["Readonly", "Record", "ThisType"]
 rebuilt        : ["test"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/weakTypeAndPrimitiveNarrowing.ts
@@ -33420,10 +33333,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Reference symbol mismatch for "classWithProperties":
-after transform: SymbolId(6) "classWithProperties"
+after transform: SymbolId(7) "classWithProperties"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["const", "key"]
+after transform: ["const"]
 rebuilt        : ["classWithProperties"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty9.ts
@@ -33437,25 +33350,25 @@ Scope children mismatch:
 after transform: ScopeId(10): [ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(4): [ScopeId(5)]
 Symbol reference IDs mismatch for "ApiItem":
-after transform: SymbolId(6): [ReferenceId(5), ReferenceId(7), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(22), ReferenceId(25)]
+after transform: SymbolId(7): [ReferenceId(5), ReferenceId(7), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(22), ReferenceId(25)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(5)]
 Symbol reference IDs mismatch for "ApiEnumMember":
-after transform: SymbolId(7): [ReferenceId(27)]
+after transform: SymbolId(8): [ReferenceId(27)]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(8): SymbolFlags(Function | Interface)
+after transform: SymbolId(9): SymbolFlags(Function | Interface)
 rebuilt        : SymbolId(2): SymbolFlags(Function)
 Symbol span mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(8): Span { start: 462, end: 483 }
+after transform: SymbolId(9): Span { start: 462, end: 483 }
 rebuilt        : SymbolId(2): Span { start: 558, end: 579 }
 Symbol reference IDs mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(8): [ReferenceId(17), ReferenceId(19), ReferenceId(24)]
+after transform: SymbolId(9): [ReferenceId(17), ReferenceId(19), ReferenceId(24)]
 rebuilt        : SymbolId(2): [ReferenceId(4)]
 Symbol redeclarations mismatch for "ApiItemContainerMixin":
-after transform: SymbolId(8): [Span { start: 462, end: 483 }, Span { start: 558, end: 579 }]
+after transform: SymbolId(9): [Span { start: 462, end: 483 }, Span { start: 558, end: 579 }]
 rebuilt        : SymbolId(2): []
 Unresolved references mismatch:
-after transform: ["K", "ReadonlyArray"]
+after transform: ["ReadonlyArray"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor2.ts
@@ -34039,7 +33952,7 @@ Scope children mismatch:
 after transform: ScopeId(5): [ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(7): [ScopeId(8)]
 Unresolved references mismatch:
-after transform: ["Awaited", "Error", "K", "Math", "Promise", "String", "arguments", "const", "require", "undefined"]
+after transform: ["Awaited", "Error", "Math", "Promise", "String", "arguments", "const", "require", "undefined"]
 rebuilt        : ["Error", "Math", "Promise", "String", "arguments", "require", "undefined"]
 Unresolved reference IDs mismatch for "Error":
 after transform: [ReferenceId(0), ReferenceId(4), ReferenceId(15), ReferenceId(22), ReferenceId(29)]
@@ -34095,9 +34008,6 @@ rebuilt        : ScopeId(7): [ScopeId(8)]
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(5)]
 rebuilt        : SymbolId(1): [ReferenceId(3)]
-Unresolved references mismatch:
-after transform: ["P", "require"]
-rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/anonymousClassAccessorsDeclarationEmit1.ts
 Symbol reference IDs mismatch for "A":
@@ -39339,7 +39249,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "foo":
-after transform: SymbolId(1) "foo"
+after transform: SymbolId(2) "foo"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
@@ -43695,37 +43605,37 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(34), ScopeId(35), ScopeId(36), ScopeId(37), ScopeId(38), ScopeId(39), ScopeId(40), ScopeId(41), ScopeId(42), ScopeId(43), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21)]
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Reference symbol mismatch for "Constructor":
-after transform: SymbolId(14) "Constructor"
+after transform: SymbolId(15) "Constructor"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Partial", "Readonly", "require"]
@@ -46142,7 +46052,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(25), ScopeId(27)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["P", "Partial"]
+after transform: ["Partial"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignmentUseParentType1.ts
@@ -46995,7 +46905,7 @@ Reference symbol mismatch for "foo2":
 after transform: SymbolId(9) "foo2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["foo", "foo2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtends1.ts
@@ -47006,13 +46916,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(58), ScopeId(59), ScopeId(60), ScopeId(61), ScopeId(62), ScopeId(65), ScopeId(66), ScopeId(67), ScopeId(68), ScopeId(69), ScopeId(72), ScopeId(73), ScopeId(74), ScopeId(75), ScopeId(76), ScopeId(79), ScopeId(81), ScopeId(82), ScopeId(85), ScopeId(87), ScopeId(89), ScopeId(91), ScopeId(95), ScopeId(98), ScopeId(102), ScopeId(105), ScopeId(107), ScopeId(108), ScopeId(109), ScopeId(110), ScopeId(113), ScopeId(114), ScopeId(116), ScopeId(117), ScopeId(118), ScopeId(119), ScopeId(120), ScopeId(121), ScopeId(127), ScopeId(129), ScopeId(130), ScopeId(131), ScopeId(133)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "x1":
-after transform: SymbolId(135) "x1"
+after transform: SymbolId(139) "x1"
 rebuilt        : <None>
 Reference symbol mismatch for "x2":
-after transform: SymbolId(141) "x2"
+after transform: SymbolId(145) "x2"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["P", "Promise"]
+after transform: ["Promise"]
 rebuilt        : ["x1", "x2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypesWithExtendsDependingOnTypeVariables.ts
@@ -47321,16 +47231,16 @@ Reference symbol mismatch for "f2":
 after transform: SymbolId(5) "f2"
 rebuilt        : <None>
 Reference symbol mismatch for "obj":
-after transform: SymbolId(10) "obj"
+after transform: SymbolId(11) "obj"
 rebuilt        : <None>
 Reference symbol mismatch for "f2":
 after transform: SymbolId(5) "f2"
 rebuilt        : <None>
 Reference symbol mismatch for "obj":
-after transform: SymbolId(10) "obj"
+after transform: SymbolId(11) "obj"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["a", "b", "f", "f2", "obj"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionTypeInference3.ts
@@ -47371,7 +47281,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(15)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "mock":
-after transform: SymbolId(46) "mock"
+after transform: SymbolId(47) "mock"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "Promise"]
@@ -47392,9 +47302,6 @@ rebuilt        : ScopeId(6): [ScopeId(7), ScopeId(9)]
 Scope children mismatch:
 after transform: ScopeId(13): [ScopeId(14), ScopeId(15), ScopeId(17)]
 rebuilt        : ScopeId(11): [ScopeId(12), ScopeId(14)]
-Unresolved references mismatch:
-after transform: ["P"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofIntersection.ts
 Scope children mismatch:
@@ -47738,16 +47645,16 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(16), ScopeId(17), ScopeId(19)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Reference symbol mismatch for "createContainer":
-after transform: SymbolId(25) "createContainer"
+after transform: SymbolId(27) "createContainer"
 rebuilt        : <None>
 Reference symbol mismatch for "createContainer":
-after transform: SymbolId(25) "createContainer"
+after transform: SymbolId(27) "createContainer"
 rebuilt        : <None>
 Reference symbol mismatch for "f":
-after transform: SymbolId(28) "f"
+after transform: SymbolId(30) "f"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Capitalize", "K"]
+after transform: ["Capitalize"]
 rebuilt        : ["createContainer", "f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/stringEnumLiteralTypes1.ts
@@ -48010,37 +47917,37 @@ Scope children mismatch:
 after transform: ScopeId(19): [ScopeId(20)]
 rebuilt        : ScopeId(16): []
 Reference symbol mismatch for "validate":
-after transform: SymbolId(54) "validate"
+after transform: SymbolId(56) "validate"
 rebuilt        : <None>
 Reference symbol mismatch for "clone":
-after transform: SymbolId(57) "clone"
+after transform: SymbolId(60) "clone"
 rebuilt        : <None>
 Reference symbol mismatch for "validateAndClone":
-after transform: SymbolId(60) "validateAndClone"
+after transform: SymbolId(64) "validateAndClone"
 rebuilt        : <None>
 Reference symbol mismatch for "applySpec":
-after transform: SymbolId(74) "applySpec"
+after transform: SymbolId(80) "applySpec"
 rebuilt        : <None>
 Reference symbol mismatch for "applySpec":
-after transform: SymbolId(74) "applySpec"
+after transform: SymbolId(80) "applySpec"
 rebuilt        : <None>
 Reference symbol mismatch for "f20":
-after transform: SymbolId(88) "f20"
+after transform: SymbolId(94) "f20"
 rebuilt        : <None>
 Reference symbol mismatch for "f21":
-after transform: SymbolId(92) "f21"
+after transform: SymbolId(98) "f21"
 rebuilt        : <None>
 Reference symbol mismatch for "f22":
-after transform: SymbolId(96) "f22"
+after transform: SymbolId(102) "f22"
 rebuilt        : <None>
 Reference symbol mismatch for "f23":
-after transform: SymbolId(100) "f23"
+after transform: SymbolId(106) "f23"
 rebuilt        : <None>
 Reference symbol mismatch for "f24":
-after transform: SymbolId(105) "f24"
+after transform: SymbolId(111) "f24"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["P", "Partial", "Pick"]
+after transform: ["Partial", "Pick"]
 rebuilt        : ["applySpec", "clone", "f20", "f21", "f22", "f23", "f24", "validate", "validateAndClone"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeConstraints.ts
@@ -48056,7 +47963,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(31), ScopeId(32)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["P", "Pick"]
+after transform: ["Pick"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeModifiers.ts
@@ -48067,7 +47974,7 @@ Scope children mismatch:
 after transform: ScopeId(29): [ScopeId(30)]
 rebuilt        : ScopeId(4): []
 Unresolved references mismatch:
-after transform: ["P", "Partial", "Pick", "Readonly"]
+after transform: ["Partial", "Pick", "Readonly"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeOverlappingStringEnumKeys.ts
@@ -48099,7 +48006,7 @@ Symbol reference IDs mismatch for "AlienAnimalTypes":
 after transform: SymbolId(3): [ReferenceId(1), ReferenceId(3), ReferenceId(12), ReferenceId(19)]
 rebuilt        : SymbolId(2): [ReferenceId(6), ReferenceId(8)]
 Unresolved references mismatch:
-after transform: ["Extract", "V"]
+after transform: ["Extract"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes1.ts
@@ -48110,19 +48017,19 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52), ScopeId(54)]
 rebuilt        : ScopeId(0): []
 Reference symbol mismatch for "f1":
-after transform: SymbolId(24) "f1"
+after transform: SymbolId(47) "f1"
 rebuilt        : <None>
 Reference symbol mismatch for "f2":
-after transform: SymbolId(26) "f2"
+after transform: SymbolId(50) "f2"
 rebuilt        : <None>
 Reference symbol mismatch for "f3":
-after transform: SymbolId(28) "f3"
+after transform: SymbolId(53) "f3"
 rebuilt        : <None>
 Reference symbol mismatch for "f4":
-after transform: SymbolId(30) "f4"
+after transform: SymbolId(56) "f4"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Array", "Date", "Number", "P"]
+after transform: ["Array", "Date", "Number"]
 rebuilt        : ["f1", "f2", "f3", "f4"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes2.ts
@@ -48136,25 +48043,25 @@ Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(1): []
 Reference symbol mismatch for "assign":
-after transform: SymbolId(15) "assign"
+after transform: SymbolId(18) "assign"
 rebuilt        : <None>
 Reference symbol mismatch for "assign":
-after transform: SymbolId(15) "assign"
+after transform: SymbolId(18) "assign"
 rebuilt        : <None>
 Reference symbol mismatch for "freeze":
-after transform: SymbolId(19) "freeze"
+after transform: SymbolId(22) "freeze"
 rebuilt        : <None>
 Reference symbol mismatch for "pick":
-after transform: SymbolId(22) "pick"
+after transform: SymbolId(25) "pick"
 rebuilt        : <None>
 Reference symbol mismatch for "mapObject":
-after transform: SymbolId(27) "mapObject"
+after transform: SymbolId(30) "mapObject"
 rebuilt        : <None>
 Reference symbol mismatch for "proxify":
-after transform: SymbolId(34) "proxify"
+after transform: SymbolId(37) "proxify"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["P", "Partial", "Pick", "Readonly", "Record"]
+after transform: ["Partial", "Pick", "Readonly", "Record"]
 rebuilt        : ["assign", "freeze", "mapObject", "pick", "proxify"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes3.ts
@@ -48168,16 +48075,16 @@ Symbol reference IDs mismatch for "Box":
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(11), ReferenceId(12)]
 rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "boxify":
-after transform: SymbolId(4) "boxify"
+after transform: SymbolId(5) "boxify"
 rebuilt        : <None>
 Reference symbol mismatch for "unboxify":
-after transform: SymbolId(7) "unboxify"
+after transform: SymbolId(8) "unboxify"
 rebuilt        : <None>
 Reference symbol mismatch for "unboxify":
-after transform: SymbolId(7) "unboxify"
+after transform: SymbolId(8) "unboxify"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "require"]
+after transform: ["require"]
 rebuilt        : ["boxify", "require", "unboxify"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypes4.ts
@@ -48185,7 +48092,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(30)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
 Unresolved references mismatch:
-after transform: ["P", "Partial", "Readonly"]
+after transform: ["Partial", "Readonly"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesArraysTuples.ts
@@ -48196,61 +48103,61 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(32), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(38), ScopeId(39), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(45), ScopeId(46), ScopeId(47), ScopeId(48), ScopeId(49), ScopeId(50), ScopeId(51), ScopeId(52), ScopeId(53)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Reference symbol mismatch for "unboxify":
-after transform: SymbolId(31) "unboxify"
+after transform: SymbolId(33) "unboxify"
 rebuilt        : <None>
 Reference symbol mismatch for "x10":
-after transform: SymbolId(34) "x10"
+after transform: SymbolId(36) "x10"
 rebuilt        : <None>
 Reference symbol mismatch for "unboxify":
-after transform: SymbolId(31) "unboxify"
+after transform: SymbolId(33) "unboxify"
 rebuilt        : <None>
 Reference symbol mismatch for "x11":
-after transform: SymbolId(36) "x11"
+after transform: SymbolId(38) "x11"
 rebuilt        : <None>
 Reference symbol mismatch for "unboxify":
-after transform: SymbolId(31) "unboxify"
+after transform: SymbolId(33) "unboxify"
 rebuilt        : <None>
 Reference symbol mismatch for "x12":
-after transform: SymbolId(38) "x12"
+after transform: SymbolId(40) "x12"
 rebuilt        : <None>
 Reference symbol mismatch for "nonpartial":
-after transform: SymbolId(40) "nonpartial"
+after transform: SymbolId(42) "nonpartial"
 rebuilt        : <None>
 Reference symbol mismatch for "x20":
-after transform: SymbolId(43) "x20"
+after transform: SymbolId(45) "x20"
 rebuilt        : <None>
 Reference symbol mismatch for "nonpartial":
-after transform: SymbolId(40) "nonpartial"
+after transform: SymbolId(42) "nonpartial"
 rebuilt        : <None>
 Reference symbol mismatch for "x21":
-after transform: SymbolId(45) "x21"
+after transform: SymbolId(47) "x21"
 rebuilt        : <None>
 Reference symbol mismatch for "nonpartial":
-after transform: SymbolId(40) "nonpartial"
+after transform: SymbolId(42) "nonpartial"
 rebuilt        : <None>
 Reference symbol mismatch for "x22":
-after transform: SymbolId(47) "x22"
+after transform: SymbolId(49) "x22"
 rebuilt        : <None>
 Reference symbol mismatch for "all":
-after transform: SymbolId(54) "all"
+after transform: SymbolId(57) "all"
 rebuilt        : <None>
 Reference symbol mismatch for "all":
-after transform: SymbolId(54) "all"
+after transform: SymbolId(57) "all"
 rebuilt        : <None>
 Reference symbol mismatch for "all":
-after transform: SymbolId(54) "all"
+after transform: SymbolId(57) "all"
 rebuilt        : <None>
 Reference symbol mismatch for "all":
-after transform: SymbolId(54) "all"
+after transform: SymbolId(57) "all"
 rebuilt        : <None>
 Reference symbol mismatch for "acceptArray":
-after transform: SymbolId(80) "acceptArray"
+after transform: SymbolId(84) "acceptArray"
 rebuilt        : <None>
 Reference symbol mismatch for "mapArray":
-after transform: SymbolId(82) "mapArray"
+after transform: SymbolId(86) "mapArray"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Array", "K", "P", "Partial", "Promise", "PromiseLike", "Readonly", "ReadonlyArray", "Required"]
+after transform: ["Array", "Partial", "Promise", "PromiseLike", "Readonly", "ReadonlyArray", "Required"]
 rebuilt        : ["acceptArray", "all", "mapArray", "nonpartial", "unboxify", "x10", "x11", "x12", "x20", "x21", "x22"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesGenericTuples.ts
@@ -48258,7 +48165,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(32)]
 rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["P", "Readonly"]
+after transform: ["Readonly"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesGenericTuples2.ts
@@ -49736,19 +49643,19 @@ Reference symbol mismatch for "makeObject2":
 after transform: SymbolId(45) "makeObject2"
 rebuilt        : <None>
 Reference symbol mismatch for "defineProp":
-after transform: SymbolId(57) "defineProp"
+after transform: SymbolId(58) "defineProp"
 rebuilt        : <None>
 Reference symbol mismatch for "defineProp":
-after transform: SymbolId(57) "defineProp"
+after transform: SymbolId(58) "defineProp"
 rebuilt        : <None>
 Reference symbol mismatch for "defineProps":
-after transform: SymbolId(64) "defineProps"
+after transform: SymbolId(65) "defineProps"
 rebuilt        : <None>
 Reference symbol mismatch for "Vue":
-after transform: SymbolId(85) "Vue"
+after transform: SymbolId(87) "Vue"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K", "Record", "ThisType"]
+after transform: ["Record", "ThisType"]
 rebuilt        : ["Vue", "defineProp", "defineProps", "f1", "f2", "makeObject", "makeObject2"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInTaggedTemplateCall.ts
@@ -49927,13 +49834,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(21), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 Reference symbol mismatch for "test":
-after transform: SymbolId(32) "test"
+after transform: SymbolId(34) "test"
 rebuilt        : <None>
 Reference symbol mismatch for "input":
-after transform: SymbolId(35) "input"
+after transform: SymbolId(38) "input"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["input", "test"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/partiallyNamedTuples2.ts
@@ -50308,19 +50215,19 @@ Reference symbol mismatch for "test1":
 after transform: SymbolId(0) "test1"
 rebuilt        : <None>
 Reference symbol mismatch for "test2":
-after transform: SymbolId(4) "test2"
+after transform: SymbolId(5) "test2"
 rebuilt        : <None>
 Reference symbol mismatch for "test3":
-after transform: SymbolId(8) "test3"
+after transform: SymbolId(10) "test3"
 rebuilt        : <None>
 Reference symbol mismatch for "test4":
-after transform: SymbolId(12) "test4"
+after transform: SymbolId(15) "test4"
 rebuilt        : <None>
 Reference symbol mismatch for "test5":
-after transform: SymbolId(16) "test5"
+after transform: SymbolId(20) "test5"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["test1", "test2", "test3", "test4", "test5"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiersWithIntersection.ts
@@ -57076,13 +56983,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "createMachine":
-after transform: SymbolId(20) "createMachine"
+after transform: SymbolId(21) "createMachine"
 rebuilt        : <None>
 Reference symbol mismatch for "assign":
-after transform: SymbolId(15) "assign"
+after transform: SymbolId(16) "assign"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["assign", "createMachine"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericContextualTypes3.ts
@@ -57093,13 +57000,13 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch for "createMachine":
-after transform: SymbolId(20) "createMachine"
+after transform: SymbolId(21) "createMachine"
 rebuilt        : <None>
 Reference symbol mismatch for "assign":
-after transform: SymbolId(15) "assign"
+after transform: SymbolId(16) "assign"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["K"]
+after transform: []
 rebuilt        : ["assign", "createMachine"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/genericFunctionParameters.ts
@@ -57161,10 +57068,10 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(7), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Reference symbol mismatch for "ConflictTarget":
-after transform: SymbolId(10) "ConflictTarget"
+after transform: SymbolId(11) "ConflictTarget"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Error", "P"]
+after transform: ["Error"]
 rebuilt        : ["ConflictTarget", "Error"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/noInferRedeclaration.ts

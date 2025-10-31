@@ -667,3 +667,15 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
         self.name.symbol_id.set(Some(symbol_id));
     }
 }
+
+impl<'a> Binder<'a> for TSMappedType<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let symbol_id = builder.declare_symbol(
+            self.key.span,
+            &self.key.name,
+            SymbolFlags::TypeParameter,
+            SymbolFlags::TypeParameterExcludes,
+        );
+        self.key.symbol_id.set(Some(symbol_id));
+    }
+}
