@@ -7,6 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{
@@ -37,9 +38,10 @@ fn cant_be_anchor(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AnchorIsValid(Box<AnchorIsValidConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AnchorIsValidConfig {
-    /// Unique and sorted list of valid hrefs
+    /// List of strings that are valid href values.
     valid_hrefs: Vec<CompactStr>,
 }
 
@@ -85,14 +87,14 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// There are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:
+    /// There are **many reasons** why an anchor should not have logic and have a correct `href` attribute:
     /// - it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link
     /// in another tab, but the default "click" behaviour is prevented
     /// - it can source of invalid links, and crawlers can't navigate the website, risking to penalise SEO ranking
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// #### Valid
+    /// Examples of **valid** code for this rule:
     ///
     /// ```jsx
     /// <>
@@ -102,7 +104,7 @@ declare_oxc_lint!(
     /// </>
     /// ```
     ///
-    /// #### Invalid
+    /// Examples of **invalid** code for this rule:
     ///
     /// ```jsx
     /// <>
@@ -119,7 +121,8 @@ declare_oxc_lint!(
     /// - [WCAG 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard)
     AnchorIsValid,
     jsx_a11y,
-    correctness
+    correctness,
+    config = AnchorIsValidConfig
 );
 
 impl Rule for AnchorIsValid {
