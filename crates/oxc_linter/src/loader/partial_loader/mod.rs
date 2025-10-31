@@ -1,3 +1,4 @@
+use memchr::memmem::Finder;
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::loader::JavaScriptSource;
@@ -68,4 +69,11 @@ fn find_script_closing_angle(source_text: &str, pointer: usize) -> Option<usize>
     }
 
     None
+}
+
+fn find_script_start(source_text: &str, pointer: &usize) -> Option<usize> {
+    let script_start_finder = Finder::new(SCRIPT_START);
+    let offset = script_start_finder.find(&source_text.as_bytes()[*pointer..])?;
+
+    Some(offset + SCRIPT_START.len())
 }

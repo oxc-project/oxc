@@ -2,9 +2,9 @@ use memchr::memmem::Finder;
 
 use oxc_span::SourceType;
 
-use crate::frameworks::FrameworkOptions;
+use crate::{frameworks::FrameworkOptions, loader::partial_loader::find_script_start};
 
-use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START, find_script_closing_angle};
+use super::{JavaScriptSource, SCRIPT_END, find_script_closing_angle};
 
 pub struct VuePartialLoader<'a> {
     source_text: &'a str,
@@ -35,11 +35,8 @@ impl<'a> VuePartialLoader<'a> {
     }
 
     fn parse_script(&self, pointer: &mut usize) -> Option<JavaScriptSource<'a>> {
-        let script_start_finder = Finder::new(SCRIPT_START);
-
         // find opening "<script"
-        let offset = script_start_finder.find(&self.source_text.as_bytes()[*pointer..])?;
-        *pointer += offset + SCRIPT_START.len();
+        *pointer += find_script_start(self.source_text, pointer)?;
 
         // skip `<script-`
         if !self.source_text[*pointer..].starts_with([' ', '>']) {
@@ -65,7 +62,7 @@ impl<'a> VuePartialLoader<'a> {
         let js_start = *pointer;
 
         // find "</script>"
-        let script_end_finder = Finder::new(SCRIPT_END);
+        let script_end_finder: Finder<'_> = Finder::new(SCRIPT_END);
         let offset = script_end_finder.find(&self.source_text.as_bytes()[*pointer..])?;
         let js_end = *pointer + offset;
         *pointer += offset + SCRIPT_END.len();
