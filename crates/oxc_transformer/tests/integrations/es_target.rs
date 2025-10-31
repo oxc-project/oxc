@@ -21,6 +21,7 @@ fn es_target() {
         ("es2019", "1n ** 2n"), // test target error
         ("es2021", "class foo { static {} }"),
         ("es2021", "class Foo { #a; }"),
+        ("es2019", r#"export { foo as "string-name" };"#), // test arbitrary module namespace names warning
     ];
 
     // Test no transformation for esnext.

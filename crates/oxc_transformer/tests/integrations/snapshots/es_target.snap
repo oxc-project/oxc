@@ -86,3 +86,14 @@ class Foo {
 		_classPrivateFieldInitSpec(this, _a, void 0);
 	}
 }
+
+########## 11 es2019
+export { foo as "string-name" };
+----------
+
+  ! Arbitrary module namespace identifier names are not available in the
+  | configured target environment.
+   ,----
+ 1 | export { foo as "string-name" };
+   :                 ^^^^^^^^^^^^^
+   `----

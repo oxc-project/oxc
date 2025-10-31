@@ -14,4 +14,7 @@ pub struct ES2020Options {
 
     #[serde(skip)]
     pub optional_chaining: bool,
+
+    #[serde(skip)]
+    pub arbitrary_module_namespace_names: bool,
 }
