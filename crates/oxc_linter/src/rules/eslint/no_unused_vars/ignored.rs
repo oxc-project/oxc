@@ -68,6 +68,8 @@ impl NoUnusedVars {
             | AstKind::TSModuleDeclaration(_)
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSTypeParameter(_) => self.is_ignored_var(declared_binding),
+            // Mapped type keys are always considered used by definition
+            AstKind::TSMappedType(_) => true,
             AstKind::Function(func) => {
                 func.r#type.is_typescript_syntax() || self.is_ignored_var(declared_binding)
             }

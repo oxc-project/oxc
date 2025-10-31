@@ -151,9 +151,11 @@ impl<'a> Symbol<'_, 'a> {
                 // ```
                 // function foo(): foo { }
                 // ```
-                if self
-                    .get_ref_relevant_node(reference)
-                    .is_some_and(|node| self.declaration().span().contains_inclusive(node.span()))
+                // Exception: TSMappedType keys are used within the same node
+                if !matches!(self.declaration().kind(), AstKind::TSMappedType(_))
+                    && self.get_ref_relevant_node(reference).is_some_and(|node| {
+                        self.declaration().span().contains_inclusive(node.span())
+                    })
                 {
                     continue;
                 }
