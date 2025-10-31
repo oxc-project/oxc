@@ -21,7 +21,9 @@ pub struct NoCallbackInPromise(Box<NoCallbackInPromiseConfig>);
 #[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoCallbackInPromiseConfig {
+    /// List of callback function names to check for within Promise `then` and `catch` methods.
     callbacks: Vec<CompactStr>,
+    /// List of callback function names to allow within Promise `then` and `catch` methods.
     exceptions: Vec<CompactStr>,
 }
 
