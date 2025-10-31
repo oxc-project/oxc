@@ -2074,6 +2074,7 @@ dependencies = [
  "oxc_ast 0.96.0",
  "oxc_data_structures 0.96.0",
  "oxc_parser 0.96.0",
+ "oxc_semantic 0.96.0",
  "oxc_span 0.96.0",
  "oxc_syntax 0.96.0",
  "pico-args",
