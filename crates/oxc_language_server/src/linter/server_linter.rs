@@ -461,6 +461,19 @@ mod test {
     }
 
     #[test]
+    fn test_report_tsgolint_unused_directives() {
+        Tester::new(
+            "fixtures/linter/tsgolint/unused_disabled_directives",
+            Some(LintOptions {
+                unused_disable_directives: UnusedDisableDirectives::Deny,
+                type_aware: true,
+                ..Default::default()
+            }),
+        )
+        .test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
     fn test_root_ignore_patterns() {
         let tester = Tester::new("fixtures/linter/ignore_patterns", None);
         tester.test_and_snapshot_multiple_file(&[
