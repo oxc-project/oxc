@@ -150,7 +150,7 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::invalid_destrucuring_declaration(decl.id.span()));
             } else if decl.kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(diagnostics::missinginitializer_in_const(decl.id.span()));
+                self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
             }
         }
     }

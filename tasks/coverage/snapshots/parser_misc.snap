@@ -3076,7 +3076,7 @@ Negative Passed: 93/93 (100.00%)
  1 │ funtransientction as longciiConÞr>ol(cde) {
    ·                                          ▲
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   × TS(1248): A class member cannot have the 'const' keyword.
    ╭─[misc/fail/oxc-4212-1.ts:1:11]
@@ -3146,6 +3146,7 @@ Negative Passed: 93/93 (100.00%)
    ·               ─
  5 │ }
    ╰────
+  help: Remove this `?`
 
   × Unexpected token
    ╭─[misc/fail/oxc-5355.jsx:1:6]

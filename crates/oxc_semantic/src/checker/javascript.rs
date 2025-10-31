@@ -204,7 +204,9 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
 }
 
 fn unexpected_arguments(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("'arguments' is not allowed in {x0}")).with_label(span1)
+    OxcDiagnostic::error(format!("'arguments' is not allowed in {x0}"))
+        .with_label(span1)
+        .with_help("Assign the 'arguments' variable to a temporary variable outside")
 }
 
 pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBuilder<'_>) {
@@ -372,6 +374,9 @@ fn illegal_use_strict(span: Span) -> OxcDiagnostic {
         "Illegal 'use strict' directive in function with non-simple parameter list",
     )
     .with_label(span)
+    .with_help(
+        "Wrap this function with an IIFE with a 'use strict' directive that returns this function",
+    )
 }
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
@@ -442,8 +447,8 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
 
 fn new_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected new.target expression")
-.with_help("new.target is only allowed in constructors and functions invoked using thew `new` operator")
-.with_label(span)
+        .with_help("new.target is only allowed in constructors and functions invoked using the `new` operator")
+        .with_label(span)
 }
 
 fn import_meta(span: Span) -> OxcDiagnostic {

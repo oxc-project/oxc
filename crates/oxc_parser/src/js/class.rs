@@ -127,17 +127,19 @@ impl<'a> ParserImpl<'a> {
                         self.error(diagnostics::extends_clause_already_seen(
                             self.cur_token().span(),
                         ));
-                    } else if implements.is_some() {
+                    } else if let Some((implements_span, _)) = implements {
                         self.error(diagnostics::extends_clause_must_precede_implements(
                             self.cur_token().span(),
+                            implements_span,
                         ));
                     }
                     extends = Some(self.parse_extends_clause());
                 }
                 Kind::Implements => {
-                    if implements.is_some() {
+                    if let Some((implements_span, _)) = implements {
                         self.error(diagnostics::implements_clause_already_seen(
                             self.cur_token().span(),
+                            implements_span,
                         ));
                     }
                     let implements_kw_span = self.cur_token().span();
@@ -651,7 +653,10 @@ impl<'a> ParserImpl<'a> {
         if let Some(rest) = &function.params.rest {
             self.error(diagnostics::setter_with_rest_parameter(rest.span));
         } else if function.params.parameters_count() != 1 {
-            self.error(diagnostics::setter_with_parameters(function.params.span));
+            self.error(diagnostics::setter_with_parameters(
+                function.params.span,
+                function.params.parameters_count(),
+            ));
         } else if self.is_ts
             && function.params.items.first().unwrap().pattern.kind.is_assignment_pattern()
         {

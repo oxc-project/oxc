@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <label><span><span><span>A label<input /></span></span></span></label>'
    ·                                                                       ▲
    ╰────
-  help: Try insert a semicolon here
+  help: Try inserting a semicolon here
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
