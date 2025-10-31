@@ -652,7 +652,7 @@ impl<'a> Symbol<'_, 'a> {
                     AstKind::ComputedMemberExpression(_)
                     | AstKind::StaticMemberExpression(_)
                     | AstKind::PrivateFieldExpression(_),
-                    // Note: AssignmentExpression is NOT needed here because we already handles it.
+                    // Note: AssignmentExpression is NOT needed here because we already handle it.
                     AstKind::UpdateExpression(_),
                 ) => break,
                 // (AstKind::FunctionBody(_), _) => return true,
