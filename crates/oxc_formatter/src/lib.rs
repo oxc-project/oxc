@@ -10,9 +10,9 @@
 )] // FIXME: all these needs to be fixed.
 
 mod ast_nodes;
-mod embedded_formatter;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
+mod embedded_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
