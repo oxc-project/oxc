@@ -900,6 +900,12 @@ mod test {
     }
 
     #[test]
+    fn lint_invalid_vue_file() {
+        let args = &["fixtures/vue/invalid.vue"];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
     fn lint_astro_file() {
         let args = &["fixtures/astro/debugger.astro"];
         Tester::new().test_and_snapshot(args);
