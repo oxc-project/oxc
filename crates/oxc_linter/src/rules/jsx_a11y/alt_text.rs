@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use schemars::JsonSchema;
 
 use crate::{
     AstNode,
@@ -69,11 +70,17 @@ fn input_type_image(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AltText(Box<AltTextConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct AltTextConfig {
+    /// Custom components to check for alt text on `img` elements.
     img: Option<Vec<CompactStr>>,
+    /// Custom components to check for alt text on `object` elements.
     object: Option<Vec<CompactStr>>,
+    /// Custom components to check for alt text on `area` elements.
     area: Option<Vec<CompactStr>>,
+    /// Custom components to check for alt text on `input[type="image"]` elements.
+    #[serde(rename = "input[type=\"image\"]")]
     input_type_image: Option<Vec<CompactStr>>,
 }
 
@@ -128,7 +135,8 @@ declare_oxc_lint!(
     /// ```
     AltText,
     jsx_a11y,
-    correctness
+    correctness,
+    config = AltTextConfig,
 );
 
 impl Rule for AltText {
