@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 
 #[cfg(test)]
 mod tests;
@@ -29,8 +30,10 @@ fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoStandaloneExpect(Box<NoStandaloneExpectConfig>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct NoStandaloneExpectConfig {
+    /// An array of function names that should also be treated as test blocks.
     additional_test_block_functions: Vec<CompactStr>,
 }
 
@@ -69,7 +72,8 @@ declare_oxc_lint!(
     /// ```
     NoStandaloneExpect,
     jest,
-    correctness
+    correctness,
+    config = NoStandaloneExpectConfig,
 );
 
 impl Rule for NoStandaloneExpect {
