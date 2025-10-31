@@ -16,8 +16,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
-use serde::Deserialize;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
